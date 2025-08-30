@@ -1,12 +1,12 @@
-import { IChapterRepository } from '@domain/repositories/IChapterRepository';
-import { ChapterResponse } from '@keres/shared';
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { ChapterResponse } from '@keres/shared'
 
 export class GetChaptersByStoryIdUseCase {
   constructor(private readonly chapterRepository: IChapterRepository) {}
 
   async execute(storyId: string): Promise<ChapterResponse[]> {
-    const chapters = await this.chapterRepository.findByStoryId(storyId);
-    return chapters.map(chapter => ({
+    const chapters = await this.chapterRepository.findByStoryId(storyId)
+    return chapters.map((chapter) => ({
       id: chapter.id,
       storyId: chapter.storyId,
       name: chapter.name,
@@ -16,6 +16,6 @@ export class GetChaptersByStoryIdUseCase {
       extraNotes: chapter.extraNotes,
       createdAt: chapter.createdAt,
       updatedAt: chapter.updatedAt,
-    }));
+    }))
   }
 }

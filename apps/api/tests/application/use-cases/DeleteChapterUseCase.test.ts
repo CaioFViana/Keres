@@ -1,43 +1,44 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { DeleteChapterUseCase } from '@application/use-cases/DeleteChapterUseCase';
-import { IChapterRepository } from '@domain/repositories/IChapterRepository';
-import { Chapter } from '@domain/entities/Chapter';
+import type { Chapter } from '@domain/entities/Chapter'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+
+import { DeleteChapterUseCase } from '@application/use-cases/DeleteChapterUseCase'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 // Mock implementation
 class MockChapterRepository implements IChapterRepository {
-  private chapters: Chapter[] = [];
+  private chapters: Chapter[] = []
 
   async findById(id: string): Promise<Chapter | null> {
-    return this.chapters.find(chapter => chapter.id === id) || null;
+    return this.chapters.find((chapter) => chapter.id === id) || null
   }
 
   async findByStoryId(storyId: string): Promise<Chapter[]> {
-    return this.chapters.filter(chapter => chapter.storyId === storyId);
+    return this.chapters.filter((chapter) => chapter.storyId === storyId)
   }
 
   async save(chapter: Chapter): Promise<void> {
-    this.chapters.push(chapter);
+    this.chapters.push(chapter)
   }
 
   async update(chapter: Chapter): Promise<void> {
-    const index = this.chapters.findIndex(c => c.id === chapter.id);
+    const index = this.chapters.findIndex((c) => c.id === chapter.id)
     if (index !== -1) {
-      this.chapters[index] = chapter;
+      this.chapters[index] = chapter
     }
   }
 
   async delete(id: string): Promise<void> {
-    this.chapters = this.chapters.filter(chapter => chapter.id !== id);
+    this.chapters = this.chapters.filter((chapter) => chapter.id !== id)
   }
 }
 
 describe('DeleteChapterUseCase', () => {
-  let chapterRepository: MockChapterRepository;
-  let deleteChapterUseCase: DeleteChapterUseCase;
+  let chapterRepository: MockChapterRepository
+  let deleteChapterUseCase: DeleteChapterUseCase
 
   beforeEach(() => {
-    chapterRepository = new MockChapterRepository();
-    deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository);
+    chapterRepository = new MockChapterRepository()
+    deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository)
 
     // Pre-populate a chapter for testing
     chapterRepository.save({
@@ -50,28 +51,28 @@ describe('DeleteChapterUseCase', () => {
       extraNotes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-  });
+    })
+  })
 
   it('should delete an existing chapter successfully', async () => {
-    const deleted = await deleteChapterUseCase.execute('chapter123', 'story123');
-    expect(deleted).toBe(true);
+    const deleted = await deleteChapterUseCase.execute('chapter123', 'story123')
+    expect(deleted).toBe(true)
 
-    const chapter = await chapterRepository.findById('chapter123');
-    expect(chapter).toBeNull();
-  });
+    const chapter = await chapterRepository.findById('chapter123')
+    expect(chapter).toBeNull()
+  })
 
   it('should return false if chapter not found', async () => {
-    const deleted = await deleteChapterUseCase.execute('nonexistent_chapter', 'story123');
-    expect(deleted).toBe(false);
-  });
+    const deleted = await deleteChapterUseCase.execute('nonexistent_chapter', 'story123')
+    expect(deleted).toBe(false)
+  })
 
   it('should return false if chapter does not belong to the specified story', async () => {
-    const deleted = await deleteChapterUseCase.execute('chapter123', 'another_story');
-    expect(deleted).toBe(false);
+    const deleted = await deleteChapterUseCase.execute('chapter123', 'another_story')
+    expect(deleted).toBe(false)
 
     // Ensure the chapter was not deleted
-    const chapter = await chapterRepository.findById('chapter123');
-    expect(chapter).toBeDefined();
-  });
-});
+    const chapter = await chapterRepository.findById('chapter123')
+    expect(chapter).toBeDefined()
+  })
+})

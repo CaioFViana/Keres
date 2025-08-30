@@ -1,12 +1,12 @@
-import { ICharacterRepository } from '@domain/repositories/ICharacterRepository';
-import { CharacterResponse } from '@keres/shared';
+import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { CharacterResponse } from '@keres/shared'
 
 export class GetCharactersByStoryIdUseCase {
   constructor(private readonly characterRepository: ICharacterRepository) {}
 
   async execute(storyId: string): Promise<CharacterResponse[]> {
-    const characters = await this.characterRepository.findByStoryId(storyId);
-    return characters.map(character => ({
+    const characters = await this.characterRepository.findByStoryId(storyId)
+    return characters.map((character) => ({
       id: character.id,
       storyId: character.storyId,
       name: character.name,
@@ -23,6 +23,6 @@ export class GetCharactersByStoryIdUseCase {
       extraNotes: character.extraNotes,
       createdAt: character.createdAt,
       updatedAt: character.updatedAt,
-    }));
+    }))
   }
 }

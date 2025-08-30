@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const createRelationSchema = z.object({
   charIdSource: z.string(),
@@ -8,7 +8,7 @@ export const createRelationSchema = z.object({
   summary: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const updateRelationSchema = z.object({
   id: z.string(),
@@ -19,7 +19,7 @@ export const updateRelationSchema = z.object({
   summary: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const relationProfileSchema = z.object({
   id: z.string(),
@@ -32,4 +32,4 @@ export const relationProfileSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})

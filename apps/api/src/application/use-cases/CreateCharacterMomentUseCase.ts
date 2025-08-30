@@ -1,6 +1,6 @@
-import { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository';
-import { CharacterMomentCreatePayload, CharacterMomentResponse } from '@keres/shared';
-import { CharacterMoment } from '@domain/entities/CharacterMoment';
+import type { CharacterMoment } from '@domain/entities/CharacterMoment'
+import type { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository'
+import type { CharacterMomentCreatePayload, CharacterMomentResponse } from '@keres/shared'
 
 export class CreateCharacterMomentUseCase {
   constructor(private readonly characterMomentRepository: ICharacterMomentRepository) {}
@@ -11,15 +11,15 @@ export class CreateCharacterMomentUseCase {
       momentId: data.momentId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.characterMomentRepository.save(newCharacterMoment);
+    await this.characterMomentRepository.save(newCharacterMoment)
 
     return {
       characterId: newCharacterMoment.characterId,
       momentId: newCharacterMoment.momentId,
       createdAt: newCharacterMoment.createdAt,
       updatedAt: newCharacterMoment.updatedAt,
-    };
+    }
   }
 }

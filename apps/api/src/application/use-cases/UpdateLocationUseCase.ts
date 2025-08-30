@@ -1,26 +1,26 @@
-import { ILocationRepository } from '@domain/repositories/ILocationRepository';
-import { LocationUpdatePayload, LocationResponse } from '@keres/shared';
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+import type { LocationResponse, LocationUpdatePayload } from '@keres/shared'
 
 export class UpdateLocationUseCase {
   constructor(private readonly locationRepository: ILocationRepository) {}
 
   async execute(data: LocationUpdatePayload): Promise<LocationResponse | null> {
-    const existingLocation = await this.locationRepository.findById(data.id);
+    const existingLocation = await this.locationRepository.findById(data.id)
     if (!existingLocation) {
-      return null; // Location not found
+      return null // Location not found
     }
     // Add ownership check
     if (data.storyId && existingLocation.storyId !== data.storyId) {
-      return null; // Location does not belong to this story
+      return null // Location does not belong to this story
     }
 
     const updatedLocation = {
       ...existingLocation,
       ...data,
       updatedAt: new Date(),
-    };
+    }
 
-    await this.locationRepository.update(updatedLocation);
+    await this.locationRepository.update(updatedLocation)
 
     return {
       id: updatedLocation.id,
@@ -34,6 +34,6 @@ export class UpdateLocationUseCase {
       extraNotes: updatedLocation.extraNotes,
       createdAt: updatedLocation.createdAt,
       updatedAt: updatedLocation.updatedAt,
-    };
+    }
   }
 }

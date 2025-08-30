@@ -1,67 +1,71 @@
-import { eq } from 'drizzle-orm';
-import { db, stories } from '@keres/db'; // Import db and stories table
-import { Story } from '@domain/entities/Story';
-import { IStoryRepository } from '@domain/repositories/IStoryRepository';
+import type { Story } from '@domain/entities/Story'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+
+import { db, stories } from '@keres/db' // Import db and stories table
+import { eq } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
   constructor() {
-    console.log('StoryRepository constructor called.');
+    console.log('StoryRepository constructor called.')
   }
 
   async findById(id: string): Promise<Story | null> {
-    console.log('StoryRepository.findById called.');
+    console.log('StoryRepository.findById called.')
     try {
-      const result = await db.select().from(stories).where(eq(stories.id, id)).limit(1);
-      return result.length > 0 ? this.toDomain(result[0]) : null;
+      const result = await db.select().from(stories).where(eq(stories.id, id)).limit(1)
+      return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
-      console.error('Error in StoryRepository.findById:', error);
-      throw error;
+      console.error('Error in StoryRepository.findById:', error)
+      throw error
     }
   }
 
   async findByUserId(userId: string): Promise<Story[]> {
-    console.log('StoryRepository.findByUserId called.');
+    console.log('StoryRepository.findByUserId called.')
     try {
-      const results = await db.select().from(stories).where(eq(stories.userId, userId));
-      return results.map(this.toDomain);
+      const results = await db.select().from(stories).where(eq(stories.userId, userId))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in StoryRepository.findByUserId:', error);
-      throw error;
+      console.error('Error in StoryRepository.findByUserId:', error)
+      throw error
     }
   }
 
   async save(storyData: Story): Promise<void> {
-    console.log('StoryRepository.save called.');
+    console.log('StoryRepository.save called.')
     try {
-      await db.insert(stories).values(this.toPersistence(storyData));
+      await db.insert(stories).values(this.toPersistence(storyData))
     } catch (error) {
-      console.error('Error in StoryRepository.save:', error);
-      throw error;
+      console.error('Error in StoryRepository.save:', error)
+      throw error
     }
   }
 
   async update(storyData: Story): Promise<void> {
-    console.log('StoryRepository.update called.');
+    console.log('StoryRepository.update called.')
     try {
-      await db.update(stories).set(this.toPersistence(storyData)).where(eq(stories.id, storyData.id));
+      await db
+        .update(stories)
+        .set(this.toPersistence(storyData))
+        .where(eq(stories.id, storyData.id))
     } catch (error) {
-      console.error('Error in StoryRepository.update:', error);
-      throw error;
+      console.error('Error in StoryRepository.update:', error)
+      throw error
     }
   }
 
   async delete(id: string): Promise<void> {
-    console.log('StoryRepository.delete called.');
+    console.log('StoryRepository.delete called.')
     try {
-      await db.delete(stories).where(eq(stories.id, id));
+      await db.delete(stories).where(eq(stories.id, id))
     } catch (error) {
-      console.error('Error in StoryRepository.delete:', error);
-      throw error;
+      console.error('Error in StoryRepository.delete:', error)
+      throw error
     }
   }
 
   private toDomain(data: typeof stories.$inferSelect): Story {
-    console.log('StoryRepository.toDomain called.');
+    console.log('StoryRepository.toDomain called.')
     return {
       id: data.id,
       userId: data.userId,
@@ -73,11 +77,11 @@ export class StoryRepository implements IStoryRepository {
       extraNotes: data.extraNotes,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-    };
+    }
   }
 
   private toPersistence(storyData: Story): typeof stories.$inferInsert {
-    console.log('StoryRepository.toPersistence called.');
+    console.log('StoryRepository.toPersistence called.')
     return {
       id: storyData.id,
       userId: storyData.userId,
@@ -89,6 +93,6 @@ export class StoryRepository implements IStoryRepository {
       extraNotes: storyData.extraNotes,
       createdAt: storyData.createdAt,
       updatedAt: storyData.updatedAt,
-    };
+    }
   }
 }

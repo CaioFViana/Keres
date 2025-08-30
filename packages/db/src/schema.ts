@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, primaryKey } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -7,11 +7,13 @@ export const users = pgTable('users', {
   passwordSalt: text('password_salt').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 export const story = pgTable('story', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
   title: text('title').notNull(),
   summary: text('summary'),
   genre: text('genre'),
@@ -20,11 +22,13 @@ export const story = pgTable('story', {
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 export const characters = pgTable('characters', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => story.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => story.id),
   name: text('name').notNull(),
   gender: text('gender'),
   race: text('race'),
@@ -39,11 +43,13 @@ export const characters = pgTable('characters', {
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 export const chapters = pgTable('chapters', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => story.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => story.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),
@@ -51,11 +57,13 @@ export const chapters = pgTable('chapters', {
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 export const scenes = pgTable('scenes', {
   id: text('id').primaryKey(),
-  chapterId: text('chapter_id').notNull().references(() => chapters.id),
+  chapterId: text('chapter_id')
+    .notNull()
+    .references(() => chapters.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),
@@ -65,11 +73,13 @@ export const scenes = pgTable('scenes', {
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 export const moments = pgTable('moments', {
   id: text('id').primaryKey(),
-  sceneId: text('scene_id').notNull().references(() => scenes.id),
+  sceneId: text('scene_id')
+    .notNull()
+    .references(() => scenes.id),
   name: text('name').notNull(),
   location: text('location'),
   index: integer('index').notNull(),
@@ -78,11 +88,13 @@ export const moments = pgTable('moments', {
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 export const locations = pgTable('locations', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => story.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => story.id),
   name: text('name').notNull(),
   description: text('description'),
   climate: text('climate'),
@@ -92,11 +104,13 @@ export const locations = pgTable('locations', {
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 export const gallery = pgTable('gallery', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => story.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => story.id),
   ownerId: text('owner_id'), // Can refer to character.id, notes.id, or locations.id
   imagePath: text('image_path').notNull(),
   isFile: boolean('is_file').default(false).notNull(),
@@ -104,12 +118,16 @@ export const gallery = pgTable('gallery', {
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 export const relations = pgTable('relations', {
   id: text('id').primaryKey(),
-  charIdSource: text('char_id_source').notNull().references(() => characters.id),
-  charIdTarget: text('char_id_target').notNull().references(() => characters.id),
+  charIdSource: text('char_id_source')
+    .notNull()
+    .references(() => characters.id),
+  charIdTarget: text('char_id_target')
+    .notNull()
+    .references(() => characters.id),
   sceneId: text('scene_id').references(() => scenes.id),
   momentId: text('moment_id').references(() => moments.id),
   summary: text('summary'),
@@ -117,24 +135,36 @@ export const relations = pgTable('relations', {
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
-export const characterMoments = pgTable('character_moments', {
-  characterId: text('character_id').notNull().references(() => characters.id),
-  momentId: text('moment_id').notNull().references(() => moments.id),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (table) => {
-  return {
-    pk: primaryKey(table.characterId, table.momentId)
-  };
-});
+export const characterMoments = pgTable(
+  'character_moments',
+  {
+    characterId: text('character_id')
+      .notNull()
+      .references(() => characters.id),
+    momentId: text('moment_id')
+      .notNull()
+      .references(() => moments.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.characterId, table.momentId),
+    }
+  },
+)
 
 export const characterRelations = pgTable('character_relations', {
   id: text('id').primaryKey(),
-  charId1: text('char_id_1').notNull().references(() => characters.id),
-  charId2: text('char_id_2').notNull().references(() => characters.id),
+  charId1: text('char_id_1')
+    .notNull()
+    .references(() => characters.id),
+  charId2: text('char_id_2')
+    .notNull()
+    .references(() => characters.id),
   relationType: text('relation_type').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})

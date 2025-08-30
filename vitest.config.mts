@@ -1,5 +1,6 @@
-import { defineConfig } from 'vitest/config';
-import path from 'path';
+import path from 'node:path'
+
+import { defineConfig } from 'vitest/config'
 // import tsconfigPaths from 'vite-tsconfig-paths'; // This line will be removed
 
 export default defineConfig({
@@ -28,4 +29,4 @@ export default defineConfig({
       '@keres/db/schema': path.resolve(__dirname, './packages/db/src/schema.ts'),
     },
   },
-});
+})

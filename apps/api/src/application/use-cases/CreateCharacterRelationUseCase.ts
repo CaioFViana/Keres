@@ -1,7 +1,8 @@
-import { CharacterRelation } from '@domain/entities/CharacterRelation';
-import { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository';
-import { ulid } from 'ulid';
-import { CharacterRelationCreatePayload, CharacterRelationResponse } from '@keres/shared';
+import type { CharacterRelation } from '@domain/entities/CharacterRelation'
+import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
+import type { CharacterRelationCreatePayload, CharacterRelationResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateCharacterRelationUseCase {
   constructor(private readonly characterRelationRepository: ICharacterRelationRepository) {}
@@ -14,9 +15,9 @@ export class CreateCharacterRelationUseCase {
       relationType: data.relationType,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.characterRelationRepository.save(newCharacterRelation);
+    await this.characterRelationRepository.save(newCharacterRelation)
 
     return {
       id: newCharacterRelation.id,
@@ -25,6 +26,6 @@ export class CreateCharacterRelationUseCase {
       relationType: newCharacterRelation.relationType,
       createdAt: newCharacterRelation.createdAt,
       updatedAt: newCharacterRelation.updatedAt,
-    };
+    }
   }
 }

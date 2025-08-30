@@ -1,12 +1,12 @@
-import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
-import { GalleryResponse } from '@keres/shared';
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
+import type { GalleryResponse } from '@keres/shared'
 
 export class GetGalleryByStoryIdUseCase {
   constructor(private readonly galleryRepository: IGalleryRepository) {}
 
   async execute(storyId: string): Promise<GalleryResponse[]> {
-    const galleryItems = await this.galleryRepository.findByStoryId(storyId);
-    return galleryItems.map(item => ({
+    const galleryItems = await this.galleryRepository.findByStoryId(storyId)
+    return galleryItems.map((item) => ({
       id: item.id,
       storyId: item.storyId,
       ownerId: item.ownerId,
@@ -16,6 +16,6 @@ export class GetGalleryByStoryIdUseCase {
       extraNotes: item.extraNotes,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
-    }));
+    }))
   }
 }

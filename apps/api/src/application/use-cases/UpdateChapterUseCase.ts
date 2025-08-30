@@ -1,26 +1,26 @@
-import { IChapterRepository } from '@domain/repositories/IChapterRepository';
-import { ChapterUpdatePayload, ChapterResponse } from '@keres/shared';
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { ChapterResponse, ChapterUpdatePayload } from '@keres/shared'
 
 export class UpdateChapterUseCase {
   constructor(private readonly chapterRepository: IChapterRepository) {}
 
   async execute(data: ChapterUpdatePayload): Promise<ChapterResponse | null> {
-    const existingChapter = await this.chapterRepository.findById(data.id);
+    const existingChapter = await this.chapterRepository.findById(data.id)
     if (!existingChapter) {
-      return null; // Chapter not found
+      return null // Chapter not found
     }
     // Add ownership check
     if (data.storyId && existingChapter.storyId !== data.storyId) {
-      return null; // Chapter does not belong to this story
+      return null // Chapter does not belong to this story
     }
 
     const updatedChapter = {
       ...existingChapter,
       ...data,
       updatedAt: new Date(),
-    };
+    }
 
-    await this.chapterRepository.update(updatedChapter);
+    await this.chapterRepository.update(updatedChapter)
 
     return {
       id: updatedChapter.id,
@@ -32,6 +32,6 @@ export class UpdateChapterUseCase {
       extraNotes: updatedChapter.extraNotes,
       createdAt: updatedChapter.createdAt,
       updatedAt: updatedChapter.updatedAt,
-    };
+    }
   }
 }

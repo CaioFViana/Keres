@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const createSceneSchema = z.object({
   chapterId: z.string(),
@@ -9,7 +9,7 @@ export const createSceneSchema = z.object({
   duration: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const updateSceneSchema = z.object({
   id: z.string(),
@@ -21,7 +21,7 @@ export const updateSceneSchema = z.object({
   duration: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const sceneProfileSchema = z.object({
   id: z.string(),
@@ -35,4 +35,4 @@ export const sceneProfileSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})

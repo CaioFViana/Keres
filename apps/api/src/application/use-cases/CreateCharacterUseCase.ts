@@ -1,7 +1,8 @@
-import { Character } from '@domain/entities/Character';
-import { ICharacterRepository } from '@domain/repositories/ICharacterRepository';
-import { ulid } from 'ulid';
-import { CharacterCreatePayload, CharacterResponse } from '@keres/shared';
+import type { Character } from '@domain/entities/Character'
+import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { CharacterCreatePayload, CharacterResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateCharacterUseCase {
   constructor(private readonly characterRepository: ICharacterRepository) {}
@@ -24,9 +25,9 @@ export class CreateCharacterUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.characterRepository.save(newCharacter);
+    await this.characterRepository.save(newCharacter)
 
     return {
       id: newCharacter.id,
@@ -45,6 +46,6 @@ export class CreateCharacterUseCase {
       extraNotes: newCharacter.extraNotes,
       createdAt: newCharacter.createdAt,
       updatedAt: newCharacter.updatedAt,
-    };
+    }
   }
 }

@@ -1,13 +1,13 @@
-import { IRelationRepository } from '@domain/repositories/IRelationRepository';
-import { RelationResponse } from '@keres/shared';
+import type { IRelationRepository } from '@domain/repositories/IRelationRepository'
+import type { RelationResponse } from '@keres/shared'
 
 export class GetRelationUseCase {
   constructor(private readonly relationRepository: IRelationRepository) {}
 
   async execute(id: string): Promise<RelationResponse | null> {
-    const relation = await this.relationRepository.findById(id);
+    const relation = await this.relationRepository.findById(id)
     if (!relation) {
-      return null;
+      return null
     }
 
     return {
@@ -21,6 +21,6 @@ export class GetRelationUseCase {
       extraNotes: relation.extraNotes,
       createdAt: relation.createdAt,
       updatedAt: relation.updatedAt,
-    };
+    }
   }
 }

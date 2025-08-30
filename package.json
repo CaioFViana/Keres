@@ -2,18 +2,25 @@
   "name": "keres-story-organizer",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "echo \"Run specific app/package dev script, e.g., bun --filter=./apps/api dev\"",
     "build": "echo \"Run specific app/package build script\"",
     "test": "vitest run",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "start:back": "bun run apps/api/src/index.ts",
+    "start:front": "",
+    "craft": "barrel-craft",
+    "craft:clean": "barrel-craft clean --force",
+    "type-check": "tsc --noEmit",
+    "lint": "biome check --write .",
+    "lint:fix": "biome check --write . --unsafe",
+    "lint:migrate": "biome migrate"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.2",
     "@vitest/coverage-v8": "^1.2.2",
+    "barrel-craft": "^0.1.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^1.2.2"
   },

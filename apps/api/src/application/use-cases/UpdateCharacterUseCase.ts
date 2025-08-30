@@ -1,26 +1,26 @@
-import { ICharacterRepository } from '@domain/repositories/ICharacterRepository';
-import { CharacterUpdatePayload, CharacterResponse } from '@keres/shared';
+import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { CharacterResponse, CharacterUpdatePayload } from '@keres/shared'
 
 export class UpdateCharacterUseCase {
   constructor(private readonly characterRepository: ICharacterRepository) {}
 
   async execute(data: CharacterUpdatePayload): Promise<CharacterResponse | null> {
-    const existingCharacter = await this.characterRepository.findById(data.id);
+    const existingCharacter = await this.characterRepository.findById(data.id)
     if (!existingCharacter) {
-      return null; // Character not found
+      return null // Character not found
     }
     // Add ownership check
     if (data.storyId && existingCharacter.storyId !== data.storyId) {
-      return null; // Character does not belong to this story
+      return null // Character does not belong to this story
     }
 
     const updatedCharacter = {
       ...existingCharacter,
       ...data,
       updatedAt: new Date(),
-    };
+    }
 
-    await this.characterRepository.update(updatedCharacter);
+    await this.characterRepository.update(updatedCharacter)
 
     return {
       id: updatedCharacter.id,
@@ -39,6 +39,6 @@ export class UpdateCharacterUseCase {
       extraNotes: updatedCharacter.extraNotes,
       createdAt: updatedCharacter.createdAt,
       updatedAt: updatedCharacter.updatedAt,
-    };
+    }
   }
 }

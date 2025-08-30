@@ -1,67 +1,68 @@
-import { eq } from 'drizzle-orm';
-import { db, scenes } from '@keres/db'; // Import db and scenes table
-import { Scene } from '@domain/entities/Scene';
-import { ISceneRepository } from '@domain/repositories/ISceneRepository';
+import type { Scene } from '@domain/entities/Scene'
+import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
+
+import { db, scenes } from '@keres/db' // Import db and scenes table
+import { eq } from 'drizzle-orm'
 
 export class SceneRepository implements ISceneRepository {
   constructor() {
-    console.log('SceneRepository constructor called.');
+    console.log('SceneRepository constructor called.')
   }
 
   async findById(id: string): Promise<Scene | null> {
-    console.log('SceneRepository.findById called.');
+    console.log('SceneRepository.findById called.')
     try {
-      const result = await db.select().from(scenes).where(eq(scenes.id, id)).limit(1);
-      return result.length > 0 ? this.toDomain(result[0]) : null;
+      const result = await db.select().from(scenes).where(eq(scenes.id, id)).limit(1)
+      return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
-      console.error('Error in SceneRepository.findById:', error);
-      throw error;
+      console.error('Error in SceneRepository.findById:', error)
+      throw error
     }
   }
 
   async findByChapterId(chapterId: string): Promise<Scene[]> {
-    console.log('SceneRepository.findByChapterId called.');
+    console.log('SceneRepository.findByChapterId called.')
     try {
-      const results = await db.select().from(scenes).where(eq(scenes.chapterId, chapterId));
-      return results.map(this.toDomain);
+      const results = await db.select().from(scenes).where(eq(scenes.chapterId, chapterId))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in SceneRepository.findByChapterId:', error);
-      throw error;
+      console.error('Error in SceneRepository.findByChapterId:', error)
+      throw error
     }
   }
 
   async save(sceneData: Scene): Promise<void> {
-    console.log('SceneRepository.save called.');
+    console.log('SceneRepository.save called.')
     try {
-      await db.insert(scenes).values(this.toPersistence(sceneData));
+      await db.insert(scenes).values(this.toPersistence(sceneData))
     } catch (error) {
-      console.error('Error in SceneRepository.save:', error);
-      throw error;
+      console.error('Error in SceneRepository.save:', error)
+      throw error
     }
   }
 
   async update(sceneData: Scene): Promise<void> {
-    console.log('SceneRepository.update called.');
+    console.log('SceneRepository.update called.')
     try {
-      await db.update(scenes).set(this.toPersistence(sceneData)).where(eq(scenes.id, sceneData.id));
+      await db.update(scenes).set(this.toPersistence(sceneData)).where(eq(scenes.id, sceneData.id))
     } catch (error) {
-      console.error('Error in SceneRepository.update:', error);
-      throw error;
+      console.error('Error in SceneRepository.update:', error)
+      throw error
     }
   }
 
   async delete(id: string): Promise<void> {
-    console.log('SceneRepository.delete called.');
+    console.log('SceneRepository.delete called.')
     try {
-      await db.delete(scenes).where(eq(scenes.id, id));
+      await db.delete(scenes).where(eq(scenes.id, id))
     } catch (error) {
-      console.error('Error in SceneRepository.delete:', error);
-      throw error;
+      console.error('Error in SceneRepository.delete:', error)
+      throw error
     }
   }
 
   private toDomain(data: typeof scenes.$inferSelect): Scene {
-    console.log('SceneRepository.toDomain called.');
+    console.log('SceneRepository.toDomain called.')
     return {
       id: data.id,
       chapterId: data.chapterId,
@@ -74,11 +75,11 @@ export class SceneRepository implements ISceneRepository {
       extraNotes: data.extraNotes,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-    };
+    }
   }
 
   private toPersistence(sceneData: Scene): typeof scenes.$inferInsert {
-    console.log('SceneRepository.toPersistence called.');
+    console.log('SceneRepository.toPersistence called.')
     return {
       id: sceneData.id,
       chapterId: sceneData.chapterId,
@@ -91,6 +92,6 @@ export class SceneRepository implements ISceneRepository {
       extraNotes: sceneData.extraNotes,
       createdAt: sceneData.createdAt,
       updatedAt: sceneData.updatedAt,
-    };
+    }
   }
 }

@@ -1,67 +1,71 @@
-import { eq } from 'drizzle-orm';
-import { db, moments } from '@keres/db'; // Import db and moments table
-import { Moment } from '@domain/entities/Moment';
-import { IMomentRepository } from '@domain/repositories/IMomentRepository';
+import type { Moment } from '@domain/entities/Moment'
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+
+import { db, moments } from '@keres/db' // Import db and moments table
+import { eq } from 'drizzle-orm'
 
 export class MomentRepository implements IMomentRepository {
   constructor() {
-    console.log('MomentRepository constructor called.');
+    console.log('MomentRepository constructor called.')
   }
 
   async findById(id: string): Promise<Moment | null> {
-    console.log('MomentRepository.findById called.');
+    console.log('MomentRepository.findById called.')
     try {
-      const result = await db.select().from(moments).where(eq(moments.id, id)).limit(1);
-      return result.length > 0 ? this.toDomain(result[0]) : null;
+      const result = await db.select().from(moments).where(eq(moments.id, id)).limit(1)
+      return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
-      console.error('Error in MomentRepository.findById:', error);
-      throw error;
+      console.error('Error in MomentRepository.findById:', error)
+      throw error
     }
   }
 
   async findBySceneId(sceneId: string): Promise<Moment[]> {
-    console.log('MomentRepository.findBySceneId called.');
+    console.log('MomentRepository.findBySceneId called.')
     try {
-      const results = await db.select().from(moments).where(eq(moments.sceneId, sceneId));
-      return results.map(this.toDomain);
+      const results = await db.select().from(moments).where(eq(moments.sceneId, sceneId))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in MomentRepository.findBySceneId:', error);
-      throw error;
+      console.error('Error in MomentRepository.findBySceneId:', error)
+      throw error
     }
   }
 
   async save(momentData: Moment): Promise<void> {
-    console.log('MomentRepository.save called.');
+    console.log('MomentRepository.save called.')
     try {
-      await db.insert(moments).values(this.toPersistence(momentData));
+      await db.insert(moments).values(this.toPersistence(momentData))
     } catch (error) {
-      console.error('Error in MomentRepository.save:', error);
-      throw error;
+      console.error('Error in MomentRepository.save:', error)
+      throw error
     }
   }
 
   async update(momentData: Moment): Promise<void> {
-    console.log('MomentRepository.update called.');
+    console.log('MomentRepository.update called.')
     try {
-      await db.update(moments).set(this.toPersistence(momentData)).where(eq(moments.id, momentData.id));
+      await db
+        .update(moments)
+        .set(this.toPersistence(momentData))
+        .where(eq(moments.id, momentData.id))
     } catch (error) {
-      console.error('Error in MomentRepository.update:', error);
-      throw error;
+      console.error('Error in MomentRepository.update:', error)
+      throw error
     }
   }
 
   async delete(id: string): Promise<void> {
-    console.log('MomentRepository.delete called.');
+    console.log('MomentRepository.delete called.')
     try {
-      await db.delete(moments).where(eq(moments.id, id));
+      await db.delete(moments).where(eq(moments.id, id))
     } catch (error) {
-      console.error('Error in MomentRepository.delete:', error);
-      throw error;
+      console.error('Error in MomentRepository.delete:', error)
+      throw error
     }
   }
 
   private toDomain(data: typeof moments.$inferSelect): Moment {
-    console.log('MomentRepository.toDomain called.');
+    console.log('MomentRepository.toDomain called.')
     return {
       id: data.id,
       sceneId: data.sceneId,
@@ -73,11 +77,11 @@ export class MomentRepository implements IMomentRepository {
       extraNotes: data.extraNotes,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-    };
+    }
   }
 
   private toPersistence(momentData: Moment): typeof moments.$inferInsert {
-    console.log('MomentRepository.toPersistence called.');
+    console.log('MomentRepository.toPersistence called.')
     return {
       id: momentData.id,
       sceneId: momentData.sceneId,
@@ -89,6 +93,6 @@ export class MomentRepository implements IMomentRepository {
       extraNotes: momentData.extraNotes,
       createdAt: momentData.createdAt,
       updatedAt: momentData.updatedAt,
-    };
+    }
   }
 }

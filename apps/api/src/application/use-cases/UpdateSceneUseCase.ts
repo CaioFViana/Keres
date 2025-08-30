@@ -1,26 +1,26 @@
-import { ISceneRepository } from '@domain/repositories/ISceneRepository';
-import { SceneUpdatePayload, SceneResponse } from '@keres/shared';
+import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
+import type { SceneResponse, SceneUpdatePayload } from '@keres/shared'
 
 export class UpdateSceneUseCase {
   constructor(private readonly sceneRepository: ISceneRepository) {}
 
   async execute(data: SceneUpdatePayload): Promise<SceneResponse | null> {
-    const existingScene = await this.sceneRepository.findById(data.id);
+    const existingScene = await this.sceneRepository.findById(data.id)
     if (!existingScene) {
-      return null; // Scene not found
+      return null // Scene not found
     }
     // Add ownership check
     if (data.chapterId && existingScene.chapterId !== data.chapterId) {
-      return null; // Scene does not belong to this chapter
+      return null // Scene does not belong to this chapter
     }
 
     const updatedScene = {
       ...existingScene,
       ...data,
       updatedAt: new Date(),
-    };
+    }
 
-    await this.sceneRepository.update(updatedScene);
+    await this.sceneRepository.update(updatedScene)
 
     return {
       id: updatedScene.id,
@@ -34,6 +34,6 @@ export class UpdateSceneUseCase {
       extraNotes: updatedScene.extraNotes,
       createdAt: updatedScene.createdAt,
       updatedAt: updatedScene.updatedAt,
-    };
+    }
   }
 }

@@ -1,43 +1,44 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { DeleteLocationUseCase } from '@application/use-cases/DeleteLocationUseCase';
-import { ILocationRepository } from '@domain/repositories/ILocationRepository';
-import { Location } from '@domain/entities/Location';
+import type { Location } from '@domain/entities/Location'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+
+import { DeleteLocationUseCase } from '@application/use-cases/DeleteLocationUseCase'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 // Mock implementation
 class MockLocationRepository implements ILocationRepository {
-  private locations: Location[] = [];
+  private locations: Location[] = []
 
   async findById(id: string): Promise<Location | null> {
-    return this.locations.find(location => location.id === id) || null;
+    return this.locations.find((location) => location.id === id) || null
   }
 
   async findByStoryId(storyId: string): Promise<Location[]> {
-    return this.locations.filter(location => location.storyId === storyId);
+    return this.locations.filter((location) => location.storyId === storyId)
   }
 
   async save(location: Location): Promise<void> {
-    this.locations.push(location);
+    this.locations.push(location)
   }
 
   async update(location: Location): Promise<void> {
-    const index = this.locations.findIndex(l => l.id === location.id);
+    const index = this.locations.findIndex((l) => l.id === location.id)
     if (index !== -1) {
-      this.locations[index] = location;
+      this.locations[index] = location
     }
   }
 
   async delete(id: string): Promise<void> {
-    this.locations = this.locations.filter(location => location.id !== id);
+    this.locations = this.locations.filter((location) => location.id !== id)
   }
 }
 
 describe('DeleteLocationUseCase', () => {
-  let locationRepository: MockLocationRepository;
-  let deleteLocationUseCase: DeleteLocationUseCase;
+  let locationRepository: MockLocationRepository
+  let deleteLocationUseCase: DeleteLocationUseCase
 
   beforeEach(() => {
-    locationRepository = new MockLocationRepository();
-    deleteLocationUseCase = new DeleteLocationUseCase(locationRepository);
+    locationRepository = new MockLocationRepository()
+    deleteLocationUseCase = new DeleteLocationUseCase(locationRepository)
 
     // Pre-populate a location for testing
     locationRepository.save({
@@ -52,28 +53,28 @@ describe('DeleteLocationUseCase', () => {
       extraNotes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-  });
+    })
+  })
 
   it('should delete an existing location successfully', async () => {
-    const deleted = await deleteLocationUseCase.execute('loc123', 'story123');
-    expect(deleted).toBe(true);
+    const deleted = await deleteLocationUseCase.execute('loc123', 'story123')
+    expect(deleted).toBe(true)
 
-    const location = await locationRepository.findById('loc123');
-    expect(location).toBeNull();
-  });
+    const location = await locationRepository.findById('loc123')
+    expect(location).toBeNull()
+  })
 
   it('should return false if location not found', async () => {
-    const deleted = await deleteLocationUseCase.execute('nonexistent_loc', 'story123');
-    expect(deleted).toBe(false);
-  });
+    const deleted = await deleteLocationUseCase.execute('nonexistent_loc', 'story123')
+    expect(deleted).toBe(false)
+  })
 
   it('should return false if location does not belong to the specified story', async () => {
-    const deleted = await deleteLocationUseCase.execute('loc123', 'another_story');
-    expect(deleted).toBe(false);
+    const deleted = await deleteLocationUseCase.execute('loc123', 'another_story')
+    expect(deleted).toBe(false)
 
     // Ensure the location was not deleted
-    const location = await locationRepository.findById('loc123');
-    expect(location).toBeDefined();
-  });
-});
+    const location = await locationRepository.findById('loc123')
+    expect(location).toBeDefined()
+  })
+})

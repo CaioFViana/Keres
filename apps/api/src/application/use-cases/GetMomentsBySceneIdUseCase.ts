@@ -1,12 +1,12 @@
-import { IMomentRepository } from '@domain/repositories/IMomentRepository';
-import { MomentResponse } from '@keres/shared';
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+import type { MomentResponse } from '@keres/shared'
 
 export class GetMomentsBySceneIdUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
   async execute(sceneId: string): Promise<MomentResponse[]> {
-    const moments = await this.momentRepository.findBySceneId(sceneId);
-    return moments.map(moment => ({
+    const moments = await this.momentRepository.findBySceneId(sceneId)
+    return moments.map((moment) => ({
       id: moment.id,
       sceneId: moment.sceneId,
       name: moment.name,
@@ -17,6 +17,6 @@ export class GetMomentsBySceneIdUseCase {
       extraNotes: moment.extraNotes,
       createdAt: moment.createdAt,
       updatedAt: moment.updatedAt,
-    }));
+    }))
   }
 }

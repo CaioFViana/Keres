@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const createLocationSchema = z.object({
   storyId: z.string(),
@@ -9,7 +9,7 @@ export const createLocationSchema = z.object({
   politics: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const updateLocationSchema = z.object({
   id: z.string(),
@@ -21,7 +21,7 @@ export const updateLocationSchema = z.object({
   politics: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const locationProfileSchema = z.object({
   id: z.string(),
@@ -35,4 +35,4 @@ export const locationProfileSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})

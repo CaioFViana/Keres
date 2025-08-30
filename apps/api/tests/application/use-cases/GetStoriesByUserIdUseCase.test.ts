@@ -1,43 +1,44 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { GetStoriesByUserIdUseCase } from '@application/use-cases/GetStoriesByUserIdUseCase';
-import { IStoryRepository } from '@domain/repositories/IStoryRepository';
-import { Story } from '@domain/entities/Story';
+import type { Story } from '@domain/entities/Story'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+
+import { GetStoriesByUserIdUseCase } from '@application/use-cases/GetStoriesByUserIdUseCase'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 // Mock implementation
 class MockStoryRepository implements IStoryRepository {
-  private stories: Story[] = [];
+  private stories: Story[] = []
 
   async findById(id: string): Promise<Story | null> {
-    return this.stories.find(story => story.id === id) || null;
+    return this.stories.find((story) => story.id === id) || null
   }
 
   async findByUserId(userId: string): Promise<Story[]> {
-    return this.stories.filter(story => story.userId === userId);
+    return this.stories.filter((story) => story.userId === userId)
   }
 
   async save(story: Story): Promise<void> {
-    this.stories.push(story);
+    this.stories.push(story)
   }
 
   async update(story: Story): Promise<void> {
-    const index = this.stories.findIndex(s => s.id === story.id);
+    const index = this.stories.findIndex((s) => s.id === story.id)
     if (index !== -1) {
-      this.stories[index] = story;
+      this.stories[index] = story
     }
   }
 
   async delete(id: string): Promise<void> {
-    this.stories = this.stories.filter(story => story.id !== id);
+    this.stories = this.stories.filter((story) => story.id !== id)
   }
 }
 
 describe('GetStoriesByUserIdUseCase', () => {
-  let storyRepository: MockStoryRepository;
-  let getStoriesByUserIdUseCase: GetStoriesByUserIdUseCase;
+  let storyRepository: MockStoryRepository
+  let getStoriesByUserIdUseCase: GetStoriesByUserIdUseCase
 
   beforeEach(() => {
-    storyRepository = new MockStoryRepository();
-    getStoriesByUserIdUseCase = new GetStoriesByUserIdUseCase(storyRepository);
+    storyRepository = new MockStoryRepository()
+    getStoriesByUserIdUseCase = new GetStoriesByUserIdUseCase(storyRepository)
 
     // Pre-populate stories for testing
     storyRepository.save({
@@ -51,7 +52,7 @@ describe('GetStoriesByUserIdUseCase', () => {
       extraNotes: 'Notes 1',
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    })
     storyRepository.save({
       id: 'story2',
       userId: 'user123',
@@ -63,7 +64,7 @@ describe('GetStoriesByUserIdUseCase', () => {
       extraNotes: 'Notes 2',
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    })
     storyRepository.save({
       id: 'story3',
       userId: 'user456',
@@ -75,22 +76,22 @@ describe('GetStoriesByUserIdUseCase', () => {
       extraNotes: 'Notes 3',
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-  });
+    })
+  })
 
   it('should return all stories for a given user ID', async () => {
-    const stories = await getStoriesByUserIdUseCase.execute('user123');
+    const stories = await getStoriesByUserIdUseCase.execute('user123')
 
-    expect(stories).toBeDefined();
-    expect(stories.length).toBe(2);
-    expect(stories[0].title).toBe('User 1 Story 1');
-    expect(stories[1].title).toBe('User 1 Story 2');
-  });
+    expect(stories).toBeDefined()
+    expect(stories.length).toBe(2)
+    expect(stories[0].title).toBe('User 1 Story 1')
+    expect(stories[1].title).toBe('User 1 Story 2')
+  })
 
   it('should return an empty array if no stories found for the user ID', async () => {
-    const stories = await getStoriesByUserIdUseCase.execute('nonexistent_user');
+    const stories = await getStoriesByUserIdUseCase.execute('nonexistent_user')
 
-    expect(stories).toBeDefined();
-    expect(stories.length).toBe(0);
-  });
-});
+    expect(stories).toBeDefined()
+    expect(stories.length).toBe(0)
+  })
+})

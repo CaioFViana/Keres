@@ -1,7 +1,8 @@
-import { Gallery } from '@domain/entities/Gallery';
-import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
-import { ulid } from 'ulid';
-import { GalleryCreatePayload, GalleryResponse } from '@keres/shared';
+import type { Gallery } from '@domain/entities/Gallery'
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
+import type { GalleryCreatePayload, GalleryResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateGalleryUseCase {
   constructor(private readonly galleryRepository: IGalleryRepository) {}
@@ -17,9 +18,9 @@ export class CreateGalleryUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.galleryRepository.save(newGallery);
+    await this.galleryRepository.save(newGallery)
 
     return {
       id: newGallery.id,
@@ -31,6 +32,6 @@ export class CreateGalleryUseCase {
       extraNotes: newGallery.extraNotes,
       createdAt: newGallery.createdAt,
       updatedAt: newGallery.updatedAt,
-    };
+    }
   }
 }

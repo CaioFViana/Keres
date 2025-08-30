@@ -1,12 +1,12 @@
-import { IStoryRepository } from '@domain/repositories/IStoryRepository';
-import { StoryResponse } from '@keres/shared';
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { StoryResponse } from '@keres/shared'
 
 export class GetStoriesByUserIdUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
   async execute(userId: string): Promise<StoryResponse[]> {
-    const stories = await this.storyRepository.findByUserId(userId);
-    return stories.map(story => ({
+    const stories = await this.storyRepository.findByUserId(userId)
+    return stories.map((story) => ({
       id: story.id,
       userId: story.userId,
       title: story.title,
@@ -17,6 +17,6 @@ export class GetStoriesByUserIdUseCase {
       extraNotes: story.extraNotes,
       createdAt: story.createdAt,
       updatedAt: story.updatedAt,
-    }));
+    }))
   }
 }

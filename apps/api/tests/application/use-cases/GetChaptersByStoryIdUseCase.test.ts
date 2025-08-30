@@ -1,43 +1,44 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { GetChaptersByStoryIdUseCase } from '@application/use-cases/GetChaptersByStoryIdUseCase';
-import { IChapterRepository } from '@domain/repositories/IChapterRepository';
-import { Chapter } from '@domain/entities/Chapter';
+import type { Chapter } from '@domain/entities/Chapter'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+
+import { GetChaptersByStoryIdUseCase } from '@application/use-cases/GetChaptersByStoryIdUseCase'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 // Mock implementation
 class MockChapterRepository implements IChapterRepository {
-  private chapters: Chapter[] = [];
+  private chapters: Chapter[] = []
 
   async findById(id: string): Promise<Chapter | null> {
-    return this.chapters.find(chapter => chapter.id === id) || null;
+    return this.chapters.find((chapter) => chapter.id === id) || null
   }
 
   async findByStoryId(storyId: string): Promise<Chapter[]> {
-    return this.chapters.filter(chapter => chapter.storyId === storyId);
+    return this.chapters.filter((chapter) => chapter.storyId === storyId)
   }
 
   async save(chapter: Chapter): Promise<void> {
-    this.chapters.push(chapter);
+    this.chapters.push(chapter)
   }
 
   async update(chapter: Chapter): Promise<void> {
-    const index = this.chapters.findIndex(c => c.id === chapter.id);
+    const index = this.chapters.findIndex((c) => c.id === chapter.id)
     if (index !== -1) {
-      this.chapters[index] = chapter;
+      this.chapters[index] = chapter
     }
   }
 
   async delete(id: string): Promise<void> {
-    this.chapters = this.chapters.filter(chapter => chapter.id !== id);
+    this.chapters = this.chapters.filter((chapter) => chapter.id !== id)
   }
 }
 
 describe('GetChaptersByStoryIdUseCase', () => {
-  let chapterRepository: MockChapterRepository;
-  let getChaptersByStoryIdUseCase: GetChaptersByStoryIdUseCase;
+  let chapterRepository: MockChapterRepository
+  let getChaptersByStoryIdUseCase: GetChaptersByStoryIdUseCase
 
   beforeEach(() => {
-    chapterRepository = new MockChapterRepository();
-    getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository);
+    chapterRepository = new MockChapterRepository()
+    getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository)
 
     // Pre-populate chapters for testing
     chapterRepository.save({
@@ -50,7 +51,7 @@ describe('GetChaptersByStoryIdUseCase', () => {
       extraNotes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    })
     chapterRepository.save({
       id: 'chapter2',
       storyId: 'story123',
@@ -61,7 +62,7 @@ describe('GetChaptersByStoryIdUseCase', () => {
       extraNotes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    })
     chapterRepository.save({
       id: 'chapter3',
       storyId: 'story456',
@@ -72,22 +73,22 @@ describe('GetChaptersByStoryIdUseCase', () => {
       extraNotes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-  });
+    })
+  })
 
   it('should return all chapters for a given story ID', async () => {
-    const chapters = await getChaptersByStoryIdUseCase.execute('story123');
+    const chapters = await getChaptersByStoryIdUseCase.execute('story123')
 
-    expect(chapters).toBeDefined();
-    expect(chapters.length).toBe(2);
-    expect(chapters[0].name).toBe('Chapter 1');
-    expect(chapters[1].name).toBe('Chapter 2');
-  });
+    expect(chapters).toBeDefined()
+    expect(chapters.length).toBe(2)
+    expect(chapters[0].name).toBe('Chapter 1')
+    expect(chapters[1].name).toBe('Chapter 2')
+  })
 
   it('should return an empty array if no chapters found for the story ID', async () => {
-    const chapters = await getChaptersByStoryIdUseCase.execute('nonexistent_story');
+    const chapters = await getChaptersByStoryIdUseCase.execute('nonexistent_story')
 
-    expect(chapters).toBeDefined();
-    expect(chapters.length).toBe(0);
-  });
-});
+    expect(chapters).toBeDefined()
+    expect(chapters.length).toBe(0)
+  })
+})

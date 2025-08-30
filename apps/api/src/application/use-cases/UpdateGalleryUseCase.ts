@@ -1,29 +1,29 @@
-import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
-import { GalleryUpdatePayload, GalleryResponse } from '@keres/shared';
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
+import type { GalleryResponse, GalleryUpdatePayload } from '@keres/shared'
 
 export class UpdateGalleryUseCase {
   constructor(private readonly galleryRepository: IGalleryRepository) {}
 
   async execute(data: GalleryUpdatePayload): Promise<GalleryResponse | null> {
-    const existingGallery = await this.galleryRepository.findById(data.id);
+    const existingGallery = await this.galleryRepository.findById(data.id)
     if (!existingGallery) {
-      return null; // Gallery item not found
+      return null // Gallery item not found
     }
     // Add ownership check
     if (data.storyId && existingGallery.storyId !== data.storyId) {
-      return null; // Gallery item does not belong to this story
+      return null // Gallery item does not belong to this story
     }
     if (data.ownerId && existingGallery.ownerId !== data.ownerId) {
-      return null; // Gallery item does not belong to this owner
+      return null // Gallery item does not belong to this owner
     }
 
     const updatedGallery = {
       ...existingGallery,
       ...data,
       updatedAt: new Date(),
-    };
+    }
 
-    await this.galleryRepository.update(updatedGallery);
+    await this.galleryRepository.update(updatedGallery)
 
     return {
       id: updatedGallery.id,
@@ -35,6 +35,6 @@ export class UpdateGalleryUseCase {
       extraNotes: updatedGallery.extraNotes,
       createdAt: updatedGallery.createdAt,
       updatedAt: updatedGallery.updatedAt,
-    };
+    }
   }
 }

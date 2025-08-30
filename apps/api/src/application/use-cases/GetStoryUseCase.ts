@@ -1,13 +1,13 @@
-import { IStoryRepository } from '@domain/repositories/IStoryRepository';
-import { StoryResponse } from '@keres/shared';
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { StoryResponse } from '@keres/shared'
 
 export class GetStoryUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
   async execute(id: string): Promise<StoryResponse | null> {
-    const story = await this.storyRepository.findById(id);
+    const story = await this.storyRepository.findById(id)
     if (!story) {
-      return null;
+      return null
     }
 
     return {
@@ -21,6 +21,6 @@ export class GetStoryUseCase {
       extraNotes: story.extraNotes,
       createdAt: story.createdAt,
       updatedAt: story.updatedAt,
-    };
+    }
   }
 }

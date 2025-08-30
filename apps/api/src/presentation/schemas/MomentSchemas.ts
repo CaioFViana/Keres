@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const createMomentSchema = z.object({
   sceneId: z.string(),
@@ -8,7 +8,7 @@ export const createMomentSchema = z.object({
   summary: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const updateMomentSchema = z.object({
   id: z.string(),
@@ -19,7 +19,7 @@ export const updateMomentSchema = z.object({
   summary: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const momentProfileSchema = z.object({
   id: z.string(),
@@ -32,4 +32,4 @@ export const momentProfileSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})

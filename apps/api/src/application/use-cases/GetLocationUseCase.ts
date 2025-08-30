@@ -1,13 +1,13 @@
-import { ILocationRepository } from '@domain/repositories/ILocationRepository';
-import { LocationResponse } from '@keres/shared';
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+import type { LocationResponse } from '@keres/shared'
 
 export class GetLocationUseCase {
   constructor(private readonly locationRepository: ILocationRepository) {}
 
   async execute(id: string): Promise<LocationResponse | null> {
-    const location = await this.locationRepository.findById(id);
+    const location = await this.locationRepository.findById(id)
     if (!location) {
-      return null;
+      return null
     }
 
     return {
@@ -22,6 +22,6 @@ export class GetLocationUseCase {
       extraNotes: location.extraNotes,
       createdAt: location.createdAt,
       updatedAt: location.updatedAt,
-    };
+    }
   }
 }

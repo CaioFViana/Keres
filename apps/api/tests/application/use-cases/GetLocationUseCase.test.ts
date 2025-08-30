@@ -1,43 +1,44 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { GetLocationUseCase } from '@application/use-cases/GetLocationUseCase';
-import { ILocationRepository } from '@domain/repositories/ILocationRepository';
-import { Location } from '@domain/entities/Location';
+import type { Location } from '@domain/entities/Location'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+
+import { GetLocationUseCase } from '@application/use-cases/GetLocationUseCase'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 // Mock implementation
 class MockLocationRepository implements ILocationRepository {
-  private locations: Location[] = [];
+  private locations: Location[] = []
 
   async findById(id: string): Promise<Location | null> {
-    return this.locations.find(location => location.id === id) || null;
+    return this.locations.find((location) => location.id === id) || null
   }
 
   async findByStoryId(storyId: string): Promise<Location[]> {
-    return this.locations.filter(location => location.storyId === storyId);
+    return this.locations.filter((location) => location.storyId === storyId)
   }
 
   async save(location: Location): Promise<void> {
-    this.locations.push(location);
+    this.locations.push(location)
   }
 
   async update(location: Location): Promise<void> {
-    const index = this.locations.findIndex(l => l.id === location.id);
+    const index = this.locations.findIndex((l) => l.id === location.id)
     if (index !== -1) {
-      this.locations[index] = location;
+      this.locations[index] = location
     }
   }
 
   async delete(id: string): Promise<void> {
-    this.locations = this.locations.filter(location => location.id !== id);
+    this.locations = this.locations.filter((location) => location.id !== id)
   }
 }
 
 describe('GetLocationUseCase', () => {
-  let locationRepository: MockLocationRepository;
-  let getLocationUseCase: GetLocationUseCase;
+  let locationRepository: MockLocationRepository
+  let getLocationUseCase: GetLocationUseCase
 
   beforeEach(() => {
-    locationRepository = new MockLocationRepository();
-    getLocationUseCase = new GetLocationUseCase(locationRepository);
+    locationRepository = new MockLocationRepository()
+    getLocationUseCase = new GetLocationUseCase(locationRepository)
 
     // Pre-populate a location for testing
     locationRepository.save({
@@ -52,20 +53,20 @@ describe('GetLocationUseCase', () => {
       extraNotes: 'Some notes',
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-  });
+    })
+  })
 
   it('should return a location profile for a valid ID', async () => {
-    const locationProfile = await getLocationUseCase.execute('loc123');
+    const locationProfile = await getLocationUseCase.execute('loc123')
 
-    expect(locationProfile).toBeDefined();
-    expect(locationProfile?.id).toBe('loc123');
-    expect(locationProfile?.name).toBe('Test Location');
-  });
+    expect(locationProfile).toBeDefined()
+    expect(locationProfile?.id).toBe('loc123')
+    expect(locationProfile?.name).toBe('Test Location')
+  })
 
   it('should return null for an invalid location ID', async () => {
-    const locationProfile = await getLocationUseCase.execute('nonexistent');
+    const locationProfile = await getLocationUseCase.execute('nonexistent')
 
-    expect(locationProfile).toBeNull();
-  });
-});
+    expect(locationProfile).toBeNull()
+  })
+})

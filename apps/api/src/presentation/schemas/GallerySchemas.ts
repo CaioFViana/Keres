@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const createGallerySchema = z.object({
   storyId: z.string(),
@@ -7,7 +7,7 @@ export const createGallerySchema = z.object({
   isFile: z.boolean().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const updateGallerySchema = z.object({
   id: z.string(),
@@ -17,7 +17,7 @@ export const updateGallerySchema = z.object({
   isFile: z.boolean().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const galleryProfileSchema = z.object({
   id: z.string(),
@@ -29,4 +29,4 @@ export const galleryProfileSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})

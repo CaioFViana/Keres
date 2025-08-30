@@ -1,12 +1,12 @@
-import { IRelationRepository } from '@domain/repositories/IRelationRepository';
-import { RelationResponse } from '@keres/shared';
+import type { IRelationRepository } from '@domain/repositories/IRelationRepository'
+import type { RelationResponse } from '@keres/shared'
 
 export class GetRelationsByCharIdUseCase {
   constructor(private readonly relationRepository: IRelationRepository) {}
 
   async execute(charId: string): Promise<RelationResponse[]> {
-    const relations = await this.relationRepository.findByCharId(charId);
-    return relations.map(relation => ({
+    const relations = await this.relationRepository.findByCharId(charId)
+    return relations.map((relation) => ({
       id: relation.id,
       charIdSource: relation.charIdSource,
       charIdTarget: relation.charIdTarget,
@@ -17,6 +17,6 @@ export class GetRelationsByCharIdUseCase {
       extraNotes: relation.extraNotes,
       createdAt: relation.createdAt,
       updatedAt: relation.updatedAt,
-    }));
+    }))
   }
 }

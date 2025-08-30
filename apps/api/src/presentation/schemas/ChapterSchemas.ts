@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const createChapterSchema = z.object({
   storyId: z.string(),
@@ -7,7 +7,7 @@ export const createChapterSchema = z.object({
   summary: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const updateChapterSchema = z.object({
   id: z.string(),
@@ -17,7 +17,7 @@ export const updateChapterSchema = z.object({
   summary: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const chapterProfileSchema = z.object({
   id: z.string(),
@@ -29,4 +29,4 @@ export const chapterProfileSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})

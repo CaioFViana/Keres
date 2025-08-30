@@ -1,13 +1,13 @@
-import { IChapterRepository } from '@domain/repositories/IChapterRepository';
-import { ChapterResponse } from '@keres/shared';
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { ChapterResponse } from '@keres/shared'
 
 export class GetChapterUseCase {
   constructor(private readonly chapterRepository: IChapterRepository) {}
 
   async execute(id: string): Promise<ChapterResponse | null> {
-    const chapter = await this.chapterRepository.findById(id);
+    const chapter = await this.chapterRepository.findById(id)
     if (!chapter) {
-      return null;
+      return null
     }
 
     return {
@@ -20,6 +20,6 @@ export class GetChapterUseCase {
       extraNotes: chapter.extraNotes,
       createdAt: chapter.createdAt,
       updatedAt: chapter.updatedAt,
-    };
+    }
   }
 }

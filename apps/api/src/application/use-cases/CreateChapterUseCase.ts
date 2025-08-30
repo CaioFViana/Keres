@@ -1,7 +1,8 @@
-import { Chapter } from '@domain/entities/Chapter';
-import { IChapterRepository } from '@domain/repositories/IChapterRepository';
-import { ulid } from 'ulid';
-import { ChapterCreatePayload, ChapterResponse } from '@keres/shared';
+import type { Chapter } from '@domain/entities/Chapter'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { ChapterCreatePayload, ChapterResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateChapterUseCase {
   constructor(private readonly chapterRepository: IChapterRepository) {}
@@ -17,9 +18,9 @@ export class CreateChapterUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.chapterRepository.save(newChapter);
+    await this.chapterRepository.save(newChapter)
 
     return {
       id: newChapter.id,
@@ -31,6 +32,6 @@ export class CreateChapterUseCase {
       extraNotes: newChapter.extraNotes,
       createdAt: newChapter.createdAt,
       updatedAt: newChapter.updatedAt,
-    };
+    }
   }
 }

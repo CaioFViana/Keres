@@ -1,67 +1,71 @@
-import { eq } from 'drizzle-orm';
-import { db, locations } from '@keres/db'; // Import db and locations table
-import { Location } from '@domain/entities/Location';
-import { ILocationRepository } from '@domain/repositories/ILocationRepository';
+import type { Location } from '@domain/entities/Location'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+
+import { db, locations } from '@keres/db' // Import db and locations table
+import { eq } from 'drizzle-orm'
 
 export class LocationRepository implements ILocationRepository {
   constructor() {
-    console.log('LocationRepository constructor called.');
+    console.log('LocationRepository constructor called.')
   }
 
   async findById(id: string): Promise<Location | null> {
-    console.log('LocationRepository.findById called.');
+    console.log('LocationRepository.findById called.')
     try {
-      const result = await db.select().from(locations).where(eq(locations.id, id)).limit(1);
-      return result.length > 0 ? this.toDomain(result[0]) : null;
+      const result = await db.select().from(locations).where(eq(locations.id, id)).limit(1)
+      return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
-      console.error('Error in LocationRepository.findById:', error);
-      throw error;
+      console.error('Error in LocationRepository.findById:', error)
+      throw error
     }
   }
 
   async findByStoryId(storyId: string): Promise<Location[]> {
-    console.log('LocationRepository.findByStoryId called.');
+    console.log('LocationRepository.findByStoryId called.')
     try {
-      const results = await db.select().from(locations).where(eq(locations.storyId, storyId));
-      return results.map(this.toDomain);
+      const results = await db.select().from(locations).where(eq(locations.storyId, storyId))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in LocationRepository.findByStoryId:', error);
-      throw error;
+      console.error('Error in LocationRepository.findByStoryId:', error)
+      throw error
     }
   }
 
   async save(locationData: Location): Promise<void> {
-    console.log('LocationRepository.save called.');
+    console.log('LocationRepository.save called.')
     try {
-      await db.insert(locations).values(this.toPersistence(locationData));
+      await db.insert(locations).values(this.toPersistence(locationData))
     } catch (error) {
-      console.error('Error in LocationRepository.save:', error);
-      throw error;
+      console.error('Error in LocationRepository.save:', error)
+      throw error
     }
   }
 
   async update(locationData: Location): Promise<void> {
-    console.log('LocationRepository.update called.');
+    console.log('LocationRepository.update called.')
     try {
-      await db.update(locations).set(this.toPersistence(locationData)).where(eq(locations.id, locationData.id));
+      await db
+        .update(locations)
+        .set(this.toPersistence(locationData))
+        .where(eq(locations.id, locationData.id))
     } catch (error) {
-      console.error('Error in LocationRepository.update:', error);
-      throw error;
+      console.error('Error in LocationRepository.update:', error)
+      throw error
     }
   }
 
   async delete(id: string): Promise<void> {
-    console.log('LocationRepository.delete called.');
+    console.log('LocationRepository.delete called.')
     try {
-      await db.delete(locations).where(eq(locations.id, id));
+      await db.delete(locations).where(eq(locations.id, id))
     } catch (error) {
-      console.error('Error in LocationRepository.delete:', error);
-      throw error;
+      console.error('Error in LocationRepository.delete:', error)
+      throw error
     }
   }
 
   private toDomain(data: typeof locations.$inferSelect): Location {
-    console.log('LocationRepository.toDomain called.');
+    console.log('LocationRepository.toDomain called.')
     return {
       id: data.id,
       storyId: data.storyId,
@@ -74,11 +78,11 @@ export class LocationRepository implements ILocationRepository {
       extraNotes: data.extraNotes,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-    };
+    }
   }
 
   private toPersistence(locationData: Location): typeof locations.$inferInsert {
-    console.log('LocationRepository.toPersistence called.');
+    console.log('LocationRepository.toPersistence called.')
     return {
       id: locationData.id,
       storyId: locationData.storyId,
@@ -91,6 +95,6 @@ export class LocationRepository implements ILocationRepository {
       extraNotes: locationData.extraNotes,
       createdAt: locationData.createdAt,
       updatedAt: locationData.updatedAt,
-    };
+    }
   }
 }

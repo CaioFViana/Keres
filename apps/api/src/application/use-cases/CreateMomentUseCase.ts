@@ -1,7 +1,8 @@
-import { Moment } from '@domain/entities/Moment';
-import { IMomentRepository } from '@domain/repositories/IMomentRepository';
-import { ulid } from 'ulid';
-import { MomentCreatePayload, MomentResponse } from '@keres/shared';
+import type { Moment } from '@domain/entities/Moment'
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+import type { MomentCreatePayload, MomentResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateMomentUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
@@ -18,9 +19,9 @@ export class CreateMomentUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.momentRepository.save(newMoment);
+    await this.momentRepository.save(newMoment)
 
     return {
       id: newMoment.id,
@@ -33,6 +34,6 @@ export class CreateMomentUseCase {
       extraNotes: newMoment.extraNotes,
       createdAt: newMoment.createdAt,
       updatedAt: newMoment.updatedAt,
-    };
+    }
   }
 }

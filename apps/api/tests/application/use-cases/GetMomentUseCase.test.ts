@@ -1,43 +1,44 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { GetMomentUseCase } from '@application/use-cases/GetMomentUseCase';
-import { IMomentRepository } from '@domain/repositories/IMomentRepository';
-import { Moment } from '@domain/entities/Moment';
+import type { Moment } from '@domain/entities/Moment'
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+
+import { GetMomentUseCase } from '@application/use-cases/GetMomentUseCase'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 // Mock implementation
 class MockMomentRepository implements IMomentRepository {
-  private moments: Moment[] = [];
+  private moments: Moment[] = []
 
   async findById(id: string): Promise<Moment | null> {
-    return this.moments.find(moment => moment.id === id) || null;
+    return this.moments.find((moment) => moment.id === id) || null
   }
 
   async findBySceneId(sceneId: string): Promise<Moment[]> {
-    return this.moments.filter(moment => moment.sceneId === sceneId);
+    return this.moments.filter((moment) => moment.sceneId === sceneId)
   }
 
   async save(moment: Moment): Promise<void> {
-    this.moments.push(moment);
+    this.moments.push(moment)
   }
 
   async update(moment: Moment): Promise<void> {
-    const index = this.moments.findIndex(m => m.id === moment.id);
+    const index = this.moments.findIndex((m) => m.id === moment.id)
     if (index !== -1) {
-      this.moments[index] = moment;
+      this.moments[index] = moment
     }
   }
 
   async delete(id: string): Promise<void> {
-    this.moments = this.moments.filter(moment => moment.id !== id);
+    this.moments = this.moments.filter((moment) => moment.id !== id)
   }
 }
 
 describe('GetMomentUseCase', () => {
-  let momentRepository: MockMomentRepository;
-  let getMomentUseCase: GetMomentUseCase;
+  let momentRepository: MockMomentRepository
+  let getMomentUseCase: GetMomentUseCase
 
   beforeEach(() => {
-    momentRepository = new MockMomentRepository();
-    getMomentUseCase = new GetMomentUseCase(momentRepository);
+    momentRepository = new MockMomentRepository()
+    getMomentUseCase = new GetMomentUseCase(momentRepository)
 
     // Pre-populate a moment for testing
     momentRepository.save({
@@ -51,20 +52,20 @@ describe('GetMomentUseCase', () => {
       extraNotes: 'Notes',
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-  });
+    })
+  })
 
   it('should return a moment profile for a valid ID', async () => {
-    const momentProfile = await getMomentUseCase.execute('moment123');
+    const momentProfile = await getMomentUseCase.execute('moment123')
 
-    expect(momentProfile).toBeDefined();
-    expect(momentProfile?.id).toBe('moment123');
-    expect(momentProfile?.name).toBe('Test Moment');
-  });
+    expect(momentProfile).toBeDefined()
+    expect(momentProfile?.id).toBe('moment123')
+    expect(momentProfile?.name).toBe('Test Moment')
+  })
 
   it('should return null for an invalid moment ID', async () => {
-    const momentProfile = await getMomentUseCase.execute('nonexistent');
+    const momentProfile = await getMomentUseCase.execute('nonexistent')
 
-    expect(momentProfile).toBeNull();
-  });
-});
+    expect(momentProfile).toBeNull()
+  })
+})

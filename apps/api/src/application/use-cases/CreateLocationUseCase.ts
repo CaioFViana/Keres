@@ -1,7 +1,8 @@
-import { Location } from '@domain/entities/Location';
-import { ILocationRepository } from '@domain/repositories/ILocationRepository';
-import { ulid } from 'ulid';
-import { LocationCreatePayload, LocationResponse } from '@keres/shared';
+import type { Location } from '@domain/entities/Location'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+import type { LocationCreatePayload, LocationResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateLocationUseCase {
   constructor(private readonly locationRepository: ILocationRepository) {}
@@ -19,9 +20,9 @@ export class CreateLocationUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.locationRepository.save(newLocation);
+    await this.locationRepository.save(newLocation)
 
     return {
       id: newLocation.id,
@@ -35,6 +36,6 @@ export class CreateLocationUseCase {
       extraNotes: newLocation.extraNotes,
       createdAt: newLocation.createdAt,
       updatedAt: newLocation.updatedAt,
-    };
+    }
   }
 }

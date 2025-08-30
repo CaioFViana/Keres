@@ -1,15 +1,16 @@
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import { db } from './index.ts';
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
+
+import { db } from './index.ts'
 
 async function main() {
   try {
-    await migrate(db, { migrationsFolder: './migrations' });
-    console.log('Migrations completed!');
-    process.exit(0);
+    await migrate(db, { migrationsFolder: './migrations' })
+    console.log('Migrations completed!')
+    process.exit(0)
   } catch (error) {
-    console.error('Error during migration:', error);
-    process.exit(1);
+    console.error('Error during migration:', error)
+    process.exit(1)
   }
 }
 
-main();
+main()

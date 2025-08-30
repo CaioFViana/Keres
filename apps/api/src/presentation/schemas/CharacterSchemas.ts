@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const createCharacterSchema = z.object({
   storyId: z.string(),
@@ -14,7 +14,7 @@ export const createCharacterSchema = z.object({
   plannedTimeline: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const updateCharacterSchema = z.object({
   id: z.string(),
@@ -31,7 +31,7 @@ export const updateCharacterSchema = z.object({
   plannedTimeline: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const characterProfileSchema = z.object({
   id: z.string(),
@@ -50,4 +50,4 @@ export const characterProfileSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})

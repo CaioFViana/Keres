@@ -1,7 +1,8 @@
-import { Scene } from '@domain/entities/Scene';
-import { ISceneRepository } from '@domain/repositories/ISceneRepository';
-import { ulid } from 'ulid';
-import { SceneCreatePayload, SceneResponse } from '@keres/shared';
+import type { Scene } from '@domain/entities/Scene'
+import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
+import type { SceneCreatePayload, SceneResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateSceneUseCase {
   constructor(private readonly sceneRepository: ISceneRepository) {}
@@ -19,9 +20,9 @@ export class CreateSceneUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.sceneRepository.save(newScene);
+    await this.sceneRepository.save(newScene)
 
     return {
       id: newScene.id,
@@ -35,6 +36,6 @@ export class CreateSceneUseCase {
       extraNotes: newScene.extraNotes,
       createdAt: newScene.createdAt,
       updatedAt: newScene.updatedAt,
-    };
+    }
   }
 }

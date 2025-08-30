@@ -1,13 +1,13 @@
-import { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository';
-import { CharacterRelationResponse } from '@keres/shared';
+import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
+import type { CharacterRelationResponse } from '@keres/shared'
 
 export class GetCharacterRelationUseCase {
   constructor(private readonly characterRelationRepository: ICharacterRelationRepository) {}
 
   async execute(id: string): Promise<CharacterRelationResponse | null> {
-    const characterRelation = await this.characterRelationRepository.findById(id);
+    const characterRelation = await this.characterRelationRepository.findById(id)
     if (!characterRelation) {
-      return null;
+      return null
     }
 
     return {
@@ -17,6 +17,6 @@ export class GetCharacterRelationUseCase {
       relationType: characterRelation.relationType,
       createdAt: characterRelation.createdAt,
       updatedAt: characterRelation.updatedAt,
-    };
+    }
   }
 }

@@ -1,13 +1,13 @@
-import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
-import { GalleryResponse } from '@keres/shared';
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
+import type { GalleryResponse } from '@keres/shared'
 
 export class GetGalleryUseCase {
   constructor(private readonly galleryRepository: IGalleryRepository) {}
 
   async execute(id: string): Promise<GalleryResponse | null> {
-    const gallery = await this.galleryRepository.findById(id);
+    const gallery = await this.galleryRepository.findById(id)
     if (!gallery) {
-      return null;
+      return null
     }
 
     return {
@@ -20,6 +20,6 @@ export class GetGalleryUseCase {
       extraNotes: gallery.extraNotes,
       createdAt: gallery.createdAt,
       updatedAt: gallery.updatedAt,
-    };
+    }
   }
 }

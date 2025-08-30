@@ -1,6 +1,6 @@
 export interface CharacterMoment {
-  characterId: string;
-  momentId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  characterId: string
+  momentId: string
+  createdAt: Date
+  updatedAt: Date
 }

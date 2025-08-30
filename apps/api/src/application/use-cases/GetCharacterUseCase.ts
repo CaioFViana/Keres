@@ -1,13 +1,13 @@
-import { ICharacterRepository } from '@domain/repositories/ICharacterRepository';
-import { CharacterResponse } from '@keres/shared';
+import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { CharacterResponse } from '@keres/shared'
 
 export class GetCharacterUseCase {
   constructor(private readonly characterRepository: ICharacterRepository) {}
 
   async execute(id: string): Promise<CharacterResponse | null> {
-    const character = await this.characterRepository.findById(id);
+    const character = await this.characterRepository.findById(id)
     if (!character) {
-      return null;
+      return null
     }
 
     return {
@@ -27,6 +27,6 @@ export class GetCharacterUseCase {
       extraNotes: character.extraNotes,
       createdAt: character.createdAt,
       updatedAt: character.updatedAt,
-    };
+    }
   }
 }

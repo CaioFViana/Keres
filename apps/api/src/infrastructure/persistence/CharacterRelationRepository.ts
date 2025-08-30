@@ -1,67 +1,78 @@
-import { eq, or } from 'drizzle-orm';
-import { db, characterRelations } from '@keres/db'; // Import db and characterRelations table
-import { CharacterRelation } from '@domain/entities/CharacterRelation';
-import { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository';
+import type { CharacterRelation } from '@domain/entities/CharacterRelation'
+import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
+
+import { characterRelations, db } from '@keres/db' // Import db and characterRelations table
+import { eq, or } from 'drizzle-orm'
 
 export class CharacterRelationRepository implements ICharacterRelationRepository {
   constructor() {
-    console.log('CharacterRelationRepository constructor called.');
+    console.log('CharacterRelationRepository constructor called.')
   }
 
   async findById(id: string): Promise<CharacterRelation | null> {
-    console.log('CharacterRelationRepository.findById called.');
+    console.log('CharacterRelationRepository.findById called.')
     try {
-      const result = await db.select().from(characterRelations).where(eq(characterRelations.id, id)).limit(1);
-      return result.length > 0 ? this.toDomain(result[0]) : null;
+      const result = await db
+        .select()
+        .from(characterRelations)
+        .where(eq(characterRelations.id, id))
+        .limit(1)
+      return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
-      console.error('Error in CharacterRelationRepository.findById:', error);
-      throw error;
+      console.error('Error in CharacterRelationRepository.findById:', error)
+      throw error
     }
   }
 
   async findByCharId(charId: string): Promise<CharacterRelation[]> {
-    console.log('CharacterRelationRepository.findByCharId called.');
+    console.log('CharacterRelationRepository.findByCharId called.')
     try {
-      const results = await db.select().from(characterRelations).where(or(eq(characterRelations.charId1, charId), eq(characterRelations.charId2, charId)));
-      return results.map(this.toDomain);
+      const results = await db
+        .select()
+        .from(characterRelations)
+        .where(or(eq(characterRelations.charId1, charId), eq(characterRelations.charId2, charId)))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in CharacterRelationRepository.findByCharId:', error);
-      throw error;
+      console.error('Error in CharacterRelationRepository.findByCharId:', error)
+      throw error
     }
   }
 
   async save(characterRelationData: CharacterRelation): Promise<void> {
-    console.log('CharacterRelationRepository.save called.');
+    console.log('CharacterRelationRepository.save called.')
     try {
-      await db.insert(characterRelations).values(this.toPersistence(characterRelationData));
+      await db.insert(characterRelations).values(this.toPersistence(characterRelationData))
     } catch (error) {
-      console.error('Error in CharacterRelationRepository.save:', error);
-      throw error;
+      console.error('Error in CharacterRelationRepository.save:', error)
+      throw error
     }
   }
 
   async update(characterRelationData: CharacterRelation): Promise<void> {
-    console.log('CharacterRelationRepository.update called.');
+    console.log('CharacterRelationRepository.update called.')
     try {
-      await db.update(characterRelations).set(this.toPersistence(characterRelationData)).where(eq(characterRelations.id, characterRelationData.id));
+      await db
+        .update(characterRelations)
+        .set(this.toPersistence(characterRelationData))
+        .where(eq(characterRelations.id, characterRelationData.id))
     } catch (error) {
-      console.error('Error in CharacterRelationRepository.update:', error);
-      throw error;
+      console.error('Error in CharacterRelationRepository.update:', error)
+      throw error
     }
   }
 
   async delete(id: string): Promise<void> {
-    console.log('CharacterRelationRepository.delete called.');
+    console.log('CharacterRelationRepository.delete called.')
     try {
-      await db.delete(characterRelations).where(eq(characterRelations.id, id));
+      await db.delete(characterRelations).where(eq(characterRelations.id, id))
     } catch (error) {
-      console.error('Error in CharacterRelationRepository.delete:', error);
-      throw error;
+      console.error('Error in CharacterRelationRepository.delete:', error)
+      throw error
     }
   }
 
   private toDomain(data: typeof characterRelations.$inferSelect): CharacterRelation {
-    console.log('CharacterRelationRepository.toDomain called.');
+    console.log('CharacterRelationRepository.toDomain called.')
     return {
       id: data.id,
       charId1: data.charId1,
@@ -69,11 +80,13 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
       relationType: data.relationType,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-    };
+    }
   }
 
-  private toPersistence(characterRelationData: CharacterRelation): typeof characterRelations.$inferInsert {
-    console.log('CharacterRelationRepository.toPersistence called.');
+  private toPersistence(
+    characterRelationData: CharacterRelation,
+  ): typeof characterRelations.$inferInsert {
+    console.log('CharacterRelationRepository.toPersistence called.')
     return {
       id: characterRelationData.id,
       charId1: characterRelationData.charId1,
@@ -81,6 +94,6 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
       relationType: characterRelationData.relationType,
       createdAt: characterRelationData.createdAt,
       updatedAt: characterRelationData.updatedAt,
-    };
+    }
   }
 }

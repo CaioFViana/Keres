@@ -1,7 +1,8 @@
-import { Story } from '@domain/entities/Story';
-import { IStoryRepository } from '@domain/repositories/IStoryRepository';
-import { ulid } from 'ulid';
-import { StoryCreatePayload, StoryResponse } from '@keres/shared';
+import type { Story } from '@domain/entities/Story'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { StoryCreatePayload, StoryResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateStoryUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
@@ -18,9 +19,9 @@ export class CreateStoryUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.storyRepository.save(newStory);
+    await this.storyRepository.save(newStory)
 
     return {
       id: newStory.id,
@@ -33,6 +34,6 @@ export class CreateStoryUseCase {
       extraNotes: newStory.extraNotes,
       createdAt: newStory.createdAt,
       updatedAt: newStory.updatedAt,
-    };
+    }
   }
 }

@@ -1,43 +1,44 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { GetCharacterUseCase } from '@application/use-cases/GetCharacterUseCase';
-import { ICharacterRepository } from '@domain/repositories/ICharacterRepository';
-import { Character } from '@domain/entities/Character';
+import type { Character } from '@domain/entities/Character'
+import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+
+import { GetCharacterUseCase } from '@application/use-cases/GetCharacterUseCase'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 // Mock implementation
 class MockCharacterRepository implements ICharacterRepository {
-  private characters: Character[] = [];
+  private characters: Character[] = []
 
   async findById(id: string): Promise<Character | null> {
-    return this.characters.find(character => character.id === id) || null;
+    return this.characters.find((character) => character.id === id) || null
   }
 
   async findByStoryId(storyId: string): Promise<Character[]> {
-    return this.characters.filter(character => character.storyId === storyId);
+    return this.characters.filter((character) => character.storyId === storyId)
   }
 
   async save(character: Character): Promise<void> {
-    this.characters.push(character);
+    this.characters.push(character)
   }
 
   async update(character: Character): Promise<void> {
-    const index = this.characters.findIndex(c => c.id === character.id);
+    const index = this.characters.findIndex((c) => c.id === character.id)
     if (index !== -1) {
-      this.characters[index] = character;
+      this.characters[index] = character
     }
   }
 
   async delete(id: string): Promise<void> {
-    this.characters = this.characters.filter(character => character.id !== id);
+    this.characters = this.characters.filter((character) => character.id !== id)
   }
 }
 
 describe('GetCharacterUseCase', () => {
-  let characterRepository: MockCharacterRepository;
-  let getCharacterUseCase: GetCharacterUseCase;
+  let characterRepository: MockCharacterRepository
+  let getCharacterUseCase: GetCharacterUseCase
 
   beforeEach(() => {
-    characterRepository = new MockCharacterRepository();
-    getCharacterUseCase = new GetCharacterUseCase(characterRepository);
+    characterRepository = new MockCharacterRepository()
+    getCharacterUseCase = new GetCharacterUseCase(characterRepository)
 
     // Pre-populate a character for testing
     characterRepository.save({
@@ -57,20 +58,20 @@ describe('GetCharacterUseCase', () => {
       extraNotes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-  });
+    })
+  })
 
   it('should return a character profile for a valid ID', async () => {
-    const characterProfile = await getCharacterUseCase.execute('char123');
+    const characterProfile = await getCharacterUseCase.execute('char123')
 
-    expect(characterProfile).toBeDefined();
-    expect(characterProfile?.id).toBe('char123');
-    expect(characterProfile?.name).toBe('Test Character');
-  });
+    expect(characterProfile).toBeDefined()
+    expect(characterProfile?.id).toBe('char123')
+    expect(characterProfile?.name).toBe('Test Character')
+  })
 
   it('should return null for an invalid character ID', async () => {
-    const characterProfile = await getCharacterUseCase.execute('nonexistent');
+    const characterProfile = await getCharacterUseCase.execute('nonexistent')
 
-    expect(characterProfile).toBeNull();
-  });
-});
+    expect(characterProfile).toBeNull()
+  })
+})

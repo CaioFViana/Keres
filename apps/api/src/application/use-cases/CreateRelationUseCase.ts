@@ -1,7 +1,8 @@
-import { Relation } from '@domain/entities/Relation';
-import { IRelationRepository } from '@domain/repositories/IRelationRepository';
-import { ulid } from 'ulid';
-import { RelationCreatePayload, RelationResponse } from '@keres/shared';
+import type { Relation } from '@domain/entities/Relation'
+import type { IRelationRepository } from '@domain/repositories/IRelationRepository'
+import type { RelationCreatePayload, RelationResponse } from '@keres/shared'
+
+import { ulid } from 'ulid'
 
 export class CreateRelationUseCase {
   constructor(private readonly relationRepository: IRelationRepository) {}
@@ -18,9 +19,9 @@ export class CreateRelationUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.relationRepository.save(newRelation);
+    await this.relationRepository.save(newRelation)
 
     return {
       id: newRelation.id,
@@ -33,6 +34,6 @@ export class CreateRelationUseCase {
       extraNotes: newRelation.extraNotes,
       createdAt: newRelation.createdAt,
       updatedAt: newRelation.updatedAt,
-    };
+    }
   }
 }

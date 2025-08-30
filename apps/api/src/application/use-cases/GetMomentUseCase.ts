@@ -1,13 +1,13 @@
-import { IMomentRepository } from '@domain/repositories/IMomentRepository';
-import { MomentResponse } from '@keres/shared';
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+import type { MomentResponse } from '@keres/shared'
 
 export class GetMomentUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
   async execute(id: string): Promise<MomentResponse | null> {
-    const moment = await this.momentRepository.findById(id);
+    const moment = await this.momentRepository.findById(id)
     if (!moment) {
-      return null;
+      return null
     }
 
     return {
@@ -21,6 +21,6 @@ export class GetMomentUseCase {
       extraNotes: moment.extraNotes,
       createdAt: moment.createdAt,
       updatedAt: moment.updatedAt,
-    };
+    }
   }
 }

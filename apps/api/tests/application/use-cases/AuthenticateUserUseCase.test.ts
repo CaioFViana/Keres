@@ -1,0 +1,99 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { AuthenticateUserUseCase } from '@application/use-cases/AuthenticateUserUseCase';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { IPasswordHasherService } from '@domain/services/IPasswordHasherService';
+import { User } from '@domain/entities/User';
+
+// Mock implementations (re-using from CreateUserUseCase.test.ts for simplicity)
+class MockUserRepository implements IUserRepository {
+  private users: User[] = [];
+
+  async findById(id: string): Promise<User | null> {
+    return this.users.find(user => user.id === id) || null;
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return this.users.find(user => user.username === username) || null;
+  }
+
+  async save(user: User): Promise<void> {
+    this.users.push(user);
+  }
+
+  async update(user: User): Promise<void> {
+    const index = this.users.findIndex(u => u.id === user.id);
+    if (index !== -1) {
+      this.users[index] = user;
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    this.users = this.users.filter(user => user.id !== id);
+  }
+}
+
+class MockPasswordHasherService implements IPasswordHasherService {
+  async hash(password: string): Promise<string> {
+    return `hashed_${password}`;
+  }
+
+  async compare(password: string, hashedPassword: string): Promise<boolean> {
+    return `hashed_${password}` === hashedPassword;
+  }
+}
+
+describe('AuthenticateUserUseCase', () => {
+  let userRepository: MockUserRepository;
+  let passwordHasher: MockPasswordHasherService;
+  let authenticateUserUseCase: AuthenticateUserUseCase;
+
+  beforeEach(() => {
+    userRepository = new MockUserRepository();
+    passwordHasher = new MockPasswordHasherService();
+    authenticateUserUseCase = new AuthenticateUserUseCase(userRepository, passwordHasher);
+
+    // Pre-populate a user for authentication tests
+    userRepository.save({
+      id: 'user123',
+      username: 'testuser',
+      passwordHash: 'hashed_password123',
+      passwordSalt: 'some_salt',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  });
+
+  it('should authenticate a user with valid credentials', async () => {
+    const authDTO = {
+      username: 'testuser',
+      password: 'password123',
+    };
+
+    const userProfile = await authenticateUserUseCase.execute(authDTO);
+
+    expect(userProfile).toBeDefined();
+    expect(userProfile?.username).toBe('testuser');
+  });
+
+  it('should return null for invalid username', async () => {
+    const authDTO = {
+      username: 'nonexistentuser',
+      password: 'password123',
+    };
+
+    const userProfile = await authenticateUserUseCase.execute(authDTO);
+
+    expect(userProfile).toBeNull();
+  });
+
+  it('should return null for invalid password', async () => {
+    const authDTO = {
+      username: 'testuser',
+      password: 'wrongpassword',
+    };
+
+    const userProfile = await authenticateUserUseCase.execute(authDTO);
+
+    expect(userProfile).toBeNull();
+  });
+});

@@ -13,7 +13,15 @@
     "coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "vitest": "^1.2.2",
-    "@vitest/coverage-v8": "^1.2.2"
+    "@vitest/coverage-v8": "^1.2.2",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^1.2.2"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "portfinder": "^1.0.37",
+    "postgres": "^3.4.7",
+    "ulid": "^3.0.1",
+    "zod": "^4.1.5"
   }
 }

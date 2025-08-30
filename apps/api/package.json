@@ -1,0 +1,23 @@
+{
+  "name": "@keres/api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts"
+  },
+  "dependencies": {
+    "hono": "^4.2.3",
+    "drizzle-orm": "^0.29.3",
+    "@keres/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.1",
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.5"
+  }
+}

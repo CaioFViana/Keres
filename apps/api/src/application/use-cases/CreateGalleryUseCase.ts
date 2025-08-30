@@ -1,12 +1,12 @@
-import { CreateGalleryDTO, GalleryProfileDTO } from '@application/dtos/GalleryDTOs';
-import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
 import { Gallery } from '@domain/entities/Gallery';
+import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
 import { ulid } from 'ulid';
+import { GalleryCreatePayload, GalleryResponse } from '@keres/shared';
 
 export class CreateGalleryUseCase {
   constructor(private readonly galleryRepository: IGalleryRepository) {}
 
-  async execute(data: CreateGalleryDTO): Promise<GalleryProfileDTO> {
+  async execute(data: GalleryCreatePayload): Promise<GalleryResponse> {
     const newGallery: Gallery = {
       id: ulid(),
       storyId: data.storyId,

@@ -1,11 +1,11 @@
-import { CreateCharacterMomentDTO, CharacterMomentProfileDTO } from '@application/dtos/CharacterMomentDTOs';
 import { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository';
+import { CharacterMomentCreatePayload, CharacterMomentResponse } from '@keres/shared';
 import { CharacterMoment } from '@domain/entities/CharacterMoment';
 
 export class CreateCharacterMomentUseCase {
   constructor(private readonly characterMomentRepository: ICharacterMomentRepository) {}
 
-  async execute(data: CreateCharacterMomentDTO): Promise<CharacterMomentProfileDTO> {
+  async execute(data: CharacterMomentCreatePayload): Promise<CharacterMomentResponse> {
     const newCharacterMoment: CharacterMoment = {
       characterId: data.characterId,
       momentId: data.momentId,

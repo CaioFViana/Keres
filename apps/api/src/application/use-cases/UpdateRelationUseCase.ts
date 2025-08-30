@@ -1,24 +1,25 @@
-import { UpdateRelationDTO, RelationProfileDTO } from '@application/dtos/RelationDTOs';
 import { IRelationRepository } from '@domain/repositories/IRelationRepository';
+import { RelationUpdatePayload, RelationResponse } from '@keres/shared';
 
 export class UpdateRelationUseCase {
   constructor(private readonly relationRepository: IRelationRepository) {}
 
-  async execute(data: UpdateRelationDTO): Promise<RelationProfileDTO | null> {
+  async execute(data: RelationUpdatePayload): Promise<RelationResponse | null> {
     const existingRelation = await this.relationRepository.findById(data.id);
     if (!existingRelation) {
-      return null;
+      return null; // Relation not found
+    }
+    // Add ownership check (assuming charIdSource and charIdTarget define ownership)
+    if (data.charIdSource && existingRelation.charIdSource !== data.charIdSource) {
+      return null; // Relation does not belong to this source character
+    }
+    if (data.charIdTarget && existingRelation.charIdTarget !== data.charIdTarget) {
+      return null; // Relation does not belong to this target character
     }
 
     const updatedRelation = {
       ...existingRelation,
-      charIdSource: data.charIdSource ?? existingRelation.charIdSource,
-      charIdTarget: data.charIdTarget ?? existingRelation.charIdTarget,
-      sceneId: data.sceneId ?? existingRelation.sceneId,
-      momentId: data.momentId ?? existingRelation.momentId,
-      summary: data.summary ?? existingRelation.summary,
-      isFavorite: data.isFavorite ?? existingRelation.isFavorite,
-      extraNotes: data.extraNotes ?? existingRelation.extraNotes,
+      ...data,
       updatedAt: new Date(),
     };
 

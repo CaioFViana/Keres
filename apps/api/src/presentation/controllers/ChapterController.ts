@@ -2,34 +2,28 @@ import { Context } from 'hono';
 import {
   CreateChapterUseCase,
   GetChapterUseCase,
-  GetChaptersByStoryIdUseCase,
   UpdateChapterUseCase,
   DeleteChapterUseCase,
+  GetChaptersByStoryIdUseCase,
 } from '@application/use-cases';
-import { createChapterSchema, updateChapterSchema, chapterProfileSchema } from '@presentation/schemas/ChapterSchemas';
+import { ChapterCreateSchema, ChapterUpdateSchema, ChapterResponseSchema } from '@keres/shared';
 
 export class ChapterController {
   constructor(
     private readonly createChapterUseCase: CreateChapterUseCase,
     private readonly getChapterUseCase: GetChapterUseCase,
-    private readonly getChaptersByStoryIdUseCase: GetChaptersByStoryIdUseCase,
     private readonly updateChapterUseCase: UpdateChapterUseCase,
-    private readonly deleteChapterUseCase: DeleteChapterUseCase
+    private readonly deleteChapterUseCase: DeleteChapterUseCase,
+    private readonly getChaptersByStoryIdUseCase: GetChaptersByStoryIdUseCase
   ) {}
 
   async createChapter(c: Context) {
-    const body = await c.req.json();
-    const validation = createChapterSchema.safeParse(body);
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json'); // Validated by zValidator middleware
 
     try {
-      const chapterProfile = await this.createChapterUseCase.execute(validation.data);
-      return c.json(chapterProfileSchema.parse(chapterProfile), 201);
+      const chapter = await this.createChapterUseCase.execute(data);
+      return c.json(ChapterResponseSchema.parse(chapter), 201);
     } catch (error: any) {
-      console.error('Error creating chapter:', error);
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
@@ -38,67 +32,57 @@ export class ChapterController {
     const chapterId = c.req.param('id');
 
     try {
-      const chapterProfile = await this.getChapterUseCase.execute(chapterId);
-      if (!chapterProfile) {
+      const chapter = await this.getChapterUseCase.execute(chapterId);
+      if (!chapter) {
         return c.json({ error: 'Chapter not found' }, 404);
       }
-      return c.json(chapterProfileSchema.parse(chapterProfile), 200);
-    } catch (error: any) {
-      console.error('Error getting chapter:', error);
+      return c.json(ChapterResponseSchema.parse(chapter), 200);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async getChaptersByStoryId(c: Context) {
-    const storyId = c.req.param('storyId');
+    const storyId = c.req.param('storyId'); // Assuming storyId is passed as a param
 
     try {
       const chapters = await this.getChaptersByStoryIdUseCase.execute(storyId);
-      return c.json(chapters.map(chapter => chapterProfileSchema.parse(chapter)), 200);
-    } catch (error: any) {
-      console.error('Error getting chapters by story ID:', error);
+      return c.json(chapters.map(chapter => ChapterResponseSchema.parse(chapter)), 200);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async updateChapter(c: Context) {
     const chapterId = c.req.param('id');
-    const body = await c.req.json();
-    const validation = updateChapterSchema.safeParse({ id: chapterId, ...body });
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json'); // Validated by zValidator middleware
 
     try {
-      const updatedChapter = await this.updateChapterUseCase.execute(validation.data);
+      const updatedChapter = await this.updateChapterUseCase.execute({ id: chapterId, ...data });
       if (!updatedChapter) {
-        return c.json({ error: 'Chapter not found or unauthorized' }, 404);
+        return c.json({ error: 'Chapter not found or does not belong to the specified story' }, 404);
       }
-      return c.json(chapterProfileSchema.parse(updatedChapter), 200);
+      return c.json(ChapterResponseSchema.parse(updatedChapter), 200);
     } catch (error: any) {
-      console.error('Error updating chapter:', error);
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async deleteChapter(c: Context) {
     const chapterId = c.req.param('id');
-    // Assuming storyId comes from the request body or a header for authorization
-    const storyId = c.req.header('x-story-id'); // For testing purposes
+    const storyId = c.req.query('storyId'); // Assuming storyId is passed as a query param for delete
 
     if (!storyId) {
-      return c.json({ error: 'Unauthorized: Missing story ID' }, 401);
+      return c.json({ error: 'storyId is required for deletion' }, 400);
     }
 
     try {
       const deleted = await this.deleteChapterUseCase.execute(chapterId, storyId);
       if (!deleted) {
-        return c.json({ error: 'Chapter not found or unauthorized' }, 404);
+        return c.json({ error: 'Chapter not found or does not belong to the specified story' }, 404);
       }
-      return c.json({ message: 'Chapter deleted successfully' }, 200);
-    } catch (error: any) {
-      console.error('Error deleting chapter:', error);
+      return c.json({}, 204);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }

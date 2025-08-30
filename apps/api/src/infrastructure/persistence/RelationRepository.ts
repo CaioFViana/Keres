@@ -1,6 +1,5 @@
-import { eq } from 'drizzle-orm';
-import { db } from '@keres/db';
-import { relations } from '@keres/db/src/schema';
+import { eq, or } from 'drizzle-orm';
+import { db, relations } from '@keres/db'; // Import db and relations table
 import { Relation } from '@domain/entities/Relation';
 import { IRelationRepository } from '@domain/repositories/IRelationRepository';
 
@@ -23,7 +22,7 @@ export class RelationRepository implements IRelationRepository {
   async findByCharId(charId: string): Promise<Relation[]> {
     console.log('RelationRepository.findByCharId called.');
     try {
-      const results = await db.select().from(relations).where(eq(relations.charIdSource, charId));
+      const results = await db.select().from(relations).where(or(eq(relations.charIdSource, charId), eq(relations.charIdTarget, charId)));
       return results.map(this.toDomain);
     } catch (error) {
       console.error('Error in RelationRepository.findByCharId:', error);

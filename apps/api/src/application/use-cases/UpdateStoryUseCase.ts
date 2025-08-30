@@ -1,24 +1,22 @@
-import { UpdateStoryDTO, StoryProfileDTO } from '@application/dtos/StoryDTOs';
 import { IStoryRepository } from '@domain/repositories/IStoryRepository';
+import { StoryUpdatePayload, StoryResponse } from '@keres/shared';
 
 export class UpdateStoryUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
-  async execute(data: UpdateStoryDTO): Promise<StoryProfileDTO | null> {
+  async execute(data: StoryUpdatePayload): Promise<StoryResponse | null> {
     const existingStory = await this.storyRepository.findById(data.id);
-    if (!existingStory || existingStory.userId !== data.userId) {
-      // Story not found or user does not own the story
-      return null;
+    if (!existingStory) {
+      return null; // Story not found
+    }
+    // Add ownership check
+    if (data.userId && existingStory.userId !== data.userId) {
+      return null; // Story does not belong to this user
     }
 
     const updatedStory = {
       ...existingStory,
-      title: data.title ?? existingStory.title,
-      summary: data.summary ?? existingStory.summary,
-      genre: data.genre ?? existingStory.genre,
-      language: data.language ?? existingStory.language,
-      isFavorite: data.isFavorite ?? existingStory.isFavorite,
-      extraNotes: data.extraNotes ?? existingStory.extraNotes,
+      ...data,
       updatedAt: new Date(),
     };
 

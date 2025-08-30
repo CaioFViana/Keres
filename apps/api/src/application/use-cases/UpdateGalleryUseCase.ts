@@ -1,23 +1,25 @@
-import { UpdateGalleryDTO, GalleryProfileDTO } from '@application/dtos/GalleryDTOs';
 import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
+import { GalleryUpdatePayload, GalleryResponse } from '@keres/shared';
 
 export class UpdateGalleryUseCase {
   constructor(private readonly galleryRepository: IGalleryRepository) {}
 
-  async execute(data: UpdateGalleryDTO): Promise<GalleryProfileDTO | null> {
+  async execute(data: GalleryUpdatePayload): Promise<GalleryResponse | null> {
     const existingGallery = await this.galleryRepository.findById(data.id);
-    if (!existingGallery || existingGallery.storyId !== data.storyId) {
-      // Gallery item not found or does not belong to the specified story
-      return null;
+    if (!existingGallery) {
+      return null; // Gallery item not found
+    }
+    // Add ownership check
+    if (data.storyId && existingGallery.storyId !== data.storyId) {
+      return null; // Gallery item does not belong to this story
+    }
+    if (data.ownerId && existingGallery.ownerId !== data.ownerId) {
+      return null; // Gallery item does not belong to this owner
     }
 
     const updatedGallery = {
       ...existingGallery,
-      ownerId: data.ownerId ?? existingGallery.ownerId,
-      imagePath: data.imagePath ?? existingGallery.imagePath,
-      isFile: data.isFile ?? existingGallery.isFile,
-      isFavorite: data.isFavorite ?? existingGallery.isFavorite,
-      extraNotes: data.extraNotes ?? existingGallery.extraNotes,
+      ...data,
       updatedAt: new Date(),
     };
 

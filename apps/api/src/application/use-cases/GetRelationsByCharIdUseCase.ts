@@ -1,10 +1,10 @@
-import { RelationProfileDTO } from '@application/dtos/RelationDTOs';
 import { IRelationRepository } from '@domain/repositories/IRelationRepository';
+import { RelationResponse } from '@keres/shared';
 
 export class GetRelationsByCharIdUseCase {
   constructor(private readonly relationRepository: IRelationRepository) {}
 
-  async execute(charId: string): Promise<RelationProfileDTO[]> {
+  async execute(charId: string): Promise<RelationResponse[]> {
     const relations = await this.relationRepository.findByCharId(charId);
     return relations.map(relation => ({
       id: relation.id,

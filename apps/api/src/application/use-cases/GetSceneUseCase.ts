@@ -1,11 +1,11 @@
-import { SceneProfileDTO } from '@application/dtos/SceneDTOs';
 import { ISceneRepository } from '@domain/repositories/ISceneRepository';
+import { SceneResponse } from '@keres/shared';
 
 export class GetSceneUseCase {
   constructor(private readonly sceneRepository: ISceneRepository) {}
 
-  async execute(sceneId: string): Promise<SceneProfileDTO | null> {
-    const scene = await this.sceneRepository.findById(sceneId);
+  async execute(id: string): Promise<SceneResponse | null> {
+    const scene = await this.sceneRepository.findById(id);
     if (!scene) {
       return null;
     }

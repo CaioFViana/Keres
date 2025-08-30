@@ -3,14 +3,15 @@ import { IChapterRepository } from '@domain/repositories/IChapterRepository';
 export class DeleteChapterUseCase {
   constructor(private readonly chapterRepository: IChapterRepository) {}
 
-  async execute(chapterId: string, storyId: string): Promise<boolean> {
-    const existingChapter = await this.chapterRepository.findById(chapterId);
-    if (!existingChapter || existingChapter.storyId !== storyId) {
-      // Chapter not found or does not belong to the specified story
-      return false;
+  async execute(id: string, storyId: string): Promise<boolean> {
+    const existingChapter = await this.chapterRepository.findById(id);
+    if (!existingChapter) {
+      return false; // Chapter not found
     }
-
-    await this.chapterRepository.delete(chapterId);
+    if (existingChapter.storyId !== storyId) { // Check ownership
+      return false; // Chapter does not belong to this story
+    }
+    await this.chapterRepository.delete(id);
     return true;
   }
 }

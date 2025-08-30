@@ -2,34 +2,28 @@ import { Context } from 'hono';
 import {
   CreateSceneUseCase,
   GetSceneUseCase,
-  GetScenesByChapterIdUseCase,
   UpdateSceneUseCase,
   DeleteSceneUseCase,
+  GetScenesByChapterIdUseCase,
 } from '@application/use-cases';
-import { createSceneSchema, updateSceneSchema, sceneProfileSchema } from '@presentation/schemas/SceneSchemas';
+import { SceneCreateSchema, SceneUpdateSchema, SceneResponseSchema } from '@keres/shared';
 
 export class SceneController {
   constructor(
     private readonly createSceneUseCase: CreateSceneUseCase,
     private readonly getSceneUseCase: GetSceneUseCase,
-    private readonly getScenesByChapterIdUseCase: GetScenesByChapterIdUseCase,
     private readonly updateSceneUseCase: UpdateSceneUseCase,
-    private readonly deleteSceneUseCase: DeleteSceneUseCase
+    private readonly deleteSceneUseCase: DeleteSceneUseCase,
+    private readonly getScenesByChapterIdUseCase: GetScenesByChapterIdUseCase
   ) {}
 
   async createScene(c: Context) {
-    const body = await c.req.json();
-    const validation = createSceneSchema.safeParse(body);
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json'); // Validated by zValidator middleware
 
     try {
-      const sceneProfile = await this.createSceneUseCase.execute(validation.data);
-      return c.json(sceneProfileSchema.parse(sceneProfile), 201);
+      const scene = await this.createSceneUseCase.execute(data);
+      return c.json(SceneResponseSchema.parse(scene), 201);
     } catch (error: any) {
-      console.error('Error creating scene:', error);
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
@@ -38,67 +32,57 @@ export class SceneController {
     const sceneId = c.req.param('id');
 
     try {
-      const sceneProfile = await this.getSceneUseCase.execute(sceneId);
-      if (!sceneProfile) {
+      const scene = await this.getSceneUseCase.execute(sceneId);
+      if (!scene) {
         return c.json({ error: 'Scene not found' }, 404);
       }
-      return c.json(sceneProfileSchema.parse(sceneProfile), 200);
-    } catch (error: any) {
-      console.error('Error getting scene:', error);
+      return c.json(SceneResponseSchema.parse(scene), 200);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async getScenesByChapterId(c: Context) {
-    const chapterId = c.req.param('chapterId');
+    const chapterId = c.req.param('chapterId'); // Assuming chapterId is passed as a param
 
     try {
       const scenes = await this.getScenesByChapterIdUseCase.execute(chapterId);
-      return c.json(scenes.map(scene => sceneProfileSchema.parse(scene)), 200);
-    } catch (error: any) {
-      console.error('Error getting scenes by chapter ID:', error);
+      return c.json(scenes.map(scene => SceneResponseSchema.parse(scene)), 200);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async updateScene(c: Context) {
     const sceneId = c.req.param('id');
-    const body = await c.req.json();
-    const validation = updateSceneSchema.safeParse({ id: sceneId, ...body });
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json'); // Validated by zValidator middleware
 
     try {
-      const updatedScene = await this.updateSceneUseCase.execute(validation.data);
+      const updatedScene = await this.updateSceneUseCase.execute({ id: sceneId, ...data });
       if (!updatedScene) {
-        return c.json({ error: 'Scene not found or unauthorized' }, 404);
+        return c.json({ error: 'Scene not found or does not belong to the specified chapter' }, 404);
       }
-      return c.json(sceneProfileSchema.parse(updatedScene), 200);
+      return c.json(SceneResponseSchema.parse(updatedScene), 200);
     } catch (error: any) {
-      console.error('Error updating scene:', error);
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async deleteScene(c: Context) {
     const sceneId = c.req.param('id');
-    // Assuming chapterId comes from the request body or a header for authorization
-    const chapterId = c.req.header('x-chapter-id'); // For testing purposes
+    const chapterId = c.req.query('chapterId'); // Assuming chapterId is passed as a query param for delete
 
     if (!chapterId) {
-      return c.json({ error: 'Unauthorized: Missing chapter ID' }, 401);
+      return c.json({ error: 'chapterId is required for deletion' }, 400);
     }
 
     try {
       const deleted = await this.deleteSceneUseCase.execute(sceneId, chapterId);
       if (!deleted) {
-        return c.json({ error: 'Scene not found or unauthorized' }, 404);
+        return c.json({ error: 'Scene not found or does not belong to the specified chapter' }, 404);
       }
-      return c.json({ message: 'Scene deleted successfully' }, 200);
-    } catch (error: any) {
-      console.error('Error deleting scene:', error);
+      return c.json({}, 204);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }

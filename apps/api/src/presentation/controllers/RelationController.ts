@@ -2,34 +2,28 @@ import { Context } from 'hono';
 import {
   CreateRelationUseCase,
   GetRelationUseCase,
-  GetRelationsByCharIdUseCase,
   UpdateRelationUseCase,
   DeleteRelationUseCase,
+  GetRelationsByCharIdUseCase,
 } from '@application/use-cases';
-import { createRelationSchema, updateRelationSchema, relationProfileSchema } from '@presentation/schemas/RelationSchemas';
+import { RelationCreateSchema, RelationUpdateSchema, RelationResponseSchema } from '@keres/shared';
 
 export class RelationController {
   constructor(
     private readonly createRelationUseCase: CreateRelationUseCase,
     private readonly getRelationUseCase: GetRelationUseCase,
-    private readonly getRelationsByCharIdUseCase: GetRelationsByCharIdUseCase,
     private readonly updateRelationUseCase: UpdateRelationUseCase,
-    private readonly deleteRelationUseCase: DeleteRelationUseCase
+    private readonly deleteRelationUseCase: DeleteRelationUseCase,
+    private readonly getRelationsByCharIdUseCase: GetRelationsByCharIdUseCase
   ) {}
 
   async createRelation(c: Context) {
-    const body = await c.req.json();
-    const validation = createRelationSchema.safeParse(body);
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json'); // Validated by zValidator middleware
 
     try {
-      const relationProfile = await this.createRelationUseCase.execute(validation.data);
-      return c.json(relationProfileSchema.parse(relationProfile), 201);
+      const relation = await this.createRelationUseCase.execute(data);
+      return c.json(RelationResponseSchema.parse(relation), 201);
     } catch (error: any) {
-      console.error('Error creating relation:', error);
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
@@ -38,61 +32,58 @@ export class RelationController {
     const relationId = c.req.param('id');
 
     try {
-      const relationProfile = await this.getRelationUseCase.execute(relationId);
-      if (!relationProfile) {
+      const relation = await this.getRelationUseCase.execute(relationId);
+      if (!relation) {
         return c.json({ error: 'Relation not found' }, 404);
       }
-      return c.json(relationProfileSchema.parse(relationProfile), 200);
-    } catch (error: any) {
-      console.error('Error getting relation:', error);
+      return c.json(RelationResponseSchema.parse(relation), 200);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async getRelationsByCharId(c: Context) {
-    const charId = c.req.param('charId');
+    const charId = c.req.param('charId'); // Assuming charId is passed as a param
 
     try {
       const relations = await this.getRelationsByCharIdUseCase.execute(charId);
-      return c.json(relations.map(relation => relationProfileSchema.parse(relation)), 200);
-    } catch (error: any) {
-      console.error('Error getting relations by character ID:', error);
+      return c.json(relations.map(relation => RelationResponseSchema.parse(relation)), 200);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async updateRelation(c: Context) {
     const relationId = c.req.param('id');
-    const body = await c.req.json();
-    const validation = updateRelationSchema.safeParse({ id: relationId, ...body });
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json'); // Validated by zValidator middleware
 
     try {
-      const updatedRelation = await this.updateRelationUseCase.execute(validation.data);
+      const updatedRelation = await this.updateRelationUseCase.execute({ id: relationId, ...data });
       if (!updatedRelation) {
-        return c.json({ error: 'Relation not found' }, 404);
+        return c.json({ error: 'Relation not found or does not belong to the specified characters' }, 404);
       }
-      return c.json(relationProfileSchema.parse(updatedRelation), 200);
+      return c.json(RelationResponseSchema.parse(updatedRelation), 200);
     } catch (error: any) {
-      console.error('Error updating relation:', error);
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async deleteRelation(c: Context) {
     const relationId = c.req.param('id');
+    const charIdSource = c.req.query('charIdSource'); // Assuming charIdSource is passed as a query param for delete
+    const charIdTarget = c.req.query('charIdTarget'); // Assuming charIdTarget is passed as a query param for delete
+
+    if (!charIdSource || !charIdTarget) {
+      return c.json({ error: 'charIdSource and charIdTarget are required for deletion' }, 400);
+    }
 
     try {
-      const deleted = await this.deleteRelationUseCase.execute(relationId);
+      const deleted = await this.deleteRelationUseCase.execute(relationId, charIdSource, charIdTarget);
       if (!deleted) {
-        return c.json({ error: 'Relation not found' }, 404);
+        return c.json({ error: 'Relation not found or does not belong to the specified characters' }, 404);
       }
-      return c.json({ message: 'Relation deleted successfully' }, 200);
-    } catch (error: any) {
-      console.error('Error deleting relation:', error);
+      return c.json({}, 204);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }

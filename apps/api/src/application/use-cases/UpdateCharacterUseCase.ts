@@ -1,30 +1,22 @@
-import { UpdateCharacterDTO, CharacterProfileDTO } from '@application/dtos/CharacterDTOs';
 import { ICharacterRepository } from '@domain/repositories/ICharacterRepository';
+import { CharacterUpdatePayload, CharacterResponse } from '@keres/shared';
 
 export class UpdateCharacterUseCase {
   constructor(private readonly characterRepository: ICharacterRepository) {}
 
-  async execute(data: UpdateCharacterDTO): Promise<CharacterProfileDTO | null> {
+  async execute(data: CharacterUpdatePayload): Promise<CharacterResponse | null> {
     const existingCharacter = await this.characterRepository.findById(data.id);
-    if (!existingCharacter || existingCharacter.storyId !== data.storyId) {
-      // Character not found or does not belong to the specified story
-      return null;
+    if (!existingCharacter) {
+      return null; // Character not found
+    }
+    // Add ownership check
+    if (data.storyId && existingCharacter.storyId !== data.storyId) {
+      return null; // Character does not belong to this story
     }
 
     const updatedCharacter = {
       ...existingCharacter,
-      name: data.name ?? existingCharacter.name,
-      gender: data.gender ?? existingCharacter.gender,
-      race: data.race ?? existingCharacter.race,
-      subrace: data.subrace ?? existingCharacter.subrace,
-      personality: data.personality ?? existingCharacter.personality,
-      motivation: data.motivation ?? existingCharacter.motivation,
-      qualities: data.qualities ?? existingCharacter.qualities,
-      weaknesses: data.weaknesses ?? existingCharacter.weaknesses,
-      biography: data.biography ?? existingCharacter.biography,
-      plannedTimeline: data.plannedTimeline ?? existingCharacter.plannedTimeline,
-      isFavorite: data.isFavorite ?? existingCharacter.isFavorite,
-      extraNotes: data.extraNotes ?? existingCharacter.extraNotes,
+      ...data,
       updatedAt: new Date(),
     };
 

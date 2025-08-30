@@ -1,12 +1,12 @@
-import { CreateStoryDTO, StoryProfileDTO } from '@application/dtos/StoryDTOs';
-import { IStoryRepository } from '@domain/repositories/IStoryRepository';
 import { Story } from '@domain/entities/Story';
+import { IStoryRepository } from '@domain/repositories/IStoryRepository';
 import { ulid } from 'ulid';
+import { StoryCreatePayload, StoryResponse } from '@keres/shared';
 
 export class CreateStoryUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
-  async execute(data: CreateStoryDTO): Promise<StoryProfileDTO> {
+  async execute(data: StoryCreatePayload): Promise<StoryResponse> {
     const newStory: Story = {
       id: ulid(),
       userId: data.userId,

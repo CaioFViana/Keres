@@ -1,11 +1,11 @@
-import { MomentProfileDTO } from '@application/dtos/MomentDTOs';
 import { IMomentRepository } from '@domain/repositories/IMomentRepository';
+import { MomentResponse } from '@keres/shared';
 
 export class GetMomentUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
-  async execute(momentId: string): Promise<MomentProfileDTO | null> {
-    const moment = await this.momentRepository.findById(momentId);
+  async execute(id: string): Promise<MomentResponse | null> {
+    const moment = await this.momentRepository.findById(id);
     if (!moment) {
       return null;
     }

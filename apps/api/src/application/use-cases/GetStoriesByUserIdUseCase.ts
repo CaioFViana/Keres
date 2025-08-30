@@ -1,10 +1,10 @@
-import { StoryProfileDTO } from '@application/dtos/StoryDTOs';
 import { IStoryRepository } from '@domain/repositories/IStoryRepository';
+import { StoryResponse } from '@keres/shared';
 
 export class GetStoriesByUserIdUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
-  async execute(userId: string): Promise<StoryProfileDTO[]> {
+  async execute(userId: string): Promise<StoryResponse[]> {
     const stories = await this.storyRepository.findByUserId(userId);
     return stories.map(story => ({
       id: story.id,

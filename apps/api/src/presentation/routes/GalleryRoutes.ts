@@ -1,40 +1,54 @@
 import { Hono } from 'hono';
-import { GalleryController } from '@presentation/controllers/GalleryController';
+import { zValidator } from '@hono/zod-validator';
 import {
   CreateGalleryUseCase,
   GetGalleryUseCase,
-  GetGalleryByStoryIdUseCase,
-  GetGalleryByOwnerIdUseCase,
   UpdateGalleryUseCase,
   DeleteGalleryUseCase,
+  GetGalleryByOwnerIdUseCase,
+  GetGalleryByStoryIdUseCase,
 } from '@application/use-cases';
 import { GalleryRepository } from '@infrastructure/persistence/GalleryRepository';
+import { GalleryController } from '@presentation/controllers/GalleryController';
+import { GalleryCreateSchema, GalleryUpdateSchema } from '@keres/shared';
+
+console.log('Initializing GalleryRoutes...');
 
 const galleryRoutes = new Hono();
 
 // Dependencies for GalleryController
+console.log('Instantiating GalleryRepository...');
 const galleryRepository = new GalleryRepository();
+console.log('Instantiating CreateGalleryUseCase...');
 const createGalleryUseCase = new CreateGalleryUseCase(galleryRepository);
+console.log('Instantiating GetGalleryUseCase...');
 const getGalleryUseCase = new GetGalleryUseCase(galleryRepository);
-const getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(galleryRepository);
-const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(galleryRepository);
+console.log('Instantiating UpdateGalleryUseCase...');
 const updateGalleryUseCase = new UpdateGalleryUseCase(galleryRepository);
+console.log('Instantiating DeleteGalleryUseCase...');
 const deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository);
+console.log('Instantiating GetGalleryByOwnerIdUseCase...');
+const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(galleryRepository);
+console.log('Instantiating GetGalleryByStoryIdUseCase...');
+const getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(galleryRepository);
 
+console.log('Instantiating GalleryController...');
 const galleryController = new GalleryController(
   createGalleryUseCase,
   getGalleryUseCase,
-  getGalleryByStoryIdUseCase,
-  getGalleryByOwnerIdUseCase,
   updateGalleryUseCase,
-  deleteGalleryUseCase
+  deleteGalleryUseCase,
+  getGalleryByOwnerIdUseCase,
+  getGalleryByStoryIdUseCase
 );
 
-galleryRoutes.post('/', (c) => galleryController.createGallery(c));
+galleryRoutes.post('/', zValidator('json', GalleryCreateSchema), (c) => galleryController.createGallery(c));
 galleryRoutes.get('/:id', (c) => galleryController.getGallery(c));
-galleryRoutes.get('/story/:storyId', (c) => galleryController.getGalleryByStoryId(c));
 galleryRoutes.get('/owner/:ownerId', (c) => galleryController.getGalleryByOwnerId(c));
-galleryRoutes.put('/:id', (c) => galleryController.updateGallery(c));
+galleryRoutes.get('/story/:storyId', (c) => galleryController.getGalleryByStoryId(c));
+galleryRoutes.put('/:id', zValidator('json', GalleryUpdateSchema), (c) => galleryController.updateGallery(c));
 galleryRoutes.delete('/:id', (c) => galleryController.deleteGallery(c));
+
+console.log('GalleryRoutes initialized.');
 
 export default galleryRoutes;

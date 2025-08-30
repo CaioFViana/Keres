@@ -3,14 +3,18 @@ import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
 export class DeleteGalleryUseCase {
   constructor(private readonly galleryRepository: IGalleryRepository) {}
 
-  async execute(galleryId: string, storyId: string): Promise<boolean> {
-    const existingGallery = await this.galleryRepository.findById(galleryId);
-    if (!existingGallery || existingGallery.storyId !== storyId) {
-      // Gallery item not found or does not belong to the specified story
-      return false;
+  async execute(id: string, storyId: string, ownerId: string): Promise<boolean> {
+    const existingGallery = await this.galleryRepository.findById(id);
+    if (!existingGallery) {
+      return false; // Gallery item not found
     }
-
-    await this.galleryRepository.delete(galleryId);
+    if (existingGallery.storyId !== storyId) { // Check story ownership
+      return false; // Gallery item does not belong to this story
+    }
+    if (existingGallery.ownerId !== ownerId) { // Check owner ownership
+      return false; // Gallery item does not belong to this owner
+    }
+    await this.galleryRepository.delete(id);
     return true;
   }
 }

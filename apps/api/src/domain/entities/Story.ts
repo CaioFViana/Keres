@@ -2,11 +2,11 @@ export interface Story {
   id: string;
   userId: string;
   title: string;
-  summary: string;
-  genre: string;
-  language: string;
+  summary: string | null;
+  genre: string | null;
+  language: string | null;
   isFavorite: boolean;
-  extraNotes: string;
+  extraNotes: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,12 +1,12 @@
-import { CreateCharacterRelationDTO, CharacterRelationProfileDTO } from '@application/dtos/CharacterRelationDTOs';
-import { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository';
 import { CharacterRelation } from '@domain/entities/CharacterRelation';
+import { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository';
 import { ulid } from 'ulid';
+import { CharacterRelationCreatePayload, CharacterRelationResponse } from '@keres/shared';
 
 export class CreateCharacterRelationUseCase {
   constructor(private readonly characterRelationRepository: ICharacterRelationRepository) {}
 
-  async execute(data: CreateCharacterRelationDTO): Promise<CharacterRelationProfileDTO> {
+  async execute(data: CharacterRelationCreatePayload): Promise<CharacterRelationResponse> {
     const newCharacterRelation: CharacterRelation = {
       id: ulid(),
       charId1: data.charId1,

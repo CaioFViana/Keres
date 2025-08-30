@@ -1,11 +1,11 @@
-import { LocationProfileDTO } from '@application/dtos/LocationDTOs';
 import { ILocationRepository } from '@domain/repositories/ILocationRepository';
+import { LocationResponse } from '@keres/shared';
 
 export class GetLocationUseCase {
   constructor(private readonly locationRepository: ILocationRepository) {}
 
-  async execute(locationId: string): Promise<LocationProfileDTO | null> {
-    const location = await this.locationRepository.findById(locationId);
+  async execute(id: string): Promise<LocationResponse | null> {
+    const location = await this.locationRepository.findById(id);
     if (!location) {
       return null;
     }

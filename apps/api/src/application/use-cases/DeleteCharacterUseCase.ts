@@ -3,14 +3,15 @@ import { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
 export class DeleteCharacterUseCase {
   constructor(private readonly characterRepository: ICharacterRepository) {}
 
-  async execute(characterId: string, storyId: string): Promise<boolean> {
-    const existingCharacter = await this.characterRepository.findById(characterId);
-    if (!existingCharacter || existingCharacter.storyId !== storyId) {
-      // Character not found or does not belong to the specified story
-      return false;
+  async execute(id: string, storyId: string): Promise<boolean> {
+    const existingCharacter = await this.characterRepository.findById(id);
+    if (!existingCharacter) {
+      return false; // Character not found
     }
-
-    await this.characterRepository.delete(characterId);
+    if (existingCharacter.storyId !== storyId) { // Check ownership
+      return false; // Character does not belong to this story
+    }
+    await this.characterRepository.delete(id);
     return true;
   }
 }

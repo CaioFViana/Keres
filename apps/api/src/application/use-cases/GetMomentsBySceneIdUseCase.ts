@@ -1,10 +1,10 @@
-import { MomentProfileDTO } from '@application/dtos/MomentDTOs';
 import { IMomentRepository } from '@domain/repositories/IMomentRepository';
+import { MomentResponse } from '@keres/shared';
 
 export class GetMomentsBySceneIdUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
-  async execute(sceneId: string): Promise<MomentProfileDTO[]> {
+  async execute(sceneId: string): Promise<MomentResponse[]> {
     const moments = await this.momentRepository.findBySceneId(sceneId);
     return moments.map(moment => ({
       id: moment.id,

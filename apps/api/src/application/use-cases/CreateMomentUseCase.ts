@@ -1,12 +1,12 @@
-import { CreateMomentDTO, MomentProfileDTO } from '@application/dtos/MomentDTOs';
-import { IMomentRepository } from '@domain/repositories/IMomentRepository';
 import { Moment } from '@domain/entities/Moment';
+import { IMomentRepository } from '@domain/repositories/IMomentRepository';
 import { ulid } from 'ulid';
+import { MomentCreatePayload, MomentResponse } from '@keres/shared';
 
 export class CreateMomentUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
-  async execute(data: CreateMomentDTO): Promise<MomentProfileDTO> {
+  async execute(data: MomentCreatePayload): Promise<MomentResponse> {
     const newMoment: Moment = {
       id: ulid(),
       sceneId: data.sceneId,

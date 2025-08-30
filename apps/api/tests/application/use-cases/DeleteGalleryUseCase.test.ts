@@ -58,7 +58,7 @@ describe('DeleteGalleryUseCase', () => {
   });
 
   it('should delete an existing gallery item successfully', async () => {
-    const deleted = await deleteGalleryUseCase.execute('gal123', 'story123');
+    const deleted = await deleteGalleryUseCase.execute('gal123', 'story123', 'char123');
     expect(deleted).toBe(true);
 
     const gallery = await galleryRepository.findById('gal123');
@@ -66,12 +66,12 @@ describe('DeleteGalleryUseCase', () => {
   });
 
   it('should return false if gallery item not found', async () => {
-    const deleted = await deleteGalleryUseCase.execute('nonexistent_gal', 'story123');
+    const deleted = await deleteGalleryUseCase.execute('nonexistent_gal', 'story123', 'char123');
     expect(deleted).toBe(false);
   });
 
   it('should return false if gallery item does not belong to the specified story', async () => {
-    const deleted = await deleteGalleryUseCase.execute('gal123', 'another_story');
+    const deleted = await deleteGalleryUseCase.execute('gal123', 'another_story', 'char123');
     expect(deleted).toBe(false);
 
     // Ensure the gallery item was not deleted

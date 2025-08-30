@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { CreateUserUseCase, AuthenticateUserUseCase, GetUserProfileUseCase } from '@application/use-cases';
-import { createUserSchema, authenticateUserSchema, userProfileSchema } from '@presentation/schemas/UserSchemas';
+import { UserRegisterSchema, UserLoginSchema, UserProfileSchema } from '@keres/shared';
 
 export class UserController {
   constructor(
@@ -10,16 +10,11 @@ export class UserController {
   ) {}
 
   async createUser(c: Context) {
-    const body = await c.req.json();
-    const validation = createUserSchema.safeParse(body);
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json');
 
     try {
-      const userProfile = await this.createUserUseCase.execute(validation.data);
-      return c.json(userProfileSchema.parse(userProfile), 201);
+      const userProfile = await this.createUserUseCase.execute(data);
+      return c.json(UserProfileSchema.parse(userProfile), 201);
     } catch (error: any) {
       if (error.message === 'Username already exists') {
         return c.json({ error: error.message }, 409);
@@ -29,19 +24,14 @@ export class UserController {
   }
 
   async authenticateUser(c: Context) {
-    const body = await c.req.json();
-    const validation = authenticateUserSchema.safeParse(body);
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json');
 
     try {
-      const userProfile = await this.authenticateUserUseCase.execute(validation.data);
+      const userProfile = await this.authenticateUserUseCase.execute(data);
       if (!userProfile) {
         return c.json({ error: 'Invalid credentials' }, 401);
       }
-      return c.json(userProfileSchema.parse(userProfile), 200);
+      return c.json(UserProfileSchema.parse(userProfile), 200);
     } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
@@ -57,7 +47,7 @@ export class UserController {
       if (!userProfile) {
         return c.json({ error: 'User not found' }, 404);
       }
-      return c.json(userProfileSchema.parse(userProfile), 200);
+      return c.json(UserProfileSchema.parse(userProfile), 200);
     } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }

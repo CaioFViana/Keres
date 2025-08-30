@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '@keres/db';
-import { chapters } from '@keres/db';
+import { db, chapters } from '@keres/db'; // Import db and chapters table
 import { Chapter } from '@domain/entities/Chapter';
 import { IChapterRepository } from '@domain/repositories/IChapterRepository';
 

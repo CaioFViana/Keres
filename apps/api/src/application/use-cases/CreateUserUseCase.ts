@@ -1,4 +1,4 @@
-import { CreateUserDTO, UserProfileDTO } from '@application/dtos/UserDTOs';
+import { UserRegisterPayload, UserProfileResponse } from '@keres/shared';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IPasswordHasherService } from '@domain/services/IPasswordHasherService';
 import { User } from '@domain/entities/User';
@@ -10,7 +10,7 @@ export class CreateUserUseCase {
     private readonly passwordHasher: IPasswordHasherService
   ) {}
 
-  async execute(data: CreateUserDTO): Promise<UserProfileDTO> {
+  async execute(data: UserRegisterPayload): Promise<UserProfileResponse> {
     const existingUser = await this.userRepository.findByUsername(data.username);
     if (existingUser) {
       throw new Error('Username already exists');

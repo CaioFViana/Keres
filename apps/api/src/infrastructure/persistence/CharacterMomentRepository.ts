@@ -1,6 +1,5 @@
 import { eq, and } from 'drizzle-orm';
-import { db } from '@keres/db';
-import { characterMoments } from '@keres/db/src/schema';
+import { db, characterMoments } from '@keres/db'; // Import db and characterMoments table
 import { CharacterMoment } from '@domain/entities/CharacterMoment';
 import { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository';
 

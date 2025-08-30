@@ -1,36 +1,49 @@
 import { Hono } from 'hono';
-import { CharacterRelationController } from '@presentation/controllers/CharacterRelationController';
+import { zValidator } from '@hono/zod-validator';
 import {
   CreateCharacterRelationUseCase,
   GetCharacterRelationUseCase,
-  GetCharacterRelationsByCharIdUseCase,
   UpdateCharacterRelationUseCase,
   DeleteCharacterRelationUseCase,
+  GetCharacterRelationsByCharIdUseCase,
 } from '@application/use-cases';
 import { CharacterRelationRepository } from '@infrastructure/persistence/CharacterRelationRepository';
+import { CharacterRelationController } from '@presentation/controllers/CharacterRelationController';
+import { CharacterRelationCreateSchema, CharacterRelationUpdateSchema } from '@keres/shared';
+
+console.log('Initializing CharacterRelationRoutes...');
 
 const characterRelationRoutes = new Hono();
 
 // Dependencies for CharacterRelationController
+console.log('Instantiating CharacterRelationRepository...');
 const characterRelationRepository = new CharacterRelationRepository();
+console.log('Instantiating CreateCharacterRelationUseCase...');
 const createCharacterRelationUseCase = new CreateCharacterRelationUseCase(characterRelationRepository);
+console.log('Instantiating GetCharacterRelationUseCase...');
 const getCharacterRelationUseCase = new GetCharacterRelationUseCase(characterRelationRepository);
-const getCharacterRelationsByCharIdUseCase = new GetCharacterRelationsByCharIdUseCase(characterRelationRepository);
+console.log('Instantiating UpdateCharacterRelationUseCase...');
 const updateCharacterRelationUseCase = new UpdateCharacterRelationUseCase(characterRelationRepository);
+console.log('Instantiating DeleteCharacterRelationUseCase...');
 const deleteCharacterRelationUseCase = new DeleteCharacterRelationUseCase(characterRelationRepository);
+console.log('Instantiating GetCharacterRelationsByCharIdUseCase...');
+const getCharacterRelationsByCharIdUseCase = new GetCharacterRelationsByCharIdUseCase(characterRelationRepository);
 
+console.log('Instantiating CharacterRelationController...');
 const characterRelationController = new CharacterRelationController(
   createCharacterRelationUseCase,
   getCharacterRelationUseCase,
-  getCharacterRelationsByCharIdUseCase,
   updateCharacterRelationUseCase,
-  deleteCharacterRelationUseCase
+  deleteCharacterRelationUseCase,
+  getCharacterRelationsByCharIdUseCase
 );
 
-characterRelationRoutes.post('/', (c) => characterRelationController.createCharacterRelation(c));
+characterRelationRoutes.post('/', zValidator('json', CharacterRelationCreateSchema), (c) => characterRelationController.createCharacterRelation(c));
 characterRelationRoutes.get('/:id', (c) => characterRelationController.getCharacterRelation(c));
 characterRelationRoutes.get('/character/:charId', (c) => characterRelationController.getCharacterRelationsByCharId(c));
-characterRelationRoutes.put('/:id', (c) => characterRelationController.updateCharacterRelation(c));
+characterRelationRoutes.put('/:id', zValidator('json', CharacterRelationUpdateSchema), (c) => characterRelationController.updateCharacterRelation(c));
 characterRelationRoutes.delete('/:id', (c) => characterRelationController.deleteCharacterRelation(c));
+
+console.log('CharacterRelationRoutes initialized.');
 
 export default characterRelationRoutes;

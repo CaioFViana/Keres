@@ -1,10 +1,10 @@
-import { CharacterProfileDTO } from '@application/dtos/CharacterDTOs';
 import { ICharacterRepository } from '@domain/repositories/ICharacterRepository';
+import { CharacterResponse } from '@keres/shared';
 
 export class GetCharactersByStoryIdUseCase {
   constructor(private readonly characterRepository: ICharacterRepository) {}
 
-  async execute(storyId: string): Promise<CharacterProfileDTO[]> {
+  async execute(storyId: string): Promise<CharacterResponse[]> {
     const characters = await this.characterRepository.findByStoryId(storyId);
     return characters.map(character => ({
       id: character.id,

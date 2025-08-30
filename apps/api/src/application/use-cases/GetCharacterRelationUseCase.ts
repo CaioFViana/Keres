@@ -1,11 +1,11 @@
-import { CharacterRelationProfileDTO } from '@application/dtos/CharacterRelationDTOs';
 import { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository';
+import { CharacterRelationResponse } from '@keres/shared';
 
 export class GetCharacterRelationUseCase {
   constructor(private readonly characterRelationRepository: ICharacterRelationRepository) {}
 
-  async execute(relationId: string): Promise<CharacterRelationProfileDTO | null> {
-    const characterRelation = await this.characterRelationRepository.findById(relationId);
+  async execute(id: string): Promise<CharacterRelationResponse | null> {
+    const characterRelation = await this.characterRelationRepository.findById(id);
     if (!characterRelation) {
       return null;
     }

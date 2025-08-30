@@ -1,12 +1,12 @@
-import { CreateLocationDTO, LocationProfileDTO } from '@application/dtos/LocationDTOs';
-import { ILocationRepository } from '@domain/repositories/ILocationRepository';
 import { Location } from '@domain/entities/Location';
+import { ILocationRepository } from '@domain/repositories/ILocationRepository';
 import { ulid } from 'ulid';
+import { LocationCreatePayload, LocationResponse } from '@keres/shared';
 
 export class CreateLocationUseCase {
   constructor(private readonly locationRepository: ILocationRepository) {}
 
-  async execute(data: CreateLocationDTO): Promise<LocationProfileDTO> {
+  async execute(data: LocationCreatePayload): Promise<LocationResponse> {
     const newLocation: Location = {
       id: ulid(),
       storyId: data.storyId,

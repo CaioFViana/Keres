@@ -3,14 +3,15 @@ import { ILocationRepository } from '@domain/repositories/ILocationRepository';
 export class DeleteLocationUseCase {
   constructor(private readonly locationRepository: ILocationRepository) {}
 
-  async execute(locationId: string, storyId: string): Promise<boolean> {
-    const existingLocation = await this.locationRepository.findById(locationId);
-    if (!existingLocation || existingLocation.storyId !== storyId) {
-      // Location not found or does not belong to the specified story
-      return false;
+  async execute(id: string, storyId: string): Promise<boolean> {
+    const existingLocation = await this.locationRepository.findById(id);
+    if (!existingLocation) {
+      return false; // Location not found
     }
-
-    await this.locationRepository.delete(locationId);
+    if (existingLocation.storyId !== storyId) { // Check ownership
+      return false; // Location does not belong to this story
+    }
+    await this.locationRepository.delete(id);
     return true;
   }
 }

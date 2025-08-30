@@ -4,6 +4,8 @@ import { CreateUserUseCase, AuthenticateUserUseCase, GetUserProfileUseCase } fro
 import { UserRepository } from '@infrastructure/persistence/UserRepository';
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher';
 import { db } from '@keres/db';
+import { UserRegisterSchema, UserLoginSchema } from '@keres/shared'; // Import Zod schemas
+import { zValidator } from '@hono/zod-validator'; // Import zValidator
 
 console.log('Initializing UserRoutes...');
 
@@ -28,8 +30,8 @@ const userController = new UserController(
   getUserProfileUseCase
 );
 
-userRoutes.post('/register', (c) => userController.createUser(c));
-userRoutes.post('/login', (c) => userController.authenticateUser(c));
+userRoutes.post('/register', zValidator('json', UserRegisterSchema), (c) => userController.createUser(c));
+userRoutes.post('/login', zValidator('json', UserLoginSchema), (c) => userController.authenticateUser(c));
 userRoutes.get('/profile/:id', (c) => userController.getUserProfile(c));
 
 console.log('UserRoutes initialized.');

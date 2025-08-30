@@ -1,36 +1,49 @@
 import { Hono } from 'hono';
-import { ChapterController } from '@presentation/controllers/ChapterController';
+import { zValidator } from '@hono/zod-validator';
 import {
   CreateChapterUseCase,
   GetChapterUseCase,
-  GetChaptersByStoryIdUseCase,
   UpdateChapterUseCase,
   DeleteChapterUseCase,
+  GetChaptersByStoryIdUseCase,
 } from '@application/use-cases';
 import { ChapterRepository } from '@infrastructure/persistence/ChapterRepository';
+import { ChapterController } from '@presentation/controllers/ChapterController';
+import { ChapterCreateSchema, ChapterUpdateSchema } from '@keres/shared';
+
+console.log('Initializing ChapterRoutes...');
 
 const chapterRoutes = new Hono();
 
 // Dependencies for ChapterController
+console.log('Instantiating ChapterRepository...');
 const chapterRepository = new ChapterRepository();
+console.log('Instantiating CreateChapterUseCase...');
 const createChapterUseCase = new CreateChapterUseCase(chapterRepository);
+console.log('Instantiating GetChapterUseCase...');
 const getChapterUseCase = new GetChapterUseCase(chapterRepository);
-const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository);
+console.log('Instantiating UpdateChapterUseCase...');
 const updateChapterUseCase = new UpdateChapterUseCase(chapterRepository);
+console.log('Instantiating DeleteChapterUseCase...');
 const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository);
+console.log('Instantiating GetChaptersByStoryIdUseCase...');
+const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository);
 
+console.log('Instantiating ChapterController...');
 const chapterController = new ChapterController(
   createChapterUseCase,
   getChapterUseCase,
-  getChaptersByStoryIdUseCase,
   updateChapterUseCase,
-  deleteChapterUseCase
+  deleteChapterUseCase,
+  getChaptersByStoryIdUseCase
 );
 
-chapterRoutes.post('/', (c) => chapterController.createChapter(c));
+chapterRoutes.post('/', zValidator('json', ChapterCreateSchema), (c) => chapterController.createChapter(c));
 chapterRoutes.get('/:id', (c) => chapterController.getChapter(c));
 chapterRoutes.get('/story/:storyId', (c) => chapterController.getChaptersByStoryId(c));
-chapterRoutes.put('/:id', (c) => chapterController.updateChapter(c));
+chapterRoutes.put('/:id', zValidator('json', ChapterUpdateSchema), (c) => chapterController.updateChapter(c));
 chapterRoutes.delete('/:id', (c) => chapterController.deleteChapter(c));
+
+console.log('ChapterRoutes initialized.');
 
 export default chapterRoutes;

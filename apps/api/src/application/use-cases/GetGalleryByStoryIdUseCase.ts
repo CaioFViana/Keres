@@ -1,10 +1,10 @@
-import { GalleryProfileDTO } from '@application/dtos/GalleryDTOs';
 import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
+import { GalleryResponse } from '@keres/shared';
 
 export class GetGalleryByStoryIdUseCase {
   constructor(private readonly galleryRepository: IGalleryRepository) {}
 
-  async execute(storyId: string): Promise<GalleryProfileDTO[]> {
+  async execute(storyId: string): Promise<GalleryResponse[]> {
     const galleryItems = await this.galleryRepository.findByStoryId(storyId);
     return galleryItems.map(item => ({
       id: item.id,

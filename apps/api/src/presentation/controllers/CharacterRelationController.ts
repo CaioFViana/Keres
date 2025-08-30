@@ -2,34 +2,28 @@ import { Context } from 'hono';
 import {
   CreateCharacterRelationUseCase,
   GetCharacterRelationUseCase,
-  GetCharacterRelationsByCharIdUseCase,
   UpdateCharacterRelationUseCase,
   DeleteCharacterRelationUseCase,
+  GetCharacterRelationsByCharIdUseCase,
 } from '@application/use-cases';
-import { createCharacterRelationSchema, updateCharacterRelationSchema, characterRelationProfileSchema } from '@presentation/schemas/CharacterRelationSchemas';
+import { CharacterRelationCreateSchema, CharacterRelationUpdateSchema, CharacterRelationResponseSchema } from '@keres/shared';
 
 export class CharacterRelationController {
   constructor(
     private readonly createCharacterRelationUseCase: CreateCharacterRelationUseCase,
     private readonly getCharacterRelationUseCase: GetCharacterRelationUseCase,
-    private readonly getCharacterRelationsByCharIdUseCase: GetCharacterRelationsByCharIdUseCase,
     private readonly updateCharacterRelationUseCase: UpdateCharacterRelationUseCase,
-    private readonly deleteCharacterRelationUseCase: DeleteCharacterRelationUseCase
+    private readonly deleteCharacterRelationUseCase: DeleteCharacterRelationUseCase,
+    private readonly getCharacterRelationsByCharIdUseCase: GetCharacterRelationsByCharIdUseCase
   ) {}
 
   async createCharacterRelation(c: Context) {
-    const body = await c.req.json();
-    const validation = createCharacterRelationSchema.safeParse(body);
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json'); // Validated by zValidator middleware
 
     try {
-      const characterRelationProfile = await this.createCharacterRelationUseCase.execute(validation.data);
-      return c.json(characterRelationProfileSchema.parse(characterRelationProfile), 201);
+      const characterRelation = await this.createCharacterRelationUseCase.execute(data);
+      return c.json(CharacterRelationResponseSchema.parse(characterRelation), 201);
     } catch (error: any) {
-      console.error('Error creating character relation:', error);
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
@@ -38,46 +32,38 @@ export class CharacterRelationController {
     const relationId = c.req.param('id');
 
     try {
-      const characterRelationProfile = await this.getCharacterRelationUseCase.execute(relationId);
-      if (!characterRelationProfile) {
+      const characterRelation = await this.getCharacterRelationUseCase.execute(relationId);
+      if (!characterRelation) {
         return c.json({ error: 'Character relation not found' }, 404);
       }
-      return c.json(characterRelationProfileSchema.parse(characterRelationProfile), 200);
-    } catch (error: any) {
-      console.error('Error getting character relation:', error);
+      return c.json(CharacterRelationResponseSchema.parse(characterRelation), 200);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async getCharacterRelationsByCharId(c: Context) {
-    const charId = c.req.param('charId');
+    const charId = c.req.param('charId'); // Assuming charId is passed as a param
 
     try {
       const characterRelations = await this.getCharacterRelationsByCharIdUseCase.execute(charId);
-      return c.json(characterRelations.map(cr => characterRelationProfileSchema.parse(cr)), 200);
-    } catch (error: any) {
-      console.error('Error getting character relations by character ID:', error);
+      return c.json(characterRelations.map(cr => CharacterRelationResponseSchema.parse(cr)), 200);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
 
   async updateCharacterRelation(c: Context) {
     const relationId = c.req.param('id');
-    const body = await c.req.json();
-    const validation = updateCharacterRelationSchema.safeParse({ id: relationId, ...body });
-
-    if (!validation.success) {
-      return c.json({ error: validation.error.errors }, 400);
-    }
+    const data = c.req.valid('json'); // Validated by zValidator middleware
 
     try {
-      const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute(validation.data);
+      const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute({ id: relationId, ...data });
       if (!updatedCharacterRelation) {
         return c.json({ error: 'Character relation not found' }, 404);
       }
-      return c.json(characterRelationProfileSchema.parse(updatedCharacterRelation), 200);
+      return c.json(CharacterRelationResponseSchema.parse(updatedCharacterRelation), 200);
     } catch (error: any) {
-      console.error('Error updating character relation:', error);
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }
@@ -90,9 +76,8 @@ export class CharacterRelationController {
       if (!deleted) {
         return c.json({ error: 'Character relation not found' }, 404);
       }
-      return c.json({ message: 'Character relation deleted successfully' }, 200);
-    } catch (error: any) {
-      console.error('Error deleting character relation:', error);
+      return c.json({}, 204);
+    } catch (error) {
       return c.json({ error: 'Internal Server Error' }, 500);
     }
   }

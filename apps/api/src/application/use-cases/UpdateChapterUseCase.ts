@@ -1,23 +1,22 @@
-import { UpdateChapterDTO, ChapterProfileDTO } from '@application/dtos/ChapterDTOs';
 import { IChapterRepository } from '@domain/repositories/IChapterRepository';
+import { ChapterUpdatePayload, ChapterResponse } from '@keres/shared';
 
 export class UpdateChapterUseCase {
   constructor(private readonly chapterRepository: IChapterRepository) {}
 
-  async execute(data: UpdateChapterDTO): Promise<ChapterProfileDTO | null> {
+  async execute(data: ChapterUpdatePayload): Promise<ChapterResponse | null> {
     const existingChapter = await this.chapterRepository.findById(data.id);
-    if (!existingChapter || existingChapter.storyId !== data.storyId) {
-      // Chapter not found or does not belong to the specified story
-      return null;
+    if (!existingChapter) {
+      return null; // Chapter not found
+    }
+    // Add ownership check
+    if (data.storyId && existingChapter.storyId !== data.storyId) {
+      return null; // Chapter does not belong to this story
     }
 
     const updatedChapter = {
       ...existingChapter,
-      name: data.name ?? existingChapter.name,
-      index: data.index ?? existingChapter.index,
-      summary: data.summary ?? existingChapter.summary,
-      isFavorite: data.isFavorite ?? existingChapter.isFavorite,
-      extraNotes: data.extraNotes ?? existingChapter.extraNotes,
+      ...data,
       updatedAt: new Date(),
     };
 

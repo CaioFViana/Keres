@@ -3,14 +3,15 @@ import { IMomentRepository } from '@domain/repositories/IMomentRepository';
 export class DeleteMomentUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
-  async execute(momentId: string, sceneId: string): Promise<boolean> {
-    const existingMoment = await this.momentRepository.findById(momentId);
-    if (!existingMoment || existingMoment.sceneId !== sceneId) {
-      // Moment not found or does not belong to the specified scene
-      return false;
+  async execute(id: string, sceneId: string): Promise<boolean> {
+    const existingMoment = await this.momentRepository.findById(id);
+    if (!existingMoment) {
+      return false; // Moment not found
     }
-
-    await this.momentRepository.delete(momentId);
+    if (existingMoment.sceneId !== sceneId) { // Check ownership
+      return false; // Moment does not belong to this scene
+    }
+    await this.momentRepository.delete(id);
     return true;
   }
 }

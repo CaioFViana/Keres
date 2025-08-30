@@ -1,20 +1,20 @@
-import { UpdateCharacterRelationDTO, CharacterRelationProfileDTO } from '@application/dtos/CharacterRelationDTOs';
 import { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository';
+import { CharacterRelationUpdatePayload, CharacterRelationResponse } from '@keres/shared';
 
 export class UpdateCharacterRelationUseCase {
   constructor(private readonly characterRelationRepository: ICharacterRelationRepository) {}
 
-  async execute(data: UpdateCharacterRelationDTO): Promise<CharacterRelationProfileDTO | null> {
+  async execute(data: CharacterRelationUpdatePayload): Promise<CharacterRelationResponse | null> {
     const existingCharacterRelation = await this.characterRelationRepository.findById(data.id);
     if (!existingCharacterRelation) {
-      return null;
+      return null; // Character relation not found
     }
+    // Note: charId1 and charId2 are typically not updated for relations.
+    // If they were, additional checks would be needed here.
 
     const updatedCharacterRelation = {
       ...existingCharacterRelation,
-      charId1: data.charId1 ?? existingCharacterRelation.charId1,
-      charId2: data.charId2 ?? existingCharacterRelation.charId2,
-      relationType: data.relationType ?? existingCharacterRelation.relationType,
+      ...data,
       updatedAt: new Date(),
     };
 

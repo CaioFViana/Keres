@@ -1,4 +1,4 @@
-import { AuthenticateUserDTO, UserProfileDTO } from '@application/dtos/UserDTOs';
+import { UserLoginPayload, UserProfileResponse } from '@keres/shared';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IPasswordHasherService } from '@domain/services/IPasswordHasherService';
 
@@ -8,7 +8,7 @@ export class AuthenticateUserUseCase {
     private readonly passwordHasher: IPasswordHasherService
   ) {}
 
-  async execute(data: AuthenticateUserDTO): Promise<UserProfileDTO | null> {
+  async execute(data: UserLoginPayload): Promise<UserProfileResponse | null> {
     const user = await this.userRepository.findByUsername(data.username);
     if (!user) {
       return null; // User not found

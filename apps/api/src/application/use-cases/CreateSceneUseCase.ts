@@ -1,12 +1,12 @@
-import { CreateSceneDTO, SceneProfileDTO } from '@application/dtos/SceneDTOs';
-import { ISceneRepository } from '@domain/repositories/ISceneRepository';
 import { Scene } from '@domain/entities/Scene';
+import { ISceneRepository } from '@domain/repositories/ISceneRepository';
 import { ulid } from 'ulid';
+import { SceneCreatePayload, SceneResponse } from '@keres/shared';
 
 export class CreateSceneUseCase {
   constructor(private readonly sceneRepository: ISceneRepository) {}
 
-  async execute(data: CreateSceneDTO): Promise<SceneProfileDTO> {
+  async execute(data: SceneCreatePayload): Promise<SceneResponse> {
     const newScene: Scene = {
       id: ulid(),
       chapterId: data.chapterId,

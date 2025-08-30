@@ -1,10 +1,10 @@
-import { CharacterMomentProfileDTO } from '@application/dtos/CharacterMomentDTOs';
 import { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository';
+import { CharacterMomentResponse } from '@keres/shared';
 
 export class GetCharacterMomentsByMomentIdUseCase {
   constructor(private readonly characterMomentRepository: ICharacterMomentRepository) {}
 
-  async execute(momentId: string): Promise<CharacterMomentProfileDTO[]> {
+  async execute(momentId: string): Promise<CharacterMomentResponse[]> {
     const characterMoments = await this.characterMomentRepository.findByMomentId(momentId);
     return characterMoments.map(cm => ({
       characterId: cm.characterId,

@@ -1,25 +1,22 @@
-import { UpdateSceneDTO, SceneProfileDTO } from '@application/dtos/SceneDTOs';
 import { ISceneRepository } from '@domain/repositories/ISceneRepository';
+import { SceneUpdatePayload, SceneResponse } from '@keres/shared';
 
 export class UpdateSceneUseCase {
   constructor(private readonly sceneRepository: ISceneRepository) {}
 
-  async execute(data: UpdateSceneDTO): Promise<SceneProfileDTO | null> {
+  async execute(data: SceneUpdatePayload): Promise<SceneResponse | null> {
     const existingScene = await this.sceneRepository.findById(data.id);
-    if (!existingScene || existingScene.chapterId !== data.chapterId) {
-      // Scene not found or does not belong to the specified chapter
-      return null;
+    if (!existingScene) {
+      return null; // Scene not found
+    }
+    // Add ownership check
+    if (data.chapterId && existingScene.chapterId !== data.chapterId) {
+      return null; // Scene does not belong to this chapter
     }
 
     const updatedScene = {
       ...existingScene,
-      name: data.name ?? existingScene.name,
-      index: data.index ?? existingScene.index,
-      summary: data.summary ?? existingScene.summary,
-      gap: data.gap ?? existingScene.gap,
-      duration: data.duration ?? existingScene.duration,
-      isFavorite: data.isFavorite ?? existingScene.isFavorite,
-      extraNotes: data.extraNotes ?? existingScene.extraNotes,
+      ...data,
       updatedAt: new Date(),
     };
 

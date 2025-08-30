@@ -1,25 +1,22 @@
-import { UpdateLocationDTO, LocationProfileDTO } from '@application/dtos/LocationDTOs';
 import { ILocationRepository } from '@domain/repositories/ILocationRepository';
+import { LocationUpdatePayload, LocationResponse } from '@keres/shared';
 
 export class UpdateLocationUseCase {
   constructor(private readonly locationRepository: ILocationRepository) {}
 
-  async execute(data: UpdateLocationDTO): Promise<LocationProfileDTO | null> {
+  async execute(data: LocationUpdatePayload): Promise<LocationResponse | null> {
     const existingLocation = await this.locationRepository.findById(data.id);
-    if (!existingLocation || existingLocation.storyId !== data.storyId) {
-      // Location not found or does not belong to the specified story
-      return null;
+    if (!existingLocation) {
+      return null; // Location not found
+    }
+    // Add ownership check
+    if (data.storyId && existingLocation.storyId !== data.storyId) {
+      return null; // Location does not belong to this story
     }
 
     const updatedLocation = {
       ...existingLocation,
-      name: data.name ?? existingLocation.name,
-      description: data.description ?? existingLocation.description,
-      climate: data.climate ?? existingLocation.climate,
-      culture: data.culture ?? existingLocation.culture,
-      politics: data.politics ?? existingLocation.politics,
-      isFavorite: data.isFavorite ?? existingLocation.isFavorite,
-      extraNotes: data.extraNotes ?? existingLocation.extraNotes,
+      ...data,
       updatedAt: new Date(),
     };
 

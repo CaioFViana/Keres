@@ -1,10 +1,10 @@
-import { SceneProfileDTO } from '@application/dtos/SceneDTOs';
 import { ISceneRepository } from '@domain/repositories/ISceneRepository';
+import { SceneResponse } from '@keres/shared';
 
 export class GetScenesByChapterIdUseCase {
   constructor(private readonly sceneRepository: ISceneRepository) {}
 
-  async execute(chapterId: string): Promise<SceneProfileDTO[]> {
+  async execute(chapterId: string): Promise<SceneResponse[]> {
     const scenes = await this.sceneRepository.findByChapterId(chapterId);
     return scenes.map(scene => ({
       id: scene.id,

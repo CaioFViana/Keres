@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '@keres/db';
-import { gallery } from '@keres/db/src/schema';
+import { db, gallery } from '@keres/db'; // Import db and gallery table
 import { Gallery } from '@domain/entities/Gallery';
 import { IGalleryRepository } from '@domain/repositories/IGalleryRepository';
 

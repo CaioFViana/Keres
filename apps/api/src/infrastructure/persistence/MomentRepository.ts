@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '@keres/db';
-import { moments } from '@keres/db/src/schema';
+import { db, moments } from '@keres/db'; // Import db and moments table
 import { Moment } from '@domain/entities/Moment';
 import { IMomentRepository } from '@domain/repositories/IMomentRepository';
 

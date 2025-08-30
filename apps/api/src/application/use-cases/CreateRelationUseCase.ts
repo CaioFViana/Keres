@@ -1,12 +1,12 @@
-import { CreateRelationDTO, RelationProfileDTO } from '@application/dtos/RelationDTOs';
-import { IRelationRepository } from '@domain/repositories/IRelationRepository';
 import { Relation } from '@domain/entities/Relation';
+import { IRelationRepository } from '@domain/repositories/IRelationRepository';
 import { ulid } from 'ulid';
+import { RelationCreatePayload, RelationResponse } from '@keres/shared';
 
 export class CreateRelationUseCase {
   constructor(private readonly relationRepository: IRelationRepository) {}
 
-  async execute(data: CreateRelationDTO): Promise<RelationProfileDTO> {
+  async execute(data: RelationCreatePayload): Promise<RelationResponse> {
     const newRelation: Relation = {
       id: ulid(),
       charIdSource: data.charIdSource,

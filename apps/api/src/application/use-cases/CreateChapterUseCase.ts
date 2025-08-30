@@ -1,12 +1,12 @@
-import { CreateChapterDTO, ChapterProfileDTO } from '@application/dtos/ChapterDTOs';
-import { IChapterRepository } from '@domain/repositories/IChapterRepository';
 import { Chapter } from '@domain/entities/Chapter';
+import { IChapterRepository } from '@domain/repositories/IChapterRepository';
 import { ulid } from 'ulid';
+import { ChapterCreatePayload, ChapterResponse } from '@keres/shared';
 
 export class CreateChapterUseCase {
   constructor(private readonly chapterRepository: IChapterRepository) {}
 
-  async execute(data: CreateChapterDTO): Promise<ChapterProfileDTO> {
+  async execute(data: ChapterCreatePayload): Promise<ChapterResponse> {
     const newChapter: Chapter = {
       id: ulid(),
       storyId: data.storyId,

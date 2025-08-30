@@ -1,11 +1,11 @@
-import { ChapterProfileDTO } from '@application/dtos/ChapterDTOs';
 import { IChapterRepository } from '@domain/repositories/IChapterRepository';
+import { ChapterResponse } from '@keres/shared';
 
 export class GetChapterUseCase {
   constructor(private readonly chapterRepository: IChapterRepository) {}
 
-  async execute(chapterId: string): Promise<ChapterProfileDTO | null> {
-    const chapter = await this.chapterRepository.findById(chapterId);
+  async execute(id: string): Promise<ChapterResponse | null> {
+    const chapter = await this.chapterRepository.findById(id);
     if (!chapter) {
       return null;
     }

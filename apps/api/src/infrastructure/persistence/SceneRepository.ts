@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '@keres/db';
-import { scenes } from '@keres/db/src/schema';
+import { db, scenes } from '@keres/db'; // Import db and scenes table
 import { Scene } from '@domain/entities/Scene';
 import { ISceneRepository } from '@domain/repositories/ISceneRepository';
 

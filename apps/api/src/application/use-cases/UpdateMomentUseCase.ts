@@ -1,24 +1,22 @@
-import { UpdateMomentDTO, MomentProfileDTO } from '@application/dtos/MomentDTOs';
 import { IMomentRepository } from '@domain/repositories/IMomentRepository';
+import { MomentUpdatePayload, MomentResponse } from '@keres/shared';
 
 export class UpdateMomentUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
-  async execute(data: UpdateMomentDTO): Promise<MomentProfileDTO | null> {
+  async execute(data: MomentUpdatePayload): Promise<MomentResponse | null> {
     const existingMoment = await this.momentRepository.findById(data.id);
-    if (!existingMoment || existingMoment.sceneId !== data.sceneId) {
-      // Moment not found or does not belong to the specified scene
-      return null;
+    if (!existingMoment) {
+      return null; // Moment not found
+    }
+    // Add ownership check
+    if (data.sceneId && existingMoment.sceneId !== data.sceneId) {
+      return null; // Moment does not belong to this scene
     }
 
     const updatedMoment = {
       ...existingMoment,
-      name: data.name ?? existingMoment.name,
-      location: data.location ?? existingMoment.location,
-      index: data.index ?? existingMoment.index,
-      summary: data.summary ?? existingMoment.summary,
-      isFavorite: data.isFavorite ?? existingMoment.isFavorite,
-      extraNotes: data.extraNotes ?? existingMoment.extraNotes,
+      ...data,
       updatedAt: new Date(),
     };
 

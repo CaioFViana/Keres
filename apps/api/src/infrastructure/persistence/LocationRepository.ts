@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '@keres/db';
-import { locations } from '@keres/db/src/schema';
+import { db, locations } from '@keres/db'; // Import db and locations table
 import { Location } from '@domain/entities/Location';
 import { ILocationRepository } from '@domain/repositories/ILocationRepository';
 

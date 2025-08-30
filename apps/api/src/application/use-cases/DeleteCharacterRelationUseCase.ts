@@ -3,13 +3,12 @@ import { ICharacterRelationRepository } from '@domain/repositories/ICharacterRel
 export class DeleteCharacterRelationUseCase {
   constructor(private readonly characterRelationRepository: ICharacterRelationRepository) {}
 
-  async execute(relationId: string): Promise<boolean> {
-    const existingCharacterRelation = await this.characterRelationRepository.findById(relationId);
+  async execute(id: string): Promise<boolean> {
+    const existingCharacterRelation = await this.characterRelationRepository.findById(id);
     if (!existingCharacterRelation) {
-      return false;
+      return false; // Character relation not found
     }
-
-    await this.characterRelationRepository.delete(relationId);
+    await this.characterRelationRepository.delete(id);
     return true;
   }
 }

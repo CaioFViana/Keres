@@ -1,7 +1,7 @@
 import type { Story } from '@domain/entities/Story'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 
-import { db, stories } from '@keres/db' // Import db and stories table
+import { db, story } from '@keres/db' // Import db and stories table
 import { eq } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
@@ -12,7 +12,7 @@ export class StoryRepository implements IStoryRepository {
   async findById(id: string): Promise<Story | null> {
     console.log('StoryRepository.findById called.')
     try {
-      const result = await db.select().from(stories).where(eq(stories.id, id)).limit(1)
+      const result = await db.select().from(story).where(eq(story.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
       console.error('Error in StoryRepository.findById:', error)
@@ -23,7 +23,7 @@ export class StoryRepository implements IStoryRepository {
   async findByUserId(userId: string): Promise<Story[]> {
     console.log('StoryRepository.findByUserId called.')
     try {
-      const results = await db.select().from(stories).where(eq(stories.userId, userId))
+      const results = await db.select().from(story).where(eq(story.userId, userId))
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in StoryRepository.findByUserId:', error)
@@ -34,7 +34,7 @@ export class StoryRepository implements IStoryRepository {
   async save(storyData: Story): Promise<void> {
     console.log('StoryRepository.save called.')
     try {
-      await db.insert(stories).values(this.toPersistence(storyData))
+      await db.insert(story).values(this.toPersistence(storyData))
     } catch (error) {
       console.error('Error in StoryRepository.save:', error)
       throw error
@@ -45,9 +45,9 @@ export class StoryRepository implements IStoryRepository {
     console.log('StoryRepository.update called.')
     try {
       await db
-        .update(stories)
+        .update(story)
         .set(this.toPersistence(storyData))
-        .where(eq(stories.id, storyData.id))
+        .where(eq(story.id, storyData.id))
     } catch (error) {
       console.error('Error in StoryRepository.update:', error)
       throw error
@@ -57,14 +57,14 @@ export class StoryRepository implements IStoryRepository {
   async delete(id: string): Promise<void> {
     console.log('StoryRepository.delete called.')
     try {
-      await db.delete(stories).where(eq(stories.id, id))
+      await db.delete(story).where(eq(story.id, id))
     } catch (error) {
       console.error('Error in StoryRepository.delete:', error)
       throw error
     }
   }
 
-  private toDomain(data: typeof stories.$inferSelect): Story {
+  private toDomain(data: typeof story.$inferSelect): Story {
     console.log('StoryRepository.toDomain called.')
     return {
       id: data.id,
@@ -80,7 +80,7 @@ export class StoryRepository implements IStoryRepository {
     }
   }
 
-  private toPersistence(storyData: Story): typeof stories.$inferInsert {
+  private toPersistence(storyData: Story): typeof story.$inferInsert {
     console.log('StoryRepository.toPersistence called.')
     return {
       id: storyData.id,

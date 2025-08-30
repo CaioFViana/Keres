@@ -1,0 +1,19 @@
+{
+  "name": "keres-story-organizer",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "echo \"Run specific app/package dev script, e.g., bun --filter=./apps/api dev\"",
+    "build": "echo \"Run specific app/package build script\"",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^1.2.2",
+    "@vitest/coverage-v8": "^1.2.2"
+  }
+}

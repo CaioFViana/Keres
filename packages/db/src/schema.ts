@@ -197,3 +197,43 @@ export const worldRules = pgTable('world_rules', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+export const notes = pgTable('notes', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => story.id),
+  title: text('title').notNull(),
+  body: text('body'), // Can be a very long text
+  galleryId: text('gallery_id').references(() => gallery.id), // FK to gallery.id, nullable
+  isFavorite: boolean('is_favorite').default(false).notNull(),
+  extraNotes: text('extra_notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const tags = pgTable('tags', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => story.id),
+  name: text('name').notNull(),
+  color: text('color'),
+  isFavorite: boolean('is_favorite').default(false).notNull(),
+  extraNotes: text('extra_notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const suggestions = pgTable('suggestions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
+  scope: text('scope').notNull(), // "global" | "story" - enforced at application level
+  storyId: text('story_id').references(() => story.id), // Nullable if scope is "global"
+  type: text('type').notNull(),
+  value: text('value').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})

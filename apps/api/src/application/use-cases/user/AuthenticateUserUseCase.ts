@@ -1,11 +1,13 @@
 import type { IUserRepository } from '@domain/repositories/IUserRepository'
 import type { IPasswordHasherService } from '@domain/services/IPasswordHasherService'
+import type { IJwtService } from '@domain/services/IJwtService' // Added
 import type { UserLoginPayload, UserProfileResponse } from '@keres/shared'
 
 export class AuthenticateUserUseCase {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly passwordHasher: IPasswordHasherService,
+    private readonly jwtService: IJwtService, // Added
   ) {}
 
   async execute(data: UserLoginPayload): Promise<UserProfileResponse | null> {
@@ -19,11 +21,13 @@ export class AuthenticateUserUseCase {
       return null // Invalid password
     }
 
+    const token = await this.jwtService.generateToken({ userId: user.id, username: user.username }, '1h'); // Generate token
     return {
       id: user.id,
       username: user.username,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      token, // Include token
     }
   }
 }

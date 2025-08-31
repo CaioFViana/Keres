@@ -9,7 +9,8 @@
   "dependencies": {
     "hono": "^4.2.3",
     "drizzle-orm": "^0.29.3",
-    "@keres/db": "workspace:*"
+    "@keres/db": "workspace:*",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@types/bun": "^1.1.1",

@@ -14,6 +14,10 @@ import sceneRoutes from './presentation/routes/SceneRoutes'
 import storyRoutes from './presentation/routes/StoryRoutes'
 import userRoutes from './presentation/routes/UserRoutes'
 import worldRuleRoutes from './presentation/routes/WorldRuleRoutes' // Added
+import noteRoutes from './presentation/routes/NoteRoutes' // Added
+import tagRoutes from './presentation/routes/TagRoutes' // Added
+import suggestionRoutes from './presentation/routes/SuggestionRoutes' // Added
+import { authMiddleware } from './presentation/middlewares/AuthMiddleware' // Added
 
 const app = new OpenAPIHono() // Change Hono to OpenAPIHono
 
@@ -26,7 +30,9 @@ app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
 
-app.route('/users', userRoutes)
+app.route('/users', userRoutes) // Public routes
+app.use(authMiddleware) // Apply middleware to all subsequent routes
+
 app.route('/stories', storyRoutes)
 app.route('/characters', characterRoutes)
 app.route('/chapters', chapterRoutes)
@@ -39,6 +45,9 @@ app.route('/character-moments', characterMomentRoutes)
 app.route('/character-relations', characterRelationRoutes)
 app.route('/choices', choiceRoutes) // Added
 app.route('/world-rules', worldRuleRoutes) // Added
+app.route('/notes', noteRoutes) // Added
+app.route('/tags', tagRoutes) // Added
+app.route('/suggestions', suggestionRoutes) // Added
 
 // Define OpenAPI document metadata
 app.doc('/openapi.json', {

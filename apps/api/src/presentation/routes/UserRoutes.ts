@@ -6,6 +6,7 @@ import {
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher'
+import { JwtService } from '@infrastructure/services/JwtService' // Added
 import { UserLoginSchema, UserProfileSchema, UserRegisterSchema } from '@keres/shared' // Import Zod schemas and UserProfileSchema
 import { UserController } from '@presentation/controllers/UserController'
 import { z } from 'zod' // Import z for defining parameters
@@ -22,7 +23,9 @@ const passwordHasher = new BcryptPasswordHasher()
 console.log('Instantiating CreateUserUseCase...')
 const createUserUseCase = new CreateUserUseCase(userRepository, passwordHasher)
 console.log('Instantiating AuthenticateUserUseCase...')
-const authenticateUserUseCase = new AuthenticateUserUseCase(userRepository, passwordHasher)
+console.log('Instantiating JwtService...') // Added
+const jwtService = new JwtService() // Added
+const authenticateUserUseCase = new AuthenticateUserUseCase(userRepository, passwordHasher, jwtService) // Modified
 console.log('Instantiating GetUserProfileUseCase...')
 const getUserProfileUseCase = new GetUserProfileUseCase(userRepository)
 
@@ -118,7 +121,7 @@ userRoutes.openapi(
         description: 'Login successful',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string(), token: z.string().optional() }), // Assuming a token or success message
+            schema: UserProfileSchema, // Changed to UserProfileSchema
           },
         },
       },
@@ -145,8 +148,8 @@ userRoutes.openapi(
     const body = await c.req.json()
     const data = UserLoginSchema.parse(body)
     try {
-      await userController.authenticateUser(data)
-      return c.json({ message: 'Login successful' }, 200)
+      const userProfile = await userController.authenticateUser(data) // Modified
+      return c.json(userProfile, 200) // Modified
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 401)

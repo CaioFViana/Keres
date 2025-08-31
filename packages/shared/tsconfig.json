@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    
+
     "outDir": "./dist", // Added
     "declaration": true, // Added, to generate .d.ts files
     "noEmit": false // Changed to false

@@ -5,15 +5,15 @@ import {
   GetMomentUseCase,
   UpdateMomentUseCase,
 } from '@application/use-cases'
-import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import { MomentRepository } from '@infrastructure/persistence/MomentRepository'
-import { MomentCreateSchema, MomentResponseSchema, MomentUpdateSchema } from '@keres/shared' // Import MomentResponseSchema
+import { CreateMomentSchema, MomentResponseSchema, UpdateMomentSchema } from '@keres/shared'
 import { MomentController } from '@presentation/controllers/MomentController'
-import { z } from 'zod' // Import z for defining parameters
+import { z } from 'zod'
 
 console.log('Initializing MomentRoutes...')
 
-const momentRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
+export const momentRoutes = new OpenAPIHono()
 
 // Dependencies for MomentController
 console.log('Instantiating MomentRepository...')
@@ -53,12 +53,12 @@ momentRoutes.openapi(
     method: 'post',
     path: '/',
     summary: 'Create a new moment',
-    description: 'Creates a new moment within a scene.',
+    description: 'Creates a new moment for a scene.',
     request: {
       body: {
         content: {
           'application/json': {
-            schema: MomentCreateSchema,
+            schema: CreateMomentSchema,
           },
         },
       },
@@ -93,10 +93,10 @@ momentRoutes.openapi(
   }),
   async (c) => {
     const body = await c.req.json()
-    const data = MomentCreateSchema.parse(body)
+    const data = CreateMomentSchema.parse(body)
     try {
-      const moment = await momentController.createMoment(data)
-      return c.json(moment, 201)
+      const newMoment = await momentController.createMoment(data)
+      return c.json(newMoment, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)
@@ -125,6 +125,14 @@ momentRoutes.openapi(
           },
         },
       },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
       404: {
         description: 'Moment not found',
         content: {
@@ -148,62 +156,13 @@ momentRoutes.openapi(
     const params = IdParamSchema.parse(c.req.param())
     try {
       const moment = await momentController.getMoment(params.id)
+      if (!moment) {
+        return c.json({ error: 'Moment not found' }, 404)
+      }
       return c.json(moment, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
-      }
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
-  },
-)
-
-// GET /scene/:sceneId
-momentRoutes.openapi(
-  createRoute({
-    method: 'get',
-    path: '/scene/{sceneId}',
-    summary: 'Get moments by scene ID',
-    description: 'Retrieves all moments belonging to a specific scene.',
-    request: {
-      params: SceneIdParamSchema,
-    },
-    responses: {
-      200: {
-        description: 'Moments retrieved successfully',
-        content: {
-          'application/json': {
-            schema: z.array(MomentResponseSchema),
-          },
-        },
-      },
-      404: {
-        description: 'Scene not found',
-        content: {
-          'application/json': {
-            schema: z.object({ error: z.string() }),
-          },
-        },
-      },
-      500: {
-        description: 'Internal Server Error',
-        content: {
-          'application/json': {
-            schema: z.object({ error: z.string() }),
-          },
-        },
-      },
-    },
-    tags: ['Moments'],
-  }),
-  async (c) => {
-    const params = SceneIdParamSchema.parse(c.req.param())
-    try {
-      const moments = await momentController.getMomentsBySceneId(params.sceneId)
-      return c.json(moments, 200)
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
@@ -222,7 +181,7 @@ momentRoutes.openapi(
       body: {
         content: {
           'application/json': {
-            schema: MomentUpdateSchema,
+            schema: UpdateMomentSchema,
           },
         },
       },
@@ -266,13 +225,16 @@ momentRoutes.openapi(
   async (c) => {
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = MomentUpdateSchema.parse(body)
+    const data = UpdateMomentSchema.parse(body)
     try {
       const updatedMoment = await momentController.updateMoment(params.id, data)
+      if (!updatedMoment) {
+        return c.json({ error: 'Moment not found' }, 404)
+      }
       return c.json(updatedMoment, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
@@ -288,13 +250,20 @@ momentRoutes.openapi(
     description: 'Deletes a moment by its unique ID.',
     request: {
       params: IdParamSchema,
-      query: SceneIdParamSchema,
     },
     responses: {
       204: {
-        description: 'Moment deleted successfully (No Content)',
+        description: 'Moment deleted successfully',
       },
-      404: {
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: { // Added 404 response
         description: 'Moment not found',
         content: {
           'application/json': {
@@ -315,13 +284,64 @@ momentRoutes.openapi(
   }),
   async (c) => {
     const params = IdParamSchema.parse(c.req.param())
-    const query = SceneIdParamSchema.parse(c.req.query())
     try {
-      await momentController.deleteMoment(params.id, query.sceneId)
+      await momentController.deleteMoment(params.id) // Just call the method
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// GET /by-scene/{sceneId}
+momentRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/by-scene/{sceneId}',
+    summary: 'Get moments by scene ID',
+    description: 'Retrieves all moments associated with a specific scene.',
+    request: {
+      params: SceneIdParamSchema,
+    },
+    responses: {
+      200: {
+        description: 'Moments retrieved successfully',
+        content: {
+          'application/json': {
+            schema: z.array(MomentResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Moments'],
+  }),
+  async (c) => {
+    const params = SceneIdParamSchema.parse(c.req.param())
+    try {
+      const moments = await momentController.getMomentsBySceneId(params.sceneId)
+      return c.json(moments, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

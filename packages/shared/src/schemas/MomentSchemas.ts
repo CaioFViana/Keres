@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const MomentCreateSchema = z.object({
+export const CreateMomentSchema = z.object({
   sceneId: z.string(),
   name: z.string().min(1, 'Name cannot be empty'),
   location: z.string().optional(),
@@ -10,7 +10,7 @@ export const MomentCreateSchema = z.object({
   extraNotes: z.string().optional(),
 })
 
-export const MomentUpdateSchema = z.object({
+export const UpdateMomentSchema = z.object({
   id: z.string(),
   sceneId: z.string().optional(), // sceneId should not be updatable in practice
   name: z.string().min(1, 'Name cannot be empty').optional(),
@@ -34,6 +34,6 @@ export const MomentResponseSchema = z.object({
   updatedAt: z.date(),
 })
 
-export type MomentCreatePayload = z.infer<typeof MomentCreateSchema>
-export type MomentUpdatePayload = z.infer<typeof MomentUpdateSchema>
+export type CreateMomentPayload = z.infer<typeof CreateMomentSchema>
+export type UpdateMomentPayload = z.infer<typeof UpdateMomentSchema>
 export type MomentResponse = z.infer<typeof MomentResponseSchema>

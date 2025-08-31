@@ -2,11 +2,10 @@ import type { CreateChoiceDTO, UpdateChoiceDTO } from '@application/dtos/ChoiceD
 import type { Choice } from '@domain/entities/Choice'
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 
-import { eq } from 'drizzle-orm'
-import { ulid } from 'ulid'
-
 import { db } from '@keres/db'
 import { choices } from '@keres/db/src/schema'
+import { eq } from 'drizzle-orm'
+import { ulid } from 'ulid'
 
 export class ChoiceRepository implements IChoiceRepository {
   async create(data: CreateChoiceDTO): Promise<Choice> {

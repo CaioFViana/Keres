@@ -1,14 +1,15 @@
+import {
+  CreateChoiceUseCase,
+  DeleteChoiceUseCase,
+  GetChoicesBySceneIdUseCase,
+  GetChoiceUseCase,
+  UpdateChoiceUseCase,
+} from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { z } from 'zod' // Import z for defining parameters
-
-import { CreateChoiceSchema, UpdateChoiceSchema, ChoiceResponseSchema } from '@keres/shared' // Use alias
-import { ChoiceController } from '@presentation/controllers/ChoiceController' // Use alias
-import { CreateChoiceUseCase } from '@application/use-cases'
-import { DeleteChoiceUseCase } from '@application/use-cases'
-import { GetChoicesBySceneIdUseCase } from '@application/use-cases'
-import { GetChoiceUseCase } from '@application/use-cases'
-import { UpdateChoiceUseCase } from '@application/use-cases'
 import { ChoiceRepository } from '@infrastructure/persistence/ChoiceRepository'
+import { ChoiceResponseSchema, CreateChoiceSchema, UpdateChoiceSchema } from '@keres/shared' // Use alias
+import { ChoiceController } from '@presentation/controllers/ChoiceController' // Use alias
+import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing ChoiceRoutes...')
 
@@ -124,7 +125,8 @@ choiceRoutes.openapi(
           },
         },
       },
-      400: { // Added 400 response
+      400: {
+        // Added 400 response
         description: 'Bad Request',
         content: {
           'application/json': {

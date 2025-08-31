@@ -1,17 +1,13 @@
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
-import type { MomentResponse, MomentUpdatePayload } from '@keres/shared'
+import type { MomentResponse, UpdateMomentPayload } from '@keres/shared'
 
 export class UpdateMomentUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
-  async execute(data: MomentUpdatePayload): Promise<MomentResponse | null> {
+  async execute(data: UpdateMomentPayload): Promise<MomentResponse | null> {
     const existingMoment = await this.momentRepository.findById(data.id)
     if (!existingMoment) {
       return null // Moment not found
-    }
-    // Add ownership check
-    if (data.sceneId && existingMoment.sceneId !== data.sceneId) {
-      return null // Moment does not belong to this scene
     }
 
     const updatedMoment = {

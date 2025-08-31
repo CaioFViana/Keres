@@ -1,6 +1,6 @@
+import type { ChoiceProfileDTO, UpdateChoiceDTO } from '@application/dtos/ChoiceDTOs'
 import type { Choice } from '@domain/entities/Choice'
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
-import type { ChoiceProfileDTO, UpdateChoiceDTO } from '@application/dtos/ChoiceDTOs'
 
 export class UpdateChoiceUseCase {
   constructor(private choiceRepository: IChoiceRepository) {}

@@ -1,13 +1,13 @@
 import type { Moment } from '@domain/entities/Moment'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
-import type { MomentCreatePayload, MomentResponse } from '@keres/shared'
+import type { CreateMomentPayload, MomentResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'
 
 export class CreateMomentUseCase {
   constructor(private readonly momentRepository: IMomentRepository) {}
 
-  async execute(data: MomentCreatePayload): Promise<MomentResponse> {
+  async execute(data: CreateMomentPayload): Promise<MomentResponse> {
     const newMoment: Moment = {
       id: ulid(),
       sceneId: data.sceneId,

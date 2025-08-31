@@ -8,9 +8,9 @@ import type {
 import type z from 'zod'
 
 import {
-  type MomentCreateSchema,
+  type CreateMomentSchema, // Renamed
   MomentResponseSchema,
-  type MomentUpdateSchema,
+  type UpdateMomentSchema, // Renamed
 } from '@keres/shared'
 
 export class MomentController {
@@ -22,7 +22,7 @@ export class MomentController {
     private readonly getMomentsBySceneIdUseCase: GetMomentsBySceneIdUseCase,
   ) {}
 
-  async createMoment(data: z.infer<typeof MomentCreateSchema>) {
+  async createMoment(data: z.infer<typeof CreateMomentSchema>) {
     const moment = await this.createMomentUseCase.execute(data)
     return MomentResponseSchema.parse(moment)
   }
@@ -40,22 +40,19 @@ export class MomentController {
     return moments.map((moment) => MomentResponseSchema.parse(moment))
   }
 
-  async updateMoment(id: string, data: z.infer<typeof MomentUpdateSchema>) {
+  async updateMoment(id: string, data: z.infer<typeof UpdateMomentSchema>) {
     const { id: dataId, ...updateData } = data
     const updatedMoment = await this.updateMomentUseCase.execute({ id, ...updateData })
     if (!updatedMoment) {
-      throw new Error('Moment not found or does not belong to the specified scene')
+      throw new Error('Moment not found') // Simplified error message
     }
     return MomentResponseSchema.parse(updatedMoment)
   }
 
-  async deleteMoment(id: string, sceneId: string) {
-    if (!sceneId) {
-      throw new Error('sceneId is required for deletion')
-    }
-    const deleted = await this.deleteMomentUseCase.execute(id, sceneId)
+  async deleteMoment(id: string) {
+    const deleted = await this.deleteMomentUseCase.execute(id)
     if (!deleted) {
-      throw new Error('Moment not found or does not belong to the specified scene')
+      throw new Error('Moment not found') // Simplified error message
     }
     return
   }

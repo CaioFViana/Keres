@@ -11,6 +11,7 @@ export class CreateStoryUseCase {
     const newStory: Story = {
       id: ulid(),
       userId: data.userId,
+      type: data.type || 'linear', // Added type field
       title: data.title,
       summary: data.summary || null,
       genre: data.genre || null,
@@ -26,6 +27,7 @@ export class CreateStoryUseCase {
     return {
       id: newStory.id,
       userId: newStory.userId,
+      type: newStory.type, // Added type field
       title: newStory.title,
       summary: newStory.summary,
       genre: newStory.genre,

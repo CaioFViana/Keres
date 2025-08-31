@@ -7,6 +7,7 @@
     "dev": "echo \"Run specific app/package dev script, e.g., bun --filter=./apps/api dev\"",
     "dev:back": "bun --filter=./apps/api dev",
     "build": "echo \"Run specific app/package build script\"",
+    "build:shared": "cd packages/shared && tsc",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "start:back": "bun run apps/api/src/index.ts",

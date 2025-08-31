@@ -8,8 +8,10 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    
+    "outDir": "./dist", // Added
+    "declaration": true, // Added, to generate .d.ts files
+    "noEmit": false // Changed to false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

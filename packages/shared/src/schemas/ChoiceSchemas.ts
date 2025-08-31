@@ -1,0 +1,30 @@
+import { z } from 'zod'
+
+export const ChoiceCreateSchema = z.object({
+  sceneId: z.string(),
+  nextSceneId: z.string(),
+  text: z.string().min(1, 'Choice text cannot be empty'),
+  isImplicit: z.boolean().optional().default(false),
+})
+
+export const ChoiceUpdateSchema = z.object({
+  id: z.string(),
+  sceneId: z.string().optional(),
+  nextSceneId: z.string().optional(),
+  text: z.string().min(1, 'Choice text cannot be empty').optional(),
+  isImplicit: z.boolean().optional(),
+})
+
+export const ChoiceResponseSchema = z.object({
+  id: z.string(),
+  sceneId: z.string(),
+  nextSceneId: z.string(),
+  text: z.string(),
+  isImplicit: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+})
+
+export type ChoiceCreatePayload = z.infer<typeof ChoiceCreateSchema>
+export type ChoiceUpdatePayload = z.infer<typeof ChoiceUpdateSchema>
+export type ChoiceResponse = z.infer<typeof ChoiceResponseSchema>

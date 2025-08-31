@@ -18,7 +18,8 @@
       "@application/*": ["./src/application/*"],
       "@infrastructure/*": ["./src/infrastructure/*"],
       "@presentation/*": ["./src/presentation/*"],
-      "@shared/*": ["./src/shared/*"]
+      "@keres/shared": ["../../packages/shared"], // Corrected alias for @keres/shared
+      "@keres/db/*": ["../../packages/db/*"] // Keep this
     }
   },
   "include": ["src/**/*.ts"],

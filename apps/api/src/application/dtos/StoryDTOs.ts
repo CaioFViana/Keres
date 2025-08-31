@@ -1,5 +1,6 @@
 export interface CreateStoryDTO {
   userId: string
+  type?: 'linear' | 'branching' // Default to 'linear'
   title: string
   summary?: string
   genre?: string
@@ -11,6 +12,7 @@ export interface CreateStoryDTO {
 export interface UpdateStoryDTO {
   id: string
   userId: string
+  type?: 'linear' | 'branching'
   title?: string
   summary?: string
   genre?: string
@@ -22,6 +24,7 @@ export interface UpdateStoryDTO {
 export interface StoryProfileDTO {
   id: string
   userId: string
+  type: 'linear' | 'branching'
   title: string
   summary: string | null
   genre: string | null

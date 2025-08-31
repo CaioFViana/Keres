@@ -5,6 +5,7 @@ import chapterRoutes from './presentation/routes/ChapterRoutes'
 import characterMomentRoutes from './presentation/routes/CharacterMomentRoutes'
 import characterRelationRoutes from './presentation/routes/CharacterRelationRoutes'
 import characterRoutes from './presentation/routes/CharacterRoutes'
+import choiceRoutes from './presentation/routes/ChoiceRoutes' // Added
 import galleryRoutes from './presentation/routes/GalleryRoutes'
 import locationRoutes from './presentation/routes/LocationRoutes'
 import momentRoutes from './presentation/routes/MomentRoutes'
@@ -35,6 +36,7 @@ app.route('/gallery', galleryRoutes)
 app.route('/relations', relationRoutes)
 app.route('/character-moments', characterMomentRoutes)
 app.route('/character-relations', characterRelationRoutes)
+app.route('/choices', choiceRoutes) // Added
 
 // Define OpenAPI document metadata
 app.doc('/openapi.json', {

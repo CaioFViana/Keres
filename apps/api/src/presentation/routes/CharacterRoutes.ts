@@ -291,7 +291,7 @@ characterRoutes.openapi(
     summary: 'Delete a character by ID',
     description: 'Deletes a character by its unique ID.',
     request: {
-      params: IdParamSchema
+      params: IdParamSchema,
     },
     responses: {
       204: {

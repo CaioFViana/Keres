@@ -14,6 +14,7 @@ export const story = pgTable('story', {
   userId: text('user_id')
     .notNull()
     .references(() => users.id),
+  type: text('type').default('linear').notNull(), // 'linear' | 'branching'
   title: text('title').notNull(),
   summary: text('summary'),
   genre: text('genre'),
@@ -165,6 +166,20 @@ export const characterRelations = pgTable('character_relations', {
     .notNull()
     .references(() => characters.id),
   relationType: text('relation_type').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const choices = pgTable('choices', {
+  id: text('id').primaryKey(),
+  sceneId: text('scene_id')
+    .notNull()
+    .references(() => scenes.id),
+  nextSceneId: text('next_scene_id')
+    .notNull()
+    .references(() => scenes.id),
+  text: text('text').notNull(),
+  isImplicit: boolean('is_implicit').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

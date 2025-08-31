@@ -25,6 +25,7 @@ export class UpdateStoryUseCase {
     return {
       id: updatedStory.id,
       userId: updatedStory.userId,
+      type: updatedStory.type, // Added type field
       title: updatedStory.title,
       summary: updatedStory.summary,
       genre: updatedStory.genre,

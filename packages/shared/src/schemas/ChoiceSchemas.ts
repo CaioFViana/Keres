@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
-export const ChoiceCreateSchema = z.object({
+export const CreateChoiceSchema = z.object({
   sceneId: z.string(),
   nextSceneId: z.string(),
   text: z.string().min(1, 'Choice text cannot be empty'),
   isImplicit: z.boolean().optional().default(false),
 })
 
-export const ChoiceUpdateSchema = z.object({
+export const UpdateChoiceSchema = z.object({
   id: z.string(),
   sceneId: z.string().optional(),
   nextSceneId: z.string().optional(),
@@ -25,6 +25,6 @@ export const ChoiceResponseSchema = z.object({
   updatedAt: z.date(),
 })
 
-export type ChoiceCreatePayload = z.infer<typeof ChoiceCreateSchema>
-export type ChoiceUpdatePayload = z.infer<typeof ChoiceUpdateSchema>
+export type CreateChoicePayload = z.infer<typeof CreateChoiceSchema>
+export type UpdateChoicePayload = z.infer<typeof UpdateChoiceSchema>
 export type ChoiceResponse = z.infer<typeof ChoiceResponseSchema>

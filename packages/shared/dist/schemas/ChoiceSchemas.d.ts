@@ -1,11 +1,11 @@
 import { z } from 'zod';
-export declare const ChoiceCreateSchema: z.ZodObject<{
+export declare const CreateChoiceSchema: z.ZodObject<{
     sceneId: z.ZodString;
     nextSceneId: z.ZodString;
     text: z.ZodString;
     isImplicit: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
 }, z.core.$strip>;
-export declare const ChoiceUpdateSchema: z.ZodObject<{
+export declare const UpdateChoiceSchema: z.ZodObject<{
     id: z.ZodString;
     sceneId: z.ZodOptional<z.ZodString>;
     nextSceneId: z.ZodOptional<z.ZodString>;
@@ -21,6 +21,6 @@ export declare const ChoiceResponseSchema: z.ZodObject<{
     createdAt: z.ZodDate;
     updatedAt: z.ZodDate;
 }, z.core.$strip>;
-export type ChoiceCreatePayload = z.infer<typeof ChoiceCreateSchema>;
-export type ChoiceUpdatePayload = z.infer<typeof ChoiceUpdateSchema>;
+export type CreateChoicePayload = z.infer<typeof CreateChoiceSchema>;
+export type UpdateChoicePayload = z.infer<typeof UpdateChoiceSchema>;
 export type ChoiceResponse = z.infer<typeof ChoiceResponseSchema>;

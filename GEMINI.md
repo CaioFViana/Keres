@@ -28,8 +28,12 @@ Based on the `docs/project_plan.md`, the project adheres to the following conven
 - **Monorepo Structure:** Organized into `apps/` (for distinct applications like API, client) and `packages/` (for shared code, database schemas, and configurations).
 - **API Development:** Utilizes Hono for REST/JSON routes, Zod for input/output validation, Drizzle ORM for database interactions, and ULID for unique identifiers.
 - **Frontend Development:** Utilizes React Native, Expo, and React Native Web for a unified codebase across web and mobile platforms, with a focus on offline capabilities via local SQLite and future synchronization with the online API.
-- **Data Modeling:** Employs a detailed data schema with ULID primary keys, including fields for `is_favorite`, `extra_notes`, `created_at`, and `updated_at` across most entities to support user preferences and tracking.
-- **Customizable Lists (Enumerators):** A flexible system for managing predefined and user-customizable lists (e.g., genres, races, genders) with support for both global and story-specific scopes.
+
+## Data Modeling
+
+- **Dynamic Story Structures:** The project plans to support both linear and branching (interactive fiction/CYOA) narrative structures. This involves introducing a `Choice` entity and a `type` flag for `Story` entities, allowing for flexible story representation without disrupting the existing linear flow. More details can be found in `docs/dynamic_story_structure.md`.
+- Employs a detailed data schema with ULID primary keys, including fields for `is_favorite`, `extra_notes`, `created_at`, and `updated_at` across most entities to support user preferences and tracking.
+- Customizable Lists (Enumerators): A flexible system for managing predefined and user-customizable lists (e.g., genres, races, genders) with support for both global and story-specific scopes.
 - **Testing:** Uses Vitest as the testing framework, with test files typically located in a `tests/` directory at the root, or within individual app/package directories.
 
 ## Next Steps (from `docs/project_plan.md`)

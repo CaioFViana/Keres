@@ -5,11 +5,14 @@ import {
   GetCharacterUseCase,
   UpdateCharacterUseCase,
 } from '@application/use-cases'
-import { zValidator } from '@hono/zod-validator'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { CharacterRepository } from '@infrastructure/persistence/CharacterRepository'
-import { CharacterCreateSchema, CharacterUpdateSchema, CharacterResponseSchema } from '@keres/shared' // Import CharacterResponseSchema
+import {
+  CharacterCreateSchema,
+  CharacterResponseSchema,
+  CharacterUpdateSchema,
+} from '@keres/shared' // Import CharacterResponseSchema
 import { CharacterController } from '@presentation/controllers/CharacterController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing CharacterRoutes...')
@@ -77,14 +80,22 @@ characterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Characters'],
   }),
-  (c) => characterController.createCharacter(c),
+  async (c) => await characterController.createCharacter(c),
 )
 
 // GET /:id
@@ -97,7 +108,7 @@ characterRoutes.openapi(
     request: {
       params: IdParamSchema,
     },
-    responses: {
+        responses: {
       200: {
         description: 'Character retrieved successfully',
         content: {
@@ -110,14 +121,22 @@ characterRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Characters'],
   }),
-  (c) => characterController.getCharacter(c),
+  async (c) => await characterController.getCharacter(c),
 )
 
 // GET /story/:storyId
@@ -143,14 +162,22 @@ characterRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Characters'],
   }),
-  (c) => characterController.getCharactersByStoryId(c),
+  async (c) => await characterController.getCharactersByStoryId(c),
 )
 
 // PUT /:id
@@ -183,7 +210,7 @@ characterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -191,14 +218,22 @@ characterRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Characters'],
   }),
-  (c) => characterController.updateCharacter(c),
+  async (c) => await characterController.updateCharacter(c),
 )
 
 // DELETE /:id
@@ -219,14 +254,22 @@ characterRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Characters'],
   }),
-  (c) => characterController.deleteCharacter(c),
+  async (c) => await characterController.deleteCharacter(c),
 )
 
 console.log('CharacterRoutes initialized.')

@@ -24,7 +24,7 @@ export class StoryController {
     try {
       const story = await this.createStoryUseCase.execute(data)
       return c.json(StoryResponseSchema.parse(story), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -64,8 +64,8 @@ export class StoryController {
     try {
       const updatedStory = await this.updateStoryUseCase.execute({ id: storyId, ...data })
       return c.json(StoryResponseSchema.parse(updatedStory), 200)
-    } catch (error: any) {
-      if (error.message === 'Story not found') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Story not found') {
         return c.json({ error: error.message }, 404)
       }
       return c.json({ error: 'Internal Server Error' }, 500)

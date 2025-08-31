@@ -5,11 +5,10 @@ import {
   GetLocationUseCase,
   UpdateLocationUseCase,
 } from '@application/use-cases'
-import { zValidator } from '@hono/zod-validator'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { LocationRepository } from '@infrastructure/persistence/LocationRepository'
-import { LocationCreateSchema, LocationUpdateSchema, LocationResponseSchema } from '@keres/shared' // Import LocationResponseSchema
+import { LocationCreateSchema, LocationResponseSchema, LocationUpdateSchema } from '@keres/shared' // Import LocationResponseSchema
 import { LocationController } from '@presentation/controllers/LocationController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing LocationRoutes...')
@@ -64,7 +63,7 @@ locationRoutes.openapi(
         },
       },
     },
-    responses: {
+        responses: {
       201: {
         description: 'Location created successfully',
         content: {
@@ -77,14 +76,22 @@ locationRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Locations'],
   }),
-  (c) => locationController.createLocation(c),
+  async (c) => await locationController.createLocation(c),
 )
 
 // GET /:id
@@ -97,7 +104,7 @@ locationRoutes.openapi(
     request: {
       params: IdParamSchema,
     },
-    responses: {
+        responses: {
       200: {
         description: 'Location retrieved successfully',
         content: {
@@ -110,14 +117,22 @@ locationRoutes.openapi(
         description: 'Location not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Locations'],
   }),
-  (c) => locationController.getLocation(c),
+  async (c) => await locationController.getLocation(c),
 )
 
 // GET /story/:storyId
@@ -143,14 +158,22 @@ locationRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Locations'],
   }),
-  (c) => locationController.getLocationsByStoryId(c),
+  async (c) => await locationController.getLocationsByStoryId(c),
 )
 
 // PUT /:id
@@ -183,7 +206,7 @@ locationRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -191,14 +214,22 @@ locationRoutes.openapi(
         description: 'Location not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Locations'],
   }),
-  (c) => locationController.updateLocation(c),
+  async (c) => await locationController.updateLocation(c),
 )
 
 // DELETE /:id
@@ -219,14 +250,22 @@ locationRoutes.openapi(
         description: 'Location not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Locations'],
   }),
-  (c) => locationController.deleteLocation(c),
+  async (c) => await locationController.deleteLocation(c),
 )
 
 console.log('LocationRoutes initialized.')

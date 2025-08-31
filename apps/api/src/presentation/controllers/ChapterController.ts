@@ -24,7 +24,7 @@ export class ChapterController {
     try {
       const chapter = await this.createChapterUseCase.execute(data)
       return c.json(ChapterResponseSchema.parse(chapter), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -67,7 +67,7 @@ export class ChapterController {
         return c.json({ error: 'Chapter not found or does not belong to the specified story' }, 404)
       }
       return c.json(ChapterResponseSchema.parse(updatedChapter), 200)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }

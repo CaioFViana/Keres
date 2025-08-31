@@ -24,7 +24,7 @@ export class CharacterController {
     try {
       const character = await this.createCharacterUseCase.execute(data)
       return c.json(CharacterResponseSchema.parse(character), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -67,8 +67,8 @@ export class CharacterController {
         ...data,
       })
       return c.json(CharacterResponseSchema.parse(updatedCharacter), 200)
-    } catch (error: any) {
-      if (error.message === 'Character not found') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Character not found') {
         return c.json({ error: error.message }, 404)
       }
       return c.json({ error: 'Internal Server Error' }, 500)

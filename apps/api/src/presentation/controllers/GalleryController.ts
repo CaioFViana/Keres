@@ -26,7 +26,7 @@ export class GalleryController {
     try {
       const gallery = await this.createGalleryUseCase.execute(data)
       return c.json(GalleryResponseSchema.parse(gallery), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -86,7 +86,7 @@ export class GalleryController {
         )
       }
       return c.json(GalleryResponseSchema.parse(updatedGallery), 200)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }

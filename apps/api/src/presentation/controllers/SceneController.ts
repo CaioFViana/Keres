@@ -24,7 +24,7 @@ export class SceneController {
     try {
       const scene = await this.createSceneUseCase.execute(data)
       return c.json(SceneResponseSchema.parse(scene), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -67,7 +67,7 @@ export class SceneController {
         return c.json({ error: 'Scene not found or does not belong to the specified chapter' }, 404)
       }
       return c.json(SceneResponseSchema.parse(updatedScene), 200)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }

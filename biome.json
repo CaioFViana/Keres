@@ -23,24 +23,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": {
-        "useAwait": "off",
-        "noExplicitAny": "off",
-        "noImplicitAnyLet": "off",
-        "noDuplicateCustomProperties": "off",
-        "noArrayIndexKey": "off",
-        "noExportsInTest": "off"
-      },
       "style": {
-        "noParameterProperties": "off",
         "useImportType": "error",
         "useConst": "error"
-      },
-      "complexity": {
-        "noForEach": "off",
-        "noStaticOnlyClass": "off",
-        "noThisInStatic": "off",
-        "noUselessConstructor": "off"
       },
       "correctness": {
         "noUnusedVariables": {
@@ -48,21 +33,7 @@
           "options": {
             "ignoreRestSiblings": true
           }
-        },
-        "useUniqueElementIds": "off"
-      },
-      "a11y": {
-        "useSemanticElements": "off",
-        "noStaticElementInteractions": "off"
-      },
-      "nursery": {
-        "useSortedClasses": "off"
-      },
-      "security": {
-        "noDangerouslySetInnerHtml": "off"
-      },
-      "performance": {
-        "noAccumulatingSpread": "off"
+        }
       }
     }
   },
@@ -138,25 +109,7 @@
     {
       "includes": ["**/*.{spec,test}.{ts,tsx,js,jsx}", "**/tests/**/*.{ts,tsx,js,jsx}"],
       "linter": {
-        "rules": {
-          "suspicious": {
-            "noExplicitAny": "off"
-          },
-          "complexity": {
-            "noForEach": "off"
-          },
-          "style": {
-            "noNonNullAssertion": "off"
-          },
-          "correctness": {
-            "noUnusedVariables": {
-              "level": "off",
-              "options": {
-                "ignoreRestSiblings": true
-              }
-            }
-          }
-        }
+        "rules": {}
       }
     },
     {

@@ -24,7 +24,7 @@ export class MomentController {
     try {
       const moment = await this.createMomentUseCase.execute(data)
       return c.json(MomentResponseSchema.parse(moment), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -67,7 +67,7 @@ export class MomentController {
         return c.json({ error: 'Moment not found or does not belong to the specified scene' }, 404)
       }
       return c.json(MomentResponseSchema.parse(updatedMoment), 200)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }

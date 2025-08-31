@@ -5,11 +5,11 @@ import {
   GetSceneUseCase,
   UpdateSceneUseCase,
 } from '@application/use-cases'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { zValidator } from '@hono/zod-validator'
 import { SceneRepository } from '@infrastructure/persistence/SceneRepository'
-import { SceneCreateSchema, SceneUpdateSchema, SceneResponseSchema } from '@keres/shared' // Import SceneResponseSchema
+import { SceneCreateSchema, SceneResponseSchema, SceneUpdateSchema } from '@keres/shared' // Import SceneResponseSchema
 import { SceneController } from '@presentation/controllers/SceneController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing SceneRoutes...')
@@ -77,15 +77,22 @@ sceneRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Scenes'],
   }),
-  zValidator('json', SceneCreateSchema),
-  (c) => sceneController.createScene(c),
+  async (c) => await sceneController.createScene(c),
 )
 
 // GET /:id
@@ -111,14 +118,22 @@ sceneRoutes.openapi(
         description: 'Scene not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Scenes'],
   }),
-  (c) => sceneController.getScene(c),
+  async (c) => await sceneController.getScene(c),
 )
 
 // GET /chapter/:chapterId
@@ -144,14 +159,22 @@ sceneRoutes.openapi(
         description: 'Chapter not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Scenes'],
   }),
-  (c) => sceneController.getScenesByChapterId(c),
+  async (c) => await sceneController.getScenesByChapterId(c),
 )
 
 // PUT /:id
@@ -184,7 +207,7 @@ sceneRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -192,14 +215,22 @@ sceneRoutes.openapi(
         description: 'Scene not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Scenes'],
   }),
-  (c) => sceneController.updateScene(c),
+  async (c) => await sceneController.updateScene(c),
 )
 
 // DELETE /:id
@@ -220,14 +251,22 @@ sceneRoutes.openapi(
         description: 'Scene not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Scenes'],
   }),
-  (c) => sceneController.deleteScene(c),
+  async (c) => await sceneController.deleteScene(c),
 )
 
 console.log('SceneRoutes initialized.')

@@ -24,7 +24,7 @@ export class LocationController {
     try {
       const location = await this.createLocationUseCase.execute(data)
       return c.json(LocationResponseSchema.parse(location), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -70,7 +70,7 @@ export class LocationController {
         )
       }
       return c.json(LocationResponseSchema.parse(updatedLocation), 200)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }

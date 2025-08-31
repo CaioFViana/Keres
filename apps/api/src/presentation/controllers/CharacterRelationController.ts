@@ -24,7 +24,7 @@ export class CharacterRelationController {
     try {
       const characterRelation = await this.createCharacterRelationUseCase.execute(data)
       return c.json(CharacterRelationResponseSchema.parse(characterRelation), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -70,7 +70,7 @@ export class CharacterRelationController {
         return c.json({ error: 'Character relation not found' }, 404)
       }
       return c.json(CharacterRelationResponseSchema.parse(updatedCharacterRelation), 200)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }

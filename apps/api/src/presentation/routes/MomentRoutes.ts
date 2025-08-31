@@ -5,11 +5,10 @@ import {
   GetMomentUseCase,
   UpdateMomentUseCase,
 } from '@application/use-cases'
-import { zValidator } from '@hono/zod-validator'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { MomentRepository } from '@infrastructure/persistence/MomentRepository'
-import { MomentCreateSchema, MomentUpdateSchema, MomentResponseSchema } from '@keres/shared' // Import MomentResponseSchema
+import { MomentCreateSchema, MomentResponseSchema, MomentUpdateSchema } from '@keres/shared' // Import MomentResponseSchema
 import { MomentController } from '@presentation/controllers/MomentController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing MomentRoutes...')
@@ -64,7 +63,7 @@ momentRoutes.openapi(
         },
       },
     },
-    responses: {
+        responses: {
       201: {
         description: 'Moment created successfully',
         content: {
@@ -77,14 +76,22 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Moments'],
   }),
-  (c) => momentController.createMoment(c),
+  async (c) => await momentController.createMoment(c),
 )
 
 // GET /:id
@@ -110,14 +117,22 @@ momentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Moments'],
   }),
-  (c) => momentController.getMoment(c),
+  async (c) => await momentController.getMoment(c),
 )
 
 // GET /scene/:sceneId
@@ -143,14 +158,22 @@ momentRoutes.openapi(
         description: 'Scene not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Moments'],
   }),
-  (c) => momentController.getMomentsBySceneId(c),
+  async (c) => await momentController.getMomentsBySceneId(c),
 )
 
 // PUT /:id
@@ -183,7 +206,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -191,14 +214,22 @@ momentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Moments'],
   }),
-  (c) => momentController.updateMoment(c),
+  async (c) => await momentController.updateMoment(c),
 )
 
 // DELETE /:id
@@ -219,14 +250,22 @@ momentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Moments'],
   }),
-  (c) => momentController.deleteMoment(c),
+  async (c) => await momentController.deleteMoment(c),
 )
 
 console.log('MomentRoutes initialized.')

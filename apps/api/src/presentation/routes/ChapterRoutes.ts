@@ -5,11 +5,10 @@ import {
   GetChapterUseCase,
   UpdateChapterUseCase,
 } from '@application/use-cases'
-import { zValidator } from '@hono/zod-validator'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { ChapterRepository } from '@infrastructure/persistence/ChapterRepository'
-import { ChapterCreateSchema, ChapterUpdateSchema, ChapterResponseSchema } from '@keres/shared'
+import { ChapterCreateSchema, ChapterResponseSchema, ChapterUpdateSchema } from '@keres/shared'
 import { ChapterController } from '@presentation/controllers/ChapterController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing ChapterRoutes...')
@@ -77,14 +76,22 @@ chapterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Chapters'],
   }),
-  (c) => chapterController.createChapter(c),
+  async (c) => await chapterController.createChapter(c),
 )
 
 // GET /:id
@@ -110,14 +117,22 @@ chapterRoutes.openapi(
         description: 'Chapter not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Chapters'],
   }),
-  (c) => chapterController.getChapter(c),
+  async (c) => await chapterController.getChapter(c),
 )
 
 // GET /story/:storyId
@@ -143,14 +158,22 @@ chapterRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Chapters'],
   }),
-  (c) => chapterController.getChaptersByStoryId(c),
+  async (c) => await chapterController.getChaptersByStoryId(c),
 )
 
 // PUT /:id
@@ -183,22 +206,30 @@ chapterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
-      404: {
-        description: 'Chapter not found',
-        content: {
-          'application/json': {
-            schema: z.object({ message: z.string() }),
-          },
+     404: {
+      description: 'Chapter not found',
+      content: {
+        'application/json': {
+          schema: z.object({ error: z.string() }),
         },
       },
+  },
+  500: {
+    description: "Internal server error",
+    content: {
+      "application/json": {
+        schema: z.object({ error: z.string() }),
+      },
+    },
+  },
     },
     tags: ['Chapters'],
   }),
-  (c) => chapterController.updateChapter(c),
+  async (c) => await chapterController.updateChapter(c),
 )
 
 // DELETE /:id
@@ -219,14 +250,22 @@ chapterRoutes.openapi(
         description: 'Chapter not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Chapters'],
   }),
-  (c) => chapterController.deleteChapter(c),
+  async (c) => await chapterController.deleteChapter(c),
 )
 
 console.log('ChapterRoutes initialized.')

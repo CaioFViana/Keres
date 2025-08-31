@@ -5,11 +5,14 @@ import {
   GetCharacterRelationUseCase,
   UpdateCharacterRelationUseCase,
 } from '@application/use-cases'
-import { zValidator } from '@hono/zod-validator'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { CharacterRelationRepository } from '@infrastructure/persistence/CharacterRelationRepository'
-import { CharacterRelationCreateSchema, CharacterRelationUpdateSchema, CharacterRelationResponseSchema } from '@keres/shared' // Import CharacterRelationResponseSchema
+import {
+  CharacterRelationCreateSchema,
+  CharacterRelationResponseSchema,
+  CharacterRelationUpdateSchema,
+} from '@keres/shared' // Import CharacterRelationResponseSchema
 import { CharacterRelationController } from '@presentation/controllers/CharacterRelationController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing CharacterRelationRoutes...')
@@ -85,14 +88,22 @@ characterRelationRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Relations'],
   }),
-  (c) => characterRelationController.createCharacterRelation(c),
+  async (c) => await characterRelationController.createCharacterRelation(c),
 )
 
 // GET /:id
@@ -118,14 +129,22 @@ characterRelationRoutes.openapi(
         description: 'Character Relation not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Relations'],
   }),
-  (c) => characterRelationController.getCharacterRelation(c),
+  async (c) => await characterRelationController.getCharacterRelation(c),
 )
 
 // GET /character/:charId
@@ -151,14 +170,22 @@ characterRelationRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Relations'],
   }),
-  (c) => characterRelationController.getCharacterRelationsByCharId(c),
+  async (c) => await characterRelationController.getCharacterRelationsByCharId(c),
 )
 
 // PUT /:id
@@ -191,7 +218,7 @@ characterRelationRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -199,14 +226,22 @@ characterRelationRoutes.openapi(
         description: 'Character Relation not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Relations'],
   }),
-  (c) => characterRelationController.updateCharacterRelation(c),
+  async (c) => await characterRelationController.updateCharacterRelation(c),
 )
 
 // DELETE /:id
@@ -227,14 +262,22 @@ characterRelationRoutes.openapi(
         description: 'Character Relation not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Relations'],
   }),
-  (c) => characterRelationController.deleteCharacterRelation(c),
+  async (c) => await characterRelationController.deleteCharacterRelation(c),
 )
 
 console.log('CharacterRelationRoutes initialized.')

@@ -5,10 +5,10 @@ import {
   GetRelationUseCase,
   UpdateRelationUseCase,
 } from '@application/use-cases'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { zValidator } from '@hono/zod-validator'
 import { RelationRepository } from '@infrastructure/persistence/RelationRepository'
-import { RelationCreateSchema, RelationUpdateSchema, RelationResponseSchema } from '@keres/shared' // Import RelationResponseSchema
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
+import { RelationCreateSchema, RelationResponseSchema, RelationUpdateSchema } from '@keres/shared' // Import RelationResponseSchema
 import { RelationController } from '@presentation/controllers/RelationController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -64,7 +64,7 @@ relationRoutes.openapi(
         },
       },
     },
-    responses: {
+        responses: {
       201: {
         description: 'Relation created successfully',
         content: {
@@ -77,15 +77,22 @@ relationRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Relations'],
   }),
-  zValidator('json', RelationCreateSchema),
-  (c) => relationController.createRelation(c),
+  async (c) => await relationController.createRelation(c),
 )
 
 // GET /:id
@@ -111,14 +118,22 @@ relationRoutes.openapi(
         description: 'Relation not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Relations'],
   }),
-  (c) => relationController.getRelation(c),
+  async (c) => await relationController.getRelation(c),
 )
 
 // GET /character/:charId
@@ -144,14 +159,22 @@ relationRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Relations'],
   }),
-  (c) => relationController.getRelationsByCharId(c),
+  async (c) => await relationController.getRelationsByCharId(c),
 )
 
 // PUT /:id
@@ -184,7 +207,7 @@ relationRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -192,14 +215,22 @@ relationRoutes.openapi(
         description: 'Relation not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Relations'],
   }),
-  (c) => relationController.updateRelation(c),
+  async (c) => await relationController.updateRelation(c),
 )
 
 // DELETE /:id
@@ -220,14 +251,22 @@ relationRoutes.openapi(
         description: 'Relation not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Relations'],
   }),
-  (c) => relationController.deleteRelation(c),
+  async (c) => await relationController.deleteRelation(c),
 )
 
 console.log('RelationRoutes initialized.')

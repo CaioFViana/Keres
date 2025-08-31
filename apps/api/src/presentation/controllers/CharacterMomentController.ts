@@ -22,7 +22,7 @@ export class CharacterMomentController {
     try {
       const characterMoment = await this.createCharacterMomentUseCase.execute(data)
       return c.json(CharacterMomentResponseSchema.parse(characterMoment), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }

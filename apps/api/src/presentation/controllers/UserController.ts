@@ -20,8 +20,8 @@ export class UserController {
     try {
       const userProfile = await this.createUserUseCase.execute(data)
       return c.json(UserProfileSchema.parse(userProfile), 201)
-    } catch (error: any) {
-      if (error.message === 'Username already exists') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Username already exists') {
         return c.json({ error: error.message }, 409)
       }
       return c.json({ error: 'Internal Server Error' }, 500)

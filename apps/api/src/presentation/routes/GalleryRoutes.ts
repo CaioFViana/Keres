@@ -6,11 +6,10 @@ import {
   GetGalleryUseCase,
   UpdateGalleryUseCase,
 } from '@application/use-cases'
-import { zValidator } from '@hono/zod-validator'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { GalleryRepository } from '@infrastructure/persistence/GalleryRepository'
-import { GalleryCreateSchema, GalleryUpdateSchema, GalleryResponseSchema } from '@keres/shared' // Import GalleryResponseSchema
+import { GalleryCreateSchema, GalleryResponseSchema, GalleryUpdateSchema } from '@keres/shared' // Import GalleryResponseSchema
 import { GalleryController } from '@presentation/controllers/GalleryController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing GalleryRoutes...')
@@ -72,7 +71,7 @@ galleryRoutes.openapi(
         },
       },
     },
-    responses: {
+        responses: {
       201: {
         description: 'Gallery item created successfully',
         content: {
@@ -85,14 +84,22 @@ galleryRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Gallery'],
   }),
-  (c) => galleryController.createGallery(c),
+  async (c) => await galleryController.createGallery(c),
 )
 
 // GET /:id
@@ -105,7 +112,7 @@ galleryRoutes.openapi(
     request: {
       params: IdParamSchema,
     },
-    responses: {
+        responses: {
       200: {
         description: 'Gallery item retrieved successfully',
         content: {
@@ -118,14 +125,22 @@ galleryRoutes.openapi(
         description: 'Gallery item not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Gallery'],
   }),
-  (c) => galleryController.getGallery(c),
+  async (c) => await galleryController.getGallery(c),
 )
 
 // GET /owner/:ownerId
@@ -134,7 +149,8 @@ galleryRoutes.openapi(
     method: 'get',
     path: '/owner/{ownerId}',
     summary: 'Get gallery items by owner ID',
-    description: 'Retrieves all gallery items associated with a specific owner (e.g., character, location).',
+    description:
+      'Retrieves all gallery items associated with a specific owner (e.g., character, location).',
     request: {
       params: OwnerIdParamSchema,
     },
@@ -151,14 +167,22 @@ galleryRoutes.openapi(
         description: 'Owner not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Gallery'],
   }),
-  (c) => galleryController.getGalleryByOwnerId(c),
+  async (c) => await galleryController.getGalleryByOwnerId(c),
 )
 
 // GET /story/:storyId
@@ -184,14 +208,22 @@ galleryRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Gallery'],
   }),
-  (c) => galleryController.getGalleryByStoryId(c),
+  async (c) => await galleryController.getGalleryByStoryId(c),
 )
 
 // PUT /:id
@@ -224,7 +256,7 @@ galleryRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -232,14 +264,22 @@ galleryRoutes.openapi(
         description: 'Gallery item not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Gallery'],
   }),
-  (c) => galleryController.updateGallery(c),
+  async (c) => await galleryController.updateGallery(c),
 )
 
 // DELETE /:id
@@ -260,14 +300,22 @@ galleryRoutes.openapi(
         description: 'Gallery item not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Gallery'],
   }),
-  (c) => galleryController.deleteGallery(c),
+  async (c) => await galleryController.deleteGallery(c),
 )
 
 console.log('GalleryRoutes initialized.')

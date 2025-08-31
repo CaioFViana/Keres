@@ -1,3 +1,4 @@
+import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi' // Import OpenAPIHono
 
 import chapterRoutes from './presentation/routes/ChapterRoutes'
@@ -11,7 +12,6 @@ import relationRoutes from './presentation/routes/RelationRoutes'
 import sceneRoutes from './presentation/routes/SceneRoutes'
 import storyRoutes from './presentation/routes/StoryRoutes'
 import userRoutes from './presentation/routes/UserRoutes'
-import { swaggerUI } from '@hono/swagger-ui'
 
 const app = new OpenAPIHono() // Change Hono to OpenAPIHono
 

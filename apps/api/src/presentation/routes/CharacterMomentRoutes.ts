@@ -4,11 +4,10 @@ import {
   GetCharacterMomentsByCharacterIdUseCase,
   GetCharacterMomentsByMomentIdUseCase,
 } from '@application/use-cases'
-import { zValidator } from '@hono/zod-validator'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { CharacterMomentRepository } from '@infrastructure/persistence/CharacterMomentRepository'
 import { CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@keres/shared' // Import CharacterMomentResponseSchema
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing CharacterMomentRoutes...')
@@ -77,14 +76,22 @@ characterMomentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Moments'],
   }),
-  (c) => characterMomentController.createCharacterMoment(c),
+  async (c) => await characterMomentController.createCharacterMoment(c),
 )
 
 // GET /character/:characterId
@@ -110,14 +117,22 @@ characterMomentRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Moments'],
   }),
-  (c) => characterMomentController.getCharacterMomentsByCharacterId(c),
+  async (c) => await characterMomentController.getCharacterMomentsByCharacterId(c),
 )
 
 // GET /moment/:momentId
@@ -143,14 +158,22 @@ characterMomentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Moments'],
   }),
-  (c) => characterMomentController.getCharacterMomentsByMomentId(c),
+  async (c) => await characterMomentController.getCharacterMomentsByMomentId(c),
 )
 
 // DELETE /
@@ -177,7 +200,7 @@ characterMomentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -185,14 +208,22 @@ characterMomentRoutes.openapi(
         description: 'Character Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Character Moments'],
   }),
-  (c) => characterMomentController.deleteCharacterMoment(c),
+    async (c) => await characterMomentController.deleteCharacterMoment(c),
 )
 
 console.log('CharacterMomentRoutes initialized.')

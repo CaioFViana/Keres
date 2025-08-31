@@ -5,11 +5,11 @@ import {
   GetStoryUseCase,
   UpdateStoryUseCase,
 } from '@application/use-cases'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { zValidator } from '@hono/zod-validator'
 import { StoryRepository } from '@infrastructure/persistence/StoryRepository'
-import { StoryCreateSchema, StoryUpdateSchema, StoryResponseSchema } from '@keres/shared' // Import StoryResponseSchema
+import { StoryCreateSchema, StoryResponseSchema, StoryUpdateSchema } from '@keres/shared' // Import StoryResponseSchema
 import { StoryController } from '@presentation/controllers/StoryController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing StoryRoutes...')
@@ -64,7 +64,7 @@ storyRoutes.openapi(
         },
       },
     },
-    responses: {
+        responses: {
       201: {
         description: 'Story created successfully',
         content: {
@@ -77,14 +77,22 @@ storyRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Stories'],
   }),
-  (c) => storyController.createStory(c),
+  async (c) => await storyController.createStory(c),
 )
 
 // GET /:id
@@ -110,14 +118,22 @@ storyRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Stories'],
   }),
-  (c) => storyController.getStory(c),
+  async (c) => await storyController.getStory(c),
 )
 
 // GET /user/:userId
@@ -143,14 +159,22 @@ storyRoutes.openapi(
         description: 'User not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Stories'],
   }),
-  (c) => storyController.getStoriesByUserId(c),
+  async (c) => await storyController.getStoriesByUserId(c),
 )
 
 // PUT /:id
@@ -183,7 +207,7 @@ storyRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
           },
         },
       },
@@ -191,15 +215,22 @@ storyRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Stories'],
   }),
-  zValidator('json', StoryUpdateSchema),
-  (c) => storyController.updateStory(c),
+  async (c) => await storyController.updateStory(c),
 )
 
 // DELETE /:id
@@ -220,14 +251,22 @@ storyRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Stories'],
   }),
-  (c) => storyController.deleteStory(c),
+  async (c) => await storyController.deleteStory(c),
 )
 
 console.log('StoryRoutes initialized.')

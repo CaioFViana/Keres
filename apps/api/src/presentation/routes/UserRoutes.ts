@@ -3,12 +3,11 @@ import {
   CreateUserUseCase,
   GetUserProfileUseCase,
 } from '@application/use-cases'
-import { zValidator } from '@hono/zod-validator' // Import zValidator
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher'
-import { UserLoginSchema, UserRegisterSchema, UserProfileSchema } from '@keres/shared' // Import Zod schemas and UserProfileSchema
+import { UserLoginSchema, UserProfileSchema, UserRegisterSchema } from '@keres/shared' // Import Zod schemas and UserProfileSchema
 import { UserController } from '@presentation/controllers/UserController'
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing UserRoutes...')
@@ -68,14 +67,22 @@ userRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Users'],
   }),
-  (c) => userController.createUser(c),
+  async (c) => await userController.createUser(c),
 )
 
 // POST /login
@@ -107,14 +114,22 @@ userRoutes.openapi(
         description: 'Unauthorized',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
-        tags: ['Users'],
+    tags: ['Users'],
   }),
-  (c) => userController.authenticateUser(c),
+  async (c) => await userController.authenticateUser(c),
 )
 
 // GET /profile/:id
@@ -123,7 +138,7 @@ userRoutes.openapi(
     method: 'get',
     path: '/profile/{id}',
     summary: 'Get user profile by ID',
-    description: 'Retrieves a user\'s profile information by their unique ID.',
+    description: "Retrieves a user's profile information by their unique ID.",
     request: {
       params: IdParamSchema,
     },
@@ -140,14 +155,22 @@ userRoutes.openapi(
         description: 'User not found',
         content: {
           'application/json': {
-            schema: z.object({ message: z.string() }),
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
           },
         },
       },
     },
     tags: ['Users'],
   }),
-  (c) => userController.getUserProfile(c),
+  async (c) => await userController.getUserProfile(c),
 )
 
 console.log('UserRoutes initialized.')

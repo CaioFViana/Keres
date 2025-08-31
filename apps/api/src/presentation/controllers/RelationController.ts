@@ -24,7 +24,7 @@ export class RelationController {
     try {
       const relation = await this.createRelationUseCase.execute(data)
       return c.json(RelationResponseSchema.parse(relation), 201)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }
@@ -70,7 +70,7 @@ export class RelationController {
         )
       }
       return c.json(RelationResponseSchema.parse(updatedRelation), 200)
-    } catch (_error: any) {
+    } catch (_error: unknown) {
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   }

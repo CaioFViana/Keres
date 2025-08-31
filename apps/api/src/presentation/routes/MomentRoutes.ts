@@ -41,11 +41,11 @@ const momentController = new MomentController(
 
 // Define schemas for path parameters
 const IdParamSchema = z.object({
-  id: z.string().ulid(),
+  id: z.ulid(),
 })
 
 const SceneIdParamSchema = z.object({
-  sceneId: z.string().ulid(),
+  sceneId: z.ulid(),
 })
 
 // POST /

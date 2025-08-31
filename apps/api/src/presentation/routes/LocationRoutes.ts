@@ -41,11 +41,11 @@ const locationController = new LocationController(
 
 // Define schemas for path parameters
 const IdParamSchema = z.object({
-  id: z.string().ulid(),
+  id: z.ulid(),
 })
 
 const StoryIdParamSchema = z.object({
-  storyId: z.string().ulid(),
+  storyId: z.ulid(),
 })
 
 // POST /

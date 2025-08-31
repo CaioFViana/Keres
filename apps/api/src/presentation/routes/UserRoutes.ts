@@ -36,7 +36,7 @@ const userController = new UserController(
 
 // Define schemas for path parameters
 const IdParamSchema = z.object({
-  id: z.string().ulid(),
+  id: z.ulid(),
 })
 
 // POST /register

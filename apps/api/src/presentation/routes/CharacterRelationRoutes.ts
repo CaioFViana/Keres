@@ -49,11 +49,11 @@ const characterRelationController = new CharacterRelationController(
 
 // Define schemas for path parameters
 const IdParamSchema = z.object({
-  id: z.string().ulid(),
+  id: z.ulid(),
 })
 
 const CharIdParamSchema = z.object({
-  charId: z.string().ulid(),
+  charId: z.ulid(),
 })
 
 // POST /

@@ -263,7 +263,8 @@ momentRoutes.openapi(
           },
         },
       },
-      404: { // Added 404 response
+      404: {
+        // Added 404 response
         description: 'Moment not found',
         content: {
           'application/json': {

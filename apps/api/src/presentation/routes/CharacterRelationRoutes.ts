@@ -103,7 +103,19 @@ characterRelationRoutes.openapi(
     },
     tags: ['Character Relations'],
   }),
-  async (c) => await characterRelationController.createCharacterRelation(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = CharacterRelationCreateSchema.parse(body)
+    try {
+      const characterRelation = await characterRelationController.createCharacterRelation(data)
+      return c.json(characterRelation, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -144,7 +156,18 @@ characterRelationRoutes.openapi(
     },
     tags: ['Character Relations'],
   }),
-  async (c) => await characterRelationController.getCharacterRelation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const characterRelation = await characterRelationController.getCharacterRelation(params.id)
+      return c.json(characterRelation, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /character/:charId
@@ -185,7 +208,20 @@ characterRelationRoutes.openapi(
     },
     tags: ['Character Relations'],
   }),
-  async (c) => await characterRelationController.getCharacterRelationsByCharId(c),
+  async (c) => {
+    const params = CharIdParamSchema.parse(c.req.param())
+    try {
+      const characterRelations = await characterRelationController.getCharacterRelationsByCharId(
+        params.charId,
+      )
+      return c.json(characterRelations, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -241,7 +277,23 @@ characterRelationRoutes.openapi(
     },
     tags: ['Character Relations'],
   }),
-  async (c) => await characterRelationController.updateCharacterRelation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = CharacterRelationUpdateSchema.parse(body)
+    try {
+      const updatedCharacterRelation = await characterRelationController.updateCharacterRelation(
+        params.id,
+        data,
+      )
+      return c.json(updatedCharacterRelation, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -277,7 +329,18 @@ characterRelationRoutes.openapi(
     },
     tags: ['Character Relations'],
   }),
-  async (c) => await characterRelationController.deleteCharacterRelation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      await characterRelationController.deleteCharacterRelation(params.id)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('CharacterRelationRoutes initialized.')

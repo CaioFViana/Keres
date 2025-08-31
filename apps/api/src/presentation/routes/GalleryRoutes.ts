@@ -71,7 +71,7 @@ galleryRoutes.openapi(
         },
       },
     },
-        responses: {
+    responses: {
       201: {
         description: 'Gallery item created successfully',
         content: {
@@ -99,7 +99,19 @@ galleryRoutes.openapi(
     },
     tags: ['Gallery'],
   }),
-  async (c) => await galleryController.createGallery(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = GalleryCreateSchema.parse(body)
+    try {
+      const gallery = await galleryController.createGallery(data)
+      return c.json(gallery, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -112,7 +124,7 @@ galleryRoutes.openapi(
     request: {
       params: IdParamSchema,
     },
-        responses: {
+    responses: {
       200: {
         description: 'Gallery item retrieved successfully',
         content: {
@@ -140,7 +152,18 @@ galleryRoutes.openapi(
     },
     tags: ['Gallery'],
   }),
-  async (c) => await galleryController.getGallery(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const gallery = await galleryController.getGallery(params.id)
+      return c.json(gallery, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /owner/:ownerId
@@ -182,7 +205,18 @@ galleryRoutes.openapi(
     },
     tags: ['Gallery'],
   }),
-  async (c) => await galleryController.getGalleryByOwnerId(c),
+  async (c) => {
+    const params = OwnerIdParamSchema.parse(c.req.param())
+    try {
+      const galleryItems = await galleryController.getGalleryByOwnerId(params.ownerId)
+      return c.json(galleryItems, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /story/:storyId
@@ -223,7 +257,18 @@ galleryRoutes.openapi(
     },
     tags: ['Gallery'],
   }),
-  async (c) => await galleryController.getGalleryByStoryId(c),
+  async (c) => {
+    const params = StoryIdParamSchema.parse(c.req.param())
+    try {
+      const galleryItems = await galleryController.getGalleryByStoryId(params.storyId)
+      return c.json(galleryItems, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -279,7 +324,20 @@ galleryRoutes.openapi(
     },
     tags: ['Gallery'],
   }),
-  async (c) => await galleryController.updateGallery(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = GalleryUpdateSchema.parse(body)
+    try {
+      const updatedGallery = await galleryController.updateGallery(params.id, data)
+      return c.json(updatedGallery, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -291,6 +349,7 @@ galleryRoutes.openapi(
     description: 'Deletes a gallery item by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: z.object({ storyId: z.ulid(), ownerId: z.ulid() }),
     },
     responses: {
       204: {
@@ -315,7 +374,19 @@ galleryRoutes.openapi(
     },
     tags: ['Gallery'],
   }),
-  async (c) => await galleryController.deleteGallery(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const query = z.object({ storyId: z.ulid(), ownerId: z.ulid() }).parse(c.req.query())
+    try {
+      await galleryController.deleteGallery(params.id, query.storyId, query.ownerId)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('GalleryRoutes initialized.')

@@ -6,7 +6,6 @@ import {
   UpdateRelationUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { zValidator } from '@hono/zod-validator'
 import { RelationRepository } from '@infrastructure/persistence/RelationRepository'
 import { RelationCreateSchema, RelationResponseSchema, RelationUpdateSchema } from '@keres/shared' // Import RelationResponseSchema
 import { RelationController } from '@presentation/controllers/RelationController'
@@ -64,7 +63,7 @@ relationRoutes.openapi(
         },
       },
     },
-        responses: {
+    responses: {
       201: {
         description: 'Relation created successfully',
         content: {
@@ -92,7 +91,19 @@ relationRoutes.openapi(
     },
     tags: ['Relations'],
   }),
-  async (c) => await relationController.createRelation(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = RelationCreateSchema.parse(body)
+    try {
+      const relation = await relationController.createRelation(data)
+      return c.json(relation, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -133,7 +144,18 @@ relationRoutes.openapi(
     },
     tags: ['Relations'],
   }),
-  async (c) => await relationController.getRelation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const relation = await relationController.getRelation(params.id)
+      return c.json(relation, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /character/:charId
@@ -174,7 +196,18 @@ relationRoutes.openapi(
     },
     tags: ['Relations'],
   }),
-  async (c) => await relationController.getRelationsByCharId(c),
+  async (c) => {
+    const params = CharIdParamSchema.parse(c.req.param())
+    try {
+      const relations = await relationController.getRelationsByCharId(params.charId)
+      return c.json(relations, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -230,7 +263,20 @@ relationRoutes.openapi(
     },
     tags: ['Relations'],
   }),
-  async (c) => await relationController.updateRelation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = RelationUpdateSchema.parse(body)
+    try {
+      const updatedRelation = await relationController.updateRelation(params.id, data)
+      return c.json(updatedRelation, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -242,6 +288,7 @@ relationRoutes.openapi(
     description: 'Deletes a relation by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: z.object({ charIdSource: z.ulid(), charIdTarget: z.ulid() }),
     },
     responses: {
       204: {
@@ -266,7 +313,19 @@ relationRoutes.openapi(
     },
     tags: ['Relations'],
   }),
-  async (c) => await relationController.deleteRelation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const query = z.object({ charIdSource: z.ulid(), charIdTarget: z.ulid() }).parse(c.req.query())
+    try {
+      await relationController.deleteRelation(params.id, query.charIdSource, query.charIdTarget)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('RelationRoutes initialized.')

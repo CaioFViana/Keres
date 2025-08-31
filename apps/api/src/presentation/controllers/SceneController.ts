@@ -5,9 +5,9 @@ import type {
   GetSceneUseCase,
   UpdateSceneUseCase,
 } from '@application/use-cases'
-import type { Context } from 'hono'
 
-import { SceneResponseSchema } from '@keres/shared'
+import { SceneCreateSchema, SceneResponseSchema, SceneUpdateSchema } from '@keres/shared'
+import z from 'zod'
 
 export class SceneController {
   constructor(
@@ -18,76 +18,40 @@ export class SceneController {
     private readonly getScenesByChapterIdUseCase: GetScenesByChapterIdUseCase,
   ) {}
 
-  async createScene(c: Context) {
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const scene = await this.createSceneUseCase.execute(data)
-      return c.json(SceneResponseSchema.parse(scene), 201)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async createScene(data: z.infer<typeof SceneCreateSchema>) {
+    const scene = await this.createSceneUseCase.execute(data)
+    return SceneResponseSchema.parse(scene)
   }
 
-  async getScene(c: Context) {
-    const sceneId = c.req.param('id')
-
-    try {
-      const scene = await this.getSceneUseCase.execute(sceneId)
-      if (!scene) {
-        return c.json({ error: 'Scene not found' }, 404)
-      }
-      return c.json(SceneResponseSchema.parse(scene), 200)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async getScene(id: string) {
+    const scene = await this.getSceneUseCase.execute(id)
+    if (!scene) {
+      throw new Error('Scene not found')
     }
+    return SceneResponseSchema.parse(scene)
   }
 
-  async getScenesByChapterId(c: Context) {
-    const chapterId = c.req.param('chapterId') // Assuming chapterId is passed as a param
-
-    try {
-      const scenes = await this.getScenesByChapterIdUseCase.execute(chapterId)
-      return c.json(
-        scenes.map((scene) => SceneResponseSchema.parse(scene)),
-        200,
-      )
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async getScenesByChapterId(chapterId: string) {
+    const scenes = await this.getScenesByChapterIdUseCase.execute(chapterId)
+    return scenes.map((scene) => SceneResponseSchema.parse(scene))
   }
 
-  async updateScene(c: Context) {
-    const sceneId = c.req.param('id')
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const updatedScene = await this.updateSceneUseCase.execute({ id: sceneId, ...data })
-      if (!updatedScene) {
-        return c.json({ error: 'Scene not found or does not belong to the specified chapter' }, 404)
-      }
-      return c.json(SceneResponseSchema.parse(updatedScene), 200)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async updateScene(id: string, data: z.infer<typeof SceneUpdateSchema>) {
+    const updatedScene = await this.updateSceneUseCase.execute({ id, ...data })
+    if (!updatedScene) {
+      throw new Error('Scene not found or does not belong to the specified chapter')
     }
+    return SceneResponseSchema.parse(updatedScene)
   }
 
-  async deleteScene(c: Context) {
-    const sceneId = c.req.param('id')
-    const chapterId = c.req.query('chapterId') // Assuming chapterId is passed as a query param for delete
-
+  async deleteScene(id: string, chapterId: string) {
     if (!chapterId) {
-      return c.json({ error: 'chapterId is required for deletion' }, 400)
+      throw new Error('chapterId is required for deletion')
     }
-
-    try {
-      const deleted = await this.deleteSceneUseCase.execute(sceneId, chapterId)
-      if (!deleted) {
-        return c.json({ error: 'Scene not found or does not belong to the specified chapter' }, 404)
-      }
-      return c.json({}, 204)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+    const deleted = await this.deleteSceneUseCase.execute(id, chapterId)
+    if (!deleted) {
+      throw new Error('Scene not found or does not belong to the specified chapter')
     }
+    return
   }
 }

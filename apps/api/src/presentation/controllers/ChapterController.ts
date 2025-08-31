@@ -5,9 +5,9 @@ import type {
   GetChapterUseCase,
   UpdateChapterUseCase,
 } from '@application/use-cases'
-import type { Context } from 'hono'
 
-import { ChapterResponseSchema } from '@keres/shared'
+import { ChapterCreateSchema, ChapterResponseSchema, ChapterUpdateSchema } from '@keres/shared'
+import {z} from 'zod'
 
 export class ChapterController {
   constructor(
@@ -18,76 +18,40 @@ export class ChapterController {
     private readonly getChaptersByStoryIdUseCase: GetChaptersByStoryIdUseCase,
   ) {}
 
-  async createChapter(c: Context) {
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const chapter = await this.createChapterUseCase.execute(data)
-      return c.json(ChapterResponseSchema.parse(chapter), 201)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async createChapter(data: z.infer<typeof ChapterCreateSchema>) {
+    const chapter = await this.createChapterUseCase.execute(data)
+    return ChapterResponseSchema.parse(chapter)
   }
 
-  async getChapter(c: Context) {
-    const chapterId = c.req.param('id')
-
-    try {
-      const chapter = await this.getChapterUseCase.execute(chapterId)
-      if (!chapter) {
-        return c.json({ error: 'Chapter not found' }, 404)
-      }
-      return c.json(ChapterResponseSchema.parse(chapter), 200)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async getChapter(id: string) {
+    const chapter = await this.getChapterUseCase.execute(id)
+    if (!chapter) {
+      throw new Error('Chapter not found')
     }
+    return ChapterResponseSchema.parse(chapter)
   }
 
-  async getChaptersByStoryId(c: Context) {
-    const storyId = c.req.param('storyId') // Assuming storyId is passed as a param
-
-    try {
-      const chapters = await this.getChaptersByStoryIdUseCase.execute(storyId)
-      return c.json(
-        chapters.map((chapter) => ChapterResponseSchema.parse(chapter)),
-        200,
-      )
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async getChaptersByStoryId(storyId: string) {
+    const chapters = await this.getChaptersByStoryIdUseCase.execute(storyId)
+    return chapters.map((chapter) => ChapterResponseSchema.parse(chapter))
   }
 
-  async updateChapter(c: Context) {
-    const chapterId = c.req.param('id')
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const updatedChapter = await this.updateChapterUseCase.execute({ id: chapterId, ...data })
-      if (!updatedChapter) {
-        return c.json({ error: 'Chapter not found or does not belong to the specified story' }, 404)
-      }
-      return c.json(ChapterResponseSchema.parse(updatedChapter), 200)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async updateChapter(id: string, data: z.infer<typeof ChapterUpdateSchema>) {
+    const updatedChapter = await this.updateChapterUseCase.execute({ id, ...data })
+    if (!updatedChapter) {
+      throw new Error('Chapter not found or does not belong to the specified story')
     }
+    return ChapterResponseSchema.parse(updatedChapter)
   }
 
-  async deleteChapter(c: Context) {
-    const chapterId = c.req.param('id')
-    const storyId = c.req.query('storyId') // Assuming storyId is passed as a query param for delete
-
+  async deleteChapter(id: string, storyId: string) {
     if (!storyId) {
-      return c.json({ error: 'storyId is required for deletion' }, 400)
+      throw new Error('storyId is required for deletion')
     }
-
-    try {
-      const deleted = await this.deleteChapterUseCase.execute(chapterId, storyId)
-      if (!deleted) {
-        return c.json({ error: 'Chapter not found or does not belong to the specified story' }, 404)
-      }
-      return c.json({}, 204)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+    const deleted = await this.deleteChapterUseCase.execute(id, storyId)
+    if (!deleted) {
+      throw new Error('Chapter not found or does not belong to the specified story')
     }
+    return // No content to return for 204
   }
 }

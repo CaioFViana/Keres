@@ -5,9 +5,9 @@ import type {
   GetCharacterRelationUseCase,
   UpdateCharacterRelationUseCase,
 } from '@application/use-cases'
-import type { Context } from 'hono'
 
-import { CharacterRelationResponseSchema } from '@keres/shared'
+import { CharacterRelationCreateSchema, CharacterRelationResponseSchema } from '@keres/shared'
+import z from 'zod'
 
 export class CharacterRelationController {
   constructor(
@@ -18,74 +18,40 @@ export class CharacterRelationController {
     private readonly getCharacterRelationsByCharIdUseCase: GetCharacterRelationsByCharIdUseCase,
   ) {}
 
-  async createCharacterRelation(c: Context) {
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const characterRelation = await this.createCharacterRelationUseCase.execute(data)
-      return c.json(CharacterRelationResponseSchema.parse(characterRelation), 201)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async createCharacterRelation(data: z.infer<typeof CharacterRelationCreateSchema>) {
+    const characterRelation = await this.createCharacterRelationUseCase.execute(data)
+    return CharacterRelationResponseSchema.parse(characterRelation)
   }
 
-  async getCharacterRelation(c: Context) {
-    const relationId = c.req.param('id')
-
-    try {
-      const characterRelation = await this.getCharacterRelationUseCase.execute(relationId)
-      if (!characterRelation) {
-        return c.json({ error: 'Character relation not found' }, 404)
-      }
-      return c.json(CharacterRelationResponseSchema.parse(characterRelation), 200)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async getCharacterRelation(id: string) {
+    const characterRelation = await this.getCharacterRelationUseCase.execute(id)
+    if (!characterRelation) {
+      throw new Error('Character relation not found')
     }
+    return CharacterRelationResponseSchema.parse(characterRelation)
   }
 
-  async getCharacterRelationsByCharId(c: Context) {
-    const charId = c.req.param('charId') // Assuming charId is passed as a param
-
-    try {
-      const characterRelations = await this.getCharacterRelationsByCharIdUseCase.execute(charId)
-      return c.json(
-        characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr)),
-        200,
-      )
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async getCharacterRelationsByCharId(charId: string) {
+    const characterRelations = await this.getCharacterRelationsByCharIdUseCase.execute(charId)
+    return characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr))
   }
 
-  async updateCharacterRelation(c: Context) {
-    const relationId = c.req.param('id')
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute({
-        id: relationId,
-        ...data,
-      })
-      if (!updatedCharacterRelation) {
-        return c.json({ error: 'Character relation not found' }, 404)
-      }
-      return c.json(CharacterRelationResponseSchema.parse(updatedCharacterRelation), 200)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async updateCharacterRelation(id: string, data: z.infer<typeof CharacterRelationUpdateSchema>) {
+    const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute({
+      id,
+      ...data,
+    })
+    if (!updatedCharacterRelation) {
+      throw new Error('Character relation not found')
     }
+    return CharacterRelationResponseSchema.parse(updatedCharacterRelation)
   }
 
-  async deleteCharacterRelation(c: Context) {
-    const relationId = c.req.param('id')
-
-    try {
-      const deleted = await this.deleteCharacterRelationUseCase.execute(relationId)
-      if (!deleted) {
-        return c.json({ error: 'Character relation not found' }, 404)
-      }
-      return c.json({}, 204)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async deleteCharacterRelation(id: string) {
+    const deleted = await this.deleteCharacterRelationUseCase.execute(id)
+    if (!deleted) {
+      throw new Error('Character relation not found')
     }
+    return
   }
 }

@@ -95,7 +95,19 @@ characterRoutes.openapi(
     },
     tags: ['Characters'],
   }),
-  async (c) => await characterController.createCharacter(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = CharacterCreateSchema.parse(body)
+    try {
+      const character = await characterController.createCharacter(data)
+      return c.json(character, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -108,7 +120,7 @@ characterRoutes.openapi(
     request: {
       params: IdParamSchema,
     },
-        responses: {
+    responses: {
       200: {
         description: 'Character retrieved successfully',
         content: {
@@ -136,7 +148,18 @@ characterRoutes.openapi(
     },
     tags: ['Characters'],
   }),
-  async (c) => await characterController.getCharacter(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const character = await characterController.getCharacter(params.id)
+      return c.json(character, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /story/:storyId
@@ -177,7 +200,18 @@ characterRoutes.openapi(
     },
     tags: ['Characters'],
   }),
-  async (c) => await characterController.getCharactersByStoryId(c),
+  async (c) => {
+    const params = StoryIdParamSchema.parse(c.req.param())
+    try {
+      const characters = await characterController.getCharactersByStoryId(params.storyId)
+      return c.json(characters, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -233,7 +267,20 @@ characterRoutes.openapi(
     },
     tags: ['Characters'],
   }),
-  async (c) => await characterController.updateCharacter(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = CharacterUpdateSchema.parse(body)
+    try {
+      const updatedCharacter = await characterController.updateCharacter(params.id, data)
+      return c.json(updatedCharacter, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -269,7 +316,18 @@ characterRoutes.openapi(
     },
     tags: ['Characters'],
   }),
-  async (c) => await characterController.deleteCharacter(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      await characterController.deleteCharacter(params.id)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('CharacterRoutes initialized.')

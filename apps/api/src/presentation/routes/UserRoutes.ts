@@ -82,7 +82,19 @@ userRoutes.openapi(
     },
     tags: ['Users'],
   }),
-  async (c) => await userController.createUser(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = UserRegisterSchema.parse(body)
+    try {
+      const userProfile = await userController.createUser(data)
+      return c.json(userProfile, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // POST /login
@@ -129,7 +141,19 @@ userRoutes.openapi(
     },
     tags: ['Users'],
   }),
-  async (c) => await userController.authenticateUser(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = UserLoginSchema.parse(body)
+    try {
+      const userProfile = await userController.authenticateUser(data)
+      return c.json(userProfile, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 401)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /profile/:id
@@ -170,7 +194,18 @@ userRoutes.openapi(
     },
     tags: ['Users'],
   }),
-  async (c) => await userController.getUserProfile(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const userProfile = await userController.getUserProfile(params.id)
+      return c.json(userProfile, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('UserRoutes initialized.')

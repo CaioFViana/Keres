@@ -6,9 +6,9 @@ import type {
   GetGalleryUseCase,
   UpdateGalleryUseCase,
 } from '@application/use-cases'
-import type { Context } from 'hono'
 
-import { GalleryResponseSchema } from '@keres/shared'
+import { GalleryCreateSchema, GalleryResponseSchema, GalleryUpdateSchema } from '@keres/shared'
+import z from 'zod'
 
 export class GalleryController {
   constructor(
@@ -20,97 +20,45 @@ export class GalleryController {
     private readonly getGalleryByStoryIdUseCase: GetGalleryByStoryIdUseCase,
   ) {}
 
-  async createGallery(c: Context) {
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const gallery = await this.createGalleryUseCase.execute(data)
-      return c.json(GalleryResponseSchema.parse(gallery), 201)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async createGallery(data: z.infer<typeof GalleryCreateSchema>) {
+    const gallery = await this.createGalleryUseCase.execute(data)
+    return GalleryResponseSchema.parse(gallery)
   }
 
-  async getGallery(c: Context) {
-    const galleryId = c.req.param('id')
-
-    try {
-      const gallery = await this.getGalleryUseCase.execute(galleryId)
-      if (!gallery) {
-        return c.json({ error: 'Gallery item not found' }, 404)
-      }
-      return c.json(GalleryResponseSchema.parse(gallery), 200)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async getGallery(id: string) {
+    const gallery = await this.getGalleryUseCase.execute(id)
+    if (!gallery) {
+      throw new Error('Gallery item not found')
     }
+    return GalleryResponseSchema.parse(gallery)
   }
 
-  async getGalleryByOwnerId(c: Context) {
-    const ownerId = c.req.param('ownerId') // Assuming ownerId is passed as a param
-
-    try {
-      const galleryItems = await this.getGalleryByOwnerIdUseCase.execute(ownerId)
-      return c.json(
-        galleryItems.map((item) => GalleryResponseSchema.parse(item)),
-        200,
-      )
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async getGalleryByOwnerId(ownerId: string) {
+    const galleryItems = await this.getGalleryByOwnerIdUseCase.execute(ownerId)
+    return galleryItems.map((item) => GalleryResponseSchema.parse(item))
   }
 
-  async getGalleryByStoryId(c: Context) {
-    const storyId = c.req.param('storyId') // Assuming storyId is passed as a param
-
-    try {
-      const galleryItems = await this.getGalleryByStoryIdUseCase.execute(storyId)
-      return c.json(
-        galleryItems.map((item) => GalleryResponseSchema.parse(item)),
-        200,
-      )
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async getGalleryByStoryId(storyId: string) {
+    const galleryItems = await this.getGalleryByStoryIdUseCase.execute(storyId)
+    return galleryItems.map((item) => GalleryResponseSchema.parse(item))
   }
 
-  async updateGallery(c: Context) {
-    const galleryId = c.req.param('id')
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const updatedGallery = await this.updateGalleryUseCase.execute({ id: galleryId, ...data })
-      if (!updatedGallery) {
-        return c.json(
-          { error: 'Gallery item not found or does not belong to the specified story/owner' },
-          404,
-        )
-      }
-      return c.json(GalleryResponseSchema.parse(updatedGallery), 200)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async updateGallery(id: string, data: z.infer<typeof GalleryUpdateSchema>) {
+    const updatedGallery = await this.updateGalleryUseCase.execute({ id, ...data })
+    if (!updatedGallery) {
+      throw new Error('Gallery item not found or does not belong to the specified story/owner')
     }
+    return GalleryResponseSchema.parse(updatedGallery)
   }
 
-  async deleteGallery(c: Context) {
-    const galleryId = c.req.param('id')
-    const storyId = c.req.query('storyId') // Assuming storyId is passed as a query param for delete
-    const ownerId = c.req.query('ownerId') // Assuming ownerId is passed as a query param for delete
-
+  async deleteGallery(id: string, storyId: string, ownerId: string) {
     if (!storyId || !ownerId) {
-      return c.json({ error: 'storyId and ownerId are required for deletion' }, 400)
+      throw new Error('storyId and ownerId are required for deletion')
     }
-
-    try {
-      const deleted = await this.deleteGalleryUseCase.execute(galleryId, storyId, ownerId)
-      if (!deleted) {
-        return c.json(
-          { error: 'Gallery item not found or does not belong to the specified story/owner' },
-          404,
-        )
-      }
-      return c.json({}, 204)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+    const deleted = await this.deleteGalleryUseCase.execute(id, storyId, ownerId)
+    if (!deleted) {
+      throw new Error('Gallery item not found or does not belong to the specified story/owner')
     }
+    return
   }
 }

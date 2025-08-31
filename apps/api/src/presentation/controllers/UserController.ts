@@ -3,9 +3,9 @@ import type {
   CreateUserUseCase,
   GetUserProfileUseCase,
 } from '@application/use-cases'
-import type { Context } from 'hono'
 
-import { UserProfileSchema } from '@keres/shared'
+import { UserLoginSchema, UserProfileSchema, UserRegisterSchema } from '@keres/shared'
+import z from 'zod'
 
 export class UserController {
   constructor(
@@ -14,47 +14,24 @@ export class UserController {
     private readonly getUserProfileUseCase: GetUserProfileUseCase,
   ) {}
 
-  async createUser(c: Context) {
-    const data = c.req.valid('json')
-
-    try {
-      const userProfile = await this.createUserUseCase.execute(data)
-      return c.json(UserProfileSchema.parse(userProfile), 201)
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message === 'Username already exists') {
-        return c.json({ error: error.message }, 409)
-      }
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async createUser(data: z.infer<typeof UserRegisterSchema>) {
+    const userProfile = await this.createUserUseCase.execute(data)
+    return UserProfileSchema.parse(userProfile)
   }
 
-  async authenticateUser(c: Context) {
-    const data = c.req.valid('json')
-
-    try {
-      const userProfile = await this.authenticateUserUseCase.execute(data)
-      if (!userProfile) {
-        return c.json({ error: 'Invalid credentials' }, 401)
-      }
-      return c.json(UserProfileSchema.parse(userProfile), 200)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async authenticateUser(data: z.infer<typeof UserLoginSchema>) {
+    const userProfile = await this.authenticateUserUseCase.execute(data)
+    if (!userProfile) {
+      throw new Error('Invalid credentials')
     }
+    return UserProfileSchema.parse(userProfile)
   }
 
-  async getUserProfile(c: Context) {
-    // In a real application, the user ID would come from authentication middleware
-    // For now, let's assume it's passed as a param or hardcoded for testing
-    const userId = c.req.param('id')
-
-    try {
-      const userProfile = await this.getUserProfileUseCase.execute(userId)
-      if (!userProfile) {
-        return c.json({ error: 'User not found' }, 404)
-      }
-      return c.json(UserProfileSchema.parse(userProfile), 200)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async getUserProfile(id: string) {
+    const userProfile = await this.getUserProfileUseCase.execute(id)
+    if (!userProfile) {
+      throw new Error('User not found')
     }
+    return UserProfileSchema.parse(userProfile)
   }
 }

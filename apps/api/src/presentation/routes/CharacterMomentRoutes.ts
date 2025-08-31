@@ -91,7 +91,19 @@ characterMomentRoutes.openapi(
     },
     tags: ['Character Moments'],
   }),
-  async (c) => await characterMomentController.createCharacterMoment(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = CharacterMomentCreateSchema.parse(body)
+    try {
+      const characterMoment = await characterMomentController.createCharacterMoment(data)
+      return c.json(characterMoment, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /character/:characterId
@@ -132,7 +144,20 @@ characterMomentRoutes.openapi(
     },
     tags: ['Character Moments'],
   }),
-  async (c) => await characterMomentController.getCharacterMomentsByCharacterId(c),
+  async (c) => {
+    const params = CharacterIdParamSchema.parse(c.req.param())
+    try {
+      const characterMoments = await characterMomentController.getCharacterMomentsByCharacterId(
+        params.characterId,
+      )
+      return c.json(characterMoments, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /moment/:momentId
@@ -173,7 +198,20 @@ characterMomentRoutes.openapi(
     },
     tags: ['Character Moments'],
   }),
-  async (c) => await characterMomentController.getCharacterMomentsByMomentId(c),
+  async (c) => {
+    const params = MomentIdParamSchema.parse(c.req.param())
+    try {
+      const characterMoments = await characterMomentController.getCharacterMomentsByMomentId(
+        params.momentId,
+      )
+      return c.json(characterMoments, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /
@@ -223,7 +261,19 @@ characterMomentRoutes.openapi(
     },
     tags: ['Character Moments'],
   }),
-    async (c) => await characterMomentController.deleteCharacterMoment(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = CharacterMomentCreateSchema.parse(body)
+    try {
+      await characterMomentController.deleteCharacterMoment(data.characterId, data.momentId)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('CharacterMomentRoutes initialized.')

@@ -63,7 +63,7 @@ momentRoutes.openapi(
         },
       },
     },
-        responses: {
+    responses: {
       201: {
         description: 'Moment created successfully',
         content: {
@@ -91,7 +91,19 @@ momentRoutes.openapi(
     },
     tags: ['Moments'],
   }),
-  async (c) => await momentController.createMoment(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = MomentCreateSchema.parse(body)
+    try {
+      const moment = await momentController.createMoment(data)
+      return c.json(moment, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -132,7 +144,18 @@ momentRoutes.openapi(
     },
     tags: ['Moments'],
   }),
-  async (c) => await momentController.getMoment(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const moment = await momentController.getMoment(params.id)
+      return c.json(moment, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /scene/:sceneId
@@ -173,7 +196,18 @@ momentRoutes.openapi(
     },
     tags: ['Moments'],
   }),
-  async (c) => await momentController.getMomentsBySceneId(c),
+  async (c) => {
+    const params = SceneIdParamSchema.parse(c.req.param())
+    try {
+      const moments = await momentController.getMomentsBySceneId(params.sceneId)
+      return c.json(moments, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -229,7 +263,20 @@ momentRoutes.openapi(
     },
     tags: ['Moments'],
   }),
-  async (c) => await momentController.updateMoment(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = MomentUpdateSchema.parse(body)
+    try {
+      const updatedMoment = await momentController.updateMoment(params.id, data)
+      return c.json(updatedMoment, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -241,6 +288,7 @@ momentRoutes.openapi(
     description: 'Deletes a moment by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: SceneIdParamSchema,
     },
     responses: {
       204: {
@@ -265,7 +313,19 @@ momentRoutes.openapi(
     },
     tags: ['Moments'],
   }),
-  async (c) => await momentController.deleteMoment(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const query = SceneIdParamSchema.parse(c.req.query())
+    try {
+      await momentController.deleteMoment(params.id, query.sceneId)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('MomentRoutes initialized.')

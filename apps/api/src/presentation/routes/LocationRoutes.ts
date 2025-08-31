@@ -63,7 +63,7 @@ locationRoutes.openapi(
         },
       },
     },
-        responses: {
+    responses: {
       201: {
         description: 'Location created successfully',
         content: {
@@ -91,7 +91,19 @@ locationRoutes.openapi(
     },
     tags: ['Locations'],
   }),
-  async (c) => await locationController.createLocation(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = LocationCreateSchema.parse(body)
+    try {
+      const location = await locationController.createLocation(data)
+      return c.json(location, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -104,7 +116,7 @@ locationRoutes.openapi(
     request: {
       params: IdParamSchema,
     },
-        responses: {
+    responses: {
       200: {
         description: 'Location retrieved successfully',
         content: {
@@ -132,7 +144,18 @@ locationRoutes.openapi(
     },
     tags: ['Locations'],
   }),
-  async (c) => await locationController.getLocation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const location = await locationController.getLocation(params.id)
+      return c.json(location, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /story/:storyId
@@ -173,7 +196,18 @@ locationRoutes.openapi(
     },
     tags: ['Locations'],
   }),
-  async (c) => await locationController.getLocationsByStoryId(c),
+  async (c) => {
+    const params = StoryIdParamSchema.parse(c.req.param())
+    try {
+      const locations = await locationController.getLocationsByStoryId(params.storyId)
+      return c.json(locations, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -229,7 +263,20 @@ locationRoutes.openapi(
     },
     tags: ['Locations'],
   }),
-  async (c) => await locationController.updateLocation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = LocationUpdateSchema.parse(body)
+    try {
+      const updatedLocation = await locationController.updateLocation(params.id, data)
+      return c.json(updatedLocation, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -241,6 +288,7 @@ locationRoutes.openapi(
     description: 'Deletes a location by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: StoryIdParamSchema,
     },
     responses: {
       204: {
@@ -265,7 +313,19 @@ locationRoutes.openapi(
     },
     tags: ['Locations'],
   }),
-  async (c) => await locationController.deleteLocation(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const query = StoryIdParamSchema.parse(c.req.query())
+    try {
+      await locationController.deleteLocation(params.id, query.storyId)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('LocationRoutes initialized.')

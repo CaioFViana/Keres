@@ -6,7 +6,6 @@ import {
   UpdateStoryUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { zValidator } from '@hono/zod-validator'
 import { StoryRepository } from '@infrastructure/persistence/StoryRepository'
 import { StoryCreateSchema, StoryResponseSchema, StoryUpdateSchema } from '@keres/shared' // Import StoryResponseSchema
 import { StoryController } from '@presentation/controllers/StoryController'
@@ -64,7 +63,7 @@ storyRoutes.openapi(
         },
       },
     },
-        responses: {
+    responses: {
       201: {
         description: 'Story created successfully',
         content: {
@@ -92,7 +91,19 @@ storyRoutes.openapi(
     },
     tags: ['Stories'],
   }),
-  async (c) => await storyController.createStory(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = StoryCreateSchema.parse(body)
+    try {
+      const story = await storyController.createStory(data)
+      return c.json(story, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -133,7 +144,18 @@ storyRoutes.openapi(
     },
     tags: ['Stories'],
   }),
-  async (c) => await storyController.getStory(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const story = await storyController.getStory(params.id)
+      return c.json(story, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /user/:userId
@@ -174,7 +196,18 @@ storyRoutes.openapi(
     },
     tags: ['Stories'],
   }),
-  async (c) => await storyController.getStoriesByUserId(c),
+  async (c) => {
+    const params = UserIdParamSchema.parse(c.req.param())
+    try {
+      const stories = await storyController.getStoriesByUserId(params.userId)
+      return c.json(stories, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -230,7 +263,20 @@ storyRoutes.openapi(
     },
     tags: ['Stories'],
   }),
-  async (c) => await storyController.updateStory(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = StoryUpdateSchema.parse(body)
+    try {
+      const updatedStory = await storyController.updateStory(params.id, data)
+      return c.json(updatedStory, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -266,7 +312,18 @@ storyRoutes.openapi(
     },
     tags: ['Stories'],
   }),
-  async (c) => await storyController.deleteStory(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      await storyController.deleteStory(params.id)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('StoryRoutes initialized.')

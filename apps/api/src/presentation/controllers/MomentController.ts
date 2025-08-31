@@ -5,9 +5,9 @@ import type {
   GetMomentUseCase,
   UpdateMomentUseCase,
 } from '@application/use-cases'
-import type { Context } from 'hono'
 
-import { MomentResponseSchema } from '@keres/shared'
+import { MomentCreateSchema, MomentResponseSchema, MomentUpdateSchema } from '@keres/shared'
+import z from 'zod'
 
 export class MomentController {
   constructor(
@@ -18,76 +18,40 @@ export class MomentController {
     private readonly getMomentsBySceneIdUseCase: GetMomentsBySceneIdUseCase,
   ) {}
 
-  async createMoment(c: Context) {
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const moment = await this.createMomentUseCase.execute(data)
-      return c.json(MomentResponseSchema.parse(moment), 201)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async createMoment(data: z.infer<typeof MomentCreateSchema>) {
+    const moment = await this.createMomentUseCase.execute(data)
+    return MomentResponseSchema.parse(moment)
   }
 
-  async getMoment(c: Context) {
-    const momentId = c.req.param('id')
-
-    try {
-      const moment = await this.getMomentUseCase.execute(momentId)
-      if (!moment) {
-        return c.json({ error: 'Moment not found' }, 404)
-      }
-      return c.json(MomentResponseSchema.parse(moment), 200)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async getMoment(id: string) {
+    const moment = await this.getMomentUseCase.execute(id)
+    if (!moment) {
+      throw new Error('Moment not found')
     }
+    return MomentResponseSchema.parse(moment)
   }
 
-  async getMomentsBySceneId(c: Context) {
-    const sceneId = c.req.param('sceneId') // Assuming sceneId is passed as a param
-
-    try {
-      const moments = await this.getMomentsBySceneIdUseCase.execute(sceneId)
-      return c.json(
-        moments.map((moment) => MomentResponseSchema.parse(moment)),
-        200,
-      )
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
+  async getMomentsBySceneId(sceneId: string) {
+    const moments = await this.getMomentsBySceneIdUseCase.execute(sceneId)
+    return moments.map((moment) => MomentResponseSchema.parse(moment))
   }
 
-  async updateMoment(c: Context) {
-    const momentId = c.req.param('id')
-    const data = c.req.valid('json') // Validated by zValidator middleware
-
-    try {
-      const updatedMoment = await this.updateMomentUseCase.execute({ id: momentId, ...data })
-      if (!updatedMoment) {
-        return c.json({ error: 'Moment not found or does not belong to the specified scene' }, 404)
-      }
-      return c.json(MomentResponseSchema.parse(updatedMoment), 200)
-    } catch (_error: unknown) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+  async updateMoment(id: string, data: z.infer<typeof MomentUpdateSchema>) {
+    const updatedMoment = await this.updateMomentUseCase.execute({ id, ...data })
+    if (!updatedMoment) {
+      throw new Error('Moment not found or does not belong to the specified scene')
     }
+    return MomentResponseSchema.parse(updatedMoment)
   }
 
-  async deleteMoment(c: Context) {
-    const momentId = c.req.param('id')
-    const sceneId = c.req.query('sceneId') // Assuming sceneId is passed as a query param for delete
-
+  async deleteMoment(id: string, sceneId: string) {
     if (!sceneId) {
-      return c.json({ error: 'sceneId is required for deletion' }, 400)
+      throw new Error('sceneId is required for deletion')
     }
-
-    try {
-      const deleted = await this.deleteMomentUseCase.execute(momentId, sceneId)
-      if (!deleted) {
-        return c.json({ error: 'Moment not found or does not belong to the specified scene' }, 404)
-      }
-      return c.json({}, 204)
-    } catch (_error) {
-      return c.json({ error: 'Internal Server Error' }, 500)
+    const deleted = await this.deleteMomentUseCase.execute(id, sceneId)
+    if (!deleted) {
+      throw new Error('Moment not found or does not belong to the specified scene')
     }
+    return
   }
 }

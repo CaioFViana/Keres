@@ -91,7 +91,19 @@ chapterRoutes.openapi(
     },
     tags: ['Chapters'],
   }),
-  async (c) => await chapterController.createChapter(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = ChapterCreateSchema.parse(body)
+    try {
+      const chapter = await chapterController.createChapter(data)
+      return c.json(chapter, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -132,7 +144,18 @@ chapterRoutes.openapi(
     },
     tags: ['Chapters'],
   }),
-  async (c) => await chapterController.getChapter(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const chapter = await chapterController.getChapter(params.id)
+      return c.json(chapter, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /story/:storyId
@@ -173,7 +196,18 @@ chapterRoutes.openapi(
     },
     tags: ['Chapters'],
   }),
-  async (c) => await chapterController.getChaptersByStoryId(c),
+  async (c) => {
+    const params = StoryIdParamSchema.parse(c.req.param())
+    try {
+      const chapters = await chapterController.getChaptersByStoryId(params.storyId)
+      return c.json(chapters, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -210,26 +244,39 @@ chapterRoutes.openapi(
           },
         },
       },
-     404: {
-      description: 'Chapter not found',
-      content: {
-        'application/json': {
-          schema: z.object({ error: z.string() }),
+      404: {
+        description: 'Chapter not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
         },
       },
-  },
-  500: {
-    description: "Internal server error",
-    content: {
-      "application/json": {
-        schema: z.object({ error: z.string() }),
+      500: {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
       },
-    },
-  },
     },
     tags: ['Chapters'],
   }),
-  async (c) => await chapterController.updateChapter(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = ChapterUpdateSchema.parse(body)
+    try {
+      const updatedChapter = await chapterController.updateChapter(params.id, data)
+      return c.json(updatedChapter, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -241,6 +288,7 @@ chapterRoutes.openapi(
     description: 'Deletes a chapter by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: StoryIdParamSchema,
     },
     responses: {
       204: {
@@ -265,7 +313,19 @@ chapterRoutes.openapi(
     },
     tags: ['Chapters'],
   }),
-  async (c) => await chapterController.deleteChapter(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const query = StoryIdParamSchema.parse(c.req.query()) // Assuming storyId is passed as a query param
+    try {
+      await chapterController.deleteChapter(params.id, query.storyId)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('ChapterRoutes initialized.')

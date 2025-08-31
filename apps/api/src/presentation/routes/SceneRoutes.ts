@@ -6,7 +6,6 @@ import {
   UpdateSceneUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { zValidator } from '@hono/zod-validator'
 import { SceneRepository } from '@infrastructure/persistence/SceneRepository'
 import { SceneCreateSchema, SceneResponseSchema, SceneUpdateSchema } from '@keres/shared' // Import SceneResponseSchema
 import { SceneController } from '@presentation/controllers/SceneController'
@@ -92,7 +91,19 @@ sceneRoutes.openapi(
     },
     tags: ['Scenes'],
   }),
-  async (c) => await sceneController.createScene(c),
+  async (c) => {
+    const body = await c.req.json()
+    const data = SceneCreateSchema.parse(body)
+    try {
+      const scene = await sceneController.createScene(data)
+      return c.json(scene, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /:id
@@ -133,7 +144,18 @@ sceneRoutes.openapi(
     },
     tags: ['Scenes'],
   }),
-  async (c) => await sceneController.getScene(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const scene = await sceneController.getScene(params.id)
+      return c.json(scene, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // GET /chapter/:chapterId
@@ -174,7 +196,18 @@ sceneRoutes.openapi(
     },
     tags: ['Scenes'],
   }),
-  async (c) => await sceneController.getScenesByChapterId(c),
+  async (c) => {
+    const params = ChapterIdParamSchema.parse(c.req.param())
+    try {
+      const scenes = await sceneController.getScenesByChapterId(params.chapterId)
+      return c.json(scenes, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // PUT /:id
@@ -230,7 +263,20 @@ sceneRoutes.openapi(
     },
     tags: ['Scenes'],
   }),
-  async (c) => await sceneController.updateScene(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = SceneUpdateSchema.parse(body)
+    try {
+      const updatedScene = await sceneController.updateScene(params.id, data)
+      return c.json(updatedScene, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 // DELETE /:id
@@ -242,6 +288,7 @@ sceneRoutes.openapi(
     description: 'Deletes a scene by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: ChapterIdParamSchema,
     },
     responses: {
       204: {
@@ -266,7 +313,19 @@ sceneRoutes.openapi(
     },
     tags: ['Scenes'],
   }),
-  async (c) => await sceneController.deleteScene(c),
+  async (c) => {
+    const params = IdParamSchema.parse(c.req.param())
+    const query = ChapterIdParamSchema.parse(c.req.query())
+    try {
+      await sceneController.deleteScene(params.id, query.chapterId)
+      return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
 )
 
 console.log('SceneRoutes initialized.')

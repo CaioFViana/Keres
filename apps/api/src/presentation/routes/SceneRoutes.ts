@@ -199,7 +199,6 @@ sceneRoutes.openapi(
     },
     tags: ['Scenes'],
   }),
-  zValidator('json', SceneUpdateSchema),
   (c) => sceneController.updateScene(c),
 )
 

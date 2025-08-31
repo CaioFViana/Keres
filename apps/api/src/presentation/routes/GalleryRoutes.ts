@@ -92,7 +92,6 @@ galleryRoutes.openapi(
     },
     tags: ['Gallery'],
   }),
-  zValidator('json', GalleryCreateSchema),
   (c) => galleryController.createGallery(c),
 )
 
@@ -240,7 +239,6 @@ galleryRoutes.openapi(
     },
     tags: ['Gallery'],
   }),
-  zValidator('json', GalleryUpdateSchema),
   (c) => galleryController.updateGallery(c),
 )
 

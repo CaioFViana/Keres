@@ -84,7 +84,6 @@ characterRoutes.openapi(
     },
     tags: ['Characters'],
   }),
-  zValidator('json', CharacterCreateSchema),
   (c) => characterController.createCharacter(c),
 )
 
@@ -199,7 +198,6 @@ characterRoutes.openapi(
     },
     tags: ['Characters'],
   }),
-  zValidator('json', CharacterUpdateSchema),
   (c) => characterController.updateCharacter(c),
 )
 

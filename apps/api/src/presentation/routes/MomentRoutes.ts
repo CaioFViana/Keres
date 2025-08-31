@@ -84,7 +84,6 @@ momentRoutes.openapi(
     },
     tags: ['Moments'],
   }),
-  zValidator('json', MomentCreateSchema),
   (c) => momentController.createMoment(c),
 )
 
@@ -199,7 +198,6 @@ momentRoutes.openapi(
     },
     tags: ['Moments'],
   }),
-  zValidator('json', MomentUpdateSchema),
   (c) => momentController.updateMoment(c),
 )
 

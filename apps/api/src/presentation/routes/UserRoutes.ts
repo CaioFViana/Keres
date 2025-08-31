@@ -75,7 +75,6 @@ userRoutes.openapi(
     },
     tags: ['Users'],
   }),
-  zValidator('json', UserRegisterSchema),
   (c) => userController.createUser(c),
 )
 
@@ -113,9 +112,8 @@ userRoutes.openapi(
         },
       },
     },
-    tags: ['Users'],
+        tags: ['Users'],
   }),
-  zValidator('json', UserLoginSchema),
   (c) => userController.authenticateUser(c),
 )
 

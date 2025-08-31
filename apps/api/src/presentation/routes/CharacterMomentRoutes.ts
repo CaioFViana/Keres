@@ -84,7 +84,6 @@ characterMomentRoutes.openapi(
     },
     tags: ['Character Moments'],
   }),
-  zValidator('json', CharacterMomentCreateSchema),
   (c) => characterMomentController.createCharacterMoment(c),
 )
 
@@ -193,7 +192,6 @@ characterMomentRoutes.openapi(
     },
     tags: ['Character Moments'],
   }),
-  zValidator('json', CharacterMomentCreateSchema), // Keep zValidator for runtime validation
   (c) => characterMomentController.deleteCharacterMoment(c),
 )
 

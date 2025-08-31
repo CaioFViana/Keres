@@ -92,7 +92,6 @@ characterRelationRoutes.openapi(
     },
     tags: ['Character Relations'],
   }),
-  zValidator('json', CharacterRelationCreateSchema),
   (c) => characterRelationController.createCharacterRelation(c),
 )
 
@@ -207,7 +206,6 @@ characterRelationRoutes.openapi(
     },
     tags: ['Character Relations'],
   }),
-  zValidator('json', CharacterRelationUpdateSchema),
   (c) => characterRelationController.updateCharacterRelation(c),
 )
 

@@ -84,7 +84,6 @@ locationRoutes.openapi(
     },
     tags: ['Locations'],
   }),
-  zValidator('json', LocationCreateSchema),
   (c) => locationController.createLocation(c),
 )
 
@@ -199,7 +198,6 @@ locationRoutes.openapi(
     },
     tags: ['Locations'],
   }),
-  zValidator('json', LocationUpdateSchema),
   (c) => locationController.updateLocation(c),
 )
 

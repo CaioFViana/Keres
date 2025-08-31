@@ -84,7 +84,6 @@ chapterRoutes.openapi(
     },
     tags: ['Chapters'],
   }),
-  zValidator('json', ChapterCreateSchema), // Keep zValidator for runtime validation
   (c) => chapterController.createChapter(c),
 )
 
@@ -199,7 +198,6 @@ chapterRoutes.openapi(
     },
     tags: ['Chapters'],
   }),
-  zValidator('json', ChapterUpdateSchema), // Keep zValidator for runtime validation
   (c) => chapterController.updateChapter(c),
 )
 

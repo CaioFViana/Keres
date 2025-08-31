@@ -84,7 +84,6 @@ storyRoutes.openapi(
     },
     tags: ['Stories'],
   }),
-  zValidator('json', StoryCreateSchema),
   (c) => storyController.createStory(c),
 )
 

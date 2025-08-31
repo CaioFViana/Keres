@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+import { ulid } from 'ulid'
 import app from '@keres/api/src/index'
 import { db, users } from '@keres/db'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -118,7 +120,8 @@ describe('UserRoutes Integration', () => {
   })
 
   it('should return 404 for non-existent user profile', async () => {
-    const response = await app.request('/users/profile/nonexistent_id')
+    const nonExistentUserId = ulid()
+    const response = await app.request(`/users/profile/${nonExistentUserId}`)
     const data = await response.json()
 
     expect(response.status).toBe(404)

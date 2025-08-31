@@ -199,7 +199,6 @@ relationRoutes.openapi(
     },
     tags: ['Relations'],
   }),
-  zValidator('json', RelationUpdateSchema),
   (c) => relationController.updateRelation(c),
 )
 

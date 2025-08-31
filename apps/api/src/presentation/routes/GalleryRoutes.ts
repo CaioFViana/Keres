@@ -8,13 +8,14 @@ import {
 } from '@application/use-cases'
 import { zValidator } from '@hono/zod-validator'
 import { GalleryRepository } from '@infrastructure/persistence/GalleryRepository'
-import { GalleryCreateSchema, GalleryUpdateSchema } from '@keres/shared'
+import { GalleryCreateSchema, GalleryUpdateSchema, GalleryResponseSchema } from '@keres/shared' // Import GalleryResponseSchema
 import { GalleryController } from '@presentation/controllers/GalleryController'
-import { Hono } from 'hono'
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
+import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing GalleryRoutes...')
 
-const galleryRoutes = new Hono()
+const galleryRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for GalleryController
 console.log('Instantiating GalleryRepository...')
@@ -42,16 +43,234 @@ const galleryController = new GalleryController(
   getGalleryByStoryIdUseCase,
 )
 
-galleryRoutes.post('/', zValidator('json', GalleryCreateSchema), (c) =>
-  galleryController.createGallery(c),
+// Define schemas for path parameters
+const IdParamSchema = z.object({
+  id: z.string().ulid(),
+})
+
+const OwnerIdParamSchema = z.object({
+  ownerId: z.string().ulid(),
+})
+
+const StoryIdParamSchema = z.object({
+  storyId: z.string().ulid(),
+})
+
+// POST /
+galleryRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/',
+    summary: 'Create a new gallery item',
+    description: 'Creates a new gallery item (image) associated with a story and an owner.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: GalleryCreateSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Gallery item created successfully',
+        content: {
+          'application/json': {
+            schema: GalleryResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  zValidator('json', GalleryCreateSchema),
+  (c) => galleryController.createGallery(c),
 )
-galleryRoutes.get('/:id', (c) => galleryController.getGallery(c))
-galleryRoutes.get('/owner/:ownerId', (c) => galleryController.getGalleryByOwnerId(c))
-galleryRoutes.get('/story/:storyId', (c) => galleryController.getGalleryByStoryId(c))
-galleryRoutes.put('/:id', zValidator('json', GalleryUpdateSchema), (c) =>
-  galleryController.updateGallery(c),
+
+// GET /:id
+galleryRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/{id}',
+    summary: 'Get a gallery item by ID',
+    description: 'Retrieves a single gallery item by its unique ID.',
+    request: {
+      params: IdParamSchema,
+    },
+    responses: {
+      200: {
+        description: 'Gallery item retrieved successfully',
+        content: {
+          'application/json': {
+            schema: GalleryResponseSchema,
+          },
+        },
+      },
+      404: {
+        description: 'Gallery item not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  (c) => galleryController.getGallery(c),
 )
-galleryRoutes.delete('/:id', (c) => galleryController.deleteGallery(c))
+
+// GET /owner/:ownerId
+galleryRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/owner/{ownerId}',
+    summary: 'Get gallery items by owner ID',
+    description: 'Retrieves all gallery items associated with a specific owner (e.g., character, location).',
+    request: {
+      params: OwnerIdParamSchema,
+    },
+    responses: {
+      200: {
+        description: 'Gallery items retrieved successfully',
+        content: {
+          'application/json': {
+            schema: z.array(GalleryResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: 'Owner not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  (c) => galleryController.getGalleryByOwnerId(c),
+)
+
+// GET /story/:storyId
+galleryRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/story/{storyId}',
+    summary: 'Get gallery items by story ID',
+    description: 'Retrieves all gallery items associated with a specific story.',
+    request: {
+      params: StoryIdParamSchema,
+    },
+    responses: {
+      200: {
+        description: 'Gallery items retrieved successfully',
+        content: {
+          'application/json': {
+            schema: z.array(GalleryResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: 'Story not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  (c) => galleryController.getGalleryByStoryId(c),
+)
+
+// PUT /:id
+galleryRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/{id}',
+    summary: 'Update a gallery item by ID',
+    description: 'Updates an existing gallery item by its unique ID.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: GalleryUpdateSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Gallery item updated successfully',
+        content: {
+          'application/json': {
+            schema: GalleryResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Gallery item not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  zValidator('json', GalleryUpdateSchema),
+  (c) => galleryController.updateGallery(c),
+)
+
+// DELETE /:id
+galleryRoutes.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/{id}',
+    summary: 'Delete a gallery item by ID',
+    description: 'Deletes a gallery item by its unique ID.',
+    request: {
+      params: IdParamSchema,
+    },
+    responses: {
+      204: {
+        description: 'Gallery item deleted successfully (No Content)',
+      },
+      404: {
+        description: 'Gallery item not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  (c) => galleryController.deleteGallery(c),
+)
 
 console.log('GalleryRoutes initialized.')
 

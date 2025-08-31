@@ -44,10 +44,7 @@ export class StoryRepository implements IStoryRepository {
   async update(storyData: Story): Promise<void> {
     console.log('StoryRepository.update called.')
     try {
-      await db
-        .update(story)
-        .set(this.toPersistence(storyData))
-        .where(eq(story.id, storyData.id))
+      await db.update(story).set(this.toPersistence(storyData)).where(eq(story.id, storyData.id))
     } catch (error) {
       console.error('Error in StoryRepository.update:', error)
       throw error

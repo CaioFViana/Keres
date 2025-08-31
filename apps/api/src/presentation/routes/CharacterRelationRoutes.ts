@@ -7,13 +7,14 @@ import {
 } from '@application/use-cases'
 import { zValidator } from '@hono/zod-validator'
 import { CharacterRelationRepository } from '@infrastructure/persistence/CharacterRelationRepository'
-import { CharacterRelationCreateSchema, CharacterRelationUpdateSchema } from '@keres/shared'
+import { CharacterRelationCreateSchema, CharacterRelationUpdateSchema, CharacterRelationResponseSchema } from '@keres/shared' // Import CharacterRelationResponseSchema
 import { CharacterRelationController } from '@presentation/controllers/CharacterRelationController'
-import { Hono } from 'hono'
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
+import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing CharacterRelationRoutes...')
 
-const characterRelationRoutes = new Hono()
+const characterRelationRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for CharacterRelationController
 console.log('Instantiating CharacterRelationRepository...')
@@ -46,18 +47,196 @@ const characterRelationController = new CharacterRelationController(
   getCharacterRelationsByCharIdUseCase,
 )
 
-characterRelationRoutes.post('/', zValidator('json', CharacterRelationCreateSchema), (c) =>
-  characterRelationController.createCharacterRelation(c),
+// Define schemas for path parameters
+const IdParamSchema = z.object({
+  id: z.string().ulid(),
+})
+
+const CharIdParamSchema = z.object({
+  charId: z.string().ulid(),
+})
+
+// POST /
+characterRelationRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/',
+    summary: 'Create a new character relation',
+    description: 'Creates a new relation between two characters.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: CharacterRelationCreateSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Character Relation created successfully',
+        content: {
+          'application/json': {
+            schema: CharacterRelationResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Relations'],
+  }),
+  zValidator('json', CharacterRelationCreateSchema),
+  (c) => characterRelationController.createCharacterRelation(c),
 )
-characterRelationRoutes.get('/:id', (c) => characterRelationController.getCharacterRelation(c))
-characterRelationRoutes.get('/character/:charId', (c) =>
-  characterRelationController.getCharacterRelationsByCharId(c),
+
+// GET /:id
+characterRelationRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/{id}',
+    summary: 'Get a character relation by ID',
+    description: 'Retrieves a single character relation by its unique ID.',
+    request: {
+      params: IdParamSchema,
+    },
+    responses: {
+      200: {
+        description: 'Character Relation retrieved successfully',
+        content: {
+          'application/json': {
+            schema: CharacterRelationResponseSchema,
+          },
+        },
+      },
+      404: {
+        description: 'Character Relation not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Relations'],
+  }),
+  (c) => characterRelationController.getCharacterRelation(c),
 )
-characterRelationRoutes.put('/:id', zValidator('json', CharacterRelationUpdateSchema), (c) =>
-  characterRelationController.updateCharacterRelation(c),
+
+// GET /character/:charId
+characterRelationRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/character/{charId}',
+    summary: 'Get character relations by character ID',
+    description: 'Retrieves all relations associated with a specific character.',
+    request: {
+      params: CharIdParamSchema,
+    },
+    responses: {
+      200: {
+        description: 'Character Relations retrieved successfully',
+        content: {
+          'application/json': {
+            schema: z.array(CharacterRelationResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: 'Character not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Relations'],
+  }),
+  (c) => characterRelationController.getCharacterRelationsByCharId(c),
 )
-characterRelationRoutes.delete('/:id', (c) =>
-  characterRelationController.deleteCharacterRelation(c),
+
+// PUT /:id
+characterRelationRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/{id}',
+    summary: 'Update a character relation by ID',
+    description: 'Updates an existing character relation by its unique ID.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: CharacterRelationUpdateSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Character Relation updated successfully',
+        content: {
+          'application/json': {
+            schema: CharacterRelationResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Character Relation not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Relations'],
+  }),
+  zValidator('json', CharacterRelationUpdateSchema),
+  (c) => characterRelationController.updateCharacterRelation(c),
+)
+
+// DELETE /:id
+characterRelationRoutes.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/{id}',
+    summary: 'Delete a character relation by ID',
+    description: 'Deletes a character relation by its unique ID.',
+    request: {
+      params: IdParamSchema,
+    },
+    responses: {
+      204: {
+        description: 'Character Relation deleted successfully (No Content)',
+      },
+      404: {
+        description: 'Character Relation not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Relations'],
+  }),
+  (c) => characterRelationController.deleteCharacterRelation(c),
 )
 
 console.log('CharacterRelationRoutes initialized.')

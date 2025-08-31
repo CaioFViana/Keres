@@ -6,13 +6,14 @@ import {
 import { zValidator } from '@hono/zod-validator' // Import zValidator
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher'
-import { UserLoginSchema, UserRegisterSchema } from '@keres/shared' // Import Zod schemas
+import { UserLoginSchema, UserRegisterSchema, UserProfileSchema } from '@keres/shared' // Import Zod schemas and UserProfileSchema
 import { UserController } from '@presentation/controllers/UserController'
-import { Hono } from 'hono'
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
+import { z } from 'zod' // Import z for defining parameters
 
 console.log('Initializing UserRoutes...')
 
-const userRoutes = new Hono()
+const userRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for UserController
 console.log('Instantiating UserRepository...')
@@ -33,13 +34,123 @@ const userController = new UserController(
   getUserProfileUseCase,
 )
 
-userRoutes.post('/register', zValidator('json', UserRegisterSchema), (c) =>
-  userController.createUser(c),
+// Define schemas for path parameters
+const IdParamSchema = z.object({
+  id: z.string().ulid(),
+})
+
+// POST /register
+userRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/register',
+    summary: 'Register a new user',
+    description: 'Registers a new user with a username and password.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: UserRegisterSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'User registered successfully',
+        content: {
+          'application/json': {
+            schema: UserProfileSchema, // Assuming UserProfileSchema is returned on successful registration
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Users'],
+  }),
+  zValidator('json', UserRegisterSchema),
+  (c) => userController.createUser(c),
 )
-userRoutes.post('/login', zValidator('json', UserLoginSchema), (c) =>
-  userController.authenticateUser(c),
+
+// POST /login
+userRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/login',
+    summary: 'Authenticate user login',
+    description: 'Authenticates a user and returns a token (or success message).',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: UserLoginSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Login successful',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string(), token: z.string().optional() }), // Assuming a token or success message
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Users'],
+  }),
+  zValidator('json', UserLoginSchema),
+  (c) => userController.authenticateUser(c),
 )
-userRoutes.get('/profile/:id', (c) => userController.getUserProfile(c))
+
+// GET /profile/:id
+userRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/profile/{id}',
+    summary: 'Get user profile by ID',
+    description: 'Retrieves a user\'s profile information by their unique ID.',
+    request: {
+      params: IdParamSchema,
+    },
+    responses: {
+      200: {
+        description: 'User profile retrieved successfully',
+        content: {
+          'application/json': {
+            schema: UserProfileSchema,
+          },
+        },
+      },
+      404: {
+        description: 'User not found',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Users'],
+  }),
+  (c) => userController.getUserProfile(c),
+)
 
 console.log('UserRoutes initialized.')
 

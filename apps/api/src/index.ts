@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { OpenAPIHono } from '@hono/zod-openapi' // Import OpenAPIHono
 
 import chapterRoutes from './presentation/routes/ChapterRoutes'
 import characterMomentRoutes from './presentation/routes/CharacterMomentRoutes'
@@ -11,8 +11,9 @@ import relationRoutes from './presentation/routes/RelationRoutes'
 import sceneRoutes from './presentation/routes/SceneRoutes'
 import storyRoutes from './presentation/routes/StoryRoutes'
 import userRoutes from './presentation/routes/UserRoutes'
+import { swaggerUI } from '@hono/swagger-ui'
 
-const app = new Hono()
+const app = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 app.onError((err, c) => {
   console.error(`${err}`)
@@ -34,5 +35,21 @@ app.route('/gallery', galleryRoutes)
 app.route('/relations', relationRoutes)
 app.route('/character-moments', characterMomentRoutes)
 app.route('/character-relations', characterRelationRoutes)
+
+// Define OpenAPI document metadata
+app.doc('/openapi.json', {
+  openapi: '3.0.0',
+  info: {
+    version: '1.0.0',
+    title: 'Keres API',
+    description: 'API for the Keres Story Organizer application.',
+  },
+})
+app.get(
+  '/swagger',
+  swaggerUI({
+    url: '/openapi.json',
+  }),
+)
 
 export default app

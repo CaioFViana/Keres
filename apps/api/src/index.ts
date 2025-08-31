@@ -13,6 +13,7 @@ import relationRoutes from './presentation/routes/RelationRoutes'
 import sceneRoutes from './presentation/routes/SceneRoutes'
 import storyRoutes from './presentation/routes/StoryRoutes'
 import userRoutes from './presentation/routes/UserRoutes'
+import worldRuleRoutes from './presentation/routes/WorldRuleRoutes' // Added
 
 const app = new OpenAPIHono() // Change Hono to OpenAPIHono
 
@@ -37,6 +38,7 @@ app.route('/relations', relationRoutes)
 app.route('/character-moments', characterMomentRoutes)
 app.route('/character-relations', characterRelationRoutes)
 app.route('/choices', choiceRoutes) // Added
+app.route('/world-rules', worldRuleRoutes) // Added
 
 // Define OpenAPI document metadata
 app.doc('/openapi.json', {

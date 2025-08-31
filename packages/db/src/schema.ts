@@ -183,3 +183,17 @@ export const choices = pgTable('choices', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+export const worldRules = pgTable('world_rules', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => story.id),
+  title: text('title').notNull(),
+  description: text('description'),
+  // affected_characters (relational table maybe?) - This will be handled separately if needed
+  isFavorite: boolean('is_favorite').default(false).notNull(),
+  extraNotes: text('extra_notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})

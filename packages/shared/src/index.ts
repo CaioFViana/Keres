@@ -22,3 +22,5 @@ export * from './schemas/SceneSchemas' // Re-export from new file
 export * from './schemas/StorySchemas' // Re-export from new file
 // User Schemas
 export * from './schemas/UserSchemas' // Re-export from new file
+// WorldRule Schemas
+export * from './schemas/WorldRuleSchemas' // Re-export from new file

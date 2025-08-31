@@ -3,9 +3,9 @@ import type {
   CreateUserUseCase,
   GetUserProfileUseCase,
 } from '@application/use-cases'
+import type z from 'zod'
 
-import { UserLoginSchema, UserProfileSchema, UserRegisterSchema } from '@keres/shared'
-import z from 'zod'
+import { type UserLoginSchema, UserProfileSchema, type UserRegisterSchema } from '@keres/shared'
 
 export class UserController {
   constructor(

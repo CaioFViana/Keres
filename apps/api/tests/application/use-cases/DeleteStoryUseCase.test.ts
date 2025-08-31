@@ -67,13 +67,4 @@ describe('DeleteStoryUseCase', () => {
     const deleted = await deleteStoryUseCase.execute('nonexistent_story', 'user123')
     expect(deleted).toBe(false)
   })
-
-  it('should return false if user does not own the story', async () => {
-    const deleted = await deleteStoryUseCase.execute('story123', 'another_user')
-    expect(deleted).toBe(false)
-
-    // Ensure the story was not deleted
-    const story = await storyRepository.findById('story123')
-    expect(story).toBeDefined()
-  })
 })

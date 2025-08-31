@@ -5,9 +5,13 @@ import type {
   GetChapterUseCase,
   UpdateChapterUseCase,
 } from '@application/use-cases'
+import type { z } from 'zod'
 
-import { ChapterCreateSchema, ChapterResponseSchema, ChapterUpdateSchema } from '@keres/shared'
-import {z} from 'zod'
+import {
+  type ChapterCreateSchema,
+  ChapterResponseSchema,
+  type ChapterUpdateSchema,
+} from '@keres/shared'
 
 export class ChapterController {
   constructor(
@@ -37,7 +41,8 @@ export class ChapterController {
   }
 
   async updateChapter(id: string, data: z.infer<typeof ChapterUpdateSchema>) {
-    const updatedChapter = await this.updateChapterUseCase.execute({ id, ...data })
+    const { id: dataId, ...updateData } = data
+    const updatedChapter = await this.updateChapterUseCase.execute({ id, ...updateData })
     if (!updatedChapter) {
       throw new Error('Chapter not found or does not belong to the specified story')
     }

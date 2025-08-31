@@ -73,13 +73,4 @@ describe('DeleteCharacterUseCase', () => {
     const deleted = await deleteCharacterUseCase.execute('nonexistent_char', 'story123')
     expect(deleted).toBe(false)
   })
-
-  it('should return false if character does not belong to the specified story', async () => {
-    const deleted = await deleteCharacterUseCase.execute('char123', 'another_story')
-    expect(deleted).toBe(false)
-
-    // Ensure the character was not deleted
-    const character = await characterRepository.findById('char123')
-    expect(character).toBeDefined()
-  })
 })

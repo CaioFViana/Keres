@@ -145,8 +145,8 @@ userRoutes.openapi(
     const body = await c.req.json()
     const data = UserLoginSchema.parse(body)
     try {
-      const userProfile = await userController.authenticateUser(data)
-      return c.json(userProfile, 200)
+      await userController.authenticateUser(data)
+      return c.json({ message: 'Login successful' }, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 401)

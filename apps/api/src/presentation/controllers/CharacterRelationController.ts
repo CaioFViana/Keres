@@ -5,9 +5,13 @@ import type {
   GetCharacterRelationUseCase,
   UpdateCharacterRelationUseCase,
 } from '@application/use-cases'
+import type z from 'zod'
 
-import { CharacterRelationCreateSchema, CharacterRelationResponseSchema } from '@keres/shared'
-import z from 'zod'
+import {
+  type CharacterRelationCreateSchema,
+  CharacterRelationResponseSchema,
+  type CharacterRelationUpdateSchema,
+} from '@keres/shared'
 
 export class CharacterRelationController {
   constructor(
@@ -37,9 +41,10 @@ export class CharacterRelationController {
   }
 
   async updateCharacterRelation(id: string, data: z.infer<typeof CharacterRelationUpdateSchema>) {
+    const { id: dataId, ...updateData } = data
     const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute({
       id,
-      ...data,
+      ...updateData,
     })
     if (!updatedCharacterRelation) {
       throw new Error('Character relation not found')

@@ -5,9 +5,13 @@ import type {
   GetLocationUseCase,
   UpdateLocationUseCase,
 } from '@application/use-cases'
+import type z from 'zod'
 
-import { LocationCreateSchema, LocationResponseSchema, LocationUpdateSchema } from '@keres/shared'
-import z from 'zod'
+import {
+  type LocationCreateSchema,
+  LocationResponseSchema,
+  type LocationUpdateSchema,
+} from '@keres/shared'
 
 export class LocationController {
   constructor(
@@ -37,7 +41,8 @@ export class LocationController {
   }
 
   async updateLocation(id: string, data: z.infer<typeof LocationUpdateSchema>) {
-    const updatedLocation = await this.updateLocationUseCase.execute({ id, ...data })
+    const { id: dataId, ...updateData } = data
+    const updatedLocation = await this.updateLocationUseCase.execute({ id, ...updateData })
     if (!updatedLocation) {
       throw new Error('Location not found or does not belong to the specified story')
     }

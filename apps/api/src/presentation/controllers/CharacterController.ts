@@ -5,9 +5,13 @@ import type {
   GetCharacterUseCase,
   UpdateCharacterUseCase,
 } from '@application/use-cases'
+import type { z } from 'zod'
 
-import { CharacterCreateSchema, CharacterResponseSchema, CharacterUpdateSchema } from '@keres/shared'
-import { z } from 'zod'
+import {
+  type CharacterCreateSchema,
+  CharacterResponseSchema,
+  type CharacterUpdateSchema,
+} from '@keres/shared'
 
 export class CharacterController {
   constructor(
@@ -37,9 +41,10 @@ export class CharacterController {
   }
 
   async updateCharacter(id: string, data: z.infer<typeof CharacterUpdateSchema>) {
+    const { id: dataId, ...updateData } = data
     const updatedCharacter = await this.updateCharacterUseCase.execute({
       id,
-      ...data,
+      ...updateData,
     })
     if (!updatedCharacter) {
       throw new Error('Character not found')

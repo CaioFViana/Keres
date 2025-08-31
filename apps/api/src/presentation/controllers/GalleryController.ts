@@ -6,9 +6,13 @@ import type {
   GetGalleryUseCase,
   UpdateGalleryUseCase,
 } from '@application/use-cases'
+import type z from 'zod'
 
-import { GalleryCreateSchema, GalleryResponseSchema, GalleryUpdateSchema } from '@keres/shared'
-import z from 'zod'
+import {
+  type GalleryCreateSchema,
+  GalleryResponseSchema,
+  type GalleryUpdateSchema,
+} from '@keres/shared'
 
 export class GalleryController {
   constructor(
@@ -44,7 +48,8 @@ export class GalleryController {
   }
 
   async updateGallery(id: string, data: z.infer<typeof GalleryUpdateSchema>) {
-    const updatedGallery = await this.updateGalleryUseCase.execute({ id, ...data })
+    const { id: dataId, ...updateData } = data
+    const updatedGallery = await this.updateGalleryUseCase.execute({ id, ...updateData })
     if (!updatedGallery) {
       throw new Error('Gallery item not found or does not belong to the specified story/owner')
     }

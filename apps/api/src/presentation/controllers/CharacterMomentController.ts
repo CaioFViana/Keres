@@ -4,9 +4,9 @@ import type {
   GetCharacterMomentsByCharacterIdUseCase,
   GetCharacterMomentsByMomentIdUseCase,
 } from '@application/use-cases'
+import type z from 'zod'
 
-import { CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@keres/shared'
-import z from 'zod'
+import { type CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@keres/shared'
 
 export class CharacterMomentController {
   constructor(

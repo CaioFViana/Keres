@@ -5,9 +5,13 @@ import type {
   GetMomentUseCase,
   UpdateMomentUseCase,
 } from '@application/use-cases'
+import type z from 'zod'
 
-import { MomentCreateSchema, MomentResponseSchema, MomentUpdateSchema } from '@keres/shared'
-import z from 'zod'
+import {
+  type MomentCreateSchema,
+  MomentResponseSchema,
+  type MomentUpdateSchema,
+} from '@keres/shared'
 
 export class MomentController {
   constructor(
@@ -37,7 +41,8 @@ export class MomentController {
   }
 
   async updateMoment(id: string, data: z.infer<typeof MomentUpdateSchema>) {
-    const updatedMoment = await this.updateMomentUseCase.execute({ id, ...data })
+    const { id: dataId, ...updateData } = data
+    const updatedMoment = await this.updateMomentUseCase.execute({ id, ...updateData })
     if (!updatedMoment) {
       throw new Error('Moment not found or does not belong to the specified scene')
     }

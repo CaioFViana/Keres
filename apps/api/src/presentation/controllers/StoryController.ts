@@ -5,9 +5,9 @@ import type {
   GetStoryUseCase,
   UpdateStoryUseCase,
 } from '@application/use-cases'
+import type z from 'zod'
 
-import { StoryCreateSchema, StoryResponseSchema, StoryUpdateSchema } from '@keres/shared'
-import z from 'zod'
+import { type StoryCreateSchema, StoryResponseSchema, type StoryUpdateSchema } from '@keres/shared'
 
 export class StoryController {
   constructor(
@@ -37,7 +37,8 @@ export class StoryController {
   }
 
   async updateStory(id: string, data: z.infer<typeof StoryUpdateSchema>) {
-    const updatedStory = await this.updateStoryUseCase.execute({ id, ...data })
+    const { id: dataId, ...updateData } = data
+    const updatedStory = await this.updateStoryUseCase.execute({ id, ...updateData })
     if (!updatedStory) {
       throw new Error('Story not found')
     }

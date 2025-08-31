@@ -5,9 +5,13 @@ import type {
   GetRelationUseCase,
   UpdateRelationUseCase,
 } from '@application/use-cases'
+import type { z } from 'zod'
 
-import { RelationCreateSchema, RelationResponseSchema, RelationUpdateSchema } from '@keres/shared'
-import { z } from 'zod'
+import {
+  type RelationCreateSchema,
+  RelationResponseSchema,
+  type RelationUpdateSchema,
+} from '@keres/shared'
 
 export class RelationController {
   constructor(
@@ -37,7 +41,8 @@ export class RelationController {
   }
 
   async updateRelation(id: string, data: z.infer<typeof RelationUpdateSchema>) {
-    const updatedRelation = await this.updateRelationUseCase.execute({ id, ...data })
+    const { id: dataId, ...updateData } = data
+    const updatedRelation = await this.updateRelationUseCase.execute({ id, ...updateData })
     if (!updatedRelation) {
       throw new Error('Relation not found or does not belong to the specified characters')
     }

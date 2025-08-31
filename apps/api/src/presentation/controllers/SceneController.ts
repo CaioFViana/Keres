@@ -5,9 +5,9 @@ import type {
   GetSceneUseCase,
   UpdateSceneUseCase,
 } from '@application/use-cases'
+import type z from 'zod'
 
-import { SceneCreateSchema, SceneResponseSchema, SceneUpdateSchema } from '@keres/shared'
-import z from 'zod'
+import { type SceneCreateSchema, SceneResponseSchema, type SceneUpdateSchema } from '@keres/shared'
 
 export class SceneController {
   constructor(
@@ -37,7 +37,8 @@ export class SceneController {
   }
 
   async updateScene(id: string, data: z.infer<typeof SceneUpdateSchema>) {
-    const updatedScene = await this.updateSceneUseCase.execute({ id, ...data })
+    const { id: dataId, ...updateData } = data
+    const updatedScene = await this.updateSceneUseCase.execute({ id, ...updateData })
     if (!updatedScene) {
       throw new Error('Scene not found or does not belong to the specified chapter')
     }

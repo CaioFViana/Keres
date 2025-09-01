@@ -14,6 +14,7 @@ export class GetStoryUseCase {
       id: story.id,
       userId: story.userId,
       title: story.title,
+      type: story.type,
       summary: story.summary,
       genre: story.genre,
       language: story.language,

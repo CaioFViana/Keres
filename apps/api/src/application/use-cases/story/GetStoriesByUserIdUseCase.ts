@@ -11,6 +11,7 @@ export class GetStoriesByUserIdUseCase {
       userId: story.userId,
       title: story.title,
       summary: story.summary,
+      type: (story.type == 'linear')? story.type: "branching",
       genre: story.genre,
       language: story.language,
       isFavorite: story.isFavorite,

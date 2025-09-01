@@ -38,7 +38,13 @@ app.doc('/openapi.json', {
     title: 'Keres API',
     description: 'API for the Keres Story Organizer application.',
   },
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
 })
+// No middleware routes.
 app.get(
   '/swagger',
   swaggerUI({
@@ -46,9 +52,14 @@ app.get(
   }),
 )
 
+app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT' 
+})
+
 app.route('/users', userRoutes) // Public routes
 app.use(authMiddleware) // Apply middleware to all subsequent routes
-
 app.route('/stories', storyRoutes)
 app.route('/characters', characterRoutes)
 app.route('/chapters', chapterRoutes)

@@ -88,6 +88,7 @@ userRoutes.openapi(
       },
     },
     tags: ['Users'],
+    security: []
   }),
   async (c) => {
     const body = await c.req.json()
@@ -147,6 +148,7 @@ userRoutes.openapi(
       },
     },
     tags: ['Users'],
+    security: [],
   }),
   async (c) => {
     const body = await c.req.json()

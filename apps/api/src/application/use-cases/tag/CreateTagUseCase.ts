@@ -1,8 +1,8 @@
-import type { Tag } from '@domain/entities/Tag';
-import type { ITagRepository } from '@domain/repositories/ITagRepository';
-import type { CreateTagPayload, TagResponse } from '@keres/shared';
+import type { Tag } from '@domain/entities/Tag'
+import type { ITagRepository } from '@domain/repositories/ITagRepository'
+import type { CreateTagPayload, TagResponse } from '@keres/shared'
 
-import { ulid } from 'ulid';
+import { ulid } from 'ulid'
 
 export class CreateTagUseCase {
   constructor(private readonly tagRepository: ITagRepository) {}
@@ -17,9 +17,9 @@ export class CreateTagUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.tagRepository.save(newTag);
+    await this.tagRepository.save(newTag)
 
     return {
       id: newTag.id,
@@ -30,6 +30,6 @@ export class CreateTagUseCase {
       extraNotes: newTag.extraNotes,
       createdAt: newTag.createdAt,
       updatedAt: newTag.updatedAt,
-    };
+    }
   }
 }

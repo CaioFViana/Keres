@@ -1,22 +1,22 @@
-import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository';
-import type { SuggestionResponse, UpdateSuggestionPayload } from '@keres/shared';
+import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
+import type { SuggestionResponse, UpdateSuggestionPayload } from '@keres/shared'
 
 export class UpdateSuggestionUseCase {
   constructor(private readonly suggestionRepository: ISuggestionRepository) {}
 
   async execute(data: UpdateSuggestionPayload): Promise<SuggestionResponse | null> {
-    const existingSuggestion = await this.suggestionRepository.findById(data.id);
+    const existingSuggestion = await this.suggestionRepository.findById(data.id)
     if (!existingSuggestion) {
-      return null; // Suggestion not found
+      return null // Suggestion not found
     }
 
     const updatedSuggestion = {
       ...existingSuggestion,
       ...data,
       updatedAt: new Date(),
-    };
+    }
 
-    await this.suggestionRepository.update(updatedSuggestion);
+    await this.suggestionRepository.update(updatedSuggestion)
 
     return {
       id: updatedSuggestion.id,
@@ -27,6 +27,6 @@ export class UpdateSuggestionUseCase {
       value: updatedSuggestion.value,
       createdAt: updatedSuggestion.createdAt,
       updatedAt: updatedSuggestion.updatedAt,
-    };
+    }
   }
 }

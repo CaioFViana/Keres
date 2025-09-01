@@ -1,112 +1,121 @@
-import type { Suggestion } from '@domain/entities/Suggestion';
-import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository';
+import type { Suggestion } from '@domain/entities/Suggestion'
+import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 
-import { db, suggestions } from '@keres/db'; // Import db and suggestions table
-import { eq, and } from 'drizzle-orm';
+import { db, suggestions } from '@keres/db' // Import db and suggestions table
+import { and, eq } from 'drizzle-orm'
 
 export class SuggestionRepository implements ISuggestionRepository {
   constructor() {
-    console.log('SuggestionRepository constructor called.');
+    console.log('SuggestionRepository constructor called.')
   }
 
   async findById(id: string): Promise<Suggestion | null> {
-    console.log('SuggestionRepository.findById called.');
+    console.log('SuggestionRepository.findById called.')
     try {
-      const result = await db.select().from(suggestions).where(eq(suggestions.id, id)).limit(1);
-      return result.length > 0 ? this.toDomain(result[0]) : null;
+      const result = await db.select().from(suggestions).where(eq(suggestions.id, id)).limit(1)
+      return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
-      console.error('Error in SuggestionRepository.findById:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.findById:', error)
+      throw error
     }
   }
 
   async findByUserId(userId: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByUserId called.');
+    console.log('SuggestionRepository.findByUserId called.')
     try {
-      const results = await db.select().from(suggestions).where(eq(suggestions.userId, userId));
-      return results.map(this.toDomain);
+      const results = await db.select().from(suggestions).where(eq(suggestions.userId, userId))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in SuggestionRepository.findByUserId:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.findByUserId:', error)
+      throw error
     }
   }
 
   async findByStoryId(storyId: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByStoryId called.');
+    console.log('SuggestionRepository.findByStoryId called.')
     try {
-      const results = await db.select().from(suggestions).where(eq(suggestions.storyId, storyId));
-      return results.map(this.toDomain);
+      const results = await db.select().from(suggestions).where(eq(suggestions.storyId, storyId))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in SuggestionRepository.findByStoryId:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.findByStoryId:', error)
+      throw error
     }
   }
 
   async findByType(type: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByType called.');
+    console.log('SuggestionRepository.findByType called.')
     try {
-      const results = await db.select().from(suggestions).where(eq(suggestions.type, type));
-      return results.map(this.toDomain);
+      const results = await db.select().from(suggestions).where(eq(suggestions.type, type))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in SuggestionRepository.findByType:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.findByType:', error)
+      throw error
     }
   }
 
   async findByUserAndType(userId: string, type: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByUserAndType called.');
+    console.log('SuggestionRepository.findByUserAndType called.')
     try {
-      const results = await db.select().from(suggestions).where(and(eq(suggestions.userId, userId), eq(suggestions.type, type)));
-      return results.map(this.toDomain);
+      const results = await db
+        .select()
+        .from(suggestions)
+        .where(and(eq(suggestions.userId, userId), eq(suggestions.type, type)))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in SuggestionRepository.findByUserAndType:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.findByUserAndType:', error)
+      throw error
     }
   }
 
   async findByStoryAndType(storyId: string, type: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByStoryAndType called.');
+    console.log('SuggestionRepository.findByStoryAndType called.')
     try {
-      const results = await db.select().from(suggestions).where(and(eq(suggestions.storyId, storyId), eq(suggestions.type, type)));
-      return results.map(this.toDomain);
+      const results = await db
+        .select()
+        .from(suggestions)
+        .where(and(eq(suggestions.storyId, storyId), eq(suggestions.type, type)))
+      return results.map(this.toDomain)
     } catch (error) {
-      console.error('Error in SuggestionRepository.findByStoryAndType:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.findByStoryAndType:', error)
+      throw error
     }
   }
 
   async save(suggestionData: Suggestion): Promise<void> {
-    console.log('SuggestionRepository.save called.');
+    console.log('SuggestionRepository.save called.')
     try {
-      await db.insert(suggestions).values(this.toPersistence(suggestionData));
+      await db.insert(suggestions).values(this.toPersistence(suggestionData))
     } catch (error) {
-      console.error('Error in SuggestionRepository.save:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.save:', error)
+      throw error
     }
   }
 
   async update(suggestionData: Suggestion): Promise<void> {
-    console.log('SuggestionRepository.update called.');
+    console.log('SuggestionRepository.update called.')
     try {
-      await db.update(suggestions).set(this.toPersistence(suggestionData)).where(eq(suggestions.id, suggestionData.id));
+      await db
+        .update(suggestions)
+        .set(this.toPersistence(suggestionData))
+        .where(eq(suggestions.id, suggestionData.id))
     } catch (error) {
-      console.error('Error in SuggestionRepository.update:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.update:', error)
+      throw error
     }
   }
 
   async delete(id: string): Promise<void> {
-    console.log('SuggestionRepository.delete called.');
+    console.log('SuggestionRepository.delete called.')
     try {
-      await db.delete(suggestions).where(eq(suggestions.id, id));
+      await db.delete(suggestions).where(eq(suggestions.id, id))
     } catch (error) {
-      console.error('Error in SuggestionRepository.delete:', error);
-      throw error;
+      console.error('Error in SuggestionRepository.delete:', error)
+      throw error
     }
   }
 
   private toDomain(data: typeof suggestions.$inferSelect): Suggestion {
-    console.log('SuggestionRepository.toDomain called.');
+    console.log('SuggestionRepository.toDomain called.')
     return {
       id: data.id,
       userId: data.userId,
@@ -116,11 +125,11 @@ export class SuggestionRepository implements ISuggestionRepository {
       value: data.value,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-    };
+    }
   }
 
   private toPersistence(suggestionData: Suggestion): typeof suggestions.$inferInsert {
-    console.log('SuggestionRepository.toPersistence called.');
+    console.log('SuggestionRepository.toPersistence called.')
     return {
       id: suggestionData.id,
       userId: suggestionData.userId,
@@ -130,6 +139,6 @@ export class SuggestionRepository implements ISuggestionRepository {
       value: suggestionData.value,
       createdAt: suggestionData.createdAt,
       updatedAt: suggestionData.updatedAt,
-    };
+    }
   }
 }

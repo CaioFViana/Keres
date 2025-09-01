@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const CreateNoteSchema = z.object({
   storyId: z.string().ulid(),
@@ -7,7 +7,7 @@ export const CreateNoteSchema = z.object({
   galleryId: z.string().ulid().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const UpdateNoteSchema = z.object({
   id: z.string().ulid(),
@@ -17,7 +17,7 @@ export const UpdateNoteSchema = z.object({
   galleryId: z.string().ulid().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const NoteResponseSchema = z.object({
   id: z.string().ulid(),
@@ -29,8 +29,8 @@ export const NoteResponseSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})
 
-export type CreateNotePayload = z.infer<typeof CreateNoteSchema>;
-export type UpdateNotePayload = z.infer<typeof UpdateNoteSchema>;
-export type NoteResponse = z.infer<typeof NoteResponseSchema>;
+export type CreateNotePayload = z.infer<typeof CreateNoteSchema>
+export type UpdateNotePayload = z.infer<typeof UpdateNoteSchema>
+export type NoteResponse = z.infer<typeof NoteResponseSchema>

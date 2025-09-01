@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const CreateSuggestionSchema = z.object({
   userId: z.string().ulid(),
@@ -6,7 +6,7 @@ export const CreateSuggestionSchema = z.object({
   storyId: z.string().ulid().nullable().optional(),
   type: z.string().min(1, 'Type cannot be empty'),
   value: z.string().min(1, 'Value cannot be empty'),
-});
+})
 
 export const UpdateSuggestionSchema = z.object({
   id: z.string().ulid(),
@@ -15,7 +15,7 @@ export const UpdateSuggestionSchema = z.object({
   storyId: z.string().ulid().nullable().optional(),
   type: z.string().min(1, 'Type cannot be empty').optional(),
   value: z.string().min(1, 'Value cannot be empty').optional(),
-});
+})
 
 export const SuggestionResponseSchema = z.object({
   id: z.string().ulid(),
@@ -26,8 +26,8 @@ export const SuggestionResponseSchema = z.object({
   value: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})
 
-export type CreateSuggestionPayload = z.infer<typeof CreateSuggestionSchema>;
-export type UpdateSuggestionPayload = z.infer<typeof UpdateSuggestionSchema>;
-export type SuggestionResponse = z.infer<typeof SuggestionResponseSchema>;
+export type CreateSuggestionPayload = z.infer<typeof CreateSuggestionSchema>
+export type UpdateSuggestionPayload = z.infer<typeof UpdateSuggestionSchema>
+export type SuggestionResponse = z.infer<typeof SuggestionResponseSchema>

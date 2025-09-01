@@ -1,8 +1,8 @@
-import type { Note } from '@domain/entities/Note';
-import type { INoteRepository } from '@domain/repositories/INoteRepository';
-import type { CreateNotePayload, NoteResponse } from '@keres/shared';
+import type { Note } from '@domain/entities/Note'
+import type { INoteRepository } from '@domain/repositories/INoteRepository'
+import type { CreateNotePayload, NoteResponse } from '@keres/shared'
 
-import { ulid } from 'ulid';
+import { ulid } from 'ulid'
 
 export class CreateNoteUseCase {
   constructor(private readonly noteRepository: INoteRepository) {}
@@ -18,9 +18,9 @@ export class CreateNoteUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.noteRepository.save(newNote);
+    await this.noteRepository.save(newNote)
 
     return {
       id: newNote.id,
@@ -32,6 +32,6 @@ export class CreateNoteUseCase {
       extraNotes: newNote.extraNotes,
       createdAt: newNote.createdAt,
       updatedAt: newNote.updatedAt,
-    };
+    }
   }
 }

@@ -25,7 +25,11 @@ const createUserUseCase = new CreateUserUseCase(userRepository, passwordHasher)
 console.log('Instantiating AuthenticateUserUseCase...')
 console.log('Instantiating JwtService...') // Added
 const jwtService = new JwtService() // Added
-const authenticateUserUseCase = new AuthenticateUserUseCase(userRepository, passwordHasher, jwtService) // Modified
+const authenticateUserUseCase = new AuthenticateUserUseCase(
+  userRepository,
+  passwordHasher,
+  jwtService,
+) // Modified
 console.log('Instantiating GetUserProfileUseCase...')
 const getUserProfileUseCase = new GetUserProfileUseCase(userRepository)
 

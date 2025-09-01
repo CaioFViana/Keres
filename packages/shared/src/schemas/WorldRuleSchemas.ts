@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const CreateWorldRuleSchema = z.object({
   storyId: z.ulid(),
@@ -6,7 +6,7 @@ export const CreateWorldRuleSchema = z.object({
   description: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const UpdateWorldRuleSchema = z.object({
   id: z.ulid(),
@@ -15,7 +15,7 @@ export const UpdateWorldRuleSchema = z.object({
   description: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const WorldRuleResponseSchema = z.object({
   id: z.ulid(),
@@ -26,8 +26,8 @@ export const WorldRuleResponseSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})
 
-export type CreateWorldRulePayload = z.infer<typeof CreateWorldRuleSchema>;
-export type UpdateWorldRulePayload = z.infer<typeof UpdateWorldRuleSchema>;
-export type WorldRuleResponse = z.infer<typeof WorldRuleResponseSchema>;
+export type CreateWorldRulePayload = z.infer<typeof CreateWorldRuleSchema>
+export type UpdateWorldRulePayload = z.infer<typeof UpdateWorldRuleSchema>
+export type WorldRuleResponse = z.infer<typeof WorldRuleResponseSchema>

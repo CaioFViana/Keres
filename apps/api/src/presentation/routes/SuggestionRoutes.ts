@@ -1,47 +1,55 @@
 import {
   CreateSuggestionUseCase,
   DeleteSuggestionUseCase,
-  GetSuggestionUseCase,
-  UpdateSuggestionUseCase,
-  GetSuggestionsByUserIdUseCase,
+  GetSuggestionsByStoryAndTypeUseCase,
   GetSuggestionsByStoryIdUseCase,
   GetSuggestionsByTypeUseCase,
   GetSuggestionsByUserAndTypeUseCase,
-  GetSuggestionsByStoryAndTypeUseCase,
-} from '@application/use-cases';
-import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
-import { SuggestionRepository } from '@infrastructure/persistence/SuggestionRepository';
-import { CreateSuggestionSchema, SuggestionResponseSchema, UpdateSuggestionSchema } from '@keres/shared';
-import { SuggestionController } from '@presentation/controllers/SuggestionController';
-import { z } from 'zod';
+  GetSuggestionsByUserIdUseCase,
+  GetSuggestionUseCase,
+  UpdateSuggestionUseCase,
+} from '@application/use-cases'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
+import { SuggestionRepository } from '@infrastructure/persistence/SuggestionRepository'
+import {
+  CreateSuggestionSchema,
+  SuggestionResponseSchema,
+  UpdateSuggestionSchema,
+} from '@keres/shared'
+import { SuggestionController } from '@presentation/controllers/SuggestionController'
+import { z } from 'zod'
 
-console.log('Initializing SuggestionRoutes...');
+console.log('Initializing SuggestionRoutes...')
 
-const suggestionRoutes = new OpenAPIHono();
+const suggestionRoutes = new OpenAPIHono()
 
 // Dependencies for SuggestionController
-console.log('Instantiating SuggestionRepository...');
-const suggestionRepository = new SuggestionRepository();
-console.log('Instantiating CreateSuggestionUseCase...');
-const createSuggestionUseCase = new CreateSuggestionUseCase(suggestionRepository);
-console.log('Instantiating GetSuggestionUseCase...');
-const getSuggestionUseCase = new GetSuggestionUseCase(suggestionRepository);
-console.log('Instantiating UpdateSuggestionUseCase...');
-const updateSuggestionUseCase = new UpdateSuggestionUseCase(suggestionRepository);
-console.log('Instantiating DeleteSuggestionUseCase...');
-const deleteSuggestionUseCase = new DeleteSuggestionUseCase(suggestionRepository);
-console.log('Instantiating GetSuggestionsByUserIdUseCase...');
-const getSuggestionsByUserIdUseCase = new GetSuggestionsByUserIdUseCase(suggestionRepository);
-console.log('Instantiating GetSuggestionsByStoryIdUseCase...');
-const getSuggestionsByStoryIdUseCase = new GetSuggestionsByStoryIdUseCase(suggestionRepository);
-console.log('Instantiating GetSuggestionsByTypeUseCase...');
-const getSuggestionsByTypeUseCase = new GetSuggestionsByTypeUseCase(suggestionRepository);
-console.log('Instantiating GetSuggestionsByUserAndTypeUseCase...');
-const getSuggestionsByUserAndTypeUseCase = new GetSuggestionsByUserAndTypeUseCase(suggestionRepository);
-console.log('Instantiating GetSuggestionsByStoryAndTypeUseCase...');
-const getSuggestionsByStoryAndTypeUseCase = new GetSuggestionsByStoryAndTypeUseCase(suggestionRepository);
+console.log('Instantiating SuggestionRepository...')
+const suggestionRepository = new SuggestionRepository()
+console.log('Instantiating CreateSuggestionUseCase...')
+const createSuggestionUseCase = new CreateSuggestionUseCase(suggestionRepository)
+console.log('Instantiating GetSuggestionUseCase...')
+const getSuggestionUseCase = new GetSuggestionUseCase(suggestionRepository)
+console.log('Instantiating UpdateSuggestionUseCase...')
+const updateSuggestionUseCase = new UpdateSuggestionUseCase(suggestionRepository)
+console.log('Instantiating DeleteSuggestionUseCase...')
+const deleteSuggestionUseCase = new DeleteSuggestionUseCase(suggestionRepository)
+console.log('Instantiating GetSuggestionsByUserIdUseCase...')
+const getSuggestionsByUserIdUseCase = new GetSuggestionsByUserIdUseCase(suggestionRepository)
+console.log('Instantiating GetSuggestionsByStoryIdUseCase...')
+const getSuggestionsByStoryIdUseCase = new GetSuggestionsByStoryIdUseCase(suggestionRepository)
+console.log('Instantiating GetSuggestionsByTypeUseCase...')
+const getSuggestionsByTypeUseCase = new GetSuggestionsByTypeUseCase(suggestionRepository)
+console.log('Instantiating GetSuggestionsByUserAndTypeUseCase...')
+const getSuggestionsByUserAndTypeUseCase = new GetSuggestionsByUserAndTypeUseCase(
+  suggestionRepository,
+)
+console.log('Instantiating GetSuggestionsByStoryAndTypeUseCase...')
+const getSuggestionsByStoryAndTypeUseCase = new GetSuggestionsByStoryAndTypeUseCase(
+  suggestionRepository,
+)
 
-console.log('Instantiating SuggestionController...');
+console.log('Instantiating SuggestionController...')
 const suggestionController = new SuggestionController(
   createSuggestionUseCase,
   getSuggestionUseCase,
@@ -52,24 +60,24 @@ const suggestionController = new SuggestionController(
   getSuggestionsByTypeUseCase,
   getSuggestionsByUserAndTypeUseCase,
   getSuggestionsByStoryAndTypeUseCase,
-);
+)
 
 // Define schemas for path parameters
 const IdParamSchema = z.object({
   id: z.ulid(),
-});
+})
 
 const UserIdParamSchema = z.object({
   userId: z.ulid(),
-});
+})
 
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
-});
+})
 
 const TypeParamSchema = z.object({
   type: z.string(),
-});
+})
 
 // POST /
 suggestionRoutes.openapi(
@@ -116,19 +124,19 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const body = await c.req.json();
-    const data = CreateSuggestionSchema.parse(body);
+    const body = await c.req.json()
+    const data = CreateSuggestionSchema.parse(body)
     try {
-      const newSuggestion = await suggestionController.createSuggestion(data);
-      return c.json(newSuggestion, 201);
+      const newSuggestion = await suggestionController.createSuggestion(data)
+      return c.json(newSuggestion, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /:id
 suggestionRoutes.openapi(
@@ -177,21 +185,21 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
+    const params = IdParamSchema.parse(c.req.param())
     try {
-      const suggestion = await suggestionController.getSuggestion(params.id);
+      const suggestion = await suggestionController.getSuggestion(params.id)
       if (!suggestion) {
-        return c.json({ error: 'Suggestion not found' }, 404);
+        return c.json({ error: 'Suggestion not found' }, 404)
       }
-      return c.json(suggestion, 200);
+      return c.json(suggestion, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /user/:userId
 suggestionRoutes.openapi(
@@ -232,18 +240,18 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const params = UserIdParamSchema.parse(c.req.param());
+    const params = UserIdParamSchema.parse(c.req.param())
     try {
-      const suggestions = await suggestionController.getSuggestionsByUserId(params.userId);
-      return c.json(suggestions, 200);
+      const suggestions = await suggestionController.getSuggestionsByUserId(params.userId)
+      return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /story/:storyId
 suggestionRoutes.openapi(
@@ -284,18 +292,18 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const params = StoryIdParamSchema.parse(c.req.param());
+    const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const suggestions = await suggestionController.getSuggestionsByStoryId(params.storyId);
-      return c.json(suggestions, 200);
+      const suggestions = await suggestionController.getSuggestionsByStoryId(params.storyId)
+      return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /type/:type
 suggestionRoutes.openapi(
@@ -303,7 +311,8 @@ suggestionRoutes.openapi(
     method: 'get',
     path: '/type/{type}',
     summary: 'Get suggestions by type',
-    description: 'Retrieves all suggestions of a specific type (e.g., "genre", "character_gender").',
+    description:
+      'Retrieves all suggestions of a specific type (e.g., "genre", "character_gender").',
     request: {
       params: TypeParamSchema,
     },
@@ -336,18 +345,18 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const params = TypeParamSchema.parse(c.req.param());
+    const params = TypeParamSchema.parse(c.req.param())
     try {
-      const suggestions = await suggestionController.getSuggestionsByType(params.type);
-      return c.json(suggestions, 200);
+      const suggestions = await suggestionController.getSuggestionsByType(params.type)
+      return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /user/:userId/type/:type
 suggestionRoutes.openapi(
@@ -391,18 +400,21 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const params = z.object({ userId: z.ulid(), type: z.string() }).parse(c.req.param());
+    const params = z.object({ userId: z.ulid(), type: z.string() }).parse(c.req.param())
     try {
-      const suggestions = await suggestionController.getSuggestionsByUserAndType(params.userId, params.type);
-      return c.json(suggestions, 200);
+      const suggestions = await suggestionController.getSuggestionsByUserAndType(
+        params.userId,
+        params.type,
+      )
+      return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /story/:storyId/type/:type
 suggestionRoutes.openapi(
@@ -446,18 +458,21 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const params = z.object({ storyId: z.ulid(), type: z.string() }).parse(c.req.param());
+    const params = z.object({ storyId: z.ulid(), type: z.string() }).parse(c.req.param())
     try {
-      const suggestions = await suggestionController.getSuggestionsByStoryAndType(params.storyId, params.type);
-      return c.json(suggestions, 200);
+      const suggestions = await suggestionController.getSuggestionsByStoryAndType(
+        params.storyId,
+        params.type,
+      )
+      return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // PUT /:id
 suggestionRoutes.openapi(
@@ -513,23 +528,23 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
-    const body = await c.req.json();
-    const data = UpdateSuggestionSchema.parse(body);
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = UpdateSuggestionSchema.parse(body)
     try {
-      const updatedSuggestion = await suggestionController.updateSuggestion(params.id, data);
+      const updatedSuggestion = await suggestionController.updateSuggestion(params.id, data)
       if (!updatedSuggestion) {
-        return c.json({ error: 'Suggestion not found' }, 404);
+        return c.json({ error: 'Suggestion not found' }, 404)
       }
-      return c.json(updatedSuggestion, 200);
+      return c.json(updatedSuggestion, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // DELETE /:id
 suggestionRoutes.openapi(
@@ -573,19 +588,19 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
+    const params = IdParamSchema.parse(c.req.param())
     try {
-      await suggestionController.deleteSuggestion(params.id);
-      return c.body(null, 204);
+      await suggestionController.deleteSuggestion(params.id)
+      return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404);
+        return c.json({ error: error.message }, 404)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
-console.log('SuggestionRoutes initialized.');
+console.log('SuggestionRoutes initialized.')
 
-export default suggestionRoutes;
+export default suggestionRoutes

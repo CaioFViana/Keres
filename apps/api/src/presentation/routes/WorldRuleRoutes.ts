@@ -4,48 +4,52 @@ import {
   GetWorldRulesByStoryIdUseCase,
   GetWorldRuleUseCase,
   UpdateWorldRuleUseCase,
-} from '@application/use-cases';
-import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
-import { WorldRuleRepository } from '@infrastructure/persistence/WorldRuleRepository';
-import { CreateWorldRuleSchema, WorldRuleResponseSchema, UpdateWorldRuleSchema } from '@keres/shared';
-import { WorldRuleController } from '@presentation/controllers/WorldRuleController';
-import { z } from 'zod';
+} from '@application/use-cases'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
+import { WorldRuleRepository } from '@infrastructure/persistence/WorldRuleRepository'
+import {
+  CreateWorldRuleSchema,
+  UpdateWorldRuleSchema,
+  WorldRuleResponseSchema,
+} from '@keres/shared'
+import { WorldRuleController } from '@presentation/controllers/WorldRuleController'
+import { z } from 'zod'
 
-console.log('Initializing WorldRuleRoutes...');
+console.log('Initializing WorldRuleRoutes...')
 
-const worldRuleRoutes = new OpenAPIHono();
+const worldRuleRoutes = new OpenAPIHono()
 
 // Dependencies for WorldRuleController
-console.log('Instantiating WorldRuleRepository...');
-const worldRuleRepository = new WorldRuleRepository();
-console.log('Instantiating CreateWorldRuleUseCase...');
-const createWorldRuleUseCase = new CreateWorldRuleUseCase(worldRuleRepository);
-console.log('Instantiating GetWorldRuleUseCase...');
-const getWorldRuleUseCase = new GetWorldRuleUseCase(worldRuleRepository);
-console.log('Instantiating UpdateWorldRuleUseCase...');
-const updateWorldRuleUseCase = new UpdateWorldRuleUseCase(worldRuleRepository);
-console.log('Instantiating DeleteWorldRuleUseCase...');
-const deleteWorldRuleUseCase = new DeleteWorldRuleUseCase(worldRuleRepository);
-console.log('Instantiating GetWorldRulesByStoryIdUseCase...');
-const getWorldRulesByStoryIdUseCase = new GetWorldRulesByStoryIdUseCase(worldRuleRepository);
+console.log('Instantiating WorldRuleRepository...')
+const worldRuleRepository = new WorldRuleRepository()
+console.log('Instantiating CreateWorldRuleUseCase...')
+const createWorldRuleUseCase = new CreateWorldRuleUseCase(worldRuleRepository)
+console.log('Instantiating GetWorldRuleUseCase...')
+const getWorldRuleUseCase = new GetWorldRuleUseCase(worldRuleRepository)
+console.log('Instantiating UpdateWorldRuleUseCase...')
+const updateWorldRuleUseCase = new UpdateWorldRuleUseCase(worldRuleRepository)
+console.log('Instantiating DeleteWorldRuleUseCase...')
+const deleteWorldRuleUseCase = new DeleteWorldRuleUseCase(worldRuleRepository)
+console.log('Instantiating GetWorldRulesByStoryIdUseCase...')
+const getWorldRulesByStoryIdUseCase = new GetWorldRulesByStoryIdUseCase(worldRuleRepository)
 
-console.log('Instantiating WorldRuleController...');
+console.log('Instantiating WorldRuleController...')
 const worldRuleController = new WorldRuleController(
   createWorldRuleUseCase,
   getWorldRuleUseCase,
   updateWorldRuleUseCase,
   deleteWorldRuleUseCase,
   getWorldRulesByStoryIdUseCase,
-);
+)
 
 // Define schemas for path parameters
 const IdParamSchema = z.object({
   id: z.ulid(),
-});
+})
 
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
-});
+})
 
 // POST /
 worldRuleRoutes.openapi(
@@ -92,19 +96,19 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
-    const body = await c.req.json();
-    const data = CreateWorldRuleSchema.parse(body);
+    const body = await c.req.json()
+    const data = CreateWorldRuleSchema.parse(body)
     try {
-      const newWorldRule = await worldRuleController.createWorldRule(data);
-      return c.json(newWorldRule, 201);
+      const newWorldRule = await worldRuleController.createWorldRule(data)
+      return c.json(newWorldRule, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /:id
 worldRuleRoutes.openapi(
@@ -153,21 +157,21 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
+    const params = IdParamSchema.parse(c.req.param())
     try {
-      const worldRule = await worldRuleController.getWorldRule(params.id);
+      const worldRule = await worldRuleController.getWorldRule(params.id)
       if (!worldRule) {
-        return c.json({ error: 'World Rule not found' }, 404);
+        return c.json({ error: 'World Rule not found' }, 404)
       }
-      return c.json(worldRule, 200);
+      return c.json(worldRule, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /story/:storyId
 worldRuleRoutes.openapi(
@@ -208,18 +212,18 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
-    const params = StoryIdParamSchema.parse(c.req.param());
+    const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const worldRules = await worldRuleController.getWorldRulesByStoryId(params.storyId);
-      return c.json(worldRules, 200);
+      const worldRules = await worldRuleController.getWorldRulesByStoryId(params.storyId)
+      return c.json(worldRules, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // PUT /:id
 worldRuleRoutes.openapi(
@@ -275,23 +279,23 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
-    const body = await c.req.json();
-    const data = UpdateWorldRuleSchema.parse(body);
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = UpdateWorldRuleSchema.parse(body)
     try {
-      const updatedWorldRule = await worldRuleController.updateWorldRule(params.id, data);
+      const updatedWorldRule = await worldRuleController.updateWorldRule(params.id, data)
       if (!updatedWorldRule) {
-        return c.json({ error: 'World Rule not found' }, 404);
+        return c.json({ error: 'World Rule not found' }, 404)
       }
-      return c.json(updatedWorldRule, 200);
+      return c.json(updatedWorldRule, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // DELETE /:id
 worldRuleRoutes.openapi(
@@ -335,19 +339,19 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
+    const params = IdParamSchema.parse(c.req.param())
     try {
-      await worldRuleController.deleteWorldRule(params.id);
-      return c.body(null, 204);
+      await worldRuleController.deleteWorldRule(params.id)
+      return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404);
+        return c.json({ error: error.message }, 404)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
-console.log('WorldRuleRoutes initialized.');
+console.log('WorldRuleRoutes initialized.')
 
-export default worldRuleRoutes;
+export default worldRuleRoutes

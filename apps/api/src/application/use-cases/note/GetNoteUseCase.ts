@@ -1,13 +1,13 @@
-import type { INoteRepository } from '@domain/repositories/INoteRepository';
-import type { NoteResponse } from '@keres/shared';
+import type { INoteRepository } from '@domain/repositories/INoteRepository'
+import type { NoteResponse } from '@keres/shared'
 
 export class GetNoteUseCase {
   constructor(private readonly noteRepository: INoteRepository) {}
 
   async execute(id: string): Promise<NoteResponse | null> {
-    const note = await this.noteRepository.findById(id);
+    const note = await this.noteRepository.findById(id)
     if (!note) {
-      return null;
+      return null
     }
 
     return {
@@ -20,6 +20,6 @@ export class GetNoteUseCase {
       extraNotes: note.extraNotes,
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
-    };
+    }
   }
 }

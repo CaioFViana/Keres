@@ -1,8 +1,8 @@
-import type { WorldRule } from '@domain/entities/WorldRule';
-import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository';
-import type { CreateWorldRulePayload, WorldRuleResponse } from '@keres/shared';
+import type { WorldRule } from '@domain/entities/WorldRule'
+import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
+import type { CreateWorldRulePayload, WorldRuleResponse } from '@keres/shared'
 
-import { ulid } from 'ulid';
+import { ulid } from 'ulid'
 
 export class CreateWorldRuleUseCase {
   constructor(private readonly worldRuleRepository: IWorldRuleRepository) {}
@@ -17,9 +17,9 @@ export class CreateWorldRuleUseCase {
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.worldRuleRepository.save(newWorldRule);
+    await this.worldRuleRepository.save(newWorldRule)
 
     return {
       id: newWorldRule.id,
@@ -30,6 +30,6 @@ export class CreateWorldRuleUseCase {
       extraNotes: newWorldRule.extraNotes,
       createdAt: newWorldRule.createdAt,
       updatedAt: newWorldRule.updatedAt,
-    };
+    }
   }
 }

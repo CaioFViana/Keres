@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const CreateTagSchema = z.object({
   storyId: z.string().ulid(),
@@ -6,7 +6,7 @@ export const CreateTagSchema = z.object({
   color: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const UpdateTagSchema = z.object({
   id: z.string().ulid(),
@@ -15,7 +15,7 @@ export const UpdateTagSchema = z.object({
   color: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().nullable().optional(),
-});
+})
 
 export const TagResponseSchema = z.object({
   id: z.string().ulid(),
@@ -26,8 +26,8 @@ export const TagResponseSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-});
+})
 
-export type CreateTagPayload = z.infer<typeof CreateTagSchema>;
-export type UpdateTagPayload = z.infer<typeof UpdateTagSchema>;
-export type TagResponse = z.infer<typeof TagResponseSchema>;
+export type CreateTagPayload = z.infer<typeof CreateTagSchema>
+export type UpdateTagPayload = z.infer<typeof UpdateTagSchema>
+export type TagResponse = z.infer<typeof TagResponseSchema>

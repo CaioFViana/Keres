@@ -4,14 +4,14 @@ import type {
   GetWorldRulesByStoryIdUseCase,
   GetWorldRuleUseCase,
   UpdateWorldRuleUseCase,
-} from '@application/use-cases';
-import type z from 'zod';
+} from '@application/use-cases'
+import type z from 'zod'
 
 import {
   type CreateWorldRuleSchema,
-  WorldRuleResponseSchema,
   type UpdateWorldRuleSchema,
-} from '@keres/shared';
+  WorldRuleResponseSchema,
+} from '@keres/shared'
 
 export class WorldRuleController {
   constructor(
@@ -23,37 +23,37 @@ export class WorldRuleController {
   ) {}
 
   async createWorldRule(data: z.infer<typeof CreateWorldRuleSchema>) {
-    const worldRule = await this.createWorldRuleUseCase.execute(data);
-    return WorldRuleResponseSchema.parse(worldRule);
+    const worldRule = await this.createWorldRuleUseCase.execute(data)
+    return WorldRuleResponseSchema.parse(worldRule)
   }
 
   async getWorldRule(id: string) {
-    const worldRule = await this.getWorldRuleUseCase.execute(id);
+    const worldRule = await this.getWorldRuleUseCase.execute(id)
     if (!worldRule) {
-      throw new Error('World Rule not found');
+      throw new Error('World Rule not found')
     }
-    return WorldRuleResponseSchema.parse(worldRule);
+    return WorldRuleResponseSchema.parse(worldRule)
   }
 
   async getWorldRulesByStoryId(storyId: string) {
-    const worldRules = await this.getWorldRulesByStoryIdUseCase.execute(storyId);
-    return worldRules.map((worldRule) => WorldRuleResponseSchema.parse(worldRule));
+    const worldRules = await this.getWorldRulesByStoryIdUseCase.execute(storyId)
+    return worldRules.map((worldRule) => WorldRuleResponseSchema.parse(worldRule))
   }
 
   async updateWorldRule(id: string, data: z.infer<typeof UpdateWorldRuleSchema>) {
-    const { id: dataId, ...updateData } = data;
-    const updatedWorldRule = await this.updateWorldRuleUseCase.execute({ id, ...updateData });
+    const { id: dataId, ...updateData } = data
+    const updatedWorldRule = await this.updateWorldRuleUseCase.execute({ id, ...updateData })
     if (!updatedWorldRule) {
-      throw new Error('World Rule not found');
+      throw new Error('World Rule not found')
     }
-    return WorldRuleResponseSchema.parse(updatedWorldRule);
+    return WorldRuleResponseSchema.parse(updatedWorldRule)
   }
 
   async deleteWorldRule(id: string) {
-    const deleted = await this.deleteWorldRuleUseCase.execute(id);
+    const deleted = await this.deleteWorldRuleUseCase.execute(id)
     if (!deleted) {
-      throw new Error('World Rule not found');
+      throw new Error('World Rule not found')
     }
-    return;
+    return
   }
 }

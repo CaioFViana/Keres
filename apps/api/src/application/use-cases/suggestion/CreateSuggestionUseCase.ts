@@ -1,8 +1,8 @@
-import type { Suggestion } from '@domain/entities/Suggestion';
-import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository';
-import type { CreateSuggestionPayload, SuggestionResponse } from '@keres/shared';
+import type { Suggestion } from '@domain/entities/Suggestion'
+import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
+import type { CreateSuggestionPayload, SuggestionResponse } from '@keres/shared'
 
-import { ulid } from 'ulid';
+import { ulid } from 'ulid'
 
 export class CreateSuggestionUseCase {
   constructor(private readonly suggestionRepository: ISuggestionRepository) {}
@@ -17,9 +17,9 @@ export class CreateSuggestionUseCase {
       value: data.value,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    }
 
-    await this.suggestionRepository.save(newSuggestion);
+    await this.suggestionRepository.save(newSuggestion)
 
     return {
       id: newSuggestion.id,
@@ -30,6 +30,6 @@ export class CreateSuggestionUseCase {
       value: newSuggestion.value,
       createdAt: newSuggestion.createdAt,
       updatedAt: newSuggestion.updatedAt,
-    };
+    }
   }
 }

@@ -1,22 +1,22 @@
-import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository';
-import type { WorldRuleResponse, UpdateWorldRulePayload } from '@keres/shared';
+import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
+import type { UpdateWorldRulePayload, WorldRuleResponse } from '@keres/shared'
 
 export class UpdateWorldRuleUseCase {
   constructor(private readonly worldRuleRepository: IWorldRuleRepository) {}
 
   async execute(data: UpdateWorldRulePayload): Promise<WorldRuleResponse | null> {
-    const existingWorldRule = await this.worldRuleRepository.findById(data.id);
+    const existingWorldRule = await this.worldRuleRepository.findById(data.id)
     if (!existingWorldRule) {
-      return null; // WorldRule not found
+      return null // WorldRule not found
     }
 
     const updatedWorldRule = {
       ...existingWorldRule,
       ...data,
       updatedAt: new Date(),
-    };
+    }
 
-    await this.worldRuleRepository.update(updatedWorldRule);
+    await this.worldRuleRepository.update(updatedWorldRule)
 
     return {
       id: updatedWorldRule.id,
@@ -27,6 +27,6 @@ export class UpdateWorldRuleUseCase {
       extraNotes: updatedWorldRule.extraNotes,
       createdAt: updatedWorldRule.createdAt,
       updatedAt: updatedWorldRule.updatedAt,
-    };
+    }
   }
 }

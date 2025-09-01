@@ -1,6 +1,7 @@
 import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi' // Import OpenAPIHono
 
+import { authMiddleware } from './presentation/middlewares/AuthMiddleware' // Added
 import chapterRoutes from './presentation/routes/ChapterRoutes'
 import characterMomentRoutes from './presentation/routes/CharacterMomentRoutes'
 import characterRelationRoutes from './presentation/routes/CharacterRelationRoutes'
@@ -9,15 +10,14 @@ import choiceRoutes from './presentation/routes/ChoiceRoutes' // Added
 import galleryRoutes from './presentation/routes/GalleryRoutes'
 import locationRoutes from './presentation/routes/LocationRoutes'
 import momentRoutes from './presentation/routes/MomentRoutes'
+import noteRoutes from './presentation/routes/NoteRoutes' // Added
 import relationRoutes from './presentation/routes/RelationRoutes'
 import sceneRoutes from './presentation/routes/SceneRoutes'
 import storyRoutes from './presentation/routes/StoryRoutes'
+import suggestionRoutes from './presentation/routes/SuggestionRoutes' // Added
+import tagRoutes from './presentation/routes/TagRoutes' // Added
 import userRoutes from './presentation/routes/UserRoutes'
 import worldRuleRoutes from './presentation/routes/WorldRuleRoutes' // Added
-import noteRoutes from './presentation/routes/NoteRoutes' // Added
-import tagRoutes from './presentation/routes/TagRoutes' // Added
-import suggestionRoutes from './presentation/routes/SuggestionRoutes' // Added
-import { authMiddleware } from './presentation/middlewares/AuthMiddleware' // Added
 
 const app = new OpenAPIHono() // Change Hono to OpenAPIHono
 
@@ -29,6 +29,22 @@ app.onError((err, c) => {
 app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
+
+// Define OpenAPI document metadata
+app.doc('/openapi.json', {
+  openapi: '3.0.0',
+  info: {
+    version: '1.0.0',
+    title: 'Keres API',
+    description: 'API for the Keres Story Organizer application.',
+  },
+})
+app.get(
+  '/swagger',
+  swaggerUI({
+    url: '/openapi.json',
+  }),
+)
 
 app.route('/users', userRoutes) // Public routes
 app.use(authMiddleware) // Apply middleware to all subsequent routes
@@ -48,21 +64,5 @@ app.route('/world-rules', worldRuleRoutes) // Added
 app.route('/notes', noteRoutes) // Added
 app.route('/tags', tagRoutes) // Added
 app.route('/suggestions', suggestionRoutes) // Added
-
-// Define OpenAPI document metadata
-app.doc('/openapi.json', {
-  openapi: '3.0.0',
-  info: {
-    version: '1.0.0',
-    title: 'Keres API',
-    description: 'API for the Keres Story Organizer application.',
-  },
-})
-app.get(
-  '/swagger',
-  swaggerUI({
-    url: '/openapi.json',
-  }),
-)
 
 export default app

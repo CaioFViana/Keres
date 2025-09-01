@@ -1,11 +1,11 @@
-import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository';
-import type { SuggestionResponse } from '@keres/shared';
+import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
+import type { SuggestionResponse } from '@keres/shared'
 
 export class GetSuggestionsByUserAndTypeUseCase {
   constructor(private readonly suggestionRepository: ISuggestionRepository) {}
 
   async execute(userId: string, type: string): Promise<SuggestionResponse[]> {
-    const suggestions = await this.suggestionRepository.findByUserAndType(userId, type);
+    const suggestions = await this.suggestionRepository.findByUserAndType(userId, type)
     return suggestions.map((suggestion) => ({
       id: suggestion.id,
       userId: suggestion.userId,
@@ -15,6 +15,6 @@ export class GetSuggestionsByUserAndTypeUseCase {
       value: suggestion.value,
       createdAt: suggestion.createdAt,
       updatedAt: suggestion.updatedAt,
-    }));
+    }))
   }
 }

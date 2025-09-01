@@ -4,48 +4,48 @@ import {
   GetNotesByStoryIdUseCase,
   GetNoteUseCase,
   UpdateNoteUseCase,
-} from '@application/use-cases';
-import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
-import { NoteRepository } from '@infrastructure/persistence/NoteRepository';
-import { CreateNoteSchema, NoteResponseSchema, UpdateNoteSchema } from '@keres/shared';
-import { NoteController } from '@presentation/controllers/NoteController';
-import { z } from 'zod';
+} from '@application/use-cases'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
+import { NoteRepository } from '@infrastructure/persistence/NoteRepository'
+import { CreateNoteSchema, NoteResponseSchema, UpdateNoteSchema } from '@keres/shared'
+import { NoteController } from '@presentation/controllers/NoteController'
+import { z } from 'zod'
 
-console.log('Initializing NoteRoutes...');
+console.log('Initializing NoteRoutes...')
 
-const noteRoutes = new OpenAPIHono();
+const noteRoutes = new OpenAPIHono()
 
 // Dependencies for NoteController
-console.log('Instantiating NoteRepository...');
-const noteRepository = new NoteRepository();
-console.log('Instantiating CreateNoteUseCase...');
-const createNoteUseCase = new CreateNoteUseCase(noteRepository);
-console.log('Instantiating GetNoteUseCase...');
-const getNoteUseCase = new GetNoteUseCase(noteRepository);
-console.log('Instantiating UpdateNoteUseCase...');
-const updateNoteUseCase = new UpdateNoteUseCase(noteRepository);
-console.log('Instantiating DeleteNoteUseCase...');
-const deleteNoteUseCase = new DeleteNoteUseCase(noteRepository);
-console.log('Instantiating GetNotesByStoryIdUseCase...');
-const getNotesByStoryIdUseCase = new GetNotesByStoryIdUseCase(noteRepository);
+console.log('Instantiating NoteRepository...')
+const noteRepository = new NoteRepository()
+console.log('Instantiating CreateNoteUseCase...')
+const createNoteUseCase = new CreateNoteUseCase(noteRepository)
+console.log('Instantiating GetNoteUseCase...')
+const getNoteUseCase = new GetNoteUseCase(noteRepository)
+console.log('Instantiating UpdateNoteUseCase...')
+const updateNoteUseCase = new UpdateNoteUseCase(noteRepository)
+console.log('Instantiating DeleteNoteUseCase...')
+const deleteNoteUseCase = new DeleteNoteUseCase(noteRepository)
+console.log('Instantiating GetNotesByStoryIdUseCase...')
+const getNotesByStoryIdUseCase = new GetNotesByStoryIdUseCase(noteRepository)
 
-console.log('Instantiating NoteController...');
+console.log('Instantiating NoteController...')
 const noteController = new NoteController(
   createNoteUseCase,
   getNoteUseCase,
   updateNoteUseCase,
   deleteNoteUseCase,
   getNotesByStoryIdUseCase,
-);
+)
 
 // Define schemas for path parameters
 const IdParamSchema = z.object({
   id: z.ulid(),
-});
+})
 
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
-});
+})
 
 // POST /
 noteRoutes.openapi(
@@ -92,19 +92,19 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
-    const body = await c.req.json();
-    const data = CreateNoteSchema.parse(body);
+    const body = await c.req.json()
+    const data = CreateNoteSchema.parse(body)
     try {
-      const newNote = await noteController.createNote(data);
-      return c.json(newNote, 201);
+      const newNote = await noteController.createNote(data)
+      return c.json(newNote, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /:id
 noteRoutes.openapi(
@@ -153,21 +153,21 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
+    const params = IdParamSchema.parse(c.req.param())
     try {
-      const note = await noteController.getNote(params.id);
+      const note = await noteController.getNote(params.id)
       if (!note) {
-        return c.json({ error: 'Note not found' }, 404);
+        return c.json({ error: 'Note not found' }, 404)
       }
-      return c.json(note, 200);
+      return c.json(note, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /story/:storyId
 noteRoutes.openapi(
@@ -208,18 +208,18 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
-    const params = StoryIdParamSchema.parse(c.req.param());
+    const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const notes = await noteController.getNotesByStoryId(params.storyId);
-      return c.json(notes, 200);
+      const notes = await noteController.getNotesByStoryId(params.storyId)
+      return c.json(notes, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // PUT /:id
 noteRoutes.openapi(
@@ -275,23 +275,23 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
-    const body = await c.req.json();
-    const data = UpdateNoteSchema.parse(body);
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = UpdateNoteSchema.parse(body)
     try {
-      const updatedNote = await noteController.updateNote(params.id, data);
+      const updatedNote = await noteController.updateNote(params.id, data)
       if (!updatedNote) {
-        return c.json({ error: 'Note not found' }, 404);
+        return c.json({ error: 'Note not found' }, 404)
       }
-      return c.json(updatedNote, 200);
+      return c.json(updatedNote, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // DELETE /:id
 noteRoutes.openapi(
@@ -335,19 +335,19 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
+    const params = IdParamSchema.parse(c.req.param())
     try {
-      await noteController.deleteNote(params.id);
-      return c.body(null, 204);
+      await noteController.deleteNote(params.id)
+      return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404);
+        return c.json({ error: error.message }, 404)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
-console.log('NoteRoutes initialized.');
+console.log('NoteRoutes initialized.')
 
-export default noteRoutes;
+export default noteRoutes

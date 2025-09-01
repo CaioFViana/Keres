@@ -1,13 +1,13 @@
-import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository';
-import type { WorldRuleResponse } from '@keres/shared';
+import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
+import type { WorldRuleResponse } from '@keres/shared'
 
 export class GetWorldRuleUseCase {
   constructor(private readonly worldRuleRepository: IWorldRuleRepository) {}
 
   async execute(id: string): Promise<WorldRuleResponse | null> {
-    const worldRule = await this.worldRuleRepository.findById(id);
+    const worldRule = await this.worldRuleRepository.findById(id)
     if (!worldRule) {
-      return null;
+      return null
     }
 
     return {
@@ -19,6 +19,6 @@ export class GetWorldRuleUseCase {
       extraNotes: worldRule.extraNotes,
       createdAt: worldRule.createdAt,
       updatedAt: worldRule.updatedAt,
-    };
+    }
   }
 }

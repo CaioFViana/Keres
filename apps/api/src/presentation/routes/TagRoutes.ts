@@ -4,48 +4,48 @@ import {
   GetTagsByStoryIdUseCase,
   GetTagUseCase,
   UpdateTagUseCase,
-} from '@application/use-cases';
-import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
-import { TagRepository } from '@infrastructure/persistence/TagRepository';
-import { CreateTagSchema, TagResponseSchema, UpdateTagSchema } from '@keres/shared';
-import { TagController } from '@presentation/controllers/TagController';
-import { z } from 'zod';
+} from '@application/use-cases'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
+import { TagRepository } from '@infrastructure/persistence/TagRepository'
+import { CreateTagSchema, TagResponseSchema, UpdateTagSchema } from '@keres/shared'
+import { TagController } from '@presentation/controllers/TagController'
+import { z } from 'zod'
 
-console.log('Initializing TagRoutes...');
+console.log('Initializing TagRoutes...')
 
-const tagRoutes = new OpenAPIHono();
+const tagRoutes = new OpenAPIHono()
 
 // Dependencies for TagController
-console.log('Instantiating TagRepository...');
-const tagRepository = new TagRepository();
-console.log('Instantiating CreateTagUseCase...');
-const createTagUseCase = new CreateTagUseCase(tagRepository);
-console.log('Instantiating GetTagUseCase...');
-const getTagUseCase = new GetTagUseCase(tagRepository);
-console.log('Instantiating UpdateTagUseCase...');
-const updateTagUseCase = new UpdateTagUseCase(tagRepository);
-console.log('Instantiating DeleteTagUseCase...');
-const deleteTagUseCase = new DeleteTagUseCase(tagRepository);
-console.log('Instantiating GetTagsByStoryIdUseCase...');
-const getTagsByStoryIdUseCase = new GetTagsByStoryIdUseCase(tagRepository);
+console.log('Instantiating TagRepository...')
+const tagRepository = new TagRepository()
+console.log('Instantiating CreateTagUseCase...')
+const createTagUseCase = new CreateTagUseCase(tagRepository)
+console.log('Instantiating GetTagUseCase...')
+const getTagUseCase = new GetTagUseCase(tagRepository)
+console.log('Instantiating UpdateTagUseCase...')
+const updateTagUseCase = new UpdateTagUseCase(tagRepository)
+console.log('Instantiating DeleteTagUseCase...')
+const deleteTagUseCase = new DeleteTagUseCase(tagRepository)
+console.log('Instantiating GetTagsByStoryIdUseCase...')
+const getTagsByStoryIdUseCase = new GetTagsByStoryIdUseCase(tagRepository)
 
-console.log('Instantiating TagController...');
+console.log('Instantiating TagController...')
 const tagController = new TagController(
   createTagUseCase,
   getTagUseCase,
   updateTagUseCase,
   deleteTagUseCase,
   getTagsByStoryIdUseCase,
-);
+)
 
 // Define schemas for path parameters
 const IdParamSchema = z.object({
   id: z.ulid(),
-});
+})
 
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
-});
+})
 
 // POST /
 tagRoutes.openapi(
@@ -92,19 +92,19 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
-    const body = await c.req.json();
-    const data = CreateTagSchema.parse(body);
+    const body = await c.req.json()
+    const data = CreateTagSchema.parse(body)
     try {
-      const newTag = await tagController.createTag(data);
-      return c.json(newTag, 201);
+      const newTag = await tagController.createTag(data)
+      return c.json(newTag, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /:id
 tagRoutes.openapi(
@@ -153,21 +153,21 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
+    const params = IdParamSchema.parse(c.req.param())
     try {
-      const tag = await tagController.getTag(params.id);
+      const tag = await tagController.getTag(params.id)
       if (!tag) {
-        return c.json({ error: 'Tag not found' }, 404);
+        return c.json({ error: 'Tag not found' }, 404)
       }
-      return c.json(tag, 200);
+      return c.json(tag, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // GET /story/:storyId
 tagRoutes.openapi(
@@ -208,18 +208,18 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
-    const params = StoryIdParamSchema.parse(c.req.param());
+    const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const tags = await tagController.getTagsByStoryId(params.storyId);
-      return c.json(tags, 200);
+      const tags = await tagController.getTagsByStoryId(params.storyId)
+      return c.json(tags, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // PUT /:id
 tagRoutes.openapi(
@@ -275,23 +275,23 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
-    const body = await c.req.json();
-    const data = UpdateTagSchema.parse(body);
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = UpdateTagSchema.parse(body)
     try {
-      const updatedTag = await tagController.updateTag(params.id, data);
+      const updatedTag = await tagController.updateTag(params.id, data)
       if (!updatedTag) {
-        return c.json({ error: 'Tag not found' }, 404);
+        return c.json({ error: 'Tag not found' }, 404)
       }
-      return c.json(updatedTag, 200);
+      return c.json(updatedTag, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400);
+        return c.json({ error: error.message }, 400)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
 // DELETE /:id
 tagRoutes.openapi(
@@ -335,19 +335,19 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
-    const params = IdParamSchema.parse(c.req.param());
+    const params = IdParamSchema.parse(c.req.param())
     try {
-      await tagController.deleteTag(params.id);
-      return c.body(null, 204);
+      await tagController.deleteTag(params.id)
+      return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404);
+        return c.json({ error: error.message }, 404)
       }
-      return c.json({ error: 'Internal Server Error' }, 500);
+      return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
-);
+)
 
-console.log('TagRoutes initialized.');
+console.log('TagRoutes initialized.')
 
-export default tagRoutes;
+export default tagRoutes

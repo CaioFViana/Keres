@@ -1,11 +1,11 @@
-import type { INoteRepository } from '@domain/repositories/INoteRepository';
-import type { NoteResponse } from '@keres/shared';
+import type { INoteRepository } from '@domain/repositories/INoteRepository'
+import type { NoteResponse } from '@keres/shared'
 
 export class GetNotesByStoryIdUseCase {
   constructor(private readonly noteRepository: INoteRepository) {}
 
   async execute(storyId: string): Promise<NoteResponse[]> {
-    const notes = await this.noteRepository.findByStoryId(storyId);
+    const notes = await this.noteRepository.findByStoryId(storyId)
     return notes.map((note) => ({
       id: note.id,
       storyId: note.storyId,
@@ -16,6 +16,6 @@ export class GetNotesByStoryIdUseCase {
       extraNotes: note.extraNotes,
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
-    }));
+    }))
   }
 }

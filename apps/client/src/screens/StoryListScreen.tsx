@@ -1,21 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import React, { useState, useEffect } from 'react'; // Ensure React and hooks are imported
-import { View, Text, StyleSheet, FlatList, Button, Alert, TextInput } from 'react-native';
-import { getStoriesByUserId, createStory, updateStory, deleteStory } from '../api';
-import { StoryResponse, CreateStoryPayload, UpdateStoryPayload } from '@keres/shared';
-import CharacterListScreen from './CharacterListScreen'; // Added
+import type { CreateStoryPayload, StoryResponse, UpdateStoryPayload } from '@keres/shared';
+import type { StackNavigationProp } from '@react-navigation/stack'; // Added
+
+import React, { useEffect, useState } from 'react';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Button, TextInput } from 'react-native-paper'; // Added
+
+import { createStory, deleteStory, getStoriesByUserId, updateStory } from '../api';
+import ChapterListScreen from './ChapterListScreen';
+import CharacterListScreen from './CharacterListScreen';
+import GalleryListScreen from './GalleryListScreen';
+import LocationListScreen from './LocationListScreen';
+import NoteListScreen from './NoteListScreen';
+import TagListScreen from './TagListScreen';
+import WorldRuleListScreen from './WorldRuleListScreen'; // Added
+
+type RootStackParamList = {
+  StoryList: undefined;
+  CharacterList: { storyId: string };
+  ChapterList: { storyId: string };
+  SceneList: { chapterId: string };
+  MomentList: { sceneId: string };
+  LocationList: { storyId: string };
+  GalleryList: { storyId: string };
+  NoteList: { storyId: string };
+  TagList: { storyId: string };
+  WorldRuleList: { storyId: string };
+  SuggestionList: { userId: string };
+  RelationList: { storyId: string }; // Added
+};
+
+type StoryListScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'StoryList'
+>;
 
 interface StoryListScreenProps {
   token: string;
   userId: string;
+  navigation: StoryListScreenNavigationProp; // Added
 }
 
-export default function StoryListScreen({ token, userId }: StoryListScreenProps) {
+export default function StoryListScreen({ token, userId, navigation }: StoryListScreenProps) {
   const [stories, setStories] = useState<StoryResponse[]>([]);
   const [newStoryTitle, setNewStoryTitle] = useState('');
   const [editingStory, setEditingStory] = useState<StoryResponse | null>(null);
-  const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null); // Added
-  const [showCharacters, setShowCharacters] = useState(false); // Added
 
   useEffect(() => {
     fetchStories();
@@ -103,25 +131,57 @@ export default function StoryListScreen({ token, userId }: StoryListScreenProps)
     <View style={styles.storyItem}>
       <Text style={styles.storyTitle}>{item.title}</Text>
       <View style={styles.storyActions}>
-        <Button title="View Characters" onPress={() => {
-          setSelectedStoryId(item.id);
-          setShowCharacters(true);
-        }} />
-        <Button title="Edit" onPress={() => handleEditStory(item)} />
-        <Button title="Delete" onPress={() => handleDeleteStory(item.id)} color="red" />
+        <Button mode="outlined" onPress={() => { // Added mode
+          navigation.navigate('CharacterList', { storyId: item.id });
+        }}>
+          View Characters
+        </Button>
+        <Button mode="outlined" onPress={() => {
+          navigation.navigate('ChapterList', { storyId: item.id });
+        }}>
+          View Chapters
+        </Button>
+        <Button mode="outlined" onPress={() => {
+          navigation.navigate('LocationList', { storyId: item.id });
+        }}>
+          View Locations
+        </Button>
+        <Button mode="outlined" onPress={() => {
+          navigation.navigate('GalleryList', { storyId: item.id });
+        }}>
+          View Galleries
+        </Button>
+        <Button mode="outlined" onPress={() => {
+          navigation.navigate('NoteList', { storyId: item.id });
+        }}>
+          View Notes
+        </Button>
+                <Button mode="outlined" onPress={() => {
+          navigation.navigate('TagList', { storyId: item.id });
+        }}>
+          View Tags
+        </Button>
+        <Button mode="outlined" onPress={() => {
+          navigation.navigate('WorldRuleList', { storyId: item.id });
+        }}>
+          View World Rules
+        </Button>
+        <Button mode="outlined" onPress={() => {
+          navigation.navigate('RelationList', { storyId: item.id });
+        }}>
+          View Relations
+        </Button>
+        <Button mode="outlined" onPress={() => handleEditStory(item)}>
+          Edit
+        </Button>
+        <Button mode="outlined" onPress={() => handleDeleteStory(item.id)} buttonColor="red">
+          Delete
+        </Button>
       </View>
     </View>
   );
 
-  if (showCharacters && selectedStoryId) {
-    return (
-      <CharacterListScreen
-        token={token}
-        storyId={selectedStoryId}
-        onBack={() => setShowCharacters(false)}
-      />
-    );
-  }
+  
 
   return (
     <View style={styles.container}>
@@ -129,17 +189,27 @@ export default function StoryListScreen({ token, userId }: StoryListScreenProps)
 
       <View style={styles.form}>
         <TextInput
-          style={styles.input}
-          placeholder={editingStory ? 'Edit Story Title' : 'New Story Title'}
+          label={editingStory ? 'Edit Story Title' : 'New Story Title'} // Changed to label
           value={newStoryTitle}
           onChangeText={setNewStoryTitle}
+          mode="outlined" // Added mode
+          style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          title={editingStory ? 'Update Story' : 'Add Story'}
+          mode="contained" // Added mode
           onPress={editingStory ? handleUpdateStory : handleCreateStory}
-        />
+          style={styles.button} // Added style
+        >
+          {editingStory ? 'Update Story' : 'Add Story'}
+        </Button>
         {editingStory && (
-          <Button title="Cancel Edit" onPress={() => setEditingStory(null)} color="gray" />
+          <Button
+            mode="outlined" // Added mode
+            onPress={() => setEditingStory(null)}
+            style={styles.button} // Added style
+          >
+            Cancel Edit
+          </Button>
         )}
       </View>
 
@@ -183,13 +253,18 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   input: {
-    height: 40,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 5,
+    // Paper TextInput handles height and border, so remove them from here
+    // height: 40,
+    // borderColor: '#ddd',
+    // borderWidth: 1,
+    // borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 10,
     backgroundColor: '#fff',
+  },
+  button: { // Added
+    marginTop: 10,
+    marginBottom: 10,
   },
   list: {
     width: '100%',

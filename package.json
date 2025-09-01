@@ -19,7 +19,7 @@
     "lint:fix": "biome check --write . --unsafe",
     "lint:migrate": "biome migrate",
     "db:generate": "cd packages/db && drizzle-kit generate:pg",
-    "db:migrate": "bun run packages/db/src/migrate.ts",
+    "db:migrate": "cd packages/db && bun run src/migrate.ts",
     "db:push": "drizzle-kit push --config packages/db/drizzle.config.ts --force",
     "db:studio": "drizzle-kit studio --config packages/db/drizzle.config.ts"
   },

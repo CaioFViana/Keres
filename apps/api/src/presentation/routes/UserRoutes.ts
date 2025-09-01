@@ -202,6 +202,7 @@ userRoutes.openapi(
       },
     },
     tags: ['Users'],
+    security: [],
   }),
   async (c) => {
     const params = IdParamSchema.parse(c.req.param())

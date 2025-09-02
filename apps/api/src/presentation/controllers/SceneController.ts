@@ -45,11 +45,8 @@ export class SceneController {
     return SceneResponseSchema.parse(updatedScene)
   }
 
-  async deleteScene(id: string, chapterId: string) {
-    if (!chapterId) {
-      throw new Error('chapterId is required for deletion')
-    }
-    const deleted = await this.deleteSceneUseCase.execute(id, chapterId)
+  async deleteScene(id: string) {
+    const deleted = await this.deleteSceneUseCase.execute(id)
     if (!deleted) {
       throw new Error('Scene not found or does not belong to the specified chapter')
     }

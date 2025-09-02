@@ -11,15 +11,12 @@ export class DeleteSceneUseCase {
     private readonly chapterRepository: IChapterRepository,
   ) {}
 
-  async execute(id: string, chapterId: string): Promise<boolean> {
+  async execute(id: string): Promise<boolean> {
     const existingScene = await this.sceneRepository.findById(id)
     if (!existingScene) {
       return false // Scene not found
     }
-    if (existingScene.chapterId !== chapterId) {
-      // Check ownership
-      return false // Scene does not belong to this chapter
-    }
+    // Check ownership
     await this.sceneRepository.delete(id)
 
     // Logic for implicit choices in linear stories after deletion

@@ -285,8 +285,7 @@ sceneRoutes.openapi(
     summary: 'Delete a scene by ID',
     description: 'Deletes a scene by its unique ID.',
     request: {
-      params: IdParamSchema,
-      query: ChapterIdParamSchema,
+      params: IdParamSchema
     },
     responses: {
       204: {
@@ -313,9 +312,8 @@ sceneRoutes.openapi(
   }),
   async (c) => {
     const params = IdParamSchema.parse(c.req.param())
-    const query = ChapterIdParamSchema.parse(c.req.query())
     try {
-      await sceneController.deleteScene(params.id, query.chapterId)
+      await sceneController.deleteScene(params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -325,7 +323,5 @@ sceneRoutes.openapi(
     }
   },
 )
-
-console.log('SceneRoutes initialized.')
 
 export default sceneRoutes

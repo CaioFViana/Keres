@@ -70,7 +70,6 @@ export class NoteRepository implements INoteRepository {
       body: data.body,
       galleryId: data.galleryId,
       isFavorite: data.isFavorite,
-      extraNotes: data.extraNotes,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     }
@@ -85,7 +84,6 @@ export class NoteRepository implements INoteRepository {
       body: noteData.body,
       galleryId: noteData.galleryId,
       isFavorite: noteData.isFavorite,
-      extraNotes: noteData.extraNotes,
       createdAt: noteData.createdAt,
       updatedAt: noteData.updatedAt,
     }

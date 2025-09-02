@@ -5,7 +5,6 @@ export interface Note {
   body: string | null
   galleryId: string | null
   isFavorite: boolean
-  extraNotes: string | null
   createdAt: Date
   updatedAt: Date
 }

@@ -15,7 +15,6 @@ export class CreateNoteUseCase {
       body: data.body || null,
       galleryId: data.galleryId || null,
       isFavorite: data.isFavorite || false,
-      extraNotes: data.extraNotes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -29,7 +28,6 @@ export class CreateNoteUseCase {
       body: newNote.body,
       galleryId: newNote.galleryId,
       isFavorite: newNote.isFavorite,
-      extraNotes: newNote.extraNotes,
       createdAt: newNote.createdAt,
       updatedAt: newNote.updatedAt,
     }

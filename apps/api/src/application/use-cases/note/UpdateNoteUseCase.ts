@@ -25,7 +25,6 @@ export class UpdateNoteUseCase {
       body: updatedNote.body,
       galleryId: updatedNote.galleryId,
       isFavorite: updatedNote.isFavorite,
-      extraNotes: updatedNote.extraNotes,
       createdAt: updatedNote.createdAt,
       updatedAt: updatedNote.updatedAt,
     }

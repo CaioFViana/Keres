@@ -190,7 +190,6 @@ export const notes = pgTable('notes', {
   body: text('body'), // Can be a very long text
   galleryId: text('gallery_id').references(() => gallery.id), // FK to gallery.id, nullable
   isFavorite: boolean('is_favorite').default(false).notNull(),
-  extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

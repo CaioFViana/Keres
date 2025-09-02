@@ -17,7 +17,6 @@ export class GetNoteUseCase {
       body: note.body,
       galleryId: note.galleryId,
       isFavorite: note.isFavorite,
-      extraNotes: note.extraNotes,
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
     }

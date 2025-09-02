@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const CreateTagSchema = z.object({
-  storyId: z.string().ulid(),
+  storyId: z.ulid(),
   name: z.string().min(1, 'Name cannot be empty'),
   color: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
@@ -9,8 +9,8 @@ export const CreateTagSchema = z.object({
 })
 
 export const UpdateTagSchema = z.object({
-  id: z.string().ulid(),
-  storyId: z.string().ulid().optional(), // storyId should not be updatable in practice
+  id: z.ulid(),
+  storyId: z.ulid().optional(), // storyId should not be updatable in practice
   name: z.string().min(1, 'Name cannot be empty').optional(),
   color: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
@@ -18,8 +18,8 @@ export const UpdateTagSchema = z.object({
 })
 
 export const TagResponseSchema = z.object({
-  id: z.string().ulid(),
-  storyId: z.string().ulid(),
+  id: z.ulid(),
+  storyId: z.ulid(),
   name: z.string(),
   color: z.string().nullable(),
   isFavorite: z.boolean(),

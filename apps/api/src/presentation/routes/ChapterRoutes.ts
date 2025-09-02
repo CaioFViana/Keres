@@ -287,8 +287,7 @@ chapterRoutes.openapi(
     summary: 'Delete a chapter by ID',
     description: 'Deletes a chapter by its unique ID.',
     request: {
-      params: IdParamSchema,
-      query: StoryIdParamSchema,
+      params: IdParamSchema
     },
     responses: {
       204: {
@@ -315,9 +314,8 @@ chapterRoutes.openapi(
   }),
   async (c) => {
     const params = IdParamSchema.parse(c.req.param())
-    const query = StoryIdParamSchema.parse(c.req.query()) // Assuming storyId is passed as a query param
     try {
-      await chapterController.deleteChapter(params.id, query.storyId)
+      await chapterController.deleteChapter(params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

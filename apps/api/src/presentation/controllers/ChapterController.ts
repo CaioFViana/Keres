@@ -49,11 +49,8 @@ export class ChapterController {
     return ChapterResponseSchema.parse(updatedChapter)
   }
 
-  async deleteChapter(id: string, storyId: string) {
-    if (!storyId) {
-      throw new Error('storyId is required for deletion')
-    }
-    const deleted = await this.deleteChapterUseCase.execute(id, storyId)
+  async deleteChapter(id: string) {
+    const deleted = await this.deleteChapterUseCase.execute(id)
     if (!deleted) {
       throw new Error('Chapter not found or does not belong to the specified story')
     }

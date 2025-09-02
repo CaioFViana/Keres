@@ -34,6 +34,7 @@ export const characters = pgTable('characters', {
   gender: text('gender'),
   race: text('race'),
   subrace: text('subrace'),
+  description: text('description'),
   personality: text('personality'),
   motivation: text('motivation'),
   qualities: text('qualities'),

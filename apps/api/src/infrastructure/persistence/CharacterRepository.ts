@@ -73,6 +73,7 @@ export class CharacterRepository implements ICharacterRepository {
       gender: data.gender,
       race: data.race,
       subrace: data.subrace,
+      description: data.description,
       personality: data.personality,
       motivation: data.motivation,
       qualities: data.qualities,

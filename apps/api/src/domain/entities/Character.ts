@@ -5,6 +5,7 @@ export interface Character {
   gender: string | null
   race: string | null
   subrace: string | null
+  description: string | null
   personality: string | null
   motivation: string | null
   qualities: string | null

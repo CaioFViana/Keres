@@ -13,6 +13,7 @@ export class GetCharactersByStoryIdUseCase {
       gender: character.gender,
       race: character.race,
       subrace: character.subrace,
+      description: character.description,
       personality: character.personality,
       motivation: character.motivation,
       qualities: character.qualities,

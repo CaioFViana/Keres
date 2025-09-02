@@ -29,6 +29,7 @@ export class UpdateCharacterUseCase {
       gender: updatedCharacter.gender,
       race: updatedCharacter.race,
       subrace: updatedCharacter.subrace,
+      description: updatedCharacter.description,
       personality: updatedCharacter.personality,
       motivation: updatedCharacter.motivation,
       qualities: updatedCharacter.qualities,

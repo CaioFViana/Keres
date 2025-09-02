@@ -6,6 +6,7 @@ import {
   UpdateSceneUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
+import { ChapterRepository, ChoiceRepository, StoryRepository } from '@infrastructure/persistence'
 import { SceneRepository } from '@infrastructure/persistence/SceneRepository'
 import { SceneCreateSchema, SceneResponseSchema, SceneUpdateSchema } from '@keres/shared' // Import SceneResponseSchema
 import { SceneController } from '@presentation/controllers/SceneController'
@@ -16,20 +17,17 @@ console.log('Initializing SceneRoutes...')
 const sceneRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for SceneController
-console.log('Instantiating SceneRepository...')
 const sceneRepository = new SceneRepository()
-console.log('Instantiating CreateSceneUseCase...')
-const createSceneUseCase = new CreateSceneUseCase(sceneRepository)
-console.log('Instantiating GetSceneUseCase...')
+const choiceRepository = new ChoiceRepository()
+const storyRepository = new StoryRepository()
+const chapterRepository = new ChapterRepository()
+
+const createSceneUseCase = new CreateSceneUseCase(sceneRepository, choiceRepository, storyRepository, chapterRepository)
 const getSceneUseCase = new GetSceneUseCase(sceneRepository)
-console.log('Instantiating UpdateSceneUseCase...')
-const updateSceneUseCase = new UpdateSceneUseCase(sceneRepository)
-console.log('Instantiating DeleteSceneUseCase...')
-const deleteSceneUseCase = new DeleteSceneUseCase(sceneRepository)
-console.log('Instantiating GetScenesByChapterIdUseCase...')
+const updateSceneUseCase = new UpdateSceneUseCase(sceneRepository, choiceRepository, storyRepository, chapterRepository)
+const deleteSceneUseCase = new DeleteSceneUseCase(sceneRepository, choiceRepository, storyRepository, chapterRepository)
 const getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(sceneRepository)
 
-console.log('Instantiating SceneController...')
 const sceneController = new SceneController(
   createSceneUseCase,
   getSceneUseCase,

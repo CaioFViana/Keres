@@ -124,10 +124,10 @@ export default function GalleryListScreen({ token, storyId, navigation }: Galler
     <View style={styles.galleryItem}>
       <Text style={styles.galleryName}>{item.name}</Text>
       <View style={styles.galleryActions}>
-        <Button mode="outlined" onPress={() => handleEditGallery(item)}>
+        <Button mode='outlined' onPress={() => handleEditGallery(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteGallery(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteGallery(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -136,7 +136,7 @@ export default function GalleryListScreen({ token, storyId, navigation }: Galler
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Stories
       </Button>
       <Text style={styles.header}>Galleries for Story ID: {storyId}</Text>
@@ -146,11 +146,11 @@ export default function GalleryListScreen({ token, storyId, navigation }: Galler
           label={editingGallery ? 'Edit Gallery Name' : 'New Gallery Name'} // Changed to label
           value={newGalleryName}
           onChangeText={setNewGalleryName}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingGallery ? handleUpdateGallery : handleCreateGallery}
           style={styles.button} // Added style
         >
@@ -158,7 +158,7 @@ export default function GalleryListScreen({ token, storyId, navigation }: Galler
         </Button>
         {editingGallery && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingGallery(null)}
             style={styles.button} // Added style
           >
@@ -216,7 +216,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

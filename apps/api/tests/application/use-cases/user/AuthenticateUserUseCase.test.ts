@@ -1,7 +1,7 @@
 import type { User } from '@domain/entities/User'
 import type { IUserRepository } from '@domain/repositories/IUserRepository'
-import type { IPasswordHasherService } from '@domain/services/IPasswordHasherService'
 import type { IJwtService } from '@domain/services/IJwtService'
+import type { IPasswordHasherService } from '@domain/services/IPasswordHasherService'
 
 import { AuthenticateUserUseCase } from '@application/use-cases/user/AuthenticateUserUseCase'
 import { beforeEach, describe, expect, it } from 'vitest'

@@ -2,7 +2,7 @@ export interface Story {
   id: string
   userId: string
   title: string
-  type: "linear" | "branching"
+  type: 'linear' | 'branching'
   summary: string | null
   genre: string | null
   language: string | null

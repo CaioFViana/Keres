@@ -148,20 +148,26 @@ export default function CharacterListScreen({
     <View style={styles.characterItem}>
       <Text style={styles.characterName}>{item.name}</Text>
       <View style={styles.characterActions}>
-        <Button mode="outlined" onPress={() => {
-          navigation.navigate('CharacterMomentList', { characterId: item.id });
-        }}>
+        <Button
+          mode='outlined'
+          onPress={() => {
+            navigation.navigate('CharacterMomentList', { characterId: item.id })
+          }}
+        >
           View Moments
         </Button>
-        <Button mode="outlined" onPress={() => {
-          navigation.navigate('CharacterRelationList', { characterId: item.id });
-        }}>
+        <Button
+          mode='outlined'
+          onPress={() => {
+            navigation.navigate('CharacterRelationList', { characterId: item.id })
+          }}
+        >
           View Relations
         </Button>
-        <Button mode="outlined" onPress={() => handleEditCharacter(item)}>
+        <Button mode='outlined' onPress={() => handleEditCharacter(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteCharacter(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteCharacter(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -170,7 +176,7 @@ export default function CharacterListScreen({
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Stories
       </Button>
       <Text style={styles.header}>Characters for Story ID: {storyId}</Text>
@@ -180,11 +186,11 @@ export default function CharacterListScreen({
           label={editingCharacter ? 'Edit Character Name' : 'New Character Name'} // Changed to label
           value={newCharacterName}
           onChangeText={setNewCharacterName}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingCharacter ? handleUpdateCharacter : handleCreateCharacter}
           style={styles.button} // Added style
         >
@@ -192,7 +198,7 @@ export default function CharacterListScreen({
         </Button>
         {editingCharacter && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingCharacter(null)}
             style={styles.button} // Added style
           >
@@ -250,7 +256,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

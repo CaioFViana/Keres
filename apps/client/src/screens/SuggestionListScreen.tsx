@@ -144,10 +144,10 @@ export default function SuggestionListScreen({
     <View style={styles.suggestionItem}>
       <Text style={styles.suggestionTitle}>{item.title}</Text>
       <View style={styles.suggestionActions}>
-        <Button mode="outlined" onPress={() => handleEditSuggestion(item)}>
+        <Button mode='outlined' onPress={() => handleEditSuggestion(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteSuggestion(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteSuggestion(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -156,7 +156,7 @@ export default function SuggestionListScreen({
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Stories
       </Button>
       <Text style={styles.header}>Suggestions for User ID: {userId}</Text>
@@ -166,11 +166,11 @@ export default function SuggestionListScreen({
           label={editingSuggestion ? 'Edit Suggestion Title' : 'New Suggestion Title'} // Changed to label
           value={newSuggestionTitle}
           onChangeText={setNewSuggestionTitle}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingSuggestion ? handleUpdateSuggestion : handleCreateSuggestion}
           style={styles.button} // Added style
         >
@@ -178,7 +178,7 @@ export default function SuggestionListScreen({
         </Button>
         {editingSuggestion && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingSuggestion(null)}
             style={styles.button} // Added style
           >
@@ -236,7 +236,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

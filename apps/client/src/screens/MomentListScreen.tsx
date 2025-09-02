@@ -121,10 +121,10 @@ export default function MomentListScreen({ token, sceneId, navigation }: MomentL
     <View style={styles.momentItem}>
       <Text style={styles.momentTitle}>{item.title}</Text>
       <View style={styles.momentActions}>
-        <Button mode="outlined" onPress={() => handleEditMoment(item)}>
+        <Button mode='outlined' onPress={() => handleEditMoment(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteMoment(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteMoment(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -133,7 +133,7 @@ export default function MomentListScreen({ token, sceneId, navigation }: MomentL
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Scenes
       </Button>
       <Text style={styles.header}>Moments for Scene ID: {sceneId}</Text>
@@ -143,11 +143,11 @@ export default function MomentListScreen({ token, sceneId, navigation }: MomentL
           label={editingMoment ? 'Edit Moment Title' : 'New Moment Title'} // Changed to label
           value={newMomentTitle}
           onChangeText={setNewMomentTitle}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingMoment ? handleUpdateMoment : handleCreateMoment}
           style={styles.button} // Added style
         >
@@ -155,7 +155,7 @@ export default function MomentListScreen({ token, sceneId, navigation }: MomentL
         </Button>
         {editingMoment && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingMoment(null)}
             style={styles.button} // Added style
           >
@@ -213,7 +213,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

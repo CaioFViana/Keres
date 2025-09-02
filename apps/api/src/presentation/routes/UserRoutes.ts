@@ -88,7 +88,7 @@ userRoutes.openapi(
       },
     },
     tags: ['Users'],
-    security: []
+    security: [],
   }),
   async (c) => {
     const body = await c.req.json()

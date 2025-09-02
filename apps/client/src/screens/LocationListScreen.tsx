@@ -129,10 +129,10 @@ export default function LocationListScreen({
     <View style={styles.locationItem}>
       <Text style={styles.locationName}>{item.name}</Text>
       <View style={styles.locationActions}>
-        <Button mode="outlined" onPress={() => handleEditLocation(item)}>
+        <Button mode='outlined' onPress={() => handleEditLocation(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteLocation(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteLocation(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -141,7 +141,7 @@ export default function LocationListScreen({
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Stories
       </Button>
       <Text style={styles.header}>Locations for Story ID: {storyId}</Text>
@@ -151,11 +151,11 @@ export default function LocationListScreen({
           label={editingLocation ? 'Edit Location Name' : 'New Location Name'} // Changed to label
           value={newLocationName}
           onChangeText={setNewLocationName}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingLocation ? handleUpdateLocation : handleCreateLocation}
           style={styles.button} // Added style
         >
@@ -163,7 +163,7 @@ export default function LocationListScreen({
         </Button>
         {editingLocation && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingLocation(null)}
             style={styles.button} // Added style
           >
@@ -221,7 +221,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

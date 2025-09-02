@@ -1,10 +1,12 @@
 import type {
   ChapterResponse,
   CharacterMomentResponse,
+  CharacterRelationResponse,
   CharacterResponse,
   CreateChapterPayload,
   CreateCharacterMomentPayload,
   CreateCharacterPayload,
+  CreateCharacterRelationPayload,
   CreateGalleryPayload,
   CreateLocationPayload,
   CreateMomentPayload,
@@ -18,6 +20,7 @@ import type {
   LocationResponse,
   MomentResponse,
   NoteResponse,
+  RelationResponse, // Added
   SceneResponse,
   StoryResponse,
   SuggestionResponse,
@@ -25,10 +28,12 @@ import type {
   UpdateChapterPayload,
   UpdateCharacterMomentPayload,
   UpdateCharacterPayload,
+  UpdateCharacterRelationPayload,
   UpdateGalleryPayload,
   UpdateLocationPayload,
   UpdateMomentPayload,
   UpdateNotePayload,
+  UpdateRelationPayload, // Added
   UpdateScenePayload,
   UpdateStoryPayload,
   UpdateSuggestionPayload,
@@ -37,12 +42,6 @@ import type {
   UserLoginPayload,
   UserProfileResponse,
   WorldRuleResponse,
-  CharacterRelationResponse,
-  CreateCharacterRelationPayload,
-  UpdateCharacterRelationPayload,
-  RelationResponse, // Added
-  CreateRelationPayload, // Added
-  UpdateRelationPayload, // Added
 } from '@keres/shared'
 
 import axios from 'axios'

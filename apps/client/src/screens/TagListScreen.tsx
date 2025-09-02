@@ -120,10 +120,10 @@ export default function TagListScreen({ token, storyId, navigation }: TagListScr
     <View style={styles.tagItem}>
       <Text style={styles.tagName}>{item.name}</Text>
       <View style={styles.tagActions}>
-        <Button mode="outlined" onPress={() => handleEditTag(item)}>
+        <Button mode='outlined' onPress={() => handleEditTag(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteTag(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteTag(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -132,7 +132,7 @@ export default function TagListScreen({ token, storyId, navigation }: TagListScr
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Stories
       </Button>
       <Text style={styles.header}>Tags for Story ID: {storyId}</Text>
@@ -142,11 +142,11 @@ export default function TagListScreen({ token, storyId, navigation }: TagListScr
           label={editingTag ? 'Edit Tag Name' : 'New Tag Name'} // Changed to label
           value={newTagName}
           onChangeText={setNewTagName}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingTag ? handleUpdateTag : handleCreateTag}
           style={styles.button} // Added style
         >
@@ -154,7 +154,7 @@ export default function TagListScreen({ token, storyId, navigation }: TagListScr
         </Button>
         {editingTag && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingTag(null)}
             style={styles.button} // Added style
           >
@@ -212,7 +212,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

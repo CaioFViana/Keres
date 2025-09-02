@@ -122,15 +122,18 @@ export default function ChapterListScreen({ token, storyId, navigation }: Chapte
     <View style={styles.chapterItem}>
       <Text style={styles.chapterTitle}>{item.title}</Text>
       <View style={styles.chapterActions}>
-        <Button mode="outlined" onPress={() => {
-          navigation.navigate('SceneList', { chapterId: item.id });
-        }}>
+        <Button
+          mode='outlined'
+          onPress={() => {
+            navigation.navigate('SceneList', { chapterId: item.id })
+          }}
+        >
           View Scenes
         </Button>
-        <Button mode="outlined" onPress={() => handleEditChapter(item)}>
+        <Button mode='outlined' onPress={() => handleEditChapter(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteChapter(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteChapter(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -139,7 +142,7 @@ export default function ChapterListScreen({ token, storyId, navigation }: Chapte
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Stories
       </Button>
       <Text style={styles.header}>Chapters for Story ID: {storyId}</Text>
@@ -149,11 +152,11 @@ export default function ChapterListScreen({ token, storyId, navigation }: Chapte
           label={editingChapter ? 'Edit Chapter Title' : 'New Chapter Title'} // Changed to label
           value={newChapterTitle}
           onChangeText={setNewChapterTitle}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingChapter ? handleUpdateChapter : handleCreateChapter}
           style={styles.button} // Added style
         >
@@ -161,7 +164,7 @@ export default function ChapterListScreen({ token, storyId, navigation }: Chapte
         </Button>
         {editingChapter && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingChapter(null)}
             style={styles.button} // Added style
           >
@@ -219,7 +222,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

@@ -5,7 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack'
 import { StatusBar } from 'expo-status-bar'
 import React, { useState } from 'react'
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native'
-import { PaperProvider } from 'react-native-paper'; // Added
+import { PaperProvider } from 'react-native-paper' // Added
 
 import { loginUser } from './src/api'
 import ChapterListScreen from './src/screens/ChapterListScreen'
@@ -100,7 +100,9 @@ function AuthenticatedApp({
         )}
       </Stack.Screen>
       <Stack.Screen name='RelationList' options={{ title: 'Relations' }}>
-        {(props) => <RelationListScreen {...props} token={token} storyId={props.route.params?.storyId} />}
+        {(props) => (
+          <RelationListScreen {...props} token={token} storyId={props.route.params?.storyId} />
+        )}
       </Stack.Screen>
       <Stack.Screen name='SuggestionList' options={{ title: 'My Suggestions' }}>
         {(props) => <SuggestionListScreen {...props} token={token} userId={userId} />}
@@ -147,30 +149,30 @@ export default function App() {
           {!token ? (
             <View style={styles.form}>
               <TextInput
-              label='Username' // Changed to label
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize='none'
-              mode="outlined" // Added mode
-              style={styles.input} // Keep existing style for width/margin
-            />
+                label='Username' // Changed to label
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize='none'
+                mode='outlined' // Added mode
+                style={styles.input} // Keep existing style for width/margin
+              />
               <TextInput
-              label='Password' // Changed to label
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              mode="outlined" // Added mode
-              style={styles.input} // Keep existing style for width/margin
-            />
-              <Button mode="contained" onPress={handleLogin} style={styles.button}>
-              Login
-            </Button>
+                label='Password' // Changed to label
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                mode='outlined' // Added mode
+                style={styles.input} // Keep existing style for width/margin
+              />
+              <Button mode='contained' onPress={handleLogin} style={styles.button}>
+                Login
+              </Button>
             </View>
           ) : (
             <>
-              <Button mode="outlined" onPress={handleLogout} style={styles.button}>
-              Logout
-            </Button>
+              <Button mode='outlined' onPress={handleLogout} style={styles.button}>
+                Logout
+              </Button>
               <AuthenticatedApp token={token} userId={userId!} onLogout={handleLogout} />
             </>
           )}
@@ -208,7 +210,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     // borderRadius: 5, // Paper TextInput has its own borderRadius
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

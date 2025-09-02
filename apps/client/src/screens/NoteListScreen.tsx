@@ -121,10 +121,10 @@ export default function NoteListScreen({ token, storyId, navigation }: NoteListS
     <View style={styles.noteItem}>
       <Text style={styles.noteTitle}>{item.title}</Text>
       <View style={styles.noteActions}>
-        <Button mode="outlined" onPress={() => handleEditNote(item)}>
+        <Button mode='outlined' onPress={() => handleEditNote(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteNote(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteNote(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -133,7 +133,7 @@ export default function NoteListScreen({ token, storyId, navigation }: NoteListS
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Stories
       </Button>
       <Text style={styles.header}>Notes for Story ID: {storyId}</Text>
@@ -143,11 +143,11 @@ export default function NoteListScreen({ token, storyId, navigation }: NoteListS
           label={editingNote ? 'Edit Note Title' : 'New Note Title'} // Changed to label
           value={newNoteTitle}
           onChangeText={setNewNoteTitle}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingNote ? handleUpdateNote : handleCreateNote}
           style={styles.button} // Added style
         >
@@ -155,7 +155,7 @@ export default function NoteListScreen({ token, storyId, navigation }: NoteListS
         </Button>
         {editingNote && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingNote(null)}
             style={styles.button} // Added style
           >
@@ -213,7 +213,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

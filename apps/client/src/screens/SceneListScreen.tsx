@@ -122,15 +122,18 @@ export default function SceneListScreen({ token, chapterId, navigation }: SceneL
     <View style={styles.sceneItem}>
       <Text style={styles.sceneTitle}>{item.title}</Text>
       <View style={styles.sceneActions}>
-        <Button mode="outlined" onPress={() => {
-          navigation.navigate('MomentList', { sceneId: item.id });
-        }}>
+        <Button
+          mode='outlined'
+          onPress={() => {
+            navigation.navigate('MomentList', { sceneId: item.id })
+          }}
+        >
           View Moments
         </Button>
-        <Button mode="outlined" onPress={() => handleEditScene(item)}>
+        <Button mode='outlined' onPress={() => handleEditScene(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteScene(item.id)} buttonColor="red">
+        <Button mode='outlined' onPress={() => handleDeleteScene(item.id)} buttonColor='red'>
           Delete
         </Button>
       </View>
@@ -139,7 +142,7 @@ export default function SceneListScreen({ token, chapterId, navigation }: SceneL
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Chapters
       </Button>
       <Text style={styles.header}>Scenes for Chapter ID: {chapterId}</Text>
@@ -149,11 +152,11 @@ export default function SceneListScreen({ token, chapterId, navigation }: SceneL
           label={editingScene ? 'Edit Scene Title' : 'New Scene Title'} // Changed to label
           value={newSceneTitle}
           onChangeText={setNewSceneTitle}
-          mode="outlined" // Added mode
+          mode='outlined' // Added mode
           style={styles.input} // Keep existing style for width/margin
         />
         <Button
-          mode="contained" // Added mode
+          mode='contained' // Added mode
           onPress={editingScene ? handleUpdateScene : handleCreateScene}
           style={styles.button} // Added style
         >
@@ -161,7 +164,7 @@ export default function SceneListScreen({ token, chapterId, navigation }: SceneL
         </Button>
         {editingScene && (
           <Button
-            mode="outlined" // Added mode
+            mode='outlined' // Added mode
             onPress={() => setEditingScene(null)}
             style={styles.button} // Added style
           >
@@ -219,7 +222,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

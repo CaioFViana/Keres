@@ -11,7 +11,6 @@ import galleryRoutes from './presentation/routes/GalleryRoutes'
 import locationRoutes from './presentation/routes/LocationRoutes'
 import momentRoutes from './presentation/routes/MomentRoutes'
 import noteRoutes from './presentation/routes/NoteRoutes' // Added
-import relationRoutes from './presentation/routes/RelationRoutes'
 import sceneRoutes from './presentation/routes/SceneRoutes'
 import storyRoutes from './presentation/routes/StoryRoutes'
 import suggestionRoutes from './presentation/routes/SuggestionRoutes' // Added
@@ -55,7 +54,7 @@ app.get(
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
   type: 'http',
   scheme: 'bearer',
-  bearerFormat: 'JWT' 
+  bearerFormat: 'JWT',
 })
 
 app.route('/users', userRoutes) // Public routes
@@ -67,7 +66,6 @@ app.route('/scenes', sceneRoutes)
 app.route('/moments', momentRoutes)
 app.route('/locations', locationRoutes)
 app.route('/gallery', galleryRoutes)
-app.route('/relations', relationRoutes)
 app.route('/character-moments', characterMomentRoutes)
 app.route('/character-relations', characterRelationRoutes)
 app.route('/choices', choiceRoutes) // Added

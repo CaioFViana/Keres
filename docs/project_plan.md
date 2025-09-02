@@ -87,23 +87,6 @@ characters
 - updated_at (timestamp)
 ```
 
-### Relations
-Todos os personagens são neutros entre si, a menos que seja indicado aqui. Também usado para rastrear mudanças no progresso da história. Bom para acompanhar quem começou a sentir o quê por quem.
-
-```ts
-relations
-- id (ulid, pk)
-- char_id_source (ulid, fk → characters.id) # Personagem que sente
-- char_id_target (ulid, fk → characters.id) # Personagem para quem se sente
-- scene_id (ulid, fk → scenes.id, nullable) # Onde se encontraram ou se conheceram. Pode ser uma cena anterior à história
-- moment_id (ulid, fk → moments.id, nullable) # Um momento específico dentro da cena
-- summary (text) # Se não quiser usar uma cena inteira, apenas um resumo do que acontece
-- is_favorite (boolean) # Indica se o objeto é favorito
-- extra_notes (text) # Notas adicionais sobre o objeto
-- created_at (timestamp)
-- updated_at (timestamp)
-```
-
 ### Gallery
 Para usar imagens para ilustrar elementos da história. Haverá múltiplas versões (personagens, notas, locais, etc.), mas com estrutura de tabela herdável.
 

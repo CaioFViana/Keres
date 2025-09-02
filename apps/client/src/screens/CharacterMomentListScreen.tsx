@@ -148,10 +148,14 @@ export default function CharacterMomentListScreen({
     <View style={styles.characterMomentItem}>
       <Text style={styles.characterMomentDescription}>{item.description}</Text>
       <View style={styles.characterMomentActions}>
-        <Button mode="outlined" onPress={() => handleEditCharacterMoment(item)}>
+        <Button mode='outlined' onPress={() => handleEditCharacterMoment(item)}>
           Edit
         </Button>
-        <Button mode="outlined" onPress={() => handleDeleteCharacterMoment(item.id)} buttonColor="red">
+        <Button
+          mode='outlined'
+          onPress={() => handleDeleteCharacterMoment(item.id)}
+          buttonColor='red'
+        >
           Delete
         </Button>
       </View>
@@ -160,7 +164,7 @@ export default function CharacterMomentListScreen({
 
   return (
     <View style={styles.container}>
-      <Button mode="outlined" onPress={() => navigation.goBack()}>
+      <Button mode='outlined' onPress={() => navigation.goBack()}>
         Back to Character
       </Button>
       <Text style={styles.header}>Character Moments for Character ID: {characterId}</Text>
@@ -174,19 +178,21 @@ export default function CharacterMomentListScreen({
           }
           value={newCharacterMomentDescription}
           onChangeText={setNewCharacterMomentDescription}
-          mode="outlined"
+          mode='outlined'
           style={styles.input}
         />
         <Button
-          mode="contained"
-          onPress={editingCharacterMoment ? handleUpdateCharacterMoment : handleCreateCharacterMoment}
+          mode='contained'
+          onPress={
+            editingCharacterMoment ? handleUpdateCharacterMoment : handleCreateCharacterMoment
+          }
           style={styles.button}
         >
           {editingCharacterMoment ? 'Update Character Moment' : 'Add Character Moment'}
         </Button>
         {editingCharacterMoment && (
           <Button
-            mode="outlined"
+            mode='outlined'
             onPress={() => setEditingCharacterMoment(null)}
             style={styles.button}
           >
@@ -244,7 +250,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#fff',
   },
-  button: { // Added
+  button: {
+    // Added
     marginTop: 10,
     marginBottom: 10,
   },

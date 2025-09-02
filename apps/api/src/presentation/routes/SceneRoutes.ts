@@ -22,10 +22,25 @@ const choiceRepository = new ChoiceRepository()
 const storyRepository = new StoryRepository()
 const chapterRepository = new ChapterRepository()
 
-const createSceneUseCase = new CreateSceneUseCase(sceneRepository, choiceRepository, storyRepository, chapterRepository)
+const createSceneUseCase = new CreateSceneUseCase(
+  sceneRepository,
+  choiceRepository,
+  storyRepository,
+  chapterRepository,
+)
 const getSceneUseCase = new GetSceneUseCase(sceneRepository)
-const updateSceneUseCase = new UpdateSceneUseCase(sceneRepository, choiceRepository, storyRepository, chapterRepository)
-const deleteSceneUseCase = new DeleteSceneUseCase(sceneRepository, choiceRepository, storyRepository, chapterRepository)
+const updateSceneUseCase = new UpdateSceneUseCase(
+  sceneRepository,
+  choiceRepository,
+  storyRepository,
+  chapterRepository,
+)
+const deleteSceneUseCase = new DeleteSceneUseCase(
+  sceneRepository,
+  choiceRepository,
+  storyRepository,
+  chapterRepository,
+)
 const getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(sceneRepository)
 
 const sceneController = new SceneController(
@@ -285,7 +300,7 @@ sceneRoutes.openapi(
     summary: 'Delete a scene by ID',
     description: 'Deletes a scene by its unique ID.',
     request: {
-      params: IdParamSchema
+      params: IdParamSchema,
     },
     responses: {
       204: {

@@ -287,7 +287,7 @@ chapterRoutes.openapi(
     summary: 'Delete a chapter by ID',
     description: 'Deletes a chapter by its unique ID.',
     request: {
-      params: IdParamSchema
+      params: IdParamSchema,
     },
     responses: {
       204: {

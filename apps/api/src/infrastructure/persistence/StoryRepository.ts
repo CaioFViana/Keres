@@ -67,7 +67,7 @@ export class StoryRepository implements IStoryRepository {
       id: data.id,
       userId: data.userId,
       title: data.title,
-      type: (data.type == 'linear')? data.type: "branching",
+      type: data.type == 'linear' ? data.type : 'branching',
       summary: data.summary,
       genre: data.genre,
       language: data.language,

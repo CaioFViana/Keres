@@ -5,7 +5,7 @@ export const CreateNoteSchema = z.object({
   title: z.string().min(1, 'Title cannot be empty'),
   body: z.string().nullable().optional(),
   galleryId: z.ulid().nullable().optional(),
-  isFavorite: z.boolean().optional()
+  isFavorite: z.boolean().optional(),
 })
 
 export const UpdateNoteSchema = z.object({
@@ -14,7 +14,7 @@ export const UpdateNoteSchema = z.object({
   title: z.string().min(1, 'Title cannot be empty').optional(),
   body: z.string().nullable().optional(),
   galleryId: z.ulid().nullable().optional(),
-  isFavorite: z.boolean().optional()
+  isFavorite: z.boolean().optional(),
 })
 
 export const NoteResponseSchema = z.object({

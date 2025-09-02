@@ -2,6 +2,6 @@
 
 export * from './CreateTagUseCase'
 export * from './DeleteTagUseCase'
-export * from './GetTagUseCase'
 export * from './GetTagsByStoryIdUseCase'
+export * from './GetTagUseCase'
 export * from './UpdateTagUseCase'

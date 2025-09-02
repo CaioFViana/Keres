@@ -2,6 +2,6 @@
 
 export * from './CreateSceneUseCase'
 export * from './DeleteSceneUseCase'
-export * from './GetSceneUseCase'
 export * from './GetScenesByChapterIdUseCase'
+export * from './GetSceneUseCase'
 export * from './UpdateSceneUseCase'

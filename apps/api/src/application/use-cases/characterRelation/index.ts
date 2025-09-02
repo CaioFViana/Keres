@@ -2,6 +2,6 @@
 
 export * from './CreateCharacterRelationUseCase'
 export * from './DeleteCharacterRelationUseCase'
-export * from './GetCharacterRelationUseCase'
 export * from './GetCharacterRelationsByCharIdUseCase'
+export * from './GetCharacterRelationUseCase'
 export * from './UpdateCharacterRelationUseCase'

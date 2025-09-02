@@ -121,23 +121,6 @@ export const gallery = pgTable('gallery', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-export const relations = pgTable('relations', {
-  id: text('id').primaryKey(),
-  charIdSource: text('char_id_source')
-    .notNull()
-    .references(() => characters.id),
-  charIdTarget: text('char_id_target')
-    .notNull()
-    .references(() => characters.id),
-  sceneId: text('scene_id').references(() => scenes.id),
-  momentId: text('moment_id').references(() => moments.id),
-  summary: text('summary'),
-  isFavorite: boolean('is_favorite').default(false).notNull(),
-  extraNotes: text('extra_notes'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
-
 export const characterMoments = pgTable(
   'character_moments',
   {

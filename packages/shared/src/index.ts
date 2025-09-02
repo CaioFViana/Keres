@@ -16,8 +16,6 @@ export * from './schemas/LocationSchemas' // Re-export from new file
 export * from './schemas/MomentSchemas' // Re-export from new file
 // Note Schemas
 export * from './schemas/NoteSchemas' // Re-export from new file
-// Relation Schemas
-export * from './schemas/RelationSchemas' // Re-export from new file
 // Scene Schemas
 export * from './schemas/SceneSchemas' // Re-export from new file
 // Story Schemas

@@ -288,7 +288,6 @@ locationRoutes.openapi(
     description: 'Deletes a location by its unique ID.',
     request: {
       params: IdParamSchema,
-      query: StoryIdParamSchema,
     },
     responses: {
       204: {
@@ -315,9 +314,8 @@ locationRoutes.openapi(
   }),
   async (c) => {
     const params = IdParamSchema.parse(c.req.param())
-    const query = StoryIdParamSchema.parse(c.req.query())
     try {
-      await locationController.deleteLocation(params.id, query.storyId)
+      await locationController.deleteLocation(params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

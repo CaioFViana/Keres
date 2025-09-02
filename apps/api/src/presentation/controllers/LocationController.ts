@@ -49,11 +49,8 @@ export class LocationController {
     return LocationResponseSchema.parse(updatedLocation)
   }
 
-  async deleteLocation(id: string, storyId: string) {
-    if (!storyId) {
-      throw new Error('storyId is required for deletion')
-    }
-    const deleted = await this.deleteLocationUseCase.execute(id, storyId)
+  async deleteLocation(id: string) {
+    const deleted = await this.deleteLocationUseCase.execute(id)
     if (!deleted) {
       throw new Error('Location not found or does not belong to the specified story')
     }

@@ -2,6 +2,6 @@
 
 export * from './CreateMomentUseCase'
 export * from './DeleteMomentUseCase'
-export * from './GetMomentsBySceneIdUseCase'
 export * from './GetMomentUseCase'
+export * from './GetMomentsBySceneIdUseCase'
 export * from './UpdateMomentUseCase'

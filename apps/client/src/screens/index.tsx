@@ -3,6 +3,7 @@
 export * from './ChapterListScreen'
 export * from './CharacterListScreen'
 export * from './CharacterMomentListScreen'
+export * from './CharacterRelationListScreen'
 export * from './GalleryListScreen'
 export * from './LocationListScreen'
 export * from './MomentListScreen'

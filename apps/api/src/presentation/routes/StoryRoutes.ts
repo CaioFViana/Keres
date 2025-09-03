@@ -11,25 +11,18 @@ import { StoryCreateSchema, StoryResponseSchema, StoryUpdateSchema } from '@kere
 import { StoryController } from '@presentation/controllers/StoryController'
 import { z } from 'zod' // Import z for defining parameters
 
-console.log('Initializing StoryRoutes...')
 
 const storyRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for StoryController
-console.log('Instantiating StoryRepository...')
 const storyRepository = new StoryRepository()
-console.log('Instantiating CreateStoryUseCase...')
 const createStoryUseCase = new CreateStoryUseCase(storyRepository)
-console.log('Instantiating GetStoryUseCase...')
 const getStoryUseCase = new GetStoryUseCase(storyRepository)
-console.log('Instantiating UpdateStoryUseCase...')
 const updateStoryUseCase = new UpdateStoryUseCase(storyRepository)
-console.log('Instantiating DeleteStoryUseCase...')
 const deleteStoryUseCase = new DeleteStoryUseCase(storyRepository)
-console.log('Instantiating GetStoriesByUserIdUseCase...')
 const getStoriesByUserIdUseCase = new GetStoriesByUserIdUseCase(storyRepository)
 
-console.log('Instantiating StoryController...')
+
 const storyController = new StoryController(
   createStoryUseCase,
   getStoryUseCase,
@@ -326,6 +319,5 @@ storyRoutes.openapi(
   },
 )
 
-console.log('StoryRoutes initialized.')
 
 export default storyRoutes

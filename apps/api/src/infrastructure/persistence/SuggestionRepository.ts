@@ -6,11 +6,11 @@ import { and, eq } from 'drizzle-orm'
 
 export class SuggestionRepository implements ISuggestionRepository {
   constructor() {
-    console.log('SuggestionRepository constructor called.')
+    
   }
 
   async findById(id: string): Promise<Suggestion | null> {
-    console.log('SuggestionRepository.findById called.')
+    
     try {
       const result = await db.select().from(suggestions).where(eq(suggestions.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +21,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   async findByUserId(userId: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByUserId called.')
+    
     try {
       const results = await db.select().from(suggestions).where(eq(suggestions.userId, userId))
       return results.map(this.toDomain)
@@ -32,7 +32,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByStoryId called.')
+    
     try {
       const results = await db.select().from(suggestions).where(eq(suggestions.storyId, storyId))
       return results.map(this.toDomain)
@@ -43,7 +43,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   async findByType(type: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByType called.')
+    
     try {
       const results = await db.select().from(suggestions).where(eq(suggestions.type, type))
       return results.map(this.toDomain)
@@ -54,7 +54,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   async findByUserAndType(userId: string, type: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByUserAndType called.')
+    
     try {
       const results = await db
         .select()
@@ -68,7 +68,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   async findByStoryAndType(storyId: string, type: string): Promise<Suggestion[]> {
-    console.log('SuggestionRepository.findByStoryAndType called.')
+    
     try {
       const results = await db
         .select()
@@ -82,7 +82,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   async save(suggestionData: Suggestion): Promise<void> {
-    console.log('SuggestionRepository.save called.')
+    
     try {
       await db.insert(suggestions).values(this.toPersistence(suggestionData))
     } catch (error) {
@@ -92,7 +92,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   async update(suggestionData: Suggestion): Promise<void> {
-    console.log('SuggestionRepository.update called.')
+    
     try {
       await db
         .update(suggestions)
@@ -105,7 +105,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('SuggestionRepository.delete called.')
+    
     try {
       await db.delete(suggestions).where(eq(suggestions.id, id))
     } catch (error) {
@@ -115,7 +115,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   private toDomain(data: typeof suggestions.$inferSelect): Suggestion {
-    console.log('SuggestionRepository.toDomain called.')
+    
     return {
       id: data.id,
       userId: data.userId,
@@ -129,7 +129,7 @@ export class SuggestionRepository implements ISuggestionRepository {
   }
 
   private toPersistence(suggestionData: Suggestion): typeof suggestions.$inferInsert {
-    console.log('SuggestionRepository.toPersistence called.')
+    
     return {
       id: suggestionData.id,
       userId: suggestionData.userId,

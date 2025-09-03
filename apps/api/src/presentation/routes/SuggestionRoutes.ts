@@ -19,37 +19,26 @@ import {
 import { SuggestionController } from '@presentation/controllers/SuggestionController'
 import { z } from 'zod'
 
-console.log('Initializing SuggestionRoutes...')
 
 const suggestionRoutes = new OpenAPIHono()
 
 // Dependencies for SuggestionController
-console.log('Instantiating SuggestionRepository...')
 const suggestionRepository = new SuggestionRepository()
-console.log('Instantiating CreateSuggestionUseCase...')
 const createSuggestionUseCase = new CreateSuggestionUseCase(suggestionRepository)
-console.log('Instantiating GetSuggestionUseCase...')
 const getSuggestionUseCase = new GetSuggestionUseCase(suggestionRepository)
-console.log('Instantiating UpdateSuggestionUseCase...')
 const updateSuggestionUseCase = new UpdateSuggestionUseCase(suggestionRepository)
-console.log('Instantiating DeleteSuggestionUseCase...')
 const deleteSuggestionUseCase = new DeleteSuggestionUseCase(suggestionRepository)
-console.log('Instantiating GetSuggestionsByUserIdUseCase...')
 const getSuggestionsByUserIdUseCase = new GetSuggestionsByUserIdUseCase(suggestionRepository)
-console.log('Instantiating GetSuggestionsByStoryIdUseCase...')
 const getSuggestionsByStoryIdUseCase = new GetSuggestionsByStoryIdUseCase(suggestionRepository)
-console.log('Instantiating GetSuggestionsByTypeUseCase...')
 const getSuggestionsByTypeUseCase = new GetSuggestionsByTypeUseCase(suggestionRepository)
-console.log('Instantiating GetSuggestionsByUserAndTypeUseCase...')
 const getSuggestionsByUserAndTypeUseCase = new GetSuggestionsByUserAndTypeUseCase(
   suggestionRepository,
 )
-console.log('Instantiating GetSuggestionsByStoryAndTypeUseCase...')
 const getSuggestionsByStoryAndTypeUseCase = new GetSuggestionsByStoryAndTypeUseCase(
   suggestionRepository,
 )
 
-console.log('Instantiating SuggestionController...')
+
 const suggestionController = new SuggestionController(
   createSuggestionUseCase,
   getSuggestionUseCase,
@@ -594,13 +583,12 @@ suggestionRoutes.openapi(
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
 )
 
-console.log('SuggestionRoutes initialized.')
 
 export default suggestionRoutes

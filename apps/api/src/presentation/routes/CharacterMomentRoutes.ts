@@ -10,27 +10,21 @@ import { CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@ker
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
 import { z } from 'zod' // Import z for defining parameters
 
-console.log('Initializing CharacterMomentRoutes...')
 
 const characterMomentRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for CharacterMomentController
-console.log('Instantiating CharacterMomentRepository...')
 const characterMomentRepository = new CharacterMomentRepository()
-console.log('Instantiating CreateCharacterMomentUseCase...')
 const createCharacterMomentUseCase = new CreateCharacterMomentUseCase(characterMomentRepository)
-console.log('Instantiating GetCharacterMomentsByCharacterIdUseCase...')
 const getCharacterMomentsByCharacterIdUseCase = new GetCharacterMomentsByCharacterIdUseCase(
   characterMomentRepository,
 )
-console.log('Instantiating GetCharacterMomentsByMomentIdUseCase...')
 const getCharacterMomentsByMomentIdUseCase = new GetCharacterMomentsByMomentIdUseCase(
   characterMomentRepository,
 )
-console.log('Instantiating DeleteCharacterMomentUseCase...')
 const deleteCharacterMomentUseCase = new DeleteCharacterMomentUseCase(characterMomentRepository)
 
-console.log('Instantiating CharacterMomentController...')
+
 const characterMomentController = new CharacterMomentController(
   createCharacterMomentUseCase,
   getCharacterMomentsByCharacterIdUseCase,
@@ -276,6 +270,5 @@ characterMomentRoutes.openapi(
   },
 )
 
-console.log('CharacterMomentRoutes initialized.')
 
 export default characterMomentRoutes

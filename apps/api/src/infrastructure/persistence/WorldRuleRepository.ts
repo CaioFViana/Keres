@@ -6,11 +6,11 @@ import { eq } from 'drizzle-orm'
 
 export class WorldRuleRepository implements IWorldRuleRepository {
   constructor() {
-    console.log('WorldRuleRepository constructor called.')
+    
   }
 
   async findById(id: string): Promise<WorldRule | null> {
-    console.log('WorldRuleRepository.findById called.')
+    
     try {
       const result = await db.select().from(worldRules).where(eq(worldRules.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +21,7 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   async findByStoryId(storyId: string): Promise<WorldRule[]> {
-    console.log('WorldRuleRepository.findByStoryId called.')
+    
     try {
       const results = await db.select().from(worldRules).where(eq(worldRules.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +32,7 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   async save(worldRuleData: WorldRule): Promise<void> {
-    console.log('WorldRuleRepository.save called.')
+    
     try {
       await db.insert(worldRules).values(this.toPersistence(worldRuleData))
     } catch (error) {
@@ -42,7 +42,7 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   async update(worldRuleData: WorldRule): Promise<void> {
-    console.log('WorldRuleRepository.update called.')
+    
     try {
       await db
         .update(worldRules)
@@ -55,7 +55,7 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('WorldRuleRepository.delete called.')
+    
     try {
       await db.delete(worldRules).where(eq(worldRules.id, id))
     } catch (error) {
@@ -65,7 +65,7 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   private toDomain(data: typeof worldRules.$inferSelect): WorldRule {
-    console.log('WorldRuleRepository.toDomain called.')
+    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -79,7 +79,7 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   private toPersistence(worldRuleData: WorldRule): typeof worldRules.$inferInsert {
-    console.log('WorldRuleRepository.toPersistence called.')
+    
     return {
       id: worldRuleData.id,
       storyId: worldRuleData.storyId,

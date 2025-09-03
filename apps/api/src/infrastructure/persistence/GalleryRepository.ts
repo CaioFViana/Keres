@@ -6,11 +6,11 @@ import { eq } from 'drizzle-orm'
 
 export class GalleryRepository implements IGalleryRepository {
   constructor() {
-    console.log('GalleryRepository constructor called.')
+    
   }
 
   async findById(id: string): Promise<Gallery | null> {
-    console.log('GalleryRepository.findById called.')
+    
     try {
       const result = await db.select().from(gallery).where(eq(gallery.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +21,7 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Gallery[]> {
-    console.log('GalleryRepository.findByStoryId called.')
+    
     try {
       const results = await db.select().from(gallery).where(eq(gallery.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +32,7 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async findByOwnerId(ownerId: string): Promise<Gallery[]> {
-    console.log('GalleryRepository.findByOwnerId called.')
+    
     try {
       const results = await db.select().from(gallery).where(eq(gallery.ownerId, ownerId))
       return results.map(this.toDomain)
@@ -43,7 +43,7 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async save(galleryData: Gallery): Promise<void> {
-    console.log('GalleryRepository.save called.')
+    
     try {
       await db.insert(gallery).values(this.toPersistence(galleryData))
     } catch (error) {
@@ -53,7 +53,7 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async update(galleryData: Gallery): Promise<void> {
-    console.log('GalleryRepository.update called.')
+    
     try {
       await db
         .update(gallery)
@@ -66,7 +66,7 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('GalleryRepository.delete called.')
+    
     try {
       await db.delete(gallery).where(eq(gallery.id, id))
     } catch (error) {
@@ -76,7 +76,7 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   private toDomain(data: typeof gallery.$inferSelect): Gallery {
-    console.log('GalleryRepository.toDomain called.')
+    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -91,7 +91,7 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   private toPersistence(galleryData: Gallery): typeof gallery.$inferInsert {
-    console.log('GalleryRepository.toPersistence called.')
+    
     return {
       id: galleryData.id,
       storyId: galleryData.storyId,

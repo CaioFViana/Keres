@@ -11,25 +11,18 @@ import { CreateNoteSchema, NoteResponseSchema, UpdateNoteSchema } from '@keres/s
 import { NoteController } from '@presentation/controllers/NoteController'
 import { z } from 'zod'
 
-console.log('Initializing NoteRoutes...')
 
 const noteRoutes = new OpenAPIHono()
 
 // Dependencies for NoteController
-console.log('Instantiating NoteRepository...')
 const noteRepository = new NoteRepository()
-console.log('Instantiating CreateNoteUseCase...')
 const createNoteUseCase = new CreateNoteUseCase(noteRepository)
-console.log('Instantiating GetNoteUseCase...')
 const getNoteUseCase = new GetNoteUseCase(noteRepository)
-console.log('Instantiating UpdateNoteUseCase...')
 const updateNoteUseCase = new UpdateNoteUseCase(noteRepository)
-console.log('Instantiating DeleteNoteUseCase...')
 const deleteNoteUseCase = new DeleteNoteUseCase(noteRepository)
-console.log('Instantiating GetNotesByStoryIdUseCase...')
 const getNotesByStoryIdUseCase = new GetNotesByStoryIdUseCase(noteRepository)
 
-console.log('Instantiating NoteController...')
+
 const noteController = new NoteController(
   createNoteUseCase,
   getNoteUseCase,
@@ -341,13 +334,12 @@ noteRoutes.openapi(
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
   },
 )
 
-console.log('NoteRoutes initialized.')
 
 export default noteRoutes

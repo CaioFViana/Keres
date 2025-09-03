@@ -6,11 +6,11 @@ import { eq, or } from 'drizzle-orm'
 
 export class CharacterRelationRepository implements ICharacterRelationRepository {
   constructor() {
-    console.log('CharacterRelationRepository constructor called.')
+    
   }
 
   async findById(id: string): Promise<CharacterRelation | null> {
-    console.log('CharacterRelationRepository.findById called.')
+    
     try {
       const result = await db
         .select()
@@ -25,7 +25,7 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
   }
 
   async findByCharId(charId: string): Promise<CharacterRelation[]> {
-    console.log('CharacterRelationRepository.findByCharId called.')
+    
     try {
       const results = await db
         .select()
@@ -39,7 +39,7 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
   }
 
   async save(characterRelationData: CharacterRelation): Promise<void> {
-    console.log('CharacterRelationRepository.save called.')
+    
     try {
       await db.insert(characterRelations).values(this.toPersistence(characterRelationData))
     } catch (error) {
@@ -49,7 +49,7 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
   }
 
   async update(characterRelationData: CharacterRelation): Promise<void> {
-    console.log('CharacterRelationRepository.update called.')
+    
     try {
       await db
         .update(characterRelations)
@@ -62,7 +62,7 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
   }
 
   async delete(id: string): Promise<void> {
-    console.log('CharacterRelationRepository.delete called.')
+    
     try {
       await db.delete(characterRelations).where(eq(characterRelations.id, id))
     } catch (error) {
@@ -72,7 +72,7 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
   }
 
   private toDomain(data: typeof characterRelations.$inferSelect): CharacterRelation {
-    console.log('CharacterRelationRepository.toDomain called.')
+    
     return {
       id: data.id,
       charId1: data.charId1,
@@ -86,7 +86,7 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
   private toPersistence(
     characterRelationData: CharacterRelation,
   ): typeof characterRelations.$inferInsert {
-    console.log('CharacterRelationRepository.toPersistence called.')
+    
     return {
       id: characterRelationData.id,
       charId1: characterRelationData.charId1,

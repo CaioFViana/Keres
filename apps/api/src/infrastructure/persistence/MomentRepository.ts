@@ -6,11 +6,11 @@ import { eq } from 'drizzle-orm'
 
 export class MomentRepository implements IMomentRepository {
   constructor() {
-    console.log('MomentRepository constructor called.')
+    
   }
 
   async findById(id: string): Promise<Moment | null> {
-    console.log('MomentRepository.findById called.')
+    
     try {
       const result = await db.select().from(moments).where(eq(moments.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +21,7 @@ export class MomentRepository implements IMomentRepository {
   }
 
   async findBySceneId(sceneId: string): Promise<Moment[]> {
-    console.log('MomentRepository.findBySceneId called.')
+    
     try {
       const results = await db.select().from(moments).where(eq(moments.sceneId, sceneId))
       return results.map(this.toDomain)
@@ -32,7 +32,7 @@ export class MomentRepository implements IMomentRepository {
   }
 
   async save(momentData: Moment): Promise<void> {
-    console.log('MomentRepository.save called.')
+    
     try {
       await db.insert(moments).values(this.toPersistence(momentData))
     } catch (error) {
@@ -42,7 +42,7 @@ export class MomentRepository implements IMomentRepository {
   }
 
   async update(momentData: Moment): Promise<void> {
-    console.log('MomentRepository.update called.')
+    
     try {
       await db
         .update(moments)
@@ -55,7 +55,7 @@ export class MomentRepository implements IMomentRepository {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('MomentRepository.delete called.')
+    
     try {
       await db.delete(moments).where(eq(moments.id, id))
     } catch (error) {
@@ -65,7 +65,7 @@ export class MomentRepository implements IMomentRepository {
   }
 
   private toDomain(data: typeof moments.$inferSelect): Moment {
-    console.log('MomentRepository.toDomain called.')
+    
     return {
       id: data.id,
       sceneId: data.sceneId,
@@ -81,7 +81,7 @@ export class MomentRepository implements IMomentRepository {
   }
 
   private toPersistence(momentData: Moment): typeof moments.$inferInsert {
-    console.log('MomentRepository.toPersistence called.')
+    
     return {
       id: momentData.id,
       sceneId: momentData.sceneId,

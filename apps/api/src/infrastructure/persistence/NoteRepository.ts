@@ -6,11 +6,11 @@ import { eq } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {
   constructor() {
-    console.log('NoteRepository constructor called.')
+    
   }
 
   async findById(id: string): Promise<Note | null> {
-    console.log('NoteRepository.findById called.')
+    
     try {
       const result = await db.select().from(notes).where(eq(notes.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +21,7 @@ export class NoteRepository implements INoteRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Note[]> {
-    console.log('NoteRepository.findByStoryId called.')
+    
     try {
       const results = await db.select().from(notes).where(eq(notes.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +32,7 @@ export class NoteRepository implements INoteRepository {
   }
 
   async save(noteData: Note): Promise<void> {
-    console.log('NoteRepository.save called.')
+    
     try {
       await db.insert(notes).values(this.toPersistence(noteData))
     } catch (error) {
@@ -42,7 +42,7 @@ export class NoteRepository implements INoteRepository {
   }
 
   async update(noteData: Note): Promise<void> {
-    console.log('NoteRepository.update called.')
+    
     try {
       await db.update(notes).set(this.toPersistence(noteData)).where(eq(notes.id, noteData.id))
     } catch (error) {
@@ -52,7 +52,7 @@ export class NoteRepository implements INoteRepository {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('NoteRepository.delete called.')
+    
     try {
       await db.delete(notes).where(eq(notes.id, id))
     } catch (error) {
@@ -62,7 +62,7 @@ export class NoteRepository implements INoteRepository {
   }
 
   private toDomain(data: typeof notes.$inferSelect): Note {
-    console.log('NoteRepository.toDomain called.')
+    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -76,7 +76,7 @@ export class NoteRepository implements INoteRepository {
   }
 
   private toPersistence(noteData: Note): typeof notes.$inferInsert {
-    console.log('NoteRepository.toPersistence called.')
+    
     return {
       id: noteData.id,
       storyId: noteData.storyId,

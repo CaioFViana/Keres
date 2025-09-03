@@ -6,11 +6,11 @@ import { eq } from 'drizzle-orm'
 
 export class ChapterRepository implements IChapterRepository {
   constructor() {
-    console.log('ChapterRepository constructor called.')
+    
   }
 
   async findById(id: string): Promise<Chapter | null> {
-    console.log('ChapterRepository.findById called.')
+    
     try {
       const result = await db.select().from(chapters).where(eq(chapters.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +21,7 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Chapter[]> {
-    console.log('ChapterRepository.findByStoryId called.')
+    
     try {
       const results = await db.select().from(chapters).where(eq(chapters.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +32,7 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   async save(chapterData: Chapter): Promise<void> {
-    console.log('ChapterRepository.save called.')
+    
     try {
       await db.insert(chapters).values(this.toPersistence(chapterData))
     } catch (error) {
@@ -42,7 +42,7 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   async update(chapterData: Chapter): Promise<void> {
-    console.log('ChapterRepository.update called.')
+    
     try {
       await db
         .update(chapters)
@@ -55,7 +55,7 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('ChapterRepository.delete called.')
+    
     try {
       await db.delete(chapters).where(eq(chapters.id, id))
     } catch (error) {
@@ -65,7 +65,7 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   private toDomain(data: typeof chapters.$inferSelect): Chapter {
-    console.log('ChapterRepository.toDomain called.')
+    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -80,7 +80,7 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   private toPersistence(chapterData: Chapter): typeof chapters.$inferInsert {
-    console.log('ChapterRepository.toPersistence called.')
+    
     return {
       id: chapterData.id,
       storyId: chapterData.storyId,

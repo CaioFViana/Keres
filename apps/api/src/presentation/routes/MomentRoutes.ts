@@ -11,25 +11,18 @@ import { CreateMomentSchema, MomentResponseSchema, UpdateMomentSchema } from '@k
 import { MomentController } from '@presentation/controllers/MomentController'
 import { z } from 'zod'
 
-console.log('Initializing MomentRoutes...')
 
 export const momentRoutes = new OpenAPIHono()
 
 // Dependencies for MomentController
-console.log('Instantiating MomentRepository...')
 const momentRepository = new MomentRepository()
-console.log('Instantiating CreateMomentUseCase...')
 const createMomentUseCase = new CreateMomentUseCase(momentRepository)
-console.log('Instantiating GetMomentUseCase...')
 const getMomentUseCase = new GetMomentUseCase(momentRepository)
-console.log('Instantiating UpdateMomentUseCase...')
 const updateMomentUseCase = new UpdateMomentUseCase(momentRepository)
-console.log('Instantiating DeleteMomentUseCase...')
 const deleteMomentUseCase = new DeleteMomentUseCase(momentRepository)
-console.log('Instantiating GetMomentsBySceneIdUseCase...')
 const getMomentsBySceneIdUseCase = new GetMomentsBySceneIdUseCase(momentRepository)
 
-console.log('Instantiating MomentController...')
+
 const momentController = new MomentController(
   createMomentUseCase,
   getMomentUseCase,
@@ -348,7 +341,3 @@ momentRoutes.openapi(
     }
   },
 )
-
-console.log('MomentRoutes initialized.')
-
-export default momentRoutes

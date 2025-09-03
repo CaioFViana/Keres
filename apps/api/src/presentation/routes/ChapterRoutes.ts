@@ -11,25 +11,18 @@ import { ChapterCreateSchema, ChapterResponseSchema, ChapterUpdateSchema } from 
 import { ChapterController } from '@presentation/controllers/ChapterController'
 import { z } from 'zod' // Import z for defining parameters
 
-console.log('Initializing ChapterRoutes...')
 
 const chapterRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for ChapterController
-console.log('Instantiating ChapterRepository...')
 const chapterRepository = new ChapterRepository()
-console.log('Instantiating CreateChapterUseCase...')
 const createChapterUseCase = new CreateChapterUseCase(chapterRepository)
-console.log('Instantiating GetChapterUseCase...')
 const getChapterUseCase = new GetChapterUseCase(chapterRepository)
-console.log('Instantiating UpdateChapterUseCase...')
 const updateChapterUseCase = new UpdateChapterUseCase(chapterRepository)
-console.log('Instantiating DeleteChapterUseCase...')
 const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository)
-console.log('Instantiating GetChaptersByStoryIdUseCase...')
 const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository)
 
-console.log('Instantiating ChapterController...')
+
 const chapterController = new ChapterController(
   createChapterUseCase,
   getChapterUseCase,
@@ -326,6 +319,5 @@ chapterRoutes.openapi(
   },
 )
 
-console.log('ChapterRoutes initialized.')
 
 export default chapterRoutes

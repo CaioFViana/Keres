@@ -15,25 +15,18 @@ import {
 import { CharacterController } from '@presentation/controllers/CharacterController'
 import { z } from 'zod' // Import z for defining parameters
 
-console.log('Initializing CharacterRoutes...')
 
 const characterRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for CharacterController
-console.log('Instantiating CharacterRepository...')
 const characterRepository = new CharacterRepository()
-console.log('Instantiating CreateCharacterUseCase...')
 const createCharacterUseCase = new CreateCharacterUseCase(characterRepository)
-console.log('Instantiating GetCharacterUseCase...')
 const getCharacterUseCase = new GetCharacterUseCase(characterRepository)
-console.log('Instantiating UpdateCharacterUseCase...')
 const updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository)
-console.log('Instantiating DeleteCharacterUseCase...')
 const deleteCharacterUseCase = new DeleteCharacterUseCase(characterRepository)
-console.log('Instantiating GetCharactersByStoryIdUseCase...')
 const getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(characterRepository)
 
-console.log('Instantiating CharacterController...')
+
 const characterController = new CharacterController(
   createCharacterUseCase,
   getCharacterUseCase,
@@ -330,6 +323,5 @@ characterRoutes.openapi(
   },
 )
 
-console.log('CharacterRoutes initialized.')
 
 export default characterRoutes

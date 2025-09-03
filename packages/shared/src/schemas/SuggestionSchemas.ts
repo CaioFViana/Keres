@@ -6,6 +6,14 @@ export const CreateSuggestionSchema = z.object({
   storyId: z.ulid().nullable().optional(),
   type: z.string().min(1, 'Type cannot be empty'),
   value: z.string().min(1, 'Value cannot be empty'),
+}).superRefine((data, ctx) => {
+  if (data.scope === 'story' && !data.storyId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'storyId is required when scope is "story"',
+      path: ['storyId'],
+    });
+  }
 })
 
 export const UpdateSuggestionSchema = z.object({

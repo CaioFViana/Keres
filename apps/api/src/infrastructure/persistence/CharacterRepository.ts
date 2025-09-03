@@ -5,12 +5,9 @@ import { characters, db } from '@keres/db' // Import db and characters table
 import { eq } from 'drizzle-orm'
 
 export class CharacterRepository implements ICharacterRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Character | null> {
-    
     try {
       const result = await db.select().from(characters).where(eq(characters.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class CharacterRepository implements ICharacterRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Character[]> {
-    
     try {
       const results = await db.select().from(characters).where(eq(characters.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class CharacterRepository implements ICharacterRepository {
   }
 
   async save(characterData: Character): Promise<void> {
-    
     try {
       await db.insert(characters).values(this.toPersistence(characterData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class CharacterRepository implements ICharacterRepository {
   }
 
   async update(characterData: Character): Promise<void> {
-    
     try {
       await db
         .update(characters)
@@ -55,7 +49,6 @@ export class CharacterRepository implements ICharacterRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(characters).where(eq(characters.id, id))
     } catch (error) {
@@ -65,7 +58,6 @@ export class CharacterRepository implements ICharacterRepository {
   }
 
   private toDomain(data: typeof characters.$inferSelect): Character {
-    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -88,7 +80,6 @@ export class CharacterRepository implements ICharacterRepository {
   }
 
   private toPersistence(characterData: Character): typeof characters.$inferInsert {
-    
     return {
       id: characterData.id,
       storyId: characterData.storyId,

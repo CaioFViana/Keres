@@ -5,12 +5,9 @@ import { characterMoments, db } from '@keres/db' // Import db and characterMomen
 import { and, eq } from 'drizzle-orm'
 
 export class CharacterMomentRepository implements ICharacterMomentRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findByCharacterId(characterId: string): Promise<CharacterMoment[]> {
-    
     try {
       const results = await db
         .select()
@@ -24,7 +21,6 @@ export class CharacterMomentRepository implements ICharacterMomentRepository {
   }
 
   async findByMomentId(momentId: string): Promise<CharacterMoment[]> {
-    
     try {
       const results = await db
         .select()
@@ -38,7 +34,6 @@ export class CharacterMomentRepository implements ICharacterMomentRepository {
   }
 
   async save(characterMomentData: CharacterMoment): Promise<void> {
-    
     try {
       await db.insert(characterMoments).values(this.toPersistence(characterMomentData))
     } catch (error) {
@@ -48,7 +43,6 @@ export class CharacterMomentRepository implements ICharacterMomentRepository {
   }
 
   async delete(characterId: string, momentId: string): Promise<void> {
-    
     try {
       await db
         .delete(characterMoments)
@@ -65,7 +59,6 @@ export class CharacterMomentRepository implements ICharacterMomentRepository {
   }
 
   private toDomain(data: typeof characterMoments.$inferSelect): CharacterMoment {
-    
     return {
       characterId: data.characterId,
       momentId: data.momentId,
@@ -77,7 +70,6 @@ export class CharacterMomentRepository implements ICharacterMomentRepository {
   private toPersistence(
     characterMomentData: CharacterMoment,
   ): typeof characterMoments.$inferInsert {
-    
     return {
       characterId: characterMomentData.characterId,
       momentId: characterMomentData.momentId,

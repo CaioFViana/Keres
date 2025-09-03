@@ -5,12 +5,9 @@ import { db, locations } from '@keres/db' // Import db and locations table
 import { eq } from 'drizzle-orm'
 
 export class LocationRepository implements ILocationRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Location | null> {
-    
     try {
       const result = await db.select().from(locations).where(eq(locations.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class LocationRepository implements ILocationRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Location[]> {
-    
     try {
       const results = await db.select().from(locations).where(eq(locations.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class LocationRepository implements ILocationRepository {
   }
 
   async save(locationData: Location): Promise<void> {
-    
     try {
       await db.insert(locations).values(this.toPersistence(locationData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class LocationRepository implements ILocationRepository {
   }
 
   async update(locationData: Location): Promise<void> {
-    
     try {
       await db
         .update(locations)
@@ -55,7 +49,6 @@ export class LocationRepository implements ILocationRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(locations).where(eq(locations.id, id))
     } catch (error) {
@@ -65,7 +58,6 @@ export class LocationRepository implements ILocationRepository {
   }
 
   private toDomain(data: typeof locations.$inferSelect): Location {
-    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -82,7 +74,6 @@ export class LocationRepository implements ILocationRepository {
   }
 
   private toPersistence(locationData: Location): typeof locations.$inferInsert {
-    
     return {
       id: locationData.id,
       storyId: locationData.storyId,

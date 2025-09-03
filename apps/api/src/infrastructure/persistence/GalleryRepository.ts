@@ -5,12 +5,9 @@ import { db, gallery } from '@keres/db' // Import db and gallery table
 import { eq } from 'drizzle-orm'
 
 export class GalleryRepository implements IGalleryRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Gallery | null> {
-    
     try {
       const result = await db.select().from(gallery).where(eq(gallery.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Gallery[]> {
-    
     try {
       const results = await db.select().from(gallery).where(eq(gallery.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async findByOwnerId(ownerId: string): Promise<Gallery[]> {
-    
     try {
       const results = await db.select().from(gallery).where(eq(gallery.ownerId, ownerId))
       return results.map(this.toDomain)
@@ -43,7 +38,6 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async save(galleryData: Gallery): Promise<void> {
-    
     try {
       await db.insert(gallery).values(this.toPersistence(galleryData))
     } catch (error) {
@@ -53,7 +47,6 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async update(galleryData: Gallery): Promise<void> {
-    
     try {
       await db
         .update(gallery)
@@ -66,7 +59,6 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(gallery).where(eq(gallery.id, id))
     } catch (error) {
@@ -76,11 +68,10 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   private toDomain(data: typeof gallery.$inferSelect): Gallery {
-    
     return {
       id: data.id,
       storyId: data.storyId,
-      ownerId: data.ownerId,
+      ownerId: data.ownerId!,
       imagePath: data.imagePath,
       isFile: data.isFile,
       isFavorite: data.isFavorite,
@@ -91,7 +82,6 @@ export class GalleryRepository implements IGalleryRepository {
   }
 
   private toPersistence(galleryData: Gallery): typeof gallery.$inferInsert {
-    
     return {
       id: galleryData.id,
       storyId: galleryData.storyId,

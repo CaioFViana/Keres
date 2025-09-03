@@ -5,12 +5,9 @@ import { db, moments } from '@keres/db' // Import db and moments table
 import { eq } from 'drizzle-orm'
 
 export class MomentRepository implements IMomentRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Moment | null> {
-    
     try {
       const result = await db.select().from(moments).where(eq(moments.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class MomentRepository implements IMomentRepository {
   }
 
   async findBySceneId(sceneId: string): Promise<Moment[]> {
-    
     try {
       const results = await db.select().from(moments).where(eq(moments.sceneId, sceneId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class MomentRepository implements IMomentRepository {
   }
 
   async save(momentData: Moment): Promise<void> {
-    
     try {
       await db.insert(moments).values(this.toPersistence(momentData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class MomentRepository implements IMomentRepository {
   }
 
   async update(momentData: Moment): Promise<void> {
-    
     try {
       await db
         .update(moments)
@@ -55,7 +49,6 @@ export class MomentRepository implements IMomentRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(moments).where(eq(moments.id, id))
     } catch (error) {
@@ -65,7 +58,6 @@ export class MomentRepository implements IMomentRepository {
   }
 
   private toDomain(data: typeof moments.$inferSelect): Moment {
-    
     return {
       id: data.id,
       sceneId: data.sceneId,
@@ -81,7 +73,6 @@ export class MomentRepository implements IMomentRepository {
   }
 
   private toPersistence(momentData: Moment): typeof moments.$inferInsert {
-    
     return {
       id: momentData.id,
       sceneId: momentData.sceneId,

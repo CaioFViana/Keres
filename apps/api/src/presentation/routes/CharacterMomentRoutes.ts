@@ -10,7 +10,6 @@ import { CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@ker
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
 import { z } from 'zod' // Import z for defining parameters
 
-
 const characterMomentRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for CharacterMomentController
@@ -23,7 +22,6 @@ const getCharacterMomentsByMomentIdUseCase = new GetCharacterMomentsByMomentIdUs
   characterMomentRepository,
 )
 const deleteCharacterMomentUseCase = new DeleteCharacterMomentUseCase(characterMomentRepository)
-
 
 const characterMomentController = new CharacterMomentController(
   createCharacterMomentUseCase,
@@ -269,6 +267,5 @@ characterMomentRoutes.openapi(
     }
   },
 )
-
 
 export default characterMomentRoutes

@@ -5,12 +5,9 @@ import { chapters, db } from '@keres/db' // Import db and chapters table
 import { eq } from 'drizzle-orm'
 
 export class ChapterRepository implements IChapterRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Chapter | null> {
-    
     try {
       const result = await db.select().from(chapters).where(eq(chapters.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Chapter[]> {
-    
     try {
       const results = await db.select().from(chapters).where(eq(chapters.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   async save(chapterData: Chapter): Promise<void> {
-    
     try {
       await db.insert(chapters).values(this.toPersistence(chapterData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   async update(chapterData: Chapter): Promise<void> {
-    
     try {
       await db
         .update(chapters)
@@ -55,7 +49,6 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(chapters).where(eq(chapters.id, id))
     } catch (error) {
@@ -65,7 +58,6 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   private toDomain(data: typeof chapters.$inferSelect): Chapter {
-    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -80,7 +72,6 @@ export class ChapterRepository implements IChapterRepository {
   }
 
   private toPersistence(chapterData: Chapter): typeof chapters.$inferInsert {
-    
     return {
       id: chapterData.id,
       storyId: chapterData.storyId,

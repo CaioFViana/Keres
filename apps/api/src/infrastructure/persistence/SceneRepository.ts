@@ -5,12 +5,9 @@ import { db, scenes } from '@keres/db' // Import db and scenes table
 import { eq } from 'drizzle-orm'
 
 export class SceneRepository implements ISceneRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Scene | null> {
-    
     try {
       const result = await db.select().from(scenes).where(eq(scenes.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class SceneRepository implements ISceneRepository {
   }
 
   async findByChapterId(chapterId: string): Promise<Scene[]> {
-    
     try {
       const results = await db.select().from(scenes).where(eq(scenes.chapterId, chapterId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class SceneRepository implements ISceneRepository {
   }
 
   async save(sceneData: Scene): Promise<void> {
-    
     try {
       await db.insert(scenes).values(this.toPersistence(sceneData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class SceneRepository implements ISceneRepository {
   }
 
   async update(sceneData: Scene): Promise<void> {
-    
     try {
       await db.update(scenes).set(this.toPersistence(sceneData)).where(eq(scenes.id, sceneData.id))
     } catch (error) {
@@ -52,7 +46,6 @@ export class SceneRepository implements ISceneRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(scenes).where(eq(scenes.id, id))
     } catch (error) {
@@ -62,7 +55,6 @@ export class SceneRepository implements ISceneRepository {
   }
 
   private toDomain(data: typeof scenes.$inferSelect): Scene {
-    
     return {
       id: data.id,
       chapterId: data.chapterId,
@@ -79,7 +71,6 @@ export class SceneRepository implements ISceneRepository {
   }
 
   private toPersistence(sceneData: Scene): typeof scenes.$inferInsert {
-    
     return {
       id: sceneData.id,
       chapterId: sceneData.chapterId,

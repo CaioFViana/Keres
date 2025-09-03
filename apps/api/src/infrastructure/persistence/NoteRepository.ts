@@ -5,12 +5,9 @@ import { db, notes } from '@keres/db' // Import db and notes table
 import { eq } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Note | null> {
-    
     try {
       const result = await db.select().from(notes).where(eq(notes.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class NoteRepository implements INoteRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Note[]> {
-    
     try {
       const results = await db.select().from(notes).where(eq(notes.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class NoteRepository implements INoteRepository {
   }
 
   async save(noteData: Note): Promise<void> {
-    
     try {
       await db.insert(notes).values(this.toPersistence(noteData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class NoteRepository implements INoteRepository {
   }
 
   async update(noteData: Note): Promise<void> {
-    
     try {
       await db.update(notes).set(this.toPersistence(noteData)).where(eq(notes.id, noteData.id))
     } catch (error) {
@@ -52,7 +46,6 @@ export class NoteRepository implements INoteRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(notes).where(eq(notes.id, id))
     } catch (error) {
@@ -62,7 +55,6 @@ export class NoteRepository implements INoteRepository {
   }
 
   private toDomain(data: typeof notes.$inferSelect): Note {
-    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -76,7 +68,6 @@ export class NoteRepository implements INoteRepository {
   }
 
   private toPersistence(noteData: Note): typeof notes.$inferInsert {
-    
     return {
       id: noteData.id,
       storyId: noteData.storyId,

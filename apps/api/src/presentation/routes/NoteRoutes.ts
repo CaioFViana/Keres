@@ -11,7 +11,6 @@ import { CreateNoteSchema, NoteResponseSchema, UpdateNoteSchema } from '@keres/s
 import { NoteController } from '@presentation/controllers/NoteController'
 import { z } from 'zod'
 
-
 const noteRoutes = new OpenAPIHono()
 
 // Dependencies for NoteController
@@ -21,7 +20,6 @@ const getNoteUseCase = new GetNoteUseCase(noteRepository)
 const updateNoteUseCase = new UpdateNoteUseCase(noteRepository)
 const deleteNoteUseCase = new DeleteNoteUseCase(noteRepository)
 const getNotesByStoryIdUseCase = new GetNotesByStoryIdUseCase(noteRepository)
-
 
 const noteController = new NoteController(
   createNoteUseCase,
@@ -340,6 +338,5 @@ noteRoutes.openapi(
     }
   },
 )
-
 
 export default noteRoutes

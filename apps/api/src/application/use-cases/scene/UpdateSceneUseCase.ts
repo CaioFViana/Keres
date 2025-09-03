@@ -22,7 +22,6 @@ export class UpdateSceneUseCase {
       return null // Scene does not belong to this chapter
     }
 
-    
     const updatedScene = {
       ...existingScene,
       ...data,

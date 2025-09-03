@@ -5,12 +5,9 @@ import { db, tags } from '@keres/db' // Import db and tags table
 import { eq } from 'drizzle-orm'
 
 export class TagRepository implements ITagRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Tag | null> {
-    
     try {
       const result = await db.select().from(tags).where(eq(tags.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class TagRepository implements ITagRepository {
   }
 
   async findByStoryId(storyId: string): Promise<Tag[]> {
-    
     try {
       const results = await db.select().from(tags).where(eq(tags.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class TagRepository implements ITagRepository {
   }
 
   async save(tagData: Tag): Promise<void> {
-    
     try {
       await db.insert(tags).values(this.toPersistence(tagData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class TagRepository implements ITagRepository {
   }
 
   async update(tagData: Tag): Promise<void> {
-    
     try {
       await db.update(tags).set(this.toPersistence(tagData)).where(eq(tags.id, tagData.id))
     } catch (error) {
@@ -52,7 +46,6 @@ export class TagRepository implements ITagRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(tags).where(eq(tags.id, id))
     } catch (error) {
@@ -62,7 +55,6 @@ export class TagRepository implements ITagRepository {
   }
 
   private toDomain(data: typeof tags.$inferSelect): Tag {
-    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -76,7 +68,6 @@ export class TagRepository implements ITagRepository {
   }
 
   private toPersistence(tagData: Tag): typeof tags.$inferInsert {
-    
     return {
       id: tagData.id,
       storyId: tagData.storyId,

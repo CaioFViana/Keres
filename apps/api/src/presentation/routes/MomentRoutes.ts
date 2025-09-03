@@ -11,7 +11,6 @@ import { CreateMomentSchema, MomentResponseSchema, UpdateMomentSchema } from '@k
 import { MomentController } from '@presentation/controllers/MomentController'
 import { z } from 'zod'
 
-
 export const momentRoutes = new OpenAPIHono()
 
 // Dependencies for MomentController
@@ -21,7 +20,6 @@ const getMomentUseCase = new GetMomentUseCase(momentRepository)
 const updateMomentUseCase = new UpdateMomentUseCase(momentRepository)
 const deleteMomentUseCase = new DeleteMomentUseCase(momentRepository)
 const getMomentsBySceneIdUseCase = new GetMomentsBySceneIdUseCase(momentRepository)
-
 
 const momentController = new MomentController(
   createMomentUseCase,

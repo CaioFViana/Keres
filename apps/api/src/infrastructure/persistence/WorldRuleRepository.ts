@@ -5,12 +5,9 @@ import { db, worldRules } from '@keres/db' // Import db and worldRules table
 import { eq } from 'drizzle-orm'
 
 export class WorldRuleRepository implements IWorldRuleRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<WorldRule | null> {
-    
     try {
       const result = await db.select().from(worldRules).where(eq(worldRules.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   async findByStoryId(storyId: string): Promise<WorldRule[]> {
-    
     try {
       const results = await db.select().from(worldRules).where(eq(worldRules.storyId, storyId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   async save(worldRuleData: WorldRule): Promise<void> {
-    
     try {
       await db.insert(worldRules).values(this.toPersistence(worldRuleData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   async update(worldRuleData: WorldRule): Promise<void> {
-    
     try {
       await db
         .update(worldRules)
@@ -55,7 +49,6 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(worldRules).where(eq(worldRules.id, id))
     } catch (error) {
@@ -65,7 +58,6 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   private toDomain(data: typeof worldRules.$inferSelect): WorldRule {
-    
     return {
       id: data.id,
       storyId: data.storyId,
@@ -79,7 +71,6 @@ export class WorldRuleRepository implements IWorldRuleRepository {
   }
 
   private toPersistence(worldRuleData: WorldRule): typeof worldRules.$inferInsert {
-    
     return {
       id: worldRuleData.id,
       storyId: worldRuleData.storyId,

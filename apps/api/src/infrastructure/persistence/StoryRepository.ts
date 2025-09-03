@@ -5,12 +5,9 @@ import { db, story } from '@keres/db' // Import db and stories table
 import { eq } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
-  constructor() {
-    
-  }
+  constructor() {}
 
   async findById(id: string): Promise<Story | null> {
-    
     try {
       const result = await db.select().from(story).where(eq(story.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
@@ -21,7 +18,6 @@ export class StoryRepository implements IStoryRepository {
   }
 
   async findByUserId(userId: string): Promise<Story[]> {
-    
     try {
       const results = await db.select().from(story).where(eq(story.userId, userId))
       return results.map(this.toDomain)
@@ -32,7 +28,6 @@ export class StoryRepository implements IStoryRepository {
   }
 
   async save(storyData: Story): Promise<void> {
-    
     try {
       await db.insert(story).values(this.toPersistence(storyData))
     } catch (error) {
@@ -42,7 +37,6 @@ export class StoryRepository implements IStoryRepository {
   }
 
   async update(storyData: Story): Promise<void> {
-    
     try {
       await db.update(story).set(this.toPersistence(storyData)).where(eq(story.id, storyData.id))
     } catch (error) {
@@ -52,7 +46,6 @@ export class StoryRepository implements IStoryRepository {
   }
 
   async delete(id: string): Promise<void> {
-    
     try {
       await db.delete(story).where(eq(story.id, id))
     } catch (error) {
@@ -62,7 +55,6 @@ export class StoryRepository implements IStoryRepository {
   }
 
   private toDomain(data: typeof story.$inferSelect): Story {
-    
     return {
       id: data.id,
       userId: data.userId,
@@ -79,7 +71,6 @@ export class StoryRepository implements IStoryRepository {
   }
 
   private toPersistence(storyData: Story): typeof story.$inferInsert {
-    
     return {
       id: storyData.id,
       userId: storyData.userId,

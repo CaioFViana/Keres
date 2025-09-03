@@ -19,7 +19,6 @@ import {
 import { SuggestionController } from '@presentation/controllers/SuggestionController'
 import { z } from 'zod'
 
-
 const suggestionRoutes = new OpenAPIHono()
 
 // Dependencies for SuggestionController
@@ -37,7 +36,6 @@ const getSuggestionsByUserAndTypeUseCase = new GetSuggestionsByUserAndTypeUseCas
 const getSuggestionsByStoryAndTypeUseCase = new GetSuggestionsByStoryAndTypeUseCase(
   suggestionRepository,
 )
-
 
 const suggestionController = new SuggestionController(
   createSuggestionUseCase,
@@ -589,6 +587,5 @@ suggestionRoutes.openapi(
     }
   },
 )
-
 
 export default suggestionRoutes

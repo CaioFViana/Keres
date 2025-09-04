@@ -1,6 +1,7 @@
 export interface Scene {
   id: string
   chapterId: string
+  locationId: string
   name: string
   index: number
   summary: string | null

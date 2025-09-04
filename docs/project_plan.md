@@ -129,6 +129,7 @@ Uma coleção de momentos. Ex: "esta manhã na escola", "a caminhada para casa",
 scenes
 - id (ulid, pk)
 - chapter_id (ulid, fk)
+- location_id (ulid, fk → locations.id)
 - name (text) # Nome/identificador da cena
 - index (int) # Para ordem
 - summary (text)
@@ -295,6 +296,37 @@ suggestions
 - value (text) # O valor da sugestão (ex: "Fantasia", "Não-binário", "Elfo da Floresta", "Mentor")
 - created_at (timestamp)
 - updated_at (timestamp)
+```
+### Gráfico de Relações entre Entidades
+
+```mermaid
+graph LR
+    users --> story
+    users --> suggestions
+
+    story --> characters
+    story --> gallery
+    story --> chapters
+    story --> locations
+    story --> world_rules
+    story --> notes
+    story --> tags
+    story -- nullable --> suggestions
+
+    chapters --> scenes
+    locations -- occurs on--> scenes
+
+    scenes --> moments
+    scenes -- source --> choices
+    choices -- target (next_scene_id) --> scenes
+
+    characters --> character_moments
+    character_moments --> moments
+
+    characters --> character_relations
+    character_relations --> characters
+
+    notes -- nullable --> gallery
 ```
 
 ## 🔗 Fluxo de Arquitetura

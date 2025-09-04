@@ -66,6 +66,9 @@ export const scenes = pgTable('scenes', {
   chapterId: text('chapter_id')
     .notNull()
     .references(() => chapters.id),
+  locationId: text('location_id')
+    .notNull()
+    .references(() => locations.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),

@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const SceneCreateSchema = z.object({
   chapterId: z.string(),
+  locationId: z.string(),
   name: z.string().min(1, 'Name cannot be empty'),
   index: z.number().int().min(0, 'Index must be a non-negative integer'),
   summary: z.string().optional(),
@@ -14,6 +15,7 @@ export const SceneCreateSchema = z.object({
 export const SceneUpdateSchema = z.object({
   id: z.string(),
   chapterId: z.string().optional(), // chapterId should not be updatable in practice
+  locationId: z.string().optional(),
   name: z.string().min(1, 'Name cannot be empty').optional(),
   index: z.number().int().min(0, 'Index must be a non-negative integer').optional(),
   summary: z.string().optional(),
@@ -26,6 +28,7 @@ export const SceneUpdateSchema = z.object({
 export const SceneResponseSchema = z.object({
   id: z.string(),
   chapterId: z.string(),
+  locationId: z.string(),
   name: z.string(),
   index: z.number().int(),
   summary: z.string().nullable(),

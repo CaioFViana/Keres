@@ -1,5 +1,6 @@
 export interface CreateSceneDTO {
   chapterId: string
+  locationId: string
   name: string
   index: number
   summary?: string | null
@@ -12,6 +13,7 @@ export interface CreateSceneDTO {
 export interface UpdateSceneDTO {
   id: string
   chapterId: string
+  locationId?: string
   name?: string
   index?: number
   summary?: string | null
@@ -24,6 +26,7 @@ export interface UpdateSceneDTO {
 export interface SceneProfileDTO {
   id: string
   chapterId: string
+  locationId: string
   name: string
   index: number
   summary: string | null

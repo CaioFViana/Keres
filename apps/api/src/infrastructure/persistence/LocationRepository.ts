@@ -36,21 +36,21 @@ export class LocationRepository implements ILocationRepository {
     }
   }
 
-  async update(locationData: Location): Promise<void> {
+  async update(locationData: Location, storyId: string): Promise<void> {
     try {
       await db
         .update(locations)
         .set(this.toPersistence(locationData))
-        .where(eq(locations.id, locationData.id))
+        .where(eq(locations.id, locationData.id), eq(locations.storyId, storyId))
     } catch (error) {
       console.error('Error in LocationRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, storyId: string): Promise<void> {
     try {
-      await db.delete(locations).where(eq(locations.id, id))
+      await db.delete(locations).where(eq(locations.id, id), eq(locations.storyId, storyId))
     } catch (error) {
       console.error('Error in LocationRepository.delete:', error)
       throw error

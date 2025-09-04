@@ -46,21 +46,21 @@ export class GalleryRepository implements IGalleryRepository {
     }
   }
 
-  async update(galleryData: Gallery): Promise<void> {
+  async update(galleryData: Gallery, storyId: string, ownerId: string): Promise<void> {
     try {
       await db
         .update(gallery)
         .set(this.toPersistence(galleryData))
-        .where(eq(gallery.id, galleryData.id))
+        .where(eq(gallery.id, galleryData.id), eq(gallery.storyId, storyId), eq(gallery.ownerId, ownerId))
     } catch (error) {
       console.error('Error in GalleryRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, storyId: string, ownerId: string): Promise<void> {
     try {
-      await db.delete(gallery).where(eq(gallery.id, id))
+      await db.delete(gallery).where(eq(gallery.id, id), eq(gallery.storyId, storyId), eq(gallery.ownerId, ownerId))
     } catch (error) {
       console.error('Error in GalleryRepository.delete:', error)
       throw error

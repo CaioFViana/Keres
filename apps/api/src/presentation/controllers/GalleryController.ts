@@ -24,43 +24,43 @@ export class GalleryController {
     private readonly getGalleryByStoryIdUseCase: GetGalleryByStoryIdUseCase,
   ) {}
 
-  async createGallery(data: z.infer<typeof GalleryCreateSchema>) {
-    const gallery = await this.createGalleryUseCase.execute(data)
+  async createGallery(userId: string, data: z.infer<typeof GalleryCreateSchema>) {
+    const gallery = await this.createGalleryUseCase.execute(userId, data)
     return GalleryResponseSchema.parse(gallery)
   }
 
-  async getGallery(id: string) {
-    const gallery = await this.getGalleryUseCase.execute(id)
+  async getGallery(userId: string, id: string) {
+    const gallery = await this.getGalleryUseCase.execute(userId, id)
     if (!gallery) {
       throw new Error('Gallery item not found')
     }
     return GalleryResponseSchema.parse(gallery)
   }
 
-  async getGalleryByOwnerId(ownerId: string) {
-    const galleryItems = await this.getGalleryByOwnerIdUseCase.execute(ownerId)
+  async getGalleryByOwnerId(userId: string, ownerId: string) {
+    const galleryItems = await this.getGalleryByOwnerIdUseCase.execute(userId, ownerId)
     return galleryItems.map((item) => GalleryResponseSchema.parse(item))
   }
 
-  async getGalleryByStoryId(storyId: string) {
-    const galleryItems = await this.getGalleryByStoryIdUseCase.execute(storyId)
+  async getGalleryByStoryId(userId: string, storyId: string) {
+    const galleryItems = await this.getGalleryByStoryIdUseCase.execute(userId, storyId)
     return galleryItems.map((item) => GalleryResponseSchema.parse(item))
   }
 
-  async updateGallery(id: string, data: z.infer<typeof GalleryUpdateSchema>) {
+  async updateGallery(userId: string, id: string, data: z.infer<typeof GalleryUpdateSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedGallery = await this.updateGalleryUseCase.execute({ id, ...updateData })
+    const updatedGallery = await this.updateGalleryUseCase.execute(userId, { id, ...updateData })
     if (!updatedGallery) {
       throw new Error('Gallery item not found or does not belong to the specified story/owner')
     }
     return GalleryResponseSchema.parse(updatedGallery)
   }
 
-  async deleteGallery(id: string, storyId: string, ownerId: string) {
+  async deleteGallery(userId: string, id: string, storyId: string, ownerId: string) {
     if (!storyId || !ownerId) {
       throw new Error('storyId and ownerId are required for deletion')
     }
-    const deleted = await this.deleteGalleryUseCase.execute(id, storyId, ownerId)
+    const deleted = await this.deleteGalleryUseCase.execute(userId, id, storyId, ownerId)
     if (!deleted) {
       throw new Error('Gallery item not found or does not belong to the specified story/owner')
     }

@@ -16,26 +16,26 @@ export class CharacterMomentController {
     private readonly deleteCharacterMomentUseCase: DeleteCharacterMomentUseCase,
   ) {}
 
-  async createCharacterMoment(data: z.infer<typeof CharacterMomentCreateSchema>) {
-    const characterMoment = await this.createCharacterMomentUseCase.execute(data)
+  async createCharacterMoment(userId: string, data: z.infer<typeof CharacterMomentCreateSchema>) {
+    const characterMoment = await this.createCharacterMomentUseCase.execute(userId, data)
     return CharacterMomentResponseSchema.parse(characterMoment)
   }
 
-  async getCharacterMomentsByCharacterId(characterId: string) {
-    const characterMoments = await this.getCharacterMomentsByCharacterIdUseCase.execute(characterId)
+  async getCharacterMomentsByCharacterId(userId: string, characterId: string) {
+    const characterMoments = await this.getCharacterMomentsByCharacterIdUseCase.execute(userId, characterId)
     return characterMoments.map((cm) => CharacterMomentResponseSchema.parse(cm))
   }
 
-  async getCharacterMomentsByMomentId(momentId: string) {
-    const characterMoments = await this.getCharacterMomentsByMomentIdUseCase.execute(momentId)
+  async getCharacterMomentsByMomentId(userId: string, momentId: string) {
+    const characterMoments = await this.getCharacterMomentsByMomentIdUseCase.execute(userId, momentId)
     return characterMoments.map((cm) => CharacterMomentResponseSchema.parse(cm))
   }
 
-  async deleteCharacterMoment(characterId: string, momentId: string) {
+  async deleteCharacterMoment(userId: string, characterId: string, momentId: string) {
     if (!characterId || !momentId) {
       throw new Error('characterId and momentId are required for deletion')
     }
-    const deleted = await this.deleteCharacterMomentUseCase.execute(characterId, momentId)
+    const deleted = await this.deleteCharacterMomentUseCase.execute(userId, characterId, momentId)
     if (!deleted) {
       throw new Error('CharacterMoment not found')
     }

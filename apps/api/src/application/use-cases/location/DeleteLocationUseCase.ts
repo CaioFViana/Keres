@@ -1,15 +1,25 @@
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 
 export class DeleteLocationUseCase {
-  constructor(private readonly locationRepository: ILocationRepository) {}
+  constructor(
+    private readonly locationRepository: ILocationRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(id: string): Promise<boolean> {
+  async execute(userId: string, id: string): Promise<boolean> {
     const existingLocation = await this.locationRepository.findById(id)
     if (!existingLocation) {
-      return false // Location not found
+      throw new Error('Location not found')
     }
-    // Check ownership
-    await this.locationRepository.delete(id)
+
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(existingLocation.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
+    await this.locationRepository.delete(id, existingLocation.storyId)
     return true
   }
 }

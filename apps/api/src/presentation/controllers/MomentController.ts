@@ -22,35 +22,35 @@ export class MomentController {
     private readonly getMomentsBySceneIdUseCase: GetMomentsBySceneIdUseCase,
   ) {}
 
-  async createMoment(data: z.infer<typeof CreateMomentSchema>) {
-    const moment = await this.createMomentUseCase.execute(data)
+  async createMoment(userId: string, data: z.infer<typeof CreateMomentSchema>) {
+    const moment = await this.createMomentUseCase.execute(userId, data)
     return MomentResponseSchema.parse(moment)
   }
 
-  async getMoment(id: string) {
-    const moment = await this.getMomentUseCase.execute(id)
+  async getMoment(userId: string, id: string) {
+    const moment = await this.getMomentUseCase.execute(userId, id)
     if (!moment) {
       throw new Error('Moment not found')
     }
     return MomentResponseSchema.parse(moment)
   }
 
-  async getMomentsBySceneId(sceneId: string) {
-    const moments = await this.getMomentsBySceneIdUseCase.execute(sceneId)
+  async getMomentsBySceneId(userId: string, sceneId: string) {
+    const moments = await this.getMomentsBySceneIdUseCase.execute(userId, sceneId)
     return moments.map((moment) => MomentResponseSchema.parse(moment))
   }
 
-  async updateMoment(id: string, data: z.infer<typeof UpdateMomentSchema>) {
+  async updateMoment(userId: string, id: string, data: z.infer<typeof UpdateMomentSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedMoment = await this.updateMomentUseCase.execute({ id, ...updateData })
+    const updatedMoment = await this.updateMomentUseCase.execute(userId, { id, ...updateData })
     if (!updatedMoment) {
       throw new Error('Moment not found') // Simplified error message
     }
     return MomentResponseSchema.parse(updatedMoment)
   }
 
-  async deleteMoment(id: string) {
-    const deleted = await this.deleteMomentUseCase.execute(id)
+  async deleteMoment(userId: string, id: string) {
+    const deleted = await this.deleteMomentUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Moment not found') // Simplified error message
     }

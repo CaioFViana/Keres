@@ -36,21 +36,21 @@ export class MomentRepository implements IMomentRepository {
     }
   }
 
-  async update(momentData: Moment): Promise<void> {
+  async update(momentData: Moment, sceneId: string): Promise<void> {
     try {
       await db
         .update(moments)
         .set(this.toPersistence(momentData))
-        .where(eq(moments.id, momentData.id))
+        .where(eq(moments.id, momentData.id), eq(moments.sceneId, sceneId))
     } catch (error) {
       console.error('Error in MomentRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, sceneId: string): Promise<void> {
     try {
-      await db.delete(moments).where(eq(moments.id, id))
+      await db.delete(moments).where(eq(moments.id, id), eq(moments.sceneId, sceneId))
     } catch (error) {
       console.error('Error in MomentRepository.delete:', error)
       throw error

@@ -22,35 +22,35 @@ export class LocationController {
     private readonly getLocationsByStoryIdUseCase: GetLocationsByStoryIdUseCase,
   ) {}
 
-  async createLocation(data: z.infer<typeof LocationCreateSchema>) {
-    const location = await this.createLocationUseCase.execute(data)
+  async createLocation(userId: string, data: z.infer<typeof LocationCreateSchema>) {
+    const location = await this.createLocationUseCase.execute(userId, data)
     return LocationResponseSchema.parse(location)
   }
 
-  async getLocation(id: string) {
-    const location = await this.getLocationUseCase.execute(id)
+  async getLocation(userId: string, id: string) {
+    const location = await this.getLocationUseCase.execute(userId, id)
     if (!location) {
       throw new Error('Location not found')
     }
     return LocationResponseSchema.parse(location)
   }
 
-  async getLocationsByStoryId(storyId: string) {
-    const locations = await this.getLocationsByStoryIdUseCase.execute(storyId)
+  async getLocationsByStoryId(userId: string, storyId: string) {
+    const locations = await this.getLocationsByStoryIdUseCase.execute(userId, storyId)
     return locations.map((location) => LocationResponseSchema.parse(location))
   }
 
-  async updateLocation(id: string, data: z.infer<typeof LocationUpdateSchema>) {
+  async updateLocation(userId: string, id: string, data: z.infer<typeof LocationUpdateSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedLocation = await this.updateLocationUseCase.execute({ id, ...updateData })
+    const updatedLocation = await this.updateLocationUseCase.execute(userId, { id, ...updateData })
     if (!updatedLocation) {
       throw new Error('Location not found or does not belong to the specified story')
     }
     return LocationResponseSchema.parse(updatedLocation)
   }
 
-  async deleteLocation(id: string) {
-    const deleted = await this.deleteLocationUseCase.execute(id)
+  async deleteLocation(userId: string, id: string) {
+    const deleted = await this.deleteLocationUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Location not found or does not belong to the specified story')
     }

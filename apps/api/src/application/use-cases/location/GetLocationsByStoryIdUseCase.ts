@@ -1,10 +1,20 @@
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { LocationResponse } from '@keres/shared'
 
 export class GetLocationsByStoryIdUseCase {
-  constructor(private readonly locationRepository: ILocationRepository) {}
+  constructor(
+    private readonly locationRepository: ILocationRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(storyId: string): Promise<LocationResponse[]> {
+  async execute(userId: string, storyId: string): Promise<LocationResponse[]> {
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
     const locations = await this.locationRepository.findByStoryId(storyId)
     return locations.map((location) => ({
       id: location.id,

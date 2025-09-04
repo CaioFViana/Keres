@@ -1,17 +1,23 @@
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { LocationResponse, LocationUpdatePayload } from '@keres/shared'
 
 export class UpdateLocationUseCase {
-  constructor(private readonly locationRepository: ILocationRepository) {}
+  constructor(
+    private readonly locationRepository: ILocationRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(data: LocationUpdatePayload): Promise<LocationResponse | null> {
+  async execute(userId: string, data: LocationUpdatePayload): Promise<LocationResponse> {
     const existingLocation = await this.locationRepository.findById(data.id)
     if (!existingLocation) {
-      return null // Location not found
+      throw new Error('Location not found')
     }
-    // Add ownership check
-    if (data.storyId && existingLocation.storyId !== data.storyId) {
-      return null // Location does not belong to this story
+
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(existingLocation.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
     }
 
     const updatedLocation = {
@@ -20,7 +26,7 @@ export class UpdateLocationUseCase {
       updatedAt: new Date(),
     }
 
-    await this.locationRepository.update(updatedLocation)
+    await this.locationRepository.update(updatedLocation, existingLocation.storyId)
 
     return {
       id: updatedLocation.id,

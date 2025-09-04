@@ -1,13 +1,23 @@
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { GalleryResponse } from '@keres/shared'
 
 export class GetGalleryUseCase {
-  constructor(private readonly galleryRepository: IGalleryRepository) {}
+  constructor(
+    private readonly galleryRepository: IGalleryRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(id: string): Promise<GalleryResponse | null> {
+  async execute(userId: string, id: string): Promise<GalleryResponse> {
     const gallery = await this.galleryRepository.findById(id)
     if (!gallery) {
-      return null
+      throw new Error('Gallery item not found')
+    }
+
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(gallery.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
     }
 
     return {

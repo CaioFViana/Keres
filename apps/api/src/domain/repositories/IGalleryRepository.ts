@@ -5,6 +5,6 @@ export interface IGalleryRepository {
   findByStoryId(storyId: string): Promise<Gallery[]>
   findByOwnerId(ownerId: string): Promise<Gallery[]>
   save(gallery: Gallery): Promise<void>
-  update(gallery: Gallery): Promise<void>
-  delete(id: string): Promise<void>
+  update(gallery: Gallery, storyId: string, ownerId: string): Promise<void>
+  delete(id: string, storyId: string, ownerId: string): Promise<void>
 }

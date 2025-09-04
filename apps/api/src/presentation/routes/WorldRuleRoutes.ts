@@ -96,10 +96,11 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CreateWorldRuleSchema.parse(body)
     try {
-      const newWorldRule = await worldRuleController.createWorldRule(data)
+      const newWorldRule = await worldRuleController.createWorldRule(userId, data)
       return c.json(newWorldRule, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -157,9 +158,10 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const worldRule = await worldRuleController.getWorldRule(params.id)
+      const worldRule = await worldRuleController.getWorldRule(userId, params.id)
       if (!worldRule) {
         return c.json({ error: 'World Rule not found' }, 404)
       }
@@ -212,9 +214,10 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const worldRules = await worldRuleController.getWorldRulesByStoryId(params.storyId)
+      const worldRules = await worldRuleController.getWorldRulesByStoryId(userId, params.storyId)
       return c.json(worldRules, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -279,11 +282,12 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = UpdateWorldRuleSchema.parse(body)
     try {
-      const updatedWorldRule = await worldRuleController.updateWorldRule(params.id, data)
+      const updatedWorldRule = await worldRuleController.updateWorldRule(userId, params.id, data)
       if (!updatedWorldRule) {
         return c.json({ error: 'World Rule not found' }, 404)
       }
@@ -339,9 +343,10 @@ worldRuleRoutes.openapi(
     tags: ['World Rules'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await worldRuleController.deleteWorldRule(params.id)
+      await worldRuleController.deleteWorldRule(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

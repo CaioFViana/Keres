@@ -83,10 +83,11 @@ choiceRoutes.openapi(
     tags: ['Choices'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CreateChoiceSchema.parse(body)
     try {
-      const newChoice = await choiceController.createChoice(data)
+      const newChoice = await choiceController.createChoice(userId, data)
       return c.json(newChoice, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -145,9 +146,10 @@ choiceRoutes.openapi(
     tags: ['Choices'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const choice = await choiceController.getChoice(params.id)
+      const choice = await choiceController.getChoice(userId, params.id)
       if (!choice) {
         return c.json({ error: 'Choice not found' }, 404)
       }
@@ -215,11 +217,12 @@ choiceRoutes.openapi(
     tags: ['Choices'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = UpdateChoiceSchema.parse(body)
     try {
-      const updatedChoice = await choiceController.updateChoice(params.id, data)
+      const updatedChoice = await choiceController.updateChoice(userId, params.id, data)
       if (!updatedChoice) {
         return c.json({ error: 'Choice not found' }, 404)
       }
@@ -267,9 +270,10 @@ choiceRoutes.openapi(
     tags: ['Choices'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await choiceController.deleteChoice(params.id)
+      await choiceController.deleteChoice(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -319,9 +323,10 @@ choiceRoutes.openapi(
     tags: ['Choices'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = SceneIdParamSchema.parse(c.req.param())
     try {
-      const choices = await choiceController.getChoicesBySceneId(params.sceneId)
+      const choices = await choiceController.getChoicesBySceneId(userId, params.sceneId)
       return c.json(choices, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

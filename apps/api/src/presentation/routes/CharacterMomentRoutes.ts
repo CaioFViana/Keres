@@ -40,6 +40,7 @@ const MomentIdParamSchema = z.object({
 })
 
 // POST /
+// POST /
 characterMomentRoutes.openapi(
   createRoute({
     method: 'post',
@@ -47,6 +48,7 @@ characterMomentRoutes.openapi(
     summary: 'Create a new character moment',
     description: 'Creates a new association between a character and a moment.',
     request: {
+      
       body: {
         content: {
           'application/json': {
@@ -84,10 +86,11 @@ characterMomentRoutes.openapi(
     tags: ['Character Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CharacterMomentCreateSchema.parse(body)
     try {
-      const characterMoment = await characterMomentController.createCharacterMoment(data)
+      const characterMoment = await characterMomentController.createCharacterMoment(userId, data)
       return c.json(characterMoment, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -137,9 +140,11 @@ characterMomentRoutes.openapi(
     tags: ['Character Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = CharacterIdParamSchema.parse(c.req.param())
     try {
       const characterMoments = await characterMomentController.getCharacterMomentsByCharacterId(
+        userId,
         params.characterId,
       )
       return c.json(characterMoments, 200)
@@ -191,9 +196,11 @@ characterMomentRoutes.openapi(
     tags: ['Character Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = MomentIdParamSchema.parse(c.req.param())
     try {
       const characterMoments = await characterMomentController.getCharacterMomentsByMomentId(
+        userId,
         params.momentId,
       )
       return c.json(characterMoments, 200)
@@ -254,10 +261,11 @@ characterMomentRoutes.openapi(
     tags: ['Character Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CharacterMomentCreateSchema.parse(body)
     try {
-      await characterMomentController.deleteCharacterMoment(data.characterId, data.momentId)
+      await characterMomentController.deleteCharacterMoment(userId, data.characterId, data.momentId)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

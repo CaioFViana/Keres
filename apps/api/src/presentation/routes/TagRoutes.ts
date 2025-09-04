@@ -92,10 +92,11 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CreateTagSchema.parse(body)
     try {
-      const newTag = await tagController.createTag(data)
+      const newTag = await tagController.createTag(userId, data)
       return c.json(newTag, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -153,9 +154,10 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const tag = await tagController.getTag(params.id)
+      const tag = await tagController.getTag(userId, params.id)
       if (!tag) {
         return c.json({ error: 'Tag not found' }, 404)
       }
@@ -208,9 +210,10 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const tags = await tagController.getTagsByStoryId(params.storyId)
+      const tags = await tagController.getTagsByStoryId(userId, params.storyId)
       return c.json(tags, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -275,11 +278,12 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = UpdateTagSchema.parse(body)
     try {
-      const updatedTag = await tagController.updateTag(params.id, data)
+      const updatedTag = await tagController.updateTag(userId, params.id, data)
       if (!updatedTag) {
         return c.json({ error: 'Tag not found' }, 404)
       }
@@ -335,9 +339,10 @@ tagRoutes.openapi(
     tags: ['Tags'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await tagController.deleteTag(params.id)
+      await tagController.deleteTag(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

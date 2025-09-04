@@ -111,10 +111,11 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CreateSuggestionSchema.parse(body)
     try {
-      const newSuggestion = await suggestionController.createSuggestion(data)
+      const newSuggestion = await suggestionController.createSuggestion(userId, data)
       return c.json(newSuggestion, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -172,9 +173,10 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const suggestion = await suggestionController.getSuggestion(params.id)
+      const suggestion = await suggestionController.getSuggestion(userId, params.id)
       if (!suggestion) {
         return c.json({ error: 'Suggestion not found' }, 404)
       }
@@ -227,9 +229,10 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = UserIdParamSchema.parse(c.req.param())
     try {
-      const suggestions = await suggestionController.getSuggestionsByUserId(params.userId)
+      const suggestions = await suggestionController.getSuggestionsByUserId(userId)
       return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -279,9 +282,10 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const suggestions = await suggestionController.getSuggestionsByStoryId(params.storyId)
+      const suggestions = await suggestionController.getSuggestionsByStoryId(userId, params.storyId)
       return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -332,9 +336,10 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = TypeParamSchema.parse(c.req.param())
     try {
-      const suggestions = await suggestionController.getSuggestionsByType(params.type)
+      const suggestions = await suggestionController.getSuggestionsByType(userId, params.type)
       return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -387,10 +392,11 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = z.object({ userId: z.ulid(), type: z.string() }).parse(c.req.param())
     try {
       const suggestions = await suggestionController.getSuggestionsByUserAndType(
-        params.userId,
+        userId,
         params.type,
       )
       return c.json(suggestions, 200)
@@ -445,9 +451,11 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = z.object({ storyId: z.ulid(), type: z.string() }).parse(c.req.param())
     try {
       const suggestions = await suggestionController.getSuggestionsByStoryAndType(
+        userId,
         params.storyId,
         params.type,
       )
@@ -515,11 +523,12 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = UpdateSuggestionSchema.parse(body)
     try {
-      const updatedSuggestion = await suggestionController.updateSuggestion(params.id, data)
+      const updatedSuggestion = await suggestionController.updateSuggestion(userId, params.id, data)
       if (!updatedSuggestion) {
         return c.json({ error: 'Suggestion not found' }, 404)
       }
@@ -575,9 +584,10 @@ suggestionRoutes.openapi(
     tags: ['Suggestions'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await suggestionController.deleteSuggestion(params.id)
+      await suggestionController.deleteSuggestion(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

@@ -83,10 +83,11 @@ momentRoutes.openapi(
     tags: ['Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CreateMomentSchema.parse(body)
     try {
-      const newMoment = await momentController.createMoment(data)
+      const newMoment = await momentController.createMoment(userId, data)
       return c.json(newMoment, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -144,9 +145,10 @@ momentRoutes.openapi(
     tags: ['Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const moment = await momentController.getMoment(params.id)
+      const moment = await momentController.getMoment(userId, params.id)
       if (!moment) {
         return c.json({ error: 'Moment not found' }, 404)
       }
@@ -214,11 +216,12 @@ momentRoutes.openapi(
     tags: ['Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = UpdateMomentSchema.parse(body)
     try {
-      const updatedMoment = await momentController.updateMoment(params.id, data)
+      const updatedMoment = await momentController.updateMoment(userId, params.id, data)
       if (!updatedMoment) {
         return c.json({ error: 'Moment not found' }, 404)
       }
@@ -275,9 +278,10 @@ momentRoutes.openapi(
     tags: ['Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await momentController.deleteMoment(params.id) // Just call the method
+      await momentController.deleteMoment(userId, params.id) // Just call the method
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -327,9 +331,10 @@ momentRoutes.openapi(
     tags: ['Moments'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = SceneIdParamSchema.parse(c.req.param())
     try {
-      const moments = await momentController.getMomentsBySceneId(params.sceneId)
+      const moments = await momentController.getMomentsBySceneId(userId, params.sceneId)
       return c.json(moments, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

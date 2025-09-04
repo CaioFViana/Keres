@@ -83,10 +83,11 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CreateNoteSchema.parse(body)
     try {
-      const newNote = await noteController.createNote(data)
+      const newNote = await noteController.createNote(userId, data)
       return c.json(newNote, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -144,9 +145,10 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const note = await noteController.getNote(params.id)
+      const note = await noteController.getNote(userId, params.id)
       if (!note) {
         return c.json({ error: 'Note not found' }, 404)
       }
@@ -199,9 +201,10 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const notes = await noteController.getNotesByStoryId(params.storyId)
+      const notes = await noteController.getNotesByStoryId(userId, params.storyId)
       return c.json(notes, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -266,11 +269,12 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = UpdateNoteSchema.parse(body)
     try {
-      const updatedNote = await noteController.updateNote(params.id, data)
+      const updatedNote = await noteController.updateNote(userId, params.id, data)
       if (!updatedNote) {
         return c.json({ error: 'Note not found' }, 404)
       }
@@ -326,9 +330,10 @@ noteRoutes.openapi(
     tags: ['Notes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await noteController.deleteNote(params.id)
+      await noteController.deleteNote(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

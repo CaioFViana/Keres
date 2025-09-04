@@ -83,10 +83,11 @@ storyRoutes.openapi(
     tags: ['Stories'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = StoryCreateSchema.parse(body)
     try {
-      const story = await storyController.createStory(data)
+      const story = await storyController.createStory(userId, data)
       return c.json(story, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -136,9 +137,10 @@ storyRoutes.openapi(
     tags: ['Stories'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const story = await storyController.getStory(params.id)
+      const story = await storyController.getStory(userId, params.id)
       return c.json(story, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -188,9 +190,10 @@ storyRoutes.openapi(
     tags: ['Stories'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = UserIdParamSchema.parse(c.req.param())
     try {
-      const stories = await storyController.getStoriesByUserId(params.userId)
+      const stories = await storyController.getStoriesByUserId(userId)
       return c.json(stories, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -255,11 +258,12 @@ storyRoutes.openapi(
     tags: ['Stories'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = StoryUpdateSchema.parse(body)
     try {
-      const updatedStory = await storyController.updateStory(params.id, data)
+      const updatedStory = await storyController.updateStory(userId, params.id, data)
       return c.json(updatedStory, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -304,9 +308,10 @@ storyRoutes.openapi(
     tags: ['Stories'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await storyController.deleteStory(params.id)
+      await storyController.deleteStory(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

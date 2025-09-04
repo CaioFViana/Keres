@@ -83,10 +83,11 @@ chapterRoutes.openapi(
     tags: ['Chapters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = ChapterCreateSchema.parse(body)
     try {
-      const chapter = await chapterController.createChapter(data)
+      const chapter = await chapterController.createChapter(userId, data)
       return c.json(chapter, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -136,9 +137,10 @@ chapterRoutes.openapi(
     tags: ['Chapters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const chapter = await chapterController.getChapter(params.id)
+      const chapter = await chapterController.getChapter(userId, params.id)
       return c.json(chapter, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -181,16 +183,17 @@ chapterRoutes.openapi(
         content: {
           'application/json': {
             schema: z.object({ error: z.string() }),
-          },
+          }
         },
       },
     },
     tags: ['Chapters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const chapters = await chapterController.getChaptersByStoryId(params.storyId)
+      const chapters = await chapterController.getChaptersByStoryId(userId, params.storyId)
       return c.json(chapters, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -255,11 +258,12 @@ chapterRoutes.openapi(
     tags: ['Chapters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = ChapterUpdateSchema.parse(body)
     try {
-      const updatedChapter = await chapterController.updateChapter(params.id, data)
+      const updatedChapter = await chapterController.updateChapter(userId, params.id, data)
       return c.json(updatedChapter, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -304,9 +308,10 @@ chapterRoutes.openapi(
     tags: ['Chapters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await chapterController.deleteChapter(params.id)
+      await chapterController.deleteChapter(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

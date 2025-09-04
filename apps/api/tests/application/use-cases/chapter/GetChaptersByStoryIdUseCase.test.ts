@@ -1,5 +1,7 @@
 import type { Chapter } from '@domain/entities/Chapter'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { Story } from '@domain/entities/Story'
 
 import { GetChaptersByStoryIdUseCase } from '@application/use-cases/chapter/GetChaptersByStoryIdUseCase'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -32,13 +34,73 @@ class MockChapterRepository implements IChapterRepository {
   }
 }
 
+class MockStoryRepository implements IStoryRepository {
+  private stories: Story[] = []
+
+  async findById(id: string, userId?: string): Promise<Story | null> {
+    const story = this.stories.find((story) => story.id === id)
+    if (story && userId && story.userId !== userId) {
+      return null // Story found but doesn't belong to the user
+    }
+    return story || null
+  }
+
+  async findByUserId(userId: string): Promise<Story[]> {
+    return this.stories.filter((story) => story.userId === userId)
+  }
+
+  async save(story: Story): Promise<void> {
+    this.stories.push(story)
+  }
+
+  async update(story: Story): Promise<void> {
+    const index = this.stories.findIndex((s) => s.id === story.id)
+    if (index !== -1) {
+      this.stories[index] = story
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    this.stories = this.stories.filter((story) => story.id !== id)
+  }
+}
+
 describe('GetChaptersByStoryIdUseCase', () => {
   let chapterRepository: MockChapterRepository
+  let storyRepository: MockStoryRepository
   let getChaptersByStoryIdUseCase: GetChaptersByStoryIdUseCase
 
   beforeEach(() => {
     chapterRepository = new MockChapterRepository()
-    getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository)
+    storyRepository = new MockStoryRepository()
+    getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(
+      chapterRepository,
+      storyRepository,
+    )
+
+    // Pre-populate stories for testing
+    storyRepository.save({
+      id: 'story123',
+      userId: 'user123',
+      title: 'Test Story 1',
+      type: 'linear',
+      summary: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    storyRepository.save({
+      id: 'story456',
+      userId: 'user123',
+      title: 'Test Story 2',
+      type: 'linear',
+      summary: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
 
     // Pre-populate chapters for testing
     chapterRepository.save({
@@ -77,7 +139,7 @@ describe('GetChaptersByStoryIdUseCase', () => {
   })
 
   it('should return all chapters for a given story ID', async () => {
-    const chapters = await getChaptersByStoryIdUseCase.execute('story123')
+    const chapters = await getChaptersByStoryIdUseCase.execute('user123', 'story123')
 
     expect(chapters).toBeDefined()
     expect(chapters.length).toBe(2)
@@ -85,10 +147,7 @@ describe('GetChaptersByStoryIdUseCase', () => {
     expect(chapters[1].name).toBe('Chapter 2')
   })
 
-  it('should return an empty array if no chapters found for the story ID', async () => {
-    const chapters = await getChaptersByStoryIdUseCase.execute('nonexistent_story')
-
-    expect(chapters).toBeDefined()
-    expect(chapters.length).toBe(0)
+  it('should throw an error if the story is not found or not owned by the user', async () => {
+    await expect(getChaptersByStoryIdUseCase.execute('user123', 'nonexistent_story')).rejects.toThrow('Story not found or not owned by user')
   })
 })

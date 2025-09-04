@@ -87,10 +87,11 @@ characterRoutes.openapi(
     tags: ['Characters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CharacterCreateSchema.parse(body)
     try {
-      const character = await characterController.createCharacter(data)
+      const character = await characterController.createCharacter(userId, data)
       return c.json(character, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -140,9 +141,10 @@ characterRoutes.openapi(
     tags: ['Characters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const character = await characterController.getCharacter(params.id)
+      const character = await characterController.getCharacter(userId, params.id)
       return c.json(character, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -192,9 +194,10 @@ characterRoutes.openapi(
     tags: ['Characters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const characters = await characterController.getCharactersByStoryId(params.storyId)
+      const characters = await characterController.getCharactersByStoryId(userId, params.storyId)
       return c.json(characters, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -259,11 +262,12 @@ characterRoutes.openapi(
     tags: ['Characters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = CharacterUpdateSchema.parse(body)
     try {
-      const updatedCharacter = await characterController.updateCharacter(params.id, data)
+      const updatedCharacter = await characterController.updateCharacter(userId, params.id, data)
       return c.json(updatedCharacter, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -308,9 +312,10 @@ characterRoutes.openapi(
     tags: ['Characters'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await characterController.deleteCharacter(params.id)
+      await characterController.deleteCharacter(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

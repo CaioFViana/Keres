@@ -1,5 +1,7 @@
 import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { Story } from '@domain/entities/Story'
 
 import { UpdateCharacterUseCase } from '@application/use-cases/character/UpdateCharacterUseCase'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -32,13 +34,70 @@ class MockCharacterRepository implements ICharacterRepository {
   }
 }
 
+class MockStoryRepository implements IStoryRepository {
+  private stories: Story[] = []
+
+  async findById(id: string, userId?: string): Promise<Story | null> {
+    const story = this.stories.find((story) => story.id === id)
+    if (story && userId && story.userId !== userId) {
+      return null // Story found but doesn't belong to the user
+    }
+    return story || null
+  }
+
+  async findByUserId(userId: string): Promise<Story[]> {
+    return this.stories.filter((story) => story.userId === userId)
+  }
+
+  async save(story: Story): Promise<void> {
+    this.stories.push(story)
+  }
+
+  async update(story: Story): Promise<void> {
+    const index = this.stories.findIndex((s) => s.id === story.id)
+    if (index !== -1) {
+      this.stories[index] = story
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    this.stories = this.stories.filter((story) => story.id !== id)
+  }
+}
+
 describe('UpdateCharacterUseCase', () => {
   let characterRepository: MockCharacterRepository
+  let storyRepository: MockStoryRepository
   let updateCharacterUseCase: UpdateCharacterUseCase
 
   beforeEach(() => {
     characterRepository = new MockCharacterRepository()
-    updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository)
+    storyRepository = new MockStoryRepository()
+    updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository, storyRepository)
+
+    // Pre-populate stories for testing
+    storyRepository.save({
+      id: 'story123',
+      userId: 'user123',
+      title: 'Test Story 1',
+      type: 'linear',
+      summary: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    storyRepository.save({
+      id: 'another_story',
+      userId: 'user123',
+      title: 'Test Story 2',
+      type: 'linear',
+      summary: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
 
     // Pre-populate a character for testing
     characterRepository.save({
@@ -70,7 +129,7 @@ describe('UpdateCharacterUseCase', () => {
       isFavorite: true,
     }
 
-    const updatedCharacter = await updateCharacterUseCase.execute(updateDTO)
+    const updatedCharacter = await updateCharacterUseCase.execute('user123', updateDTO)
 
     expect(updatedCharacter).toBeDefined()
     expect(updatedCharacter?.name).toBe('Updated Name')
@@ -79,28 +138,24 @@ describe('UpdateCharacterUseCase', () => {
     expect(updatedCharacter?.personality).toBe('Original Personality') // Should remain unchanged
   })
 
-  it('should return null if character not found', async () => {
+  it('should throw an error if character not found', async () => {
     const updateDTO = {
       id: 'nonexistent_char',
       storyId: 'story123',
       name: 'New Name',
     }
 
-    const updatedCharacter = await updateCharacterUseCase.execute(updateDTO)
-
-    expect(updatedCharacter).toBeNull()
+    await expect(updateCharacterUseCase.execute('user123', updateDTO)).rejects.toThrow('Character not found')
   })
 
-  it('should return null if character does not belong to the specified story', async () => {
+  it('should throw an error if character does not belong to the specified story', async () => {
     const updateDTO = {
       id: 'char123',
       storyId: 'another_story',
       name: 'New Name',
     }
 
-    const updatedCharacter = await updateCharacterUseCase.execute(updateDTO)
-
-    expect(updatedCharacter).toBeNull()
+    await expect(updateCharacterUseCase.execute('user123', updateDTO)).rejects.toThrow('Character does not belong to the specified story')
 
     // Ensure the character was not updated
     const character = await characterRepository.findById('char123')

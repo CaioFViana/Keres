@@ -90,10 +90,11 @@ galleryRoutes.openapi(
     tags: ['Gallery'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = GalleryCreateSchema.parse(body)
     try {
-      const gallery = await galleryController.createGallery(data)
+      const gallery = await galleryController.createGallery(userId, data)
       return c.json(gallery, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -143,9 +144,10 @@ galleryRoutes.openapi(
     tags: ['Gallery'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const gallery = await galleryController.getGallery(params.id)
+      const gallery = await galleryController.getGallery(userId, params.id)
       return c.json(gallery, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -196,9 +198,10 @@ galleryRoutes.openapi(
     tags: ['Gallery'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = OwnerIdParamSchema.parse(c.req.param())
     try {
-      const galleryItems = await galleryController.getGalleryByOwnerId(params.ownerId)
+      const galleryItems = await galleryController.getGalleryByOwnerId(userId, params.ownerId)
       return c.json(galleryItems, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -248,9 +251,10 @@ galleryRoutes.openapi(
     tags: ['Gallery'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const galleryItems = await galleryController.getGalleryByStoryId(params.storyId)
+      const galleryItems = await galleryController.getGalleryByStoryId(userId, params.storyId)
       return c.json(galleryItems, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -315,11 +319,12 @@ galleryRoutes.openapi(
     tags: ['Gallery'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = GalleryUpdateSchema.parse(body)
     try {
-      const updatedGallery = await galleryController.updateGallery(params.id, data)
+      const updatedGallery = await galleryController.updateGallery(userId, params.id, data)
       return c.json(updatedGallery, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -365,10 +370,11 @@ galleryRoutes.openapi(
     tags: ['Gallery'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const query = z.object({ storyId: z.ulid(), ownerId: z.ulid() }).parse(c.req.query())
     try {
-      await galleryController.deleteGallery(params.id, query.storyId, query.ownerId)
+      await galleryController.deleteGallery(userId, params.id, query.storyId, query.ownerId)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

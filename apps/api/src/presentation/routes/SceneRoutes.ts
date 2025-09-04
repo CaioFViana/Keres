@@ -103,10 +103,11 @@ sceneRoutes.openapi(
     tags: ['Scenes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = SceneCreateSchema.parse(body)
     try {
-      const scene = await sceneController.createScene(data)
+      const scene = await sceneController.createScene(userId, data)
       return c.json(scene, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -156,9 +157,10 @@ sceneRoutes.openapi(
     tags: ['Scenes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const scene = await sceneController.getScene(params.id)
+      const scene = await sceneController.getScene(userId, params.id)
       return c.json(scene, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -208,9 +210,10 @@ sceneRoutes.openapi(
     tags: ['Scenes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = ChapterIdParamSchema.parse(c.req.param())
     try {
-      const scenes = await sceneController.getScenesByChapterId(params.chapterId)
+      const scenes = await sceneController.getScenesByChapterId(userId, params.chapterId)
       return c.json(scenes, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -275,11 +278,12 @@ sceneRoutes.openapi(
     tags: ['Scenes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = SceneUpdateSchema.parse(body)
     try {
-      const updatedScene = await sceneController.updateScene(params.id, data)
+      const updatedScene = await sceneController.updateScene(userId, params.id, data)
       return c.json(updatedScene, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -324,9 +328,10 @@ sceneRoutes.openapi(
     tags: ['Scenes'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await sceneController.deleteScene(params.id)
+      await sceneController.deleteScene(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

@@ -83,10 +83,11 @@ locationRoutes.openapi(
     tags: ['Locations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = LocationCreateSchema.parse(body)
     try {
-      const location = await locationController.createLocation(data)
+      const location = await locationController.createLocation(userId, data)
       return c.json(location, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -136,9 +137,10 @@ locationRoutes.openapi(
     tags: ['Locations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const location = await locationController.getLocation(params.id)
+      const location = await locationController.getLocation(userId, params.id)
       return c.json(location, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -188,9 +190,10 @@ locationRoutes.openapi(
     tags: ['Locations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
     try {
-      const locations = await locationController.getLocationsByStoryId(params.storyId)
+      const locations = await locationController.getLocationsByStoryId(userId, params.storyId)
       return c.json(locations, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -255,11 +258,12 @@ locationRoutes.openapi(
     tags: ['Locations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = LocationUpdateSchema.parse(body)
     try {
-      const updatedLocation = await locationController.updateLocation(params.id, data)
+      const updatedLocation = await locationController.updateLocation(userId, params.id, data)
       return c.json(updatedLocation, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -304,9 +308,10 @@ locationRoutes.openapi(
     tags: ['Locations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await locationController.deleteLocation(params.id)
+      await locationController.deleteLocation(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

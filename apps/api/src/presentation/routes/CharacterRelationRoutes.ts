@@ -95,10 +95,11 @@ characterRelationRoutes.openapi(
     tags: ['Character Relations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
     const data = CharacterRelationCreateSchema.parse(body)
     try {
-      const characterRelation = await characterRelationController.createCharacterRelation(data)
+      const characterRelation = await characterRelationController.createCharacterRelation(userId, data)
       return c.json(characterRelation, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -148,9 +149,10 @@ characterRelationRoutes.openapi(
     tags: ['Character Relations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const characterRelation = await characterRelationController.getCharacterRelation(params.id)
+      const characterRelation = await characterRelationController.getCharacterRelation(userId, params.id)
       return c.json(characterRelation, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -200,9 +202,11 @@ characterRelationRoutes.openapi(
     tags: ['Character Relations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = CharIdParamSchema.parse(c.req.param())
     try {
       const characterRelations = await characterRelationController.getCharacterRelationsByCharId(
+        userId,
         params.charId,
       )
       return c.json(characterRelations, 200)
@@ -269,11 +273,13 @@ characterRelationRoutes.openapi(
     tags: ['Character Relations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
     const data = CharacterRelationUpdateSchema.parse(body)
     try {
       const updatedCharacterRelation = await characterRelationController.updateCharacterRelation(
+        userId,
         params.id,
         data,
       )
@@ -321,9 +327,10 @@ characterRelationRoutes.openapi(
     tags: ['Character Relations'],
   }),
   async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      await characterRelationController.deleteCharacterRelation(params.id)
+      await characterRelationController.deleteCharacterRelation(userId, params.id)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {

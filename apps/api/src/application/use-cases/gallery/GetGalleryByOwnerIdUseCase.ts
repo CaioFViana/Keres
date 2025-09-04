@@ -58,3 +58,4 @@ export class GetGalleryByOwnerIdUseCase {
 
     return ownedGalleryItems
   }
+}

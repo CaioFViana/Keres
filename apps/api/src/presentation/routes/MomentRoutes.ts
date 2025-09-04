@@ -372,3 +372,5 @@ momentRoutes.openapi(
     }
   },
 )
+
+export default momentRoutes

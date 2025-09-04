@@ -9,8 +9,16 @@ export class BcryptPasswordHasher implements IPasswordHasherService {
     this.saltRounds = saltRounds
   }
 
-  async hash(password: string): Promise<string> {
-    return bcrypt.hash(password, this.saltRounds)
+  async generateSalt(): Promise<string> {
+    return bcrypt.genSalt(this.saltRounds)
+  }
+
+  async hash(password: string, salt?: string): Promise<string> {
+    if (salt) {
+      return bcrypt.hash(password, salt)
+    } else {
+      return bcrypt.hash(password, this.saltRounds)
+    }
   }
 
   async compare(password: string, hashedPassword: string): Promise<boolean> {

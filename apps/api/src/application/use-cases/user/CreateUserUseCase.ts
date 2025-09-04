@@ -17,8 +17,9 @@ export class CreateUserUseCase {
       throw new Error('Username already exists')
     }
 
-    const passwordHash = await this.passwordHasher.hash(data.password)
-    const passwordSalt = 'some_salt' // In a real app, generate a unique salt per user
+    const generatedSalt = await this.passwordHasher.generateSalt()
+    const passwordHash = await this.passwordHasher.hash(data.password, generatedSalt)
+    const passwordSalt = generatedSalt // Use the generated salt
 
     const newUser: User = {
       id: ulid(),

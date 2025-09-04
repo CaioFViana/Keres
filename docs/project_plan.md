@@ -34,6 +34,8 @@ story-organizer/
 
 ## 🗄️ Estrutura de Dados
 
+*   **Atualizações Recentes:** A tabela `Story` agora inclui um campo `type` para diferenciar entre histórias lineares e ramificadas. Uma nova tabela `Choices` foi adicionada para suportar a mecânica de histórias "Escolha Sua Aventura".
+
 ### Usuários
 Para permitir múltiplos logins. Cada usuário pode ter quantas histórias desejar, sem que as tabelas de outras histórias interfiram (Ex: "raças" de uma história não devem aparecer em outra).
 
@@ -54,6 +56,7 @@ A tabela principal. Armazena os dados gerais da história.
 story
 - id (ulid, pk)
 - user_id (ulid, fk → users.id)
+- type (text) # 'linear' | 'branching' (default: 'linear')
 - title (text)
 - summary (text) # Como a sinopse de um livro
 - genre (text) # Gênero da história (o software terá sugestões)
@@ -198,6 +201,20 @@ character_relations
 - updated_at (timestamp)
 ```
 
+### Choices
+Representa as escolhas em histórias ramificadas (CYOA).
+
+```ts
+choices
+- id (ulid, pk)
+- scene_id (ulid, fk)
+- next_scene_id (ulid, fk)
+- text (text)
+- is_implicit (boolean)
+- created_at (timestamp)
+- updated_at (timestamp)
+```
+
 ### World Rules
 Por exemplo, quem pode fazer o quê? Qual é a relação de poder?
 
@@ -279,8 +296,6 @@ suggestions
 - created_at (timestamp)
 - updated_at (timestamp)
 ```
-
----
 
 ## 🔗 Fluxo de Arquitetura
 

@@ -5,7 +5,7 @@ import {
   GetCharacterMomentsByMomentIdUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { CharacterMomentRepository } from '@infrastructure/persistence/CharacterMomentRepository'
+import { CharacterMomentRepository, CharacterRepository, MomentRepository, SceneRepository, ChapterRepository, StoryRepository } from '@infrastructure/persistence'
 import { CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@keres/shared' // Import CharacterMomentResponseSchema
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
 import { z } from 'zod' // Import z for defining parameters
@@ -14,14 +14,39 @@ const characterMomentRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for CharacterMomentController
 const characterMomentRepository = new CharacterMomentRepository()
-const createCharacterMomentUseCase = new CreateCharacterMomentUseCase(characterMomentRepository)
+const characterRepository = new CharacterRepository()
+const momentRepository = new MomentRepository()
+const sceneRepository = new SceneRepository()
+const chapterRepository = new ChapterRepository()
+const storyRepository = new StoryRepository()
+const createCharacterMomentUseCase = new CreateCharacterMomentUseCase(
+  characterMomentRepository,
+  characterRepository,
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
 const getCharacterMomentsByCharacterIdUseCase = new GetCharacterMomentsByCharacterIdUseCase(
   characterMomentRepository,
+  characterRepository,
+  storyRepository,
 )
 const getCharacterMomentsByMomentIdUseCase = new GetCharacterMomentsByMomentIdUseCase(
   characterMomentRepository,
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
 )
-const deleteCharacterMomentUseCase = new DeleteCharacterMomentUseCase(characterMomentRepository)
+const deleteCharacterMomentUseCase = new DeleteCharacterMomentUseCase(
+  characterMomentRepository,
+  characterRepository,
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
 
 const characterMomentController = new CharacterMomentController(
   createCharacterMomentUseCase,

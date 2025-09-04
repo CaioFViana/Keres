@@ -6,7 +6,7 @@ import {
   UpdateWorldRuleUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { WorldRuleRepository } from '@infrastructure/persistence/WorldRuleRepository'
+import { WorldRuleRepository, StoryRepository } from '@infrastructure/persistence'
 import {
   CreateWorldRuleSchema,
   UpdateWorldRuleSchema,
@@ -15,25 +15,17 @@ import {
 import { WorldRuleController } from '@presentation/controllers/WorldRuleController'
 import { z } from 'zod'
 
-console.log('Initializing WorldRuleRoutes...')
-
 const worldRuleRoutes = new OpenAPIHono()
 
 // Dependencies for WorldRuleController
-console.log('Instantiating WorldRuleRepository...')
 const worldRuleRepository = new WorldRuleRepository()
-console.log('Instantiating CreateWorldRuleUseCase...')
-const createWorldRuleUseCase = new CreateWorldRuleUseCase(worldRuleRepository)
-console.log('Instantiating GetWorldRuleUseCase...')
-const getWorldRuleUseCase = new GetWorldRuleUseCase(worldRuleRepository)
-console.log('Instantiating UpdateWorldRuleUseCase...')
-const updateWorldRuleUseCase = new UpdateWorldRuleUseCase(worldRuleRepository)
-console.log('Instantiating DeleteWorldRuleUseCase...')
-const deleteWorldRuleUseCase = new DeleteWorldRuleUseCase(worldRuleRepository)
-console.log('Instantiating GetWorldRulesByStoryIdUseCase...')
-const getWorldRulesByStoryIdUseCase = new GetWorldRulesByStoryIdUseCase(worldRuleRepository)
+const storyRepository = new StoryRepository()
+const createWorldRuleUseCase = new CreateWorldRuleUseCase(worldRuleRepository, storyRepository)
+const getWorldRuleUseCase = new GetWorldRuleUseCase(worldRuleRepository, storyRepository)
+const updateWorldRuleUseCase = new UpdateWorldRuleUseCase(worldRuleRepository, storyRepository)
+const deleteWorldRuleUseCase = new DeleteWorldRuleUseCase(worldRuleRepository, storyRepository)
+const getWorldRulesByStoryIdUseCase = new GetWorldRulesByStoryIdUseCase(worldRuleRepository, storyRepository)
 
-console.log('Instantiating WorldRuleController...')
 const worldRuleController = new WorldRuleController(
   createWorldRuleUseCase,
   getWorldRuleUseCase,
@@ -356,7 +348,5 @@ worldRuleRoutes.openapi(
     }
   },
 )
-
-console.log('WorldRuleRoutes initialized.')
 
 export default worldRuleRoutes

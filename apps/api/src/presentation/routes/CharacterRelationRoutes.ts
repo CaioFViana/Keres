@@ -6,7 +6,7 @@ import {
   UpdateCharacterRelationUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { CharacterRelationRepository } from '@infrastructure/persistence/CharacterRelationRepository'
+import { CharacterRelationRepository, CharacterRepository, StoryRepository } from '@infrastructure/persistence'
 import {
   CharacterRelationCreateSchema,
   CharacterRelationResponseSchema,
@@ -19,18 +19,32 @@ const characterRelationRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for CharacterRelationController
 const characterRelationRepository = new CharacterRelationRepository()
+const characterRepository = new CharacterRepository()
+const storyRepository = new StoryRepository()
 const createCharacterRelationUseCase = new CreateCharacterRelationUseCase(
   characterRelationRepository,
+  characterRepository,
+  storyRepository,
 )
-const getCharacterRelationUseCase = new GetCharacterRelationUseCase(characterRelationRepository)
+const getCharacterRelationUseCase = new GetCharacterRelationUseCase(
+  characterRelationRepository,
+  characterRepository,
+  storyRepository,
+)
 const updateCharacterRelationUseCase = new UpdateCharacterRelationUseCase(
   characterRelationRepository,
+  characterRepository,
+  storyRepository,
 )
 const deleteCharacterRelationUseCase = new DeleteCharacterRelationUseCase(
   characterRelationRepository,
+  characterRepository,
+  storyRepository,
 )
 const getCharacterRelationsByCharIdUseCase = new GetCharacterRelationsByCharIdUseCase(
   characterRelationRepository,
+  characterRepository,
+  storyRepository,
 )
 
 const characterRelationController = new CharacterRelationController(

@@ -6,7 +6,7 @@ import {
   UpdateNoteUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { NoteRepository } from '@infrastructure/persistence/NoteRepository'
+import { NoteRepository, StoryRepository } from '@infrastructure/persistence'
 import { CreateNoteSchema, NoteResponseSchema, UpdateNoteSchema } from '@keres/shared'
 import { NoteController } from '@presentation/controllers/NoteController'
 import { z } from 'zod'
@@ -15,11 +15,12 @@ const noteRoutes = new OpenAPIHono()
 
 // Dependencies for NoteController
 const noteRepository = new NoteRepository()
-const createNoteUseCase = new CreateNoteUseCase(noteRepository)
-const getNoteUseCase = new GetNoteUseCase(noteRepository)
-const updateNoteUseCase = new UpdateNoteUseCase(noteRepository)
-const deleteNoteUseCase = new DeleteNoteUseCase(noteRepository)
-const getNotesByStoryIdUseCase = new GetNotesByStoryIdUseCase(noteRepository)
+const storyRepository = new StoryRepository()
+const createNoteUseCase = new CreateNoteUseCase(noteRepository, storyRepository)
+const getNoteUseCase = new GetNoteUseCase(noteRepository, storyRepository)
+const updateNoteUseCase = new UpdateNoteUseCase(noteRepository, storyRepository)
+const deleteNoteUseCase = new DeleteNoteUseCase(noteRepository, storyRepository)
+const getNotesByStoryIdUseCase = new GetNotesByStoryIdUseCase(noteRepository, storyRepository)
 
 const noteController = new NoteController(
   createNoteUseCase,

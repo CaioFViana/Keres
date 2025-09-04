@@ -6,7 +6,7 @@ import {
   UpdateCharacterUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { CharacterRepository } from '@infrastructure/persistence/CharacterRepository'
+import { CharacterRepository, StoryRepository } from '@infrastructure/persistence'
 import {
   CharacterCreateSchema,
   CharacterResponseSchema,
@@ -19,11 +19,12 @@ const characterRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for CharacterController
 const characterRepository = new CharacterRepository()
-const createCharacterUseCase = new CreateCharacterUseCase(characterRepository)
-const getCharacterUseCase = new GetCharacterUseCase(characterRepository)
-const updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository)
-const deleteCharacterUseCase = new DeleteCharacterUseCase(characterRepository)
-const getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(characterRepository)
+const storyRepository = new StoryRepository()
+const createCharacterUseCase = new CreateCharacterUseCase(characterRepository, storyRepository)
+const getCharacterUseCase = new GetCharacterUseCase(characterRepository, storyRepository)
+const updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository, storyRepository)
+const deleteCharacterUseCase = new DeleteCharacterUseCase(characterRepository, storyRepository)
+const getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(characterRepository, storyRepository)
 
 const characterController = new CharacterController(
   createCharacterUseCase,

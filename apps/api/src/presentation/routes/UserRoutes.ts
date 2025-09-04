@@ -6,30 +6,24 @@ import {
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher'
-import { JwtService } from '@infrastructure/services/JwtService' // Added
+import { JwtService } from '@infrastructure/services/JwtService'
 import { UserLoginSchema, UserProfileSchema, UserRegisterSchema } from '@keres/shared' // Import Zod schemas and UserProfileSchema
 import { UserController } from '@presentation/controllers/UserController'
 import { z } from 'zod' // Import z for defining parameters
 
-console.log('Initializing UserRoutes...')
-
 const userRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for UserController
-console.log('Instantiating UserRepository...')
 const userRepository = new UserRepository()
-console.log('Instantiating BcryptPasswordHasher...')
 const passwordHasher = new BcryptPasswordHasher()
-console.log('Instantiating CreateUserUseCase...')
 const createUserUseCase = new CreateUserUseCase(userRepository, passwordHasher)
-console.log('Instantiating AuthenticateUserUseCase...')
-console.log('Instantiating JwtService...') // Added
-const jwtService = new JwtService() // Added
+
+const jwtService = new JwtService()
 const authenticateUserUseCase = new AuthenticateUserUseCase(
   userRepository,
   passwordHasher,
   jwtService,
-) // Modified
+)
 console.log('Instantiating GetUserProfileUseCase...')
 const getUserProfileUseCase = new GetUserProfileUseCase(userRepository)
 
@@ -217,7 +211,5 @@ userRoutes.openapi(
     }
   },
 )
-
-console.log('UserRoutes initialized.')
 
 export default userRoutes

@@ -10,7 +10,7 @@ import {
   UpdateSuggestionUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { SuggestionRepository } from '@infrastructure/persistence/SuggestionRepository'
+import { SuggestionRepository, StoryRepository } from '@infrastructure/persistence'
 import {
   CreateSuggestionSchema,
   SuggestionResponseSchema,
@@ -23,18 +23,20 @@ const suggestionRoutes = new OpenAPIHono()
 
 // Dependencies for SuggestionController
 const suggestionRepository = new SuggestionRepository()
-const createSuggestionUseCase = new CreateSuggestionUseCase(suggestionRepository)
-const getSuggestionUseCase = new GetSuggestionUseCase(suggestionRepository)
-const updateSuggestionUseCase = new UpdateSuggestionUseCase(suggestionRepository)
-const deleteSuggestionUseCase = new DeleteSuggestionUseCase(suggestionRepository)
+const storyRepository = new StoryRepository()
+const createSuggestionUseCase = new CreateSuggestionUseCase(suggestionRepository, storyRepository)
+const getSuggestionUseCase = new GetSuggestionUseCase(suggestionRepository, storyRepository)
+const updateSuggestionUseCase = new UpdateSuggestionUseCase(suggestionRepository, storyRepository)
+const deleteSuggestionUseCase = new DeleteSuggestionUseCase(suggestionRepository, storyRepository)
 const getSuggestionsByUserIdUseCase = new GetSuggestionsByUserIdUseCase(suggestionRepository)
-const getSuggestionsByStoryIdUseCase = new GetSuggestionsByStoryIdUseCase(suggestionRepository)
-const getSuggestionsByTypeUseCase = new GetSuggestionsByTypeUseCase(suggestionRepository)
+const getSuggestionsByStoryIdUseCase = new GetSuggestionsByStoryIdUseCase(suggestionRepository, storyRepository)
+const getSuggestionsByTypeUseCase = new GetSuggestionsByTypeUseCase(suggestionRepository, storyRepository)
 const getSuggestionsByUserAndTypeUseCase = new GetSuggestionsByUserAndTypeUseCase(
   suggestionRepository,
 )
 const getSuggestionsByStoryAndTypeUseCase = new GetSuggestionsByStoryAndTypeUseCase(
   suggestionRepository,
+  storyRepository,
 )
 
 const suggestionController = new SuggestionController(

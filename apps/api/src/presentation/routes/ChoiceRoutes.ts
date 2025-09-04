@@ -6,7 +6,7 @@ import {
   UpdateChoiceUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { ChoiceRepository } from '@infrastructure/persistence/ChoiceRepository'
+import { ChoiceRepository, SceneRepository, ChapterRepository, StoryRepository } from '@infrastructure/persistence'
 import { ChoiceResponseSchema, CreateChoiceSchema, UpdateChoiceSchema } from '@keres/shared' // Use alias
 import { ChoiceController } from '@presentation/controllers/ChoiceController' // Use alias
 import { z } from 'zod' // Import z for defining parameters
@@ -15,11 +15,39 @@ export const choiceRoutes = new OpenAPIHono()
 
 // Dependencies for ChoiceController
 const choiceRepository = new ChoiceRepository()
-const createChoiceUseCase = new CreateChoiceUseCase(choiceRepository)
-const getChoiceUseCase = new GetChoiceUseCase(choiceRepository)
-const updateChoiceUseCase = new UpdateChoiceUseCase(choiceRepository)
-const deleteChoiceUseCase = new DeleteChoiceUseCase(choiceRepository)
-const getChoicesBySceneIdUseCase = new GetChoicesBySceneIdUseCase(choiceRepository)
+const sceneRepository = new SceneRepository()
+const chapterRepository = new ChapterRepository()
+const storyRepository = new StoryRepository()
+const createChoiceUseCase = new CreateChoiceUseCase(
+  choiceRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
+const getChoiceUseCase = new GetChoiceUseCase(
+  choiceRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
+const updateChoiceUseCase = new UpdateChoiceUseCase(
+  choiceRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
+const deleteChoiceUseCase = new DeleteChoiceUseCase(
+  choiceRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
+const getChoicesBySceneIdUseCase = new GetChoicesBySceneIdUseCase(
+  choiceRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
 
 const choiceController = new ChoiceController(
   createChoiceUseCase,

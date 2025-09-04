@@ -6,7 +6,7 @@ import {
   UpdateChapterUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { ChapterRepository } from '@infrastructure/persistence/ChapterRepository'
+import { ChapterRepository, StoryRepository } from '@infrastructure/persistence'
 import { ChapterCreateSchema, ChapterResponseSchema, ChapterUpdateSchema } from '@keres/shared'
 import { ChapterController } from '@presentation/controllers/ChapterController'
 import { z } from 'zod' // Import z for defining parameters
@@ -15,11 +15,12 @@ const chapterRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for ChapterController
 const chapterRepository = new ChapterRepository()
-const createChapterUseCase = new CreateChapterUseCase(chapterRepository)
-const getChapterUseCase = new GetChapterUseCase(chapterRepository)
-const updateChapterUseCase = new UpdateChapterUseCase(chapterRepository)
-const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository)
-const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository)
+const storyRepository = new StoryRepository()
+const createChapterUseCase = new CreateChapterUseCase(chapterRepository, storyRepository)
+const getChapterUseCase = new GetChapterUseCase(chapterRepository, storyRepository)
+const updateChapterUseCase = new UpdateChapterUseCase(chapterRepository, storyRepository)
+const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository, storyRepository)
+const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository, storyRepository)
 
 const chapterController = new ChapterController(
   createChapterUseCase,

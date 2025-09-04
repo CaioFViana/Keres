@@ -6,30 +6,21 @@ import {
   UpdateTagUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { TagRepository } from '@infrastructure/persistence/TagRepository'
+import { TagRepository, StoryRepository } from '@infrastructure/persistence'
 import { CreateTagSchema, TagResponseSchema, UpdateTagSchema } from '@keres/shared'
 import { TagController } from '@presentation/controllers/TagController'
 import { z } from 'zod'
 
-console.log('Initializing TagRoutes...')
-
 const tagRoutes = new OpenAPIHono()
 
-// Dependencies for TagController
-console.log('Instantiating TagRepository...')
 const tagRepository = new TagRepository()
-console.log('Instantiating CreateTagUseCase...')
-const createTagUseCase = new CreateTagUseCase(tagRepository)
-console.log('Instantiating GetTagUseCase...')
-const getTagUseCase = new GetTagUseCase(tagRepository)
-console.log('Instantiating UpdateTagUseCase...')
-const updateTagUseCase = new UpdateTagUseCase(tagRepository)
-console.log('Instantiating DeleteTagUseCase...')
-const deleteTagUseCase = new DeleteTagUseCase(tagRepository)
-console.log('Instantiating GetTagsByStoryIdUseCase...')
-const getTagsByStoryIdUseCase = new GetTagsByStoryIdUseCase(tagRepository)
+const storyRepository = new StoryRepository()
+const createTagUseCase = new CreateTagUseCase(tagRepository, storyRepository)
+const getTagUseCase = new GetTagUseCase(tagRepository, storyRepository)
+const updateTagUseCase = new UpdateTagUseCase(tagRepository, storyRepository)
+const deleteTagUseCase = new DeleteTagUseCase(tagRepository, storyRepository)
+const getTagsByStoryIdUseCase = new GetTagsByStoryIdUseCase(tagRepository, storyRepository)
 
-console.log('Instantiating TagController...')
 const tagController = new TagController(
   createTagUseCase,
   getTagUseCase,
@@ -352,7 +343,5 @@ tagRoutes.openapi(
     }
   },
 )
-
-console.log('TagRoutes initialized.')
 
 export default tagRoutes

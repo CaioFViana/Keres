@@ -7,7 +7,7 @@ import {
   UpdateGalleryUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { GalleryRepository } from '@infrastructure/persistence/GalleryRepository'
+import { GalleryRepository, StoryRepository, CharacterRepository, NoteRepository, LocationRepository } from '@infrastructure/persistence'
 import { GalleryCreateSchema, GalleryResponseSchema, GalleryUpdateSchema } from '@keres/shared' // Import GalleryResponseSchema
 import { GalleryController } from '@presentation/controllers/GalleryController'
 import { z } from 'zod' // Import z for defining parameters
@@ -16,12 +16,22 @@ const galleryRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for GalleryController
 const galleryRepository = new GalleryRepository()
-const createGalleryUseCase = new CreateGalleryUseCase(galleryRepository)
-const getGalleryUseCase = new GetGalleryUseCase(galleryRepository)
-const updateGalleryUseCase = new UpdateGalleryUseCase(galleryRepository)
-const deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository)
-const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(galleryRepository)
-const getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(galleryRepository)
+const storyRepository = new StoryRepository()
+const characterRepository = new CharacterRepository()
+const noteRepository = new NoteRepository()
+const locationRepository = new LocationRepository()
+const createGalleryUseCase = new CreateGalleryUseCase(galleryRepository, storyRepository)
+const getGalleryUseCase = new GetGalleryUseCase(galleryRepository, storyRepository)
+const updateGalleryUseCase = new UpdateGalleryUseCase(galleryRepository, storyRepository)
+const deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository, storyRepository)
+const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(
+  galleryRepository,
+  characterRepository,
+  noteRepository,
+  locationRepository,
+  storyRepository,
+)
+const getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(galleryRepository, storyRepository)
 
 const galleryController = new GalleryController(
   createGalleryUseCase,

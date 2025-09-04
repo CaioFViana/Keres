@@ -6,7 +6,7 @@ import {
   UpdateLocationUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { LocationRepository } from '@infrastructure/persistence/LocationRepository'
+import { LocationRepository, StoryRepository } from '@infrastructure/persistence'
 import { LocationCreateSchema, LocationResponseSchema, LocationUpdateSchema } from '@keres/shared' // Import LocationResponseSchema
 import { LocationController } from '@presentation/controllers/LocationController'
 import { z } from 'zod' // Import z for defining parameters
@@ -15,11 +15,12 @@ const locationRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for LocationController
 const locationRepository = new LocationRepository()
-const createLocationUseCase = new CreateLocationUseCase(locationRepository)
-const getLocationUseCase = new GetLocationUseCase(locationRepository)
-const updateLocationUseCase = new UpdateLocationUseCase(locationRepository)
-const deleteLocationUseCase = new DeleteLocationUseCase(locationRepository)
-const getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(locationRepository)
+const storyRepository = new StoryRepository()
+const createLocationUseCase = new CreateLocationUseCase(locationRepository, storyRepository)
+const getLocationUseCase = new GetLocationUseCase(locationRepository, storyRepository)
+const updateLocationUseCase = new UpdateLocationUseCase(locationRepository, storyRepository)
+const deleteLocationUseCase = new DeleteLocationUseCase(locationRepository, storyRepository)
+const getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(locationRepository, storyRepository)
 
 const locationController = new LocationController(
   createLocationUseCase,

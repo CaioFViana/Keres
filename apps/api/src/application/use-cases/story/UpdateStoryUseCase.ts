@@ -14,6 +14,10 @@ export class UpdateStoryUseCase {
       return null // Story does not belong to this user
     }
 
+    if (data.type && existingStory.type === 'branching' && data.type === 'linear') {
+      throw new Error('Cannot change story type from branching to linear.')
+    }
+
     const updatedStory = {
       ...existingStory,
       ...data,

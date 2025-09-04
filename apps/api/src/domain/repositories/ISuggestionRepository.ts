@@ -8,6 +8,6 @@ export interface ISuggestionRepository {
   findByUserAndType(userId: string, type: string): Promise<Suggestion[]> // For user-specific global suggestions
   findByStoryAndType(storyId: string, type: string): Promise<Suggestion[]> // For story-specific suggestions
   save(suggestion: Suggestion): Promise<void>
-  update(suggestion: Suggestion): Promise<void>
-  delete(id: string): Promise<void>
+  update(suggestion: Suggestion, userId: string, scope: string, storyId: string | null): Promise<void>
+  delete(id: string, userId: string, scope: string, storyId: string | null): Promise<void>
 }

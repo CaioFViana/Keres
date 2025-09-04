@@ -36,18 +36,21 @@ export class TagRepository implements ITagRepository {
     }
   }
 
-  async update(tagData: Tag): Promise<void> {
+  async update(tagData: Tag, storyId: string): Promise<void> {
     try {
-      await db.update(tags).set(this.toPersistence(tagData)).where(eq(tags.id, tagData.id))
+      await db
+        .update(tags)
+        .set(this.toPersistence(tagData))
+        .where(eq(tags.id, tagData.id), eq(tags.storyId, storyId))
     } catch (error) {
       console.error('Error in TagRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, storyId: string): Promise<void> {
     try {
-      await db.delete(tags).where(eq(tags.id, id))
+      await db.delete(tags).where(eq(tags.id, id), eq(tags.storyId, storyId))
     } catch (error) {
       console.error('Error in TagRepository.delete:', error)
       throw error

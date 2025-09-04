@@ -30,13 +30,13 @@ export class SuggestionController {
     private readonly getSuggestionsByStoryAndTypeUseCase: GetSuggestionsByStoryAndTypeUseCase,
   ) {}
 
-  async createSuggestion(data: z.infer<typeof CreateSuggestionSchema>) {
-    const suggestion = await this.createSuggestionUseCase.execute(data)
+  async createSuggestion(userId: string, data: z.infer<typeof CreateSuggestionSchema>) {
+    const suggestion = await this.createSuggestionUseCase.execute(userId, data)
     return SuggestionResponseSchema.parse(suggestion)
   }
 
-  async getSuggestion(id: string) {
-    const suggestion = await this.getSuggestionUseCase.execute(id)
+  async getSuggestion(userId: string, id: string) {
+    const suggestion = await this.getSuggestionUseCase.execute(userId, id)
     if (!suggestion) {
       throw new Error('Suggestion not found')
     }
@@ -48,13 +48,13 @@ export class SuggestionController {
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async getSuggestionsByStoryId(storyId: string) {
-    const suggestions = await this.getSuggestionsByStoryIdUseCase.execute(storyId)
+  async getSuggestionsByStoryId(userId: string, storyId: string) {
+    const suggestions = await this.getSuggestionsByStoryIdUseCase.execute(userId, storyId)
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async getSuggestionsByType(type: string) {
-    const suggestions = await this.getSuggestionsByTypeUseCase.execute(type)
+  async getSuggestionsByType(userId: string, type: string) {
+    const suggestions = await this.getSuggestionsByTypeUseCase.execute(userId, type)
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
@@ -63,22 +63,22 @@ export class SuggestionController {
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async getSuggestionsByStoryAndType(storyId: string, type: string) {
-    const suggestions = await this.getSuggestionsByStoryAndTypeUseCase.execute(storyId, type)
+  async getSuggestionsByStoryAndType(userId: string, storyId: string, type: string) {
+    const suggestions = await this.getSuggestionsByStoryAndTypeUseCase.execute(userId, storyId, type)
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async updateSuggestion(id: string, data: z.infer<typeof UpdateSuggestionSchema>) {
+  async updateSuggestion(userId: string, id: string, data: z.infer<typeof UpdateSuggestionSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedSuggestion = await this.updateSuggestionUseCase.execute({ id, ...updateData })
+    const updatedSuggestion = await this.updateSuggestionUseCase.execute(userId, { id, ...updateData })
     if (!updatedSuggestion) {
       throw new Error('Suggestion not found')
     }
     return SuggestionResponseSchema.parse(updatedSuggestion)
   }
 
-  async deleteSuggestion(id: string) {
-    const deleted = await this.deleteSuggestionUseCase.execute(id)
+  async deleteSuggestion(userId: string, id: string) {
+    const deleted = await this.deleteSuggestionUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Suggestion not found')
     }

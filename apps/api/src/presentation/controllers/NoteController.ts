@@ -18,35 +18,35 @@ export class NoteController {
     private readonly getNotesByStoryIdUseCase: GetNotesByStoryIdUseCase,
   ) {}
 
-  async createNote(data: z.infer<typeof CreateNoteSchema>) {
-    const note = await this.createNoteUseCase.execute(data)
+  async createNote(userId: string, data: z.infer<typeof CreateNoteSchema>) {
+    const note = await this.createNoteUseCase.execute(userId, data)
     return NoteResponseSchema.parse(note)
   }
 
-  async getNote(id: string) {
-    const note = await this.getNoteUseCase.execute(id)
+  async getNote(userId: string, id: string) {
+    const note = await this.getNoteUseCase.execute(userId, id)
     if (!note) {
       throw new Error('Note not found')
     }
     return NoteResponseSchema.parse(note)
   }
 
-  async getNotesByStoryId(storyId: string) {
-    const notes = await this.getNotesByStoryIdUseCase.execute(storyId)
+  async getNotesByStoryId(userId: string, storyId: string) {
+    const notes = await this.getNotesByStoryIdUseCase.execute(userId, storyId)
     return notes.map((note) => NoteResponseSchema.parse(note))
   }
 
-  async updateNote(id: string, data: z.infer<typeof UpdateNoteSchema>) {
+  async updateNote(userId: string, id: string, data: z.infer<typeof UpdateNoteSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedNote = await this.updateNoteUseCase.execute({ id, ...updateData })
+    const updatedNote = await this.updateNoteUseCase.execute(userId, { id, ...updateData })
     if (!updatedNote) {
       throw new Error('Note not found')
     }
     return NoteResponseSchema.parse(updatedNote)
   }
 
-  async deleteNote(id: string) {
-    const deleted = await this.deleteNoteUseCase.execute(id)
+  async deleteNote(userId: string, id: string) {
+    const deleted = await this.deleteNoteUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Note not found')
     }

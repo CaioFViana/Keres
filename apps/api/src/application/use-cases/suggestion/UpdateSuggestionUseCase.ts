@@ -1,13 +1,34 @@
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { SuggestionResponse, UpdateSuggestionPayload } from '@keres/shared'
 
 export class UpdateSuggestionUseCase {
-  constructor(private readonly suggestionRepository: ISuggestionRepository) {}
+  constructor(
+    private readonly suggestionRepository: ISuggestionRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(data: UpdateSuggestionPayload): Promise<SuggestionResponse | null> {
+  async execute(userId: string, data: UpdateSuggestionPayload): Promise<SuggestionResponse> {
     const existingSuggestion = await this.suggestionRepository.findById(data.id)
     if (!existingSuggestion) {
-      return null // Suggestion not found
+      throw new Error('Suggestion not found')
+    }
+
+    if (existingSuggestion.scope === 'story') {
+      if (!existingSuggestion.storyId) {
+        throw new Error('Story ID is missing for story-scoped suggestion')
+      }
+      // Verify that the story exists and belongs to the user
+      const story = await this.storyRepository.findById(existingSuggestion.storyId, userId)
+      if (!story) {
+        throw new Error('Story not found or not owned by user')
+      }
+    } else if (existingSuggestion.scope === 'global') {
+      if (existingSuggestion.userId !== userId) {
+        throw new Error('Unauthorized: Cannot update global suggestion not owned by user')
+      }
+    } else {
+      throw new Error('Invalid scope for suggestion')
     }
 
     const updatedSuggestion = {
@@ -16,7 +37,12 @@ export class UpdateSuggestionUseCase {
       updatedAt: new Date(),
     }
 
-    await this.suggestionRepository.update(updatedSuggestion)
+    await this.suggestionRepository.update(
+      updatedSuggestion,
+      existingSuggestion.userId,
+      existingSuggestion.scope,
+      existingSuggestion.storyId,
+    )
 
     return {
       id: updatedSuggestion.id,

@@ -1,13 +1,23 @@
 import type { WorldRule } from '@domain/entities/WorldRule'
 import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { CreateWorldRulePayload, WorldRuleResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'
 
 export class CreateWorldRuleUseCase {
-  constructor(private readonly worldRuleRepository: IWorldRuleRepository) {}
+  constructor(
+    private readonly worldRuleRepository: IWorldRuleRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(data: CreateWorldRulePayload): Promise<WorldRuleResponse> {
+  async execute(userId: string, data: CreateWorldRulePayload): Promise<WorldRuleResponse> {
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(data.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
     const newWorldRule: WorldRule = {
       id: ulid(),
       storyId: data.storyId,

@@ -6,7 +6,10 @@ export class GetSuggestionsByUserIdUseCase {
 
   async execute(userId: string): Promise<SuggestionResponse[]> {
     const suggestions = await this.suggestionRepository.findByUserId(userId)
-    return suggestions.map((suggestion) => ({
+    // Ensure that all returned suggestions actually belong to the requested userId
+    const filteredSuggestions = suggestions.filter((suggestion) => suggestion.userId === userId)
+
+    return filteredSuggestions.map((suggestion) => ({
       id: suggestion.id,
       userId: suggestion.userId,
       scope: suggestion.scope,

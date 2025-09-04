@@ -36,18 +36,18 @@ export class NoteRepository implements INoteRepository {
     }
   }
 
-  async update(noteData: Note): Promise<void> {
+  async update(noteData: Note, storyId: string): Promise<void> {
     try {
-      await db.update(notes).set(this.toPersistence(noteData)).where(eq(notes.id, noteData.id))
+      await db.update(notes).set(this.toPersistence(noteData)).where(eq(notes.id, noteData.id), eq(notes.storyId, storyId))
     } catch (error) {
       console.error('Error in NoteRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, storyId: string): Promise<void> {
     try {
-      await db.delete(notes).where(eq(notes.id, id))
+      await db.delete(notes).where(eq(notes.id, id), eq(notes.storyId, storyId))
     } catch (error) {
       console.error('Error in NoteRepository.delete:', error)
       throw error

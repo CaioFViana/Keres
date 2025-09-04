@@ -82,21 +82,49 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
-  async update(suggestionData: Suggestion): Promise<void> {
+  async update(
+    suggestionData: Suggestion,
+    userId: string,
+    scope: string,
+    storyId: string | null,
+  ): Promise<void> {
     try {
-      await db
-        .update(suggestions)
-        .set(this.toPersistence(suggestionData))
-        .where(eq(suggestions.id, suggestionData.id))
+      const conditions = [eq(suggestions.id, suggestionData.id), eq(suggestions.userId, userId)]
+
+      if (scope === 'story') {
+        if (storyId) {
+          conditions.push(eq(suggestions.storyId, storyId))
+        } else {
+          // This case should ideally be caught by the use case, but as a safeguard
+          conditions.push(eq(suggestions.storyId, null as any)) // Ensure it never matches
+        }
+      } else if (scope === 'global') {
+        conditions.push(eq(suggestions.storyId, null as any))
+      }
+
+      await db.update(suggestions).set(this.toPersistence(suggestionData)).where(and(...conditions))
     } catch (error) {
       console.error('Error in SuggestionRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, userId: string, scope: string, storyId: string | null): Promise<void> {
     try {
-      await db.delete(suggestions).where(eq(suggestions.id, id))
+      const conditions = [eq(suggestions.id, id), eq(suggestions.userId, userId)]
+
+      if (scope === 'story') {
+        if (storyId) {
+          conditions.push(eq(suggestions.storyId, storyId))
+        } else {
+          // This case should ideally be caught by the use case, but as a safeguard
+          conditions.push(eq(suggestions.storyId, null as any)) // Ensure it never matches
+        }
+      } else if (scope === 'global') {
+        conditions.push(eq(suggestions.storyId, null as any))
+      }
+
+      await db.delete(suggestions).where(and(...conditions))
     } catch (error) {
       console.error('Error in SuggestionRepository.delete:', error)
       throw error

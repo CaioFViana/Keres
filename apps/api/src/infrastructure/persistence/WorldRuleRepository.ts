@@ -36,21 +36,21 @@ export class WorldRuleRepository implements IWorldRuleRepository {
     }
   }
 
-  async update(worldRuleData: WorldRule): Promise<void> {
+  async update(worldRuleData: WorldRule, storyId: string): Promise<void> {
     try {
       await db
         .update(worldRules)
         .set(this.toPersistence(worldRuleData))
-        .where(eq(worldRules.id, worldRuleData.id))
+        .where(eq(worldRules.id, worldRuleData.id), eq(worldRules.storyId, storyId))
     } catch (error) {
       console.error('Error in WorldRuleRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, storyId: string): Promise<void> {
     try {
-      await db.delete(worldRules).where(eq(worldRules.id, id))
+      await db.delete(worldRules).where(eq(worldRules.id, id), eq(worldRules.storyId, storyId))
     } catch (error) {
       console.error('Error in WorldRuleRepository.delete:', error)
       throw error

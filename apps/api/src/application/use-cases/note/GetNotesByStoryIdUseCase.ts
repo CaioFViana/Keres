@@ -1,10 +1,20 @@
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { NoteResponse } from '@keres/shared'
 
 export class GetNotesByStoryIdUseCase {
-  constructor(private readonly noteRepository: INoteRepository) {}
+  constructor(
+    private readonly noteRepository: INoteRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(storyId: string): Promise<NoteResponse[]> {
+  async execute(userId: string, storyId: string): Promise<NoteResponse[]> {
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
     const notes = await this.noteRepository.findByStoryId(storyId)
     return notes.map((note) => ({
       id: note.id,

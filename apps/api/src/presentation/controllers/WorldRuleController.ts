@@ -22,35 +22,35 @@ export class WorldRuleController {
     private readonly getWorldRulesByStoryIdUseCase: GetWorldRulesByStoryIdUseCase,
   ) {}
 
-  async createWorldRule(data: z.infer<typeof CreateWorldRuleSchema>) {
-    const worldRule = await this.createWorldRuleUseCase.execute(data)
+  async createWorldRule(userId: string, data: z.infer<typeof CreateWorldRuleSchema>) {
+    const worldRule = await this.createWorldRuleUseCase.execute(userId, data)
     return WorldRuleResponseSchema.parse(worldRule)
   }
 
-  async getWorldRule(id: string) {
-    const worldRule = await this.getWorldRuleUseCase.execute(id)
+  async getWorldRule(userId: string, id: string) {
+    const worldRule = await this.getWorldRuleUseCase.execute(userId, id)
     if (!worldRule) {
       throw new Error('World Rule not found')
     }
     return WorldRuleResponseSchema.parse(worldRule)
   }
 
-  async getWorldRulesByStoryId(storyId: string) {
-    const worldRules = await this.getWorldRulesByStoryIdUseCase.execute(storyId)
+  async getWorldRulesByStoryId(userId: string, storyId: string) {
+    const worldRules = await this.getWorldRulesByStoryIdUseCase.execute(userId, storyId)
     return worldRules.map((worldRule) => WorldRuleResponseSchema.parse(worldRule))
   }
 
-  async updateWorldRule(id: string, data: z.infer<typeof UpdateWorldRuleSchema>) {
+  async updateWorldRule(userId: string, id: string, data: z.infer<typeof UpdateWorldRuleSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedWorldRule = await this.updateWorldRuleUseCase.execute({ id, ...updateData })
+    const updatedWorldRule = await this.updateWorldRuleUseCase.execute(userId, { id, ...updateData })
     if (!updatedWorldRule) {
       throw new Error('World Rule not found')
     }
     return WorldRuleResponseSchema.parse(updatedWorldRule)
   }
 
-  async deleteWorldRule(id: string) {
-    const deleted = await this.deleteWorldRuleUseCase.execute(id)
+  async deleteWorldRule(userId: string, id: string) {
+    const deleted = await this.deleteWorldRuleUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('World Rule not found')
     }

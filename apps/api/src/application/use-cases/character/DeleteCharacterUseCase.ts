@@ -1,14 +1,24 @@
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 
 export class DeleteCharacterUseCase {
-  constructor(private readonly characterRepository: ICharacterRepository) {}
+  constructor(
+    private readonly characterRepository: ICharacterRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(id: string): Promise<boolean> {
+  async execute(userId: string, id: string): Promise<boolean> {
     const existingCharacter = await this.characterRepository.findById(id)
     if (!existingCharacter) {
-      return false // Character not found
+      throw new Error('Character not found')
     }
-    await this.characterRepository.delete(id)
+
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(existingCharacter.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+    await this.characterRepository.delete(id, existingCharacter.storyId)
     return true
   }
 }

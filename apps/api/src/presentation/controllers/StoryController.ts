@@ -18,13 +18,13 @@ export class StoryController {
     private readonly getStoriesByUserIdUseCase: GetStoriesByUserIdUseCase,
   ) {}
 
-  async createStory(data: z.infer<typeof StoryCreateSchema>) {
-    const story = await this.createStoryUseCase.execute(data)
+  async createStory(userId: string, data: z.infer<typeof StoryCreateSchema>) {
+    const story = await this.createStoryUseCase.execute(userId, data)
     return StoryResponseSchema.parse(story)
   }
 
-  async getStory(id: string) {
-    const story = await this.getStoryUseCase.execute(id)
+  async getStory(userId: string, id: string) {
+    const story = await this.getStoryUseCase.execute(userId, id)
     if (!story) {
       throw new Error('Story not found')
     }
@@ -36,17 +36,17 @@ export class StoryController {
     return stories.map((story) => StoryResponseSchema.parse(story))
   }
 
-  async updateStory(id: string, data: z.infer<typeof StoryUpdateSchema>) {
+  async updateStory(userId: string, id: string, data: z.infer<typeof StoryUpdateSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedStory = await this.updateStoryUseCase.execute({ id, ...updateData })
+    const updatedStory = await this.updateStoryUseCase.execute(userId, { id, ...updateData })
     if (!updatedStory) {
       throw new Error('Story not found')
     }
     return StoryResponseSchema.parse(updatedStory)
   }
 
-  async deleteStory(id: string) {
-    const deleted = await this.deleteStoryUseCase.execute(id)
+  async deleteStory(userId: string, id: string) {
+    const deleted = await this.deleteStoryUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Story not found')
     }

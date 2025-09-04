@@ -4,13 +4,13 @@ import type { StoryResponse, StoryUpdatePayload } from '@keres/shared'
 export class UpdateStoryUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
-  async execute(data: StoryUpdatePayload): Promise<StoryResponse | null> {
-    const existingStory = await this.storyRepository.findById(data.id)
+  async execute(userId: string, data: StoryUpdatePayload): Promise<StoryResponse | null> {
+    const existingStory = await this.storyRepository.findById(data.id, userId)
     if (!existingStory) {
       return null // Story not found
     }
     // Add ownership check
-    if (data.userId && existingStory.userId !== data.userId) {
+    if (existingStory.userId !== userId) {
       return null // Story does not belong to this user
     }
 
@@ -20,7 +20,7 @@ export class UpdateStoryUseCase {
       updatedAt: new Date(),
     }
 
-    await this.storyRepository.update(updatedStory)
+    await this.storyRepository.update(updatedStory, userId)
 
     return {
       id: updatedStory.id,

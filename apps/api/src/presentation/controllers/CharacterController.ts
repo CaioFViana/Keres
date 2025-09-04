@@ -22,27 +22,27 @@ export class CharacterController {
     private readonly getCharactersByStoryIdUseCase: GetCharactersByStoryIdUseCase,
   ) {}
 
-  async createCharacter(data: z.infer<typeof CharacterCreateSchema>) {
-    const character = await this.createCharacterUseCase.execute(data)
+  async createCharacter(userId: string, data: z.infer<typeof CharacterCreateSchema>) {
+    const character = await this.createCharacterUseCase.execute(userId, data)
     return CharacterResponseSchema.parse(character)
   }
 
-  async getCharacter(id: string) {
-    const character = await this.getCharacterUseCase.execute(id)
+  async getCharacter(userId: string, id: string) {
+    const character = await this.getCharacterUseCase.execute(userId, id)
     if (!character) {
       throw new Error('Character not found')
     }
     return CharacterResponseSchema.parse(character)
   }
 
-  async getCharactersByStoryId(storyId: string) {
-    const characters = await this.getCharactersByStoryIdUseCase.execute(storyId)
+  async getCharactersByStoryId(userId: string, storyId: string) {
+    const characters = await this.getCharactersByStoryIdUseCase.execute(userId, storyId)
     return characters.map((character) => CharacterResponseSchema.parse(character))
   }
 
-  async updateCharacter(id: string, data: z.infer<typeof CharacterUpdateSchema>) {
+  async updateCharacter(userId: string, id: string, data: z.infer<typeof CharacterUpdateSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedCharacter = await this.updateCharacterUseCase.execute({
+    const updatedCharacter = await this.updateCharacterUseCase.execute(userId, {
       id,
       ...updateData,
     })
@@ -52,8 +52,8 @@ export class CharacterController {
     return CharacterResponseSchema.parse(updatedCharacter)
   }
 
-  async deleteCharacter(id: string) {
-    const deleted = await this.deleteCharacterUseCase.execute(id)
+  async deleteCharacter(userId: string, id: string) {
+    const deleted = await this.deleteCharacterUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Character not found')
     }

@@ -36,21 +36,21 @@ export class CharacterRepository implements ICharacterRepository {
     }
   }
 
-  async update(characterData: Character): Promise<void> {
+  async update(characterData: Character, storyId: string): Promise<void> {
     try {
       await db
         .update(characters)
         .set(this.toPersistence(characterData))
-        .where(eq(characters.id, characterData.id))
+        .where(eq(characters.id, characterData.id), eq(characters.storyId, storyId))
     } catch (error) {
       console.error('Error in CharacterRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, storyId: string): Promise<void> {
     try {
-      await db.delete(characters).where(eq(characters.id, id))
+      await db.delete(characters).where(eq(characters.id, id), eq(characters.storyId, storyId))
     } catch (error) {
       console.error('Error in CharacterRepository.delete:', error)
       throw error

@@ -1,13 +1,23 @@
 import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { CharacterCreatePayload, CharacterResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'
 
 export class CreateCharacterUseCase {
-  constructor(private readonly characterRepository: ICharacterRepository) {}
+  constructor(
+    private readonly characterRepository: ICharacterRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(data: CharacterCreatePayload): Promise<CharacterResponse> {
+  async execute(userId: string, data: CharacterCreatePayload): Promise<CharacterResponse> {
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(data.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
     const newCharacter: Character = {
       id: ulid(),
       storyId: data.storyId,

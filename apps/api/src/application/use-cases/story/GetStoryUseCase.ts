@@ -4,9 +4,9 @@ import type { StoryResponse } from '@keres/shared'
 export class GetStoryUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
-  async execute(id: string): Promise<StoryResponse | null> {
-    const story = await this.storyRepository.findById(id)
-    if (!story) {
+  async execute(userId: string, id: string): Promise<StoryResponse | null> {
+    const story = await this.storyRepository.findById(id, userId)
+    if (!story || story.userId !== userId) {
       return null
     }
 

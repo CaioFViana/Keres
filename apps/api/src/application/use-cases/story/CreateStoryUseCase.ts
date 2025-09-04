@@ -7,10 +7,10 @@ import { ulid } from 'ulid'
 export class CreateStoryUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
-  async execute(data: StoryCreatePayload): Promise<StoryResponse> {
+  async execute(userId: string, data: StoryCreatePayload): Promise<StoryResponse> {
     const newStory: Story = {
       id: ulid(),
-      userId: data.userId,
+      userId: userId, // Use the userId from the authenticated context
       type: data.type || 'linear', // Added type field
       title: data.title,
       summary: data.summary || null,

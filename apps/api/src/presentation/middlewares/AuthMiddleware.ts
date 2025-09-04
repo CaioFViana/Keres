@@ -4,7 +4,19 @@ import { JwtService } from '@infrastructure/services/JwtService'
 
 const jwtService = new JwtService()
 
+// Keres' fixed user. Please never change this
+const OFFLINE_USER_ID = '01K48ZX9A7P34EGK8SSQNKERES' // Define a fixed user ID for offline mode
+
 export const authMiddleware = async (c: Context, next: Next) => {
+  const isOfflineMode = process.env.OFFLINE_MODE === 'true'
+
+  if (isOfflineMode) {
+    // In offline mode, bypass JWT verification and set a fixed user ID
+    c.set('jwtPayload', { userId: OFFLINE_USER_ID })
+    await next()
+    return
+  }
+
   const authHeader = c.req.header('Authorization')
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

@@ -17,6 +17,13 @@ This document tracks the ongoing development progress of the Keres project, deta
 *   **Tags Entity CRUD:** Full CRUD operations (schema, domain, repository, use cases, controller, routes) implemented and integrated.
 *   **Listas Customizáveis (Suggestions) Entity CRUD:** Full CRUD operations (schema, domain, repository, use cases, controller, routes) implemented and integrated.
 *   **Authentication and Authorization:** Implemented JWT-based authentication, including token generation on login, and a middleware for protecting API routes.
+
+### Ownership Model (TODO 1 - Backend Focus)
+
+*   **Conclusion:** The existing database schema in `packages/db/src/schema.ts` is already well-suited to implement the proposed ownership model. Entities that are children of a `Story` (directly or indirectly) already have a `storyId` (or a foreign key linking back to `story.id`), and the `story` table correctly links to `users.id` via `userId`.
+*   **Impact:** No schema changes are required for this ownership model. The primary implementation effort will be focused on the application's business logic (use cases) and data access layers (repositories) to enforce ownership checks.
+    *   **Use Cases:** Will receive the authenticated `userId` and use it to verify ownership of `Story` entities, and indirectly, of their child entities.
+    *   **Repositories:** Will be updated to accept `userId` (and `storyId` where applicable) and include these in Drizzle ORM queries to filter data by ownership at the database level.
 *   **Frontend Integration:**
     *   Initial setup: Added `axios` for API calls, created a basic API client, and implemented a login form in `App.tsx` to demonstrate authentication.
     *   **Navigation System:** Implemented React Navigation (`@react-navigation/native`, `@react-navigation/stack`) to manage screen navigation. All entity list screens are now integrated into a stack navigator.

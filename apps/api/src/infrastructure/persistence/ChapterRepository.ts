@@ -36,21 +36,21 @@ export class ChapterRepository implements IChapterRepository {
     }
   }
 
-  async update(chapterData: Chapter): Promise<void> {
+  async update(chapterData: Chapter, storyId: string): Promise<void> {
     try {
       await db
         .update(chapters)
         .set(this.toPersistence(chapterData))
-        .where(eq(chapters.id, chapterData.id))
+        .where(eq(chapters.id, chapterData.id), eq(chapters.storyId, storyId))
     } catch (error) {
       console.error('Error in ChapterRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, storyId: string): Promise<void> {
     try {
-      await db.delete(chapters).where(eq(chapters.id, id))
+      await db.delete(chapters).where(eq(chapters.id, id), eq(chapters.storyId, storyId))
     } catch (error) {
       console.error('Error in ChapterRepository.delete:', error)
       throw error

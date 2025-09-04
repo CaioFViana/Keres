@@ -18,35 +18,35 @@ export class SceneController {
     private readonly getScenesByChapterIdUseCase: GetScenesByChapterIdUseCase,
   ) {}
 
-  async createScene(data: z.infer<typeof SceneCreateSchema>) {
-    const scene = await this.createSceneUseCase.execute(data)
+  async createScene(userId: string, data: z.infer<typeof SceneCreateSchema>) {
+    const scene = await this.createSceneUseCase.execute(userId, data)
     return SceneResponseSchema.parse(scene)
   }
 
-  async getScene(id: string) {
-    const scene = await this.getSceneUseCase.execute(id)
+  async getScene(userId: string, id: string) {
+    const scene = await this.getSceneUseCase.execute(userId, id)
     if (!scene) {
       throw new Error('Scene not found')
     }
     return SceneResponseSchema.parse(scene)
   }
 
-  async getScenesByChapterId(chapterId: string) {
-    const scenes = await this.getScenesByChapterIdUseCase.execute(chapterId)
+  async getScenesByChapterId(userId: string, chapterId: string) {
+    const scenes = await this.getScenesByChapterIdUseCase.execute(userId, chapterId)
     return scenes.map((scene) => SceneResponseSchema.parse(scene))
   }
 
-  async updateScene(id: string, data: z.infer<typeof SceneUpdateSchema>) {
+  async updateScene(userId: string, id: string, data: z.infer<typeof SceneUpdateSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedScene = await this.updateSceneUseCase.execute({ id, ...updateData })
+    const updatedScene = await this.updateSceneUseCase.execute(userId, { id, ...updateData })
     if (!updatedScene) {
       throw new Error('Scene not found or does not belong to the specified chapter')
     }
     return SceneResponseSchema.parse(updatedScene)
   }
 
-  async deleteScene(id: string) {
-    const deleted = await this.deleteSceneUseCase.execute(id)
+  async deleteScene(userId: string, id: string) {
+    const deleted = await this.deleteSceneUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Scene not found or does not belong to the specified chapter')
     }

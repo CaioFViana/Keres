@@ -1,13 +1,23 @@
 import type { Chapter } from '@domain/entities/Chapter'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ChapterCreatePayload, ChapterResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'
 
 export class CreateChapterUseCase {
-  constructor(private readonly chapterRepository: IChapterRepository) {}
+  constructor(
+    private readonly chapterRepository: IChapterRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(data: ChapterCreatePayload): Promise<ChapterResponse> {
+  async execute(userId: string, data: ChapterCreatePayload): Promise<ChapterResponse> {
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(data.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
     const newChapter: Chapter = {
       id: ulid(),
       storyId: data.storyId,

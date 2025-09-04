@@ -11,19 +11,30 @@ export class DeleteSceneUseCase {
     private readonly chapterRepository: IChapterRepository,
   ) {}
 
-  async execute(id: string): Promise<boolean> {
+  async execute(userId: string, id: string): Promise<boolean> {
     const existingScene = await this.sceneRepository.findById(id)
     if (!existingScene) {
-      return false // Scene not found
+      throw new Error('Scene not found')
     }
-    // Check ownership
-    await this.sceneRepository.delete(id)
+
+    // Verify that the chapter exists and belongs to the user's story
+    const chapter = await this.chapterRepository.findById(existingScene.chapterId)
+    if (!chapter) {
+      throw new Error('Chapter not found')
+    }
+    const story = await this.storyRepository.findById(chapter.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
+    await this.sceneRepository.delete(id, existingScene.chapterId)
 
     // Logic for implicit choices in linear stories after deletion
-    const chapter = await this.chapterRepository.findById(existingScene.chapterId)
-    if (chapter) {
-      const story = await this.storyRepository.findById(chapter.storyId)
-      if (story && story.type === 'linear') {
+    // Re-fetch chapter and story with userId for ownership verification within this block
+    const chapterForImplicit = await this.chapterRepository.findById(existingScene.chapterId)
+    if (chapterForImplicit) {
+      const storyForImplicit = await this.storyRepository.findById(chapterForImplicit.storyId, userId)
+      if (storyForImplicit && storyForImplicit.type === 'linear') {
         const scenesInChapter = await this.sceneRepository.findByChapterId(existingScene.chapterId)
         scenesInChapter.sort((a, b) => a.index - b.index)
 

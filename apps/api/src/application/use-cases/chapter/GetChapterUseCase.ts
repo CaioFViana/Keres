@@ -1,13 +1,23 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ChapterResponse } from '@keres/shared'
 
 export class GetChapterUseCase {
-  constructor(private readonly chapterRepository: IChapterRepository) {}
+  constructor(
+    private readonly chapterRepository: IChapterRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(id: string): Promise<ChapterResponse | null> {
+  async execute(userId: string, id: string): Promise<ChapterResponse> {
     const chapter = await this.chapterRepository.findById(id)
     if (!chapter) {
-      return null
+      throw new Error('Chapter not found')
+    }
+
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(chapter.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
     }
 
     return {

@@ -1,10 +1,20 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ChapterResponse } from '@keres/shared'
 
 export class GetChaptersByStoryIdUseCase {
-  constructor(private readonly chapterRepository: IChapterRepository) {}
+  constructor(
+    private readonly chapterRepository: IChapterRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(storyId: string): Promise<ChapterResponse[]> {
+  async execute(userId: string, storyId: string): Promise<ChapterResponse[]> {
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
     const chapters = await this.chapterRepository.findByStoryId(storyId)
     return chapters.map((chapter) => ({
       id: chapter.id,

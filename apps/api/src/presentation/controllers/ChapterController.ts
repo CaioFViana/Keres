@@ -22,35 +22,35 @@ export class ChapterController {
     private readonly getChaptersByStoryIdUseCase: GetChaptersByStoryIdUseCase,
   ) {}
 
-  async createChapter(data: z.infer<typeof ChapterCreateSchema>) {
-    const chapter = await this.createChapterUseCase.execute(data)
+  async createChapter(userId: string, data: z.infer<typeof ChapterCreateSchema>) {
+    const chapter = await this.createChapterUseCase.execute(userId, data)
     return ChapterResponseSchema.parse(chapter)
   }
 
-  async getChapter(id: string) {
-    const chapter = await this.getChapterUseCase.execute(id)
+  async getChapter(userId: string, id: string) {
+    const chapter = await this.getChapterUseCase.execute(userId, id)
     if (!chapter) {
       throw new Error('Chapter not found')
     }
     return ChapterResponseSchema.parse(chapter)
   }
 
-  async getChaptersByStoryId(storyId: string) {
-    const chapters = await this.getChaptersByStoryIdUseCase.execute(storyId)
+  async getChaptersByStoryId(userId: string, storyId: string) {
+    const chapters = await this.getChaptersByStoryIdUseCase.execute(userId, storyId)
     return chapters.map((chapter) => ChapterResponseSchema.parse(chapter))
   }
 
-  async updateChapter(id: string, data: z.infer<typeof ChapterUpdateSchema>) {
+  async updateChapter(userId: string, id: string, data: z.infer<typeof ChapterUpdateSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedChapter = await this.updateChapterUseCase.execute({ id, ...updateData })
+    const updatedChapter = await this.updateChapterUseCase.execute(userId, { id, ...updateData })
     if (!updatedChapter) {
       throw new Error('Chapter not found or does not belong to the specified story')
     }
     return ChapterResponseSchema.parse(updatedChapter)
   }
 
-  async deleteChapter(id: string) {
-    const deleted = await this.deleteChapterUseCase.execute(id)
+  async deleteChapter(userId: string, id: string) {
+    const deleted = await this.deleteChapterUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Chapter not found or does not belong to the specified story')
     }

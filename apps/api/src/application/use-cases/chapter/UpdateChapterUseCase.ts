@@ -1,17 +1,23 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ChapterResponse, ChapterUpdatePayload } from '@keres/shared'
 
 export class UpdateChapterUseCase {
-  constructor(private readonly chapterRepository: IChapterRepository) {}
+  constructor(
+    private readonly chapterRepository: IChapterRepository,
+    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+  ) {}
 
-  async execute(data: ChapterUpdatePayload): Promise<ChapterResponse | null> {
+  async execute(userId: string, data: ChapterUpdatePayload): Promise<ChapterResponse> {
     const existingChapter = await this.chapterRepository.findById(data.id)
     if (!existingChapter) {
-      return null // Chapter not found
+      throw new Error('Chapter not found')
     }
-    // Add ownership check
-    if (data.storyId && existingChapter.storyId !== data.storyId) {
-      return null // Chapter does not belong to this story
+
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(existingChapter.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
     }
 
     const updatedChapter = {
@@ -20,7 +26,7 @@ export class UpdateChapterUseCase {
       updatedAt: new Date(),
     }
 
-    await this.chapterRepository.update(updatedChapter)
+    await this.chapterRepository.update(updatedChapter, existingChapter.storyId)
 
     return {
       id: updatedChapter.id,

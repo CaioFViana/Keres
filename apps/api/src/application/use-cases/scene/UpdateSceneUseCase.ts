@@ -12,14 +12,20 @@ export class UpdateSceneUseCase {
     private readonly chapterRepository: IChapterRepository,
   ) {}
 
-  async execute(data: SceneUpdatePayload): Promise<SceneResponse | null> {
+  async execute(userId: string, data: SceneUpdatePayload): Promise<SceneResponse> {
     const existingScene = await this.sceneRepository.findById(data.id)
     if (!existingScene) {
-      return null // Scene not found
+      throw new Error('Scene not found')
     }
-    // Add ownership check
-    if (data.chapterId && existingScene.chapterId !== data.chapterId) {
-      return null // Scene does not belong to this chapter
+
+    // Verify that the chapter exists and belongs to the user's story
+    const chapter = await this.chapterRepository.findById(existingScene.chapterId)
+    if (!chapter) {
+      throw new Error('Chapter not found')
+    }
+    const story = await this.storyRepository.findById(chapter.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
     }
 
     const updatedScene = {
@@ -28,13 +34,13 @@ export class UpdateSceneUseCase {
       updatedAt: new Date(),
     }
 
-    await this.sceneRepository.update(updatedScene)
+    await this.sceneRepository.update(updatedScene, existingScene.chapterId)
 
     // Logic for implicit choices in linear stories
-    const chapter = await this.chapterRepository.findById(updatedScene.chapterId)
-    if (chapter) {
-      const story = await this.storyRepository.findById(chapter.storyId)
-      if (story && story.type === 'linear') {
+    const chapterForImplicit = await this.chapterRepository.findById(updatedScene.chapterId)
+    if (chapterForImplicit) {
+      const storyForImplicit = await this.storyRepository.findById(chapterForImplicit.storyId, userId)
+      if (storyForImplicit && storyForImplicit.type === 'linear') {
         const scenesInChapter = await this.sceneRepository.findByChapterId(updatedScene.chapterId)
         scenesInChapter.sort((a, b) => a.index - b.index)
 

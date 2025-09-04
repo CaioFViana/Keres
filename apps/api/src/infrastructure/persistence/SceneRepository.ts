@@ -36,18 +36,18 @@ export class SceneRepository implements ISceneRepository {
     }
   }
 
-  async update(sceneData: Scene): Promise<void> {
+  async update(sceneData: Scene, chapterId: string): Promise<void> {
     try {
-      await db.update(scenes).set(this.toPersistence(sceneData)).where(eq(scenes.id, sceneData.id))
+      await db.update(scenes).set(this.toPersistence(sceneData)).where(eq(scenes.id, sceneData.id), eq(scenes.chapterId, chapterId))
     } catch (error) {
       console.error('Error in SceneRepository.update:', error)
       throw error
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, chapterId: string): Promise<void> {
     try {
-      await db.delete(scenes).where(eq(scenes.id, id))
+      await db.delete(scenes).where(eq(scenes.id, id), eq(scenes.chapterId, chapterId))
     } catch (error) {
       console.error('Error in SceneRepository.delete:', error)
       throw error

@@ -15,7 +15,17 @@ export class CreateSceneUseCase {
     private readonly chapterRepository: IChapterRepository, // Added
   ) {}
 
-  async execute(data: SceneCreatePayload): Promise<SceneResponse> {
+  async execute(userId: string, data: SceneCreatePayload): Promise<SceneResponse> {
+    // Verify that the chapter exists and belongs to the user's story
+    const chapter = await this.chapterRepository.findById(data.chapterId)
+    if (!chapter) {
+      throw new Error('Chapter not found')
+    }
+    const story = await this.storyRepository.findById(chapter.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
     const newScene: Scene = {
       id: ulid(),
       chapterId: data.chapterId,
@@ -33,10 +43,11 @@ export class CreateSceneUseCase {
     await this.sceneRepository.save(newScene)
 
     // Logic for implicit choices in linear stories
-    const chapter = await this.chapterRepository.findById(newScene.chapterId)
-    if (chapter) {
-      const story = await this.storyRepository.findById(chapter.storyId)
-      if (story && story.type === 'linear') {
+    // Re-fetch chapter and story with userId for ownership verification within this block
+    const chapterForImplicit = await this.chapterRepository.findById(newScene.chapterId)
+    if (chapterForImplicit) {
+      const storyForImplicit = await this.storyRepository.findById(chapterForImplicit.storyId, userId)
+      if (storyForImplicit && storyForImplicit.type === 'linear') {
         const scenesInChapter = await this.sceneRepository.findByChapterId(newScene.chapterId)
         scenesInChapter.sort((a, b) => a.index - b.index)
 

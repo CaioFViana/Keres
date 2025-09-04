@@ -30,7 +30,7 @@ export class ChoiceRepository implements IChoiceRepository {
     return choice || null
   }
 
-  async update(id: string, data: UpdateChoiceDTO): Promise<Choice | null> {
+  async update(id: string, data: UpdateChoiceDTO, sceneId: string): Promise<Choice | null> {
     const [updatedChoice] = await db
       .update(choices)
       .set({
@@ -40,13 +40,13 @@ export class ChoiceRepository implements IChoiceRepository {
         isImplicit: data.isImplicit,
         updatedAt: new Date(),
       })
-      .where(eq(choices.id, id))
+      .where(eq(choices.id, id), eq(choices.sceneId, sceneId))
       .returning()
     return updatedChoice || null
   }
 
-  async delete(id: string): Promise<void> {
-    await db.delete(choices).where(eq(choices.id, id))
+  async delete(id: string, sceneId: string): Promise<void> {
+    await db.delete(choices).where(eq(choices.id, id), eq(choices.sceneId, sceneId))
   }
 
   async findBySceneId(sceneId: string): Promise<Choice[]> {

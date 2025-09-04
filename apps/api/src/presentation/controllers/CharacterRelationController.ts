@@ -22,27 +22,27 @@ export class CharacterRelationController {
     private readonly getCharacterRelationsByCharIdUseCase: GetCharacterRelationsByCharIdUseCase,
   ) {}
 
-  async createCharacterRelation(data: z.infer<typeof CharacterRelationCreateSchema>) {
-    const characterRelation = await this.createCharacterRelationUseCase.execute(data)
+  async createCharacterRelation(userId: string, data: z.infer<typeof CharacterRelationCreateSchema>) {
+    const characterRelation = await this.createCharacterRelationUseCase.execute(userId, data)
     return CharacterRelationResponseSchema.parse(characterRelation)
   }
 
-  async getCharacterRelation(id: string) {
-    const characterRelation = await this.getCharacterRelationUseCase.execute(id)
+  async getCharacterRelation(userId: string, id: string) {
+    const characterRelation = await this.getCharacterRelationUseCase.execute(userId, id)
     if (!characterRelation) {
       throw new Error('Character relation not found')
     }
     return CharacterRelationResponseSchema.parse(characterRelation)
   }
 
-  async getCharacterRelationsByCharId(charId: string) {
-    const characterRelations = await this.getCharacterRelationsByCharIdUseCase.execute(charId)
+  async getCharacterRelationsByCharId(userId: string, charId: string) {
+    const characterRelations = await this.getCharacterRelationsByCharIdUseCase.execute(userId, charId)
     return characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr))
   }
 
-  async updateCharacterRelation(id: string, data: z.infer<typeof CharacterRelationUpdateSchema>) {
+  async updateCharacterRelation(userId: string, id: string, data: z.infer<typeof CharacterRelationUpdateSchema>) {
     const { id: dataId, ...updateData } = data
-    const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute({
+    const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute(userId, {
       id,
       ...updateData,
     })
@@ -52,8 +52,8 @@ export class CharacterRelationController {
     return CharacterRelationResponseSchema.parse(updatedCharacterRelation)
   }
 
-  async deleteCharacterRelation(id: string) {
-    const deleted = await this.deleteCharacterRelationUseCase.execute(id)
+  async deleteCharacterRelation(userId: string, id: string) {
+    const deleted = await this.deleteCharacterRelationUseCase.execute(userId, id)
     if (!deleted) {
       throw new Error('Character relation not found')
     }

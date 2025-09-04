@@ -1,8 +1,8 @@
 import type { CharacterRelation } from '@domain/entities/CharacterRelation'
 import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
 
-import { characterRelations, db } from '@keres/db' // Import db and characterRelations table
-import { eq, or } from 'drizzle-orm'
+import { characterRelations, db, characters } from '@keres/db' // Import db, characterRelations, and characters table
+import { eq, or, and } from 'drizzle-orm' // Import and
 
 export class CharacterRelationRepository implements ICharacterRelationRepository {
   constructor() {}
@@ -43,12 +43,21 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
     }
   }
 
-  async update(characterRelationData: CharacterRelation): Promise<void> {
+  async update(characterRelationData: CharacterRelation, id: string, storyId: string): Promise<void> {
     try {
       await db
         .update(characterRelations)
         .set(this.toPersistence(characterRelationData))
-        .where(eq(characterRelations.id, characterRelationData.id))
+        .where(
+          and(
+            eq(characterRelations.id, id),
+            or(
+              eq(characterRelations.charId1, characters.id), // Join with characters table
+              eq(characterRelations.charId2, characters.id), // Join with characters table
+            ),
+            eq(characters.storyId, storyId), // Check storyId
+          ),
+        )
     } catch (error) {
       console.error('Error in CharacterRelationRepository.update:', error)
       throw error

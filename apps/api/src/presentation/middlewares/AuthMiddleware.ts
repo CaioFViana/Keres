@@ -8,7 +8,7 @@ const jwtService = new JwtService()
 const OFFLINE_USER_ID = '01K48ZX9A7P34EGK8SSQNKERES' // Define a fixed user ID for offline mode
 
 export const authMiddleware = async (c: Context, next: Next) => {
-  const isOfflineMode = process.env.OFFLINE_MODE === 'true'
+  const isOfflineMode = process.env.APP_MODE === 'offline'
 
   if (isOfflineMode) {
     // In offline mode, bypass JWT verification and set a fixed user ID

@@ -349,6 +349,60 @@ graph LR
   - SQLite local independente.
   - Export/Import de stories em JSON para sincronização.
 
+### Configuração de Ambiente (Modos Online/Offline)
+
+O Keres suporta dois modos de operação principais: **Online** e **Offline**, controlados por variáveis de ambiente. Esta abordagem permite flexibilidade na implantação e no uso, adaptando o comportamento do aplicativo e a conexão com o banco de dados.
+
+#### Variável `APP_MODE`
+
+A variável de ambiente `APP_MODE` é a chave para alternar entre os modos.
+
+*   **`APP_MODE=online`**: O aplicativo se conectará a um banco de dados PostgreSQL remoto (ou local, se configurado) e operará como um serviço de backend tradicional. Este é o modo padrão se `APP_MODE` não for definido.
+*   **`APP_MODE=offline`**: O aplicativo se conectará a um banco de dados SQLite local (geralmente um arquivo no sistema de arquivos do usuário). Neste modo, a verificação de JWT é simplificada para permitir o uso sem um servidor de autenticação externo.
+
+#### Configuração de Banco de Dados
+
+A conexão com o banco de dados é determinada por `APP_MODE`, mas pode ser explicitamente sobrescrita:
+
+*   **`DATABASE_TYPE`**: Define o tipo de banco de dados (`postgres` ou `sqlite`).
+    *   Se `APP_MODE=online` (ou não definido), o padrão é `postgres`.
+    *   Se `APP_MODE=offline`, o padrão é `sqlite`.
+    *   Pode ser definido explicitamente para sobrescrever o padrão (ex: `DATABASE_TYPE=sqlite` mesmo em `APP_MODE=online` para testes).
+*   **`DATABASE_URL`**: A string de conexão para o banco de dados.
+    *   **Para `APP_MODE=online` (ou padrão):** O padrão é `postgres://user:password@localhost:5432/keres_db`.
+    *   **Para `APP_MODE=offline`:** O padrão é `file:./data/keres.sqlite` (um arquivo SQLite local).
+    *   Sempre pode ser definido explicitamente para apontar para qualquer URL de conexão válida.
+
+#### Configuração de JWT
+
+O segredo usado para assinar e verificar JSON Web Tokens (JWTs) também é configurável:
+
+*   **`JWT_SECRET`**: A chave secreta para JWTs.
+    *   **Para `APP_MODE=online`:** Recomenda-se um segredo forte e aleatório, gerenciado com segurança.
+    *   **Para `APP_MODE=offline`:** Pode ser um segredo fixo (menos crítico, pois o "servidor" é local) ou gerado na primeira execução.
+
+#### Exemplo de Arquivos `.env`
+
+Você pode usar arquivos `.env` para gerenciar essas variáveis de ambiente.
+
+**`.env` para Modo Online:**
+
+```dotenv
+APP_MODE=online
+DATABASE_TYPE=postgres
+DATABASE_URL=postgres://seu_usuario:sua_senha@seu_host_db:5432/seu_db_nome
+JWT_SECRET=seu_segredo_jwt_forte_para_online
+```
+
+**`.env` para Modo Offline:**
+
+```dotenv
+APP_MODE=offline
+DATABASE_TYPE=sqlite
+DATABASE_URL=file:./data/keres.sqlite # Caminho para o arquivo SQLite local
+JWT_SECRET=segredo_jwt_fixo_para_offline # Ou gerado dinamicamente
+```
+
 ---
 
 ## 🏗️ Próximos Passos

@@ -42,7 +42,7 @@ Essas funcionalidades servirão como o mecanismo principal para "sincronização
 Para suportar esta estratégia, o backend Hono (`apps/api`) será adaptado para:
 
 *   **Conexão Dinâmica ao Banco de Dados:** O backend será configurado para alternar sua conexão Drizzle ORM entre um banco de dados PostgreSQL (para o modo online) e um banco de dados SQLite (para o modo offline), com base em variáveis de ambiente ou configuração fornecida pelo frontend.
-*   **Execução Local:** O `apps/api` será projetado para ser executável como um processo local no dispositivo do usuário (ex: empacotado com Electron para desktop, ou como um serviço leve em mobile).
+*   **Execução Local:** O `apps/api` será projetado para ser executável como um processo local no dispositivo do usuário (ex: empacotado com Electron para desktop, ou como um serviço leve em mobile). **Nesses cenários de empacotamento com o frontend, o `apps/api` operará exclusivamente no modo offline, utilizando o banco de dados SQLite local.**
 *   **Endpoints de Exportação/Importação:** Serão adicionadas rotas de API específicas para lidar com as operações de exportação e importação de dados.
 
 Esta abordagem oferece um equilíbrio entre funcionalidade, simplicidade de desenvolvimento e controle do usuário, alinhando-se com a visão central do projeto Keres.

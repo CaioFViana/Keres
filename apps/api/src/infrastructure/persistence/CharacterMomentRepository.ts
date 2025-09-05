@@ -7,6 +7,25 @@ import { and, eq } from 'drizzle-orm'
 export class CharacterMomentRepository implements ICharacterMomentRepository {
   constructor() {}
 
+  async findById(characterId: string, momentId: string): Promise<CharacterMoment | null> {
+    try {
+      const result = await db
+        .select()
+        .from(characterMoments)
+        .where(
+          and(
+            eq(characterMoments.characterId, characterId),
+            eq(characterMoments.momentId, momentId),
+          ),
+        )
+        .limit(1)
+      return result.length > 0 ? this.toDomain(result[0]) : null
+    } catch (error) {
+      console.error('Error in CharacterMomentRepository.findById:', error)
+      throw error
+    }
+  }
+
   async findByCharacterId(characterId: string): Promise<CharacterMoment[]> {
     try {
       const results = await db

@@ -6,7 +6,7 @@ import {
   UpdateTagUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { TagRepository, StoryRepository } from '@infrastructure/persistence'
+import { StoryRepository, TagRepository } from '@infrastructure/persistence'
 import { CreateTagSchema, TagResponseSchema, UpdateTagSchema } from '@keres/shared'
 import { TagController } from '@presentation/controllers/TagController'
 import { z } from 'zod'

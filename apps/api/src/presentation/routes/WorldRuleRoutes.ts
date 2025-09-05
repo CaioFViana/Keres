@@ -6,7 +6,7 @@ import {
   UpdateWorldRuleUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { WorldRuleRepository, StoryRepository } from '@infrastructure/persistence'
+import { StoryRepository, WorldRuleRepository } from '@infrastructure/persistence'
 import {
   CreateWorldRuleSchema,
   UpdateWorldRuleSchema,
@@ -24,7 +24,10 @@ const createWorldRuleUseCase = new CreateWorldRuleUseCase(worldRuleRepository, s
 const getWorldRuleUseCase = new GetWorldRuleUseCase(worldRuleRepository, storyRepository)
 const updateWorldRuleUseCase = new UpdateWorldRuleUseCase(worldRuleRepository, storyRepository)
 const deleteWorldRuleUseCase = new DeleteWorldRuleUseCase(worldRuleRepository, storyRepository)
-const getWorldRulesByStoryIdUseCase = new GetWorldRulesByStoryIdUseCase(worldRuleRepository, storyRepository)
+const getWorldRulesByStoryIdUseCase = new GetWorldRulesByStoryIdUseCase(
+  worldRuleRepository,
+  storyRepository,
+)
 
 const worldRuleController = new WorldRuleController(
   createWorldRuleUseCase,

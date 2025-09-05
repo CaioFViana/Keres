@@ -1,7 +1,7 @@
 import type { Chapter } from '@domain/entities/Chapter'
+import type { Story } from '@domain/entities/Story'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { Story } from '@domain/entities/Story'
 
 import { GetChaptersByStoryIdUseCase } from '@application/use-cases/chapter/GetChaptersByStoryIdUseCase'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -148,6 +148,8 @@ describe('GetChaptersByStoryIdUseCase', () => {
   })
 
   it('should throw an error if the story is not found or not owned by the user', async () => {
-    await expect(getChaptersByStoryIdUseCase.execute('user123', 'nonexistent_story')).rejects.toThrow('Story not found or not owned by user')
+    await expect(
+      getChaptersByStoryIdUseCase.execute('user123', 'nonexistent_story'),
+    ).rejects.toThrow('Story not found or not owned by user')
   })
 })

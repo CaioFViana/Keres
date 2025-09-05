@@ -1,7 +1,7 @@
 import type { Character } from '@domain/entities/Character'
+import type { Story } from '@domain/entities/Story'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { Story } from '@domain/entities/Story'
 
 import { UpdateCharacterUseCase } from '@application/use-cases/character/UpdateCharacterUseCase'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -145,7 +145,9 @@ describe('UpdateCharacterUseCase', () => {
       name: 'New Name',
     }
 
-    await expect(updateCharacterUseCase.execute('user123', updateDTO)).rejects.toThrow('Character not found')
+    await expect(updateCharacterUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Character not found',
+    )
   })
 
   it('should throw an error if character does not belong to the specified story', async () => {
@@ -155,7 +157,9 @@ describe('UpdateCharacterUseCase', () => {
       name: 'New Name',
     }
 
-    await expect(updateCharacterUseCase.execute('user123', updateDTO)).rejects.toThrow('Character does not belong to the specified story')
+    await expect(updateCharacterUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Character does not belong to the specified story',
+    )
 
     // Ensure the character was not updated
     const character = await characterRepository.findById('char123')

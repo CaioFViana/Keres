@@ -220,6 +220,7 @@ export const suggestions = pgTable('suggestions', {
   storyId: text('story_id').references(() => story.id), // Nullable if scope is "global"
   type: text('type').notNull(),
   value: text('value').notNull(),
+  isDefault: boolean('is_default').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

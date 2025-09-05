@@ -1,7 +1,7 @@
+import Database from 'better-sqlite3'
+import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
 import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
-import Database from 'better-sqlite3'
 
 import * as schema from './schema' // Import all exports from schema.ts
 

@@ -1,6 +1,6 @@
 {
-  "id": "ee67632c-718d-46d9-9102-791e1a001263",
-  "prevId": "0171f96a-2a7a-4814-a3af-ba5defab59d3",
+  "id": "504cf765-5f1d-4061-951e-3ffa4b2c8371",
+  "prevId": "ee67632c-718d-46d9-9102-791e1a001263",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -970,6 +970,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",

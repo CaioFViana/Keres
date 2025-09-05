@@ -5,6 +5,7 @@ export interface Suggestion {
   storyId: string | null
   type: string
   value: string
+  isDefault: boolean
   createdAt: Date
   updatedAt: Date
 }

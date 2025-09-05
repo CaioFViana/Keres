@@ -34,6 +34,7 @@ export const SuggestionResponseSchema = z.object({
   storyId: z.ulid().nullable(),
   type: z.string(),
   value: z.string(),
+  isDefault: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
 })

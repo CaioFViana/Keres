@@ -294,6 +294,7 @@ suggestions
 - story_id (ulid, nullable) # Se o escopo for "story", FK para a história à qual a sugestão pertence
 - type (text) # Categoria da sugestão (ex: "genre", "character_gender", "race", "relation_type")
 - value (text) # O valor da sugestão (ex: "Fantasia", "Não-binário", "Elfo da Floresta", "Mentor")
+- is_default (boolean) # Indica se a sugestão é padrão do sistema ou criada pelo usuário
 - created_at (timestamp)
 - updated_at (timestamp)
 ```
@@ -311,7 +312,7 @@ graph LR
     story --> world_rules
     story --> notes
     story --> tags
-    story -- nullable --> suggestions
+    story -- when story specific --> suggestions
 
     chapters --> scenes
     locations -- occurs on--> scenes
@@ -326,7 +327,7 @@ graph LR
     characters --> character_relations
     character_relations --> characters
 
-    notes -- nullable --> gallery
+    notes -- can have --> gallery
 ```
 
 ## 🔗 Fluxo de Arquitetura

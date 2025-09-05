@@ -11,8 +11,6 @@ export const GalleryCreateSchema = z.object({
 
 export const GalleryUpdateSchema = z.object({
   id: z.string(),
-  storyId: z.string().optional(), // storyId should not be updatable in practice
-  ownerId: z.string().optional(), // ownerId should not be updatable in practice
   imagePath: z.string().url('Invalid image URL').optional(),
   isFile: z.boolean().optional(),
   isFavorite: z.boolean().optional(),

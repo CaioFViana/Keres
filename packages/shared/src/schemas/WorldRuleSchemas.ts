@@ -10,7 +10,6 @@ export const CreateWorldRuleSchema = z.object({
 
 export const UpdateWorldRuleSchema = z.object({
   id: z.ulid(),
-  storyId: z.ulid().optional(), // storyId should not be updatable in practice
   title: z.string().min(1, 'Title cannot be empty').optional(),
   description: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),

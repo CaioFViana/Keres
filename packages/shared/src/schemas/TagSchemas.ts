@@ -10,7 +10,6 @@ export const CreateTagSchema = z.object({
 
 export const UpdateTagSchema = z.object({
   id: z.ulid(),
-  storyId: z.ulid().optional(), // storyId should not be updatable in practice
   name: z.string().min(1, 'Name cannot be empty').optional(),
   color: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),

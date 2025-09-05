@@ -13,7 +13,6 @@ export const StoryCreateSchema = z.object({
 
 export const StoryUpdateSchema = z.object({
   id: z.string(),
-  userId: z.string().optional(), // userId should not be updatable in practice, but for now keep it optional
   type: z.enum(['linear', 'branching']).optional(),
   title: z.string().min(1, 'Name cannot be empty').optional(),
   summary: z.string().optional(),

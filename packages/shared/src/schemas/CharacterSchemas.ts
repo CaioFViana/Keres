@@ -19,7 +19,6 @@ export const CharacterCreateSchema = z.object({
 
 export const CharacterUpdateSchema = z.object({
   id: z.string(),
-  storyId: z.string().optional(), // storyId should not be updatable in practice, but for now keep it optional
   name: z.string().min(1, 'Name cannot be empty').optional(),
   gender: z.string().optional(),
   race: z.string().optional(),

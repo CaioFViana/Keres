@@ -3,9 +3,10 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
 
 import { CreateSceneUseCase } from '@application/use-cases/scene/CreateSceneUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementations
 class MockSceneRepository implements ISceneRepository {
@@ -35,87 +36,77 @@ class MockSceneRepository implements ISceneRepository {
   }
 }
 
-class MockChapterRepository implements IChapterRepository {
-  async findById(id: string): Promise<any | null> {
-    // Return a mock chapter object if needed for specific tests, otherwise null
-    if (id === 'chapter123' || id === 'chapter456') {
-      return {
-        id: id,
-        storyId: 'story123',
-        name: 'Chapter 1',
-        index: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-    }
-    return null
-  }
-  async findByStoryId(storyId: string): Promise<any[]> {
-    return []
-  }
-  async save(chapter: any): Promise<void> {}
-  async update(chapter: any): Promise<void> {}
-  async delete(id: string): Promise<void> {}
+// Mock for IChapterRepository
+const mockChapterRepository = {
+  findById: vi.fn(),
+  findByStoryId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
 }
 
-class MockStoryRepository implements IStoryRepository {
-  async findById(id: string): Promise<any | null> {
-    // Return a mock story object if needed for specific tests, otherwise null
-    if (id === 'story123') {
-      return {
-        id: id,
-        userId: 'user123',
-        name: 'Story 1',
-        type: 'linear',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-    }
-    return null
-  }
-  async findByUserId(userId: string): Promise<any[]> {
-    return []
-  }
-  async save(story: any): Promise<void> {}
-  async update(story: any): Promise<void> {}
-  async delete(id: string): Promise<void> {}
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
 }
 
-class MockChoiceRepository implements IChoiceRepository {
-  async findById(id: string): Promise<any | null> {
-    return null
-  }
-  async findBySceneId(sceneId: string): Promise<any[]> {
-    return []
-  }
-  async create(choice: any): Promise<void> {}
-  async update(choice: any): Promise<void> {}
-  async delete(id: string): Promise<void> {}
+// Mock for IChoiceRepository
+const mockChoiceRepository = {
+  findById: vi.fn(),
+  findBySceneId: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
+// Mock for ILocationRepository
+const mockLocationRepository = {
+  findById: vi.fn(),
+  findByStoryId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
 }
 
 describe('CreateSceneUseCase', () => {
   let sceneRepository: MockSceneRepository
-  let chapterRepository: MockChapterRepository
-  let storyRepository: MockStoryRepository
-  let choiceRepository: MockChoiceRepository
   let createSceneUseCase: CreateSceneUseCase
 
   beforeEach(() => {
     sceneRepository = new MockSceneRepository()
-    chapterRepository = new MockChapterRepository()
-    storyRepository = new MockStoryRepository()
-    choiceRepository = new MockChoiceRepository()
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockChapterRepository.findById.mockImplementation((id: string) => {
+      if (id === 'chapter123' || id === 'chapter456') {
+        return { id: id, storyId: 'story123', name: 'Chapter 1', index: 1 }
+      }
+      return null
+    })
+    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+    mockLocationRepository.findById.mockImplementation((id: string) => {
+      if (id === 'loc123') return { id: 'loc123', storyId: 'story123' }
+      return null
+    })
+
     createSceneUseCase = new CreateSceneUseCase(
       sceneRepository,
-      choiceRepository,
-      storyRepository,
-      chapterRepository,
+      mockChoiceRepository,
+      mockStoryRepository,
+      mockChapterRepository,
+      mockLocationRepository, // Added
     )
   })
 
   it('should create a new scene successfully', async () => {
     const sceneDTO = {
       chapterId: 'chapter123',
+      locationId: 'loc123',
       name: 'Scene 1',
       index: 1,
       summary: 'A summary.',
@@ -125,11 +116,12 @@ describe('CreateSceneUseCase', () => {
       extraNotes: 'Some extra notes.',
     }
 
-    const sceneProfile = await createSceneUseCase.execute(sceneDTO)
+    const sceneProfile = await createSceneUseCase.execute('user123', sceneDTO) // Pass userId
 
     expect(sceneProfile).toBeDefined()
     expect(sceneProfile.name).toBe('Scene 1')
     expect(sceneProfile.chapterId).toBe('chapter123')
+    expect(sceneProfile.locationId).toBe('loc123')
     expect(sceneProfile.id).toBeDefined()
     expect(sceneProfile.isFavorite).toBe(true)
 
@@ -141,11 +133,12 @@ describe('CreateSceneUseCase', () => {
   it('should create a new scene with default values for optional fields', async () => {
     const sceneDTO = {
       chapterId: 'chapter456',
+      locationId: 'loc123',
       name: 'Scene 2',
       index: 2,
     }
 
-    const sceneProfile = await createSceneUseCase.execute(sceneDTO)
+    const sceneProfile = await createSceneUseCase.execute('user123', sceneDTO) // Pass userId
 
     expect(sceneProfile).toBeDefined()
     expect(sceneProfile.name).toBe('Scene 2')
@@ -154,5 +147,61 @@ describe('CreateSceneUseCase', () => {
     expect(sceneProfile.duration).toBeNull()
     expect(sceneProfile.isFavorite).toBe(false)
     expect(sceneProfile.extraNotes).toBeNull()
+  })
+
+  it('should throw an error if chapter not found', async () => {
+    mockChapterRepository.findById.mockResolvedValue(null) // Mock chapter not found
+
+    const sceneDTO = {
+      chapterId: 'nonexistent_chapter',
+      locationId: 'loc123',
+      name: 'Scene 3',
+      index: 3,
+    }
+
+    await expect(createSceneUseCase.execute('user123', sceneDTO)).rejects.toThrow('Chapter not found')
+  })
+
+  it('should throw an error if story not found or not owned by user', async () => {
+    mockStoryRepository.findById.mockResolvedValue(null) // Mock story not found
+
+    const sceneDTO = {
+      chapterId: 'chapter123',
+      locationId: 'loc123',
+      name: 'Scene 4',
+      index: 4,
+    }
+
+    await expect(createSceneUseCase.execute('user123', sceneDTO)).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
+  })
+
+  it('should throw an error if location not found', async () => {
+    mockLocationRepository.findById.mockResolvedValue(null) // Mock location not found
+
+    const sceneDTO = {
+      chapterId: 'chapter123',
+      locationId: 'nonexistent_loc',
+      name: 'Scene 5',
+      index: 5,
+    }
+
+    await expect(createSceneUseCase.execute('user123', sceneDTO)).rejects.toThrow('Location not found')
+  })
+
+  it('should throw an error if location does not belong to the same story as the chapter', async () => {
+    mockLocationRepository.findById.mockResolvedValue({ id: 'loc_other_story', storyId: 'other_story' }) // Mock location from another story
+
+    const sceneDTO = {
+      chapterId: 'chapter123',
+      locationId: 'loc_other_story',
+      name: 'Scene 6',
+      index: 6,
+    }
+
+    await expect(createSceneUseCase.execute('user123', sceneDTO)).rejects.toThrow(
+      'Location does not belong to the same story as the chapter',
+    )
   })
 })

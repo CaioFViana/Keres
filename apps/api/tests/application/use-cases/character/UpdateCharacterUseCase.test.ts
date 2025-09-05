@@ -34,35 +34,13 @@ class MockCharacterRepository implements ICharacterRepository {
   }
 }
 
-class MockStoryRepository implements IStoryRepository {
-  private stories: Story[] = []
-
-  async findById(id: string, userId?: string): Promise<Story | null> {
-    const story = this.stories.find((story) => story.id === id)
-    if (story && userId && story.userId !== userId) {
-      return null // Story found but doesn't belong to the user
-    }
-    return story || null
-  }
-
-  async findByUserId(userId: string): Promise<Story[]> {
-    return this.stories.filter((story) => story.userId === userId)
-  }
-
-  async save(story: Story): Promise<void> {
-    this.stories.push(story)
-  }
-
-  async update(story: Story): Promise<void> {
-    const index = this.stories.findIndex((s) => s.id === story.id)
-    if (index !== -1) {
-      this.stories[index] = story
-    }
-  }
-
-  async delete(id: string): Promise<void> {
-    this.stories = this.stories.filter((story) => story.id !== id)
-  }
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
 }
 
 describe('UpdateCharacterUseCase', () => {
@@ -151,14 +129,17 @@ describe('UpdateCharacterUseCase', () => {
   })
 
   it('should throw an error if character does not belong to the specified story', async () => {
+    // Mock story to return a story not owned by the user
+    storyRepository.findById.mockResolvedValue({ id: 'another_story', userId: 'another_user', type: 'linear' })
+
     const updateDTO = {
       id: 'char123',
-      storyId: 'another_story',
+      storyId: 'another_story', // This storyId is used to find the existing character's story
       name: 'New Name',
     }
 
     await expect(updateCharacterUseCase.execute('user123', updateDTO)).rejects.toThrow(
-      'Character does not belong to the specified story',
+      'Story not found or not owned by user', // Updated error message
     )
 
     // Ensure the character was not updated

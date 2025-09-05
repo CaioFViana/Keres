@@ -34,12 +34,17 @@ class MockUserRepository implements IUserRepository {
 }
 
 class MockPasswordHasherService implements IPasswordHasherService {
-  async hash(password: string): Promise<string> {
-    return `hashed_${password}`
+  async generateSalt(): Promise<string> {
+    return 'mock_salt' // Mock implementation for generateSalt
+  }
+
+  async hash(password: string, salt: string): Promise<string> {
+    return `hashed_${password}_${salt}`
   }
 
   async compare(password: string, hashedPassword: string): Promise<boolean> {
-    return `hashed_${password}` === hashedPassword
+    // This mock assumes the salt is part of the hashedPassword for simplicity
+    return hashedPassword.startsWith(`hashed_${password}`)
   }
 }
 
@@ -68,7 +73,7 @@ describe('CreateUserUseCase', () => {
 
     const createdUser = await userRepository.findByUsername('testuser')
     expect(createdUser).toBeDefined()
-    expect(createdUser?.passwordHash).toBe('hashed_password123')
+    expect(createdUser?.passwordHash).toBe('hashed_password123_mock_salt')
   })
 
   it('should throw an error if username already exists', async () => {

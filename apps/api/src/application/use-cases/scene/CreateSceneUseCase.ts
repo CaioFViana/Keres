@@ -3,6 +3,7 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
 import type { SceneCreatePayload, SceneResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'
@@ -13,6 +14,7 @@ export class CreateSceneUseCase {
     private readonly choiceRepository: IChoiceRepository,
     private readonly storyRepository: IStoryRepository,
     private readonly chapterRepository: IChapterRepository, // Added
+    private readonly locationRepository: ILocationRepository, // Added
   ) {}
 
   async execute(userId: string, data: SceneCreatePayload): Promise<SceneResponse> {
@@ -26,9 +28,19 @@ export class CreateSceneUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
+    // Verify that the location exists and belongs to the same story
+    const location = await this.locationRepository.findById(data.locationId)
+    if (!location) {
+      throw new Error('Location not found')
+    }
+    if (location.storyId !== chapter.storyId) {
+      throw new Error('Location does not belong to the same story as the chapter')
+    }
+
     const newScene: Scene = {
       id: ulid(),
       chapterId: data.chapterId,
+      locationId: data.locationId, // Added locationId
       name: data.name,
       index: data.index,
       summary: data.summary || null,
@@ -56,7 +68,7 @@ export class CreateSceneUseCase {
           const existingChoices = await this.choiceRepository.findBySceneId(scene.id)
           for (const choice of existingChoices) {
             if (choice.isImplicit) {
-              await this.choiceRepository.delete(choice.id)
+              await this.choiceRepository.delete(choice.id, scene.id)
             }
           }
         }
@@ -79,6 +91,7 @@ export class CreateSceneUseCase {
     return {
       id: newScene.id,
       chapterId: newScene.chapterId,
+      locationId: newScene.locationId, // Added locationId
       name: newScene.name,
       index: newScene.index,
       summary: newScene.summary,

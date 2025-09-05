@@ -2,14 +2,18 @@ import type { Story } from '@domain/entities/Story'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 
 import { GetStoryUseCase } from '@application/use-cases/story/GetStoryUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementation
 class MockStoryRepository implements IStoryRepository {
   private stories: Story[] = []
 
-  async findById(id: string): Promise<Story | null> {
-    return this.stories.find((story) => story.id === id) || null
+  async findById(id: string, userId?: string): Promise<Story | null> {
+    const story = this.stories.find((s) => s.id === id)
+    if (story && userId && story.userId !== userId) {
+      return null // Story found but doesn't belong to the user
+    }
+    return story || null
   }
 
   async findByUserId(userId: string): Promise<Story[]> {
@@ -38,6 +42,9 @@ describe('GetStoryUseCase', () => {
 
   beforeEach(() => {
     storyRepository = new MockStoryRepository()
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
     getStoryUseCase = new GetStoryUseCase(storyRepository)
 
     // Pre-populate a story for testing
@@ -56,7 +63,7 @@ describe('GetStoryUseCase', () => {
   })
 
   it('should return a story profile for a valid ID', async () => {
-    const storyProfile = await getStoryUseCase.execute('story123')
+    const storyProfile = await getStoryUseCase.execute('user123', 'story123') // Pass userId
 
     expect(storyProfile).toBeDefined()
     expect(storyProfile?.id).toBe('story123')
@@ -64,8 +71,27 @@ describe('GetStoryUseCase', () => {
   })
 
   it('should return null for an invalid story ID', async () => {
-    const storyProfile = await getStoryUseCase.execute('nonexistent')
+    const storyProfile = await getStoryUseCase.execute('user123', 'nonexistent') // Pass userId
 
     expect(storyProfile).toBeNull()
+  })
+
+  it('should throw an error if story not found or not owned by user', async () => {
+    // Mock story to return a story not owned by the user
+    storyRepository.save({
+      id: 'story456',
+      userId: 'another_user',
+      title: 'Another Story',
+      type: 'linear',
+      summary: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    await expect(getStoryUseCase.execute('user123', 'story456')).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
   })
 })

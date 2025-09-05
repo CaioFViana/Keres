@@ -116,7 +116,7 @@ export const gallery = pgTable('gallery', {
   storyId: text('story_id')
     .notNull()
     .references(() => story.id),
-  ownerId: text('owner_id'), // Can refer to character.id, notes.id, or locations.id
+  ownerId: text('owner_id').notNull(), // Can refer to character.id, notes.id, or locations.id
   imagePath: text('image_path').notNull(),
   isFile: boolean('is_file').default(false).notNull(),
   isFavorite: boolean('is_favorite').default(false).notNull(),

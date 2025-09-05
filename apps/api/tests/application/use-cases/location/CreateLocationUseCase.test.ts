@@ -1,8 +1,9 @@
 import type { Location } from '@domain/entities/Location'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { CreateLocationUseCase } from '@application/use-cases/location/CreateLocationUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementation
 class MockLocationRepository implements ILocationRepository {
@@ -32,13 +33,31 @@ class MockLocationRepository implements ILocationRepository {
   }
 }
 
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe('CreateLocationUseCase', () => {
   let locationRepository: MockLocationRepository
   let createLocationUseCase: CreateLocationUseCase
 
   beforeEach(() => {
     locationRepository = new MockLocationRepository()
-    createLocationUseCase = new CreateLocationUseCase(locationRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+
+    createLocationUseCase = new CreateLocationUseCase(
+      locationRepository,
+      mockStoryRepository, // Added
+    )
   })
 
   it('should create a new location successfully', async () => {
@@ -53,7 +72,7 @@ describe('CreateLocationUseCase', () => {
       extraNotes: 'Some extra notes.',
     }
 
-    const locationProfile = await createLocationUseCase.execute(locationDTO)
+    const locationProfile = await createLocationUseCase.execute('user123', locationDTO) // Pass userId
 
     expect(locationProfile).toBeDefined()
     expect(locationProfile.name).toBe('Forest')
@@ -72,7 +91,7 @@ describe('CreateLocationUseCase', () => {
       name: 'Mountain',
     }
 
-    const locationProfile = await createLocationUseCase.execute(locationDTO)
+    const locationProfile = await createLocationUseCase.execute('user123', locationDTO) // Pass userId
 
     expect(locationProfile).toBeDefined()
     expect(locationProfile.name).toBe('Mountain')
@@ -82,5 +101,18 @@ describe('CreateLocationUseCase', () => {
     expect(locationProfile.politics).toBeNull()
     expect(locationProfile.isFavorite).toBe(false)
     expect(locationProfile.extraNotes).toBeNull()
+  })
+
+  it('should throw an error if story not found or not owned by user', async () => {
+    mockStoryRepository.findById.mockResolvedValue(null) // Mock story not found
+
+    const locationDTO = {
+      storyId: 'nonexistent_story',
+      name: 'Desert',
+    }
+
+    await expect(createLocationUseCase.execute('user123', locationDTO)).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
   })
 })

@@ -11,6 +11,7 @@ export const GalleryCreateSchema = z.object({
 
 export const GalleryUpdateSchema = z.object({
   id: z.string(),
+  ownerId: z.string().optional(), // Added ownerId as optional for updates
   imagePath: z.string().url('Invalid image URL').optional(),
   isFile: z.boolean().optional(),
   isFavorite: z.boolean().optional(),

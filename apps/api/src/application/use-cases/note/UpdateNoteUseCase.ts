@@ -1,11 +1,13 @@
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository' // Added
 import type { NoteResponse, UpdateNotePayload } from '@keres/shared'
 
 export class UpdateNoteUseCase {
   constructor(
     private readonly noteRepository: INoteRepository,
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+    private readonly galleryRepository: IGalleryRepository, // Added
   ) {}
 
   async execute(userId: string, data: UpdateNotePayload): Promise<NoteResponse> {
@@ -18,6 +20,17 @@ export class UpdateNoteUseCase {
     const story = await this.storyRepository.findById(existingNote.storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
+    }
+
+    // Validate galleryId if provided in the update payload
+    if (data.galleryId) {
+      const gallery = await this.galleryRepository.findById(data.galleryId)
+      if (!gallery) {
+        throw new Error('Gallery item not found')
+      }
+      if (gallery.storyId !== existingNote.storyId) {
+        throw new Error('Gallery item does not belong to the specified story')
+      }
     }
 
     const updatedNote = {

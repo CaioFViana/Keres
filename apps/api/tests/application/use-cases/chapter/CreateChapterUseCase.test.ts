@@ -1,8 +1,9 @@
 import type { Chapter } from '@domain/entities/Chapter'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { CreateChapterUseCase } from '@application/use-cases/chapter/CreateChapterUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementation
 class MockChapterRepository implements IChapterRepository {
@@ -32,13 +33,31 @@ class MockChapterRepository implements IChapterRepository {
   }
 }
 
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe('CreateChapterUseCase', () => {
   let chapterRepository: MockChapterRepository
   let createChapterUseCase: CreateChapterUseCase
 
   beforeEach(() => {
     chapterRepository = new MockChapterRepository()
-    createChapterUseCase = new CreateChapterUseCase(chapterRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+
+    createChapterUseCase = new CreateChapterUseCase(
+      chapterRepository,
+      mockStoryRepository, // Added
+    )
   })
 
   it('should create a new chapter successfully', async () => {
@@ -51,7 +70,7 @@ describe('CreateChapterUseCase', () => {
       extraNotes: 'Some extra notes.',
     }
 
-    const chapterProfile = await createChapterUseCase.execute(chapterDTO)
+    const chapterProfile = await createChapterUseCase.execute('user123', chapterDTO) // Pass userId
 
     expect(chapterProfile).toBeDefined()
     expect(chapterProfile.name).toBe('Chapter 1')
@@ -71,12 +90,26 @@ describe('CreateChapterUseCase', () => {
       index: 2,
     }
 
-    const chapterProfile = await createChapterUseCase.execute(chapterDTO)
+    const chapterProfile = await createChapterUseCase.execute('user123', chapterDTO) // Pass userId
 
     expect(chapterProfile).toBeDefined()
     expect(chapterProfile.name).toBe('Chapter 2')
     expect(chapterProfile.summary).toBeNull()
     expect(chapterProfile.isFavorite).toBe(false)
     expect(chapterProfile.extraNotes).toBeNull()
+  })
+
+  it('should throw an error if story not found or not owned by user', async () => {
+    mockStoryRepository.findById.mockResolvedValue(null) // Mock story not found
+
+    const chapterDTO = {
+      storyId: 'nonexistent_story',
+      name: 'Chapter 3',
+      index: 3,
+    }
+
+    await expect(createChapterUseCase.execute('user123', chapterDTO)).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
   })
 })

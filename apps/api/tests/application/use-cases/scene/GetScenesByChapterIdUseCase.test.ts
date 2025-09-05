@@ -1,8 +1,10 @@
 import type { Scene } from '@domain/entities/Scene'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { GetScenesByChapterIdUseCase } from '@application/use-cases/scene/GetScenesByChapterIdUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementation
 class MockSceneRepository implements ISceneRepository {
@@ -32,13 +34,47 @@ class MockSceneRepository implements ISceneRepository {
   }
 }
 
+// Mock for IChapterRepository
+const mockChapterRepository = {
+  findById: vi.fn(),
+  findByStoryId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe('GetScenesByChapterIdUseCase', () => {
   let sceneRepository: MockSceneRepository
   let getScenesByChapterIdUseCase: GetScenesByChapterIdUseCase
 
   beforeEach(() => {
     sceneRepository = new MockSceneRepository()
-    getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(sceneRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockChapterRepository.findById.mockImplementation((id: string) => {
+      if (id === 'chapter123' || id === 'chapter456') {
+        return { id: id, storyId: 'story123', name: 'Chapter 1', index: 1 } // Added storyId
+      }
+      return null
+    })
+    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+
+    getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(
+      sceneRepository,
+      mockChapterRepository, // Added
+      mockStoryRepository, // Added
+    )
 
     // Pre-populate scenes for testing
     sceneRepository.save({
@@ -83,7 +119,7 @@ describe('GetScenesByChapterIdUseCase', () => {
   })
 
   it('should return all scenes for a given chapter ID', async () => {
-    const scenes = await getScenesByChapterIdUseCase.execute('chapter123')
+    const scenes = await getScenesByChapterIdUseCase.execute('user123', 'chapter123') // Pass userId
 
     expect(scenes).toBeDefined()
     expect(scenes.length).toBe(2)
@@ -92,9 +128,25 @@ describe('GetScenesByChapterIdUseCase', () => {
   })
 
   it('should return an empty array if no scenes found for the chapter ID', async () => {
-    const scenes = await getScenesByChapterIdUseCase.execute('nonexistent_chapter')
+    const scenes = await getScenesByChapterIdUseCase.execute('user123', 'nonexistent_chapter') // Pass userId
 
     expect(scenes).toBeDefined()
     expect(scenes.length).toBe(0)
+  })
+
+  it('should throw an error if chapter not found or not owned by user', async () => {
+    mockChapterRepository.findById.mockResolvedValue(null) // Mock chapter not found
+
+    await expect(getScenesByChapterIdUseCase.execute('user123', 'nonexistent_chapter')).rejects.toThrow(
+      'Chapter not found',
+    )
+  })
+
+  it('should throw an error if story not found or not owned by user for chapter', async () => {
+    mockStoryRepository.findById.mockResolvedValue(null) // Mock story not found
+
+    await expect(getScenesByChapterIdUseCase.execute('user123', 'chapter123')).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
   })
 })

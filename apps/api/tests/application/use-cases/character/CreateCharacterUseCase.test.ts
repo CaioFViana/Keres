@@ -1,8 +1,9 @@
 import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { CreateCharacterUseCase } from '@application/use-cases/character/CreateCharacterUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementation
 class MockCharacterRepository implements ICharacterRepository {
@@ -32,13 +33,31 @@ class MockCharacterRepository implements ICharacterRepository {
   }
 }
 
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe('CreateCharacterUseCase', () => {
   let characterRepository: MockCharacterRepository
   let createCharacterUseCase: CreateCharacterUseCase
 
   beforeEach(() => {
     characterRepository = new MockCharacterRepository()
-    createCharacterUseCase = new CreateCharacterUseCase(characterRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+
+    createCharacterUseCase = new CreateCharacterUseCase(
+      characterRepository,
+      mockStoryRepository, // Added
+    )
   })
 
   it('should create a new character successfully', async () => {
@@ -50,7 +69,7 @@ describe('CreateCharacterUseCase', () => {
       isFavorite: true,
     }
 
-    const characterProfile = await createCharacterUseCase.execute(characterDTO)
+    const characterProfile = await createCharacterUseCase.execute('user123', characterDTO) // Pass userId
 
     expect(characterProfile).toBeDefined()
     expect(characterProfile.name).toBe('Hero')
@@ -69,12 +88,25 @@ describe('CreateCharacterUseCase', () => {
       name: 'Sidekick',
     }
 
-    const characterProfile = await createCharacterUseCase.execute(characterDTO)
+    const characterProfile = await createCharacterUseCase.execute('user123', characterDTO) // Pass userId
 
     expect(characterProfile).toBeDefined()
     expect(characterProfile.name).toBe('Sidekick')
     expect(characterProfile.gender).toBeNull()
     expect(characterProfile.race).toBeNull()
     expect(characterProfile.isFavorite).toBe(false)
+  })
+
+  it('should throw an error if story not found or not owned by user', async () => {
+    mockStoryRepository.findById.mockResolvedValue(null) // Mock story not found
+
+    const characterDTO = {
+      storyId: 'nonexistent_story',
+      name: 'Villain',
+    }
+
+    await expect(createCharacterUseCase.execute('user123', characterDTO)).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
   })
 })

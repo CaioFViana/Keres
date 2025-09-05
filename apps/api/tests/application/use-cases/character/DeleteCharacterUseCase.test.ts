@@ -1,8 +1,9 @@
 import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { DeleteCharacterUseCase } from '@application/use-cases/character/DeleteCharacterUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementation
 class MockCharacterRepository implements ICharacterRepository {
@@ -32,13 +33,31 @@ class MockCharacterRepository implements ICharacterRepository {
   }
 }
 
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe('DeleteCharacterUseCase', () => {
   let characterRepository: MockCharacterRepository
   let deleteCharacterUseCase: DeleteCharacterUseCase
 
   beforeEach(() => {
     characterRepository = new MockCharacterRepository()
-    deleteCharacterUseCase = new DeleteCharacterUseCase(characterRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+
+    deleteCharacterUseCase = new DeleteCharacterUseCase(
+      characterRepository,
+      mockStoryRepository, // Added
+    )
 
     // Pre-populate a character for testing
     characterRepository.save({
@@ -62,15 +81,30 @@ describe('DeleteCharacterUseCase', () => {
   })
 
   it('should delete an existing character successfully', async () => {
-    const deleted = await deleteCharacterUseCase.execute('char123', 'story123')
+    const deleted = await deleteCharacterUseCase.execute('user123', 'char123') // Pass userId
     expect(deleted).toBe(true)
 
     const character = await characterRepository.findById('char123')
     expect(character).toBeNull()
   })
 
-  it('should return false if character not found', async () => {
-    const deleted = await deleteCharacterUseCase.execute('nonexistent_char', 'story123')
-    expect(deleted).toBe(false)
+  it('should throw an error if character not found', async () => {
+    // Mock characterRepository.findById to return null for nonexistent character
+    characterRepository.findById.mockResolvedValue(null)
+
+    await expect(deleteCharacterUseCase.execute('user123', 'nonexistent_char')).rejects.toThrow('Character not found')
+  })
+
+  it('should throw an error if character does not belong to the specified story', async () => {
+    // Mock story to return a story not owned by the user
+    mockStoryRepository.findById.mockResolvedValue({ id: 'another_story', userId: 'another_user', type: 'linear' })
+
+    await expect(deleteCharacterUseCase.execute('user123', 'char123')).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
+
+    // Ensure the character was not deleted
+    const character = await characterRepository.findById('char123')
+    expect(character).toBeDefined()
   })
 })

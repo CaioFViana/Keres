@@ -1,8 +1,9 @@
 import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { GetCharacterUseCase } from '@application/use-cases/character/GetCharacterUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementation
 class MockCharacterRepository implements ICharacterRepository {
@@ -32,13 +33,31 @@ class MockCharacterRepository implements ICharacterRepository {
   }
 }
 
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe('GetCharacterUseCase', () => {
   let characterRepository: MockCharacterRepository
   let getCharacterUseCase: GetCharacterUseCase
 
   beforeEach(() => {
     characterRepository = new MockCharacterRepository()
-    getCharacterUseCase = new GetCharacterUseCase(characterRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+
+    getCharacterUseCase = new GetCharacterUseCase(
+      characterRepository,
+      mockStoryRepository, // Added
+    )
 
     // Pre-populate a character for testing
     characterRepository.save({
@@ -62,16 +81,25 @@ describe('GetCharacterUseCase', () => {
   })
 
   it('should return a character profile for a valid ID', async () => {
-    const characterProfile = await getCharacterUseCase.execute('char123')
+    const characterProfile = await getCharacterUseCase.execute('user123', 'char123') // Pass userId
 
     expect(characterProfile).toBeDefined()
     expect(characterProfile?.id).toBe('char123')
     expect(characterProfile?.name).toBe('Test Character')
   })
 
-  it('should return null for an invalid character ID', async () => {
-    const characterProfile = await getCharacterUseCase.execute('nonexistent')
+  it('should throw an error if character not found', async () => {
+    // Mock characterRepository.findById to return null for nonexistent character
+    characterRepository.findById.mockResolvedValue(null)
 
-    expect(characterProfile).toBeNull()
+    await expect(getCharacterUseCase.execute('user123', 'nonexistent')).rejects.toThrow('Character not found')
+  })
+
+  it('should throw an error if story not found or not owned by user', async () => {
+    mockStoryRepository.findById.mockResolvedValue(null) // Mock story not found
+
+    await expect(getCharacterUseCase.execute('user123', 'char123')).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
   })
 })

@@ -1,8 +1,11 @@
 import type { Moment } from '@domain/entities/Moment'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Added
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { UpdateMomentUseCase } from '@application/use-cases/moment/UpdateMomentUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
 
 // Mock implementation
 class MockMomentRepository implements IMomentRepository {
@@ -32,13 +35,58 @@ class MockMomentRepository implements IMomentRepository {
   }
 }
 
+// Mock for ISceneRepository
+const mockSceneRepository = {
+  findById: vi.fn(),
+  findByChapterId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
+// Mock for IChapterRepository
+const mockChapterRepository = {
+  findById: vi.fn(),
+  findByStoryId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
 describe('UpdateMomentUseCase', () => {
   let momentRepository: MockMomentRepository
   let updateMomentUseCase: UpdateMomentUseCase
 
   beforeEach(() => {
     momentRepository = new MockMomentRepository()
-    updateMomentUseCase = new UpdateMomentUseCase(momentRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockSceneRepository.findById.mockImplementation((id: string) => {
+      if (id === 'scene123' || id === 'scene456') {
+        return { id: id, chapterId: 'chapter123', name: 'Scene 1', index: 1 } // Added chapterId
+      }
+      return null
+    })
+    mockChapterRepository.findById.mockResolvedValue({ id: 'chapter123', storyId: 'story123', name: 'Chapter 1' })
+    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+
+    updateMomentUseCase = new UpdateMomentUseCase(
+      momentRepository,
+      mockSceneRepository, // Added
+      mockChapterRepository, // Added
+      mockStoryRepository, // Added
+    )
 
     // Pre-populate a moment for testing
     momentRepository.save({
@@ -58,13 +106,12 @@ describe('UpdateMomentUseCase', () => {
   it('should update an existing moment successfully', async () => {
     const updateDTO = {
       id: 'moment123',
-      sceneId: 'scene123',
       name: 'Updated Moment Name',
       location: 'Updated Location',
       isFavorite: true,
     }
 
-    const updatedMoment = await updateMomentUseCase.execute(updateDTO)
+    const updatedMoment = await updateMomentUseCase.execute('user123', updateDTO) // Pass userId
 
     expect(updatedMoment).toBeDefined()
     expect(updatedMoment?.name).toBe('Updated Moment Name')
@@ -76,28 +123,46 @@ describe('UpdateMomentUseCase', () => {
   it('should return null if moment not found', async () => {
     const updateDTO = {
       id: 'nonexistent_moment',
-      sceneId: 'scene123',
       name: 'New Name',
     }
 
-    const updatedMoment = await updateMomentUseCase.execute(updateDTO)
+    const updatedMoment = await updateMomentUseCase.execute('user123', updateDTO) // Pass userId
 
     expect(updatedMoment).toBeNull()
   })
 
-  it('should return null if moment does not belong to the specified scene', async () => {
+  it('should throw an error if scene not found for moment', async () => {
+    mockSceneRepository.findById.mockResolvedValue(null) // Mock scene not found
+
     const updateDTO = {
       id: 'moment123',
-      sceneId: 'another_scene',
       name: 'New Name',
     }
 
-    const updatedMoment = await updateMomentUseCase.execute(updateDTO)
+    await expect(updateMomentUseCase.execute('user123', updateDTO)).rejects.toThrow('Scene not found')
+  })
 
-    expect(updatedMoment).toBeNull()
+  it('should throw an error if chapter not found for scene', async () => {
+    mockChapterRepository.findById.mockResolvedValue(null) // Mock chapter not found
 
-    // Ensure the moment was not updated
-    const moment = await momentRepository.findById('moment123')
-    expect(moment?.name).toBe('Original Moment Name')
+    const updateDTO = {
+      id: 'moment123',
+      name: 'New Name',
+    }
+
+    await expect(updateMomentUseCase.execute('user123', updateDTO)).rejects.toThrow('Chapter not found')
+  })
+
+  it('should throw an error if story not found or not owned by user for moment', async () => {
+    mockStoryRepository.findById.mockResolvedValue(null) // Mock story not found
+
+    const updateDTO = {
+      id: 'moment123',
+      name: 'New Name',
+    }
+
+    await expect(updateMomentUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
   })
 })

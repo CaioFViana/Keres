@@ -24,39 +24,45 @@ export class CreateGalleryUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    // Validate ownerId
-    let ownerFound = false
+    // Validate ownerId if provided
+    let ownerIdToUse: string | null = null
+    if (data.ownerId) {
+      let ownerFound = false
 
-    // Check in Characters
-    const character = await this.characterRepository.findById(data.ownerId)
-    if (character && character.storyId === data.storyId) {
-      ownerFound = true
-    }
-
-    // Check in Notes (only if not found in Characters)
-    if (!ownerFound) {
-      const note = await this.noteRepository.findById(data.ownerId)
-      if (note && note.storyId === data.storyId) {
+      // Check in Characters
+      const character = await this.characterRepository.findById(data.ownerId)
+      if (character && character.storyId === data.storyId) {
         ownerFound = true
+        ownerIdToUse = data.ownerId
       }
-    }
 
-    // Check in Locations (only if not found in Notes)
-    if (!ownerFound) {
-      const location = await this.locationRepository.findById(data.ownerId)
-      if (location && location.storyId === data.storyId) {
-        ownerFound = true
+      // Check in Notes (only if not found in Characters)
+      if (!ownerFound) {
+        const note = await this.noteRepository.findById(data.ownerId)
+        if (note && note.storyId === data.storyId) {
+          ownerFound = true
+          ownerIdToUse = data.ownerId
+        }
       }
-    }
 
-    if (!ownerFound) {
-      throw new Error('Owner not found or does not belong to the specified story')
+      // Check in Locations (only if not found in Notes)
+      if (!ownerFound) {
+        const location = await this.locationRepository.findById(data.ownerId)
+        if (location && location.storyId === data.storyId) {
+          ownerFound = true
+          ownerIdToUse = data.ownerId
+        }
+      }
+
+      if (!ownerFound) {
+        throw new Error('Owner not found or does not belong to the specified story')
+      }
     }
 
     const newGallery: Gallery = {
       id: ulid(),
       storyId: data.storyId,
-      ownerId: data.ownerId,
+      ownerId: ownerIdToUse,
       imagePath: data.imagePath,
       isFile: data.isFile || false,
       isFavorite: data.isFavorite || false,
@@ -64,6 +70,8 @@ export class CreateGalleryUseCase {
       createdAt: new Date(),
       updatedAt: new Date(),
     }
+
+    
 
     await this.galleryRepository.save(newGallery)
 

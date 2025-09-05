@@ -89,15 +89,18 @@ describe('DeleteCharacterUseCase', () => {
   })
 
   it('should throw an error if character not found', async () => {
-    // Mock characterRepository.findById to return null for nonexistent character
-    characterRepository.findById.mockResolvedValue(null)
+    const emptyCharacterRepository = new MockCharacterRepository()
+    const deleteUseCaseWithEmptyRepo = new DeleteCharacterUseCase(
+      emptyCharacterRepository,
+      mockStoryRepository,
+    )
 
-    await expect(deleteCharacterUseCase.execute('user123', 'nonexistent_char')).rejects.toThrow('Character not found')
+    await expect(deleteUseCaseWithEmptyRepo.execute('user123', 'nonexistent_char')).rejects.toThrow('Character not found')
   })
 
   it('should throw an error if character does not belong to the specified story', async () => {
     // Mock story to return a story not owned by the user
-    mockStoryRepository.findById.mockResolvedValue({ id: 'another_story', userId: 'another_user', type: 'linear' })
+    mockStoryRepository.findById.mockImplementationOnce((storyId, userId) => { return null; })
 
     await expect(deleteCharacterUseCase.execute('user123', 'char123')).rejects.toThrow(
       'Story not found or not owned by user',

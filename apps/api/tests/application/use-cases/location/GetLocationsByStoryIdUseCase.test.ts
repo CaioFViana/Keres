@@ -2,7 +2,16 @@ import type { Location } from '@domain/entities/Location'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
 
 import { GetLocationsByStoryIdUseCase } from '@application/use-cases/location/GetLocationsByStoryIdUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
 
 // Mock implementation
 class MockLocationRepository implements ILocationRepository {
@@ -38,7 +47,21 @@ describe('GetLocationsByStoryIdUseCase', () => {
 
   beforeEach(() => {
     locationRepository = new MockLocationRepository()
-    getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(locationRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      if (id === 'story456' && userId === 'user123') {
+        return Promise.resolve({ id: 'story456', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+      }
+      return Promise.resolve(null)
+    })
+
+    getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(locationRepository, mockStoryRepository)
 
     // Pre-populate locations for testing
     locationRepository.save({
@@ -83,7 +106,7 @@ describe('GetLocationsByStoryIdUseCase', () => {
   })
 
   it('should return all locations for a given story ID', async () => {
-    const locations = await getLocationsByStoryIdUseCase.execute('story123')
+    const locations = await getLocationsByStoryIdUseCase.execute('user123', 'story123')
 
     expect(locations).toBeDefined()
     expect(locations.length).toBe(2)
@@ -92,9 +115,6 @@ describe('GetLocationsByStoryIdUseCase', () => {
   })
 
   it('should return an empty array if no locations found for the story ID', async () => {
-    const locations = await getLocationsByStoryIdUseCase.execute('nonexistent_story')
-
-    expect(locations).toBeDefined()
-    expect(locations.length).toBe(0)
+    await expect(getLocationsByStoryIdUseCase.execute('user123', 'nonexistent_story')).rejects.toThrow('Story not found or not owned by user')
   })
 })

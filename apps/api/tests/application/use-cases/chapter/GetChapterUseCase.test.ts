@@ -82,10 +82,13 @@ describe('GetChapterUseCase', () => {
   })
 
   it('should throw an error if chapter not found', async () => {
-    // Mock chapterRepository.findById to return null for nonexistent chapter
-    chapterRepository.findById.mockResolvedValue(null)
+    const emptyChapterRepository = new MockChapterRepository()
+    const getUseCaseWithEmptyRepo = new GetChapterUseCase(
+      emptyChapterRepository,
+      mockStoryRepository,
+    )
 
-    await expect(getChapterUseCase.execute('user123', 'nonexistent')).rejects.toThrow('Chapter not found')
+    await expect(getUseCaseWithEmptyRepo.execute('user123', 'nonexistent')).rejects.toThrow('Chapter not found')
   })
 
   it('should throw an error if story not found or not owned by user', async () => {

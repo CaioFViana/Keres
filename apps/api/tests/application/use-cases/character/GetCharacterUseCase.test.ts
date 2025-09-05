@@ -89,10 +89,13 @@ describe('GetCharacterUseCase', () => {
   })
 
   it('should throw an error if character not found', async () => {
-    // Mock characterRepository.findById to return null for nonexistent character
-    characterRepository.findById.mockResolvedValue(null)
+    const emptyCharacterRepository = new MockCharacterRepository()
+    const getUseCaseWithEmptyRepo = new GetCharacterUseCase(
+      emptyCharacterRepository,
+      mockStoryRepository,
+    )
 
-    await expect(getCharacterUseCase.execute('user123', 'nonexistent')).rejects.toThrow('Character not found')
+    await expect(getUseCaseWithEmptyRepo.execute('user123', 'nonexistent')).rejects.toThrow('Character not found')
   })
 
   it('should throw an error if story not found or not owned by user', async () => {

@@ -4,7 +4,7 @@ import type { ICharacterRepository } from '@domain/repositories/ICharacterReposi
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 
 import { UpdateCharacterUseCase } from '@application/use-cases/character/UpdateCharacterUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock implementation
 class MockCharacterRepository implements ICharacterRepository {
@@ -45,36 +45,23 @@ const mockStoryRepository = {
 
 describe('UpdateCharacterUseCase', () => {
   let characterRepository: MockCharacterRepository
-  let storyRepository: MockStoryRepository
+  let storyRepository: typeof mockStoryRepository
   let updateCharacterUseCase: UpdateCharacterUseCase
 
   beforeEach(() => {
     characterRepository = new MockCharacterRepository()
-    storyRepository = new MockStoryRepository()
+    storyRepository = mockStoryRepository
     updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository, storyRepository)
 
-    // Pre-populate stories for testing
-    storyRepository.save({
-      id: 'story123',
-      userId: 'user123',
-      title: 'Test Story 1',
-      type: 'linear',
-      summary: null,
-      isFavorite: false,
-      extraNotes: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    storyRepository.save({
-      id: 'another_story',
-      userId: 'user123',
-      title: 'Test Story 2',
-      type: 'linear',
-      summary: null,
-      isFavorite: false,
-      extraNotes: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      if (id === 'another_story' && userId === 'user123') {
+        return Promise.resolve({ id: 'another_story', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+      }
+      return Promise.resolve(null)
     })
 
     // Pre-populate a character for testing
@@ -130,7 +117,7 @@ describe('UpdateCharacterUseCase', () => {
 
   it('should throw an error if character does not belong to the specified story', async () => {
     // Mock story to return a story not owned by the user
-    storyRepository.findById.mockResolvedValue({ id: 'another_story', userId: 'another_user', type: 'linear' })
+    mockStoryRepository.findById.mockImplementationOnce((storyId, userId) => { return null; })
 
     const updateDTO = {
       id: 'char123',

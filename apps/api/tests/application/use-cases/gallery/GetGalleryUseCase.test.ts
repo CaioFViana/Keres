@@ -2,7 +2,16 @@ import type { Gallery } from '@domain/entities/Gallery'
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 
 import { GetGalleryUseCase } from '@application/use-cases/gallery/GetGalleryUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
 
 // Mock implementation
 class MockGalleryRepository implements IGalleryRepository {
@@ -42,7 +51,18 @@ describe('GetGalleryUseCase', () => {
 
   beforeEach(() => {
     galleryRepository = new MockGalleryRepository()
-    getGalleryUseCase = new GetGalleryUseCase(galleryRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      return Promise.resolve(null)
+    })
+
+    getGalleryUseCase = new GetGalleryUseCase(galleryRepository, mockStoryRepository)
 
     // Pre-populate a gallery item for testing
     galleryRepository.save({
@@ -59,7 +79,7 @@ describe('GetGalleryUseCase', () => {
   })
 
   it('should return a gallery item profile for a valid ID', async () => {
-    const galleryProfile = await getGalleryUseCase.execute('gallery123')
+    const galleryProfile = await getGalleryUseCase.execute('user123', 'gallery123')
 
     expect(galleryProfile).toBeDefined()
     expect(galleryProfile?.id).toBe('gallery123')
@@ -67,8 +87,6 @@ describe('GetGalleryUseCase', () => {
   })
 
   it('should return null for an invalid gallery ID', async () => {
-    const galleryProfile = await getGalleryUseCase.execute('nonexistent')
-
-    expect(galleryProfile).toBeNull()
+    await expect(getGalleryUseCase.execute('user123', 'nonexistent')).rejects.toThrow('Gallery item not found')
   })
 })

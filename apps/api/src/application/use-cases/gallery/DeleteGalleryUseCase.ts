@@ -15,8 +15,8 @@ export class DeleteGalleryUseCase {
     }
 
     const existingGallery = await this.galleryRepository.findById(id)
-    if (!existingGallery) {
-      throw new Error('Gallery item not found')
+    if (!existingGallery || existingGallery.storyId !== storyId) {
+      throw new Error('Gallery item not found or does not belong to the specified story')
     }
 
     await this.galleryRepository.delete(id, storyId, ownerId)

@@ -2,7 +2,31 @@ import type { Gallery } from '@domain/entities/Gallery'
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 
 import { GetGalleryByOwnerIdUseCase } from '@application/use-cases/gallery/GetGalleryByOwnerIdUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
+
+// Mock for ICharacterRepository
+const mockCharacterRepository = {
+  findById: vi.fn(),
+}
+
+// Mock for INoteRepository
+const mockNoteRepository = {
+  findById: vi.fn(),
+}
+
+// Mock for ILocationRepository
+const mockLocationRepository = {
+  findById: vi.fn(),
+}
 
 // Mock implementation
 class MockGalleryRepository implements IGalleryRepository {
@@ -42,7 +66,36 @@ describe('GetGalleryByOwnerIdUseCase', () => {
 
   beforeEach(() => {
     galleryRepository = new MockGalleryRepository()
-    getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(galleryRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      return Promise.resolve(null)
+    })
+    mockCharacterRepository.findById.mockImplementation((id: string) => {
+      if (id === 'char1') return { id: 'char1', storyId: 'story123' }
+      return null
+    })
+    mockNoteRepository.findById.mockImplementation((id: string) => {
+      if (id === 'note1') return { id: 'note1', storyId: 'story123' }
+      return null
+    })
+    mockLocationRepository.findById.mockImplementation((id: string) => {
+      if (id === 'loc1') return { id: 'loc1', storyId: 'story123' }
+      return null
+    })
+
+    getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(
+      galleryRepository,
+      mockCharacterRepository,
+      mockNoteRepository,
+      mockLocationRepository,
+      mockStoryRepository,
+    )
 
     // Pre-populate gallery items for testing
     galleryRepository.save({
@@ -81,7 +134,7 @@ describe('GetGalleryByOwnerIdUseCase', () => {
   })
 
   it('should return all gallery items for a given owner ID', async () => {
-    const galleryItems = await getGalleryByOwnerIdUseCase.execute('char1')
+    const galleryItems = await getGalleryByOwnerIdUseCase.execute('user123', 'char1')
 
     expect(galleryItems).toBeDefined()
     expect(galleryItems.length).toBe(2)
@@ -90,7 +143,7 @@ describe('GetGalleryByOwnerIdUseCase', () => {
   })
 
   it('should return an empty array if no gallery items found for the owner ID', async () => {
-    const galleryItems = await getGalleryByOwnerIdUseCase.execute('nonexistent_owner')
+    const galleryItems = await getGalleryByOwnerIdUseCase.execute('user123', 'nonexistent_owner')
 
     expect(galleryItems).toBeDefined()
     expect(galleryItems.length).toBe(0)

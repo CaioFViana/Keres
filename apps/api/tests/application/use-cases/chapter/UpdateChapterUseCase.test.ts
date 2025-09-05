@@ -2,7 +2,16 @@ import type { Chapter } from '@domain/entities/Chapter'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 
 import { UpdateChapterUseCase } from '@application/use-cases/chapter/UpdateChapterUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
 
 // Mock implementation
 class MockChapterRepository implements IChapterRepository {
@@ -38,7 +47,21 @@ describe('UpdateChapterUseCase', () => {
 
   beforeEach(() => {
     chapterRepository = new MockChapterRepository()
-    updateChapterUseCase = new UpdateChapterUseCase(chapterRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      if (id === 'another_story' && userId === 'user123') {
+        return Promise.resolve({ id: 'another_story', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+      }
+      return Promise.resolve(null)
+    })
+
+    updateChapterUseCase = new UpdateChapterUseCase(chapterRepository, mockStoryRepository) // Pass mockStoryRepository
 
     // Pre-populate a chapter for testing
     chapterRepository.save({

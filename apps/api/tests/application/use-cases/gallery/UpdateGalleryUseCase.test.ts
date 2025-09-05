@@ -180,29 +180,27 @@ describe('UpdateGalleryUseCase', () => {
     )
   })
 
-  it('should return null if gallery item not found', async () => {
+    it('should return null if gallery item not found', async () => {
     const updateDTO = {
       id: 'nonexistent_gal',
       imagePath: 'http://example.com/new.jpg',
     }
 
-    const updatedGallery = await updateGalleryUseCase.execute('user123', updateDTO) // Pass userId
-
-    expect(updatedGallery).toBeNull()
+    await expect(updateGalleryUseCase.execute('user123', updateDTO)).rejects.toThrow('Gallery item not found')
   })
 
-  it('should return null if gallery item does not belong to the specified story', async () => {
+    it('should return null if gallery item does not belong to the specified story', async () => {
     // Mock story to return a story not owned by the user
-    mockStoryRepository.findById.mockResolvedValue({ id: 'another_story', userId: 'another_user', type: 'linear' })
+    mockStoryRepository.findById.mockResolvedValue(null)
 
     const updateDTO = {
       id: 'gal123',
       imagePath: 'http://example.com/new.jpg',
     }
 
-    const updatedGallery = await updateGalleryUseCase.execute('user123', updateDTO) // Pass userId
-
-    expect(updatedGallery).toBeNull()
+    await expect(updateGalleryUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
 
     // Ensure the gallery item was not updated
     const gallery = await galleryRepository.findById('gal123')

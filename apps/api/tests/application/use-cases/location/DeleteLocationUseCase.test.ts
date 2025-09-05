@@ -2,7 +2,16 @@ import type { Location } from '@domain/entities/Location'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
 
 import { DeleteLocationUseCase } from '@application/use-cases/location/DeleteLocationUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
 
 // Mock implementation
 class MockLocationRepository implements ILocationRepository {
@@ -38,7 +47,21 @@ describe('DeleteLocationUseCase', () => {
 
   beforeEach(() => {
     locationRepository = new MockLocationRepository()
-    deleteLocationUseCase = new DeleteLocationUseCase(locationRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      if (id === 'another_story' && userId === 'user123') {
+        return Promise.resolve({ id: 'another_story', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+      }
+      return Promise.resolve(null)
+    })
+
+    deleteLocationUseCase = new DeleteLocationUseCase(locationRepository, mockStoryRepository)
 
     // Pre-populate a location for testing
     locationRepository.save({
@@ -57,7 +80,7 @@ describe('DeleteLocationUseCase', () => {
   })
 
   it('should delete an existing location successfully', async () => {
-    const deleted = await deleteLocationUseCase.execute('loc123', 'story123')
+    const deleted = await deleteLocationUseCase.execute('user123', 'loc123')
     expect(deleted).toBe(true)
 
     const location = await locationRepository.findById('loc123')
@@ -65,13 +88,11 @@ describe('DeleteLocationUseCase', () => {
   })
 
   it('should return false if location not found', async () => {
-    const deleted = await deleteLocationUseCase.execute('nonexistent_loc', 'story123')
-    expect(deleted).toBe(false)
+    await expect(deleteLocationUseCase.execute('user123', 'nonexistent_loc')).rejects.toThrow('Location not found')
   })
 
-  it('should return false if location does not belong to the specified story', async () => {
-    const deleted = await deleteLocationUseCase.execute('loc123', 'another_story')
-    expect(deleted).toBe(false)
+    it('should return false if location does not belong to the specified story', async () => {
+    await expect(deleteLocationUseCase.execute('user123', 'loc123')).rejects.toThrow('Story not found or not owned by user')
 
     // Ensure the location was not deleted
     const location = await locationRepository.findById('loc123')

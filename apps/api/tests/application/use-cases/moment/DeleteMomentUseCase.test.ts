@@ -112,18 +112,18 @@ describe('DeleteMomentUseCase', () => {
   })
 
   it('should return false if moment not found', async () => {
-    const deleted = await deleteMomentUseCase.execute('user123', 'nonexistent_moment') // Pass userId
-    expect(deleted).toBe(false)
+    await expect(deleteMomentUseCase.execute('user123', 'nonexistent_moment')).rejects.toThrow('Moment not found')
   })
 
-  it('should return false if moment does not belong to the specified scene', async () => {
+      it('should return false if moment does not belong to the specified scene', async () => {
     // Mock scene to return a scene not owned by the user
     mockSceneRepository.findById.mockResolvedValue({ id: 'another_scene', chapterId: 'another_chapter', name: 'Scene X' })
     mockChapterRepository.findById.mockResolvedValue({ id: 'another_chapter', storyId: 'another_story', name: 'Chapter X' })
     mockStoryRepository.findById.mockResolvedValue({ id: 'another_story', userId: 'another_user', type: 'linear' })
 
-    const deleted = await deleteMomentUseCase.execute('user123', 'moment123') // Pass userId
-    expect(deleted).toBe(false)
+    await expect(deleteMomentUseCase.execute('user123', 'moment123')).rejects.toThrow(
+      'Story not found or not owned by user',
+    )
 
     // Ensure the moment was not deleted
     const moment = await momentRepository.findById('moment123')

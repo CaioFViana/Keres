@@ -2,7 +2,16 @@ import type { Location } from '@domain/entities/Location'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
 
 import { GetLocationUseCase } from '@application/use-cases/location/GetLocationUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
 
 // Mock implementation
 class MockLocationRepository implements ILocationRepository {
@@ -38,7 +47,18 @@ describe('GetLocationUseCase', () => {
 
   beforeEach(() => {
     locationRepository = new MockLocationRepository()
-    getLocationUseCase = new GetLocationUseCase(locationRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      return Promise.resolve(null)
+    })
+
+    getLocationUseCase = new GetLocationUseCase(locationRepository, mockStoryRepository)
 
     // Pre-populate a location for testing
     locationRepository.save({
@@ -57,16 +77,14 @@ describe('GetLocationUseCase', () => {
   })
 
   it('should return a location profile for a valid ID', async () => {
-    const locationProfile = await getLocationUseCase.execute('loc123')
+    const locationProfile = await getLocationUseCase.execute('user123', 'loc123')
 
     expect(locationProfile).toBeDefined()
     expect(locationProfile?.id).toBe('loc123')
     expect(locationProfile?.name).toBe('Test Location')
   })
 
-  it('should return null for an invalid location ID', async () => {
-    const locationProfile = await getLocationUseCase.execute('nonexistent')
-
-    expect(locationProfile).toBeNull()
+    it('should return null for an invalid location ID', async () => {
+    await expect(getLocationUseCase.execute('user123', 'nonexistent')).rejects.toThrow('Location not found')
   })
 })

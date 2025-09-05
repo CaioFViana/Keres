@@ -2,7 +2,16 @@ import type { Gallery } from '@domain/entities/Gallery'
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 
 import { DeleteGalleryUseCase } from '@application/use-cases/gallery/DeleteGalleryUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
 
 // Mock implementation
 class MockGalleryRepository implements IGalleryRepository {
@@ -31,8 +40,8 @@ class MockGalleryRepository implements IGalleryRepository {
     }
   }
 
-  async delete(id: string): Promise<void> {
-    this.galleryItems = this.galleryItems.filter((item) => item.id !== id)
+  async delete(id: string, storyId: string, ownerId: string): Promise<void> {
+    this.galleryItems = this.galleryItems.filter((item) => item.id !== id || item.storyId !== storyId || item.ownerId !== ownerId)
   }
 }
 
@@ -42,7 +51,21 @@ describe('DeleteGalleryUseCase', () => {
 
   beforeEach(() => {
     galleryRepository = new MockGalleryRepository()
-    deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      if (id === 'another_story' && userId === 'user123') {
+        return Promise.resolve({ id: 'another_story', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+      }
+      return Promise.resolve(null)
+    })
+
+    deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository, mockStoryRepository)
 
     // Pre-populate a gallery item for testing
     galleryRepository.save({
@@ -59,7 +82,7 @@ describe('DeleteGalleryUseCase', () => {
   })
 
   it('should delete an existing gallery item successfully', async () => {
-    const deleted = await deleteGalleryUseCase.execute('gal123', 'story123', 'char123')
+    const deleted = await deleteGalleryUseCase.execute('user123', 'gal123', 'story123', 'char123')
     expect(deleted).toBe(true)
 
     const gallery = await galleryRepository.findById('gal123')
@@ -67,13 +90,11 @@ describe('DeleteGalleryUseCase', () => {
   })
 
   it('should return false if gallery item not found', async () => {
-    const deleted = await deleteGalleryUseCase.execute('nonexistent_gal', 'story123', 'char123')
-    expect(deleted).toBe(false)
+    await expect(deleteGalleryUseCase.execute('user123', 'nonexistent_gal', 'story123', 'char123')).rejects.toThrow('Gallery item not found')
   })
 
   it('should return false if gallery item does not belong to the specified story', async () => {
-    const deleted = await deleteGalleryUseCase.execute('gal123', 'another_story', 'char123')
-    expect(deleted).toBe(false)
+    await expect(deleteGalleryUseCase.execute('user123', 'gal123', 'another_story', 'char123')).rejects.toThrow('Gallery item not found or does not belong to the specified story')
 
     // Ensure the gallery item was not deleted
     const gallery = await galleryRepository.findById('gal123')

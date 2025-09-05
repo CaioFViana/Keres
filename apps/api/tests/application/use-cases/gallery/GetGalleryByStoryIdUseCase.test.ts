@@ -2,7 +2,16 @@ import type { Gallery } from '@domain/entities/Gallery'
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 
 import { GetGalleryByStoryIdUseCase } from '@application/use-cases/gallery/GetGalleryByStoryIdUseCase'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock for IStoryRepository
+const mockStoryRepository = {
+  findById: vi.fn(),
+  findByUserId: vi.fn(),
+  save: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+}
 
 // Mock implementation
 class MockGalleryRepository implements IGalleryRepository {
@@ -42,7 +51,21 @@ describe('GetGalleryByStoryIdUseCase', () => {
 
   beforeEach(() => {
     galleryRepository = new MockGalleryRepository()
-    getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(galleryRepository)
+    // Reset mocks before each test
+    vi.clearAllMocks()
+
+    // Setup mock return values for dependencies
+    mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
+      if (id === 'story123' && userId === 'user123') {
+        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+      }
+      if (id === 'story456' && userId === 'user123') {
+        return Promise.resolve({ id: 'story456', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+      }
+      return Promise.resolve(null)
+    })
+
+    getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(galleryRepository, mockStoryRepository)
 
     // Pre-populate gallery items for testing
     galleryRepository.save({
@@ -81,7 +104,7 @@ describe('GetGalleryByStoryIdUseCase', () => {
   })
 
   it('should return all gallery items for a given story ID', async () => {
-    const galleryItems = await getGalleryByStoryIdUseCase.execute('story123')
+    const galleryItems = await getGalleryByStoryIdUseCase.execute('user123', 'story123')
 
     expect(galleryItems).toBeDefined()
     expect(galleryItems.length).toBe(2)
@@ -90,9 +113,6 @@ describe('GetGalleryByStoryIdUseCase', () => {
   })
 
   it('should return an empty array if no gallery items found for the story ID', async () => {
-    const galleryItems = await getGalleryByStoryIdUseCase.execute('nonexistent_story')
-
-    expect(galleryItems).toBeDefined()
-    expect(galleryItems.length).toBe(0)
+    await expect(getGalleryByStoryIdUseCase.execute('user123', 'nonexistent_story')).rejects.toThrow('Story not found or not owned by user')
   })
 })

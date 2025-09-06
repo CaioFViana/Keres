@@ -5,8 +5,10 @@ import type { ILocationRepository } from '@domain/repositories/ILocationReposito
 import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { GalleryCreatePayload, GalleryResponse } from '@keres/shared'
+import { getKeresGalleryPath } from '@keres/shared'
 
 import { ulid } from 'ulid'
+import fs from 'fs'
 
 export class CreateGalleryUseCase {
   constructor(
@@ -24,45 +26,56 @@ export class CreateGalleryUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    // Validate ownerId if provided
-    let ownerIdToUse: string | null = null
-    if (data.ownerId) {
-      let ownerFound = false
-
-      // Check in Characters
-      const character = await this.characterRepository.findById(data.ownerId)
-      if (character && character.storyId === data.storyId) {
-        ownerFound = true
-        ownerIdToUse = data.ownerId
-      }
-
-      // Check in Notes (only if not found in Characters)
-      if (!ownerFound) {
-        const note = await this.noteRepository.findById(data.ownerId)
-        if (note && note.storyId === data.storyId) {
-          ownerFound = true
-          ownerIdToUse = data.ownerId
-        }
-      }
-
-      // Check in Locations (only if not found in Notes)
-      if (!ownerFound) {
-        const location = await this.locationRepository.findById(data.ownerId)
-        if (location && location.storyId === data.storyId) {
-          ownerFound = true
-          ownerIdToUse = data.ownerId
-        }
+    // Validate ownerId based on ownerType
+    let ownerFound = false
+    if (data.ownerId && data.ownerType) {
+      switch (data.ownerType) {
+        case 'character':
+          const character = await this.characterRepository.findById(data.ownerId)
+          if (character && character.storyId === data.storyId) {
+            ownerFound = true
+          }
+          break
+        case 'note':
+          const note = await this.noteRepository.findById(data.ownerId)
+          if (note && note.storyId === data.storyId) {
+            ownerFound = true
+          }
+          break
+        case 'location':
+          const location = await this.locationRepository.findById(data.ownerId)
+          if (location && location.storyId === data.storyId) {
+            ownerFound = true
+          }
+          break
       }
 
       if (!ownerFound) {
         throw new Error('Owner not found or does not belong to the specified story')
       }
+    } else if (data.ownerId && !data.ownerType) {
+      throw new Error('ownerType is required when ownerId is provided')
     }
+
+    // Ensure Gallery directory exists if isFile is true
+    if (data.isFile) {
+      const galleryPath = getKeresGalleryPath()
+      if (!fs.existsSync(galleryPath)) {
+        console.log(`Creating gallery directory: ${galleryPath}`)
+        fs.mkdirSync(galleryPath, { recursive: true })
+      }
+    }
+
+    // TODO: Implement file saving logic here if data.isFile is true.
+    // This will involve receiving the actual file data (e.g., as a Buffer) from the controller,
+    // generating a unique filename, saving it to the path returned by getKeresGalleryPath(),
+    // and updating data.imagePath to reflect the local file path.
 
     const newGallery: Gallery = {
       id: ulid(),
       storyId: data.storyId,
-      ownerId: ownerIdToUse,
+      ownerId: data.ownerId,
+      ownerType: data.ownerType || null,
       imagePath: data.imagePath,
       isFile: data.isFile || false,
       isFavorite: data.isFavorite || false,
@@ -77,6 +90,7 @@ export class CreateGalleryUseCase {
       id: newGallery.id,
       storyId: newGallery.storyId,
       ownerId: newGallery.ownerId,
+      ownerType: newGallery.ownerType,
       imagePath: newGallery.imagePath,
       isFile: newGallery.isFile,
       isFavorite: newGallery.isFavorite,

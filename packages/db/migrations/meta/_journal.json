@@ -127,6 +127,13 @@
       "when": 1757117207247,
       "tag": "0017_lean_golden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1757123810188,
+      "tag": "0018_brown_jazinda",
+      "breakpoints": true
     }
   ]
 }

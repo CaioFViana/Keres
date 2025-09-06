@@ -2,8 +2,11 @@ import Database from 'better-sqlite3'
 import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
 import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
+import path from 'path'
+import fs from 'fs'
 
 import * as schema from './schema' // Import all exports from schema.ts
+import { getKeresDbPath } from '@keres/shared'
 
 // Determine APP_MODE, defaulting to 'online'
 const appMode = process.env.APP_MODE || 'online'
@@ -18,7 +21,7 @@ if (process.env.DATABASE_URL) {
 } else {
   if (appMode === 'offline') {
     // Default for offline mode: local SQLite file
-    connectionString = 'file:./data/keres.sqlite'
+    connectionString = 'file:' + getKeresDbPath()
   } else {
     // Default for online mode: local PostgreSQL
     connectionString = 'postgres://user:password@localhost:5432/keres_db'
@@ -33,7 +36,17 @@ console.log(`Using database type: ${databaseType}`)
 console.log(`Using connection string: ${connectionString}`)
 
 if (databaseType === 'sqlite') {
-  const sqlite = new Database(connectionString)
+  // Extract the file path from the connection string (e.g., 'file:/path/to/db.sqlite')
+  const dbFilePath = connectionString.startsWith('file:') ? connectionString.substring(5) : connectionString
+  const dbDirectory = path.dirname(dbFilePath)
+
+  // Ensure the directory exists
+  if (!fs.existsSync(dbDirectory)) {
+    console.log(`Creating database directory: ${dbDirectory}`)
+    fs.mkdirSync(dbDirectory, { recursive: true })
+  }
+
+  const sqlite = new Database(dbFilePath)
   db = drizzleSqlite(sqlite, { schema })
 } else if (databaseType === 'postgres') {
   // Explicitly check for postgres

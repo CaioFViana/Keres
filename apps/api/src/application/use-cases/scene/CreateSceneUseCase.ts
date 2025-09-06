@@ -1,9 +1,9 @@
 import type { Scene } from '@domain/entities/Scene'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
 import type { SceneCreatePayload, SceneResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'
@@ -58,7 +58,10 @@ export class CreateSceneUseCase {
     // Re-fetch chapter and story with userId for ownership verification within this block
     const chapterForImplicit = await this.chapterRepository.findById(newScene.chapterId)
     if (chapterForImplicit) {
-      const storyForImplicit = await this.storyRepository.findById(chapterForImplicit.storyId, userId)
+      const storyForImplicit = await this.storyRepository.findById(
+        chapterForImplicit.storyId,
+        userId,
+      )
       if (storyForImplicit && storyForImplicit.type === 'linear') {
         const scenesInChapter = await this.sceneRepository.findByChapterId(newScene.chapterId)
         scenesInChapter.sort((a, b) => a.index - b.index)

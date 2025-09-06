@@ -2,6 +2,6 @@
 
 export * from './CreateNoteUseCase'
 export * from './DeleteNoteUseCase'
-export * from './GetNoteUseCase'
 export * from './GetNotesByStoryIdUseCase'
+export * from './GetNoteUseCase'
 export * from './UpdateNoteUseCase'

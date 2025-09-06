@@ -31,7 +31,7 @@ export const authMiddleware = async (c: Context, next: Next) => {
       return c.json({ error: 'Unauthorized: Invalid token' }, 401)
     }
     // Attach decoded payload to context for later use in routes
-    c.set('jwtPayload', decoded as {userId: string})
+    c.set('jwtPayload', decoded as { userId: string })
     await next()
   } catch (error) {
     return c.json({ error: 'Unauthorized: Token verification failed' }, 401)

@@ -33,7 +33,10 @@ export class DeleteSceneUseCase {
     // Re-fetch chapter and story with userId for ownership verification within this block
     const chapterForImplicit = await this.chapterRepository.findById(existingScene.chapterId)
     if (chapterForImplicit) {
-      const storyForImplicit = await this.storyRepository.findById(chapterForImplicit.storyId, userId)
+      const storyForImplicit = await this.storyRepository.findById(
+        chapterForImplicit.storyId,
+        userId,
+      )
       if (storyForImplicit && storyForImplicit.type === 'linear') {
         const scenesInChapter = await this.sceneRepository.findByChapterId(existingScene.chapterId)
         scenesInChapter.sort((a, b) => a.index - b.index)

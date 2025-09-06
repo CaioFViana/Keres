@@ -6,7 +6,12 @@ import {
   UpdateChoiceUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { ChoiceRepository, SceneRepository, ChapterRepository, StoryRepository } from '@infrastructure/persistence'
+import {
+  ChapterRepository,
+  ChoiceRepository,
+  SceneRepository,
+  StoryRepository,
+} from '@infrastructure/persistence'
 import { ChoiceResponseSchema, CreateChoiceSchema, UpdateChoiceSchema } from '@keres/shared' // Use alias
 import { ChoiceController } from '@presentation/controllers/ChoiceController' // Use alias
 import { z } from 'zod' // Import z for defining parameters

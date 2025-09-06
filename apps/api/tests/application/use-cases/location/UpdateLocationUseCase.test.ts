@@ -53,10 +53,20 @@ describe('UpdateLocationUseCase', () => {
     // Setup mock return values for dependencies
     mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
       if (id === 'story123' && userId === 'user123') {
-        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+        return Promise.resolve({
+          id: 'story123',
+          userId: 'user123',
+          title: 'Test Story 1',
+          type: 'linear',
+        })
       }
       if (id === 'another_story' && userId === 'user123') {
-        return Promise.resolve({ id: 'another_story', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+        return Promise.resolve({
+          id: 'another_story',
+          userId: 'user123',
+          title: 'Test Story 2',
+          type: 'linear',
+        })
       }
       return Promise.resolve(null)
     })
@@ -104,7 +114,9 @@ describe('UpdateLocationUseCase', () => {
       name: 'New Name',
     }
 
-    await expect(updateLocationUseCase.execute('user123', updateDTO)).rejects.toThrow('Location not found')
+    await expect(updateLocationUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Location not found',
+    )
   })
 
   it('should return null if location does not belong to the specified story', async () => {
@@ -114,7 +126,9 @@ describe('UpdateLocationUseCase', () => {
       name: 'New Name',
     }
 
-    await expect(updateLocationUseCase.execute('user123', updateDTO)).rejects.toThrow('Location not found or does not belong to the specified story')
+    await expect(updateLocationUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Location not found or does not belong to the specified story',
+    )
 
     // Ensure the location was not updated
     const location = await locationRepository.findById('loc123')

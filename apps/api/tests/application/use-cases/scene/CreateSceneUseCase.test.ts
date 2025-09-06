@@ -1,9 +1,9 @@
 import type { Scene } from '@domain/entities/Scene'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
 
 import { CreateSceneUseCase } from '@application/use-cases/scene/CreateSceneUseCase'
 import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
@@ -88,7 +88,11 @@ describe('CreateSceneUseCase', () => {
       }
       return null
     })
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    })
     mockLocationRepository.findById.mockImplementation((id: string) => {
       if (id === 'loc123') return { id: 'loc123', storyId: 'story123' }
       return null
@@ -159,7 +163,9 @@ describe('CreateSceneUseCase', () => {
       index: 3,
     }
 
-    await expect(createSceneUseCase.execute('user123', sceneDTO)).rejects.toThrow('Chapter not found')
+    await expect(createSceneUseCase.execute('user123', sceneDTO)).rejects.toThrow(
+      'Chapter not found',
+    )
   })
 
   it('should throw an error if story not found or not owned by user', async () => {
@@ -187,11 +193,16 @@ describe('CreateSceneUseCase', () => {
       index: 5,
     }
 
-    await expect(createSceneUseCase.execute('user123', sceneDTO)).rejects.toThrow('Location not found')
+    await expect(createSceneUseCase.execute('user123', sceneDTO)).rejects.toThrow(
+      'Location not found',
+    )
   })
 
   it('should throw an error if location does not belong to the same story as the chapter', async () => {
-    mockLocationRepository.findById.mockResolvedValue({ id: 'loc_other_story', storyId: 'other_story' }) // Mock location from another story
+    mockLocationRepository.findById.mockResolvedValue({
+      id: 'loc_other_story',
+      storyId: 'other_story',
+    }) // Mock location from another story
 
     const sceneDTO = {
       chapterId: 'chapter123',

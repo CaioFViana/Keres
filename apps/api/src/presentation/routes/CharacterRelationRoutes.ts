@@ -6,7 +6,11 @@ import {
   UpdateCharacterRelationUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { CharacterRelationRepository, CharacterRepository, StoryRepository } from '@infrastructure/persistence'
+import {
+  CharacterRelationRepository,
+  CharacterRepository,
+  StoryRepository,
+} from '@infrastructure/persistence'
 import {
   CharacterRelationCreateSchema,
   CharacterRelationResponseSchema,
@@ -113,7 +117,10 @@ characterRelationRoutes.openapi(
     const body = await c.req.json()
     const data = CharacterRelationCreateSchema.parse(body)
     try {
-      const characterRelation = await characterRelationController.createCharacterRelation(userId, data)
+      const characterRelation = await characterRelationController.createCharacterRelation(
+        userId,
+        data,
+      )
       return c.json(characterRelation, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -166,7 +173,10 @@ characterRelationRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const characterRelation = await characterRelationController.getCharacterRelation(userId, params.id)
+      const characterRelation = await characterRelationController.getCharacterRelation(
+        userId,
+        params.id,
+      )
       return c.json(characterRelation, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

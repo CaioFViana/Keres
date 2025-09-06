@@ -27,7 +27,7 @@ export class AddTagToEntityUseCase {
 
     // 2. Validate target entity existence and ownership
     switch (targetType) {
-      case 'Character':
+      case 'Character': {
         const character = await this.characterRepository.findById(targetId)
         if (!character) {
           throw new Error('Character not found.')
@@ -38,7 +38,8 @@ export class AddTagToEntityUseCase {
         }
         await this.tagRepository.addTagToCharacter(targetId, tagId)
         break
-      case 'Location':
+      }
+      case 'Location': {
         const location = await this.locationRepository.findById(targetId)
         if (!location) {
           throw new Error('Location not found.')
@@ -49,7 +50,8 @@ export class AddTagToEntityUseCase {
         }
         await this.tagRepository.addTagToLocation(targetId, tagId)
         break
-      case 'Chapter':
+      }
+      case 'Chapter': {
         const chapter = await this.chapterRepository.findById(targetId)
         if (!chapter) {
           throw new Error('Chapter not found.')
@@ -60,7 +62,8 @@ export class AddTagToEntityUseCase {
         }
         await this.tagRepository.addTagToChapter(targetId, tagId)
         break
-      case 'Scene':
+      }
+      case 'Scene': {
         const scene = await this.sceneRepository.findById(targetId)
         if (!scene) {
           throw new Error('Scene not found.')
@@ -75,6 +78,7 @@ export class AddTagToEntityUseCase {
         }
         await this.tagRepository.addTagToScene(targetId, tagId)
         break
+      }
       default:
         throw new Error('Invalid target type.')
     }

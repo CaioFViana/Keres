@@ -20,7 +20,10 @@ const createLocationUseCase = new CreateLocationUseCase(locationRepository, stor
 const getLocationUseCase = new GetLocationUseCase(locationRepository, storyRepository)
 const updateLocationUseCase = new UpdateLocationUseCase(locationRepository, storyRepository)
 const deleteLocationUseCase = new DeleteLocationUseCase(locationRepository, storyRepository)
-const getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(locationRepository, storyRepository)
+const getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(
+  locationRepository,
+  storyRepository,
+)
 
 const locationController = new LocationController(
   createLocationUseCase,

@@ -7,7 +7,13 @@ import {
   UpdateGalleryUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { GalleryRepository, StoryRepository, CharacterRepository, NoteRepository, LocationRepository } from '@infrastructure/persistence'
+import {
+  CharacterRepository,
+  GalleryRepository,
+  LocationRepository,
+  NoteRepository,
+  StoryRepository,
+} from '@infrastructure/persistence'
 import { GalleryCreateSchema, GalleryResponseSchema, GalleryUpdateSchema } from '@keres/shared' // Import GalleryResponseSchema
 import { GalleryController } from '@presentation/controllers/GalleryController'
 import { z } from 'zod' // Import z for defining parameters
@@ -31,7 +37,10 @@ const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(
   locationRepository,
   storyRepository,
 )
-const getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(galleryRepository, storyRepository)
+const getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(
+  galleryRepository,
+  storyRepository,
+)
 
 const galleryController = new GalleryController(
   createGalleryUseCase,

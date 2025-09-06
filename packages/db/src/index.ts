@@ -35,7 +35,8 @@ console.log(`Using connection string: ${connectionString}`)
 if (databaseType === 'sqlite') {
   const sqlite = new Database(connectionString)
   db = drizzleSqlite(sqlite, { schema })
-} else if (databaseType === 'postgres') { // Explicitly check for postgres
+} else if (databaseType === 'postgres') {
+  // Explicitly check for postgres
   const client = postgres(connectionString)
   db = drizzlePg(client, { schema })
 } else {
@@ -46,4 +47,3 @@ if (databaseType === 'sqlite') {
 export { db } // Export db and pass schema
 
 export * from './schema' // Re-export all named exports from schema.ts
-

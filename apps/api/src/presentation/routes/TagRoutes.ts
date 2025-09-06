@@ -397,7 +397,7 @@ tagRoutes.openapi(
       404: {
         description: 'Not Found',
         content: {
-          'application': {
+          application: {
             schema: z.object({ error: z.string() }),
           },
         },
@@ -457,7 +457,7 @@ tagRoutes.openapi(
       400: {
         description: 'Bad Request',
         content: {
-          'application': {
+          application: {
             schema: z.object({ error: z.string() }),
           },
         },
@@ -465,7 +465,7 @@ tagRoutes.openapi(
       404: {
         description: 'Not Found',
         content: {
-          'application': {
+          application: {
             schema: z.object({ error: z.string() }),
           },
         },

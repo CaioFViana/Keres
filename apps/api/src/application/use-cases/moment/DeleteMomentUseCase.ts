@@ -1,6 +1,6 @@
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import IChapterRepository
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Import ISceneRepository
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import IChapterRepository
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 
 export class DeleteMomentUseCase {

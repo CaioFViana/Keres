@@ -52,7 +52,11 @@ describe('GetCharactersByStoryIdUseCase', () => {
     vi.clearAllMocks()
 
     // Setup mock return values for dependencies
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    }) // Default story for tests
 
     getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(
       characterRepository,
@@ -135,8 +139,8 @@ describe('GetCharactersByStoryIdUseCase', () => {
   it('should throw an error if story not found or not owned by user', async () => {
     mockStoryRepository.findById.mockResolvedValue(null) // Mock story not found
 
-    await expect(getCharactersByStoryIdUseCase.execute('user123', 'nonexistent_story')).rejects.toThrow(
-      'Story not found or not owned by user',
-    )
+    await expect(
+      getCharactersByStoryIdUseCase.execute('user123', 'nonexistent_story'),
+    ).rejects.toThrow('Story not found or not owned by user')
   })
 })

@@ -13,7 +13,10 @@ export class CreateCharacterRelationUseCase {
     private readonly storyRepository: IStoryRepository, // Inject
   ) {}
 
-  async execute(userId: string, data: CharacterRelationCreatePayload): Promise<CharacterRelationResponse> {
+  async execute(
+    userId: string,
+    data: CharacterRelationCreatePayload,
+  ): Promise<CharacterRelationResponse> {
     // Verify character1 ownership
     const character1 = await this.characterRepository.findById(data.charId1)
     if (!character1) {

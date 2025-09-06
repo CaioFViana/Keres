@@ -1,7 +1,7 @@
 import type { Note } from '@domain/entities/Note'
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository' // Added
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository' // Added
 import type { CreateNotePayload, NoteResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'

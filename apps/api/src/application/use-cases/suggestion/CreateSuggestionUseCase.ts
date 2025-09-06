@@ -1,6 +1,6 @@
 import type { Suggestion } from '@domain/entities/Suggestion'
-import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
+import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 import type { CreateSuggestionPayload, SuggestionResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'

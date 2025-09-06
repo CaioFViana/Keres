@@ -11,9 +11,9 @@ import type { z } from 'zod'
 
 import {
   type CreateTagSchema,
-  TagResponseSchema,
   type TagAssignmentPayload,
   type TagRemovalPayload,
+  TagResponseSchema,
   type UpdateTagSchema,
 } from '@keres/shared'
 

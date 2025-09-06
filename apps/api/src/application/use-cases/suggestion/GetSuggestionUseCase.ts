@@ -1,5 +1,5 @@
-import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
+import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 import type { SuggestionResponse } from '@keres/shared'
 
 export class GetSuggestionUseCase {

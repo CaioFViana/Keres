@@ -1,9 +1,9 @@
 import type { Gallery } from '@domain/entities/Gallery'
-import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository' // Added
-import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
+import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { GalleryCreatePayload, GalleryResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'
@@ -70,8 +70,6 @@ export class CreateGalleryUseCase {
       createdAt: new Date(),
       updatedAt: new Date(),
     }
-
-    
 
     await this.galleryRepository.save(newGallery)
 

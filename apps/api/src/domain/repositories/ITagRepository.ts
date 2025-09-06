@@ -1,4 +1,4 @@
-import { Tag } from '@domain/entities/Tag'
+import type { Tag } from '@domain/entities/Tag'
 
 export interface ITagRepository {
   findById(tagId: string): Promise<Tag | null>

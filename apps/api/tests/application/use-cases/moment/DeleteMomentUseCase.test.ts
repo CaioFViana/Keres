@@ -1,7 +1,7 @@
 import type { Moment } from '@domain/entities/Moment'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Added
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { DeleteMomentUseCase } from '@application/use-cases/moment/DeleteMomentUseCase'
@@ -78,8 +78,16 @@ describe('DeleteMomentUseCase', () => {
       }
       return null
     })
-    mockChapterRepository.findById.mockResolvedValue({ id: 'chapter123', storyId: 'story123', name: 'Chapter 1' })
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+    mockChapterRepository.findById.mockResolvedValue({
+      id: 'chapter123',
+      storyId: 'story123',
+      name: 'Chapter 1',
+    })
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    })
 
     deleteMomentUseCase = new DeleteMomentUseCase(
       momentRepository,
@@ -112,14 +120,28 @@ describe('DeleteMomentUseCase', () => {
   })
 
   it('should return false if moment not found', async () => {
-    await expect(deleteMomentUseCase.execute('user123', 'nonexistent_moment')).rejects.toThrow('Moment not found')
+    await expect(deleteMomentUseCase.execute('user123', 'nonexistent_moment')).rejects.toThrow(
+      'Moment not found',
+    )
   })
 
-      it('should return false if moment does not belong to the specified scene', async () => {
+  it('should return false if moment does not belong to the specified scene', async () => {
     // Mock scene to return a scene not owned by the user
-    mockSceneRepository.findById.mockResolvedValue({ id: 'another_scene', chapterId: 'another_chapter', name: 'Scene X' })
-    mockChapterRepository.findById.mockResolvedValue({ id: 'another_chapter', storyId: 'another_story', name: 'Chapter X' })
-    mockStoryRepository.findById.mockResolvedValue({ id: 'another_story', userId: 'another_user', type: 'linear' })
+    mockSceneRepository.findById.mockResolvedValue({
+      id: 'another_scene',
+      chapterId: 'another_chapter',
+      name: 'Scene X',
+    })
+    mockChapterRepository.findById.mockResolvedValue({
+      id: 'another_chapter',
+      storyId: 'another_story',
+      name: 'Chapter X',
+    })
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'another_story',
+      userId: 'another_user',
+      type: 'linear',
+    })
 
     await expect(deleteMomentUseCase.execute('user123', 'moment123')).rejects.toThrow(
       'Story not found or not owned by user',

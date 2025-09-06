@@ -1,6 +1,6 @@
 import type { Scene } from '@domain/entities/Scene'
-import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
+import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { GetScenesByChapterIdUseCase } from '@application/use-cases/scene/GetScenesByChapterIdUseCase'
@@ -68,7 +68,11 @@ describe('GetScenesByChapterIdUseCase', () => {
       }
       return null
     })
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    })
 
     getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(
       sceneRepository,
@@ -137,9 +141,9 @@ describe('GetScenesByChapterIdUseCase', () => {
   it('should throw an error if chapter not found or not owned by user', async () => {
     mockChapterRepository.findById.mockResolvedValue(null) // Mock chapter not found
 
-    await expect(getScenesByChapterIdUseCase.execute('user123', 'nonexistent_chapter')).rejects.toThrow(
-      'Chapter not found',
-    )
+    await expect(
+      getScenesByChapterIdUseCase.execute('user123', 'nonexistent_chapter'),
+    ).rejects.toThrow('Chapter not found')
   })
 
   it('should throw an error if story not found or not owned by user for chapter', async () => {

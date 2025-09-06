@@ -53,7 +53,12 @@ describe('GetLocationUseCase', () => {
     // Setup mock return values for dependencies
     mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
       if (id === 'story123' && userId === 'user123') {
-        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+        return Promise.resolve({
+          id: 'story123',
+          userId: 'user123',
+          title: 'Test Story 1',
+          type: 'linear',
+        })
       }
       return Promise.resolve(null)
     })
@@ -84,7 +89,9 @@ describe('GetLocationUseCase', () => {
     expect(locationProfile?.name).toBe('Test Location')
   })
 
-    it('should return null for an invalid location ID', async () => {
-    await expect(getLocationUseCase.execute('user123', 'nonexistent')).rejects.toThrow('Location not found')
+  it('should return null for an invalid location ID', async () => {
+    await expect(getLocationUseCase.execute('user123', 'nonexistent')).rejects.toThrow(
+      'Location not found',
+    )
   })
 })

@@ -1,7 +1,7 @@
 import type { Moment } from '@domain/entities/Moment'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Added
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { UpdateMomentUseCase } from '@application/use-cases/moment/UpdateMomentUseCase'
@@ -78,8 +78,16 @@ describe('UpdateMomentUseCase', () => {
       }
       return null
     })
-    mockChapterRepository.findById.mockResolvedValue({ id: 'chapter123', storyId: 'story123', name: 'Chapter 1' })
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+    mockChapterRepository.findById.mockResolvedValue({
+      id: 'chapter123',
+      storyId: 'story123',
+      name: 'Chapter 1',
+    })
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    })
 
     updateMomentUseCase = new UpdateMomentUseCase(
       momentRepository,
@@ -139,7 +147,9 @@ describe('UpdateMomentUseCase', () => {
       name: 'New Name',
     }
 
-    await expect(updateMomentUseCase.execute('user123', updateDTO)).rejects.toThrow('Scene not found')
+    await expect(updateMomentUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Scene not found',
+    )
   })
 
   it('should throw an error if chapter not found for scene', async () => {
@@ -150,7 +160,9 @@ describe('UpdateMomentUseCase', () => {
       name: 'New Name',
     }
 
-    await expect(updateMomentUseCase.execute('user123', updateDTO)).rejects.toThrow('Chapter not found')
+    await expect(updateMomentUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Chapter not found',
+    )
   })
 
   it('should throw an error if story not found or not owned by user for moment', async () => {

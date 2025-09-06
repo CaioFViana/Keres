@@ -10,7 +10,10 @@ export class UpdateCharacterRelationUseCase {
     private readonly storyRepository: IStoryRepository, // Inject
   ) {}
 
-  async execute(userId: string, data: CharacterRelationUpdatePayload): Promise<CharacterRelationResponse> {
+  async execute(
+    userId: string,
+    data: CharacterRelationUpdatePayload,
+  ): Promise<CharacterRelationResponse> {
     const existingCharacterRelation = await this.characterRelationRepository.findById(data.id)
     if (!existingCharacterRelation) {
       throw new Error('Character relation not found')
@@ -35,7 +38,11 @@ export class UpdateCharacterRelationUseCase {
       updatedAt: new Date(),
     }
 
-    await this.characterRelationRepository.update(updatedCharacterRelation, existingCharacterRelation.id, character1.storyId)
+    await this.characterRelationRepository.update(
+      updatedCharacterRelation,
+      existingCharacterRelation.id,
+      character1.storyId,
+    )
 
     return {
       id: updatedCharacterRelation.id,

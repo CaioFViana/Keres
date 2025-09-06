@@ -10,7 +10,7 @@ import {
   UpdateSuggestionUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { SuggestionRepository, StoryRepository } from '@infrastructure/persistence'
+import { StoryRepository, SuggestionRepository } from '@infrastructure/persistence'
 import {
   CreateSuggestionSchema,
   SuggestionResponseSchema,
@@ -29,8 +29,14 @@ const getSuggestionUseCase = new GetSuggestionUseCase(suggestionRepository, stor
 const updateSuggestionUseCase = new UpdateSuggestionUseCase(suggestionRepository, storyRepository)
 const deleteSuggestionUseCase = new DeleteSuggestionUseCase(suggestionRepository, storyRepository)
 const getSuggestionsByUserIdUseCase = new GetSuggestionsByUserIdUseCase(suggestionRepository)
-const getSuggestionsByStoryIdUseCase = new GetSuggestionsByStoryIdUseCase(suggestionRepository, storyRepository)
-const getSuggestionsByTypeUseCase = new GetSuggestionsByTypeUseCase(suggestionRepository, storyRepository)
+const getSuggestionsByStoryIdUseCase = new GetSuggestionsByStoryIdUseCase(
+  suggestionRepository,
+  storyRepository,
+)
+const getSuggestionsByTypeUseCase = new GetSuggestionsByTypeUseCase(
+  suggestionRepository,
+  storyRepository,
+)
 const getSuggestionsByUserAndTypeUseCase = new GetSuggestionsByUserAndTypeUseCase(
   suggestionRepository,
 )

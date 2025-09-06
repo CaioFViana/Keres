@@ -22,12 +22,18 @@ export class CharacterMomentController {
   }
 
   async getCharacterMomentsByCharacterId(userId: string, characterId: string) {
-    const characterMoments = await this.getCharacterMomentsByCharacterIdUseCase.execute(userId, characterId)
+    const characterMoments = await this.getCharacterMomentsByCharacterIdUseCase.execute(
+      userId,
+      characterId,
+    )
     return characterMoments.map((cm) => CharacterMomentResponseSchema.parse(cm))
   }
 
   async getCharacterMomentsByMomentId(userId: string, momentId: string) {
-    const characterMoments = await this.getCharacterMomentsByMomentIdUseCase.execute(userId, momentId)
+    const characterMoments = await this.getCharacterMomentsByMomentIdUseCase.execute(
+      userId,
+      momentId,
+    )
     return characterMoments.map((cm) => CharacterMomentResponseSchema.parse(cm))
   }
 

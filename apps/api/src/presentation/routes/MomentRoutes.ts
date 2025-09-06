@@ -6,7 +6,12 @@ import {
   UpdateMomentUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { MomentRepository, SceneRepository, ChapterRepository, StoryRepository } from '@infrastructure/persistence'
+import {
+  ChapterRepository,
+  MomentRepository,
+  SceneRepository,
+  StoryRepository,
+} from '@infrastructure/persistence'
 import { CreateMomentSchema, MomentResponseSchema, UpdateMomentSchema } from '@keres/shared'
 import { MomentController } from '@presentation/controllers/MomentController'
 import { z } from 'zod'

@@ -5,7 +5,14 @@ import {
   GetCharacterMomentsByMomentIdUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { CharacterMomentRepository, CharacterRepository, MomentRepository, SceneRepository, ChapterRepository, StoryRepository } from '@infrastructure/persistence'
+import {
+  ChapterRepository,
+  CharacterMomentRepository,
+  CharacterRepository,
+  MomentRepository,
+  SceneRepository,
+  StoryRepository,
+} from '@infrastructure/persistence'
 import { CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@keres/shared' // Import CharacterMomentResponseSchema
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
 import { z } from 'zod' // Import z for defining parameters
@@ -73,7 +80,6 @@ characterMomentRoutes.openapi(
     summary: 'Create a new character moment',
     description: 'Creates a new association between a character and a moment.',
     request: {
-      
       body: {
         content: {
           'application/json': {

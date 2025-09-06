@@ -41,7 +41,9 @@ class MockGalleryRepository implements IGalleryRepository {
   }
 
   async delete(id: string, storyId: string, ownerId: string): Promise<void> {
-    this.galleryItems = this.galleryItems.filter((item) => item.id !== id || item.storyId !== storyId || item.ownerId !== ownerId)
+    this.galleryItems = this.galleryItems.filter(
+      (item) => item.id !== id || item.storyId !== storyId || item.ownerId !== ownerId,
+    )
   }
 }
 
@@ -57,10 +59,20 @@ describe('DeleteGalleryUseCase', () => {
     // Setup mock return values for dependencies
     mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
       if (id === 'story123' && userId === 'user123') {
-        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+        return Promise.resolve({
+          id: 'story123',
+          userId: 'user123',
+          title: 'Test Story 1',
+          type: 'linear',
+        })
       }
       if (id === 'another_story' && userId === 'user123') {
-        return Promise.resolve({ id: 'another_story', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+        return Promise.resolve({
+          id: 'another_story',
+          userId: 'user123',
+          title: 'Test Story 2',
+          type: 'linear',
+        })
       }
       return Promise.resolve(null)
     })
@@ -90,11 +102,15 @@ describe('DeleteGalleryUseCase', () => {
   })
 
   it('should return false if gallery item not found', async () => {
-    await expect(deleteGalleryUseCase.execute('user123', 'nonexistent_gal', 'story123', 'char123')).rejects.toThrow('Gallery item not found')
+    await expect(
+      deleteGalleryUseCase.execute('user123', 'nonexistent_gal', 'story123', 'char123'),
+    ).rejects.toThrow('Gallery item not found')
   })
 
   it('should return false if gallery item does not belong to the specified story', async () => {
-    await expect(deleteGalleryUseCase.execute('user123', 'gal123', 'another_story', 'char123')).rejects.toThrow('Gallery item not found or does not belong to the specified story')
+    await expect(
+      deleteGalleryUseCase.execute('user123', 'gal123', 'another_story', 'char123'),
+    ).rejects.toThrow('Gallery item not found or does not belong to the specified story')
 
     // Ensure the gallery item was not deleted
     const gallery = await galleryRepository.findById('gal123')

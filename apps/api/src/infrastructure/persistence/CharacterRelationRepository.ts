@@ -1,8 +1,8 @@
 import type { CharacterRelation } from '@domain/entities/CharacterRelation'
 import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
 
-import { characterRelations, db, characters } from '@keres/db' // Import db, characterRelations, and characters table
-import { eq, or, and } from 'drizzle-orm' // Import and
+import { characterRelations, characters, db } from '@keres/db' // Import db, characterRelations, and characters table
+import { and, eq, or } from 'drizzle-orm' // Import and
 
 export class CharacterRelationRepository implements ICharacterRelationRepository {
   constructor() {}
@@ -43,7 +43,11 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
     }
   }
 
-  async update(characterRelationData: CharacterRelation, id: string, storyId: string): Promise<void> {
+  async update(
+    characterRelationData: CharacterRelation,
+    id: string,
+    storyId: string,
+  ): Promise<void> {
     try {
       await db
         .update(characterRelations)

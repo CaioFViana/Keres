@@ -57,7 +57,12 @@ describe('GetGalleryUseCase', () => {
     // Setup mock return values for dependencies
     mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
       if (id === 'story123' && userId === 'user123') {
-        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+        return Promise.resolve({
+          id: 'story123',
+          userId: 'user123',
+          title: 'Test Story 1',
+          type: 'linear',
+        })
       }
       return Promise.resolve(null)
     })
@@ -87,6 +92,8 @@ describe('GetGalleryUseCase', () => {
   })
 
   it('should return null for an invalid gallery ID', async () => {
-    await expect(getGalleryUseCase.execute('user123', 'nonexistent')).rejects.toThrow('Gallery item not found')
+    await expect(getGalleryUseCase.execute('user123', 'nonexistent')).rejects.toThrow(
+      'Gallery item not found',
+    )
   })
 })

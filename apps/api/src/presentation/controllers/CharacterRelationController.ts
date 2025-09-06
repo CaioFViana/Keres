@@ -22,7 +22,10 @@ export class CharacterRelationController {
     private readonly getCharacterRelationsByCharIdUseCase: GetCharacterRelationsByCharIdUseCase,
   ) {}
 
-  async createCharacterRelation(userId: string, data: z.infer<typeof CharacterRelationCreateSchema>) {
+  async createCharacterRelation(
+    userId: string,
+    data: z.infer<typeof CharacterRelationCreateSchema>,
+  ) {
     const characterRelation = await this.createCharacterRelationUseCase.execute(userId, data)
     return CharacterRelationResponseSchema.parse(characterRelation)
   }
@@ -36,11 +39,18 @@ export class CharacterRelationController {
   }
 
   async getCharacterRelationsByCharId(userId: string, charId: string) {
-    const characterRelations = await this.getCharacterRelationsByCharIdUseCase.execute(userId, charId)
+    const characterRelations = await this.getCharacterRelationsByCharIdUseCase.execute(
+      userId,
+      charId,
+    )
     return characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr))
   }
 
-  async updateCharacterRelation(userId: string, id: string, data: z.infer<typeof CharacterRelationUpdateSchema>) {
+  async updateCharacterRelation(
+    userId: string,
+    id: string,
+    data: z.infer<typeof CharacterRelationUpdateSchema>,
+  ) {
     const { id: dataId, ...updateData } = data
     const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute(userId, {
       id,

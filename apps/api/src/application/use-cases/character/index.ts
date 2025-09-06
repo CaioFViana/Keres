@@ -2,6 +2,6 @@
 
 export * from './CreateCharacterUseCase'
 export * from './DeleteCharacterUseCase'
-export * from './GetCharacterUseCase'
 export * from './GetCharactersByStoryIdUseCase'
+export * from './GetCharacterUseCase'
 export * from './UpdateCharacterUseCase'

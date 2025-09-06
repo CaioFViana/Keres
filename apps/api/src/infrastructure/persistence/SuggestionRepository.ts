@@ -102,7 +102,10 @@ export class SuggestionRepository implements ISuggestionRepository {
         conditions.push(eq(suggestions.storyId, null as any))
       }
 
-      await db.update(suggestions).set(this.toPersistence(suggestionData)).where(and(...conditions))
+      await db
+        .update(suggestions)
+        .set(this.toPersistence(suggestionData))
+        .where(and(...conditions))
     } catch (error) {
       console.error('Error in SuggestionRepository.update:', error)
       throw error

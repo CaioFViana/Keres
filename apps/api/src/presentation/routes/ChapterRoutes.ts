@@ -20,7 +20,10 @@ const createChapterUseCase = new CreateChapterUseCase(chapterRepository, storyRe
 const getChapterUseCase = new GetChapterUseCase(chapterRepository, storyRepository)
 const updateChapterUseCase = new UpdateChapterUseCase(chapterRepository, storyRepository)
 const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository, storyRepository)
-const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(chapterRepository, storyRepository)
+const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(
+  chapterRepository,
+  storyRepository,
+)
 
 const chapterController = new ChapterController(
   createChapterUseCase,
@@ -184,7 +187,7 @@ chapterRoutes.openapi(
         content: {
           'application/json': {
             schema: z.object({ error: z.string() }),
-          }
+          },
         },
       },
     },

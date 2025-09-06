@@ -1,9 +1,9 @@
 import type { Gallery } from '@domain/entities/Gallery'
-import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository' // Added
-import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
+import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { UpdateGalleryUseCase } from '@application/use-cases/gallery/UpdateGalleryUseCase'
 import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
@@ -70,7 +70,11 @@ describe('UpdateGalleryUseCase', () => {
     vi.clearAllMocks()
 
     // Setup mock return values for dependencies
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    }) // Default story for tests
     mockCharacterRepository.findById.mockImplementation((id: string) => {
       if (id === 'char123') return { id: 'char123', storyId: 'story123' }
       return null
@@ -180,16 +184,18 @@ describe('UpdateGalleryUseCase', () => {
     )
   })
 
-    it('should return null if gallery item not found', async () => {
+  it('should return null if gallery item not found', async () => {
     const updateDTO = {
       id: 'nonexistent_gal',
       imagePath: 'http://example.com/new.jpg',
     }
 
-    await expect(updateGalleryUseCase.execute('user123', updateDTO)).rejects.toThrow('Gallery item not found')
+    await expect(updateGalleryUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Gallery item not found',
+    )
   })
 
-    it('should return null if gallery item does not belong to the specified story', async () => {
+  it('should return null if gallery item does not belong to the specified story', async () => {
     // Mock story to return a story not owned by the user
     mockStoryRepository.findById.mockResolvedValue(null)
 

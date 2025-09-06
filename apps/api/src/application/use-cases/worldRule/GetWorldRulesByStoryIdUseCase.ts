@@ -1,5 +1,5 @@
-import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
+import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
 import type { WorldRuleResponse } from '@keres/shared'
 
 export class GetWorldRulesByStoryIdUseCase {

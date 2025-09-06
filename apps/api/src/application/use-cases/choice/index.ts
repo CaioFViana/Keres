@@ -2,6 +2,6 @@
 
 export * from './CreateChoiceUseCase'
 export * from './DeleteChoiceUseCase'
-export * from './GetChoiceUseCase'
 export * from './GetChoicesBySceneIdUseCase'
+export * from './GetChoiceUseCase'
 export * from './UpdateChoiceUseCase'

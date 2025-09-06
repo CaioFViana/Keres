@@ -6,7 +6,12 @@ import {
   UpdateSceneUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { ChapterRepository, ChoiceRepository, StoryRepository, SceneRepository } from '@infrastructure/persistence'
+import {
+  ChapterRepository,
+  ChoiceRepository,
+  SceneRepository,
+  StoryRepository,
+} from '@infrastructure/persistence'
 import { SceneCreateSchema, SceneResponseSchema, SceneUpdateSchema } from '@keres/shared' // Import SceneResponseSchema
 import { SceneController } from '@presentation/controllers/SceneController'
 import { z } from 'zod' // Import z for defining parameters
@@ -25,11 +30,7 @@ const createSceneUseCase = new CreateSceneUseCase(
   storyRepository,
   chapterRepository,
 )
-const getSceneUseCase = new GetSceneUseCase(
-  sceneRepository,
-  chapterRepository,
-  storyRepository,
-)
+const getSceneUseCase = new GetSceneUseCase(sceneRepository, chapterRepository, storyRepository)
 const updateSceneUseCase = new UpdateSceneUseCase(
   sceneRepository,
   choiceRepository,

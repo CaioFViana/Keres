@@ -52,7 +52,11 @@ describe('DeleteCharacterUseCase', () => {
     vi.clearAllMocks()
 
     // Setup mock return values for dependencies
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    }) // Default story for tests
 
     deleteCharacterUseCase = new DeleteCharacterUseCase(
       characterRepository,
@@ -95,12 +99,16 @@ describe('DeleteCharacterUseCase', () => {
       mockStoryRepository,
     )
 
-    await expect(deleteUseCaseWithEmptyRepo.execute('user123', 'nonexistent_char')).rejects.toThrow('Character not found')
+    await expect(deleteUseCaseWithEmptyRepo.execute('user123', 'nonexistent_char')).rejects.toThrow(
+      'Character not found',
+    )
   })
 
   it('should throw an error if character does not belong to the specified story', async () => {
     // Mock story to return a story not owned by the user
-    mockStoryRepository.findById.mockImplementationOnce((storyId, userId) => { return null; })
+    mockStoryRepository.findById.mockImplementationOnce((storyId, userId) => {
+      return null
+    })
 
     await expect(deleteCharacterUseCase.execute('user123', 'char123')).rejects.toThrow(
       'Story not found or not owned by user',

@@ -240,9 +240,9 @@ export const characterTags = pgTable(
   (table) => {
     return {
       pk: primaryKey(table.characterId, table.tagId),
-    };
+    }
   },
-);
+)
 
 export const locationTags = pgTable(
   'location_tags',
@@ -259,9 +259,9 @@ export const locationTags = pgTable(
   (table) => {
     return {
       pk: primaryKey(table.locationId, table.tagId),
-    };
+    }
   },
-);
+)
 
 export const chapterTags = pgTable(
   'chapter_tags',
@@ -278,9 +278,9 @@ export const chapterTags = pgTable(
   (table) => {
     return {
       pk: primaryKey(table.chapterId, table.tagId),
-    };
+    }
   },
-);
+)
 
 export const sceneTags = pgTable(
   'scene_tags',
@@ -297,6 +297,6 @@ export const sceneTags = pgTable(
   (table) => {
     return {
       pk: primaryKey(table.sceneId, table.tagId),
-    };
+    }
   },
-);
+)

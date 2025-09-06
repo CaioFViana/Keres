@@ -38,7 +38,10 @@ export class NoteRepository implements INoteRepository {
 
   async update(noteData: Note, storyId: string): Promise<void> {
     try {
-      await db.update(notes).set(this.toPersistence(noteData)).where(eq(notes.id, noteData.id), eq(notes.storyId, storyId))
+      await db
+        .update(notes)
+        .set(this.toPersistence(noteData))
+        .where(eq(notes.id, noteData.id), eq(notes.storyId, storyId))
     } catch (error) {
       console.error('Error in NoteRepository.update:', error)
       throw error

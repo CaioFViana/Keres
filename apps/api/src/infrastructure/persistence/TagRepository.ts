@@ -1,7 +1,18 @@
-import { Tag } from '@domain/entities/Tag'
-import { ITagRepository } from '@domain/repositories/ITagRepository'
-import { chapterTags, characterTags, locationTags, chapters, db, locations, sceneTags, scenes, tags } from '@keres/db'
-import { eq, and } from 'drizzle-orm'
+import type { Tag } from '@domain/entities/Tag'
+import type { ITagRepository } from '@domain/repositories/ITagRepository'
+
+import {
+  chapters,
+  chapterTags,
+  characterTags,
+  db,
+  locations,
+  locationTags,
+  scenes,
+  sceneTags,
+  tags,
+} from '@keres/db'
+import { and, eq } from 'drizzle-orm'
 
 export class TagRepository implements ITagRepository {
   constructor() {}
@@ -27,7 +38,9 @@ export class TagRepository implements ITagRepository {
 
   async removeTagFromCharacter(characterId: string, tagId: string): Promise<void> {
     try {
-      await db.delete(characterTags).where(and(eq(characterTags.characterId, characterId), eq(characterTags.tagId, tagId)))
+      await db
+        .delete(characterTags)
+        .where(and(eq(characterTags.characterId, characterId), eq(characterTags.tagId, tagId)))
     } catch (error) {
       console.error('Error in TagRepository.removeTagFromCharacter:', error)
       throw error

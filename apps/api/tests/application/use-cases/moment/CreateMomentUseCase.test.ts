@@ -1,7 +1,7 @@
 import type { Moment } from '@domain/entities/Moment'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Added
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { CreateMomentUseCase } from '@application/use-cases/moment/CreateMomentUseCase'
@@ -78,8 +78,16 @@ describe('CreateMomentUseCase', () => {
       }
       return null
     })
-    mockChapterRepository.findById.mockResolvedValue({ id: 'chapter123', storyId: 'story123', name: 'Chapter 1' })
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+    mockChapterRepository.findById.mockResolvedValue({
+      id: 'chapter123',
+      storyId: 'story123',
+      name: 'Chapter 1',
+    })
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    })
 
     createMomentUseCase = new CreateMomentUseCase(
       momentRepository,
@@ -139,7 +147,9 @@ describe('CreateMomentUseCase', () => {
       index: 3,
     }
 
-    await expect(createMomentUseCase.execute('user123', momentDTO)).rejects.toThrow('Scene not found')
+    await expect(createMomentUseCase.execute('user123', momentDTO)).rejects.toThrow(
+      'Scene not found',
+    )
   })
 
   it('should throw an error if chapter not found for scene', async () => {
@@ -151,7 +161,9 @@ describe('CreateMomentUseCase', () => {
       index: 4,
     }
 
-    await expect(createMomentUseCase.execute('user123', momentDTO)).rejects.toThrow('Chapter not found')
+    await expect(createMomentUseCase.execute('user123', momentDTO)).rejects.toThrow(
+      'Chapter not found',
+    )
   })
 
   it('should throw an error if story not found or not owned by user for scene', async () => {

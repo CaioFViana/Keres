@@ -56,10 +56,20 @@ describe('UpdateCharacterUseCase', () => {
     // Setup mock return values for dependencies
     mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
       if (id === 'story123' && userId === 'user123') {
-        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+        return Promise.resolve({
+          id: 'story123',
+          userId: 'user123',
+          title: 'Test Story 1',
+          type: 'linear',
+        })
       }
       if (id === 'another_story' && userId === 'user123') {
-        return Promise.resolve({ id: 'another_story', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+        return Promise.resolve({
+          id: 'another_story',
+          userId: 'user123',
+          title: 'Test Story 2',
+          type: 'linear',
+        })
       }
       return Promise.resolve(null)
     })
@@ -117,7 +127,9 @@ describe('UpdateCharacterUseCase', () => {
 
   it('should throw an error if character does not belong to the specified story', async () => {
     // Mock story to return a story not owned by the user
-    mockStoryRepository.findById.mockImplementationOnce((storyId, userId) => { return null; })
+    mockStoryRepository.findById.mockImplementationOnce((storyId, userId) => {
+      return null
+    })
 
     const updateDTO = {
       id: 'char123',

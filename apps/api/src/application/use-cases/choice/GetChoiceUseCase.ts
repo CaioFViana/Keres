@@ -1,8 +1,8 @@
 import type { ChoiceProfileDTO } from '@application/dtos/ChoiceDTOs'
 import type { Choice } from '@domain/entities/Choice'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Import
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import
 
 export class GetChoiceUseCase {

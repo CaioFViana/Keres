@@ -1,7 +1,7 @@
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import
 import type { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository' // Import
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Import
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import
 import type { CharacterMomentResponse } from '@keres/shared'
 

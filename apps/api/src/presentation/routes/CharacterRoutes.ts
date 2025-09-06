@@ -24,7 +24,10 @@ const createCharacterUseCase = new CreateCharacterUseCase(characterRepository, s
 const getCharacterUseCase = new GetCharacterUseCase(characterRepository, storyRepository)
 const updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository, storyRepository)
 const deleteCharacterUseCase = new DeleteCharacterUseCase(characterRepository, storyRepository)
-const getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(characterRepository, storyRepository)
+const getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(
+  characterRepository,
+  storyRepository,
+)
 
 const characterController = new CharacterController(
   createCharacterUseCase,

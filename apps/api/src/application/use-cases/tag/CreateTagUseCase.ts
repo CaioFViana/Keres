@@ -1,6 +1,6 @@
 import type { Tag } from '@domain/entities/Tag'
-import type { ITagRepository } from '@domain/repositories/ITagRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
+import type { ITagRepository } from '@domain/repositories/ITagRepository'
 import type { CreateTagPayload, TagResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'

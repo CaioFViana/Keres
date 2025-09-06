@@ -39,7 +39,10 @@ export class UpdateSceneUseCase {
     // Logic for implicit choices in linear stories
     const chapterForImplicit = await this.chapterRepository.findById(updatedScene.chapterId)
     if (chapterForImplicit) {
-      const storyForImplicit = await this.storyRepository.findById(chapterForImplicit.storyId, userId)
+      const storyForImplicit = await this.storyRepository.findById(
+        chapterForImplicit.storyId,
+        userId,
+      )
       if (storyForImplicit && storyForImplicit.type === 'linear') {
         const scenesInChapter = await this.sceneRepository.findByChapterId(updatedScene.chapterId)
         scenesInChapter.sort((a, b) => a.index - b.index)

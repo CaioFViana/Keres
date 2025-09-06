@@ -1,7 +1,7 @@
 import type { Moment } from '@domain/entities/Moment'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Added
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Added
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { GetMomentsBySceneIdUseCase } from '@application/use-cases/moment/GetMomentsBySceneIdUseCase'
@@ -78,8 +78,16 @@ describe('GetMomentsBySceneIdUseCase', () => {
       }
       return null
     })
-    mockChapterRepository.findById.mockResolvedValue({ id: 'chapter123', storyId: 'story123', name: 'Chapter 1' })
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+    mockChapterRepository.findById.mockResolvedValue({
+      id: 'chapter123',
+      storyId: 'story123',
+      name: 'Chapter 1',
+    })
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    })
 
     getMomentsBySceneIdUseCase = new GetMomentsBySceneIdUseCase(
       momentRepository,
@@ -146,13 +154,17 @@ describe('GetMomentsBySceneIdUseCase', () => {
   it('should throw an error if scene not found or not owned by user', async () => {
     mockSceneRepository.findById.mockResolvedValue(null) // Mock scene not found
 
-    await expect(getMomentsBySceneIdUseCase.execute('user123', 'nonexistent_scene')).rejects.toThrow('Scene not found')
+    await expect(
+      getMomentsBySceneIdUseCase.execute('user123', 'nonexistent_scene'),
+    ).rejects.toThrow('Scene not found')
   })
 
   it('should throw an error if chapter not found for scene', async () => {
     mockChapterRepository.findById.mockResolvedValue(null) // Mock chapter not found
 
-    await expect(getMomentsBySceneIdUseCase.execute('user123', 'scene123')).rejects.toThrow('Chapter not found')
+    await expect(getMomentsBySceneIdUseCase.execute('user123', 'scene123')).rejects.toThrow(
+      'Chapter not found',
+    )
   })
 
   it('should throw an error if story not found or not owned by user for scene', async () => {

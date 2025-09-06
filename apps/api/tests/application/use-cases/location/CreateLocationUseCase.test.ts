@@ -52,7 +52,11 @@ describe('CreateLocationUseCase', () => {
     vi.clearAllMocks()
 
     // Setup mock return values for dependencies
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    }) // Default story for tests
 
     createLocationUseCase = new CreateLocationUseCase(
       locationRepository,

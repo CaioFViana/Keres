@@ -38,7 +38,10 @@ export class SceneRepository implements ISceneRepository {
 
   async update(sceneData: Scene, chapterId: string): Promise<void> {
     try {
-      await db.update(scenes).set(this.toPersistence(sceneData)).where(eq(scenes.id, sceneData.id), eq(scenes.chapterId, chapterId))
+      await db
+        .update(scenes)
+        .set(this.toPersistence(sceneData))
+        .where(eq(scenes.id, sceneData.id), eq(scenes.chapterId, chapterId))
     } catch (error) {
       console.error('Error in SceneRepository.update:', error)
       throw error

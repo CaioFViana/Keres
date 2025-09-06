@@ -1,9 +1,9 @@
 import type { Gallery } from '@domain/entities/Gallery'
-import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository' // Added
-import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
+import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { CreateGalleryUseCase } from '@application/use-cases/gallery/CreateGalleryUseCase'
 import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
@@ -70,7 +70,11 @@ describe('CreateGalleryUseCase', () => {
     vi.clearAllMocks()
 
     // Setup mock return values for dependencies
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    }) // Default story for tests
     mockCharacterRepository.findById.mockImplementation((id: string) => {
       if (id === 'char123') return { id: 'char123', storyId: 'story123' }
       return null
@@ -83,7 +87,6 @@ describe('CreateGalleryUseCase', () => {
       if (id === 'loc123') return { id: 'loc123', storyId: 'story123' }
       return null
     })
-
 
     createGalleryUseCase = new CreateGalleryUseCase(
       galleryRepository,

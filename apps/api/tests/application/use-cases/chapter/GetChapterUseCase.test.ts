@@ -52,7 +52,11 @@ describe('GetChapterUseCase', () => {
     vi.clearAllMocks()
 
     // Setup mock return values for dependencies
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' }) // Default story for tests
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    }) // Default story for tests
 
     getChapterUseCase = new GetChapterUseCase(
       chapterRepository,
@@ -88,7 +92,9 @@ describe('GetChapterUseCase', () => {
       mockStoryRepository,
     )
 
-    await expect(getUseCaseWithEmptyRepo.execute('user123', 'nonexistent')).rejects.toThrow('Chapter not found')
+    await expect(getUseCaseWithEmptyRepo.execute('user123', 'nonexistent')).rejects.toThrow(
+      'Chapter not found',
+    )
   })
 
   it('should throw an error if story not found or not owned by user', async () => {

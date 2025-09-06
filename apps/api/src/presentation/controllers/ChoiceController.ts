@@ -3,11 +3,13 @@ import type {
   CreateChoiceDTO,
   UpdateChoiceDTO,
 } from '@application/dtos/ChoiceDTOs'
-import type { CreateChoiceUseCase } from '@application/use-cases/'
-import type { DeleteChoiceUseCase } from '@application/use-cases/'
-import type { GetChoicesBySceneIdUseCase } from '@application/use-cases/'
-import type { GetChoiceUseCase } from '@application/use-cases/'
-import type { UpdateChoiceUseCase } from '@application/use-cases/'
+import type {
+  CreateChoiceUseCase,
+  DeleteChoiceUseCase,
+  GetChoicesBySceneIdUseCase,
+  GetChoiceUseCase,
+  UpdateChoiceUseCase,
+} from '@application/use-cases/'
 
 export class ChoiceController {
   constructor(
@@ -26,7 +28,11 @@ export class ChoiceController {
     return this.getChoiceUseCase.execute(userId, id)
   }
 
-  async updateChoice(userId: string, id: string, data: UpdateChoiceDTO): Promise<ChoiceProfileDTO | null> {
+  async updateChoice(
+    userId: string,
+    id: string,
+    data: UpdateChoiceDTO,
+  ): Promise<ChoiceProfileDTO | null> {
     return this.updateChoiceUseCase.execute(userId, id, data)
   }
 

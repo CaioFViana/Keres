@@ -57,15 +57,28 @@ describe('GetGalleryByStoryIdUseCase', () => {
     // Setup mock return values for dependencies
     mockStoryRepository.findById.mockImplementation((id: string, userId: string) => {
       if (id === 'story123' && userId === 'user123') {
-        return Promise.resolve({ id: 'story123', userId: 'user123', title: 'Test Story 1', type: 'linear' })
+        return Promise.resolve({
+          id: 'story123',
+          userId: 'user123',
+          title: 'Test Story 1',
+          type: 'linear',
+        })
       }
       if (id === 'story456' && userId === 'user123') {
-        return Promise.resolve({ id: 'story456', userId: 'user123', title: 'Test Story 2', type: 'linear' })
+        return Promise.resolve({
+          id: 'story456',
+          userId: 'user123',
+          title: 'Test Story 2',
+          type: 'linear',
+        })
       }
       return Promise.resolve(null)
     })
 
-    getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(galleryRepository, mockStoryRepository)
+    getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(
+      galleryRepository,
+      mockStoryRepository,
+    )
 
     // Pre-populate gallery items for testing
     galleryRepository.save({
@@ -113,6 +126,8 @@ describe('GetGalleryByStoryIdUseCase', () => {
   })
 
   it('should return an empty array if no gallery items found for the story ID', async () => {
-    await expect(getGalleryByStoryIdUseCase.execute('user123', 'nonexistent_story')).rejects.toThrow('Story not found or not owned by user')
+    await expect(
+      getGalleryByStoryIdUseCase.execute('user123', 'nonexistent_story'),
+    ).rejects.toThrow('Story not found or not owned by user')
   })
 })

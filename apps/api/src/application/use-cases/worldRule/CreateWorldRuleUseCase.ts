@@ -1,6 +1,6 @@
 import type { WorldRule } from '@domain/entities/WorldRule'
-import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
+import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
 import type { CreateWorldRulePayload, WorldRuleResponse } from '@keres/shared'
 
 import { ulid } from 'ulid'

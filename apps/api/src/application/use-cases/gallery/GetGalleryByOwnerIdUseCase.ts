@@ -1,7 +1,7 @@
-import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository' // Import
-import type { INoteRepository } from '@domain/repositories/INoteRepository' // Import
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Import
+import type { INoteRepository } from '@domain/repositories/INoteRepository' // Import
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import
 import type { GalleryResponse } from '@keres/shared'
 

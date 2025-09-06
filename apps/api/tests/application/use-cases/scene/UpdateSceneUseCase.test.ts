@@ -1,9 +1,9 @@
 import type { Scene } from '@domain/entities/Scene'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
+import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
 
 import { UpdateSceneUseCase } from '@application/use-cases/scene/UpdateSceneUseCase'
 import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi
@@ -88,7 +88,11 @@ describe('UpdateSceneUseCase', () => {
       }
       return null
     })
-    mockStoryRepository.findById.mockResolvedValue({ id: 'story123', userId: 'user123', type: 'linear' })
+    mockStoryRepository.findById.mockResolvedValue({
+      id: 'story123',
+      userId: 'user123',
+      type: 'linear',
+    })
     mockLocationRepository.findById.mockImplementation((id: string) => {
       if (id === 'loc123') return { id: 'loc123', storyId: 'story123' } // Added storyId
       return null
@@ -155,7 +159,9 @@ describe('UpdateSceneUseCase', () => {
       name: 'New Name',
     }
 
-    await expect(updateSceneUseCase.execute('user123', updateDTO)).rejects.toThrow('Chapter not found')
+    await expect(updateSceneUseCase.execute('user123', updateDTO)).rejects.toThrow(
+      'Chapter not found',
+    )
   })
 
   it('should throw an error if story not found or not owned by user for scene', async () => {

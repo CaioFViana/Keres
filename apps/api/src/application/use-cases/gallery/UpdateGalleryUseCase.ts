@@ -1,8 +1,8 @@
-import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository' // Added
-import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Added
+import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { GalleryResponse, GalleryUpdatePayload } from '@keres/shared'
 
 export class UpdateGalleryUseCase {
@@ -27,7 +27,8 @@ export class UpdateGalleryUseCase {
     }
 
     // Validate ownerId if provided in the update payload
-    if (data.ownerId !== undefined) { // Check if ownerId is explicitly provided in the payload
+    if (data.ownerId !== undefined) {
+      // Check if ownerId is explicitly provided in the payload
       let ownerFound = false
 
       // Check in Characters

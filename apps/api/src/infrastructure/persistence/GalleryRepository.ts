@@ -51,7 +51,11 @@ export class GalleryRepository implements IGalleryRepository {
       await db
         .update(gallery)
         .set(this.toPersistence(galleryData))
-        .where(eq(gallery.id, galleryData.id), eq(gallery.storyId, storyId), eq(gallery.ownerId, ownerId))
+        .where(
+          eq(gallery.id, galleryData.id),
+          eq(gallery.storyId, storyId),
+          eq(gallery.ownerId, ownerId),
+        )
     } catch (error) {
       console.error('Error in GalleryRepository.update:', error)
       throw error
@@ -60,7 +64,9 @@ export class GalleryRepository implements IGalleryRepository {
 
   async delete(id: string, storyId: string, ownerId: string): Promise<void> {
     try {
-      await db.delete(gallery).where(eq(gallery.id, id), eq(gallery.storyId, storyId), eq(gallery.ownerId, ownerId))
+      await db
+        .delete(gallery)
+        .where(eq(gallery.id, id), eq(gallery.storyId, storyId), eq(gallery.ownerId, ownerId))
     } catch (error) {
       console.error('Error in GalleryRepository.delete:', error)
       throw error

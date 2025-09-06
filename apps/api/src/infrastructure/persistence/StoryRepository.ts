@@ -9,7 +9,11 @@ export class StoryRepository implements IStoryRepository {
 
   async findById(id: string, userId: string): Promise<Story | null> {
     try {
-      const result = await db.select().from(story).where(eq(story.id, id), eq(story.userId, userId)).limit(1)
+      const result = await db
+        .select()
+        .from(story)
+        .where(eq(story.id, id), eq(story.userId, userId))
+        .limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
       console.error('Error in StoryRepository.findById:', error)
@@ -38,7 +42,10 @@ export class StoryRepository implements IStoryRepository {
 
   async update(storyData: Story, userId: string): Promise<void> {
     try {
-      await db.update(story).set(this.toPersistence(storyData)).where(eq(story.id, storyData.id), eq(story.userId, userId))
+      await db
+        .update(story)
+        .set(this.toPersistence(storyData))
+        .where(eq(story.id, storyData.id), eq(story.userId, userId))
     } catch (error) {
       console.error('Error in StoryRepository.update:', error)
       throw error

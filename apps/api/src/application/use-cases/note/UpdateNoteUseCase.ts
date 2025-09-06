@@ -1,6 +1,6 @@
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository' // Added
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository' // Added
 import type { NoteResponse, UpdateNotePayload } from '@keres/shared'
 
 export class UpdateNoteUseCase {

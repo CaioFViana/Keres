@@ -1,5 +1,5 @@
-import type { ITagRepository } from '@domain/repositories/ITagRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
+import type { ITagRepository } from '@domain/repositories/ITagRepository'
 import type { TagResponse } from '@keres/shared'
 
 export class GetTagsByStoryIdUseCase {

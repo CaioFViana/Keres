@@ -1,8 +1,9 @@
 import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { ListQueryParams } from '@keres/shared'
 
-import { characters, db } from '@keres/db' // Import db and characters table
-import { eq } from 'drizzle-orm'
+import { characters, characterTags, db } from '@keres/db' // Import db and characters table
+import { and, eq, inArray } from 'drizzle-orm'
 
 export class CharacterRepository implements ICharacterRepository {
   constructor() {}
@@ -17,9 +18,24 @@ export class CharacterRepository implements ICharacterRepository {
     }
   }
 
-  async findByStoryId(storyId: string): Promise<Character[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Character[]> {
     try {
-      const results = await db.select().from(characters).where(eq(characters.storyId, storyId))
+      let queryBuilder = db.select().from(characters).where(eq(characters.storyId, storyId))
+
+      if (query?.isFavorite !== undefined) {
+        queryBuilder = queryBuilder.where(
+          and(eq(characters.storyId, storyId), eq(characters.isFavorite, query.isFavorite)),
+        )
+      }
+
+      if (query?.hasTags) {
+        const tagIds = query.hasTags.split(',')
+        queryBuilder = queryBuilder
+          .leftJoin(characterTags, eq(characters.id, characterTags.characterId))
+          .where(and(eq(characters.storyId, storyId), inArray(characterTags.tagId, tagIds)))
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in CharacterRepository.findByStoryId:', error)

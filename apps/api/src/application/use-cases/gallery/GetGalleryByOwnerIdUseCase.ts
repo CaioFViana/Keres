@@ -3,7 +3,7 @@ import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Import
 import type { INoteRepository } from '@domain/repositories/INoteRepository' // Import
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import
-import type { GalleryResponse } from '@keres/shared'
+import type { GalleryResponse, ListQueryParams } from '@keres/shared'
 
 export class GetGalleryByOwnerIdUseCase {
   constructor(
@@ -14,8 +14,12 @@ export class GetGalleryByOwnerIdUseCase {
     private readonly storyRepository: IStoryRepository, // Inject
   ) {}
 
-  async execute(userId: string, ownerId: string): Promise<GalleryResponse[]> {
-    const galleryItems = await this.galleryRepository.findByOwnerId(ownerId)
+  async execute(
+    userId: string,
+    ownerId: string,
+    query: ListQueryParams,
+  ): Promise<GalleryResponse[]> {
+    const galleryItems = await this.galleryRepository.findByOwnerId(ownerId, userId, query)
     const ownedGalleryItems: GalleryResponse[] = []
 
     for (const item of galleryItems) {

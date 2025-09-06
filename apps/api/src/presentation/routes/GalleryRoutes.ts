@@ -14,7 +14,12 @@ import {
   NoteRepository,
   StoryRepository,
 } from '@infrastructure/persistence'
-import { GalleryCreateSchema, GalleryResponseSchema, GalleryUpdateSchema } from '@keres/shared' // Import GalleryResponseSchema
+import {
+  GalleryCreateSchema,
+  GalleryResponseSchema,
+  GalleryUpdateSchema,
+  ListQuerySchema,
+} from '@keres/shared' // Import GalleryResponseSchema
 import { GalleryController } from '@presentation/controllers/GalleryController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -26,9 +31,22 @@ const storyRepository = new StoryRepository()
 const characterRepository = new CharacterRepository()
 const noteRepository = new NoteRepository()
 const locationRepository = new LocationRepository()
-const createGalleryUseCase = new CreateGalleryUseCase(galleryRepository, storyRepository)
+
+const createGalleryUseCase = new CreateGalleryUseCase(
+  galleryRepository,
+  storyRepository,
+  characterRepository,
+  noteRepository,
+  locationRepository,
+)
 const getGalleryUseCase = new GetGalleryUseCase(galleryRepository, storyRepository)
-const updateGalleryUseCase = new UpdateGalleryUseCase(galleryRepository, storyRepository)
+const updateGalleryUseCase = new UpdateGalleryUseCase(
+  galleryRepository,
+  storyRepository,
+  characterRepository,
+  noteRepository,
+  locationRepository,
+)
 const deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository, storyRepository)
 const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(
   galleryRepository,
@@ -187,6 +205,7 @@ galleryRoutes.openapi(
       'Retrieves all gallery items associated with a specific owner (e.g., character, location).',
     request: {
       params: OwnerIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -219,8 +238,13 @@ galleryRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = OwnerIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const galleryItems = await galleryController.getGalleryByOwnerId(userId, params.ownerId)
+      const galleryItems = await galleryController.getGalleryByOwnerId(
+        userId,
+        params.ownerId,
+        query,
+      )
       return c.json(galleryItems, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -240,6 +264,7 @@ galleryRoutes.openapi(
     description: 'Retrieves all gallery items associated with a specific story.',
     request: {
       params: StoryIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -272,8 +297,13 @@ galleryRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const galleryItems = await galleryController.getGalleryByStoryId(userId, params.storyId)
+      const galleryItems = await galleryController.getGalleryByStoryId(
+        userId,
+        params.storyId,
+        query,
+      )
       return c.json(galleryItems, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

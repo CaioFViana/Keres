@@ -1,8 +1,9 @@
 import type { Moment } from '@domain/entities/Moment'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+import type { ListQueryParams } from '@keres/shared'
 
 import { db, moments } from '@keres/db' // Import db and moments table
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 export class MomentRepository implements IMomentRepository {
   constructor() {}
@@ -17,9 +18,17 @@ export class MomentRepository implements IMomentRepository {
     }
   }
 
-  async findBySceneId(sceneId: string): Promise<Moment[]> {
+  async findBySceneId(sceneId: string, query?: ListQueryParams): Promise<Moment[]> {
     try {
-      const results = await db.select().from(moments).where(eq(moments.sceneId, sceneId))
+      let queryBuilder = db.select().from(moments).where(eq(moments.sceneId, sceneId))
+
+      if (query?.isFavorite !== undefined) {
+        queryBuilder = queryBuilder.where(
+          and(eq(moments.sceneId, sceneId), eq(moments.isFavorite, query.isFavorite)),
+        )
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in MomentRepository.findBySceneId:', error)

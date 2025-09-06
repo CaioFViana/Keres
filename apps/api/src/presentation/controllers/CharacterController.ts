@@ -11,6 +11,7 @@ import {
   type CharacterCreateSchema,
   CharacterResponseSchema,
   type CharacterUpdateSchema,
+  type ListQueryParams,
 } from '@keres/shared'
 
 export class CharacterController {
@@ -35,8 +36,8 @@ export class CharacterController {
     return CharacterResponseSchema.parse(character)
   }
 
-  async getCharactersByStoryId(userId: string, storyId: string) {
-    const characters = await this.getCharactersByStoryIdUseCase.execute(userId, storyId)
+  async getCharactersByStoryId(userId: string, storyId: string, query: ListQueryParams) {
+    const characters = await this.getCharactersByStoryIdUseCase.execute(userId, storyId, query)
     return characters.map((character) => CharacterResponseSchema.parse(character))
   }
 

@@ -11,6 +11,7 @@ import {
   CharacterCreateSchema,
   CharacterResponseSchema,
   CharacterUpdateSchema,
+  ListQuerySchema,
 } from '@keres/shared' // Import CharacterResponseSchema
 import { CharacterController } from '@presentation/controllers/CharacterController'
 import { z } from 'zod' // Import z for defining parameters
@@ -168,6 +169,7 @@ characterRoutes.openapi(
     description: 'Retrieves all characters belonging to a specific story.',
     request: {
       params: StoryIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -200,8 +202,13 @@ characterRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const characters = await characterController.getCharactersByStoryId(userId, params.storyId)
+      const characters = await characterController.getCharactersByStoryId(
+        userId,
+        params.storyId,
+        query,
+      )
       return c.json(characters, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

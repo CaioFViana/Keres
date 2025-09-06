@@ -1,8 +1,9 @@
 import type { WorldRule } from '@domain/entities/WorldRule'
 import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
+import type { ListQueryParams } from '@keres/shared'
 
 import { db, worldRules } from '@keres/db' // Import db and worldRules table
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 export class WorldRuleRepository implements IWorldRuleRepository {
   constructor() {}
@@ -17,9 +18,17 @@ export class WorldRuleRepository implements IWorldRuleRepository {
     }
   }
 
-  async findByStoryId(storyId: string): Promise<WorldRule[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<WorldRule[]> {
     try {
-      const results = await db.select().from(worldRules).where(eq(worldRules.storyId, storyId))
+      let queryBuilder = db.select().from(worldRules).where(eq(worldRules.storyId, storyId))
+
+      if (query?.isFavorite !== undefined) {
+        queryBuilder = queryBuilder.where(
+          and(eq(worldRules.storyId, storyId), eq(worldRules.isFavorite, query.isFavorite)),
+        )
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in WorldRuleRepository.findByStoryId:', error)

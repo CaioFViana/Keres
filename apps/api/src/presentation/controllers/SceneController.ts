@@ -7,7 +7,12 @@ import type {
 } from '@application/use-cases'
 import type z from 'zod'
 
-import { type SceneCreateSchema, SceneResponseSchema, type SceneUpdateSchema } from '@keres/shared'
+import {
+  type ListQueryParams,
+  type SceneCreateSchema,
+  SceneResponseSchema,
+  type SceneUpdateSchema,
+} from '@keres/shared'
 
 export class SceneController {
   constructor(
@@ -31,8 +36,8 @@ export class SceneController {
     return SceneResponseSchema.parse(scene)
   }
 
-  async getScenesByChapterId(userId: string, chapterId: string) {
-    const scenes = await this.getScenesByChapterIdUseCase.execute(userId, chapterId)
+  async getScenesByChapterId(userId: string, chapterId: string, query: ListQueryParams) {
+    const scenes = await this.getScenesByChapterIdUseCase.execute(userId, chapterId, query)
     return scenes.map((scene) => SceneResponseSchema.parse(scene))
   }
 

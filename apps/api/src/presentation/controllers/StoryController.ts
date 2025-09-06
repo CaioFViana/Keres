@@ -7,7 +7,12 @@ import type {
 } from '@application/use-cases'
 import type z from 'zod'
 
-import { type StoryCreateSchema, StoryResponseSchema, type StoryUpdateSchema } from '@keres/shared'
+import {
+  type ListQueryParams,
+  type StoryCreateSchema,
+  StoryResponseSchema,
+  type StoryUpdateSchema,
+} from '@keres/shared'
 
 export class StoryController {
   constructor(
@@ -31,8 +36,8 @@ export class StoryController {
     return StoryResponseSchema.parse(story)
   }
 
-  async getStoriesByUserId(userId: string) {
-    const stories = await this.getStoriesByUserIdUseCase.execute(userId)
+  async getStoriesByUserId(userId: string, query: ListQueryParams) {
+    const stories = await this.getStoriesByUserIdUseCase.execute(userId, query)
     return stories.map((story) => StoryResponseSchema.parse(story))
   }
 

@@ -1,8 +1,9 @@
 import type { Note } from '@domain/entities/Note'
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
+import type { ListQueryParams } from '@keres/shared'
 
 import { db, notes } from '@keres/db' // Import db and notes table
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {
   constructor() {}
@@ -17,9 +18,17 @@ export class NoteRepository implements INoteRepository {
     }
   }
 
-  async findByStoryId(storyId: string): Promise<Note[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Note[]> {
     try {
-      const results = await db.select().from(notes).where(eq(notes.storyId, storyId))
+      let queryBuilder = db.select().from(notes).where(eq(notes.storyId, storyId))
+
+      if (query?.isFavorite !== undefined) {
+        queryBuilder = queryBuilder.where(
+          and(eq(notes.storyId, storyId), eq(notes.isFavorite, query.isFavorite)),
+        )
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in NoteRepository.findByStoryId:', error)

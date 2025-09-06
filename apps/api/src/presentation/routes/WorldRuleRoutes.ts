@@ -9,6 +9,7 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import { StoryRepository, WorldRuleRepository } from '@infrastructure/persistence'
 import {
   CreateWorldRuleSchema,
+  ListQuerySchema,
   UpdateWorldRuleSchema,
   WorldRuleResponseSchema,
 } from '@keres/shared'
@@ -179,6 +180,7 @@ worldRuleRoutes.openapi(
     description: 'Retrieves all world rules associated with a specific story.',
     request: {
       params: StoryIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -211,8 +213,13 @@ worldRuleRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const worldRules = await worldRuleController.getWorldRulesByStoryId(userId, params.storyId)
+      const worldRules = await worldRuleController.getWorldRulesByStoryId(
+        userId,
+        params.storyId,
+        query,
+      )
       return c.json(worldRules, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

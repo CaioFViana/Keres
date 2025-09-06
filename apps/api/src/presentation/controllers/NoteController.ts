@@ -7,7 +7,12 @@ import type {
 } from '@application/use-cases'
 import type z from 'zod'
 
-import { type CreateNoteSchema, NoteResponseSchema, type UpdateNoteSchema } from '@keres/shared'
+import {
+  type CreateNoteSchema,
+  type ListQueryParams,
+  NoteResponseSchema,
+  type UpdateNoteSchema,
+} from '@keres/shared'
 
 export class NoteController {
   constructor(
@@ -31,8 +36,8 @@ export class NoteController {
     return NoteResponseSchema.parse(note)
   }
 
-  async getNotesByStoryId(userId: string, storyId: string) {
-    const notes = await this.getNotesByStoryIdUseCase.execute(userId, storyId)
+  async getNotesByStoryId(userId: string, storyId: string, query: ListQueryParams) {
+    const notes = await this.getNotesByStoryIdUseCase.execute(userId, storyId, query)
     return notes.map((note) => NoteResponseSchema.parse(note))
   }
 

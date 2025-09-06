@@ -6,8 +6,13 @@ import {
   UpdateNoteUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { NoteRepository, StoryRepository } from '@infrastructure/persistence'
-import { CreateNoteSchema, NoteResponseSchema, UpdateNoteSchema } from '@keres/shared'
+import { GalleryRepository, NoteRepository, StoryRepository } from '@infrastructure/persistence'
+import {
+  CreateNoteSchema,
+  ListQuerySchema,
+  NoteResponseSchema,
+  UpdateNoteSchema,
+} from '@keres/shared'
 import { NoteController } from '@presentation/controllers/NoteController'
 import { z } from 'zod'
 
@@ -16,9 +21,10 @@ const noteRoutes = new OpenAPIHono()
 // Dependencies for NoteController
 const noteRepository = new NoteRepository()
 const storyRepository = new StoryRepository()
-const createNoteUseCase = new CreateNoteUseCase(noteRepository, storyRepository)
+const galleryRepository = new GalleryRepository()
+const createNoteUseCase = new CreateNoteUseCase(noteRepository, storyRepository, galleryRepository)
 const getNoteUseCase = new GetNoteUseCase(noteRepository, storyRepository)
-const updateNoteUseCase = new UpdateNoteUseCase(noteRepository, storyRepository)
+const updateNoteUseCase = new UpdateNoteUseCase(noteRepository, storyRepository, galleryRepository)
 const deleteNoteUseCase = new DeleteNoteUseCase(noteRepository, storyRepository)
 const getNotesByStoryIdUseCase = new GetNotesByStoryIdUseCase(noteRepository, storyRepository)
 
@@ -172,6 +178,7 @@ noteRoutes.openapi(
     description: 'Retrieves all notes associated with a specific story.',
     request: {
       params: StoryIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -204,8 +211,9 @@ noteRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const notes = await noteController.getNotesByStoryId(userId, params.storyId)
+      const notes = await noteController.getNotesByStoryId(userId, params.storyId, query)
       return c.json(notes, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

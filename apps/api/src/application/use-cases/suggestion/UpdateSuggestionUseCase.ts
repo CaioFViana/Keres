@@ -51,6 +51,7 @@ export class UpdateSuggestionUseCase {
       storyId: updatedSuggestion.storyId,
       type: updatedSuggestion.type,
       value: updatedSuggestion.value,
+      isDefault: updatedSuggestion.isDefault,
       createdAt: updatedSuggestion.createdAt,
       updatedAt: updatedSuggestion.updatedAt,
     }

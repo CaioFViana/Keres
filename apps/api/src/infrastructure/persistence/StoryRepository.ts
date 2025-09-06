@@ -1,8 +1,9 @@
 import type { Story } from '@domain/entities/Story'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { ListQueryParams } from '@keres/shared'
 
 import { db, story } from '@keres/db' // Import db and stories table
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
   constructor() {}
@@ -21,9 +22,17 @@ export class StoryRepository implements IStoryRepository {
     }
   }
 
-  async findByUserId(userId: string): Promise<Story[]> {
+  async findByUserId(userId: string, query?: ListQueryParams): Promise<Story[]> {
     try {
-      const results = await db.select().from(story).where(eq(story.userId, userId))
+      let queryBuilder = db.select().from(story).where(eq(story.userId, userId))
+
+      if (query?.isFavorite !== undefined) {
+        queryBuilder = queryBuilder.where(
+          and(eq(story.userId, userId), eq(story.isFavorite, query.isFavorite)),
+        )
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in StoryRepository.findByUserId:', error)

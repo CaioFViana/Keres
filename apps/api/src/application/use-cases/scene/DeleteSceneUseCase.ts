@@ -46,7 +46,7 @@ export class DeleteSceneUseCase {
           const existingChoices = await this.choiceRepository.findBySceneId(scene.id)
           for (const choice of existingChoices) {
             if (choice.isImplicit) {
-              await this.choiceRepository.delete(choice.id)
+              await this.choiceRepository.delete(choice.id, scene.id)
             }
           }
         }

@@ -11,6 +11,7 @@ import {
   type ChapterCreateSchema,
   ChapterResponseSchema,
   type ChapterUpdateSchema,
+  type ListQueryParams,
 } from '@keres/shared'
 
 export class ChapterController {
@@ -35,8 +36,8 @@ export class ChapterController {
     return ChapterResponseSchema.parse(chapter)
   }
 
-  async getChaptersByStoryId(userId: string, storyId: string) {
-    const chapters = await this.getChaptersByStoryIdUseCase.execute(userId, storyId)
+  async getChaptersByStoryId(userId: string, storyId: string, query: ListQueryParams) {
+    const chapters = await this.getChaptersByStoryIdUseCase.execute(userId, storyId, query)
     return chapters.map((chapter) => ChapterResponseSchema.parse(chapter))
   }
 

@@ -31,6 +31,7 @@ export class GetSceneUseCase {
       chapterId: scene.chapterId,
       name: scene.name,
       index: scene.index,
+      locationId: scene.locationId,
       summary: scene.summary,
       gap: scene.gap,
       duration: scene.duration,

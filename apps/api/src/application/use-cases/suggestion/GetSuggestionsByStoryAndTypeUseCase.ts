@@ -23,6 +23,7 @@ export class GetSuggestionsByStoryAndTypeUseCase {
       storyId: suggestion.storyId,
       type: suggestion.type,
       value: suggestion.value,
+      isDefault: suggestion.isDefault,
       createdAt: suggestion.createdAt,
       updatedAt: suggestion.updatedAt,
     }))

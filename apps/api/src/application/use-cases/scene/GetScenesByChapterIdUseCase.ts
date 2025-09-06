@@ -1,7 +1,7 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import IChapterRepository
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { SceneResponse } from '@keres/shared'
+import type { ListQueryParams, SceneResponse } from '@keres/shared'
 
 export class GetScenesByChapterIdUseCase {
   constructor(
@@ -10,7 +10,11 @@ export class GetScenesByChapterIdUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(userId: string, chapterId: string): Promise<SceneResponse[]> {
+  async execute(
+    userId: string,
+    chapterId: string,
+    query: ListQueryParams,
+  ): Promise<SceneResponse[]> {
     // Verify that the chapter exists and belongs to the user's story
     const chapter = await this.chapterRepository.findById(chapterId)
     if (!chapter) {
@@ -21,12 +25,13 @@ export class GetScenesByChapterIdUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    const scenes = await this.sceneRepository.findByChapterId(chapterId)
+    const scenes = await this.sceneRepository.findByChapterId(chapterId, query)
     return scenes.map((scene) => ({
       id: scene.id,
       chapterId: scene.chapterId,
       name: scene.name,
       index: scene.index,
+      locationId: scene.locationId,
       summary: scene.summary,
       gap: scene.gap,
       duration: scene.duration,

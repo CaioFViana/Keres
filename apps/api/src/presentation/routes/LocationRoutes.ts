@@ -7,7 +7,12 @@ import {
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { LocationRepository, StoryRepository } from '@infrastructure/persistence'
-import { LocationCreateSchema, LocationResponseSchema, LocationUpdateSchema } from '@keres/shared' // Import LocationResponseSchema
+import {
+  ListQuerySchema,
+  LocationCreateSchema,
+  LocationResponseSchema,
+  LocationUpdateSchema,
+} from '@keres/shared' // Import LocationResponseSchema
 import { LocationController } from '@presentation/controllers/LocationController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -164,6 +169,7 @@ locationRoutes.openapi(
     description: 'Retrieves all locations belonging to a specific story.',
     request: {
       params: StoryIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -196,8 +202,13 @@ locationRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const locations = await locationController.getLocationsByStoryId(userId, params.storyId)
+      const locations = await locationController.getLocationsByStoryId(
+        userId,
+        params.storyId,
+        query,
+      )
       return c.json(locations, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

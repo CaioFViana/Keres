@@ -1,8 +1,9 @@
 import type { Gallery } from '@domain/entities/Gallery'
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
+import type { ListQueryParams } from '@keres/shared'
 
-import { db, gallery } from '@keres/db' // Import db and gallery table
-import { eq } from 'drizzle-orm'
+import { characters, db, gallery, locations, notes, story } from '@keres/db' // Import db and gallery table
+import { and, eq, or, sql } from 'drizzle-orm'
 
 export class GalleryRepository implements IGalleryRepository {
   constructor() {}
@@ -17,9 +18,17 @@ export class GalleryRepository implements IGalleryRepository {
     }
   }
 
-  async findByStoryId(storyId: string): Promise<Gallery[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Gallery[]> {
     try {
-      const results = await db.select().from(gallery).where(eq(gallery.storyId, storyId))
+      let queryBuilder = db.select().from(gallery).where(eq(gallery.storyId, storyId))
+
+      if (query?.isFavorite !== undefined) {
+        queryBuilder = queryBuilder.where(
+          and(eq(gallery.storyId, storyId), eq(gallery.isFavorite, query.isFavorite)),
+        )
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in GalleryRepository.findByStoryId:', error)
@@ -27,10 +36,58 @@ export class GalleryRepository implements IGalleryRepository {
     }
   }
 
-  async findByOwnerId(ownerId: string): Promise<Gallery[]> {
+  async findByOwnerId(
+    ownerId: string,
+    userId: string,
+    query?: ListQueryParams,
+  ): Promise<Gallery[]> {
     try {
-      const results = await db.select().from(gallery).where(eq(gallery.ownerId, ownerId))
-      return results.map(this.toDomain)
+      let queryBuilder = db.select().from(gallery).where(eq(gallery.ownerId, ownerId))
+
+      if (query?.isFavorite !== undefined) {
+        queryBuilder = queryBuilder.where(
+          and(eq(gallery.ownerId, ownerId), eq(gallery.isFavorite, query.isFavorite)),
+        )
+      }
+
+      // This part is complex due to the polymorphic ownerId.
+      // We need to check if the ownerId belongs to a character, note, or location,
+      // and then verify if that character/note/location's story belongs to the userId.
+      // This might be better handled in the use case or by separate queries.
+      // For now, I'll implement a basic join to filter by story ownership.
+
+      // This is a simplified approach. A more robust solution might involve
+      // fetching the owner first and then filtering the gallery items.
+      const results = await queryBuilder
+        .leftJoin(characters, eq(gallery.ownerId, characters.id))
+        .leftJoin(notes, eq(gallery.ownerId, notes.id))
+        .leftJoin(locations, eq(gallery.ownerId, locations.id))
+        .leftJoin(
+          story,
+          or(
+            eq(characters.storyId, story.id),
+            eq(notes.storyId, story.id),
+            eq(locations.storyId, story.id),
+          ),
+        )
+        .where(eq(story.userId, userId))
+
+      // Auto generated row typing.
+      return results.map(
+        (row: {
+          gallery: {
+            id: string
+            createdAt: Date
+            updatedAt: Date
+            isFavorite: boolean
+            extraNotes: string | null
+            storyId: string
+            ownerId: string
+            imagePath: string
+            isFile: boolean
+          }
+        }) => this.toDomain(row.gallery),
+      )
     } catch (error) {
       console.error('Error in GalleryRepository.findByOwnerId:', error)
       throw error

@@ -7,7 +7,12 @@ import {
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { StoryRepository } from '@infrastructure/persistence/StoryRepository'
-import { StoryCreateSchema, StoryResponseSchema, StoryUpdateSchema } from '@keres/shared' // Import StoryResponseSchema
+import {
+  ListQuerySchema,
+  StoryCreateSchema,
+  StoryResponseSchema,
+  StoryUpdateSchema,
+} from '@keres/shared' // Import StoryResponseSchema
 import { StoryController } from '@presentation/controllers/StoryController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -155,11 +160,11 @@ storyRoutes.openapi(
 storyRoutes.openapi(
   createRoute({
     method: 'get',
-    path: '/user/{userId}',
+    path: '/all',
     summary: 'Get stories by user ID',
     description: 'Retrieves all stories belonging to a specific user.',
     request: {
-      params: UserIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -191,9 +196,9 @@ storyRoutes.openapi(
   }),
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const params = UserIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const stories = await storyController.getStoriesByUserId(userId)
+      const stories = await storyController.getStoriesByUserId(userId, query)
       return c.json(stories, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

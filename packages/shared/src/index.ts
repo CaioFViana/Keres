@@ -8,6 +8,8 @@ export * from './schemas/CharacterRelationSchemas' // Re-export from new file
 export * from './schemas/CharacterSchemas' // Re-export from new file
 // Choice Schemas
 export * from './schemas/ChoiceSchemas' // Re-export from new file
+// Common Schemas
+export * from './schemas/CommonSchemas'
 // Gallery Schemas
 export * from './schemas/GallerySchemas' // Re-export from new file
 // Location Schemas

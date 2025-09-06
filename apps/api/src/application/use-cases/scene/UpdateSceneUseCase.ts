@@ -52,7 +52,7 @@ export class UpdateSceneUseCase {
           const existingChoices = await this.choiceRepository.findBySceneId(scene.id)
           for (const choice of existingChoices) {
             if (choice.isImplicit) {
-              await this.choiceRepository.delete(choice.id)
+              await this.choiceRepository.delete(choice.id, scene.id)
             }
           }
         }
@@ -77,6 +77,7 @@ export class UpdateSceneUseCase {
       chapterId: updatedScene.chapterId,
       name: updatedScene.name,
       index: updatedScene.index,
+      locationId: updatedScene.locationId,
       summary: updatedScene.summary,
       gap: updatedScene.gap,
       duration: updatedScene.duration,

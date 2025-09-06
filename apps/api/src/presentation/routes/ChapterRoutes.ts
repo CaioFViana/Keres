@@ -7,7 +7,12 @@ import {
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { ChapterRepository, StoryRepository } from '@infrastructure/persistence'
-import { ChapterCreateSchema, ChapterResponseSchema, ChapterUpdateSchema } from '@keres/shared'
+import {
+  ChapterCreateSchema,
+  ChapterResponseSchema,
+  ChapterUpdateSchema,
+  ListQuerySchema,
+} from '@keres/shared'
 import { ChapterController } from '@presentation/controllers/ChapterController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -164,6 +169,7 @@ chapterRoutes.openapi(
     description: 'Retrieves all chapters belonging to a specific story.',
     request: {
       params: StoryIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -196,8 +202,9 @@ chapterRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const chapters = await chapterController.getChaptersByStoryId(userId, params.storyId)
+      const chapters = await chapterController.getChaptersByStoryId(userId, params.storyId, query)
       return c.json(chapters, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

@@ -8,9 +8,10 @@ import type {
 import type z from 'zod'
 
 import {
-  type CreateMomentSchema, // Renamed
+  type CreateMomentSchema,
+  type ListQueryParams,
   MomentResponseSchema,
-  type UpdateMomentSchema, // Renamed
+  type UpdateMomentSchema,
 } from '@keres/shared'
 
 export class MomentController {
@@ -35,8 +36,8 @@ export class MomentController {
     return MomentResponseSchema.parse(moment)
   }
 
-  async getMomentsBySceneId(userId: string, sceneId: string) {
-    const moments = await this.getMomentsBySceneIdUseCase.execute(userId, sceneId)
+  async getMomentsBySceneId(userId: string, sceneId: string, query: ListQueryParams) {
+    const moments = await this.getMomentsBySceneIdUseCase.execute(userId, sceneId, query)
     return moments.map((moment) => MomentResponseSchema.parse(moment))
   }
 

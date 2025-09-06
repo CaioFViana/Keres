@@ -5,9 +5,10 @@ import type {
   GetLocationUseCase,
   UpdateLocationUseCase,
 } from '@application/use-cases'
-import type z from 'zod'
+import type { z } from 'zod'
 
 import {
+  type ListQueryParams,
   type LocationCreateSchema,
   LocationResponseSchema,
   type LocationUpdateSchema,
@@ -35,8 +36,8 @@ export class LocationController {
     return LocationResponseSchema.parse(location)
   }
 
-  async getLocationsByStoryId(userId: string, storyId: string) {
-    const locations = await this.getLocationsByStoryIdUseCase.execute(userId, storyId)
+  async getLocationsByStoryId(userId: string, storyId: string, query: ListQueryParams) {
+    const locations = await this.getLocationsByStoryIdUseCase.execute(userId, storyId, query)
     return locations.map((location) => LocationResponseSchema.parse(location))
   }
 

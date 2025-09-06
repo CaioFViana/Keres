@@ -142,6 +142,7 @@ export class SuggestionRepository implements ISuggestionRepository {
       storyId: data.storyId,
       type: data.type,
       value: data.value,
+      isDefault: data.isDefault,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     }

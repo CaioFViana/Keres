@@ -25,6 +25,7 @@ export class GetSuggestionsByTypeUseCase {
               storyId: suggestion.storyId,
               type: suggestion.type,
               value: suggestion.value,
+              isDefault: suggestion.isDefault,
               createdAt: suggestion.createdAt,
               updatedAt: suggestion.updatedAt,
             })
@@ -39,6 +40,7 @@ export class GetSuggestionsByTypeUseCase {
             storyId: suggestion.storyId,
             type: suggestion.type,
             value: suggestion.value,
+            isDefault: suggestion.isDefault,
             createdAt: suggestion.createdAt,
             updatedAt: suggestion.updatedAt,
           })

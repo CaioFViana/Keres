@@ -1,11 +1,11 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { StoryResponse } from '@keres/shared'
+import type { ListQueryParams, StoryResponse } from '@keres/shared'
 
 export class GetStoriesByUserIdUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
-  async execute(userId: string): Promise<StoryResponse[]> {
-    const stories = await this.storyRepository.findByUserId(userId)
+  async execute(userId: string, query: ListQueryParams): Promise<StoryResponse[]> {
+    const stories = await this.storyRepository.findByUserId(userId, query)
     return stories.map((story) => ({
       id: story.id,
       userId: story.userId,

@@ -41,6 +41,7 @@ export class CreateSuggestionUseCase {
       storyId: data.storyId || null,
       type: data.type,
       value: data.value,
+      isDefault: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -54,6 +55,7 @@ export class CreateSuggestionUseCase {
       storyId: newSuggestion.storyId,
       type: newSuggestion.type,
       value: newSuggestion.value,
+      isDefault: newSuggestion.isDefault,
       createdAt: newSuggestion.createdAt,
       updatedAt: newSuggestion.updatedAt,
     }

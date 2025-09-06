@@ -9,10 +9,16 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRou
 import {
   ChapterRepository,
   ChoiceRepository,
+  LocationRepository,
   SceneRepository,
   StoryRepository,
 } from '@infrastructure/persistence'
-import { SceneCreateSchema, SceneResponseSchema, SceneUpdateSchema } from '@keres/shared' // Import SceneResponseSchema
+import {
+  ListQuerySchema,
+  SceneCreateSchema,
+  SceneResponseSchema,
+  SceneUpdateSchema,
+} from '@keres/shared' // Import SceneResponseSchema
 import { SceneController } from '@presentation/controllers/SceneController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -23,12 +29,14 @@ const sceneRepository = new SceneRepository()
 const choiceRepository = new ChoiceRepository()
 const storyRepository = new StoryRepository()
 const chapterRepository = new ChapterRepository()
+const locationRepository = new LocationRepository()
 
 const createSceneUseCase = new CreateSceneUseCase(
   sceneRepository,
   choiceRepository,
   storyRepository,
   chapterRepository,
+  locationRepository,
 )
 const getSceneUseCase = new GetSceneUseCase(sceneRepository, chapterRepository, storyRepository)
 const updateSceneUseCase = new UpdateSceneUseCase(
@@ -188,6 +196,7 @@ sceneRoutes.openapi(
     description: 'Retrieves all scenes belonging to a specific chapter.',
     request: {
       params: ChapterIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -220,8 +229,9 @@ sceneRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = ChapterIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const scenes = await sceneController.getScenesByChapterId(userId, params.chapterId)
+      const scenes = await sceneController.getScenesByChapterId(userId, params.chapterId, query)
       return c.json(scenes, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

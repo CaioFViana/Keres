@@ -1,8 +1,9 @@
 import type { Location } from '@domain/entities/Location'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
+import type { ListQueryParams } from '@keres/shared'
 
-import { db, locations } from '@keres/db' // Import db and locations table
-import { eq } from 'drizzle-orm'
+import { db, locations, locationTags } from '@keres/db' // Import db and locations table
+import { and, eq, inArray } from 'drizzle-orm'
 
 export class LocationRepository implements ILocationRepository {
   constructor() {}
@@ -17,9 +18,24 @@ export class LocationRepository implements ILocationRepository {
     }
   }
 
-  async findByStoryId(storyId: string): Promise<Location[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Location[]> {
     try {
-      const results = await db.select().from(locations).where(eq(locations.storyId, storyId))
+      let queryBuilder = db.select().from(locations).where(eq(locations.storyId, storyId))
+
+      if (query?.isFavorite !== undefined) {
+        queryBuilder = queryBuilder.where(
+          and(eq(locations.storyId, storyId), eq(locations.isFavorite, query.isFavorite)),
+        )
+      }
+
+      if (query?.hasTags) {
+        const tagIds = query.hasTags.split(',')
+        queryBuilder = queryBuilder
+          .leftJoin(locationTags, eq(locations.id, locationTags.locationId))
+          .where(and(eq(locations.storyId, storyId), inArray(locationTags.tagId, tagIds)))
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in LocationRepository.findByStoryId:', error)

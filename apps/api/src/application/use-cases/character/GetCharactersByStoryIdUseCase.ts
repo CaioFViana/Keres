@@ -1,6 +1,6 @@
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { CharacterResponse } from '@keres/shared'
+import type { CharacterResponse, ListQueryParams } from '@keres/shared'
 
 export class GetCharactersByStoryIdUseCase {
   constructor(
@@ -8,14 +8,18 @@ export class GetCharactersByStoryIdUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, storyId: string): Promise<CharacterResponse[]> {
+  async execute(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<CharacterResponse[]> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
     }
 
-    const characters = await this.characterRepository.findByStoryId(storyId)
+    const characters = await this.characterRepository.findByStoryId(storyId, query)
     return characters.map((character) => ({
       id: character.id,
       storyId: character.storyId,

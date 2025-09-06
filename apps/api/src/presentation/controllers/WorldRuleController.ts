@@ -9,6 +9,7 @@ import type z from 'zod'
 
 import {
   type CreateWorldRuleSchema,
+  type ListQueryParams,
   type UpdateWorldRuleSchema,
   WorldRuleResponseSchema,
 } from '@keres/shared'
@@ -35,8 +36,8 @@ export class WorldRuleController {
     return WorldRuleResponseSchema.parse(worldRule)
   }
 
-  async getWorldRulesByStoryId(userId: string, storyId: string) {
-    const worldRules = await this.getWorldRulesByStoryIdUseCase.execute(userId, storyId)
+  async getWorldRulesByStoryId(userId: string, storyId: string, query: ListQueryParams) {
+    const worldRules = await this.getWorldRulesByStoryIdUseCase.execute(userId, storyId, query)
     return worldRules.map((worldRule) => WorldRuleResponseSchema.parse(worldRule))
   }
 

@@ -2,7 +2,7 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Import ISceneRepository
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { MomentResponse } from '@keres/shared'
+import type { ListQueryParams, MomentResponse } from '@keres/shared'
 
 export class GetMomentsBySceneIdUseCase {
   constructor(
@@ -12,7 +12,11 @@ export class GetMomentsBySceneIdUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, sceneId: string): Promise<MomentResponse[]> {
+  async execute(
+    userId: string,
+    sceneId: string,
+    query: ListQueryParams,
+  ): Promise<MomentResponse[]> {
     // Verify that the scene exists and belongs to the user's story
     const scene = await this.sceneRepository.findById(sceneId)
     if (!scene) {
@@ -27,7 +31,7 @@ export class GetMomentsBySceneIdUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    const moments = await this.momentRepository.findBySceneId(sceneId)
+    const moments = await this.momentRepository.findBySceneId(sceneId, query)
     return moments.map((moment) => ({
       id: moment.id,
       sceneId: moment.sceneId,

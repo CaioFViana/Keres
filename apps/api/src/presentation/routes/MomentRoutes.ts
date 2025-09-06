@@ -12,7 +12,12 @@ import {
   SceneRepository,
   StoryRepository,
 } from '@infrastructure/persistence'
-import { CreateMomentSchema, MomentResponseSchema, UpdateMomentSchema } from '@keres/shared'
+import {
+  CreateMomentSchema,
+  ListQuerySchema,
+  MomentResponseSchema,
+  UpdateMomentSchema,
+} from '@keres/shared'
 import { MomentController } from '@presentation/controllers/MomentController'
 import { z } from 'zod'
 
@@ -334,6 +339,7 @@ momentRoutes.openapi(
     description: 'Retrieves all moments associated with a specific scene.',
     request: {
       params: SceneIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -366,8 +372,9 @@ momentRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = SceneIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const moments = await momentController.getMomentsBySceneId(userId, params.sceneId)
+      const moments = await momentController.getMomentsBySceneId(userId, params.sceneId, query)
       return c.json(moments, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

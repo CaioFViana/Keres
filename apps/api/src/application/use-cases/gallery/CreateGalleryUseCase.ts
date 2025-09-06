@@ -8,7 +8,7 @@ import type { GalleryCreatePayload, GalleryResponse } from '@keres/shared'
 import { getKeresGalleryPath } from '@keres/shared'
 
 import { ulid } from 'ulid'
-import fs from 'fs'
+import fs from 'fs/promises' // Use fs.promises for async operations
 
 export class CreateGalleryUseCase {
   constructor(
@@ -19,7 +19,7 @@ export class CreateGalleryUseCase {
     private readonly locationRepository: ILocationRepository, // Added
   ) {}
 
-  async execute(userId: string, data: GalleryCreatePayload): Promise<GalleryResponse> {
+  async execute(userId: string, data: GalleryCreatePayload, fileBuffer: Buffer): Promise<GalleryResponse> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(data.storyId, userId)
     if (!story) {
@@ -57,26 +57,35 @@ export class CreateGalleryUseCase {
       throw new Error('ownerType is required when ownerId is provided')
     }
 
-    // Ensure Gallery directory exists if isFile is true
-    if (data.isFile) {
-      const galleryPath = getKeresGalleryPath()
-      if (!fs.existsSync(galleryPath)) {
-        console.log(`Creating gallery directory: ${galleryPath}`)
-        fs.mkdirSync(galleryPath, { recursive: true })
-      }
-    }
+    let finalImagePath = data.imagePath // Default to the provided imagePath
 
-    // TODO: Implement file saving logic here if data.isFile is true.
-    // This will involve receiving the actual file data (e.g., as a Buffer) from the controller,
-    // generating a unique filename, saving it to the path returned by getKeresGalleryPath(),
-    // and updating data.imagePath to reflect the local file path.
+    // Handle file saving if isFile is true
+    if (data.isFile) {
+      if (!fileBuffer) {
+        throw new Error('File content is required when isFile is true')
+      }
+
+      const galleryPath = getKeresGalleryPath()
+      // Ensure Gallery directory exists
+      await fs.mkdir(galleryPath, { recursive: true })
+
+      const originalExtension = data.imagePath ? data.imagePath.split('.').pop() : '';
+      // Sanitize the extension to only allow alphanumeric characters
+      const sanitizedExtension = originalExtension ? originalExtension.replace(/[^a-zA-Z0-9]/g, '') : '';
+      const fileExtension = sanitizedExtension ? `.${sanitizedExtension}` : '';
+      const uniqueFilename = `${ulid()}${fileExtension}`;
+      const fullFilePath = `${galleryPath}/${uniqueFilename}`;
+
+      await fs.writeFile(fullFilePath, fileBuffer);
+      finalImagePath = uniqueFilename; // Update imagePath to the unique filename
+    }
 
     const newGallery: Gallery = {
       id: ulid(),
       storyId: data.storyId,
       ownerId: data.ownerId,
-      ownerType: data.ownerType || null,
-      imagePath: data.imagePath,
+      ownerType: data.ownerType,
+      imagePath: finalImagePath,
       isFile: data.isFile || false,
       isFavorite: data.isFavorite || false,
       extraNotes: data.extraNotes || null,

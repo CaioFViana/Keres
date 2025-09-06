@@ -33,8 +33,8 @@ export class GalleryController {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async createGallery(userId: string, data: z.infer<typeof GalleryCreateSchema>) {
-    const gallery = await this.createGalleryUseCase.execute(userId, data)
+  async createGallery(userId: string, data: z.infer<typeof GalleryCreateSchema>, fileBuffer: Buffer) {
+    const gallery = await this.createGalleryUseCase.execute(userId, data, fileBuffer)
     return GalleryResponseSchema.parse(gallery)
   }
 

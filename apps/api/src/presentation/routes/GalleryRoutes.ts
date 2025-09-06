@@ -94,7 +94,7 @@ galleryRoutes.openapi(
     request: {
       body: {
         content: {
-          'application/json': {
+          'multipart/form-data': {
             schema: GalleryCreateSchema,
           },
         },
@@ -130,10 +130,27 @@ galleryRoutes.openapi(
   }),
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const body = await c.req.json()
-    const data = GalleryCreateSchema.parse(body)
+    const body = await c.req.parseBody()
+
+    const parsedBody = GalleryCreateSchema.parse(body)
+
+    const file = parsedBody.file
+    let fileBuffer: Buffer = Buffer.from(await file.arrayBuffer())
+
+
+    const data = {
+      storyId: parsedBody.storyId,
+      ownerId: parsedBody.ownerId,
+      ownerType: parsedBody.ownerType,
+      imagePath: parsedBody.imagePath,
+      isFile: parsedBody.isFile,
+      isFavorite: parsedBody.isFavorite,
+      extraNotes: parsedBody.extraNotes,
+      file: parsedBody.file
+    }
+
     try {
-      const gallery = await galleryController.createGallery(userId, data)
+      const gallery = await galleryController.createGallery(userId, data, fileBuffer)
       return c.json(gallery, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {

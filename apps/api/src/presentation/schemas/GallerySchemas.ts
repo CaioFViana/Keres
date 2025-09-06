@@ -1,12 +1,14 @@
 import { z } from 'zod'
 
-export const createGallerySchema = z.object({
+export const GalleryCreateSchema = z.object({
   storyId: z.string(),
-  ownerId: z.string(), // Can refer to character.id, notes.id, or locations.id
-  imagePath: z.string().url(),
+  ownerId: z.string(),
+  ownerType: z.union([z.literal('character'), z.literal('note'), z.literal('location')]),
+  imagePath: z.string(), // This will be the original filename with extension
   isFile: z.boolean().optional(),
   isFavorite: z.boolean().optional(),
-  extraNotes: z.string().nullable().optional(),
+  extraNotes: z.string().optional(),
+  file: z.instanceof(File), // The actual file
 })
 
 export const updateGallerySchema = z.object({

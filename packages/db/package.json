@@ -7,11 +7,13 @@
   "scripts": {
     "generate": "drizzle-kit generate:pg",
     "migrate": "ts-node src/migrate.ts",
+    "seed": "bun src/seed.ts",
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
     "drizzle-orm": "^0.29.3",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "ulid": "^2.3.0"
   },
   "devDependencies": {
     "drizzle-kit": "^0.20.13",

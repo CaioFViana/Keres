@@ -9,6 +9,7 @@ packages/shared/dist
 
 # Node
 /node_modules
+packages/db/node_modules
 npm-debug.log
 yarn-error.log
 

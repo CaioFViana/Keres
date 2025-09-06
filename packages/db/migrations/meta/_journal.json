@@ -120,6 +120,13 @@
       "when": 1757037504465,
       "tag": "0016_aspiring_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1757117207247,
+      "tag": "0017_lean_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

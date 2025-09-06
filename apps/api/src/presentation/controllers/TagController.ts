@@ -1,21 +1,31 @@
 import type {
+  AddTagToEntityUseCase,
   CreateTagUseCase,
   DeleteTagUseCase,
   GetTagsByStoryIdUseCase,
   GetTagUseCase,
+  RemoveTagFromEntityUseCase,
   UpdateTagUseCase,
-} from '@application/use-cases'
-import type z from 'zod'
+} from '@application/use-cases/tag'
+import type { z } from 'zod'
 
-import { type CreateTagSchema, TagResponseSchema, type UpdateTagSchema } from '@keres/shared'
+import {
+  type CreateTagSchema,
+  TagResponseSchema,
+  type TagAssignmentPayload,
+  type TagRemovalPayload,
+  type UpdateTagSchema,
+} from '@keres/shared'
 
 export class TagController {
   constructor(
     private readonly createTagUseCase: CreateTagUseCase,
     private readonly getTagUseCase: GetTagUseCase,
+    private readonly getTagsByStoryIdUseCase: GetTagsByStoryIdUseCase,
     private readonly updateTagUseCase: UpdateTagUseCase,
     private readonly deleteTagUseCase: DeleteTagUseCase,
-    private readonly getTagsByStoryIdUseCase: GetTagsByStoryIdUseCase,
+    private readonly addTagToEntityUseCase: AddTagToEntityUseCase,
+    private readonly removeTagFromEntityUseCase: RemoveTagFromEntityUseCase,
   ) {}
 
   async createTag(userId: string, data: z.infer<typeof CreateTagSchema>) {
@@ -40,7 +50,7 @@ export class TagController {
     const { id: dataId, ...updateData } = data
     const updatedTag = await this.updateTagUseCase.execute(userId, { id, ...updateData })
     if (!updatedTag) {
-      throw new Error('Tag not found')
+      throw new Error('Tag not found or does not belong to the specified story')
     }
     return TagResponseSchema.parse(updatedTag)
   }
@@ -48,8 +58,16 @@ export class TagController {
   async deleteTag(userId: string, id: string) {
     const deleted = await this.deleteTagUseCase.execute(userId, id)
     if (!deleted) {
-      throw new Error('Tag not found')
+      throw new Error('Tag not found or does not belong to the specified story')
     }
-    return
+    return // No content to return for 204
+  }
+
+  async addTag(userId: string, data: TagAssignmentPayload): Promise<void> {
+    await this.addTagToEntityUseCase.execute(userId, data)
+  }
+
+  async removeTag(userId: string, data: TagRemovalPayload): Promise<void> {
+    await this.removeTagFromEntityUseCase.execute(userId, data)
   }
 }

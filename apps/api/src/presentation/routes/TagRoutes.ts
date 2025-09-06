@@ -1,32 +1,71 @@
 import {
+  AddTagToEntityUseCase,
   CreateTagUseCase,
   DeleteTagUseCase,
   GetTagsByStoryIdUseCase,
   GetTagUseCase,
+  RemoveTagFromEntityUseCase,
   UpdateTagUseCase,
-} from '@application/use-cases'
+} from '@application/use-cases/tag'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { StoryRepository, TagRepository } from '@infrastructure/persistence'
-import { CreateTagSchema, TagResponseSchema, UpdateTagSchema } from '@keres/shared'
+import {
+  ChapterRepository,
+  CharacterRepository,
+  LocationRepository,
+  SceneRepository,
+  StoryRepository,
+  TagRepository,
+} from '@infrastructure/persistence'
+import {
+  CreateTagSchema,
+  TagAssignmentSchema,
+  TagRemovalSchema,
+  TagResponseSchema,
+  UpdateTagSchema,
+} from '@keres/shared'
 import { TagController } from '@presentation/controllers/TagController'
 import { z } from 'zod'
 
 const tagRoutes = new OpenAPIHono()
 
+// Dependencies for TagController
 const tagRepository = new TagRepository()
 const storyRepository = new StoryRepository()
+const characterRepository = new CharacterRepository()
+const locationRepository = new LocationRepository()
+const chapterRepository = new ChapterRepository()
+const sceneRepository = new SceneRepository()
+
 const createTagUseCase = new CreateTagUseCase(tagRepository, storyRepository)
 const getTagUseCase = new GetTagUseCase(tagRepository, storyRepository)
+const getTagsByStoryIdUseCase = new GetTagsByStoryIdUseCase(tagRepository, storyRepository)
 const updateTagUseCase = new UpdateTagUseCase(tagRepository, storyRepository)
 const deleteTagUseCase = new DeleteTagUseCase(tagRepository, storyRepository)
-const getTagsByStoryIdUseCase = new GetTagsByStoryIdUseCase(tagRepository, storyRepository)
+const addTagToEntityUseCase = new AddTagToEntityUseCase(
+  tagRepository,
+  storyRepository,
+  characterRepository,
+  locationRepository,
+  chapterRepository,
+  sceneRepository,
+)
+const removeTagFromEntityUseCase = new RemoveTagFromEntityUseCase(
+  tagRepository,
+  storyRepository,
+  characterRepository,
+  locationRepository,
+  chapterRepository,
+  sceneRepository,
+)
 
 const tagController = new TagController(
   createTagUseCase,
   getTagUseCase,
+  getTagsByStoryIdUseCase,
   updateTagUseCase,
   deleteTagUseCase,
-  getTagsByStoryIdUseCase,
+  addTagToEntityUseCase,
+  removeTagFromEntityUseCase,
 )
 
 // Define schemas for path parameters
@@ -44,7 +83,7 @@ tagRoutes.openapi(
     method: 'post',
     path: '/',
     summary: 'Create a new tag',
-    description: 'Creates a new tag for a story.',
+    description: 'Creates a new tag in a story.',
     request: {
       body: {
         content: {
@@ -87,8 +126,8 @@ tagRoutes.openapi(
     const body = await c.req.json()
     const data = CreateTagSchema.parse(body)
     try {
-      const newTag = await tagController.createTag(userId, data)
-      return c.json(newTag, 201)
+      const tag = await tagController.createTag(userId, data)
+      return c.json(tag, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)
@@ -117,14 +156,6 @@ tagRoutes.openapi(
           },
         },
       },
-      400: {
-        description: 'Bad Request',
-        content: {
-          'application/json': {
-            schema: z.object({ error: z.string() }),
-          },
-        },
-      },
       404: {
         description: 'Tag not found',
         content: {
@@ -149,13 +180,10 @@ tagRoutes.openapi(
     const params = IdParamSchema.parse(c.req.param())
     try {
       const tag = await tagController.getTag(userId, params.id)
-      if (!tag) {
-        return c.json({ error: 'Tag not found' }, 404)
-      }
       return c.json(tag, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400)
+        return c.json({ error: error.message }, 404)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
@@ -168,7 +196,7 @@ tagRoutes.openapi(
     method: 'get',
     path: '/story/{storyId}',
     summary: 'Get tags by story ID',
-    description: 'Retrieves all tags associated with a specific story.',
+    description: 'Retrieves all tags belonging to a specific story.',
     request: {
       params: StoryIdParamSchema,
     },
@@ -181,8 +209,8 @@ tagRoutes.openapi(
           },
         },
       },
-      400: {
-        description: 'Bad Request',
+      404: {
+        description: 'Story not found',
         content: {
           'application/json': {
             schema: z.object({ error: z.string() }),
@@ -208,7 +236,7 @@ tagRoutes.openapi(
       return c.json(tags, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400)
+        return c.json({ error: error.message }, 404)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
@@ -258,7 +286,7 @@ tagRoutes.openapi(
         },
       },
       500: {
-        description: 'Internal Server Error',
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: z.object({ error: z.string() }),
@@ -275,13 +303,10 @@ tagRoutes.openapi(
     const data = UpdateTagSchema.parse(body)
     try {
       const updatedTag = await tagController.updateTag(userId, params.id, data)
-      if (!updatedTag) {
-        return c.json({ error: 'Tag not found' }, 404)
-      }
       return c.json(updatedTag, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 400)
+        return c.json({ error: error.message }, 404)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
@@ -301,14 +326,6 @@ tagRoutes.openapi(
     responses: {
       204: {
         description: 'Tag deleted successfully (No Content)',
-      },
-      400: {
-        description: 'Bad Request',
-        content: {
-          'application/json': {
-            schema: z.object({ error: z.string() }),
-          },
-        },
       },
       404: {
         description: 'Tag not found',
@@ -338,6 +355,142 @@ tagRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /add
+tagRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/add',
+    summary: 'Add a tag to an entity',
+    description: 'Assigns a tag to a specified entity (Character, Location, Chapter, or Scene).',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: TagAssignmentSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Tag added successfully',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Not Found',
+        content: {
+          'application': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Tags'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = TagAssignmentSchema.parse(body)
+    try {
+      await tagController.addTag(userId, data)
+      return c.json({ message: 'Tag added successfully' }, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// DELETE /remove
+tagRoutes.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/remove',
+    summary: 'Remove a tag from an entity',
+    description: 'Removes a tag from a specified entity (Character, Location, Chapter, or Scene).',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: TagRemovalSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Tag removed successfully',
+        content: {
+          'application/json': {
+            schema: z.object({ message: z.string() }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Not Found',
+        content: {
+          'application': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Tags'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = TagRemovalSchema.parse(body)
+    try {
+      await tagController.removeTag(userId, data)
+      return c.json({ message: 'Tag removed successfully' }, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

@@ -1,15 +1,14 @@
-import type { Tag } from '@domain/entities/Tag'
-import type { ITagRepository } from '@domain/repositories/ITagRepository'
-
-import { db, tags } from '@keres/db' // Import db and tags table
-import { eq } from 'drizzle-orm'
+import { Tag } from '@domain/entities/Tag'
+import { ITagRepository } from '@domain/repositories/ITagRepository'
+import { chapterTags, characterTags, locationTags, chapters, db, locations, sceneTags, scenes, tags } from '@keres/db'
+import { eq, and } from 'drizzle-orm'
 
 export class TagRepository implements ITagRepository {
   constructor() {}
 
-  async findById(id: string): Promise<Tag | null> {
+  async findById(tagId: string): Promise<Tag | null> {
     try {
-      const result = await db.select().from(tags).where(eq(tags.id, id)).limit(1)
+      const result = await db.select().from(tags).where(eq(tags.id, tagId)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
       console.error('Error in TagRepository.findById:', error)
@@ -17,42 +16,74 @@ export class TagRepository implements ITagRepository {
     }
   }
 
-  async findByStoryId(storyId: string): Promise<Tag[]> {
+  async addTagToCharacter(characterId: string, tagId: string): Promise<void> {
     try {
-      const results = await db.select().from(tags).where(eq(tags.storyId, storyId))
-      return results.map(this.toDomain)
+      await db.insert(characterTags).values({ characterId, tagId })
     } catch (error) {
-      console.error('Error in TagRepository.findByStoryId:', error)
+      console.error('Error in TagRepository.addTagToCharacter:', error)
       throw error
     }
   }
 
-  async save(tagData: Tag): Promise<void> {
+  async removeTagFromCharacter(characterId: string, tagId: string): Promise<void> {
     try {
-      await db.insert(tags).values(this.toPersistence(tagData))
+      await db.delete(characterTags).where(and(eq(characterTags.characterId, characterId), eq(characterTags.tagId, tagId)))
     } catch (error) {
-      console.error('Error in TagRepository.save:', error)
+      console.error('Error in TagRepository.removeTagFromCharacter:', error)
       throw error
     }
   }
 
-  async update(tagData: Tag, storyId: string): Promise<void> {
+  async addTagToLocation(locationId: string, tagId: string): Promise<void> {
     try {
-      await db
-        .update(tags)
-        .set(this.toPersistence(tagData))
-        .where(eq(tags.id, tagData.id), eq(tags.storyId, storyId))
+      await db.insert(locationTags).values({ locationId, tagId })
     } catch (error) {
-      console.error('Error in TagRepository.update:', error)
+      console.error('Error in TagRepository.addTagToLocation:', error)
       throw error
     }
   }
 
-  async delete(id: string, storyId: string): Promise<void> {
+  async removeTagFromLocation(locationId: string, tagId: string): Promise<void> {
     try {
-      await db.delete(tags).where(eq(tags.id, id), eq(tags.storyId, storyId))
+      await db.delete(locationTags).where(and(eq(locations.id, locationId), eq(tags.id, tagId)))
     } catch (error) {
-      console.error('Error in TagRepository.delete:', error)
+      console.error('Error in TagRepository.removeTagFromLocation:', error)
+      throw error
+    }
+  }
+
+  async addTagToChapter(chapterId: string, tagId: string): Promise<void> {
+    try {
+      await db.insert(chapterTags).values({ chapterId, tagId })
+    } catch (error) {
+      console.error('Error in TagRepository.addTagToChapter:', error)
+      throw error
+    }
+  }
+
+  async removeTagFromChapter(chapterId: string, tagId: string): Promise<void> {
+    try {
+      await db.delete(chapterTags).where(and(eq(chapters.id, chapterId), eq(tags.id, tagId)))
+    } catch (error) {
+      console.error('Error in TagRepository.removeTagFromChapter:', error)
+      throw error
+    }
+  }
+
+  async addTagToScene(sceneId: string, tagId: string): Promise<void> {
+    try {
+      await db.insert(sceneTags).values({ sceneId, tagId })
+    } catch (error) {
+      console.error('Error in TagRepository.addTagToScene:', error)
+      throw error
+    }
+  }
+
+  async removeTagFromScene(sceneId: string, tagId: string): Promise<void> {
+    try {
+      await db.delete(sceneTags).where(and(eq(scenes.id, sceneId), eq(tags.id, tagId)))
+    } catch (error) {
+      console.error('Error in TagRepository.removeTagFromScene:', error)
       throw error
     }
   }
@@ -67,19 +98,6 @@ export class TagRepository implements ITagRepository {
       extraNotes: data.extraNotes,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-    }
-  }
-
-  private toPersistence(tagData: Tag): typeof tags.$inferInsert {
-    return {
-      id: tagData.id,
-      storyId: tagData.storyId,
-      name: tagData.name,
-      color: tagData.color,
-      isFavorite: tagData.isFavorite,
-      extraNotes: tagData.extraNotes,
-      createdAt: tagData.createdAt,
-      updatedAt: tagData.updatedAt,
     }
   }
 }

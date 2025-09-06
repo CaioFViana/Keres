@@ -224,3 +224,79 @@ export const suggestions = pgTable('suggestions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+export const characterTags = pgTable(
+  'character_tags',
+  {
+    characterId: text('character_id')
+      .notNull()
+      .references(() => characters.id),
+    tagId: text('tag_id')
+      .notNull()
+      .references(() => tags.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.characterId, table.tagId),
+    };
+  },
+);
+
+export const locationTags = pgTable(
+  'location_tags',
+  {
+    locationId: text('location_id')
+      .notNull()
+      .references(() => locations.id),
+    tagId: text('tag_id')
+      .notNull()
+      .references(() => tags.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.locationId, table.tagId),
+    };
+  },
+);
+
+export const chapterTags = pgTable(
+  'chapter_tags',
+  {
+    chapterId: text('chapter_id')
+      .notNull()
+      .references(() => chapters.id),
+    tagId: text('tag_id')
+      .notNull()
+      .references(() => tags.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.chapterId, table.tagId),
+    };
+  },
+);
+
+export const sceneTags = pgTable(
+  'scene_tags',
+  {
+    sceneId: text('scene_id')
+      .notNull()
+      .references(() => scenes.id),
+    tagId: text('tag_id')
+      .notNull()
+      .references(() => tags.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.sceneId, table.tagId),
+    };
+  },
+);

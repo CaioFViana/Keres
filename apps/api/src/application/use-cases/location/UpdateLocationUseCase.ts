@@ -10,8 +10,8 @@ export class UpdateLocationUseCase {
 
   async execute(userId: string, data: LocationUpdatePayload): Promise<LocationResponse> {
     const existingLocation = await this.locationRepository.findById(data.id)
-    if (!existingLocation || existingLocation.storyId !== data.storyId) {
-      throw new Error('Location not found or does not belong to the specified story')
+    if (!existingLocation) {
+      throw new Error('Location not found.')
     }
 
     // Verify that the story exists and belongs to the user

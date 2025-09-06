@@ -27,6 +27,23 @@ export const TagResponseSchema = z.object({
   updatedAt: z.date(),
 })
 
+export const TagTargetTypeSchema = z.enum(['Character', 'Location', 'Chapter', 'Scene'])
+
+export const TagAssignmentSchema = z.object({
+  tagId: z.ulid(),
+  targetType: TagTargetTypeSchema,
+  targetId: z.ulid(),
+})
+
+export const TagRemovalSchema = z.object({
+  tagId: z.ulid(),
+  targetType: TagTargetTypeSchema,
+  targetId: z.ulid(),
+})
+
 export type CreateTagPayload = z.infer<typeof CreateTagSchema>
 export type UpdateTagPayload = z.infer<typeof UpdateTagSchema>
 export type TagResponse = z.infer<typeof TagResponseSchema>
+export type TagTargetType = z.infer<typeof TagTargetTypeSchema>
+export type TagAssignmentPayload = z.infer<typeof TagAssignmentSchema>
+export type TagRemovalPayload = z.infer<typeof TagRemovalSchema>

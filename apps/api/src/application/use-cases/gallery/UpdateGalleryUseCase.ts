@@ -4,9 +4,10 @@ import type { ILocationRepository } from '@domain/repositories/ILocationReposito
 import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { GalleryResponse, GalleryUpdatePayload } from '@keres/shared'
-import fs from 'node:fs'
+import fs from 'node:fs/promises'
 
 import { getKeresGalleryPath } from '@keres/shared'
+import { ulid } from 'ulid'
 
 export class UpdateGalleryUseCase {
   constructor(
@@ -17,7 +18,7 @@ export class UpdateGalleryUseCase {
     private readonly locationRepository: ILocationRepository, // Added
   ) {}
 
-  async execute(userId: string, data: GalleryUpdatePayload): Promise<GalleryResponse> {
+  async execute(userId: string, data: GalleryUpdatePayload, fileBuffer?: Buffer): Promise<GalleryResponse> {
     const existingGallery = await this.galleryRepository.findById(data.id)
     if (!existingGallery) {
       throw new Error('Gallery item not found')
@@ -69,25 +70,58 @@ export class UpdateGalleryUseCase {
       }
     }
 
-    // Ensure Gallery directory exists if isFile is true and imagePath is being updated
-    // Phase 1 Keres has isFile always true. so removed that check.
-    if (data.imagePath) {
+    let finalImagePath = existingGallery.imagePath // Start with existing imagePath
+    let finalIsFile = existingGallery.isFile // Start with existing isFile
+
+    // Handle file saving/deletion if imagePath or file changes
+    if (data.imagePath !== undefined || fileBuffer !== undefined) {
       const galleryPath = getKeresGalleryPath()
-      if (!fs.existsSync(galleryPath)) {
-        console.log(`Creating gallery directory: ${galleryPath}`)
-        fs.mkdirSync(galleryPath, { recursive: true })
+      await fs.mkdir(galleryPath, { recursive: true }) // Ensure directory exists
+
+      // Case 1: New file provided (implies isFile is true)
+      if (fileBuffer) {
+        // Delete old file if it was a local file
+        if (existingGallery.isFile) {
+          const oldFilePath = `${galleryPath}/${existingGallery.imagePath}`
+          try {
+            await fs.unlink(oldFilePath)
+          } catch (error) {
+            console.warn(`Could not delete old file ${oldFilePath}:`, error)
+          }
+        }
+
+        const originalExtension = data.imagePath ? data.imagePath.split('.').pop() : ''
+        const sanitizedExtension = originalExtension
+          ? originalExtension.replace(/[^a-zA-Z0-9]/g, '')
+          : ''
+        const fileExtension = sanitizedExtension ? `.${sanitizedExtension}` : ''
+        const uniqueFilename = `${ulid()}${fileExtension}`
+        const fullFilePath = `${galleryPath}/${uniqueFilename}`
+
+        await fs.writeFile(fullFilePath, fileBuffer)
+        finalImagePath = uniqueFilename
+        finalIsFile = true
+      } else if (data.imagePath !== undefined && data.imagePath !== existingGallery.imagePath) {
+        // Case 2: imagePath changed, but no new file provided (implies it's a URL)
+        // Delete old file if it was a local file
+        if (existingGallery.isFile) {
+          const oldFilePath = `${galleryPath}/${existingGallery.imagePath}`
+          try {
+            await fs.unlink(oldFilePath)
+          } catch (error) {
+            console.warn(`Could not delete old file ${oldFilePath}:`, error)
+          }
+        }
+        finalImagePath = data.imagePath // New imagePath is a URL
+        finalIsFile = false
       }
     }
-
-    // TODO: Implement file saving logic here if data.isFile is true and a new file is provided.
-    // This will involve receiving the actual file data (e.g., as a Buffer) from the controller,
-    // generating a unique filename, saving it to the path returned by getKeresGalleryPath(),
-    // and updating data.imagePath to reflect the local file path.
-    // Also handle deletion of old file if imagePath changes and old file was local.
 
     const updatedGallery = {
       ...existingGallery,
       ...data,
+      imagePath: finalImagePath,
+      isFile: finalIsFile,
       updatedAt: new Date(),
     }
 

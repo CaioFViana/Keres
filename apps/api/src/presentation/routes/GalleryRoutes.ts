@@ -406,7 +406,7 @@ galleryRoutes.openapi(
       params: IdParamSchema,
       body: {
         content: {
-          'application/json': {
+          'multipart/form-data': {
             schema: GalleryUpdateSchema,
           },
         },
@@ -451,10 +451,29 @@ galleryRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
-    const body = await c.req.json()
-    const data = GalleryUpdateSchema.parse(body)
+    const body = await c.req.parseBody()
+
+    const parsedBody = GalleryUpdateSchema.parse(body)
+
+    let fileBuffer: Buffer | undefined
+    if (!parsedBody.file) {
+      throw new Error('File is required when isFile is true')
+    }
+    fileBuffer = Buffer.from(await parsedBody.file.arrayBuffer())
+
+    const data = {
+      id: parsedBody.id,
+      ownerId: parsedBody.ownerId,
+      ownerType: parsedBody.ownerType,
+      imagePath: parsedBody.imagePath,
+      isFile: true,
+      isFavorite: parsedBody.isFavorite,
+      extraNotes: parsedBody.extraNotes,
+      file: parsedBody.file
+    }
+
     try {
-      const updatedGallery = await galleryController.updateGallery(userId, params.id, data)
+      const updatedGallery = await galleryController.updateGallery(userId, params.id, data, fileBuffer)
       return c.json(updatedGallery, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

@@ -17,6 +17,7 @@ export const GalleryUpdateSchema = z.object({
   imagePath: z.string().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().optional(),
+  file: z.instanceof(File), // The actual file
 })
 
 export const GalleryResponseSchema = z.object({

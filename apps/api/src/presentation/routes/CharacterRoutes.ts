@@ -6,7 +6,7 @@ import {
   UpdateCharacterUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { CharacterRepository, StoryRepository } from '@infrastructure/persistence'
+import { CharacterRepository, StoryRepository, CharacterMomentRepository, CharacterRelationRepository, MomentRepository } from '@infrastructure/persistence'
 import {
   CharacterCreateSchema,
   CharacterResponseSchema,
@@ -21,8 +21,11 @@ const characterRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 // Dependencies for CharacterController
 const characterRepository = new CharacterRepository()
 const storyRepository = new StoryRepository()
+const characterMomentRepository = new CharacterMomentRepository() // New
+const characterRelationRepository = new CharacterRelationRepository() // New
+const momentRepository = new MomentRepository() // New
 const createCharacterUseCase = new CreateCharacterUseCase(characterRepository, storyRepository)
-const getCharacterUseCase = new GetCharacterUseCase(characterRepository, storyRepository)
+const getCharacterUseCase = new GetCharacterUseCase(characterRepository, storyRepository, characterMomentRepository, characterRelationRepository, momentRepository) // Updated
 const updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository, storyRepository)
 const deleteCharacterUseCase = new DeleteCharacterUseCase(characterRepository, storyRepository)
 const getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(
@@ -45,6 +48,11 @@ const IdParamSchema = z.object({
 
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
+})
+
+// Define schema for include query parameter
+const IncludeQuerySchema = z.object({
+  include: z.string().optional().transform((val) => val ? val.split(',') : []),
 })
 
 // POST /
@@ -116,6 +124,7 @@ characterRoutes.openapi(
     description: 'Retrieves a single character by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: IncludeQuerySchema, // Add this line
     },
     responses: {
       200: {
@@ -148,8 +157,9 @@ characterRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
+    const query = IncludeQuerySchema.parse(c.req.query()) // Parse query
     try {
-      const character = await characterController.getCharacter(userId, params.id)
+      const character = await characterController.getCharacter(userId, params.id, query.include) // Pass include
       return c.json(character, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

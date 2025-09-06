@@ -28,8 +28,8 @@ export class CharacterController {
     return CharacterResponseSchema.parse(character)
   }
 
-  async getCharacter(userId: string, id: string) {
-    const character = await this.getCharacterUseCase.execute(userId, id)
+  async getCharacter(userId: string, id: string, include: string[] = []) {
+    const character = await this.getCharacterUseCase.execute(userId, id, include)
     if (!character) {
       throw new Error('Character not found')
     }

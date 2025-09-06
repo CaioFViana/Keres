@@ -3,7 +3,7 @@ import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ListQueryParams } from '@keres/shared'
 
 import { db, moments } from '@keres/db' // Import db and moments table
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm' // Import inArray
 
 export class MomentRepository implements IMomentRepository {
   async findById(id: string): Promise<Moment | null> {
@@ -12,6 +12,20 @@ export class MomentRepository implements IMomentRepository {
       return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
       console.error('Error in MomentRepository.findById:', error)
+      throw error
+    }
+  }
+
+  // New findByIds method
+  async findByIds(ids: string[]): Promise<Moment[]> {
+    try {
+      if (ids.length === 0) {
+        return []
+      }
+      const results = await db.select().from(moments).where(inArray(moments.id, ids))
+      return results.map(this.toDomain)
+    } catch (error) {
+      console.error('Error in MomentRepository.findByIds:', error)
       throw error
     }
   }

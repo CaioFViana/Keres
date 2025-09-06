@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { MomentResponseSchema } from './MomentSchemas' // Import MomentResponseSchema
+import { CharacterRelationResponseSchema } from './CharacterRelationSchemas' // Import CharacterRelationResponseSchema
 
 export const CharacterCreateSchema = z.object({
   storyId: z.string(),
@@ -52,6 +54,9 @@ export const CharacterResponseSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  // Add optional fields for included data
+  moments: z.array(MomentResponseSchema).optional(), // New
+  relations: z.array(CharacterRelationResponseSchema).optional(), // New
 })
 
 export type CharacterCreatePayload = z.infer<typeof CharacterCreateSchema>

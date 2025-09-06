@@ -41,6 +41,20 @@ export class CharacterRepository implements ICharacterRepository {
     }
   }
 
+  // New findByIds method
+  async findByIds(ids: string[]): Promise<Character[]> {
+    try {
+      if (ids.length === 0) {
+        return []
+      }
+      const results = await db.select().from(characters).where(inArray(characters.id, ids))
+      return results.map(this.toDomain)
+    } catch (error) {
+      console.error('Error in CharacterRepository.findByIds:', error)
+      throw error
+    }
+  }
+
   async save(characterData: Character): Promise<void> {
     try {
       await db.insert(characters).values(this.toPersistence(characterData))

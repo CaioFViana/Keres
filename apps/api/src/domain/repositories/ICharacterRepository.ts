@@ -3,6 +3,7 @@ import type { ListQueryParams } from '@keres/shared'
 
 export interface ICharacterRepository {
   findById(id: string): Promise<Character | null>
+  findByIds(ids: string[]): Promise<Character[]>
   findByStoryId(storyId: string, query?: ListQueryParams): Promise<Character[]>
   save(character: Character): Promise<void>
   update(character: Character, storyId: string): Promise<void>

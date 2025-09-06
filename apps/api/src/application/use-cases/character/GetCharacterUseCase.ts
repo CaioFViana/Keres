@@ -1,14 +1,20 @@
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { CharacterResponse } from '@keres/shared'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository'
+import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository' // New import
+import { CharacterResponse, MomentResponseSchema } from '@keres/shared' // Import MomentResponseSchema
 
 export class GetCharacterUseCase {
   constructor(
     private readonly characterRepository: ICharacterRepository,
-    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+    private readonly storyRepository: IStoryRepository,
+    private readonly characterMomentRepository: ICharacterMomentRepository,
+    private readonly characterRelationRepository: ICharacterRelationRepository,
+    private readonly momentRepository: IMomentRepository, // New injection
   ) {}
 
-  async execute(userId: string, id: string): Promise<CharacterResponse> {
+  async execute(userId: string, id: string, include: string[] = []): Promise<CharacterResponse> {
     const character = await this.characterRepository.findById(id)
     if (!character) {
       throw new Error('Character not found')
@@ -20,7 +26,7 @@ export class GetCharacterUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    return {
+    const response: CharacterResponse = {
       id: character.id,
       storyId: character.storyId,
       name: character.name,
@@ -39,5 +45,19 @@ export class GetCharacterUseCase {
       createdAt: character.createdAt,
       updatedAt: character.updatedAt,
     }
+
+    if (include.includes('moments')) {
+      const characterMoments = await this.characterMomentRepository.findByCharacterId(character.id)
+      const momentIds = characterMoments.map(cm => cm.momentId)
+      const moments = await this.momentRepository.findByIds(momentIds)
+      response.moments = moments.map(m => MomentResponseSchema.parse(m)) // Map to MomentResponse
+    }
+
+    if (include.includes('relations')) {
+      const relations = await this.characterRelationRepository.findByCharId(character.id)
+      response.relations = relations // Assign to the response (assuming CharacterRelationResponse matches CharacterRelation entity)
+    }
+
+    return response
   }
 }

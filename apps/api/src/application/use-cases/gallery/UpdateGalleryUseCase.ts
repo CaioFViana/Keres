@@ -70,7 +70,8 @@ export class UpdateGalleryUseCase {
     }
 
     // Ensure Gallery directory exists if isFile is true and imagePath is being updated
-    if (data.isFile && data.imagePath) {
+    // Phase 1 Keres has isFile always true. so removed that check.
+    if (data.imagePath) {
       const galleryPath = getKeresGalleryPath()
       if (!fs.existsSync(galleryPath)) {
         console.log(`Creating gallery directory: ${galleryPath}`)

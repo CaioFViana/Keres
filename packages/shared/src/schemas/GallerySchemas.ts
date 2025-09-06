@@ -5,7 +5,6 @@ export const GalleryCreateSchema = z.object({
   ownerId: z.string(),
   ownerType: z.union([z.literal('character'), z.literal('note'), z.literal('location')]),
   imagePath: z.string(), // This will be the original filename with extension
-  isFile: z.boolean().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().optional(),
   file: z.instanceof(File), // The actual file
@@ -16,7 +15,6 @@ export const GalleryUpdateSchema = z.object({
   ownerId: z.string().optional(), // Added ownerId as optional for updates
   ownerType: z.union([z.literal('character'), z.literal('note'), z.literal('location')]).optional(),
   imagePath: z.string().optional(),
-  isFile: z.boolean().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().optional(),
 })

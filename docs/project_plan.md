@@ -99,7 +99,7 @@ gallery
 - story_id (ulid, fk)
 - owner_id (ulid) # ID do personagem/nota/local
 - image_path (text) # URL ou caminho do arquivo
-- is_file (bool) # Apenas para versão offline
+- is_file (bool) # Sempre será true nesta faze. um dia talvez permitiremos URL (salvo em image_path). Mas não tão cedo.
 - is_favorite (boolean) # Indica se o objeto é favorito
 - extra_notes (text) # Notas adicionais sobre o objeto
 - created_at (timestamp)

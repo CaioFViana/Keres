@@ -1,7 +1,7 @@
 import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi' // Import OpenAPIHono
 
-import { authMiddleware } from './presentation/middlewares/AuthMiddleware' // Added
+import { authMiddleware } from '@presentation/middlewares/AuthMiddleware' // Added
 import chapterRoutes from './presentation/routes/ChapterRoutes'
 import characterMomentRoutes from './presentation/routes/CharacterMomentRoutes'
 import characterRelationRoutes from './presentation/routes/CharacterRelationRoutes'

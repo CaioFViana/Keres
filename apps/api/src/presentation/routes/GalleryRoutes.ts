@@ -134,15 +134,19 @@ galleryRoutes.openapi(
 
     const parsedBody = GalleryCreateSchema.parse(body)
 
-    const file = parsedBody.file
-    const fileBuffer: Buffer = Buffer.from(await file.arrayBuffer())
+    let fileBuffer: Buffer
+    if (!parsedBody.file) {
+      throw new Error('File is required.')
+    }
+    fileBuffer = Buffer.from(await parsedBody.file.arrayBuffer())
+
 
     const data = {
       storyId: parsedBody.storyId,
       ownerId: parsedBody.ownerId,
       ownerType: parsedBody.ownerType,
       imagePath: parsedBody.imagePath,
-      isFile: parsedBody.isFile,
+      isFile: true, // For this project phase, always true. in the future URL could be allowed so leaving because of it.
       isFavorite: parsedBody.isFavorite,
       extraNotes: parsedBody.extraNotes,
       file: parsedBody.file,

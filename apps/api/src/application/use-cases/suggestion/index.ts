@@ -2,10 +2,10 @@
 
 export * from './CreateSuggestionUseCase'
 export * from './DeleteSuggestionUseCase'
+export * from './GetSuggestionUseCase'
 export * from './GetSuggestionsByStoryAndTypeUseCase'
 export * from './GetSuggestionsByStoryIdUseCase'
 export * from './GetSuggestionsByTypeUseCase'
 export * from './GetSuggestionsByUserAndTypeUseCase'
 export * from './GetSuggestionsByUserIdUseCase'
-export * from './GetSuggestionUseCase'
 export * from './UpdateSuggestionUseCase'

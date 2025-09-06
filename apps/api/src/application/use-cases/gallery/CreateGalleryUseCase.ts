@@ -66,28 +66,24 @@ export class CreateGalleryUseCase {
 
     let finalImagePath = data.imagePath // Default to the provided imagePath
 
-    // Handle file saving if isFile is true
-    if (data.isFile) {
-      if (!fileBuffer) {
-        throw new Error('File content is required when isFile is true')
-      }
+    // Handle file saving if isFile is true. On this project phase, always will be.
+    /*if (data.isFile) {*/
+    const galleryPath = getKeresGalleryPath()
+    // Ensure Gallery directory exists
+    await fs.mkdir(galleryPath, { recursive: true })
 
-      const galleryPath = getKeresGalleryPath()
-      // Ensure Gallery directory exists
-      await fs.mkdir(galleryPath, { recursive: true })
+    const originalExtension = data.imagePath ? data.imagePath.split('.').pop() : ''
+    // Sanitize the extension to only allow alphanumeric characters
+    const sanitizedExtension = originalExtension
+      ? originalExtension.replace(/[^a-zA-Z0-9]/g, '')
+      : ''
+    const fileExtension = sanitizedExtension ? `.${sanitizedExtension}` : ''
+    const uniqueFilename = `${ulid()}${fileExtension}`
+    const fullFilePath = `${galleryPath}/${uniqueFilename}`
 
-      const originalExtension = data.imagePath ? data.imagePath.split('.').pop() : ''
-      // Sanitize the extension to only allow alphanumeric characters
-      const sanitizedExtension = originalExtension
-        ? originalExtension.replace(/[^a-zA-Z0-9]/g, '')
-        : ''
-      const fileExtension = sanitizedExtension ? `.${sanitizedExtension}` : ''
-      const uniqueFilename = `${ulid()}${fileExtension}`
-      const fullFilePath = `${galleryPath}/${uniqueFilename}`
-
-      await fs.writeFile(fullFilePath, fileBuffer)
-      finalImagePath = uniqueFilename // Update imagePath to the unique filename
-    }
+    await fs.writeFile(fullFilePath, fileBuffer as Buffer)
+    finalImagePath = uniqueFilename // Update imagePath to the unique filename
+    /*}*/
 
     const newGallery: Gallery = {
       id: ulid(),
@@ -95,7 +91,8 @@ export class CreateGalleryUseCase {
       ownerId: data.ownerId,
       ownerType: data.ownerType,
       imagePath: finalImagePath,
-      isFile: data.isFile || false,
+      //isFile: data.isFile || true,
+      isFile: true,
       isFavorite: data.isFavorite || false,
       extraNotes: data.extraNotes || null,
       createdAt: new Date(),

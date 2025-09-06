@@ -5,8 +5,6 @@ import { db, users } from '@keres/db'
 import { eq } from 'drizzle-orm'
 
 export class UserRepository implements IUserRepository {
-  constructor() {}
-
   async findById(id: string): Promise<User | null> {
     try {
       const result = await db.select().from(users).where(eq(users.id, id)).limit(1)

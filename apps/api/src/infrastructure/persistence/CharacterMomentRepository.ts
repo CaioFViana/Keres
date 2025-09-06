@@ -5,8 +5,6 @@ import { characterMoments, db } from '@keres/db' // Import db and characterMomen
 import { and, eq } from 'drizzle-orm'
 
 export class CharacterMomentRepository implements ICharacterMomentRepository {
-  constructor() {}
-
   async findById(characterId: string, momentId: string): Promise<CharacterMoment | null> {
     try {
       const result = await db

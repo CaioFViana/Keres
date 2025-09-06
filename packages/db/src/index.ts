@@ -1,12 +1,13 @@
+import fs from 'fs'
+import path from 'path'
+
+import { getKeresDbPath } from '@keres/shared'
 import Database from 'better-sqlite3'
 import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
 import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import path from 'path'
-import fs from 'fs'
 
 import * as schema from './schema' // Import all exports from schema.ts
-import { getKeresDbPath } from '@keres/shared'
 
 // Determine APP_MODE, defaulting to 'online'
 const appMode = process.env.APP_MODE || 'online'
@@ -37,7 +38,9 @@ console.log(`Using connection string: ${connectionString}`)
 
 if (databaseType === 'sqlite') {
   // Extract the file path from the connection string (e.g., 'file:/path/to/db.sqlite')
-  const dbFilePath = connectionString.startsWith('file:') ? connectionString.substring(5) : connectionString
+  const dbFilePath = connectionString.startsWith('file:')
+    ? connectionString.substring(5)
+    : connectionString
   const dbDirectory = path.dirname(dbFilePath)
 
   // Ensure the directory exists

@@ -39,10 +39,6 @@ const IdParamSchema = z.object({
   id: z.ulid(),
 })
 
-const UserIdParamSchema = z.object({
-  userId: z.ulid(),
-})
-
 // POST /
 storyRoutes.openapi(
   createRoute({

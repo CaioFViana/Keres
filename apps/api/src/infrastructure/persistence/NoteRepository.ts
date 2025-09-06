@@ -6,8 +6,6 @@ import { db, notes } from '@keres/db' // Import db and notes table
 import { and, eq } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {
-  constructor() {}
-
   async findById(id: string): Promise<Note | null> {
     try {
       const result = await db.select().from(notes).where(eq(notes.id, id)).limit(1)

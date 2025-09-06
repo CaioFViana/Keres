@@ -5,8 +5,6 @@ import { db, scenes } from '@keres/db' // Import db and scenes table
 import { eq } from 'drizzle-orm'
 
 export class SceneRepository implements ISceneRepository {
-  constructor() {}
-
   async findById(id: string): Promise<Scene | null> {
     try {
       const result = await db.select().from(scenes).where(eq(scenes.id, id)).limit(1)

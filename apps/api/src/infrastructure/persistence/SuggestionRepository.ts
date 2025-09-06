@@ -5,8 +5,6 @@ import { db, suggestions } from '@keres/db' // Import db and suggestions table
 import { and, eq } from 'drizzle-orm'
 
 export class SuggestionRepository implements ISuggestionRepository {
-  constructor() {}
-
   async findById(id: string): Promise<Suggestion | null> {
     try {
       const result = await db.select().from(suggestions).where(eq(suggestions.id, id)).limit(1)

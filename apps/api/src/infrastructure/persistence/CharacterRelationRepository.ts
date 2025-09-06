@@ -5,8 +5,6 @@ import { characterRelations, characters, db } from '@keres/db' // Import db, cha
 import { and, eq, or } from 'drizzle-orm' // Import and
 
 export class CharacterRelationRepository implements ICharacterRelationRepository {
-  constructor() {}
-
   async findById(id: string): Promise<CharacterRelation | null> {
     try {
       const result = await db

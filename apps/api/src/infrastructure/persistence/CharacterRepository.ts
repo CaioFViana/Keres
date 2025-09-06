@@ -6,8 +6,6 @@ import { characters, characterTags, db } from '@keres/db' // Import db and chara
 import { and, eq, inArray } from 'drizzle-orm'
 
 export class CharacterRepository implements ICharacterRepository {
-  constructor() {}
-
   async findById(id: string): Promise<Character | null> {
     try {
       const result = await db.select().from(characters).where(eq(characters.id, id)).limit(1)

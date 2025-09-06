@@ -3,11 +3,9 @@ import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository
 import type { ListQueryParams } from '@keres/shared'
 
 import { characters, db, gallery, locations, notes, story } from '@keres/db' // Import db and gallery table
-import { and, eq, or, sql } from 'drizzle-orm'
+import { and, eq, or } from 'drizzle-orm'
 
 export class GalleryRepository implements IGalleryRepository {
-  constructor() {}
-
   async findById(id: string): Promise<Gallery | null> {
     try {
       const result = await db.select().from(gallery).where(eq(gallery.id, id)).limit(1)

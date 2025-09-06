@@ -6,8 +6,6 @@ import { db, worldRules } from '@keres/db' // Import db and worldRules table
 import { and, eq } from 'drizzle-orm'
 
 export class WorldRuleRepository implements IWorldRuleRepository {
-  constructor() {}
-
   async findById(id: string): Promise<WorldRule | null> {
     try {
       const result = await db.select().from(worldRules).where(eq(worldRules.id, id)).limit(1)

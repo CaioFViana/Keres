@@ -4,9 +4,9 @@ import type { ILocationRepository } from '@domain/repositories/ILocationReposito
 import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { GalleryResponse, GalleryUpdatePayload } from '@keres/shared'
-import { getKeresGalleryPath } from '@keres/shared'
+import fs from 'node:fs'
 
-import fs from 'fs'
+import { getKeresGalleryPath } from '@keres/shared'
 
 export class UpdateGalleryUseCase {
   constructor(
@@ -33,28 +33,32 @@ export class UpdateGalleryUseCase {
     if (data.ownerId !== undefined || data.ownerType !== undefined) {
       let ownerFound = false
       const targetOwnerId = data.ownerId !== undefined ? data.ownerId : existingGallery.ownerId
-      const targetOwnerType = data.ownerType !== undefined ? data.ownerType : existingGallery.ownerType
+      const targetOwnerType =
+        data.ownerType !== undefined ? data.ownerType : existingGallery.ownerType
 
       if (targetOwnerId && targetOwnerType) {
         switch (targetOwnerType) {
-          case 'character':
+          case 'character': {
             const character = await this.characterRepository.findById(targetOwnerId)
             if (character && character.storyId === existingGallery.storyId) {
               ownerFound = true
             }
             break
-          case 'note':
+          }
+          case 'note': {
             const note = await this.noteRepository.findById(targetOwnerId)
             if (note && note.storyId === existingGallery.storyId) {
               ownerFound = true
             }
             break
-          case 'location':
+          }
+          case 'location': {
             const location = await this.locationRepository.findById(targetOwnerId)
             if (location && location.storyId === existingGallery.storyId) {
               ownerFound = true
             }
             break
+          }
         }
 
         if (!ownerFound) {

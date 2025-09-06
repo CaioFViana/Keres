@@ -8,7 +8,7 @@ export const GalleryCreateSchema = z.object({
   isFile: z.boolean().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().optional(),
-  file: z.instanceof(File) // The actual file
+  file: z.instanceof(File), // The actual file
 })
 
 export const GalleryUpdateSchema = z.object({

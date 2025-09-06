@@ -5,10 +5,10 @@ import type { ILocationRepository } from '@domain/repositories/ILocationReposito
 import type { INoteRepository } from '@domain/repositories/INoteRepository' // Added
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { GalleryCreatePayload, GalleryResponse } from '@keres/shared'
-import { getKeresGalleryPath } from '@keres/shared'
+import fs from 'node:fs/promises' // Use fs.promises for async operations
 
+import { getKeresGalleryPath } from '@keres/shared'
 import { ulid } from 'ulid'
-import fs from 'fs/promises' // Use fs.promises for async operations
 
 export class CreateGalleryUseCase {
   constructor(
@@ -19,7 +19,11 @@ export class CreateGalleryUseCase {
     private readonly locationRepository: ILocationRepository, // Added
   ) {}
 
-  async execute(userId: string, data: GalleryCreatePayload, fileBuffer: Buffer): Promise<GalleryResponse> {
+  async execute(
+    userId: string,
+    data: GalleryCreatePayload,
+    fileBuffer: Buffer,
+  ): Promise<GalleryResponse> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(data.storyId, userId)
     if (!story) {
@@ -30,24 +34,27 @@ export class CreateGalleryUseCase {
     let ownerFound = false
     if (data.ownerId && data.ownerType) {
       switch (data.ownerType) {
-        case 'character':
+        case 'character': {
           const character = await this.characterRepository.findById(data.ownerId)
           if (character && character.storyId === data.storyId) {
             ownerFound = true
           }
           break
-        case 'note':
+        }
+        case 'note': {
           const note = await this.noteRepository.findById(data.ownerId)
           if (note && note.storyId === data.storyId) {
             ownerFound = true
           }
           break
-        case 'location':
+        }
+        case 'location': {
           const location = await this.locationRepository.findById(data.ownerId)
           if (location && location.storyId === data.storyId) {
             ownerFound = true
           }
           break
+        }
       }
 
       if (!ownerFound) {
@@ -69,15 +76,17 @@ export class CreateGalleryUseCase {
       // Ensure Gallery directory exists
       await fs.mkdir(galleryPath, { recursive: true })
 
-      const originalExtension = data.imagePath ? data.imagePath.split('.').pop() : '';
+      const originalExtension = data.imagePath ? data.imagePath.split('.').pop() : ''
       // Sanitize the extension to only allow alphanumeric characters
-      const sanitizedExtension = originalExtension ? originalExtension.replace(/[^a-zA-Z0-9]/g, '') : '';
-      const fileExtension = sanitizedExtension ? `.${sanitizedExtension}` : '';
-      const uniqueFilename = `${ulid()}${fileExtension}`;
-      const fullFilePath = `${galleryPath}/${uniqueFilename}`;
+      const sanitizedExtension = originalExtension
+        ? originalExtension.replace(/[^a-zA-Z0-9]/g, '')
+        : ''
+      const fileExtension = sanitizedExtension ? `.${sanitizedExtension}` : ''
+      const uniqueFilename = `${ulid()}${fileExtension}`
+      const fullFilePath = `${galleryPath}/${uniqueFilename}`
 
-      await fs.writeFile(fullFilePath, fileBuffer);
-      finalImagePath = uniqueFilename; // Update imagePath to the unique filename
+      await fs.writeFile(fullFilePath, fileBuffer)
+      finalImagePath = uniqueFilename // Update imagePath to the unique filename
     }
 
     const newGallery: Gallery = {

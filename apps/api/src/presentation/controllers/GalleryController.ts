@@ -9,17 +9,16 @@ import type {
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type z from 'zod'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
 import {
   type GalleryCreateSchema,
   GalleryResponseSchema,
   type GalleryUpdateSchema,
+  getKeresGalleryPath,
   type ListQueryParams,
 } from '@keres/shared'
-import { getKeresGalleryPath } from '@keres/shared'
-
-import path from 'path'
-import fs from 'fs/promises'
 
 export class GalleryController {
   constructor(
@@ -33,7 +32,11 @@ export class GalleryController {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async createGallery(userId: string, data: z.infer<typeof GalleryCreateSchema>, fileBuffer: Buffer) {
+  async createGallery(
+    userId: string,
+    data: z.infer<typeof GalleryCreateSchema>,
+    fileBuffer: Buffer,
+  ) {
     const gallery = await this.createGalleryUseCase.execute(userId, data, fileBuffer)
     return GalleryResponseSchema.parse(gallery)
   }

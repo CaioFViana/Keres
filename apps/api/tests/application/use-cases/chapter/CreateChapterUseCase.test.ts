@@ -1,6 +1,5 @@
 import type { Chapter } from '@domain/entities/Chapter'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { CreateChapterUseCase } from '@application/use-cases/chapter/CreateChapterUseCase'
 import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi

@@ -15,8 +15,6 @@ import {
 import { and, eq } from 'drizzle-orm'
 
 export class TagRepository implements ITagRepository {
-  constructor() {}
-
   async findById(tagId: string): Promise<Tag | null> {
     try {
       const result = await db.select().from(tags).where(eq(tags.id, tagId)).limit(1)

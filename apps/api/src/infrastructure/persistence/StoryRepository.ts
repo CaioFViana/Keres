@@ -6,8 +6,6 @@ import { db, story } from '@keres/db' // Import db and stories table
 import { and, eq } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
-  constructor() {}
-
   async findById(id: string, userId: string): Promise<Story | null> {
     try {
       const result = await db
@@ -75,7 +73,7 @@ export class StoryRepository implements IStoryRepository {
       id: data.id,
       userId: data.userId,
       title: data.title,
-      type: data.type == 'linear' ? data.type : 'branching',
+      type: data.type === 'linear' ? data.type : 'branching',
       summary: data.summary,
       genre: data.genre,
       language: data.language,

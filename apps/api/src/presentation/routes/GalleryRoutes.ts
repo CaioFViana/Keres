@@ -68,7 +68,7 @@ const galleryController = new GalleryController(
   getGalleryByOwnerIdUseCase,
   getGalleryByStoryIdUseCase,
   galleryRepository,
-  storyRepository
+  storyRepository,
 )
 
 // Define schemas for path parameters
@@ -135,8 +135,7 @@ galleryRoutes.openapi(
     const parsedBody = GalleryCreateSchema.parse(body)
 
     const file = parsedBody.file
-    let fileBuffer: Buffer = Buffer.from(await file.arrayBuffer())
-
+    const fileBuffer: Buffer = Buffer.from(await file.arrayBuffer())
 
     const data = {
       storyId: parsedBody.storyId,
@@ -146,7 +145,7 @@ galleryRoutes.openapi(
       isFile: parsedBody.isFile,
       isFavorite: parsedBody.isFavorite,
       extraNotes: parsedBody.extraNotes,
-      file: parsedBody.file
+      file: parsedBody.file,
     }
 
     try {
@@ -259,7 +258,10 @@ galleryRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     try {
-      const { fileContent, contentType } = await galleryController.getGalleryImage(userId, params.id)
+      const { fileContent, contentType } = await galleryController.getGalleryImage(
+        userId,
+        params.id,
+      )
       return c.body(new Uint8Array(fileContent), 200, { 'Content-Type': contentType })
     } catch (error: unknown) {
       if (error instanceof Error) {

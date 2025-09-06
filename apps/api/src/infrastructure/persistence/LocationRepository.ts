@@ -6,8 +6,6 @@ import { db, locations, locationTags } from '@keres/db' // Import db and locatio
 import { and, eq, inArray } from 'drizzle-orm'
 
 export class LocationRepository implements ILocationRepository {
-  constructor() {}
-
   async findById(id: string): Promise<Location | null> {
     try {
       const result = await db.select().from(locations).where(eq(locations.id, id)).limit(1)

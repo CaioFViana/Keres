@@ -6,8 +6,6 @@ import { chapters, chapterTags, db } from '@keres/db' // Import db and chapters 
 import { and, eq, inArray } from 'drizzle-orm'
 
 export class ChapterRepository implements IChapterRepository {
-  constructor() {}
-
   async findById(id: string): Promise<Chapter | null> {
     try {
       const result = await db.select().from(chapters).where(eq(chapters.id, id)).limit(1)

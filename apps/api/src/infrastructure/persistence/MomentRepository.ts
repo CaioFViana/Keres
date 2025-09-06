@@ -6,8 +6,6 @@ import { db, moments } from '@keres/db' // Import db and moments table
 import { and, eq } from 'drizzle-orm'
 
 export class MomentRepository implements IMomentRepository {
-  constructor() {}
-
   async findById(id: string): Promise<Moment | null> {
     try {
       const result = await db.select().from(moments).where(eq(moments.id, id)).limit(1)

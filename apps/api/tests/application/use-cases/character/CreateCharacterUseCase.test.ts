@@ -1,6 +1,5 @@
 import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Added
 
 import { CreateCharacterUseCase } from '@application/use-cases/character/CreateCharacterUseCase'
 import { beforeEach, describe, expect, it, vi } from 'vitest' // Added vi

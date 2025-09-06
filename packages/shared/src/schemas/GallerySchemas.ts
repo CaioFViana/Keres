@@ -1,4 +1,7 @@
 import { z } from 'zod'
+import { extendZodWithOpenApi } from '@hono/zod-openapi'
+
+extendZodWithOpenApi(z)
 
 export const GalleryCreateSchema = z.object({
   storyId: z.string(),
@@ -7,7 +10,10 @@ export const GalleryCreateSchema = z.object({
   imagePath: z.string(), // This will be the original filename with extension
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().optional(),
-  file: z.instanceof(File), // The actual file
+  file: z.instanceof(File).openapi({
+    type: 'string',
+    format: 'binary',
+  }), // The actual file
 })
 
 export const GalleryUpdateSchema = z.object({
@@ -17,7 +23,10 @@ export const GalleryUpdateSchema = z.object({
   imagePath: z.string().optional(),
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().optional(),
-  file: z.instanceof(File), // The actual file
+  file: z.instanceof(File).openapi({
+    type: 'string',
+    format: 'binary',
+  }), // The actual file
 })
 
 export const GalleryResponseSchema = z.object({

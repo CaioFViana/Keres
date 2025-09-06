@@ -18,6 +18,20 @@ export class GalleryRepository implements IGalleryRepository {
     }
   }
 
+  async findByImagePathAndStoryId(imagePath: string, storyId: string): Promise<Gallery | null> {
+    try {
+      const result = await db
+        .select()
+        .from(gallery)
+        .where(and(eq(gallery.imagePath, imagePath), eq(gallery.storyId, storyId)))
+        .limit(1)
+      return result.length > 0 ? this.toDomain(result[0]) : null
+    } catch (error) {
+      console.error('Error in GalleryRepository.findByImagePathAndStoryId:', error)
+      throw error
+    }
+  }
+
   async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Gallery[]> {
     try {
       let queryBuilder = db.select().from(gallery).where(eq(gallery.storyId, storyId))
@@ -83,6 +97,7 @@ export class GalleryRepository implements IGalleryRepository {
             extraNotes: string | null
             storyId: string
             ownerId: string
+            ownerType: 'character' | 'note' | 'location'
             imagePath: string
             isFile: boolean
           }
@@ -135,6 +150,7 @@ export class GalleryRepository implements IGalleryRepository {
       id: data.id,
       storyId: data.storyId,
       ownerId: data.ownerId!,
+      ownerType: data.ownerType as 'character' | 'note' | 'location',
       imagePath: data.imagePath,
       isFile: data.isFile,
       isFavorite: data.isFavorite,
@@ -148,6 +164,7 @@ export class GalleryRepository implements IGalleryRepository {
     return {
       id: galleryData.id,
       storyId: galleryData.storyId,
+      ownerType: galleryData.ownerType as 'character' | 'note' | 'location',
       ownerId: galleryData.ownerId,
       imagePath: galleryData.imagePath,
       isFile: galleryData.isFile,

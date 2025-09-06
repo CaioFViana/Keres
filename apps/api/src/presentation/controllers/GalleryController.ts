@@ -6,6 +6,8 @@ import type {
   GetGalleryUseCase,
   UpdateGalleryUseCase,
 } from '@application/use-cases'
+import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type z from 'zod'
 
 import {
@@ -14,6 +16,10 @@ import {
   type GalleryUpdateSchema,
   type ListQueryParams,
 } from '@keres/shared'
+import { getKeresGalleryPath } from '@keres/shared'
+
+import path from 'path'
+import fs from 'fs/promises'
 
 export class GalleryController {
   constructor(
@@ -23,6 +29,8 @@ export class GalleryController {
     private readonly deleteGalleryUseCase: DeleteGalleryUseCase,
     private readonly getGalleryByOwnerIdUseCase: GetGalleryByOwnerIdUseCase,
     private readonly getGalleryByStoryIdUseCase: GetGalleryByStoryIdUseCase,
+    private readonly galleryRepository: IGalleryRepository,
+    private readonly storyRepository: IStoryRepository,
   ) {}
 
   async createGallery(userId: string, data: z.infer<typeof GalleryCreateSchema>) {
@@ -66,5 +74,58 @@ export class GalleryController {
       throw new Error('Gallery item not found or does not belong to the specified story/owner')
     }
     return
+  }
+
+  async getGalleryImage(userId: string, galleryId: string) {
+    // Find the gallery item by ID
+    const galleryItem = await this.galleryRepository.findById(galleryId)
+    if (!galleryItem) {
+      throw new Error('Gallery item not found')
+    }
+
+    // Verify that the story exists and belongs to the user
+    const story = await this.storyRepository.findById(galleryItem.storyId, userId)
+    if (!story) {
+      throw new Error('Story not found or not owned by user')
+    }
+
+    const galleryPath = getKeresGalleryPath()
+    const imageFilePath = path.join(galleryPath, galleryItem.imagePath)
+
+    try {
+      const fileContent = await fs.readFile(imageFilePath)
+      const ext = path.extname(galleryItem.imagePath).toLowerCase()
+      let contentType = 'application/octet-stream' // Default to binary
+
+      switch (ext) {
+        case '.jpg':
+        case '.jpeg':
+          contentType = 'image/jpeg'
+          break
+        case '.png':
+          contentType = 'image/png'
+          break
+        case '.gif':
+          contentType = 'image/gif'
+          break
+        case '.webp':
+          contentType = 'image/webp'
+          break
+        case '.svg':
+          contentType = 'image/svg+xml'
+          break
+        case '.bmp':
+          contentType = 'image/bmp'
+          break
+        // Add more image types as needed
+      }
+
+      return { fileContent, contentType }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error('Image file not found on disk')
+      }
+      throw new Error(`Failed to read image: ${(error as Error).message}`)
+    }
   }
 }

@@ -91,6 +91,7 @@ export class StoryRepository implements IStoryRepository {
       id: storyData.id,
       userId: storyData.userId,
       title: storyData.title,
+      type: storyData.type,
       summary: storyData.summary,
       genre: storyData.genre,
       language: storyData.language,

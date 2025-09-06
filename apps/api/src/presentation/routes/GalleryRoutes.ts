@@ -67,6 +67,8 @@ const galleryController = new GalleryController(
   deleteGalleryUseCase,
   getGalleryByOwnerIdUseCase,
   getGalleryByStoryIdUseCase,
+  galleryRepository,
+  storyRepository
 )
 
 // Define schemas for path parameters
@@ -186,6 +188,62 @@ galleryRoutes.openapi(
     try {
       const gallery = await galleryController.getGallery(userId, params.id)
       return c.json(gallery, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// GET /images/:filename
+galleryRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/images/{id}',
+    summary: 'Serve a gallery image file',
+    description: 'Retrieves a gallery image file by its ID.',
+    request: {
+      params: IdParamSchema,
+    },
+    responses: {
+      200: {
+        description: 'Image file retrieved successfully',
+        content: {
+          'application/octet-stream': {
+            schema: {
+              type: 'string',
+              format: 'binary',
+            },
+          },
+        },
+      },
+      404: {
+        description: 'Image not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    try {
+      const { fileContent, contentType } = await galleryController.getGalleryImage(userId, params.id)
+      return c.body(new Uint8Array(fileContent), 200, { 'Content-Type': contentType })
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)

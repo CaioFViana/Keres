@@ -24,13 +24,19 @@ export class AuthenticateUserUseCase {
     const token = await this.jwtService.generateToken(
       { userId: user.id, username: user.username },
       '1h',
-    ) // Generate token
+    )
+    const refreshToken = await this.jwtService.generateRefreshToken(
+      { userId: user.id },
+      '7d',
+    )
+
     return {
       id: user.id,
       username: user.username,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      token, // Include token
+      token,
+      refreshToken,
     }
   }
 }

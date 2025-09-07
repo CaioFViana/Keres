@@ -25,4 +25,16 @@ export class JwtService implements IJwtService {
       return null // Token is invalid or expired
     }
   }
+
+  async generateRefreshToken(payload: object, expiresIn: string): Promise<string> {
+    return jwt.sign(payload, this.secret, { expiresIn })
+  }
+
+  async verifyRefreshToken(token: string): Promise<object | null> {
+    try {
+      return jwt.verify(token, this.secret) as object
+    } catch (error) {
+      return null // Token is invalid or expired
+    }
+  }
 }

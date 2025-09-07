@@ -15,7 +15,8 @@ export const UserProfileSchema = z.object({
   username: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  token: z.string().optional(), // Added token field
+  token: z.string().optional(),
+  refreshToken: z.string().optional(),
 })
 
 export type UserRegisterPayload = z.infer<typeof UserRegisterSchema>

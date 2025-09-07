@@ -2,6 +2,7 @@ import {
   AuthenticateUserUseCase,
   CreateUserUseCase,
   GetUserProfileUseCase,
+  RefreshTokenUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
@@ -24,6 +25,8 @@ const authenticateUserUseCase = new AuthenticateUserUseCase(
   passwordHasher,
   jwtService,
 )
+const refreshTokenUseCase = new RefreshTokenUseCase(jwtService, userRepository)
+
 console.log('Instantiating GetUserProfileUseCase...')
 const getUserProfileUseCase = new GetUserProfileUseCase(userRepository)
 
@@ -37,6 +40,16 @@ const userController = new UserController(
 // Define schemas for path parameters
 const IdParamSchema = z.object({
   id: z.ulid(),
+})
+
+// Define schema for refresh token request
+const RefreshTokenRequestSchema = z.object({
+  refreshToken: z.string(),
+})
+
+// Define schema for refresh token response
+const RefreshTokenResponseSchema = z.object({
+  token: z.string(),
 })
 
 // POST /register
@@ -150,6 +163,69 @@ userRoutes.openapi(
     try {
       const userProfile = await userController.authenticateUser(data) // Modified
       return c.json(userProfile, 200) // Modified
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 401)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /refresh-token
+userRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/refresh-token',
+    summary: 'Refresh access token',
+    description: 'Exchanges a valid refresh token for a new access token.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: RefreshTokenRequestSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Access token refreshed successfully',
+        content: {
+          'application/json': {
+            schema: RefreshTokenResponseSchema,
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Users'],
+    security: [],
+  }),
+  async (c) => {
+    const body = await c.req.json()
+    const { refreshToken } = RefreshTokenRequestSchema.parse(body)
+    try {
+      const result = await refreshTokenUseCase.execute(refreshToken)
+      if (!result) {
+        return c.json({ error: 'Invalid refresh token' }, 401)
+      }
+      return c.json(result, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 401)

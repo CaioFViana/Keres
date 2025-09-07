@@ -4,6 +4,8 @@ import {
   GetCharactersByStoryIdUseCase,
   GetCharacterUseCase,
   UpdateCharacterUseCase,
+  CreateManyCharactersUseCase,
+  UpdateManyCharactersUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import {
@@ -18,6 +20,7 @@ import {
   CharacterResponseSchema,
   CharacterUpdateSchema,
   ListQuerySchema,
+  UpdateManyCharactersSchema,
 } from '@keres/shared' // Import CharacterResponseSchema
 import { CharacterController } from '@presentation/controllers/CharacterController'
 import { z } from 'zod' // Import z for defining parameters
@@ -31,6 +34,9 @@ const characterMomentRepository = new CharacterMomentRepository() // New
 const characterRelationRepository = new CharacterRelationRepository() // New
 const momentRepository = new MomentRepository() // New
 const createCharacterUseCase = new CreateCharacterUseCase(characterRepository, storyRepository)
+const createManyCharactersUseCase = new CreateManyCharactersUseCase(characterRepository, storyRepository)
+const updateManyCharactersUseCase = new UpdateManyCharactersUseCase(characterRepository, storyRepository)
+
 const getCharacterUseCase = new GetCharacterUseCase(
   characterRepository,
   storyRepository,
@@ -51,6 +57,8 @@ const characterController = new CharacterController(
   updateCharacterUseCase,
   deleteCharacterUseCase,
   getCharactersByStoryIdUseCase,
+  createManyCharactersUseCase,
+  updateManyCharactersUseCase
 )
 
 // Define schemas for path parameters
@@ -69,6 +77,9 @@ const IncludeQuerySchema = z.object({
     .optional()
     .transform((val) => (val ? val.split(',') : [])),
 })
+
+// Define schema for batch character creation
+const CreateManyCharactersSchema = z.array(CharacterCreateSchema)
 
 // POST /
 characterRoutes.openapi(
@@ -121,6 +132,66 @@ characterRoutes.openapi(
     try {
       const character = await characterController.createCharacter(userId, data)
       return c.json(character, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /batch
+characterRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/batch',
+    summary: 'Create multiple characters',
+    description: 'Creates multiple characters in a story in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: CreateManyCharactersSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Characters created successfully',
+        content: {
+          'application/json': {
+            schema: z.array(CharacterResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Characters'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = CreateManyCharactersSchema.parse(body)
+    try {
+      const newCharacters = await characterController.createManyCharacters(userId, data)
+      return c.json(newCharacters, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)
@@ -379,6 +450,74 @@ characterRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// PUT /batch
+characterRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/batch',
+    summary: 'Update multiple characters',
+    description: 'Updates multiple characters in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateManyCharactersSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Characters updated successfully',
+        content: {
+          'application/json': {
+            schema: z.array(CharacterResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Character not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Characters'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = UpdateManyCharactersSchema.parse(body)
+    try {
+      const updatedCharacters = await characterController.updateManyCharacters(userId, data)
+      return c.json(updatedCharacters, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

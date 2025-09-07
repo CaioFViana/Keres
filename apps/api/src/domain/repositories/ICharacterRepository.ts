@@ -6,6 +6,8 @@ export interface ICharacterRepository {
   findByIds(ids: string[]): Promise<Character[]>
   findByStoryId(storyId: string, query?: ListQueryParams): Promise<Character[]>
   save(character: Character): Promise<void>
+  saveMany(characters: Character[]): Promise<void>
   update(character: Character, storyId: string): Promise<void>
+  updateMany(characters: Character[]): Promise<void>
   delete(id: string, storyId: string): Promise<void>
 }

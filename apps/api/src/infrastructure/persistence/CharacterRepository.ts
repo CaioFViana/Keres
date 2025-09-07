@@ -64,6 +64,19 @@ export class CharacterRepository implements ICharacterRepository {
     }
   }
 
+  async saveMany(charactersData: Character[]): Promise<void> {
+    try {
+      if (charactersData.length === 0) {
+        return
+      }
+      const persistenceData = charactersData.map(this.toPersistence)
+      await db.insert(characters).values(persistenceData)
+    } catch (error) {
+      console.error('Error in CharacterRepository.saveMany:', error)
+      throw error
+    }
+  }
+
   async update(characterData: Character, storyId: string): Promise<void> {
     try {
       await db
@@ -72,6 +85,25 @@ export class CharacterRepository implements ICharacterRepository {
         .where(eq(characters.id, characterData.id), eq(characters.storyId, storyId))
     } catch (error) {
       console.error('Error in CharacterRepository.update:', error)
+      throw error
+    }
+  }
+
+  async updateMany(charactersData: Character[]): Promise<void> {
+    try {
+      if (charactersData.length === 0) {
+        return
+      }
+      await db.transaction(async (tx) => {
+        for (const characterData of charactersData) {
+          await tx
+            .update(characters)
+            .set(this.toPersistence(characterData))
+            .where(eq(characters.id, characterData.id))
+        }
+      })
+    } catch (error) {
+      console.error('Error in CharacterRepository.updateMany:', error)
       throw error
     }
   }

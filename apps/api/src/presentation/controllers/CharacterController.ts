@@ -4,6 +4,8 @@ import type {
   GetCharactersByStoryIdUseCase,
   GetCharacterUseCase,
   UpdateCharacterUseCase,
+  CreateManyCharactersUseCase,
+  UpdateManyCharactersUseCase,
 } from '@application/use-cases'
 import type { z } from 'zod'
 
@@ -21,11 +23,23 @@ export class CharacterController {
     private readonly updateCharacterUseCase: UpdateCharacterUseCase,
     private readonly deleteCharacterUseCase: DeleteCharacterUseCase,
     private readonly getCharactersByStoryIdUseCase: GetCharactersByStoryIdUseCase,
+    private readonly createManyCharactersUseCase: CreateManyCharactersUseCase,
+    private readonly updateManyCharactersUseCase: UpdateManyCharactersUseCase,
   ) {}
 
   async createCharacter(userId: string, data: z.infer<typeof CharacterCreateSchema>) {
     const character = await this.createCharacterUseCase.execute(userId, data)
     return CharacterResponseSchema.parse(character)
+  }
+
+  async createManyCharacters(userId: string, data: z.infer<typeof CharacterCreateSchema>[]) {
+    const characters = await this.createManyCharactersUseCase.execute(userId, data)
+    return characters.map((character) => CharacterResponseSchema.parse(character))
+  }
+
+  async updateManyCharacters(userId: string, data: z.infer<typeof CharacterUpdateSchema>[]) {
+    const characters = await this.updateManyCharactersUseCase.execute(userId, data)
+    return characters.map((character) => CharacterResponseSchema.parse(character))
   }
 
   async getCharacter(userId: string, id: string, include: string[] = []) {

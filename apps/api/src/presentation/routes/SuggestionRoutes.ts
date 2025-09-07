@@ -550,6 +550,79 @@ suggestionRoutes.openapi(
   },
 )
 
+// PATCH /:id (Partial Update)
+suggestionRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a suggestion by ID',
+    description: 'Partially updates an existing suggestion by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateSuggestionSchema, // UpdateSuggestionSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Suggestion updated successfully',
+        content: {
+          'application/json': {
+            schema: SuggestionResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Suggestion not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Suggestions'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = UpdateSuggestionSchema.parse(body) // UpdateSuggestionSchema already handles optional fields
+    try {
+      const updatedSuggestion = await suggestionController.updateSuggestion(userId, params.id, data) // Reusing updateSuggestion for now
+      if (!updatedSuggestion) {
+        return c.json({ error: 'Suggestion not found' }, 404)
+      }
+      return c.json(updatedSuggestion, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // DELETE /:id
 suggestionRoutes.openapi(
   createRoute({

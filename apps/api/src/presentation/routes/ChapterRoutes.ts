@@ -293,6 +293,76 @@ chapterRoutes.openapi(
   },
 )
 
+// PATCH /:id (Partial Update)
+chapterRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a chapter by ID',
+    description: 'Partially updates an existing chapter by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: ChapterUpdateSchema, // ChapterUpdateSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Chapter updated successfully',
+        content: {
+          'application/json': {
+            schema: ChapterResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Chapter not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Chapters'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = ChapterUpdateSchema.parse(body) // ChapterUpdateSchema already handles optional fields
+    try {
+      const updatedChapter = await chapterController.updateChapter(userId, params.id, data) // Reusing updateChapter for now
+      return c.json(updatedChapter, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // DELETE /:id
 chapterRoutes.openapi(
   createRoute({

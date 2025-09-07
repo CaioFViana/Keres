@@ -297,6 +297,76 @@ locationRoutes.openapi(
   },
 )
 
+// PATCH /:id (Partial Update)
+locationRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a location by ID',
+    description: 'Partially updates an existing location by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: LocationUpdateSchema, // LocationUpdateSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Location updated successfully',
+        content: {
+          'application/json': {
+            schema: LocationResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Location not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Locations'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = LocationUpdateSchema.parse(body) // LocationUpdateSchema already handles optional fields
+    try {
+      const updatedLocation = await locationController.updateLocation(userId, params.id, data) // Reusing updateLocation for now
+      return c.json(updatedLocation, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // DELETE /:id
 locationRoutes.openapi(
   createRoute({

@@ -303,6 +303,79 @@ worldRuleRoutes.openapi(
   },
 )
 
+// PATCH /:id (Partial Update)
+worldRuleRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a world rule by ID',
+    description: 'Partially updates an existing world rule by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateWorldRuleSchema, // UpdateWorldRuleSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'World Rule updated successfully',
+        content: {
+          'application/json': {
+            schema: WorldRuleResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'World Rule not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['World Rules'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = UpdateWorldRuleSchema.parse(body) // UpdateWorldRuleSchema already handles optional fields
+    try {
+      const updatedWorldRule = await worldRuleController.updateWorldRule(userId, params.id, data) // Reusing updateWorldRule for now
+      if (!updatedWorldRule) {
+        return c.json({ error: 'World Rule not found' }, 404)
+      }
+      return c.json(updatedWorldRule, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // DELETE /:id
 worldRuleRoutes.openapi(
   createRoute({

@@ -284,6 +284,76 @@ storyRoutes.openapi(
   },
 )
 
+// PATCH /:id (Partial Update)
+storyRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a story by ID',
+    description: 'Partially updates an existing story by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: StoryUpdateSchema, // StoryUpdateSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Story updated successfully',
+        content: {
+          'application/json': {
+            schema: StoryResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Story not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Stories'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = StoryUpdateSchema.parse(body) // StoryUpdateSchema already handles optional fields
+    try {
+      const updatedStory = await storyController.updateStory(userId, params.id, data) // Reusing updateStory for now
+      return c.json(updatedStory, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // DELETE /:id
 storyRoutes.openapi(
   createRoute({

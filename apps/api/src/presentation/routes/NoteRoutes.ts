@@ -297,6 +297,79 @@ noteRoutes.openapi(
   },
 )
 
+// PATCH /:id (Partial Update)
+noteRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a note by ID',
+    description: 'Partially updates an existing note by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateNoteSchema, // UpdateNoteSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Note updated successfully',
+        content: {
+          'application/json': {
+            schema: NoteResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Note not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Notes'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = UpdateNoteSchema.parse(body) // UpdateNoteSchema already handles optional fields
+    try {
+      const updatedNote = await noteController.updateNote(userId, params.id, data) // Reusing updateNote for now
+      if (!updatedNote) {
+        return c.json({ error: 'Note not found' }, 404)
+      }
+      return c.json(updatedNote, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // DELETE /:id
 noteRoutes.openapi(
   createRoute({

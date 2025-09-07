@@ -455,11 +455,12 @@ galleryRoutes.openapi(
 
     const parsedBody = GalleryUpdateSchema.parse(body)
 
-    let fileBuffer: Buffer | undefined
+    let fileBuffer: Buffer
     if (!parsedBody.file) {
       throw new Error('File is required when isFile is true')
     }
     fileBuffer = Buffer.from(await parsedBody.file.arrayBuffer())
+
 
     const data = {
       id: parsedBody.id,
@@ -469,7 +470,83 @@ galleryRoutes.openapi(
       isFile: true,
       isFavorite: parsedBody.isFavorite,
       extraNotes: parsedBody.extraNotes,
-      file: parsedBody.file
+      file: parsedBody.file,
+    }
+
+    try {
+      const updatedGallery = await galleryController.updateGallery(userId, params.id, data, fileBuffer)
+      return c.json(updatedGallery, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// PATCH /:id (Partial Update)
+galleryRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a gallery item by ID',
+    description: 'Partially updates an existing gallery item by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'multipart/form-data': {
+            schema: GalleryUpdateSchema, // GalleryUpdateSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Gallery item updated successfully',
+        content: {
+          'application/json': {
+            schema: GalleryResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Gallery item not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.parseBody()
+    const data = GalleryUpdateSchema.parse(body) // GalleryUpdateSchema already handles optional fields
+    let fileBuffer: Buffer | undefined
+
+    if (data.file) { // Check if file is provided in the partial update
+      fileBuffer = Buffer.from(await data.file.arrayBuffer())
     }
 
     try {

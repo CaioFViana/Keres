@@ -273,6 +273,79 @@ momentRoutes.openapi(
   },
 )
 
+// PATCH /:id (Partial Update)
+momentRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a moment by ID',
+    description: 'Partially updates an existing moment by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateMomentSchema, // UpdateMomentSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Moment updated successfully',
+        content: {
+          'application/json': {
+            schema: MomentResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Moment not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Moments'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = UpdateMomentSchema.parse(body) // UpdateMomentSchema already handles optional fields
+    try {
+      const updatedMoment = await momentController.updateMoment(userId, params.id, data) // Reusing updateMoment for now
+      if (!updatedMoment) {
+        return c.json({ error: 'Moment not found' }, 404)
+      }
+      return c.json(updatedMoment, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // DELETE /:id
 momentRoutes.openapi(
   createRoute({

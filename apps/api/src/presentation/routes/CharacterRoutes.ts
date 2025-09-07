@@ -299,6 +299,76 @@ characterRoutes.openapi(
   },
 )
 
+// PATCH /:id (Partial Update)
+characterRoutes.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/{id}',
+    summary: 'Partially update a character by ID',
+    description: 'Partially updates an existing character by its unique ID. Only provided fields will be updated.',
+    request: {
+      params: IdParamSchema,
+      body: {
+        content: {
+          'application/json': {
+            schema: CharacterUpdateSchema, // CharacterUpdateSchema already has optional fields
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Character updated successfully',
+        content: {
+          'application/json': {
+            schema: CharacterResponseSchema,
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Character not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Characters'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = IdParamSchema.parse(c.req.param())
+    const body = await c.req.json()
+    const data = CharacterUpdateSchema.parse(body) // CharacterUpdateSchema already handles optional fields
+    try {
+      const updatedCharacter = await characterController.updateCharacter(userId, params.id, data) // Reusing updateCharacter for now
+      return c.json(updatedCharacter, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // DELETE /:id
 characterRoutes.openapi(
   createRoute({

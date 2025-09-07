@@ -80,6 +80,19 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
+  async saveMany(suggestionsData: Suggestion[]): Promise<void> {
+    try {
+      if (suggestionsData.length === 0) {
+        return
+      }
+      const persistenceData = suggestionsData.map(this.toPersistence)
+      await db.insert(suggestions).values(persistenceData)
+    } catch (error) {
+      console.error('Error in SuggestionRepository.saveMany:', error)
+      throw error
+    }
+  }
+
   async update(
     suggestionData: Suggestion,
     userId: string,
@@ -106,6 +119,40 @@ export class SuggestionRepository implements ISuggestionRepository {
         .where(and(...conditions))
     } catch (error) {
       console.error('Error in SuggestionRepository.update:', error)
+      throw error
+    }
+  }
+
+  async updateMany(suggestionsData: Suggestion[]): Promise<void> {
+    try {
+      if (suggestionsData.length === 0) {
+        return
+      }
+      await db.transaction(async (tx) => {
+        for (const suggestionData of suggestionsData) {
+          const conditions = [
+            eq(suggestions.id, suggestionData.id),
+            eq(suggestions.userId, suggestionData.userId),
+          ]
+
+          if (suggestionData.scope === 'story') {
+            if (suggestionData.storyId) {
+              conditions.push(eq(suggestions.storyId, suggestionData.storyId))
+            } else {
+              conditions.push(eq(suggestions.storyId, null as any))
+            }
+          } else if (suggestionData.scope === 'global') {
+            conditions.push(eq(suggestions.storyId, null as any))
+          }
+
+          await tx
+            .update(suggestions)
+            .set(this.toPersistence(suggestionData))
+            .where(and(...conditions))
+        }
+      })
+    } catch (error) {
+      console.error('Error in SuggestionRepository.updateMany:', error)
       throw error
     }
   }

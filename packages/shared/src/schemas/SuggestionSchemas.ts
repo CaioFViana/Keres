@@ -21,6 +21,7 @@ export const CreateSuggestionSchema = z
 export const UpdateSuggestionSchema = z.object({
   id: z.ulid(),
   scope: z.union([z.literal('global'), z.literal('story')]).optional(),
+  storyId: z.ulid().nullable().optional(),
   type: z.string().min(1, 'Type cannot be empty').optional(),
   value: z.string().min(1, 'Value cannot be empty').optional(),
 })
@@ -40,3 +41,9 @@ export const SuggestionResponseSchema = z.object({
 export type CreateSuggestionPayload = z.infer<typeof CreateSuggestionSchema>
 export type UpdateSuggestionPayload = z.infer<typeof UpdateSuggestionSchema>
 export type SuggestionResponse = z.infer<typeof SuggestionResponseSchema>
+
+export const CreateManySuggestionsSchema = z.array(CreateSuggestionSchema)
+export const UpdateManySuggestionsSchema = z.array(UpdateSuggestionSchema)
+
+export type CreateManySuggestionsPayload = z.infer<typeof CreateManySuggestionsSchema>
+export type UpdateManySuggestionsPayload = z.infer<typeof UpdateManySuggestionsSchema>

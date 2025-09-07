@@ -8,6 +8,8 @@ import type {
   GetSuggestionsByUserIdUseCase,
   GetSuggestionUseCase,
   UpdateSuggestionUseCase,
+  CreateManySuggestionsUseCase,
+  UpdateManySuggestionsUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
 
@@ -28,11 +30,23 @@ export class SuggestionController {
     private readonly getSuggestionsByTypeUseCase: GetSuggestionsByTypeUseCase,
     private readonly getSuggestionsByUserAndTypeUseCase: GetSuggestionsByUserAndTypeUseCase,
     private readonly getSuggestionsByStoryAndTypeUseCase: GetSuggestionsByStoryAndTypeUseCase,
+    private readonly createManySuggestionsUseCase: CreateManySuggestionsUseCase,
+    private readonly updateManySuggestionsUseCase: UpdateManySuggestionsUseCase,
   ) {}
 
   async createSuggestion(userId: string, data: z.infer<typeof CreateSuggestionSchema>) {
     const suggestion = await this.createSuggestionUseCase.execute(userId, data)
     return SuggestionResponseSchema.parse(suggestion)
+  }
+
+  async createManySuggestions(userId: string, data: z.infer<typeof CreateSuggestionSchema>[]) {
+    const suggestions = await this.createManySuggestionsUseCase.execute(userId, data)
+    return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+  }
+
+  async updateManySuggestions(userId: string, data: z.infer<typeof UpdateSuggestionSchema>[]) {
+    const suggestions = await this.updateManySuggestionsUseCase.execute(userId, data)
+    return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
   async getSuggestion(userId: string, id: string) {

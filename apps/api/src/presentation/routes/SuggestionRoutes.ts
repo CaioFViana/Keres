@@ -1,4 +1,5 @@
 import {
+  CreateManySuggestionsUseCase,
   CreateSuggestionUseCase,
   DeleteSuggestionUseCase,
   GetSuggestionsByStoryAndTypeUseCase,
@@ -7,6 +8,7 @@ import {
   GetSuggestionsByUserAndTypeUseCase,
   GetSuggestionsByUserIdUseCase,
   GetSuggestionUseCase,
+  UpdateManySuggestionsUseCase,
   UpdateSuggestionUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
@@ -45,6 +47,16 @@ const getSuggestionsByStoryAndTypeUseCase = new GetSuggestionsByStoryAndTypeUseC
   storyRepository,
 )
 
+const createManySuggestionsUseCase = new CreateManySuggestionsUseCase(
+  suggestionRepository,
+  storyRepository,
+)
+
+const updateManySuggestionsUseCase = new UpdateManySuggestionsUseCase(
+  suggestionRepository,
+  storyRepository,
+)
+
 const suggestionController = new SuggestionController(
   createSuggestionUseCase,
   getSuggestionUseCase,
@@ -55,6 +67,8 @@ const suggestionController = new SuggestionController(
   getSuggestionsByTypeUseCase,
   getSuggestionsByUserAndTypeUseCase,
   getSuggestionsByStoryAndTypeUseCase,
+  createManySuggestionsUseCase,
+  updateManySuggestionsUseCase
 )
 
 // Define schemas for path parameters
@@ -125,6 +139,69 @@ suggestionRoutes.openapi(
     try {
       const newSuggestion = await suggestionController.createSuggestion(userId, data)
       return c.json(newSuggestion, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// Define schema for batch suggestion creation
+const CreateManySuggestionsSchema = z.array(CreateSuggestionSchema)
+
+// POST /batch
+suggestionRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/batch',
+    summary: 'Create multiple suggestions',
+    description: 'Creates multiple customizable list suggestions in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: CreateManySuggestionsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Suggestions created successfully',
+        content: {
+          'application/json': {
+            schema: z.array(SuggestionResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Suggestions'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = CreateManySuggestionsSchema.parse(body)
+    try {
+      const newSuggestions = await suggestionController.createManySuggestions(userId, data)
+      return c.json(newSuggestions, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)
@@ -615,6 +692,77 @@ suggestionRoutes.openapi(
         return c.json({ error: 'Suggestion not found' }, 404)
       }
       return c.json(updatedSuggestion, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// Define schema for batch suggestion update
+const UpdateManySuggestionsSchema = z.array(UpdateSuggestionSchema)
+
+// PUT /batch
+suggestionRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/batch',
+    summary: 'Update multiple suggestions',
+    description: 'Updates multiple suggestions in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateManySuggestionsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Suggestions updated successfully',
+        content: {
+          'application/json': {
+            schema: z.array(SuggestionResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Suggestion not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Suggestions'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = UpdateManySuggestionsSchema.parse(body)
+    try {
+      const updatedSuggestions = await suggestionController.updateManySuggestions(userId, data)
+      return c.json(updatedSuggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

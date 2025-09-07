@@ -448,33 +448,29 @@ async function main() {
   console.log('Red Riding Hood relational tags created.')
 
   // Notes for Red Riding Hood story
-  await db
-    .insert(schema.notes)
-    .values([
-      {
-        id: ulid(),
-        storyId: redStoryId,
-        title: 'Moral of the Story',
-        body: 'Always listen to your mother and do not talk to strangers.',
-        galleryId: null,
-        isFavorite: true,
-      },
-    ])
+  await db.insert(schema.notes).values([
+    {
+      id: ulid(),
+      storyId: redStoryId,
+      title: 'Moral of the Story',
+      body: 'Always listen to your mother and do not talk to strangers.',
+      galleryId: null,
+      isFavorite: true,
+    },
+  ])
   console.log('Red Riding Hood notes created.')
 
   // World Rules for Red Riding Hood story
-  await db
-    .insert(schema.worldRules)
-    .values([
-      {
-        id: ulid(),
-        storyId: redStoryId,
-        title: 'Forest Dangers',
-        description: 'The forest is home to wild animals and should be traversed with caution.',
-        isFavorite: false,
-        extraNotes: 'A warning for travelers.',
-      },
-    ])
+  await db.insert(schema.worldRules).values([
+    {
+      id: ulid(),
+      storyId: redStoryId,
+      title: 'Forest Dangers',
+      description: 'The forest is home to wild animals and should be traversed with caution.',
+      isFavorite: false,
+      extraNotes: 'A warning for travelers.',
+    },
+  ])
   console.log('Red Riding Hood world rules created.')
 
   // Suggestions for Red Riding Hood story
@@ -1329,34 +1325,30 @@ async function main() {
   console.log('Hansel and Gretel relational tags created.')
 
   // Notes for Hansel and Gretel story
-  await db
-    .insert(schema.notes)
-    .values([
-      {
-        id: ulid(),
-        storyId: hanselStoryId,
-        title: "The Witch's Weakness",
-        body: "The witch is blind and relies on touch to check Hansel's fatness.",
-        galleryId: null,
-        isFavorite: false,
-      },
-    ])
+  await db.insert(schema.notes).values([
+    {
+      id: ulid(),
+      storyId: hanselStoryId,
+      title: "The Witch's Weakness",
+      body: "The witch is blind and relies on touch to check Hansel's fatness.",
+      galleryId: null,
+      isFavorite: false,
+    },
+  ])
   console.log('Hansel and Gretel notes created.')
 
   // World Rules for Hansel and Gretel story
-  await db
-    .insert(schema.worldRules)
-    .values([
-      {
-        id: ulid(),
-        storyId: hanselStoryId,
-        title: 'Magic in the Forest',
-        description:
-          'The forest contains magical elements, including talking animals and enchanted houses.',
-        isFavorite: true,
-        extraNotes: 'Explains the fantastical elements.',
-      },
-    ])
+  await db.insert(schema.worldRules).values([
+    {
+      id: ulid(),
+      storyId: hanselStoryId,
+      title: 'Magic in the Forest',
+      description:
+        'The forest contains magical elements, including talking animals and enchanted houses.',
+      isFavorite: true,
+      extraNotes: 'Explains the fantastical elements.',
+    },
+  ])
   console.log('Hansel and Gretel world rules created.')
 
   // Suggestions for Hansel and Gretel story

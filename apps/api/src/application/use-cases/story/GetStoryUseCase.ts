@@ -1,7 +1,8 @@
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
-import { StoryResponse, CharacterResponseSchema, ChapterResponseSchema, CharacterResponse, ChapterResponse } from '@keres/shared'
+import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+
+import { ChapterResponseSchema, CharacterResponseSchema, type StoryResponse } from '@keres/shared'
 
 export class GetStoryUseCase {
   constructor(

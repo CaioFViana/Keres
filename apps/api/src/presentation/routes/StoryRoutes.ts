@@ -6,7 +6,11 @@ import {
   UpdateStoryUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { StoryRepository, CharacterRepository, ChapterRepository } from '@infrastructure/persistence'
+import {
+  ChapterRepository,
+  CharacterRepository,
+  StoryRepository,
+} from '@infrastructure/persistence'
 import {
   ListQuerySchema,
   StoryCreateSchema,
@@ -43,7 +47,10 @@ const IdParamSchema = z.object({
 
 // Define schema for include query parameter
 const IncludeQuerySchema = z.object({
-  include: z.string().optional().transform((val) => val ? val.split(',') : []),
+  include: z
+    .string()
+    .optional()
+    .transform((val) => (val ? val.split(',') : [])),
 })
 
 // POST /
@@ -290,7 +297,8 @@ storyRoutes.openapi(
     method: 'patch',
     path: '/{id}',
     summary: 'Partially update a story by ID',
-    description: 'Partially updates an existing story by its unique ID. Only provided fields will be updated.',
+    description:
+      'Partially updates an existing story by its unique ID. Only provided fields will be updated.',
     request: {
       params: IdParamSchema,
       body: {

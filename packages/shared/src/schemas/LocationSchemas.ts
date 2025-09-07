@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SceneResponseSchema } from './SceneSchemas' // Import SceneResponseSchema
 
 export const LocationCreateSchema = z.object({
   storyId: z.string(),
@@ -34,6 +35,8 @@ export const LocationResponseSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  // Add optional fields for included data
+  scenes: z.array(SceneResponseSchema).optional(), // New
 })
 
 export type LocationCreatePayload = z.infer<typeof LocationCreateSchema>

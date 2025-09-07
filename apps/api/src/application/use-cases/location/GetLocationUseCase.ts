@@ -1,14 +1,16 @@
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { LocationResponse } from '@keres/shared'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
+import { LocationResponse, SceneResponseSchema } from '@keres/shared'
 
 export class GetLocationUseCase {
   constructor(
     private readonly locationRepository: ILocationRepository,
-    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+    private readonly storyRepository: IStoryRepository,
+    private readonly sceneRepository: ISceneRepository,
   ) {}
 
-  async execute(userId: string, id: string): Promise<LocationResponse> {
+  async execute(userId: string, id: string, include: string[] = []): Promise<LocationResponse> {
     const location = await this.locationRepository.findById(id)
     if (!location) {
       throw new Error('Location not found')
@@ -20,7 +22,7 @@ export class GetLocationUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    return {
+    const response: LocationResponse = {
       id: location.id,
       storyId: location.storyId,
       name: location.name,
@@ -33,5 +35,12 @@ export class GetLocationUseCase {
       createdAt: location.createdAt,
       updatedAt: location.updatedAt,
     }
+
+    if (include.includes('scenes')) {
+      const rawScenes = await this.sceneRepository.findByLocationId(location.id)
+      response.scenes = rawScenes.map((s) => SceneResponseSchema.parse(s))
+    }
+
+    return response
   }
 }

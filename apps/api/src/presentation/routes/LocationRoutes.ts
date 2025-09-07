@@ -6,7 +6,7 @@ import {
   UpdateLocationUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { LocationRepository, StoryRepository } from '@infrastructure/persistence'
+import { LocationRepository, StoryRepository, SceneRepository } from '@infrastructure/persistence'
 import {
   ListQuerySchema,
   LocationCreateSchema,
@@ -21,8 +21,9 @@ const locationRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 // Dependencies for LocationController
 const locationRepository = new LocationRepository()
 const storyRepository = new StoryRepository()
+const sceneRepository = new SceneRepository() // New
 const createLocationUseCase = new CreateLocationUseCase(locationRepository, storyRepository)
-const getLocationUseCase = new GetLocationUseCase(locationRepository, storyRepository)
+const getLocationUseCase = new GetLocationUseCase(locationRepository, storyRepository, sceneRepository) // Updated
 const updateLocationUseCase = new UpdateLocationUseCase(locationRepository, storyRepository)
 const deleteLocationUseCase = new DeleteLocationUseCase(locationRepository, storyRepository)
 const getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(
@@ -45,6 +46,11 @@ const IdParamSchema = z.object({
 
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
+})
+
+// Define schema for include query parameter
+const IncludeQuerySchema = z.object({
+  include: z.string().optional().transform((val) => val ? val.split(',') : []),
 })
 
 // POST /
@@ -116,6 +122,7 @@ locationRoutes.openapi(
     description: 'Retrieves a single location by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: IncludeQuerySchema, // Add this line
     },
     responses: {
       200: {
@@ -148,8 +155,9 @@ locationRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
+    const query = IncludeQuerySchema.parse(c.req.query()) // Parse query
     try {
-      const location = await locationController.getLocation(userId, params.id)
+      const location = await locationController.getLocation(userId, params.id, query.include) // Pass include
       return c.json(location, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

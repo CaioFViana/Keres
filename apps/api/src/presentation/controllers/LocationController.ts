@@ -28,8 +28,8 @@ export class LocationController {
     return LocationResponseSchema.parse(location)
   }
 
-  async getLocation(userId: string, id: string) {
-    const location = await this.getLocationUseCase.execute(userId, id)
+  async getLocation(userId: string, id: string, include: string[] = []) {
+    const location = await this.getLocationUseCase.execute(userId, id, include)
     if (!location) {
       throw new Error('Location not found')
     }

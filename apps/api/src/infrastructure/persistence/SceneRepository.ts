@@ -25,6 +25,16 @@ export class SceneRepository implements ISceneRepository {
     }
   }
 
+  async findByLocationId(locationId: string): Promise<Scene[]> {
+    try {
+      const results = await db.select().from(scenes).where(eq(scenes.locationId, locationId))
+      return results.map(this.toDomain)
+    } catch (error) {
+      console.error('Error in SceneRepository.findByLocationId:', error)
+      throw error
+    }
+  }
+
   async save(sceneData: Scene): Promise<void> {
     try {
       await db.insert(scenes).values(this.toPersistence(sceneData))

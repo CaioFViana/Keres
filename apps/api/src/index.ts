@@ -1,8 +1,8 @@
 import { swaggerUI } from '@hono/swagger-ui'
-import { OpenAPIHono } from '@hono/zod-openapi'
-import { extendZodWithOpenApi } from '@hono/zod-openapi' // Import this
-
+import { extendZodWithOpenApi, OpenAPIHono } from '@hono/zod-openapi'
 import { authMiddleware } from '@presentation/middlewares/AuthMiddleware' // Added
+import { z } from 'zod'
+
 import chapterRoutes from './presentation/routes/ChapterRoutes'
 import characterMomentRoutes from './presentation/routes/CharacterMomentRoutes'
 import characterRelationRoutes from './presentation/routes/CharacterRelationRoutes'
@@ -18,8 +18,6 @@ import suggestionRoutes from './presentation/routes/SuggestionRoutes' // Added
 import tagRoutes from './presentation/routes/TagRoutes' // Added
 import userRoutes from './presentation/routes/UserRoutes'
 import worldRuleRoutes from './presentation/routes/WorldRuleRoutes' // Added
-
-import { z } from 'zod'
 
 extendZodWithOpenApi(z)
 

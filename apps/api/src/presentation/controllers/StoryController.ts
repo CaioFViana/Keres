@@ -36,8 +36,8 @@ export class StoryController {
     return StoryResponseSchema.parse(story)
   }
 
-  async getStoriesByUserId(userId: string, query: ListQueryParams) {
-    const stories = await this.getStoriesByUserIdUseCase.execute(userId, query)
+  async getStoriesByUserId(userId: string, query: ListQueryParams, include: string[] = []) {
+    const stories = await this.getStoriesByUserIdUseCase.execute(userId, query, include)
     return stories.map((story) => StoryResponseSchema.parse(story))
   }
 

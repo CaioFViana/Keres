@@ -140,7 +140,6 @@ galleryRoutes.openapi(
     }
     fileBuffer = Buffer.from(await parsedBody.file.arrayBuffer())
 
-
     const data = {
       storyId: parsedBody.storyId,
       ownerId: parsedBody.ownerId,
@@ -461,7 +460,6 @@ galleryRoutes.openapi(
     }
     fileBuffer = Buffer.from(await parsedBody.file.arrayBuffer())
 
-
     const data = {
       id: parsedBody.id,
       ownerId: parsedBody.ownerId,
@@ -474,7 +472,12 @@ galleryRoutes.openapi(
     }
 
     try {
-      const updatedGallery = await galleryController.updateGallery(userId, params.id, data, fileBuffer)
+      const updatedGallery = await galleryController.updateGallery(
+        userId,
+        params.id,
+        data,
+        fileBuffer,
+      )
       return c.json(updatedGallery, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -491,7 +494,8 @@ galleryRoutes.openapi(
     method: 'patch',
     path: '/{id}',
     summary: 'Partially update a gallery item by ID',
-    description: 'Partially updates an existing gallery item by its unique ID. Only provided fields will be updated.',
+    description:
+      'Partially updates an existing gallery item by its unique ID. Only provided fields will be updated.',
     request: {
       params: IdParamSchema,
       body: {
@@ -545,12 +549,18 @@ galleryRoutes.openapi(
     const data = GalleryUpdateSchema.parse(body) // GalleryUpdateSchema already handles optional fields
     let fileBuffer: Buffer | undefined
 
-    if (data.file) { // Check if file is provided in the partial update
+    if (data.file) {
+      // Check if file is provided in the partial update
       fileBuffer = Buffer.from(await data.file.arrayBuffer())
     }
 
     try {
-      const updatedGallery = await galleryController.updateGallery(userId, params.id, data, fileBuffer)
+      const updatedGallery = await galleryController.updateGallery(
+        userId,
+        params.id,
+        data,
+        fileBuffer,
+      )
       return c.json(updatedGallery, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

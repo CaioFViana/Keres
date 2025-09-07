@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { MomentResponseSchema } from './MomentSchemas' // Import MomentResponseSchema
+
 import { ChoiceResponseSchema } from './ChoiceSchemas' // Import ChoiceResponseSchema
+import { MomentResponseSchema } from './MomentSchemas' // Import MomentResponseSchema
 
 export const SceneCreateSchema = z.object({
   chapterId: z.string(),

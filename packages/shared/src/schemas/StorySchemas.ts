@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { CharacterResponseSchema } from './CharacterSchemas' // Import CharacterResponseSchema
+
 import { ChapterResponseSchema } from './ChapterSchemas' // Import ChapterResponseSchema
+import { CharacterResponseSchema } from './CharacterSchemas' // Import CharacterResponseSchema
 
 export const StoryCreateSchema = z.object({
   userId: z.string(),

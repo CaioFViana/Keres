@@ -1,9 +1,10 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
-import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
-import { SceneResponse, MomentResponseSchema, ChoiceResponseSchema } from '@keres/shared'
+
+import { ChoiceResponseSchema, MomentResponseSchema, type SceneResponse } from '@keres/shared'
 
 export class GetSceneUseCase {
   constructor(

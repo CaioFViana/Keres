@@ -6,7 +6,13 @@ import {
   UpdateCharacterUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { CharacterRepository, StoryRepository, CharacterMomentRepository, CharacterRelationRepository, MomentRepository } from '@infrastructure/persistence'
+import {
+  CharacterMomentRepository,
+  CharacterRelationRepository,
+  CharacterRepository,
+  MomentRepository,
+  StoryRepository,
+} from '@infrastructure/persistence'
 import {
   CharacterCreateSchema,
   CharacterResponseSchema,
@@ -25,7 +31,13 @@ const characterMomentRepository = new CharacterMomentRepository() // New
 const characterRelationRepository = new CharacterRelationRepository() // New
 const momentRepository = new MomentRepository() // New
 const createCharacterUseCase = new CreateCharacterUseCase(characterRepository, storyRepository)
-const getCharacterUseCase = new GetCharacterUseCase(characterRepository, storyRepository, characterMomentRepository, characterRelationRepository, momentRepository) // Updated
+const getCharacterUseCase = new GetCharacterUseCase(
+  characterRepository,
+  storyRepository,
+  characterMomentRepository,
+  characterRelationRepository,
+  momentRepository,
+) // Updated
 const updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository, storyRepository)
 const deleteCharacterUseCase = new DeleteCharacterUseCase(characterRepository, storyRepository)
 const getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(
@@ -52,7 +64,10 @@ const StoryIdParamSchema = z.object({
 
 // Define schema for include query parameter
 const IncludeQuerySchema = z.object({
-  include: z.string().optional().transform((val) => val ? val.split(',') : []),
+  include: z
+    .string()
+    .optional()
+    .transform((val) => (val ? val.split(',') : [])),
 })
 
 // POST /
@@ -305,7 +320,8 @@ characterRoutes.openapi(
     method: 'patch',
     path: '/{id}',
     summary: 'Partially update a character by ID',
-    description: 'Partially updates an existing character by its unique ID. Only provided fields will be updated.',
+    description:
+      'Partially updates an existing character by its unique ID. Only provided fields will be updated.',
     request: {
       params: IdParamSchema,
       body: {

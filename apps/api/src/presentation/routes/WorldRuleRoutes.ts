@@ -309,7 +309,8 @@ worldRuleRoutes.openapi(
     method: 'patch',
     path: '/{id}',
     summary: 'Partially update a world rule by ID',
-    description: 'Partially updates an existing world rule by its unique ID. Only provided fields will be updated.',
+    description:
+      'Partially updates an existing world rule by its unique ID. Only provided fields will be updated.',
     request: {
       params: IdParamSchema,
       body: {

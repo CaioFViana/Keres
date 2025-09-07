@@ -2,6 +2,6 @@
 
 export * from './CreateChapterUseCase'
 export * from './DeleteChapterUseCase'
-export * from './GetChapterUseCase'
 export * from './GetChaptersByStoryIdUseCase'
+export * from './GetChapterUseCase'
 export * from './UpdateChapterUseCase'

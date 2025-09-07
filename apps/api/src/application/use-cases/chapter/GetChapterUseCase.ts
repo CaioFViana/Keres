@@ -1,7 +1,8 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
+import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // New import
-import { ChapterResponse, SceneResponseSchema } from '@keres/shared' // Import SceneResponseSchema
+
+import { type ChapterResponse, SceneResponseSchema } from '@keres/shared'
 
 export class GetChapterUseCase {
   constructor(

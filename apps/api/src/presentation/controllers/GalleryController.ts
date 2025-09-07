@@ -59,9 +59,18 @@ export class GalleryController {
     return galleryItems.map((item) => GalleryResponseSchema.parse(item))
   }
 
-  async updateGallery(userId: string, id: string, data: z.infer<typeof GalleryUpdateSchema>, fileBuffer?: Buffer) {
+  async updateGallery(
+    userId: string,
+    id: string,
+    data: z.infer<typeof GalleryUpdateSchema>,
+    fileBuffer?: Buffer,
+  ) {
     const { id: dataId, ...updateData } = data
-    const updatedGallery = await this.updateGalleryUseCase.execute(userId, { id, ...updateData }, fileBuffer)
+    const updatedGallery = await this.updateGalleryUseCase.execute(
+      userId,
+      { id, ...updateData },
+      fileBuffer,
+    )
     if (!updatedGallery) {
       throw new Error('Gallery item not found or does not belong to the specified story/owner')
     }

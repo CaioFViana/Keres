@@ -1,7 +1,8 @@
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
-import { LocationResponse, SceneResponseSchema } from '@keres/shared'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+
+import { type LocationResponse, SceneResponseSchema } from '@keres/shared'
 
 export class GetLocationUseCase {
   constructor(

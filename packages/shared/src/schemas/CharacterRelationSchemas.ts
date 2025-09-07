@@ -19,10 +19,12 @@ export const CharacterRelationResponseSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   // New field for the related character's details
-  relatedCharacter: z.object({
-    id: z.string(),
-    name: z.string(),
-  }).optional(), // Optional because it's only included when requested
+  relatedCharacter: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .optional(), // Optional because it's only included when requested
 })
 
 export type CharacterRelationCreatePayload = z.infer<typeof CharacterRelationCreateSchema>

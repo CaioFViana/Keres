@@ -50,7 +50,10 @@ const StoryIdParamSchema = z.object({
 
 // Define schema for include query parameter
 const IncludeQuerySchema = z.object({
-  include: z.string().optional().transform((val) => val ? val.split(',') : []),
+  include: z
+    .string()
+    .optional()
+    .transform((val) => (val ? val.split(',') : [])),
 })
 
 // POST /
@@ -299,7 +302,8 @@ chapterRoutes.openapi(
     method: 'patch',
     path: '/{id}',
     summary: 'Partially update a chapter by ID',
-    description: 'Partially updates an existing chapter by its unique ID. Only provided fields will be updated.',
+    description:
+      'Partially updates an existing chapter by its unique ID. Only provided fields will be updated.',
     request: {
       params: IdParamSchema,
       body: {

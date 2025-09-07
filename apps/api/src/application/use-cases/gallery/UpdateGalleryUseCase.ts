@@ -18,7 +18,11 @@ export class UpdateGalleryUseCase {
     private readonly locationRepository: ILocationRepository, // Added
   ) {}
 
-  async execute(userId: string, data: GalleryUpdatePayload, fileBuffer?: Buffer): Promise<GalleryResponse> {
+  async execute(
+    userId: string,
+    data: GalleryUpdatePayload,
+    fileBuffer?: Buffer,
+  ): Promise<GalleryResponse> {
     const existingGallery = await this.galleryRepository.findById(data.id)
     if (!existingGallery) {
       throw new Error('Gallery item not found')

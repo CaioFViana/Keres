@@ -1,9 +1,10 @@
-import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository'
 import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
-import type { IMomentRepository } from '@domain/repositories/IMomentRepository' // New import
-import { CharacterResponse, MomentResponseSchema } from '@keres/shared' // Import MomentResponseSchema
+import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+
+import { type CharacterResponse, MomentResponseSchema } from '@keres/shared'
 
 export class GetCharacterUseCase {
   constructor(
@@ -48,9 +49,9 @@ export class GetCharacterUseCase {
 
     if (include.includes('moments')) {
       const characterMoments = await this.characterMomentRepository.findByCharacterId(character.id)
-      const momentIds = characterMoments.map(cm => cm.momentId)
+      const momentIds = characterMoments.map((cm) => cm.momentId)
       const moments = await this.momentRepository.findByIds(momentIds)
-      response.moments = moments.map(m => MomentResponseSchema.parse(m)) // Map to MomentResponse
+      response.moments = moments.map((m) => MomentResponseSchema.parse(m)) // Map to MomentResponse
     }
 
     if (include.includes('relations')) {

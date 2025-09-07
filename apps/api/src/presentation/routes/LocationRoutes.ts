@@ -6,7 +6,7 @@ import {
   UpdateLocationUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { LocationRepository, StoryRepository, SceneRepository } from '@infrastructure/persistence'
+import { LocationRepository, SceneRepository, StoryRepository } from '@infrastructure/persistence'
 import {
   ListQuerySchema,
   LocationCreateSchema,
@@ -23,7 +23,11 @@ const locationRepository = new LocationRepository()
 const storyRepository = new StoryRepository()
 const sceneRepository = new SceneRepository() // New
 const createLocationUseCase = new CreateLocationUseCase(locationRepository, storyRepository)
-const getLocationUseCase = new GetLocationUseCase(locationRepository, storyRepository, sceneRepository) // Updated
+const getLocationUseCase = new GetLocationUseCase(
+  locationRepository,
+  storyRepository,
+  sceneRepository,
+) // Updated
 const updateLocationUseCase = new UpdateLocationUseCase(locationRepository, storyRepository)
 const deleteLocationUseCase = new DeleteLocationUseCase(locationRepository, storyRepository)
 const getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(
@@ -50,7 +54,10 @@ const StoryIdParamSchema = z.object({
 
 // Define schema for include query parameter
 const IncludeQuerySchema = z.object({
-  include: z.string().optional().transform((val) => val ? val.split(',') : []),
+  include: z
+    .string()
+    .optional()
+    .transform((val) => (val ? val.split(',') : [])),
 })
 
 // POST /
@@ -303,7 +310,8 @@ locationRoutes.openapi(
     method: 'patch',
     path: '/{id}',
     summary: 'Partially update a location by ID',
-    description: 'Partially updates an existing location by its unique ID. Only provided fields will be updated.',
+    description:
+      'Partially updates an existing location by its unique ID. Only provided fields will be updated.',
     request: {
       params: IdParamSchema,
       body: {

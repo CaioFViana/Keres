@@ -10,9 +10,9 @@ import {
   ChapterRepository,
   ChoiceRepository,
   LocationRepository,
+  MomentRepository,
   SceneRepository,
   StoryRepository,
-  MomentRepository,
 } from '@infrastructure/persistence'
 import {
   ListQuerySchema,
@@ -40,7 +40,13 @@ const createSceneUseCase = new CreateSceneUseCase(
   chapterRepository,
   locationRepository,
 )
-const getSceneUseCase = new GetSceneUseCase(sceneRepository, chapterRepository, storyRepository, momentRepository, choiceRepository)
+const getSceneUseCase = new GetSceneUseCase(
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+  momentRepository,
+  choiceRepository,
+)
 const updateSceneUseCase = new UpdateSceneUseCase(
   sceneRepository,
   choiceRepository,
@@ -78,7 +84,10 @@ const ChapterIdParamSchema = z.object({
 
 // Define schema for include query parameter
 const IncludeQuerySchema = z.object({
-  include: z.string().optional().transform((val) => val ? val.split(',') : []),
+  include: z
+    .string()
+    .optional()
+    .transform((val) => (val ? val.split(',') : [])),
 })
 
 // POST /
@@ -327,7 +336,8 @@ sceneRoutes.openapi(
     method: 'patch',
     path: '/{id}',
     summary: 'Partially update a scene by ID',
-    description: 'Partially updates an existing scene by its unique ID. Only provided fields will be updated.',
+    description:
+      'Partially updates an existing scene by its unique ID. Only provided fields will be updated.',
     request: {
       params: IdParamSchema,
       body: {

@@ -279,7 +279,8 @@ momentRoutes.openapi(
     method: 'patch',
     path: '/{id}',
     summary: 'Partially update a moment by ID',
-    description: 'Partially updates an existing moment by its unique ID. Only provided fields will be updated.',
+    description:
+      'Partially updates an existing moment by its unique ID. Only provided fields will be updated.',
     request: {
       params: IdParamSchema,
       body: {

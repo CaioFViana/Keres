@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { MomentResponseSchema } from './MomentSchemas' // Import MomentResponseSchema
+
 import { CharacterRelationResponseSchema } from './CharacterRelationSchemas' // Import CharacterRelationResponseSchema
+import { MomentResponseSchema } from './MomentSchemas' // Import MomentResponseSchema
 
 export const CharacterCreateSchema = z.object({
   storyId: z.string(),

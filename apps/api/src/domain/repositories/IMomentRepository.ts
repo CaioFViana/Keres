@@ -6,6 +6,8 @@ export interface IMomentRepository {
   findByIds(ids: string[]): Promise<Moment[]>
   findBySceneId(sceneId: string, query?: ListQueryParams): Promise<Moment[]>
   save(moment: Moment): Promise<void>
+  saveMany(moments: Moment[]): Promise<void>
   update(moment: Moment, sceneId: string): Promise<void>
+  updateMany(moments: Moment[]): Promise<void>
   delete(id: string, sceneId: string): Promise<void>
 }

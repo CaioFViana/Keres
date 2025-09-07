@@ -57,6 +57,19 @@ export class MomentRepository implements IMomentRepository {
     }
   }
 
+  async saveMany(momentsData: Moment[]): Promise<void> {
+    try {
+      if (momentsData.length === 0) {
+        return
+      }
+      const persistenceData = momentsData.map(this.toPersistence)
+      await db.insert(moments).values(persistenceData)
+    } catch (error) {
+      console.error('Error in MomentRepository.saveMany:', error)
+      throw error
+    }
+  }
+
   async update(momentData: Moment, sceneId: string): Promise<void> {
     try {
       await db
@@ -65,6 +78,25 @@ export class MomentRepository implements IMomentRepository {
         .where(eq(moments.id, momentData.id), eq(moments.sceneId, sceneId))
     } catch (error) {
       console.error('Error in MomentRepository.update:', error)
+      throw error
+    }
+  }
+
+  async updateMany(momentsData: Moment[]): Promise<void> {
+    try {
+      if (momentsData.length === 0) {
+        return
+      }
+      await db.transaction(async (tx) => {
+        for (const momentData of momentsData) {
+          await tx
+            .update(moments)
+            .set(this.toPersistence(momentData))
+            .where(eq(moments.id, momentData.id))
+        }
+      })
+    } catch (error) {
+      console.error('Error in MomentRepository.updateMany:', error)
       throw error
     }
   }

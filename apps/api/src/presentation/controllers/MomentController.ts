@@ -4,6 +4,8 @@ import type {
   GetMomentsBySceneIdUseCase,
   GetMomentUseCase,
   UpdateMomentUseCase,
+  CreateManyMomentsUseCase,
+  UpdateManyMomentsUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
 
@@ -21,11 +23,23 @@ export class MomentController {
     private readonly updateMomentUseCase: UpdateMomentUseCase,
     private readonly deleteMomentUseCase: DeleteMomentUseCase,
     private readonly getMomentsBySceneIdUseCase: GetMomentsBySceneIdUseCase,
+    private readonly createManyMomentsUseCase: CreateManyMomentsUseCase,
+    private readonly updateManyMomentsUseCase: UpdateManyMomentsUseCase,
   ) {}
 
   async createMoment(userId: string, data: z.infer<typeof CreateMomentSchema>) {
     const moment = await this.createMomentUseCase.execute(userId, data)
     return MomentResponseSchema.parse(moment)
+  }
+
+  async createManyMoments(userId: string, data: z.infer<typeof CreateMomentSchema>[]) {
+    const moments = await this.createManyMomentsUseCase.execute(userId, data)
+    return moments.map((moment) => MomentResponseSchema.parse(moment))
+  }
+
+  async updateManyMoments(userId: string, data: z.infer<typeof UpdateMomentSchema>[]) {
+    const moments = await this.updateManyMomentsUseCase.execute(userId, data)
+    return moments.map((moment) => MomentResponseSchema.parse(moment))
   }
 
   async getMoment(userId: string, id: string) {

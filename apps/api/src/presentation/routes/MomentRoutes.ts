@@ -4,6 +4,8 @@ import {
   GetMomentsBySceneIdUseCase,
   GetMomentUseCase,
   UpdateMomentUseCase,
+  CreateManyMomentsUseCase,
+  UpdateManyMomentsUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import {
@@ -34,6 +36,12 @@ const createMomentUseCase = new CreateMomentUseCase(
   chapterRepository,
   storyRepository,
 )
+const createManyMomentsUseCase = new CreateManyMomentsUseCase(
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
 const getMomentUseCase = new GetMomentUseCase(
   momentRepository,
   sceneRepository,
@@ -41,6 +49,12 @@ const getMomentUseCase = new GetMomentUseCase(
   storyRepository,
 )
 const updateMomentUseCase = new UpdateMomentUseCase(
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
+const updateManyMomentsUseCase = new UpdateManyMomentsUseCase(
   momentRepository,
   sceneRepository,
   chapterRepository,
@@ -65,6 +79,8 @@ const momentController = new MomentController(
   updateMomentUseCase,
   deleteMomentUseCase,
   getMomentsBySceneIdUseCase,
+  createManyMomentsUseCase,
+  updateManyMomentsUseCase,
 )
 
 // Define schemas for path parameters
@@ -75,6 +91,12 @@ const IdParamSchema = z.object({
 const SceneIdParamSchema = z.object({
   sceneId: z.ulid(),
 })
+
+// Define schema for batch moment creation
+const CreateManyMomentsSchema = z.array(CreateMomentSchema)
+
+// Define schema for batch moment update
+const UpdateManyMomentsSchema = z.array(UpdateMomentSchema)
 
 // POST /
 momentRoutes.openapi(
@@ -127,6 +149,134 @@ momentRoutes.openapi(
     try {
       const newMoment = await momentController.createMoment(userId, data)
       return c.json(newMoment, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /batch
+momentRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/batch',
+    summary: 'Create multiple moments',
+    description: 'Creates multiple moments for a scene in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: CreateManyMomentsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Moments created successfully',
+        content: {
+          'application/json': {
+            schema: z.array(MomentResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Moments'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = CreateManyMomentsSchema.parse(body)
+    try {
+      const newMoments = await momentController.createManyMoments(userId, data)
+      return c.json(newMoments, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// PUT /batch
+momentRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/batch',
+    summary: 'Update multiple moments',
+    description: 'Updates multiple moments in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateManyMomentsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Moments updated successfully',
+        content: {
+          'application/json': {
+            schema: z.array(MomentResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Moment not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Moments'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = UpdateManyMomentsSchema.parse(body)
+    try {
+      const updatedMoments = await momentController.updateManyMoments(userId, data)
+      return c.json(updatedMoments, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

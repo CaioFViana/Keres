@@ -6,7 +6,7 @@ import {
   UpdateStoryUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { StoryRepository } from '@infrastructure/persistence/StoryRepository'
+import { StoryRepository, CharacterRepository, ChapterRepository } from '@infrastructure/persistence'
 import {
   ListQuerySchema,
   StoryCreateSchema,
@@ -20,8 +20,10 @@ const storyRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for StoryController
 const storyRepository = new StoryRepository()
+const characterRepository = new CharacterRepository() // New
+const chapterRepository = new ChapterRepository() // New
 const createStoryUseCase = new CreateStoryUseCase(storyRepository)
-const getStoryUseCase = new GetStoryUseCase(storyRepository)
+const getStoryUseCase = new GetStoryUseCase(storyRepository, characterRepository, chapterRepository) // Updated
 const updateStoryUseCase = new UpdateStoryUseCase(storyRepository)
 const deleteStoryUseCase = new DeleteStoryUseCase(storyRepository)
 const getStoriesByUserIdUseCase = new GetStoriesByUserIdUseCase(storyRepository)
@@ -37,6 +39,11 @@ const storyController = new StoryController(
 // Define schemas for path parameters
 const IdParamSchema = z.object({
   id: z.ulid(),
+})
+
+// Define schema for include query parameter
+const IncludeQuerySchema = z.object({
+  include: z.string().optional().transform((val) => val ? val.split(',') : []),
 })
 
 // POST /
@@ -108,6 +115,7 @@ storyRoutes.openapi(
     description: 'Retrieves a single story by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: IncludeQuerySchema, // Add this line
     },
     responses: {
       200: {
@@ -140,8 +148,9 @@ storyRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
+    const query = IncludeQuerySchema.parse(c.req.query()) // Parse query
     try {
-      const story = await storyController.getStory(userId, params.id)
+      const story = await storyController.getStory(userId, params.id, query.include) // Pass include
       return c.json(story, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

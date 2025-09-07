@@ -28,8 +28,8 @@ export class StoryController {
     return StoryResponseSchema.parse(story)
   }
 
-  async getStory(userId: string, id: string) {
-    const story = await this.getStoryUseCase.execute(userId, id)
+  async getStory(userId: string, id: string, include: string[] = []) {
+    const story = await this.getStoryUseCase.execute(userId, id, include)
     if (!story) {
       throw new Error('Story not found')
     }

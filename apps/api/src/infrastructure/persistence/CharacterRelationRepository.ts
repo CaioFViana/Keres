@@ -41,6 +41,19 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
     }
   }
 
+  async saveMany(characterRelationsData: CharacterRelation[]): Promise<void> {
+    try {
+      if (characterRelationsData.length === 0) {
+        return
+      }
+      const persistenceData = characterRelationsData.map(this.toPersistence)
+      await db.insert(characterRelations).values(persistenceData)
+    } catch (error) {
+      console.error('Error in CharacterRelationRepository.saveMany:', error)
+      throw error
+    }
+  }
+
   async update(
     characterRelationData: CharacterRelation,
     id: string,
@@ -62,6 +75,25 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
         )
     } catch (error) {
       console.error('Error in CharacterRelationRepository.update:', error)
+      throw error
+    }
+  }
+
+  async updateMany(characterRelationsData: CharacterRelation[]): Promise<void> {
+    try {
+      if (characterRelationsData.length === 0) {
+        return
+      }
+      await db.transaction(async (tx) => {
+        for (const relationData of characterRelationsData) {
+          await tx
+            .update(characterRelations)
+            .set(this.toPersistence(relationData))
+            .where(eq(characterRelations.id, relationData.id))
+        }
+      })
+    } catch (error) {
+      console.error('Error in CharacterRelationRepository.updateMany:', error)
       throw error
     }
   }

@@ -1,9 +1,11 @@
 import {
   CreateCharacterRelationUseCase,
+  CreateManyCharacterRelationsUseCase,
   DeleteCharacterRelationUseCase,
   GetCharacterRelationsByCharIdUseCase,
   GetCharacterRelationUseCase,
   UpdateCharacterRelationUseCase,
+  UpdateManyCharacterRelationsUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import {
@@ -51,12 +53,26 @@ const getCharacterRelationsByCharIdUseCase = new GetCharacterRelationsByCharIdUs
   storyRepository,
 )
 
+const createManyCharacterRelationsUseCase = new CreateManyCharacterRelationsUseCase(
+  characterRelationRepository,
+  characterRepository,
+  storyRepository,
+)
+
+const updateManyCharacterRelationsUseCase = new UpdateManyCharacterRelationsUseCase(
+  characterRelationRepository,
+  characterRepository,
+  storyRepository,
+)
+
 const characterRelationController = new CharacterRelationController(
   createCharacterRelationUseCase,
   getCharacterRelationUseCase,
   updateCharacterRelationUseCase,
   deleteCharacterRelationUseCase,
   getCharacterRelationsByCharIdUseCase,
+  createManyCharacterRelationsUseCase,
+  updateManyCharacterRelationsUseCase
 )
 
 // Define schemas for path parameters
@@ -122,6 +138,140 @@ characterRelationRoutes.openapi(
         data,
       )
       return c.json(characterRelation, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// Define schema for batch character relation creation
+const CreateManyCharacterRelationsSchema = z.array(CharacterRelationCreateSchema)
+
+// POST /batch
+characterRelationRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/batch',
+    summary: 'Create multiple character relations',
+    description: 'Creates multiple relations between characters in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: CreateManyCharacterRelationsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Character Relations created successfully',
+        content: {
+          'application/json': {
+            schema: z.array(CharacterRelationResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Relations'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = CreateManyCharacterRelationsSchema.parse(body)
+    try {
+      const newCharacterRelations = await characterRelationController.createManyCharacterRelations(userId, data)
+      return c.json(newCharacterRelations, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// Define schema for batch character relation update
+const UpdateManyCharacterRelationsSchema = z.array(CharacterRelationUpdateSchema)
+
+// PUT /batch
+characterRelationRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/batch',
+    summary: 'Update multiple character relations',
+    description: 'Updates multiple relations between characters in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateManyCharacterRelationsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Character Relations updated successfully',
+        content: {
+          'application/json': {
+            schema: z.array(CharacterRelationResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Character Relation not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Relations'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = UpdateManyCharacterRelationsSchema.parse(body)
+    try {
+      const updatedCharacterRelations = await characterRelationController.updateManyCharacterRelations(userId, data)
+      return c.json(updatedCharacterRelations, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

@@ -4,6 +4,8 @@ import type {
   GetCharacterRelationsByCharIdUseCase,
   GetCharacterRelationUseCase,
   UpdateCharacterRelationUseCase,
+  CreateManyCharacterRelationsUseCase,
+  UpdateManyCharacterRelationsUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
 
@@ -20,6 +22,8 @@ export class CharacterRelationController {
     private readonly updateCharacterRelationUseCase: UpdateCharacterRelationUseCase,
     private readonly deleteCharacterRelationUseCase: DeleteCharacterRelationUseCase,
     private readonly getCharacterRelationsByCharIdUseCase: GetCharacterRelationsByCharIdUseCase,
+    private readonly createManyCharacterRelationsUseCase: CreateManyCharacterRelationsUseCase,
+    private readonly updateManyCharacterRelationsUseCase: UpdateManyCharacterRelationsUseCase,
   ) {}
 
   async createCharacterRelation(
@@ -28,6 +32,19 @@ export class CharacterRelationController {
   ) {
     const characterRelation = await this.createCharacterRelationUseCase.execute(userId, data)
     return CharacterRelationResponseSchema.parse(characterRelation)
+  }
+
+  async createManyCharacterRelations(userId: string, data: z.infer<typeof CharacterRelationCreateSchema>[]) {
+    const characterRelations = await this.createManyCharacterRelationsUseCase.execute(userId, data)
+    return characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr))
+  }
+
+  async updateManyCharacterRelations(
+    userId: string,
+    data: z.infer<typeof CharacterRelationUpdateSchema>[],
+  ) {
+    const characterRelations = await this.updateManyCharacterRelationsUseCase.execute(userId, data)
+    return characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr))
   }
 
   async getCharacterRelation(userId: string, id: string) {

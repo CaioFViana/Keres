@@ -5,9 +5,10 @@ export const CharacterMomentCreateSchema = z.object({
   momentId: z.string(),
 })
 
-// CharacterMoment is a join table, so update is not typically applicable for its core fields.
-// If there were additional fields on the join table, an update schema would be defined.
-// For now, we'll just define a response schema.
+export const CharacterMomentUpdateSchema = z.object({
+  characterId: z.string(),
+  momentId: z.string(),
+})
 
 export const CharacterMomentResponseSchema = z.object({
   characterId: z.string(),
@@ -17,4 +18,11 @@ export const CharacterMomentResponseSchema = z.object({
 })
 
 export type CharacterMomentCreatePayload = z.infer<typeof CharacterMomentCreateSchema>
+export type CharacterMomentUpdatePayload = z.infer<typeof CharacterMomentUpdateSchema>
 export type CharacterMomentResponse = z.infer<typeof CharacterMomentResponseSchema>
+
+export const CreateManyCharacterMomentsSchema = z.array(CharacterMomentCreateSchema)
+export const UpdateManyCharacterMomentsSchema = z.array(CharacterMomentUpdateSchema)
+
+export type CreateManyCharacterMomentsPayload = z.infer<typeof CreateManyCharacterMomentsSchema>
+export type UpdateManyCharacterMomentsPayload = z.infer<typeof UpdateManyCharacterMomentsSchema>

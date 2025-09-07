@@ -1,8 +1,10 @@
 import {
   CreateCharacterMomentUseCase,
+  CreateManyCharacterMomentsUseCase,
   DeleteCharacterMomentUseCase,
   GetCharacterMomentsByCharacterIdUseCase,
   GetCharacterMomentsByMomentIdUseCase,
+  UpdateManyCharacterMomentsUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import {
@@ -13,7 +15,7 @@ import {
   SceneRepository,
   StoryRepository,
 } from '@infrastructure/persistence'
-import { CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@keres/shared' // Import CharacterMomentResponseSchema
+import { CharacterMomentCreateSchema, CharacterMomentResponseSchema, CharacterMomentUpdateSchema } from '@keres/shared' // Import CharacterMomentResponseSchema
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -55,11 +57,32 @@ const deleteCharacterMomentUseCase = new DeleteCharacterMomentUseCase(
   storyRepository,
 )
 
+const createManyCharactersMomentUseCase = new CreateManyCharacterMomentsUseCase(
+  characterMomentRepository,
+  characterRepository,
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
+
+const updateManyCharactersMomentUseCase = new UpdateManyCharacterMomentsUseCase(
+  characterMomentRepository,
+  characterRepository,
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
+
+
 const characterMomentController = new CharacterMomentController(
   createCharacterMomentUseCase,
   getCharacterMomentsByCharacterIdUseCase,
   getCharacterMomentsByMomentIdUseCase,
   deleteCharacterMomentUseCase,
+  createManyCharactersMomentUseCase,
+  updateManyCharactersMomentUseCase
 )
 
 // Define schemas for path parameters
@@ -123,6 +146,140 @@ characterMomentRoutes.openapi(
     try {
       const characterMoment = await characterMomentController.createCharacterMoment(userId, data)
       return c.json(characterMoment, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// Define schema for batch character moment creation
+const CreateManyCharacterMomentsSchema = z.array(CharacterMomentCreateSchema)
+
+// POST /batch
+characterMomentRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/batch',
+    summary: 'Create multiple character moments',
+    description: 'Creates multiple associations between characters and moments in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: CreateManyCharacterMomentsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Character Moments created successfully',
+        content: {
+          'application/json': {
+            schema: z.array(CharacterMomentResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Moments'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = CreateManyCharacterMomentsSchema.parse(body)
+    try {
+      const newCharacterMoments = await characterMomentController.createManyCharacterMoments(userId, data)
+      return c.json(newCharacterMoments, 201)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// Define schema for batch character moment update
+const UpdateManyCharacterMomentsSchema = z.array(CharacterMomentUpdateSchema)
+
+// PUT /batch
+characterMomentRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/batch',
+    summary: 'Update multiple character moments',
+    description: 'Updates multiple associations between characters and moments in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateManyCharacterMomentsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Character Moments updated successfully',
+        content: {
+          'application/json': {
+            schema: z.array(CharacterMomentResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      404: {
+        description: 'Character Moment not found',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Moments'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = UpdateManyCharacterMomentsSchema.parse(body)
+    try {
+      const updatedCharacterMoments = await characterMomentController.updateManyCharacterMoments(userId, data)
+      return c.json(updatedCharacterMoments, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

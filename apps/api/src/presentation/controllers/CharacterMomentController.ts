@@ -3,10 +3,12 @@ import type {
   DeleteCharacterMomentUseCase,
   GetCharacterMomentsByCharacterIdUseCase,
   GetCharacterMomentsByMomentIdUseCase,
+  CreateManyCharacterMomentsUseCase,
+  UpdateManyCharacterMomentsUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
 
-import { type CharacterMomentCreateSchema, CharacterMomentResponseSchema } from '@keres/shared'
+import { type CharacterMomentCreateSchema, CharacterMomentResponseSchema, type CharacterMomentUpdateSchema } from '@keres/shared'
 
 export class CharacterMomentController {
   constructor(
@@ -14,11 +16,23 @@ export class CharacterMomentController {
     private readonly getCharacterMomentsByCharacterIdUseCase: GetCharacterMomentsByCharacterIdUseCase,
     private readonly getCharacterMomentsByMomentIdUseCase: GetCharacterMomentsByMomentIdUseCase,
     private readonly deleteCharacterMomentUseCase: DeleteCharacterMomentUseCase,
+    private readonly createManyCharacterMomentsUseCase: CreateManyCharacterMomentsUseCase,
+    private readonly updateManyCharacterMomentsUseCase: UpdateManyCharacterMomentsUseCase,
   ) {}
 
   async createCharacterMoment(userId: string, data: z.infer<typeof CharacterMomentCreateSchema>) {
     const characterMoment = await this.createCharacterMomentUseCase.execute(userId, data)
     return CharacterMomentResponseSchema.parse(characterMoment)
+  }
+
+  async createManyCharacterMoments(userId: string, data: z.infer<typeof CharacterMomentCreateSchema>[]) {
+    const characterMoments = await this.createManyCharacterMomentsUseCase.execute(userId, data)
+    return characterMoments.map((cm) => CharacterMomentResponseSchema.parse(cm))
+  }
+
+  async updateManyCharacterMoments(userId: string, data: z.infer<typeof CharacterMomentUpdateSchema>[]) {
+    const characterMoments = await this.updateManyCharacterMomentsUseCase.execute(userId, data)
+    return characterMoments.map((cm) => CharacterMomentResponseSchema.parse(cm))
   }
 
   async getCharacterMomentsByCharacterId(userId: string, characterId: string) {

@@ -59,6 +59,43 @@ export class CharacterMomentRepository implements ICharacterMomentRepository {
     }
   }
 
+  async saveMany(characterMomentsData: CharacterMoment[]): Promise<void> {
+    try {
+      if (characterMomentsData.length === 0) {
+        return
+      }
+      const persistenceData = characterMomentsData.map(this.toPersistence)
+      await db.insert(characterMoments).values(persistenceData)
+    } catch (error) {
+      console.error('Error in CharacterMomentRepository.saveMany:', error)
+      throw error
+    }
+  }
+
+  async updateMany(characterMomentsData: CharacterMoment[]): Promise<void> {
+    try {
+      if (characterMomentsData.length === 0) {
+        return
+      }
+      await db.transaction(async (tx) => {
+        for (const characterMomentData of characterMomentsData) {
+          await tx
+            .update(characterMoments)
+            .set(this.toPersistence(characterMomentData))
+            .where(
+              and(
+                eq(characterMoments.characterId, characterMomentData.characterId),
+                eq(characterMoments.momentId, characterMomentData.momentId),
+              ),
+            )
+        }
+      })
+    } catch (error) {
+      console.error('Error in CharacterMomentRepository.updateMany:', error)
+      throw error
+    }
+  }
+
   async delete(characterId: string, momentId: string): Promise<void> {
     try {
       await db

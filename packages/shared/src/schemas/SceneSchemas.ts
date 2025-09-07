@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { MomentResponseSchema } from './MomentSchemas' // Import MomentResponseSchema
+import { ChoiceResponseSchema } from './ChoiceSchemas' // Import ChoiceResponseSchema
 
 export const SceneCreateSchema = z.object({
   chapterId: z.string(),
@@ -38,6 +40,9 @@ export const SceneResponseSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  // Add optional fields for included data
+  moments: z.array(MomentResponseSchema).optional(), // New
+  choices: z.array(ChoiceResponseSchema).optional(), // New
 })
 
 export type SceneCreatePayload = z.infer<typeof SceneCreateSchema>

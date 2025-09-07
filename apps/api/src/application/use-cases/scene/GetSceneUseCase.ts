@@ -1,16 +1,20 @@
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import IChapterRepository
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { SceneResponse } from '@keres/shared'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
+import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
+import { SceneResponse, MomentResponseSchema, ChoiceResponseSchema } from '@keres/shared'
 
 export class GetSceneUseCase {
   constructor(
     private readonly sceneRepository: ISceneRepository,
-    private readonly chapterRepository: IChapterRepository, // Inject IChapterRepository
-    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+    private readonly chapterRepository: IChapterRepository,
+    private readonly storyRepository: IStoryRepository,
+    private readonly momentRepository: IMomentRepository,
+    private readonly choiceRepository: IChoiceRepository,
   ) {}
 
-  async execute(userId: string, id: string): Promise<SceneResponse> {
+  async execute(userId: string, id: string, include: string[] = []): Promise<SceneResponse> {
     const scene = await this.sceneRepository.findById(id)
     if (!scene) {
       throw new Error('Scene not found')
@@ -26,7 +30,7 @@ export class GetSceneUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    return {
+    const response: SceneResponse = {
       id: scene.id,
       chapterId: scene.chapterId,
       name: scene.name,
@@ -40,5 +44,17 @@ export class GetSceneUseCase {
       createdAt: scene.createdAt,
       updatedAt: scene.updatedAt,
     }
+
+    if (include.includes('moments')) {
+      const rawMoments = await this.momentRepository.findBySceneId(scene.id)
+      response.moments = rawMoments.map((m) => MomentResponseSchema.parse(m))
+    }
+
+    if (include.includes('choices')) {
+      const rawChoices = await this.choiceRepository.findBySceneId(scene.id)
+      response.choices = rawChoices.map((c) => ChoiceResponseSchema.parse(c))
+    }
+
+    return response
   }
 }

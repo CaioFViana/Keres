@@ -28,8 +28,8 @@ export class ChapterController {
     return ChapterResponseSchema.parse(chapter)
   }
 
-  async getChapter(userId: string, id: string) {
-    const chapter = await this.getChapterUseCase.execute(userId, id)
+  async getChapter(userId: string, id: string, include: string[] = []) {
+    const chapter = await this.getChapterUseCase.execute(userId, id, include)
     if (!chapter) {
       throw new Error('Chapter not found')
     }

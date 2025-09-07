@@ -12,6 +12,7 @@ import {
   LocationRepository,
   SceneRepository,
   StoryRepository,
+  MomentRepository,
 } from '@infrastructure/persistence'
 import {
   ListQuerySchema,
@@ -30,6 +31,7 @@ const choiceRepository = new ChoiceRepository()
 const storyRepository = new StoryRepository()
 const chapterRepository = new ChapterRepository()
 const locationRepository = new LocationRepository()
+const momentRepository = new MomentRepository()
 
 const createSceneUseCase = new CreateSceneUseCase(
   sceneRepository,
@@ -38,7 +40,7 @@ const createSceneUseCase = new CreateSceneUseCase(
   chapterRepository,
   locationRepository,
 )
-const getSceneUseCase = new GetSceneUseCase(sceneRepository, chapterRepository, storyRepository)
+const getSceneUseCase = new GetSceneUseCase(sceneRepository, chapterRepository, storyRepository, momentRepository, choiceRepository)
 const updateSceneUseCase = new UpdateSceneUseCase(
   sceneRepository,
   choiceRepository,
@@ -72,6 +74,11 @@ const IdParamSchema = z.object({
 
 const ChapterIdParamSchema = z.object({
   chapterId: z.ulid(),
+})
+
+// Define schema for include query parameter
+const IncludeQuerySchema = z.object({
+  include: z.string().optional().transform((val) => val ? val.split(',') : []),
 })
 
 // POST /
@@ -143,6 +150,7 @@ sceneRoutes.openapi(
     description: 'Retrieves a single scene by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: IncludeQuerySchema, // Add this line
     },
     responses: {
       200: {
@@ -175,8 +183,9 @@ sceneRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
+    const query = IncludeQuerySchema.parse(c.req.query()) // Parse query
     try {
-      const scene = await sceneController.getScene(userId, params.id)
+      const scene = await sceneController.getScene(userId, params.id, query.include) // Pass include
       return c.json(scene, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

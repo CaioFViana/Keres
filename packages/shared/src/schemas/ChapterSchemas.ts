@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SceneResponseSchema } from './SceneSchemas' // Import SceneResponseSchema
 
 export const ChapterCreateSchema = z.object({
   storyId: z.string(),
@@ -28,6 +29,7 @@ export const ChapterResponseSchema = z.object({
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  scenes: z.array(SceneResponseSchema).optional(),
 })
 
 export type ChapterCreatePayload = z.infer<typeof ChapterCreateSchema>

@@ -1,14 +1,16 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { ChapterResponse } from '@keres/shared'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // New import
+import { ChapterResponse, SceneResponseSchema } from '@keres/shared' // Import SceneResponseSchema
 
 export class GetChapterUseCase {
   constructor(
     private readonly chapterRepository: IChapterRepository,
-    private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
+    private readonly storyRepository: IStoryRepository,
+    private readonly sceneRepository: ISceneRepository,
   ) {}
 
-  async execute(userId: string, id: string): Promise<ChapterResponse> {
+  async execute(userId: string, id: string, include: string[] = []): Promise<ChapterResponse> {
     const chapter = await this.chapterRepository.findById(id)
     if (!chapter) {
       throw new Error('Chapter not found')
@@ -20,7 +22,7 @@ export class GetChapterUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    return {
+    const response: ChapterResponse = {
       id: chapter.id,
       storyId: chapter.storyId,
       name: chapter.name,
@@ -31,5 +33,12 @@ export class GetChapterUseCase {
       createdAt: chapter.createdAt,
       updatedAt: chapter.updatedAt,
     }
+
+    if (include.includes('scenes')) {
+      const rawScenes = await this.sceneRepository.findByChapterId(chapter.id)
+      response.scenes = rawScenes.map((s) => SceneResponseSchema.parse(s))
+    }
+
+    return response
   }
 }

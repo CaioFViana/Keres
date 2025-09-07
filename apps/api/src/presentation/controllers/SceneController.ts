@@ -28,8 +28,8 @@ export class SceneController {
     return SceneResponseSchema.parse(scene)
   }
 
-  async getScene(userId: string, id: string) {
-    const scene = await this.getSceneUseCase.execute(userId, id)
+  async getScene(userId: string, id: string, include: string[] = []) {
+    const scene = await this.getSceneUseCase.execute(userId, id, include)
     if (!scene) {
       throw new Error('Scene not found')
     }

@@ -6,7 +6,7 @@ import {
   UpdateChapterUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { ChapterRepository, StoryRepository } from '@infrastructure/persistence'
+import { ChapterRepository, SceneRepository, StoryRepository } from '@infrastructure/persistence'
 import {
   ChapterCreateSchema,
   ChapterResponseSchema,
@@ -21,8 +21,9 @@ const chapterRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 // Dependencies for ChapterController
 const chapterRepository = new ChapterRepository()
 const storyRepository = new StoryRepository()
+const sceneRepository = new SceneRepository()
 const createChapterUseCase = new CreateChapterUseCase(chapterRepository, storyRepository)
-const getChapterUseCase = new GetChapterUseCase(chapterRepository, storyRepository)
+const getChapterUseCase = new GetChapterUseCase(chapterRepository, storyRepository, sceneRepository)
 const updateChapterUseCase = new UpdateChapterUseCase(chapterRepository, storyRepository)
 const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository, storyRepository)
 const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(
@@ -45,6 +46,11 @@ const IdParamSchema = z.object({
 
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
+})
+
+// Define schema for include query parameter
+const IncludeQuerySchema = z.object({
+  include: z.string().optional().transform((val) => val ? val.split(',') : []),
 })
 
 // POST /
@@ -116,6 +122,7 @@ chapterRoutes.openapi(
     description: 'Retrieves a single chapter by its unique ID.',
     request: {
       params: IdParamSchema,
+      query: IncludeQuerySchema, // Add this line
     },
     responses: {
       200: {
@@ -148,8 +155,9 @@ chapterRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
+    const query = IncludeQuerySchema.parse(c.req.query()) // Parse query
     try {
-      const chapter = await chapterController.getChapter(userId, params.id)
+      const chapter = await chapterController.getChapter(userId, params.id, query.include) // Pass include
       return c.json(chapter, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

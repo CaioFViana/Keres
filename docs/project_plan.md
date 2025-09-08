@@ -149,7 +149,7 @@ moments
 - id (ulid, pk)
 - scene_id (ulid, fk)
 - name (text) # Nome do acontecimento
-- location (text)
+- location_id (ulid, fk → locations.id, optional) # Para especificação mais especifica caso a cena não seja suficiente.
 - index (int) # Para ordem
 - summary (text)
 - is_favorite (boolean) # Indica se o objeto é favorito

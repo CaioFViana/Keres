@@ -316,6 +316,7 @@ graph LR
 
     chapters --> scenes
     locations -- occurs on--> scenes
+    locations -- can be more specified to happen on (optional) --> moments
 
     scenes --> moments
     scenes -- source --> choices
@@ -328,6 +329,8 @@ graph LR
     character_relations --> characters
 
     notes -- can have --> gallery
+
+    tags -- via relational table --> chapters/scenes/characters/locations
 ```
 
 ## 🔗 Fluxo de Arquitetura

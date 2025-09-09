@@ -10,8 +10,8 @@ export const CreateChoiceSchema = z.object({
 export const UpdateChoiceSchema = z.object({
   id: z.string(),
   sceneId: z.string().optional(),
-  text: z.string().min(1, 'Choice text cannot be empty').optional(),
-  isImplicit: z.boolean().optional(),
+  nextSceneId: z.string().optional(),
+  text: z.string().min(1, 'Choice text cannot be empty').optional()
 })
 
 export const ChoiceResponseSchema = z.object({

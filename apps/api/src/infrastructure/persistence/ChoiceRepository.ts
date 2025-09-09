@@ -37,7 +37,6 @@ export class ChoiceRepository implements IChoiceRepository {
         sceneId: data.sceneId,
         nextSceneId: data.nextSceneId,
         text: data.text,
-        isImplicit: data.isImplicit,
         updatedAt: new Date(),
       })
       .where(eq(choices.id, id), eq(choices.sceneId, sceneId))

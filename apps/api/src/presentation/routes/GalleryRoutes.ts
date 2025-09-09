@@ -17,6 +17,7 @@ import {
 } from '@infrastructure/persistence'
 import {
   BulkDeleteResponseSchema,
+  ErrorResponseSchema,
   GalleryCreateSchema,
   GalleryResponseSchema,
   GalleryUpdateSchema,
@@ -130,7 +131,7 @@ galleryRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -138,7 +139,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -203,7 +204,7 @@ galleryRoutes.openapi(
         description: 'Gallery item not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -211,7 +212,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -259,7 +260,7 @@ galleryRoutes.openapi(
         description: 'Image not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -267,7 +268,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -316,7 +317,7 @@ galleryRoutes.openapi(
         description: 'Owner not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -324,7 +325,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -375,7 +376,7 @@ galleryRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -383,7 +384,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -440,7 +441,7 @@ galleryRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -448,7 +449,7 @@ galleryRoutes.openapi(
         description: 'Gallery item not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -456,7 +457,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -535,7 +536,7 @@ galleryRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -543,7 +544,7 @@ galleryRoutes.openapi(
         description: 'Gallery item not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -551,7 +552,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -609,7 +610,7 @@ galleryRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -617,7 +618,7 @@ galleryRoutes.openapi(
         description: 'Gallery item not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -625,7 +626,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -682,7 +683,7 @@ galleryRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -690,7 +691,7 @@ galleryRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },

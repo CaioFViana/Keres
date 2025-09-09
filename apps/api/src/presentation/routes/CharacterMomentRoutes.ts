@@ -21,6 +21,7 @@ import {
   CharacterMomentCreateSchema,
   CharacterMomentResponseSchema,
   CharacterMomentUpdateSchema,
+  ErrorResponseSchema,
 } from '@keres/shared' // Import CharacterMomentResponseSchema
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
 import { z } from 'zod' // Import z for defining parameters
@@ -144,7 +145,7 @@ characterMomentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -152,7 +153,7 @@ characterMomentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -208,7 +209,7 @@ characterMomentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -216,7 +217,7 @@ characterMomentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -275,7 +276,7 @@ characterMomentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -283,7 +284,7 @@ characterMomentRoutes.openapi(
         description: 'Character Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -291,7 +292,7 @@ characterMomentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -340,7 +341,7 @@ characterMomentRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -348,7 +349,7 @@ characterMomentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -396,7 +397,7 @@ characterMomentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -404,7 +405,7 @@ characterMomentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -453,7 +454,7 @@ characterMomentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -461,7 +462,7 @@ characterMomentRoutes.openapi(
         description: 'Character Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -469,7 +470,7 @@ characterMomentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -521,7 +522,7 @@ characterMomentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -529,7 +530,7 @@ characterMomentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },

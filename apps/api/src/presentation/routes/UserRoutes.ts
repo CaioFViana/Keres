@@ -10,7 +10,7 @@ import { StoryRepository } from '@infrastructure/persistence'
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher'
 import { JwtService } from '@infrastructure/services/JwtService'
-import { UserLoginSchema, UserProfileSchema, UserRegisterSchema } from '@keres/shared' // Import Zod schemas and UserProfileSchema
+import { ErrorResponseSchema, UserLoginSchema, UserProfileSchema, UserRegisterSchema } from '@keres/shared' // Import Zod schemas and UserProfileSchema
 import { UserController } from '@presentation/controllers/UserController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -86,7 +86,7 @@ userRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -94,7 +94,7 @@ userRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -146,7 +146,7 @@ userRoutes.openapi(
         description: 'Unauthorized',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -154,7 +154,7 @@ userRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -206,7 +206,7 @@ userRoutes.openapi(
         description: 'Unauthorized',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -214,7 +214,7 @@ userRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -263,7 +263,7 @@ userRoutes.openapi(
         description: 'User not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -271,7 +271,7 @@ userRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },

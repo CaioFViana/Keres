@@ -18,6 +18,7 @@ import {
 import {
   BulkDeleteResponseSchema,
   CreateMomentSchema,
+  ErrorResponseSchema,
   ListQuerySchema,
   MomentResponseSchema,
   UpdateMomentSchema,
@@ -141,7 +142,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -149,7 +150,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -201,7 +202,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -209,7 +210,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -261,7 +262,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -269,7 +270,7 @@ momentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -277,7 +278,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -323,7 +324,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -331,7 +332,7 @@ momentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -339,7 +340,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -394,7 +395,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -402,7 +403,7 @@ momentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -410,7 +411,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -468,7 +469,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -476,7 +477,7 @@ momentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -484,7 +485,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -529,7 +530,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -538,7 +539,7 @@ momentRoutes.openapi(
         description: 'Moment not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -546,7 +547,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -597,7 +598,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -605,7 +606,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -652,7 +653,7 @@ momentRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -660,7 +661,7 @@ momentRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },

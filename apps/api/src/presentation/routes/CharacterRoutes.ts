@@ -21,6 +21,7 @@ import {
   CharacterCreateSchema,
   CharacterResponseSchema,
   CharacterUpdateSchema,
+  ErrorResponseSchema,
   ListQuerySchema,
   UpdateManyCharactersSchema,
 } from '@keres/shared' // Import CharacterResponseSchema
@@ -128,7 +129,7 @@ characterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -136,7 +137,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -188,7 +189,7 @@ characterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -196,7 +197,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -243,7 +244,7 @@ characterRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -251,7 +252,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -298,7 +299,7 @@ characterRoutes.openapi(
         description: 'Story not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -306,7 +307,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -363,7 +364,7 @@ characterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -371,7 +372,7 @@ characterRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -379,7 +380,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -434,7 +435,7 @@ characterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -442,7 +443,7 @@ characterRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -450,7 +451,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -503,7 +504,7 @@ characterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -511,7 +512,7 @@ characterRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -519,7 +520,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -560,7 +561,7 @@ characterRoutes.openapi(
         description: 'Character not found',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -568,7 +569,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -619,7 +620,7 @@ characterRoutes.openapi(
         description: 'Bad Request',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },
@@ -627,7 +628,7 @@ characterRoutes.openapi(
         description: 'Internal Server Error',
         content: {
           'application/json': {
-            schema: z.object({ error: z.string() }),
+            schema: ErrorResponseSchema,
           },
         },
       },

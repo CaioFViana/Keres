@@ -325,12 +325,12 @@ graph LR
     characters --> character_moments
     character_moments --> moments
 
+    tags -- via relational table --> chapters/scenes/characters/locations
     characters --> character_relations
     character_relations --> characters
 
     notes -- can have --> gallery
 
-    tags -- via relational table --> chapters/scenes/characters/locations
 ```
 
 ## 🔗 Fluxo de Arquitetura

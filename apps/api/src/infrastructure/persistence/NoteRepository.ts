@@ -34,6 +34,16 @@ export class NoteRepository implements INoteRepository {
     }
   }
 
+  async findByGalleryId(galleryId: string): Promise<Note[]> {
+    try {
+      const results = await db.select().from(notes).where(eq(notes.galleryId, galleryId))
+      return results.map(this.toDomain)
+    } catch (error) {
+      console.error('Error in NoteRepository.findByGalleryId:', error)
+      throw error
+    }
+  }
+
   async save(noteData: Note): Promise<void> {
     try {
       await db.insert(notes).values(this.toPersistence(noteData))

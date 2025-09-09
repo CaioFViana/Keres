@@ -1,6 +1,7 @@
 import type {
   AuthenticateUserUseCase,
   CreateUserUseCase,
+  DeleteUserUseCase,
   GetUserProfileUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
@@ -12,6 +13,7 @@ export class UserController {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly authenticateUserUseCase: AuthenticateUserUseCase,
     private readonly getUserProfileUseCase: GetUserProfileUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
   ) {}
 
   async createUser(data: z.infer<typeof UserRegisterSchema>) {
@@ -33,5 +35,10 @@ export class UserController {
       throw new Error('User not found')
     }
     return UserProfileSchema.parse(userProfile)
+  }
+
+  async deleteUser(id: string) {
+    await this.deleteUserUseCase.execute(id)
+    return { message: 'User deleted successfully' }
   }
 }

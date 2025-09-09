@@ -77,8 +77,7 @@ Esta lista detalha as rotas e funcionalidades que não foram encontradas na impl
     *   **Descrição:** Implementar rotas para deletar múltiplas entidades em uma única requisição.
     *   **Entidades Alvo:** Todas as entidades.
     *   **Exemplos de Rotas a Implementar:**
-        *   `DELETE /[entidade]?ids=id1,id2,id3`
-        *   `POST /[entidade]/bulk-delete` (se `DELETE` com corpo não for preferível)
+        *   `POST /[entidade]/bulk-delete`
 
 4.  **Operações Transacionais/Compostas Específicas**
     *   **Descrição:** Implementar rotas para operações de negócio que envolvem a criação ou modificação atômica de múltiplas entidades.

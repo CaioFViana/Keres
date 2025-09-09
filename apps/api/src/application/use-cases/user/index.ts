@@ -2,4 +2,6 @@
 
 export * from './AuthenticateUserUseCase'
 export * from './CreateUserUseCase'
+export * from './DeleteUserUseCase'
 export * from './GetUserProfileUseCase'
+export * from './RefreshTokenUseCase'

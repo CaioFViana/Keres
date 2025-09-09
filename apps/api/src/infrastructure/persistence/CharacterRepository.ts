@@ -2,8 +2,8 @@ import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { characters, characterTags, db } from '@keres/db' // Import db and characters table
-import { and, eq, inArray } from 'drizzle-orm'
+import { characters, characterTags, db, story } from '@keres/db' // Import db and characters table
+import { and, eq, inArray, like, or } from 'drizzle-orm'
 
 export class CharacterRepository implements ICharacterRepository {
   async findById(id: string): Promise<Character | null> {
@@ -157,6 +157,31 @@ export class CharacterRepository implements ICharacterRepository {
       extraNotes: characterData.extraNotes,
       createdAt: characterData.createdAt,
       updatedAt: characterData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<Character[]> {
+    try {
+      const results = await db
+        .select({ characters: characters })
+        .from(characters)
+        .innerJoin(story, eq(characters.storyId, story.id))
+        .where(
+          and(
+            eq(story.userId, userId),
+            or(
+              like(characters.name, `%${query}%`),
+              like(characters.description, `%${query}%`),
+              like(characters.personality, `%${query}%`),
+              like(characters.biography, `%${query}%`),
+              like(characters.extraNotes, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map((result: {characters: Character}) => this.toDomain(result.characters))
+    } catch (error) {
+      console.error('Error in CharacterRepository.search:', error)
+      throw error
     }
   }
 }

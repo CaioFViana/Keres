@@ -8,4 +8,5 @@ export interface INoteRepository {
   save(note: Note): Promise<void>
   update(note: Note, storyId: string): Promise<void>
   delete(id: string, storyId: string): Promise<void>
+  search(query: string, userId: string): Promise<Note[]>
 }

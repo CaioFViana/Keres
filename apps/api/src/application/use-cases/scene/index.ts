@@ -3,6 +3,6 @@
 export * from './BulkDeleteSceneUseCase'
 export * from './CreateSceneUseCase'
 export * from './DeleteSceneUseCase'
-export * from './GetScenesByChapterIdUseCase'
 export * from './GetSceneUseCase'
+export * from './GetScenesByChapterIdUseCase'
 export * from './UpdateSceneUseCase'

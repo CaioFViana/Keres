@@ -10,4 +10,5 @@ export interface ICharacterRepository {
   update(character: Character, storyId: string): Promise<void>
   updateMany(characters: Character[]): Promise<void>
   delete(id: string, storyId: string): Promise<void>
+  search(query: string, userId: string): Promise<Character[]>
 }

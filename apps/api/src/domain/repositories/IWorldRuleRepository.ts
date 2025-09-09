@@ -7,4 +7,5 @@ export interface IWorldRuleRepository {
   save(worldRule: WorldRule): Promise<void>
   update(worldRule: WorldRule, storyId: string): Promise<void>
   delete(id: string, storyId: string): Promise<void>
+  search(query: string, userId: string): Promise<WorldRule[]>
 }

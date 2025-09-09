@@ -18,6 +18,7 @@ import suggestionRoutes from './presentation/routes/SuggestionRoutes' // Added
 import tagRoutes from './presentation/routes/TagRoutes' // Added
 import userRoutes from './presentation/routes/UserRoutes'
 import worldRuleRoutes from './presentation/routes/WorldRuleRoutes' // Added
+import searchRoutes from './presentation/routes/SearchRoutes' // Added
 
 extendZodWithOpenApi(z)
 
@@ -76,5 +77,6 @@ app.route('/world-rules', worldRuleRoutes) // Added
 app.route('/notes', noteRoutes) // Added
 app.route('/tags', tagRoutes) // Added
 app.route('/suggestions', suggestionRoutes) // Added
+app.route('/search', searchRoutes) // Added
 
 export default app

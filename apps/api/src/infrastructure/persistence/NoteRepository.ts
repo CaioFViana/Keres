@@ -2,8 +2,8 @@ import type { Note } from '@domain/entities/Note'
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, notes } from '@keres/db' // Import db and notes table
-import { and, eq } from 'drizzle-orm'
+import { db, notes, story } from '@keres/db' // Import db, notes and stories table
+import { and, eq, like, or } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {
   async findById(id: string): Promise<Note | null> {
@@ -97,6 +97,28 @@ export class NoteRepository implements INoteRepository {
       isFavorite: noteData.isFavorite,
       createdAt: noteData.createdAt,
       updatedAt: noteData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<Note[]> {
+    try {
+      const results = await db
+        .select({ notes: notes })
+        .from(notes)
+        .innerJoin(story, eq(notes.storyId, story.id))
+        .where(
+          and(
+            eq(story.userId, userId),
+            or(
+              like(notes.title, `%${query}%`),
+              like(notes.body, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map((result: {notes: Note}) => this.toDomain(result.notes))
+    } catch (error) {
+      console.error('Error in NoteRepository.search:', error)
+      throw error
     }
   }
 }

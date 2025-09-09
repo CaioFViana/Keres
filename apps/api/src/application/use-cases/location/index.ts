@@ -3,6 +3,6 @@
 export * from './BulkDeleteLocationUseCase'
 export * from './CreateLocationUseCase'
 export * from './DeleteLocationUseCase'
-export * from './GetLocationsByStoryIdUseCase'
 export * from './GetLocationUseCase'
+export * from './GetLocationsByStoryIdUseCase'
 export * from './UpdateLocationUseCase'

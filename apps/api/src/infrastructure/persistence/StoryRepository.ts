@@ -3,7 +3,7 @@ import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ListQueryParams } from '@keres/shared'
 
 import { db, story } from '@keres/db' // Import db and stories table
-import { and, eq } from 'drizzle-orm'
+import { and, eq, like, or } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
   async findById(id: string, userId: string): Promise<Story | null> {
@@ -100,6 +100,27 @@ export class StoryRepository implements IStoryRepository {
       extraNotes: storyData.extraNotes,
       createdAt: storyData.createdAt,
       updatedAt: storyData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<Story[]> {
+    try {
+      const results = await db
+        .select()
+        .from(story)
+        .where(
+          and(
+            eq(story.userId, userId),
+            or(
+              like(story.title, `%${query}%`),
+              like(story.summary, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map(this.toDomain)
+    } catch (error) {
+      console.error('Error in StoryRepository.search:', error)
+      throw error
     }
   }
 }

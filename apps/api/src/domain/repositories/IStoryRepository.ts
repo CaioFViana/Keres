@@ -7,4 +7,5 @@ export interface IStoryRepository {
   save(story: Story): Promise<void>
   update(story: Story, userId: string): Promise<void>
   delete(id: string, userId: string): Promise<void>
+  search(query: string, userId: string): Promise<Story[]>
 }

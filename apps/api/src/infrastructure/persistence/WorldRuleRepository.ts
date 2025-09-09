@@ -2,8 +2,8 @@ import type { WorldRule } from '@domain/entities/WorldRule'
 import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, worldRules } from '@keres/db' // Import db and worldRules table
-import { and, eq } from 'drizzle-orm'
+import { db, worldRules, story } from '@keres/db' // Import db and worldRules table
+import { and, eq, like, or } from 'drizzle-orm'
 
 export class WorldRuleRepository implements IWorldRuleRepository {
   async findById(id: string): Promise<WorldRule | null> {
@@ -87,6 +87,29 @@ export class WorldRuleRepository implements IWorldRuleRepository {
       extraNotes: worldRuleData.extraNotes,
       createdAt: worldRuleData.createdAt,
       updatedAt: worldRuleData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<WorldRule[]> {
+    try {
+      const results = await db
+        .select({ worldRules: worldRules })
+        .from(worldRules)
+        .innerJoin(story, eq(worldRules.storyId, story.id))
+        .where(
+          and(
+            eq(story.userId, userId),
+            or(
+              like(worldRules.title, `%${query}%`),
+              like(worldRules.description, `%${query}%`),
+              like(worldRules.extraNotes, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map((result: {worldRules: WorldRule}) => this.toDomain(result.worldRules))
+    } catch (error) {
+      console.error('Error in WorldRuleRepository.search:', error)
+      throw error
     }
   }
 }

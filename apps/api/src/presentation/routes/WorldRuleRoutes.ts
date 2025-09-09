@@ -9,6 +9,7 @@ import {
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import { StoryRepository, WorldRuleRepository } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   CreateWorldRuleSchema,
   ListQuerySchema,
   UpdateWorldRuleSchema,
@@ -465,12 +466,7 @@ worldRuleRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
-                example: [{ id: 'ulid1', reason: 'World Rule not found' }],
-              }),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

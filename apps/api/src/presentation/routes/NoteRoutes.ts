@@ -9,6 +9,7 @@ import {
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import { GalleryRepository, NoteRepository, StoryRepository } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   CreateNoteSchema,
   ListQuerySchema,
   NoteResponseSchema,
@@ -439,7 +440,7 @@ noteRoutes.openapi(
   },
 )
 
-// POST /bulk-delete // Added
+// POST /bulk-delete
 noteRoutes.openapi(
   createRoute({
     method: 'post',
@@ -460,12 +461,7 @@ noteRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
-                example: [{ id: 'ulid1', reason: 'Note not found' }],
-              }),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

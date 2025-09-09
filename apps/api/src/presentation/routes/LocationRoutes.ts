@@ -9,6 +9,7 @@ import {
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { LocationRepository, SceneRepository, StoryRepository } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   ListQuerySchema,
   LocationCreateSchema,
   LocationResponseSchema,
@@ -22,13 +23,13 @@ const locationRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 // Dependencies for LocationController
 const locationRepository = new LocationRepository()
 const storyRepository = new StoryRepository()
-const sceneRepository = new SceneRepository() // New
+const sceneRepository = new SceneRepository()
 const createLocationUseCase = new CreateLocationUseCase(locationRepository, storyRepository)
 const getLocationUseCase = new GetLocationUseCase(
   locationRepository,
   storyRepository,
   sceneRepository,
-) // Updated
+)
 const updateLocationUseCase = new UpdateLocationUseCase(locationRepository, storyRepository)
 const deleteLocationUseCase = new DeleteLocationUseCase(
   locationRepository,
@@ -36,7 +37,6 @@ const deleteLocationUseCase = new DeleteLocationUseCase(
   sceneRepository,
 )
 const bulkDeleteLocationUseCase = new BulkDeleteLocationUseCase(
-  // Added
   locationRepository,
   storyRepository,
   sceneRepository,
@@ -461,12 +461,7 @@ locationRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
-                example: [{ id: 'ulid1', reason: 'Location not found' }],
-              }),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

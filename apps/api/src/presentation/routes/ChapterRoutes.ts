@@ -9,6 +9,7 @@ import {
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
 import { ChapterRepository, SceneRepository, StoryRepository } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   ChapterCreateSchema,
   ChapterResponseSchema,
   ChapterUpdateSchema,
@@ -452,10 +453,7 @@ chapterRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

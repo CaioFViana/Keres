@@ -17,6 +17,7 @@ import {
   StoryRepository,
 } from '@infrastructure/persistence'
 import {
+  BulkDeleteCharacterMomentResponseSchema,
   CharacterMomentCreateSchema,
   CharacterMomentResponseSchema,
   CharacterMomentUpdateSchema,
@@ -512,22 +513,7 @@ characterMomentRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.object({ characterId: z.ulid(), momentId: z.ulid() })),
-              failedIds: z
-                .array(
-                  z.object({ characterId: z.string(), momentId: z.string(), reason: z.string() }),
-                )
-                .openapi({
-                  example: [
-                    {
-                      characterId: 'ulid1',
-                      momentId: 'ulid2',
-                      reason: 'CharacterMoment not found',
-                    },
-                  ],
-                }),
-            }),
+            schema: BulkDeleteCharacterMomentResponseSchema,
           },
         },
       },

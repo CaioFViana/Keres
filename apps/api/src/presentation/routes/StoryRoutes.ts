@@ -311,7 +311,7 @@ storyRoutes.openapi(
       body: {
         content: {
           'application/json': {
-            schema: StoryUpdateSchema, // StoryUpdateSchema already has optional fields
+            schema: StoryUpdateSchema,
           },
         },
       },

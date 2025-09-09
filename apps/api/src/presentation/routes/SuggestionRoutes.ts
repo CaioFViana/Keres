@@ -15,6 +15,7 @@ import {
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import { StoryRepository, SuggestionRepository } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   CreateSuggestionSchema,
   SuggestionResponseSchema,
   UpdateSuggestionSchema,
@@ -861,12 +862,7 @@ suggestionRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
-                example: [{ id: 'ulid1', reason: 'Suggestion not found' }],
-              }),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

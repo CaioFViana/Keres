@@ -18,6 +18,7 @@ import {
   TagRepository,
 } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   CreateTagSchema,
   TagAssignmentSchema,
   TagRemovalSchema,
@@ -607,12 +608,7 @@ tagRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
-                example: [{ id: 'ulid1', reason: 'Tag not found' }],
-              }),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

@@ -16,6 +16,7 @@ import {
   StoryRepository,
 } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   ListQuerySchema,
   SceneCreateSchema,
   SceneResponseSchema,
@@ -62,9 +63,9 @@ const deleteSceneUseCase = new DeleteSceneUseCase(
 )
 const bulkDeleteSceneUseCase = new BulkDeleteSceneUseCase(
   sceneRepository,
-  choiceRepository,
   storyRepository,
   chapterRepository,
+  choiceRepository,
 )
 const getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(
   sceneRepository,
@@ -483,10 +484,7 @@ sceneRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

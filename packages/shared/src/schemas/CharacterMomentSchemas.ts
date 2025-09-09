@@ -34,13 +34,23 @@ export const BulkDeleteCharacterMomentResponseSchema = z.object({
       momentId: z.string(),
     }),
   ),
-  failedIds: z.array(
-    z.object({
-      characterId: z.string(),
-      momentId: z.string(),
-      reason: z.string(),
+  failedIds: z
+    .array(
+      z.object({
+        characterId: z.string(),
+        momentId: z.string(),
+        reason: z.string(),
+      }),
+    )
+    .openapi({
+      example: [
+        {
+          characterId: 'ulid1',
+          momentId: 'ulid2',
+          reason: 'CharacterMoment not found',
+        },
+      ],
     }),
-  ),
 })
 
 export type BulkDeleteCharacterMomentResponse = z.infer<

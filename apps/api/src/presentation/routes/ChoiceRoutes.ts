@@ -13,9 +13,14 @@ import {
   SceneRepository,
   StoryRepository,
 } from '@infrastructure/persistence'
-import { ChoiceResponseSchema, CreateChoiceSchema, UpdateChoiceSchema } from '@keres/shared' // Use alias
-import { ChoiceController } from '@presentation/controllers/ChoiceController' // Use alias
-import { z } from 'zod' // Import z for defining parameters
+import {
+  BulkDeleteResponseSchema,
+  ChoiceResponseSchema,
+  CreateChoiceSchema,
+  UpdateChoiceSchema,
+} from '@keres/shared'
+import { ChoiceController } from '@presentation/controllers/ChoiceController'
+import { z } from 'zod'
 
 export const choiceRoutes = new OpenAPIHono()
 
@@ -478,12 +483,7 @@ choiceRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
-                example: [{ id: 'ulid1', reason: 'Choice not found' }],
-              }),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

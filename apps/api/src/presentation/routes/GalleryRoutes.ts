@@ -16,6 +16,7 @@ import {
   StoryRepository,
 } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   GalleryCreateSchema,
   GalleryResponseSchema,
   GalleryUpdateSchema,
@@ -673,12 +674,7 @@ galleryRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
-                example: [{ id: 'ulid1', reason: 'Gallery item not found' }],
-              }),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

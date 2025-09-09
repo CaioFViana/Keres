@@ -16,6 +16,7 @@ import {
   StoryRepository,
 } from '@infrastructure/persistence'
 import {
+  BulkDeleteResponseSchema,
   CreateMomentSchema,
   ListQuerySchema,
   MomentResponseSchema,
@@ -588,10 +589,7 @@ momentRoutes.openapi(
         description: 'Bulk delete operation results',
         content: {
           'application/json': {
-            schema: z.object({
-              successfulIds: z.array(z.string()),
-              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })),
-            }),
+            schema: BulkDeleteResponseSchema,
           },
         },
       },

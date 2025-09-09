@@ -6,3 +6,15 @@ export const ListQuerySchema = z.object({
 })
 
 export type ListQueryParams = z.infer<typeof ListQuerySchema>
+
+export const BulkDeleteResponseSchema = z.object({
+  successfulIds: z.array(z.string()),
+  failedIds: z.array(
+    z.object({
+      id: z.string(),
+      reason: z.string(),
+    }),
+  ),
+})
+
+export type BulkDeleteResponse = z.infer<typeof BulkDeleteResponseSchema>

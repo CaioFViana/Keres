@@ -1,5 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
+import type { BulkDeleteResponse } from '@keres/shared'
 
 export class BulkDeleteSuggestionUseCase {
   constructor(
@@ -7,10 +8,7 @@ export class BulkDeleteSuggestionUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(
-    userId: string,
-    ids: string[],
-  ): Promise<{ successfulIds: string[]; failedIds: { id: string; reason: string }[] }> {
+  async execute(userId: string, ids: string[]): Promise<BulkDeleteResponse> {
     const successfulIds: string[] = []
     const failedIds: { id: string; reason: string }[] = []
 
@@ -52,8 +50,8 @@ export class BulkDeleteSuggestionUseCase {
           existingSuggestion.storyId,
         )
         successfulIds.push(id)
-      } catch (error: any) {
-        failedIds.push({ id, reason: error.message || 'Unknown error' })
+      } catch (error: unknown) {
+        failedIds.push({ id, reason: error instanceof Error ? error.message : 'Unknown error' })
       }
     }
 

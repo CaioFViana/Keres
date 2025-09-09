@@ -147,7 +147,7 @@ export class GalleryRepository implements IGalleryRepository {
     return {
       id: data.id,
       storyId: data.storyId,
-      ownerId: data.ownerId!,
+      ownerId: data.ownerId,
       ownerType: data.ownerType as 'character' | 'note' | 'location',
       imagePath: data.imagePath,
       isFile: data.isFile,

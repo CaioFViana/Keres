@@ -1,6 +1,7 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { BulkDeleteResponse } from '@keres/shared'
 
 export class BulkDeleteChapterUseCase {
   constructor(
@@ -9,10 +10,7 @@ export class BulkDeleteChapterUseCase {
     private readonly sceneRepository: ISceneRepository,
   ) {}
 
-  async execute(
-    userId: string,
-    ids: string[],
-  ): Promise<{ successfulIds: string[]; failedIds: { id: string; reason: string }[] }> {
+  async execute(userId: string, ids: string[]): Promise<BulkDeleteResponse> {
     const successfulIds: string[] = []
     const failedIds: { id: string; reason: string }[] = []
 
@@ -41,8 +39,8 @@ export class BulkDeleteChapterUseCase {
 
         await this.chapterRepository.delete(id, existingChapter.storyId)
         successfulIds.push(id)
-      } catch (error: any) {
-        failedIds.push({ id, reason: error.message || 'Unknown error' })
+      } catch (error: unknown) {
+        failedIds.push({ id, reason: error instanceof Error ? error.message : 'Unknown error' })
       }
     }
 

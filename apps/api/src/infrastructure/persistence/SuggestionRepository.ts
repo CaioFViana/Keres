@@ -2,7 +2,7 @@ import type { Suggestion } from '@domain/entities/Suggestion'
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 
 import { db, suggestions } from '@keres/db' // Import db and suggestions table
-import { and, eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 
 export class SuggestionRepository implements ISuggestionRepository {
   async findById(id: string): Promise<Suggestion | null> {
@@ -107,10 +107,10 @@ export class SuggestionRepository implements ISuggestionRepository {
           conditions.push(eq(suggestions.storyId, storyId))
         } else {
           // This case should ideally be caught by the use case, but as a safeguard
-          conditions.push(eq(suggestions.storyId, null as any)) // Ensure it never matches
+          conditions.push(isNull(suggestions.storyId)) // Ensure it never matches
         }
       } else if (scope === 'global') {
-        conditions.push(eq(suggestions.storyId, null as any))
+        conditions.push(isNull(suggestions.storyId))
       }
 
       await db
@@ -139,10 +139,10 @@ export class SuggestionRepository implements ISuggestionRepository {
             if (suggestionData.storyId) {
               conditions.push(eq(suggestions.storyId, suggestionData.storyId))
             } else {
-              conditions.push(eq(suggestions.storyId, null as any))
+              conditions.push(isNull(suggestions.storyId))
             }
           } else if (suggestionData.scope === 'global') {
-            conditions.push(eq(suggestions.storyId, null as any))
+            conditions.push(isNull(suggestions.storyId))
           }
 
           await tx
@@ -166,10 +166,10 @@ export class SuggestionRepository implements ISuggestionRepository {
           conditions.push(eq(suggestions.storyId, storyId))
         } else {
           // This case should ideally be caught by the use case, but as a safeguard
-          conditions.push(eq(suggestions.storyId, null as any)) // Ensure it never matches
+          conditions.push(isNull(suggestions.storyId)) // Ensure it never matches
         }
       } else if (scope === 'global') {
-        conditions.push(eq(suggestions.storyId, null as any))
+        conditions.push(isNull(suggestions.storyId))
       }
 
       await db.delete(suggestions).where(and(...conditions))

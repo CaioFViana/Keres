@@ -1,5 +1,6 @@
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { BulkDeleteResponse } from '@keres/shared'
 
 export class BulkDeleteNoteUseCase {
   constructor(
@@ -7,10 +8,7 @@ export class BulkDeleteNoteUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(
-    userId: string,
-    ids: string[],
-  ): Promise<{ successfulIds: string[]; failedIds: { id: string; reason: string }[] }> {
+  async execute(userId: string, ids: string[]): Promise<BulkDeleteResponse> {
     const successfulIds: string[] = []
     const failedIds: { id: string; reason: string }[] = []
 
@@ -30,8 +28,8 @@ export class BulkDeleteNoteUseCase {
 
         await this.noteRepository.delete(id, existingNote.storyId)
         successfulIds.push(id)
-      } catch (error: any) {
-        failedIds.push({ id, reason: error.message || 'Unknown error' })
+      } catch (error: unknown) {
+        failedIds.push({ id, reason: error instanceof Error ? error.message : 'Unknown error' })
       }
     }
 

@@ -1,5 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ITagRepository } from '@domain/repositories/ITagRepository'
+import type { BulkDeleteResponse } from '@keres/shared'
 
 export class BulkDeleteTagUseCase {
   constructor(
@@ -7,10 +8,7 @@ export class BulkDeleteTagUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(
-    userId: string,
-    ids: string[],
-  ): Promise<{ successfulIds: string[]; failedIds: { id: string; reason: string }[] }> {
+  async execute(userId: string, ids: string[]): Promise<BulkDeleteResponse> {
     const successfulIds: string[] = []
     const failedIds: { id: string; reason: string }[] = []
 

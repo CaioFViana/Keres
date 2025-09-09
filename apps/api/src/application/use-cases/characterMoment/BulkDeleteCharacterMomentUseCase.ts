@@ -4,6 +4,7 @@ import type { ICharacterRepository } from '@domain/repositories/ICharacterReposi
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { BulkDeleteCharacterMomentResponse } from '@keres/shared'
 
 export class BulkDeleteCharacterMomentUseCase {
   constructor(
@@ -18,10 +19,7 @@ export class BulkDeleteCharacterMomentUseCase {
   async execute(
     userId: string,
     ids: { characterId: string; momentId: string }[],
-  ): Promise<{
-    successfulIds: { characterId: string; momentId: string }[]
-    failedIds: { characterId: string; momentId: string; reason: string }[]
-  }> {
+  ): Promise<BulkDeleteCharacterMomentResponse> {
     const successfulIds: { characterId: string; momentId: string }[] = []
     const failedIds: { characterId: string; momentId: string; reason: string }[] = []
 
@@ -89,8 +87,12 @@ export class BulkDeleteCharacterMomentUseCase {
 
         await this.characterMomentRepository.delete(characterId, momentId)
         successfulIds.push({ characterId, momentId })
-      } catch (error: any) {
-        failedIds.push({ characterId, momentId, reason: error.message || 'Unknown error' })
+      } catch (error: unknown) {
+        failedIds.push({
+          characterId,
+          momentId,
+          reason: error instanceof Error ? error.message : 'Unknown error',
+        })
       }
     }
 

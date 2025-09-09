@@ -26,3 +26,23 @@ export const UpdateManyCharacterMomentsSchema = z.array(CharacterMomentUpdateSch
 
 export type CreateManyCharacterMomentsPayload = z.infer<typeof CreateManyCharacterMomentsSchema>
 export type UpdateManyCharacterMomentsPayload = z.infer<typeof UpdateManyCharacterMomentsSchema>
+
+export const BulkDeleteCharacterMomentResponseSchema = z.object({
+  successfulIds: z.array(
+    z.object({
+      characterId: z.string(),
+      momentId: z.string(),
+    }),
+  ),
+  failedIds: z.array(
+    z.object({
+      characterId: z.string(),
+      momentId: z.string(),
+      reason: z.string(),
+    }),
+  ),
+})
+
+export type BulkDeleteCharacterMomentResponse = z.infer<
+  typeof BulkDeleteCharacterMomentResponseSchema
+>

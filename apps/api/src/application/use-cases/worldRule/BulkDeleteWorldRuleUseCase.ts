@@ -1,5 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
+import type { BulkDeleteResponse } from '@keres/shared'
 
 export class BulkDeleteWorldRuleUseCase {
   constructor(
@@ -7,10 +8,7 @@ export class BulkDeleteWorldRuleUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(
-    userId: string,
-    ids: string[],
-  ): Promise<{ successfulIds: string[]; failedIds: { id: string; reason: string }[] }> {
+  async execute(userId: string, ids: string[]): Promise<BulkDeleteResponse> {
     const successfulIds: string[] = []
     const failedIds: { id: string; reason: string }[] = []
 
@@ -30,8 +28,8 @@ export class BulkDeleteWorldRuleUseCase {
 
         await this.worldRuleRepository.delete(id, existingWorldRule.storyId)
         successfulIds.push(id)
-      } catch (error: any) {
-        failedIds.push({ id, reason: error.message || 'Unknown error' })
+      } catch (error: unknown) {
+        failedIds.push({ id, reason: error instanceof Error ? error.message : 'Unknown error' })
       }
     }
 

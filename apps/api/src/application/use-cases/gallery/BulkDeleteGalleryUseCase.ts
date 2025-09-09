@@ -1,6 +1,7 @@
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { BulkDeleteResponse } from '@keres/shared'
 
 export class BulkDeleteGalleryUseCase {
   constructor(
@@ -9,10 +10,7 @@ export class BulkDeleteGalleryUseCase {
     private readonly noteRepository: INoteRepository,
   ) {}
 
-  async execute(
-    userId: string,
-    ids: string[],
-  ): Promise<{ successfulIds: string[]; failedIds: { id: string; reason: string }[] }> {
+  async execute(userId: string, ids: string[]): Promise<BulkDeleteResponse> {
     const successfulIds: string[] = []
     const failedIds: { id: string; reason: string }[] = []
 
@@ -41,8 +39,8 @@ export class BulkDeleteGalleryUseCase {
 
         await this.galleryRepository.delete(id, existingGallery.storyId, existingGallery.ownerId)
         successfulIds.push(id)
-      } catch (error: any) {
-        failedIds.push({ id, reason: error.message || 'Unknown error' })
+      } catch (error: unknown) {
+        failedIds.push({ id, reason: error instanceof Error ? error.message : 'Unknown error' })
       }
     }
 

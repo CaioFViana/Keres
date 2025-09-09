@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { ChapterResponseSchema } from './ChapterSchemas' // Import ChapterResponseSchema
 import { CharacterResponseSchema } from './CharacterSchemas' // Import CharacterResponseSchema
+import { LocationResponseSchema } from './LocationSchemas' // Import LocationResponseSchema
 
 export const StoryCreateSchema = z.object({
   userId: z.string(),
@@ -40,6 +41,7 @@ export const StoryResponseSchema = z.object({
   // Add optional fields for included data
   characters: z.array(CharacterResponseSchema).optional(), // New
   chapters: z.array(ChapterResponseSchema).optional(), // New
+  locations: z.array(LocationResponseSchema).optional(), // New
 })
 
 export type StoryCreatePayload = z.infer<typeof StoryCreateSchema>

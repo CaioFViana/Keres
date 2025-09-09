@@ -24,6 +24,9 @@ export class StoryRepository implements IStoryRepository {
     try {
       let queryBuilder = db.select().from(story).where(eq(story.userId, userId))
 
+      // TODO: Implement logic to include related entities based on the 'include' array
+      // For example, if 'include' contains 'characters', you would join the characters table.
+
       if (query?.isFavorite !== undefined) {
         queryBuilder = queryBuilder.where(
           and(eq(story.userId, userId), eq(story.isFavorite, query.isFavorite)),

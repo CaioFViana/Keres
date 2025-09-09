@@ -1,9 +1,9 @@
-import type { ChoiceProfileDTO, CreateChoiceDTO } from '@application/dtos/ChoiceDTOs'
-import type { Choice } from '@domain/entities/Choice'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import { type CreateChoiceSchema, ChoiceResponseSchema } from '@keres/shared'
+import type { z } from 'zod'
 
 export class CreateChoiceUseCase {
   constructor(
@@ -13,7 +13,7 @@ export class CreateChoiceUseCase {
     private storyRepository: IStoryRepository, // Inject
   ) {}
 
-  async execute(userId: string, data: CreateChoiceDTO): Promise<ChoiceProfileDTO> {
+  async execute(userId: string, data: z.infer<typeof CreateChoiceSchema>): Promise<z.infer<typeof ChoiceResponseSchema>> {
     // Verify scene ownership
     const scene = await this.sceneRepository.findById(data.sceneId)
     if (!scene) {
@@ -48,18 +48,6 @@ export class CreateChoiceUseCase {
     }
 
     const newChoice = await this.choiceRepository.create(data)
-    return this.mapToProfileDTO(newChoice)
-  }
-
-  private mapToProfileDTO(choice: Choice): ChoiceProfileDTO {
-    return {
-      id: choice.id,
-      sceneId: choice.sceneId,
-      nextSceneId: choice.nextSceneId,
-      text: choice.text,
-      isImplicit: choice.isImplicit,
-      createdAt: choice.createdAt,
-      updatedAt: choice.updatedAt,
-    }
+    return ChoiceResponseSchema.parse(newChoice)
   }
 }

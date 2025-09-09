@@ -1,9 +1,9 @@
-import type { ChoiceProfileDTO, UpdateChoiceDTO } from '@application/dtos/ChoiceDTOs'
-import type { Choice } from '@domain/entities/Choice'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Import
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import
+import { type UpdateChoiceSchema, ChoiceResponseSchema } from '@keres/shared'
+import type { z } from 'zod'
 
 export class UpdateChoiceUseCase {
   constructor(
@@ -13,7 +13,7 @@ export class UpdateChoiceUseCase {
     private storyRepository: IStoryRepository,
   ) {}
 
-  async execute(userId: string, id: string, data: UpdateChoiceDTO): Promise<ChoiceProfileDTO> {
+  async execute(userId: string, id: string, data: z.infer<typeof UpdateChoiceSchema>): Promise<z.infer<typeof ChoiceResponseSchema>> {
     const existingChoice = await this.choiceRepository.findById(id)
     if (!existingChoice) {
       throw new Error('Choice not found')
@@ -37,18 +37,6 @@ export class UpdateChoiceUseCase {
     if (!updatedChoice) {
       throw new Error('Failed to update choice')
     }
-    return this.mapToProfileDTO(updatedChoice)
-  }
-
-  private mapToProfileDTO(choice: Choice): ChoiceProfileDTO {
-    return {
-      id: choice.id,
-      sceneId: choice.sceneId,
-      nextSceneId: choice.nextSceneId,
-      text: choice.text,
-      isImplicit: choice.isImplicit,
-      createdAt: choice.createdAt,
-      updatedAt: choice.updatedAt,
-    }
+    return ChoiceResponseSchema.parse(updatedChoice)
   }
 }

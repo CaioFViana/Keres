@@ -3,6 +3,7 @@ import type {
   CreateSceneUseCase,
   DeleteSceneUseCase,
   GetScenesByChapterIdUseCase,
+  GetScenesByLocationIdUseCase,
   GetSceneUseCase,
   UpdateSceneUseCase,
 } from '@application/use-cases'
@@ -23,6 +24,7 @@ export class SceneController {
     private readonly deleteSceneUseCase: DeleteSceneUseCase,
     private readonly bulkDeleteSceneUseCase: BulkDeleteSceneUseCase,
     private readonly getScenesByChapterIdUseCase: GetScenesByChapterIdUseCase,
+    private readonly getScenesByLocationIdUseCase: GetScenesByLocationIdUseCase,
   ) {}
 
   async createScene(userId: string, data: z.infer<typeof SceneCreateSchema>) {
@@ -40,6 +42,11 @@ export class SceneController {
 
   async getScenesByChapterId(userId: string, chapterId: string, query: ListQueryParams) {
     const scenes = await this.getScenesByChapterIdUseCase.execute(userId, chapterId, query)
+    return scenes.map((scene) => SceneResponseSchema.parse(scene))
+  }
+
+  async getScenesByLocationId(userId: string, locationId: string, query: ListQueryParams) {
+    const scenes = await this.getScenesByLocationIdUseCase.execute(userId, locationId, query)
     return scenes.map((scene) => SceneResponseSchema.parse(scene))
   }
 

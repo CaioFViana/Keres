@@ -3,6 +3,7 @@ import {
   CreateSceneUseCase,
   DeleteSceneUseCase,
   GetScenesByChapterIdUseCase,
+  GetScenesByLocationIdUseCase,
   GetSceneUseCase,
   UpdateSceneUseCase,
 } from '@application/use-cases'
@@ -74,6 +75,12 @@ const getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(
   storyRepository,
 )
 
+const getScenesByLocationidUseCase = new GetScenesByLocationIdUseCase(
+  sceneRepository,
+  locationRepository,
+  storyRepository
+)
+
 const sceneController = new SceneController(
   createSceneUseCase,
   getSceneUseCase,
@@ -81,6 +88,7 @@ const sceneController = new SceneController(
   deleteSceneUseCase,
   bulkDeleteSceneUseCase,
   getScenesByChapterIdUseCase,
+  getScenesByLocationidUseCase
 )
 
 // Define schemas for path parameters
@@ -104,6 +112,61 @@ const IncludeQuerySchema = z.object({
 const BulkDeleteSchema = z.object({
   ids: z.array(z.ulid()),
 })
+
+// GET /location/:locationId
+sceneRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/location/{locationId}',
+    summary: 'Get scenes by location ID',
+    description: 'Retrieves all scenes belonging to a specific location.',
+    request: {
+      params: z.object({ locationId: z.ulid() }),
+      query: ListQuerySchema,
+    },
+    responses: {
+      200: {
+        description: 'Scenes retrieved successfully',
+        content: {
+          'application/json': {
+            schema: z.array(SceneResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: 'Location not found',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+    },
+    tags: ['Scenes'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = z.object({ locationId: z.ulid() }).parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
+    try {
+      const scenes = await sceneController.getScenesByLocationId(userId, params.locationId, query)
+      return c.json(scenes, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
 
 // POST /
 sceneRoutes.openapi(

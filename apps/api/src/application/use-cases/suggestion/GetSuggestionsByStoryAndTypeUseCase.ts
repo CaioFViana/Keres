@@ -1,6 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
-import type { SuggestionResponse } from '@keres/shared'
+import type { ListQueryParams, SuggestionResponse } from '@keres/shared'
 
 export class GetSuggestionsByStoryAndTypeUseCase {
   constructor(
@@ -8,14 +8,14 @@ export class GetSuggestionsByStoryAndTypeUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, storyId: string, type: string): Promise<SuggestionResponse[]> {
+  async execute(userId: string, storyId: string, type: string, query: ListQueryParams): Promise<SuggestionResponse[]> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
     }
 
-    const suggestions = await this.suggestionRepository.findByStoryAndType(storyId, type)
+    const suggestions = await this.suggestionRepository.findByStoryAndType(storyId, type, query)
     return suggestions.map((suggestion) => ({
       id: suggestion.id,
       userId: suggestion.userId,

@@ -2,7 +2,8 @@ import type { Scene } from '@domain/entities/Scene'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 
 import { db, scenes, chapters, story } from '@keres/db' // Import db and scenes table
-import { eq, and, like, or } from 'drizzle-orm'
+import { eq, and, like, or, desc, asc } from 'drizzle-orm'
+import { ListQueryParams } from '@keres/shared'
 
 export class SceneRepository implements ISceneRepository {
   async findById(id: string): Promise<Scene | null> {
@@ -15,9 +16,62 @@ export class SceneRepository implements ISceneRepository {
     }
   }
 
-  async findByChapterId(chapterId: string): Promise<Scene[]> {
+  async findByChapterId(chapterId: string, query?: ListQueryParams): Promise<Scene[]> {
     try {
-      const results = await db.select().from(scenes).where(eq(scenes.chapterId, chapterId))
+      let queryBuilder = db.select().from(scenes).where(eq(scenes.chapterId, chapterId))
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        name: scenes.name,
+        summary: scenes.summary,
+        isFavorite: scenes.isFavorite,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        name: scenes.name,
+        index: scenes.index,
+        createdAt: scenes.createdAt,
+        updatedAt: scenes.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(scenes.chapterId, chapterId), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SceneRepository.findByChapterId:', error)
@@ -25,9 +79,62 @@ export class SceneRepository implements ISceneRepository {
     }
   }
 
-  async findByLocationId(locationId: string): Promise<Scene[]> {
+  async findByLocationId(locationId: string, query?: ListQueryParams): Promise<Scene[]> {
     try {
-      const results = await db.select().from(scenes).where(eq(scenes.locationId, locationId))
+      let queryBuilder = db.select().from(scenes).where(eq(scenes.locationId, locationId))
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        name: scenes.name,
+        summary: scenes.summary,
+        isFavorite: scenes.isFavorite,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        name: scenes.name,
+        index: scenes.index,
+        createdAt: scenes.createdAt,
+        updatedAt: scenes.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(scenes.locationId, locationId), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SceneRepository.findByLocationId:', error)

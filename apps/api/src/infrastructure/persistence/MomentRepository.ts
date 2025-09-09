@@ -3,7 +3,7 @@ import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ListQueryParams } from '@keres/shared'
 
 import { db, moments, chapters, scenes, story } from '@keres/db' // Import db and moments table
-import { and, eq, inArray, like, or } from 'drizzle-orm' // Import inArray
+import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm' // Import inArray
 
 export class MomentRepository implements IMomentRepository {
   async findById(id: string): Promise<Moment | null> {
@@ -34,10 +34,56 @@ export class MomentRepository implements IMomentRepository {
     try {
       let queryBuilder = db.select().from(moments).where(eq(moments.sceneId, sceneId))
 
-      if (query?.isFavorite !== undefined) {
-        queryBuilder = queryBuilder.where(
-          and(eq(moments.sceneId, sceneId), eq(moments.isFavorite, query.isFavorite)),
-        )
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        name: moments.name,
+        summary: moments.summary,
+        location: moments.location,
+        isFavorite: moments.isFavorite,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        name: moments.name,
+        index: moments.index,
+        createdAt: moments.createdAt,
+        updatedAt: moments.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(moments.sceneId, sceneId), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
       }
 
       const results = await queryBuilder

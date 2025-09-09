@@ -3,7 +3,7 @@ import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ListQueryParams } from '@keres/shared'
 
 import { db, story } from '@keres/db' // Import db and stories table
-import { and, eq, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
   async findById(id: string, userId: string): Promise<Story | null> {
@@ -24,13 +24,56 @@ export class StoryRepository implements IStoryRepository {
     try {
       let queryBuilder = db.select().from(story).where(eq(story.userId, userId))
 
-      // TODO: Implement logic to include related entities based on the 'include' array
-      // For example, if 'include' contains 'characters', you would join the characters table.
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        title: story.title,
+        summary: story.summary,
+        genre: story.genre,
+        language: story.language,
+        isFavorite: story.isFavorite,
+        // Add other filterable fields here
+      }
 
-      if (query?.isFavorite !== undefined) {
-        queryBuilder = queryBuilder.where(
-          and(eq(story.userId, userId), eq(story.isFavorite, query.isFavorite)),
-        )
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        title: story.title,
+        createdAt: story.createdAt,
+        updatedAt: story.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(story.userId, userId), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
       }
 
       const results = await queryBuilder

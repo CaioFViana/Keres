@@ -1,6 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
-import type { SuggestionResponse } from '@keres/shared'
+import type { ListQueryParams, SuggestionResponse } from '@keres/shared'
 
 export class GetSuggestionsByTypeUseCase {
   constructor(
@@ -8,8 +8,8 @@ export class GetSuggestionsByTypeUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, type: string): Promise<SuggestionResponse[]> {
-    const suggestions = await this.suggestionRepository.findByType(type)
+  async execute(userId: string, type: string, query: ListQueryParams): Promise<SuggestionResponse[]> {
+    const suggestions = await this.suggestionRepository.findByType(type, query)
     const ownedSuggestions: SuggestionResponse[] = []
 
     for (const suggestion of suggestions) {

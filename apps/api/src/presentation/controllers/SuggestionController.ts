@@ -16,6 +16,7 @@ import type z from 'zod'
 
 import {
   type CreateSuggestionSchema,
+  ListQueryParams,
   SuggestionResponseSchema,
   type UpdateSuggestionSchema,
 } from '@keres/shared'
@@ -59,31 +60,32 @@ export class SuggestionController {
     return SuggestionResponseSchema.parse(suggestion)
   }
 
-  async getSuggestionsByUserId(userId: string) {
-    const suggestions = await this.getSuggestionsByUserIdUseCase.execute(userId)
+  async getSuggestionsByUserId(userId: string, query: ListQueryParams) {
+    const suggestions = await this.getSuggestionsByUserIdUseCase.execute(userId, query)
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async getSuggestionsByStoryId(userId: string, storyId: string) {
-    const suggestions = await this.getSuggestionsByStoryIdUseCase.execute(userId, storyId)
+  async getSuggestionsByStoryId(userId: string, storyId: string, query: ListQueryParams) {
+    const suggestions = await this.getSuggestionsByStoryIdUseCase.execute(userId, storyId, query)
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async getSuggestionsByType(userId: string, type: string) {
-    const suggestions = await this.getSuggestionsByTypeUseCase.execute(userId, type)
+  async getSuggestionsByType(userId: string, type: string, query: ListQueryParams) {
+    const suggestions = await this.getSuggestionsByTypeUseCase.execute(userId, type, query)
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async getSuggestionsByUserAndType(userId: string, type: string) {
-    const suggestions = await this.getSuggestionsByUserAndTypeUseCase.execute(userId, type)
+  async getSuggestionsByUserAndType(userId: string, type: string, query: ListQueryParams) {
+    const suggestions = await this.getSuggestionsByUserAndTypeUseCase.execute(userId, type, query)
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async getSuggestionsByStoryAndType(userId: string, storyId: string, type: string) {
+  async getSuggestionsByStoryAndType(userId: string, storyId: string, type: string, query: ListQueryParams) {
     const suggestions = await this.getSuggestionsByStoryAndTypeUseCase.execute(
       userId,
       storyId,
       type,
+      query,
     )
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }

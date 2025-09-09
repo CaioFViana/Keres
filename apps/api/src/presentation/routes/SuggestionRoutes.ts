@@ -18,6 +18,7 @@ import {
   BulkDeleteResponseSchema,
   CreateSuggestionSchema,
   ErrorResponseSchema,
+  ListQuerySchema,
   SuggestionResponseSchema,
   UpdateSuggestionSchema,
 } from '@keres/shared'
@@ -297,6 +298,7 @@ suggestionRoutes.openapi(
     description: 'Retrieves all suggestions associated with a specific user.',
     request: {
       params: UserIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -329,9 +331,10 @@ suggestionRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const _params = UserIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     // Idea could be a really far future where one could look into other's suggestions. so for now.. leave as is.
     try {
-      const suggestions = await suggestionController.getSuggestionsByUserId(userId)
+      const suggestions = await suggestionController.getSuggestionsByUserId(userId, query)
       return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -351,6 +354,7 @@ suggestionRoutes.openapi(
     description: 'Retrieves all suggestions associated with a specific story.',
     request: {
       params: StoryIdParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -383,8 +387,9 @@ suggestionRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = StoryIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const suggestions = await suggestionController.getSuggestionsByStoryId(userId, params.storyId)
+      const suggestions = await suggestionController.getSuggestionsByStoryId(userId, params.storyId, query)
       return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -405,6 +410,7 @@ suggestionRoutes.openapi(
       'Retrieves all suggestions of a specific type (e.g., "genre", "character_gender").',
     request: {
       params: TypeParamSchema,
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -437,8 +443,9 @@ suggestionRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = TypeParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
-      const suggestions = await suggestionController.getSuggestionsByType(userId, params.type)
+      const suggestions = await suggestionController.getSuggestionsByType(userId, params.type, query)
       return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -461,6 +468,7 @@ suggestionRoutes.openapi(
         userId: z.ulid(),
         type: z.string(),
       }),
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -493,10 +501,12 @@ suggestionRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = z.object({ userId: z.ulid(), type: z.string() }).parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
       const suggestions = await suggestionController.getSuggestionsByUserAndType(
         userId,
         params.type,
+        query,
       )
       return c.json(suggestions, 200)
     } catch (error: unknown) {
@@ -520,6 +530,7 @@ suggestionRoutes.openapi(
         storyId: z.ulid(),
         type: z.string(),
       }),
+      query: ListQuerySchema,
     },
     responses: {
       200: {
@@ -552,11 +563,13 @@ suggestionRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = z.object({ storyId: z.ulid(), type: z.string() }).parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
     try {
       const suggestions = await suggestionController.getSuggestionsByStoryAndType(
         userId,
         params.storyId,
         params.type,
+        query,
       )
       return c.json(suggestions, 200)
     } catch (error: unknown) {

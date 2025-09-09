@@ -2,7 +2,8 @@ import type { Suggestion } from '@domain/entities/Suggestion'
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 
 import { db, suggestions } from '@keres/db' // Import db and suggestions table
-import { and, eq, isNull, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull, like, or } from 'drizzle-orm'
+import { ListQueryParams } from '@keres/shared'
 
 export class SuggestionRepository implements ISuggestionRepository {
   async findById(id: string): Promise<Suggestion | null> {
@@ -15,9 +16,64 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
-  async findByUserId(userId: string): Promise<Suggestion[]> {
+  async findByUserId(userId: string, query?: ListQueryParams): Promise<Suggestion[]> {
     try {
-      const results = await db.select().from(suggestions).where(eq(suggestions.userId, userId))
+      let queryBuilder = db.select().from(suggestions).where(eq(suggestions.userId, userId))
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        type: suggestions.type,
+        value: suggestions.value,
+        isDefault: suggestions.isDefault,
+        scope: suggestions.scope,
+        storyId: suggestions.storyId,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        type: suggestions.type,
+        value: suggestions.value,
+        createdAt: suggestions.createdAt,
+        updatedAt: suggestions.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(suggestions.userId, userId), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SuggestionRepository.findByUserId:', error)
@@ -25,9 +81,64 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
-  async findByStoryId(storyId: string): Promise<Suggestion[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Suggestion[]> {
     try {
-      const results = await db.select().from(suggestions).where(eq(suggestions.storyId, storyId))
+      let queryBuilder = db.select().from(suggestions).where(eq(suggestions.storyId, storyId))
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        type: suggestions.type,
+        value: suggestions.value,
+        isDefault: suggestions.isDefault,
+        scope: suggestions.scope,
+        userId: suggestions.userId,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        type: suggestions.type,
+        value: suggestions.value,
+        createdAt: suggestions.createdAt,
+        updatedAt: suggestions.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(suggestions.storyId, storyId), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SuggestionRepository.findByStoryId:', error)
@@ -35,9 +146,63 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
-  async findByType(type: string): Promise<Suggestion[]> {
+  async findByType(type: string, query?: ListQueryParams): Promise<Suggestion[]> {
     try {
-      const results = await db.select().from(suggestions).where(eq(suggestions.type, type))
+      let queryBuilder = db.select().from(suggestions).where(eq(suggestions.type, type))
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        value: suggestions.value,
+        isDefault: suggestions.isDefault,
+        scope: suggestions.scope,
+        userId: suggestions.userId,
+        storyId: suggestions.storyId,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        value: suggestions.value,
+        createdAt: suggestions.createdAt,
+        updatedAt: suggestions.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(suggestions.type, type), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SuggestionRepository.findByType:', error)
@@ -45,12 +210,67 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
-  async findByUserAndType(userId: string, type: string): Promise<Suggestion[]> {
+  async findByUserAndType(userId: string, type: string, query?: ListQueryParams): Promise<Suggestion[]> {
     try {
-      const results = await db
+      let queryBuilder = db
         .select()
         .from(suggestions)
         .where(and(eq(suggestions.userId, userId), eq(suggestions.type, type)))
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        value: suggestions.value,
+        isDefault: suggestions.isDefault,
+        scope: suggestions.scope,
+        storyId: suggestions.storyId,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        value: suggestions.value,
+        createdAt: suggestions.createdAt,
+        updatedAt: suggestions.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(
+                and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(column, value)),
+              )
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SuggestionRepository.findByUserAndType:', error)
@@ -58,12 +278,67 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
-  async findByStoryAndType(storyId: string, type: string): Promise<Suggestion[]> {
+  async findByStoryAndType(storyId: string, type: string, query?: ListQueryParams): Promise<Suggestion[]> {
     try {
-      const results = await db
+      let queryBuilder = db
         .select()
         .from(suggestions)
         .where(and(eq(suggestions.storyId, storyId), eq(suggestions.type, type)))
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        value: suggestions.value,
+        isDefault: suggestions.isDefault,
+        scope: suggestions.scope,
+        userId: suggestions.userId,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        value: suggestions.value,
+        createdAt: suggestions.createdAt,
+        updatedAt: suggestions.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(
+                and(eq(suggestions.storyId, storyId), eq(suggestions.type, type), eq(column, value)),
+              )
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
+      }
+
+      const results = await queryBuilder
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SuggestionRepository.findByStoryAndType:', error)

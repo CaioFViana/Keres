@@ -3,7 +3,7 @@ import type { ILocationRepository } from '@domain/repositories/ILocationReposito
 import type { ListQueryParams } from '@keres/shared'
 
 import { db, locations, locationTags, story } from '@keres/db' // Import db and locations table
-import { and, eq, inArray, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm'
 
 export class LocationRepository implements ILocationRepository {
   async findById(id: string): Promise<Location | null> {
@@ -20,10 +20,23 @@ export class LocationRepository implements ILocationRepository {
     try {
       let queryBuilder = db.select().from(locations).where(eq(locations.storyId, storyId))
 
-      if (query?.isFavorite !== undefined) {
-        queryBuilder = queryBuilder.where(
-          and(eq(locations.storyId, storyId), eq(locations.isFavorite, query.isFavorite)),
-        )
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        name: locations.name,
+        description: locations.description,
+        climate: locations.climate,
+        culture: locations.culture,
+        politics: locations.politics,
+        isFavorite: locations.isFavorite,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        name: locations.name,
+        createdAt: locations.createdAt,
+        updatedAt: locations.updatedAt,
+        // Add other sortable fields here
       }
 
       if (query?.hasTags) {
@@ -31,6 +44,40 @@ export class LocationRepository implements ILocationRepository {
         queryBuilder = queryBuilder
           .leftJoin(locationTags, eq(locations.id, locationTags.locationId))
           .where(and(eq(locations.storyId, storyId), inArray(locationTags.tagId, tagIds)))
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(locations.storyId, storyId), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
       }
 
       const results = await queryBuilder

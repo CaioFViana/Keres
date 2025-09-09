@@ -3,7 +3,7 @@ import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { ListQueryParams } from '@keres/shared'
 
 import { db, notes, story } from '@keres/db' // Import db, notes and stories table
-import { and, eq, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {
   async findById(id: string): Promise<Note | null> {
@@ -20,10 +20,54 @@ export class NoteRepository implements INoteRepository {
     try {
       let queryBuilder = db.select().from(notes).where(eq(notes.storyId, storyId))
 
-      if (query?.isFavorite !== undefined) {
-        queryBuilder = queryBuilder.where(
-          and(eq(notes.storyId, storyId), eq(notes.isFavorite, query.isFavorite)),
-        )
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        title: notes.title,
+        body: notes.body,
+        isFavorite: notes.isFavorite,
+        // Add other filterable fields here
+      }
+
+      // Define allowed sortable fields and their Drizzle column mappings
+      const sortableFields = {
+        title: notes.title,
+        createdAt: notes.createdAt,
+        updatedAt: notes.updatedAt,
+        // Add other sortable fields here
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+            const value = query.filter[key]
+            const column = filterableFields[key as keyof typeof filterableFields]
+            if (column) {
+              queryBuilder = queryBuilder.where(and(eq(notes.storyId, storyId), eq(column, value)))
+            }
+          }
+        }
+      }
+
+      // Sorting (Revised)
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+          } else {
+            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        queryBuilder = queryBuilder.limit(query.limit)
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit
+          queryBuilder = queryBuilder.offset(offset)
+        }
       }
 
       const results = await queryBuilder

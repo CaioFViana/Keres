@@ -1,11 +1,11 @@
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
-import type { SuggestionResponse } from '@keres/shared'
+import type { ListQueryParams, SuggestionResponse } from '@keres/shared'
 
 export class GetSuggestionsByUserIdUseCase {
   constructor(private readonly suggestionRepository: ISuggestionRepository) {}
 
-  async execute(userId: string): Promise<SuggestionResponse[]> {
-    const suggestions = await this.suggestionRepository.findByUserId(userId)
+  async execute(userId: string, query: ListQueryParams): Promise<SuggestionResponse[]> {
+    const suggestions = await this.suggestionRepository.findByUserId(userId, query)
     // Ensure that all returned suggestions actually belong to the requested userId
     const filteredSuggestions = suggestions.filter((suggestion) => suggestion.userId === userId)
 

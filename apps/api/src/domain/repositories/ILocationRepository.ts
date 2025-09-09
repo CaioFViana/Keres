@@ -7,4 +7,5 @@ export interface ILocationRepository {
   save(location: Location): Promise<void>
   update(location: Location, storyId: string): Promise<void>
   delete(id: string, storyId: string): Promise<void>
+  search(query: string, userId: string): Promise<Location[]>
 }

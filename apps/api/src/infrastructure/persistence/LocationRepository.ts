@@ -2,8 +2,8 @@ import type { Location } from '@domain/entities/Location'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, locations, locationTags } from '@keres/db' // Import db and locations table
-import { and, eq, inArray } from 'drizzle-orm'
+import { db, locations, locationTags, story } from '@keres/db' // Import db and locations table
+import { and, eq, inArray, like, or } from 'drizzle-orm'
 
 export class LocationRepository implements ILocationRepository {
   async findById(id: string): Promise<Location | null> {
@@ -100,6 +100,32 @@ export class LocationRepository implements ILocationRepository {
       extraNotes: locationData.extraNotes,
       createdAt: locationData.createdAt,
       updatedAt: locationData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<Location[]> {
+    try {
+      const results = await db
+        .select({ locations: locations })
+        .from(locations)
+        .innerJoin(story, eq(locations.storyId, story.id))
+        .where(
+          and(
+            eq(story.userId, userId),
+            or(
+              like(locations.name, `%${query}%`),
+              like(locations.description, `%${query}%`),
+              like(locations.climate, `%${query}%`),
+              like(locations.culture, `%${query}%`),
+              like(locations.politics, `%${query}%`),
+              like(locations.extraNotes, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map((result: { locations: Location}) => this.toDomain(result.locations))
+    } catch (error) {
+      console.error('Error in LocationRepository.search:', error)
+      throw error
     }
   }
 }

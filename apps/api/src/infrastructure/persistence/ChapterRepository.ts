@@ -2,8 +2,8 @@ import type { Chapter } from '@domain/entities/Chapter'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { chapters, chapterTags, db } from '@keres/db' // Import db and chapters table
-import { and, eq, inArray } from 'drizzle-orm'
+import { chapters, chapterTags, db, story } from '@keres/db' // Import db and chapters table
+import { and, eq, inArray, like, or } from 'drizzle-orm'
 
 export class ChapterRepository implements IChapterRepository {
   async findById(id: string): Promise<Chapter | null> {
@@ -96,6 +96,29 @@ export class ChapterRepository implements IChapterRepository {
       extraNotes: chapterData.extraNotes,
       createdAt: chapterData.createdAt,
       updatedAt: chapterData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<Chapter[]> {
+    try {
+      const results = await db
+        .select({ chapters: chapters })
+        .from(chapters)
+        .innerJoin(story, eq(chapters.storyId, story.id))
+        .where(
+          and(
+            eq(story.userId, userId),
+            or(
+              like(chapters.name, `%${query}%`),
+              like(chapters.summary, `%${query}%`),
+              like(chapters.extraNotes, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map((result: {chapters: Chapter}) => this.toDomain(result.chapters))
+    } catch (error) {
+      console.error('Error in ChapterRepository.search:', error)
+      throw error
     }
   }
 }

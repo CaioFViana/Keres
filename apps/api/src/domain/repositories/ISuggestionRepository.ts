@@ -17,4 +17,5 @@ export interface ISuggestionRepository {
   ): Promise<void>
   updateMany(suggestions: Suggestion[]): Promise<void>
   delete(id: string, userId: string, scope: string, storyId: string | null): Promise<void>
+  search(query: string, userId: string): Promise<Suggestion[]>
 }

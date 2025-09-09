@@ -4,10 +4,16 @@ import {
   NoteRepository,
   StoryRepository,
   WorldRuleRepository,
+  LocationRepository,
+  ChapterRepository,
+  ChoiceRepository,
+  MomentRepository,
+  SceneRepository,
+  SuggestionRepository,
 } from '@infrastructure/persistence'
 import { GlobalSearchUseCase } from '@application/use-cases/search/GlobalSearchUseCase'
 import { SearchController } from '@presentation/controllers/SearchController'
-import { ErrorResponseSchema, SearchQuerySchema } from '@keres/shared'
+import { ErrorResponseSchema, SearchQuerySchema, SearchResponseSchema } from '@keres/shared'
 import { z } from 'zod'
 
 const searchRoutes = new OpenAPIHono()
@@ -17,12 +23,24 @@ const storyRepository = new StoryRepository()
 const noteRepository = new NoteRepository()
 const characterRepository = new CharacterRepository()
 const worldRuleRepository = new WorldRuleRepository()
+const locationRepository = new LocationRepository()
+const chapterRepository = new ChapterRepository()
+const choiceRepository = new ChoiceRepository()
+const momentRepository = new MomentRepository()
+const sceneRepository = new SceneRepository()
+const suggestionRepository = new SuggestionRepository()
 
 const globalSearchUseCase = new GlobalSearchUseCase(
   storyRepository,
   noteRepository,
   characterRepository,
   worldRuleRepository,
+  locationRepository,
+  chapterRepository,
+  choiceRepository,
+  momentRepository,
+  sceneRepository,
+  suggestionRepository,
 )
 
 const searchController = new SearchController(globalSearchUseCase)
@@ -33,7 +51,7 @@ searchRoutes.openapi(
     method: 'get',
     path: '/',
     summary: 'Global search across entities',
-    description: 'Searches for a keyword across specified entities (stories, notes, characters, world rules).',
+    description: 'Searches for a keyword across specified entities.',
     request: {
       query: SearchQuerySchema,
     },
@@ -42,10 +60,7 @@ searchRoutes.openapi(
         description: 'Search results retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(z.object({
-              type: z.string(),
-              data: z.any(), // This could be more specific, but for now, any is fine
-            })),
+            schema: SearchResponseSchema,
           },
         },
       },

@@ -7,4 +7,5 @@ export interface IChapterRepository {
   save(chapter: Chapter): Promise<void>
   update(chapter: Chapter, storyId: string): Promise<void>
   delete(id: string, storyId: string): Promise<void>
+  search(query: string, userId: string): Promise<Chapter[]>
 }

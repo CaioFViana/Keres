@@ -30,7 +30,19 @@ export const ErrorResponseSchema = z.object({
 
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>
 
+const searchQueryTypeValues = ['stories', 'notes', 'characters', 'world_rules', 'locations', 
+        'chapters', 'choices', 'moments', 'scenes', 'suggestions']
+
 export const SearchQuerySchema = z.object({
   query: z.string().min(1, 'Search query cannot be empty'),
-  scope: z.string().optional().transform((val) => (val ? val.split(',') : ['stories', 'notes', 'characters', 'world_rules'])),
-});
+  scope: z.string().optional().transform((val) => 
+    (val ? val.split(',') : searchQueryTypeValues)
+  ),
+})
+
+export const SearchResponseSchema = z.array(
+  z.object({
+    type: z.string(),
+    data: z.any(), // This could be more specific, but for now, any is fine
+  })
+)

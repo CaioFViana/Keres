@@ -10,4 +10,5 @@ export interface IMomentRepository {
   update(moment: Moment, sceneId: string): Promise<void>
   updateMany(moments: Moment[]): Promise<void>
   delete(id: string, sceneId: string): Promise<void>
+  search(query: string, userId: string): Promise<Moment[]>
 }

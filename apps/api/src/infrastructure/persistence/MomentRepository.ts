@@ -2,8 +2,8 @@ import type { Moment } from '@domain/entities/Moment'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, moments } from '@keres/db' // Import db and moments table
-import { and, eq, inArray } from 'drizzle-orm' // Import inArray
+import { db, moments, chapters, scenes, story } from '@keres/db' // Import db and moments table
+import { and, eq, inArray, like, or } from 'drizzle-orm' // Import inArray
 
 export class MomentRepository implements IMomentRepository {
   async findById(id: string): Promise<Moment | null> {
@@ -137,6 +137,32 @@ export class MomentRepository implements IMomentRepository {
       extraNotes: momentData.extraNotes,
       createdAt: momentData.createdAt,
       updatedAt: momentData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<Moment[]> {
+    try {
+      const results = await db
+        .select({ moments: moments })
+        .from(moments)
+        .innerJoin(scenes, eq(moments.sceneId, scenes.id))
+        .innerJoin(chapters, eq(scenes.chapterId, chapters.id))
+        .innerJoin(story, eq(chapters.storyId, story.id))
+        .where(
+          and(
+            eq(story.userId, userId),
+            or(
+              like(moments.name, `%${query}%`),
+              like(moments.summary, `%${query}%`),
+              like(moments.location, `%${query}%`),
+              like(moments.extraNotes, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map((result: {moments: Moment}) => result.moments)
+    } catch (error) {
+      console.error('Error in MomentRepository.search:', error)
+      throw error
     }
   }
 }

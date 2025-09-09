@@ -1,8 +1,8 @@
 import type { Scene } from '@domain/entities/Scene'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 
-import { db, scenes } from '@keres/db' // Import db and scenes table
-import { eq } from 'drizzle-orm'
+import { db, scenes, chapters, story } from '@keres/db' // Import db and scenes table
+import { eq, and, like, or } from 'drizzle-orm'
 
 export class SceneRepository implements ISceneRepository {
   async findById(id: string): Promise<Scene | null> {
@@ -96,6 +96,30 @@ export class SceneRepository implements ISceneRepository {
       extraNotes: sceneData.extraNotes,
       createdAt: sceneData.createdAt,
       updatedAt: sceneData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<Scene[]> {
+    try {
+      const results = await db
+        .select({ scenes: scenes })
+        .from(scenes)
+        .innerJoin(chapters, eq(scenes.chapterId, chapters.id))
+        .innerJoin(story, eq(chapters.storyId, story.id))
+        .where(
+          and(
+            eq(story.userId, userId),
+            or(
+              like(scenes.name, `%${query}%`),
+              like(scenes.summary, `%${query}%`),
+              like(scenes.extraNotes, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map((result: {scenes: Scene}) => result.scenes)
+    } catch (error) {
+      console.error('Error in SceneRepository.search:', error)
+      throw error
     }
   }
 }

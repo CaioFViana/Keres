@@ -8,4 +8,5 @@ export interface ISceneRepository {
   save(scene: Scene): Promise<void>
   update(scene: Scene, chapterId: string): Promise<void>
   delete(id: string, chapterId: string): Promise<void>
+  search(query: string, userId: string): Promise<Scene[]>
 }

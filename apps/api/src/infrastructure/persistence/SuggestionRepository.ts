@@ -2,7 +2,7 @@ import type { Suggestion } from '@domain/entities/Suggestion'
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 
 import { db, suggestions } from '@keres/db' // Import db and suggestions table
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, like, or } from 'drizzle-orm'
 
 export class SuggestionRepository implements ISuggestionRepository {
   async findById(id: string): Promise<Suggestion | null> {
@@ -203,6 +203,26 @@ export class SuggestionRepository implements ISuggestionRepository {
       value: suggestionData.value,
       createdAt: suggestionData.createdAt,
       updatedAt: suggestionData.updatedAt,
+    }
+  }
+
+  async search(query: string, userId: string): Promise<Suggestion[]> {
+    try {
+      const results = await db
+        .select()
+        .from(suggestions)
+        .where(
+          and(
+            eq(suggestions.userId, userId),
+            or(
+              like(suggestions.value, `%${query}%`),
+            ),
+          ),
+        )
+      return results.map(this.toDomain)
+    } catch (error) {
+      console.error('Error in SuggestionRepository.search:', error)
+      throw error
     }
   }
 }

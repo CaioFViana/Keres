@@ -1,4 +1,5 @@
 import type {
+  BulkDeleteChapterUseCase,
   CreateChapterUseCase,
   DeleteChapterUseCase,
   GetChaptersByStoryIdUseCase,
@@ -20,6 +21,7 @@ export class ChapterController {
     private readonly getChapterUseCase: GetChapterUseCase,
     private readonly updateChapterUseCase: UpdateChapterUseCase,
     private readonly deleteChapterUseCase: DeleteChapterUseCase,
+    private readonly bulkDeleteChapterUseCase: BulkDeleteChapterUseCase,
     private readonly getChaptersByStoryIdUseCase: GetChaptersByStoryIdUseCase,
   ) {}
 
@@ -56,5 +58,10 @@ export class ChapterController {
       throw new Error('Chapter not found or does not belong to the specified story')
     }
     return // No content to return for 204
+  }
+
+  async bulkDeleteChapters(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteChapterUseCase.execute(userId, ids)
+    return result
   }
 }

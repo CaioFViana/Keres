@@ -1,14 +1,19 @@
 import type {
+  BulkDeleteCharacterMomentUseCase,
   CreateCharacterMomentUseCase,
+  CreateManyCharacterMomentsUseCase,
   DeleteCharacterMomentUseCase,
   GetCharacterMomentsByCharacterIdUseCase,
   GetCharacterMomentsByMomentIdUseCase,
-  CreateManyCharacterMomentsUseCase,
   UpdateManyCharacterMomentsUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
 
-import { type CharacterMomentCreateSchema, CharacterMomentResponseSchema, type CharacterMomentUpdateSchema } from '@keres/shared'
+import {
+  type CharacterMomentCreateSchema,
+  CharacterMomentResponseSchema,
+  type CharacterMomentUpdateSchema,
+} from '@keres/shared'
 
 export class CharacterMomentController {
   constructor(
@@ -16,6 +21,7 @@ export class CharacterMomentController {
     private readonly getCharacterMomentsByCharacterIdUseCase: GetCharacterMomentsByCharacterIdUseCase,
     private readonly getCharacterMomentsByMomentIdUseCase: GetCharacterMomentsByMomentIdUseCase,
     private readonly deleteCharacterMomentUseCase: DeleteCharacterMomentUseCase,
+    private readonly bulkDeleteCharacterMomentUseCase: BulkDeleteCharacterMomentUseCase,
     private readonly createManyCharacterMomentsUseCase: CreateManyCharacterMomentsUseCase,
     private readonly updateManyCharacterMomentsUseCase: UpdateManyCharacterMomentsUseCase,
   ) {}
@@ -25,12 +31,18 @@ export class CharacterMomentController {
     return CharacterMomentResponseSchema.parse(characterMoment)
   }
 
-  async createManyCharacterMoments(userId: string, data: z.infer<typeof CharacterMomentCreateSchema>[]) {
+  async createManyCharacterMoments(
+    userId: string,
+    data: z.infer<typeof CharacterMomentCreateSchema>[],
+  ) {
     const characterMoments = await this.createManyCharacterMomentsUseCase.execute(userId, data)
     return characterMoments.map((cm) => CharacterMomentResponseSchema.parse(cm))
   }
 
-  async updateManyCharacterMoments(userId: string, data: z.infer<typeof CharacterMomentUpdateSchema>[]) {
+  async updateManyCharacterMoments(
+    userId: string,
+    data: z.infer<typeof CharacterMomentUpdateSchema>[],
+  ) {
     const characterMoments = await this.updateManyCharacterMomentsUseCase.execute(userId, data)
     return characterMoments.map((cm) => CharacterMomentResponseSchema.parse(cm))
   }
@@ -60,5 +72,13 @@ export class CharacterMomentController {
       throw new Error('CharacterMoment not found')
     }
     return
+  }
+
+  async bulkDeleteCharacterMoments(
+    userId: string,
+    ids: { characterId: string; momentId: string }[],
+  ) {
+    const result = await this.bulkDeleteCharacterMomentUseCase.execute(userId, ids)
+    return result
   }
 }

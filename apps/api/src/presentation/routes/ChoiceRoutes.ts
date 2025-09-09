@@ -1,4 +1,5 @@
 import {
+  BulkDeleteChoiceUseCase,
   CreateChoiceUseCase,
   DeleteChoiceUseCase,
   GetChoicesBySceneIdUseCase,
@@ -47,6 +48,12 @@ const deleteChoiceUseCase = new DeleteChoiceUseCase(
   chapterRepository,
   storyRepository,
 )
+const bulkDeleteChoiceUseCase = new BulkDeleteChoiceUseCase(
+  choiceRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
 const getChoicesBySceneIdUseCase = new GetChoicesBySceneIdUseCase(
   choiceRepository,
   sceneRepository,
@@ -59,6 +66,7 @@ const choiceController = new ChoiceController(
   getChoiceUseCase,
   updateChoiceUseCase,
   deleteChoiceUseCase,
+  bulkDeleteChoiceUseCase,
   getChoicesBySceneIdUseCase,
 )
 
@@ -70,6 +78,11 @@ const IdParamSchema = z.object({
 const SceneIdParamSchema = z.object({
   sceneId: z.ulid(),
 })
+
+// Define schema for bulk delete request body // Added
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+}) // Added
 
 // POST /
 choiceRoutes.openapi(
@@ -435,6 +448,71 @@ choiceRoutes.openapi(
     try {
       const choices = await choiceController.getChoicesBySceneId(userId, params.sceneId)
       return c.json(choices, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete // Added
+choiceRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete choices',
+    description: 'Deletes multiple choices by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
+                example: [{ id: 'ulid1', reason: 'Choice not found' }],
+              }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Choices'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await choiceController.bulkDeleteChoices(userId, ids)
+      return c.json(result, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

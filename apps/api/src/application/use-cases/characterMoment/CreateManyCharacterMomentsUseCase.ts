@@ -1,9 +1,9 @@
 import type { CharacterMoment } from '@domain/entities/CharacterMoment'
+import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { CharacterMomentResponse, CreateManyCharacterMomentsPayload } from '@keres/shared'
 
@@ -17,7 +17,10 @@ export class CreateManyCharacterMomentsUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(userId: string, data: CreateManyCharacterMomentsPayload): Promise<CharacterMomentResponse[]> {
+  async execute(
+    userId: string,
+    data: CreateManyCharacterMomentsPayload,
+  ): Promise<CharacterMomentResponse[]> {
     if (data.length === 0) {
       return []
     }
@@ -54,9 +57,7 @@ export class CreateManyCharacterMomentsUseCase {
       }
       const momentStory = await this.storyRepository.findById(chapter.storyId, userId)
       if (!momentStory) {
-        throw new Error(
-          `Story for moment ID ${payload.momentId} not found or not owned by user`,
-        )
+        throw new Error(`Story for moment ID ${payload.momentId} not found or not owned by user`)
       }
 
       if (characterStory.id !== momentStory.id) {

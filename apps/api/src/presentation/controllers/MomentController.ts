@@ -1,11 +1,12 @@
 import type {
+  BulkDeleteMomentUseCase,
+  CreateManyMomentsUseCase,
   CreateMomentUseCase,
   DeleteMomentUseCase,
   GetMomentsBySceneIdUseCase,
   GetMomentUseCase,
-  UpdateMomentUseCase,
-  CreateManyMomentsUseCase,
   UpdateManyMomentsUseCase,
+  UpdateMomentUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
 
@@ -22,6 +23,7 @@ export class MomentController {
     private readonly getMomentUseCase: GetMomentUseCase,
     private readonly updateMomentUseCase: UpdateMomentUseCase,
     private readonly deleteMomentUseCase: DeleteMomentUseCase,
+    private readonly bulkDeleteMomentUseCase: BulkDeleteMomentUseCase,
     private readonly getMomentsBySceneIdUseCase: GetMomentsBySceneIdUseCase,
     private readonly createManyMomentsUseCase: CreateManyMomentsUseCase,
     private readonly updateManyMomentsUseCase: UpdateManyMomentsUseCase,
@@ -70,5 +72,10 @@ export class MomentController {
       throw new Error('Moment not found') // Simplified error message
     }
     return
+  }
+
+  async bulkDeleteMoments(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteMomentUseCase.execute(userId, ids)
+    return result
   }
 }

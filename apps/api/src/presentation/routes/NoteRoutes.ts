@@ -1,4 +1,5 @@
 import {
+  BulkDeleteNoteUseCase,
   CreateNoteUseCase,
   DeleteNoteUseCase,
   GetNotesByStoryIdUseCase,
@@ -26,6 +27,11 @@ const createNoteUseCase = new CreateNoteUseCase(noteRepository, storyRepository,
 const getNoteUseCase = new GetNoteUseCase(noteRepository, storyRepository)
 const updateNoteUseCase = new UpdateNoteUseCase(noteRepository, storyRepository, galleryRepository)
 const deleteNoteUseCase = new DeleteNoteUseCase(noteRepository, storyRepository)
+const bulkDeleteNoteUseCase = new BulkDeleteNoteUseCase(
+  // Added
+  noteRepository,
+  storyRepository,
+)
 const getNotesByStoryIdUseCase = new GetNotesByStoryIdUseCase(noteRepository, storyRepository)
 
 const noteController = new NoteController(
@@ -33,6 +39,7 @@ const noteController = new NoteController(
   getNoteUseCase,
   updateNoteUseCase,
   deleteNoteUseCase,
+  bulkDeleteNoteUseCase,
   getNotesByStoryIdUseCase,
 )
 
@@ -44,6 +51,11 @@ const IdParamSchema = z.object({
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
 })
+
+// Define schema for bulk delete request body // Added
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+}) // Added
 
 // POST /
 noteRoutes.openapi(
@@ -418,6 +430,71 @@ noteRoutes.openapi(
     try {
       await noteController.deleteNote(userId, params.id)
       return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete // Added
+noteRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete notes',
+    description: 'Deletes multiple notes by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
+                example: [{ id: 'ulid1', reason: 'Note not found' }],
+              }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Notes'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await noteController.bulkDeleteNotes(userId, ids)
+      return c.json(result, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

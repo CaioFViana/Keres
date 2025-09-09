@@ -1,10 +1,11 @@
 import {
+  BulkDeleteCharacterUseCase,
   CreateCharacterUseCase,
+  CreateManyCharactersUseCase,
   DeleteCharacterUseCase,
   GetCharactersByStoryIdUseCase,
   GetCharacterUseCase,
   UpdateCharacterUseCase,
-  CreateManyCharactersUseCase,
   UpdateManyCharactersUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
@@ -34,8 +35,14 @@ const characterMomentRepository = new CharacterMomentRepository() // New
 const characterRelationRepository = new CharacterRelationRepository() // New
 const momentRepository = new MomentRepository() // New
 const createCharacterUseCase = new CreateCharacterUseCase(characterRepository, storyRepository)
-const createManyCharactersUseCase = new CreateManyCharactersUseCase(characterRepository, storyRepository)
-const updateManyCharactersUseCase = new UpdateManyCharactersUseCase(characterRepository, storyRepository)
+const createManyCharactersUseCase = new CreateManyCharactersUseCase(
+  characterRepository,
+  storyRepository,
+)
+const updateManyCharactersUseCase = new UpdateManyCharactersUseCase(
+  characterRepository,
+  storyRepository,
+)
 
 const getCharacterUseCase = new GetCharacterUseCase(
   characterRepository,
@@ -46,6 +53,10 @@ const getCharacterUseCase = new GetCharacterUseCase(
 ) // Updated
 const updateCharacterUseCase = new UpdateCharacterUseCase(characterRepository, storyRepository)
 const deleteCharacterUseCase = new DeleteCharacterUseCase(characterRepository, storyRepository)
+const bulkDeleteCharacterUseCase = new BulkDeleteCharacterUseCase(
+  characterRepository,
+  storyRepository,
+)
 const getCharactersByStoryIdUseCase = new GetCharactersByStoryIdUseCase(
   characterRepository,
   storyRepository,
@@ -56,9 +67,10 @@ const characterController = new CharacterController(
   getCharacterUseCase,
   updateCharacterUseCase,
   deleteCharacterUseCase,
+  bulkDeleteCharacterUseCase,
   getCharactersByStoryIdUseCase,
   createManyCharactersUseCase,
-  updateManyCharactersUseCase
+  updateManyCharactersUseCase,
 )
 
 // Define schemas for path parameters
@@ -80,6 +92,11 @@ const IncludeQuerySchema = z.object({
 
 // Define schema for batch character creation
 const CreateManyCharactersSchema = z.array(CharacterCreateSchema)
+
+// Define schema for bulk delete request body
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+})
 
 // POST /
 characterRoutes.openapi(
@@ -566,6 +583,69 @@ characterRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete
+characterRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete characters',
+    description: 'Deletes multiple characters by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Characters'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await characterController.bulkDeleteCharacters(userId, ids)
+      return c.json(result, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

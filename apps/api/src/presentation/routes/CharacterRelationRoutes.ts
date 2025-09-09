@@ -1,4 +1,5 @@
 import {
+  BulkDeleteCharacterRelationUseCase,
   CreateCharacterRelationUseCase,
   CreateManyCharacterRelationsUseCase,
   DeleteCharacterRelationUseCase,
@@ -47,6 +48,13 @@ const deleteCharacterRelationUseCase = new DeleteCharacterRelationUseCase(
   characterRepository,
   storyRepository,
 )
+
+const bulkDeleteCharacterRelationUseCase = new BulkDeleteCharacterRelationUseCase(
+  characterRelationRepository,
+  characterRepository,
+  storyRepository,
+)
+
 const getCharacterRelationsByCharIdUseCase = new GetCharacterRelationsByCharIdUseCase(
   characterRelationRepository,
   characterRepository,
@@ -70,9 +78,10 @@ const characterRelationController = new CharacterRelationController(
   getCharacterRelationUseCase,
   updateCharacterRelationUseCase,
   deleteCharacterRelationUseCase,
+  bulkDeleteCharacterRelationUseCase,
   getCharacterRelationsByCharIdUseCase,
   createManyCharacterRelationsUseCase,
-  updateManyCharacterRelationsUseCase
+  updateManyCharacterRelationsUseCase,
 )
 
 // Define schemas for path parameters
@@ -83,6 +92,11 @@ const IdParamSchema = z.object({
 const CharIdParamSchema = z.object({
   charId: z.ulid(),
 })
+
+// Define schema for bulk delete request body // Added
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+}) // Added
 
 // POST /
 characterRelationRoutes.openapi(
@@ -199,7 +213,10 @@ characterRelationRoutes.openapi(
     const body = await c.req.json()
     const data = CreateManyCharacterRelationsSchema.parse(body)
     try {
-      const newCharacterRelations = await characterRelationController.createManyCharacterRelations(userId, data)
+      const newCharacterRelations = await characterRelationController.createManyCharacterRelations(
+        userId,
+        data,
+      )
       return c.json(newCharacterRelations, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -270,7 +287,8 @@ characterRelationRoutes.openapi(
     const body = await c.req.json()
     const data = UpdateManyCharacterRelationsSchema.parse(body)
     try {
-      const updatedCharacterRelations = await characterRelationController.updateManyCharacterRelations(userId, data)
+      const updatedCharacterRelations =
+        await characterRelationController.updateManyCharacterRelations(userId, data)
       return c.json(updatedCharacterRelations, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -509,6 +527,71 @@ characterRelationRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete // Added
+characterRelationRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete character relations',
+    description: 'Deletes multiple character relations by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
+                example: [{ id: 'ulid1', reason: 'Character relation not found' }],
+              }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Relations'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await characterRelationController.bulkDeleteCharacterRelations(userId, ids)
+      return c.json(result, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

@@ -13,7 +13,10 @@ export class CreateManyCharacterRelationsUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(userId: string, data: CreateManyCharacterRelationsPayload): Promise<CharacterRelationResponse[]> {
+  async execute(
+    userId: string,
+    data: CreateManyCharacterRelationsPayload,
+  ): Promise<CharacterRelationResponse[]> {
     if (data.length === 0) {
       return []
     }

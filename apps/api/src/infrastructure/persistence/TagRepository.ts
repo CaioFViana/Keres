@@ -99,6 +99,15 @@ export class TagRepository implements ITagRepository {
     }
   }
 
+  async delete(id: string, storyId: string): Promise<void> {
+    try {
+      await db.delete(tags).where(and(eq(tags.id, id), eq(tags.storyId, storyId)))
+    } catch (error) {
+      console.error('Error in TagRepository.delete:', error)
+      throw error
+    }
+  }
+
   private toDomain(data: typeof tags.$inferSelect): Tag {
     return {
       id: data.id,

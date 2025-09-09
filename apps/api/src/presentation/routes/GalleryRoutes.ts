@@ -1,4 +1,5 @@
 import {
+  BulkDeleteGalleryUseCase,
   CreateGalleryUseCase,
   DeleteGalleryUseCase,
   GetGalleryByOwnerIdUseCase,
@@ -6,7 +7,7 @@ import {
   GetGalleryUseCase,
   UpdateGalleryUseCase,
 } from '@application/use-cases'
-import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import {
   CharacterRepository,
   GalleryRepository,
@@ -19,11 +20,11 @@ import {
   GalleryResponseSchema,
   GalleryUpdateSchema,
   ListQuerySchema,
-} from '@keres/shared' // Import GalleryResponseSchema
+} from '@keres/shared'
 import { GalleryController } from '@presentation/controllers/GalleryController'
-import { z } from 'zod' // Import z for defining parameters
+import { z } from 'zod'
 
-const galleryRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
+const galleryRoutes = new OpenAPIHono()
 
 // Dependencies for GalleryController
 const galleryRepository = new GalleryRepository()
@@ -47,7 +48,16 @@ const updateGalleryUseCase = new UpdateGalleryUseCase(
   noteRepository,
   locationRepository,
 )
-const deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository, storyRepository, noteRepository)
+const deleteGalleryUseCase = new DeleteGalleryUseCase(
+  galleryRepository,
+  storyRepository,
+  noteRepository,
+)
+const bulkDeleteGalleryUseCase = new BulkDeleteGalleryUseCase(
+  galleryRepository,
+  storyRepository,
+  noteRepository,
+)
 const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(
   galleryRepository,
   characterRepository,
@@ -65,6 +75,7 @@ const galleryController = new GalleryController(
   getGalleryUseCase,
   updateGalleryUseCase,
   deleteGalleryUseCase,
+  bulkDeleteGalleryUseCase,
   getGalleryByOwnerIdUseCase,
   getGalleryByStoryIdUseCase,
   galleryRepository,
@@ -84,13 +95,18 @@ const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
 })
 
+// Define schema for bulk delete request body // Added
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+}) // Added
+
 // POST /
 galleryRoutes.openapi(
   createRoute({
     method: 'post',
     path: '/',
     summary: 'Create a new gallery item',
-    description: 'Creates a new gallery item (image) associated with a story and an owner.',
+    description: 'Creates a new gallery item for a story or owner.',
     request: {
       body: {
         content: {
@@ -281,8 +297,7 @@ galleryRoutes.openapi(
     method: 'get',
     path: '/owner/{ownerId}',
     summary: 'Get gallery items by owner ID',
-    description:
-      'Retrieves all gallery items associated with a specific owner (e.g., character, location).',
+    description: 'Retrieves all gallery items belonging to a specific owner.',
     request: {
       params: OwnerIdParamSchema,
       query: ListQuerySchema,
@@ -341,7 +356,7 @@ galleryRoutes.openapi(
     method: 'get',
     path: '/story/{storyId}',
     summary: 'Get gallery items by story ID',
-    description: 'Retrieves all gallery items associated with a specific story.',
+    description: 'Retrieves all gallery items belonging to a specific story.',
     request: {
       params: StoryIdParamSchema,
       query: ListQuerySchema,
@@ -580,11 +595,22 @@ galleryRoutes.openapi(
     description: 'Deletes a gallery item by its unique ID.',
     request: {
       params: IdParamSchema,
-      query: z.object({ storyId: z.ulid(), ownerId: z.ulid() }),
+      query: z.object({
+        storyId: z.ulid(),
+        ownerId: z.ulid(),
+      }),
     },
     responses: {
       204: {
         description: 'Gallery item deleted successfully (No Content)',
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
       },
       404: {
         description: 'Gallery item not found',
@@ -608,13 +634,83 @@ galleryRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
-    const query = z.object({ storyId: z.ulid(), ownerId: z.ulid() }).parse(c.req.query())
+    const query = z
+      .object({
+        storyId: z.ulid(),
+        ownerId: z.ulid(),
+      })
+      .parse(c.req.query())
     try {
       await galleryController.deleteGallery(userId, params.id, query.storyId, query.ownerId)
       return c.body(null, 204)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete // Added
+galleryRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete gallery items',
+    description: 'Deletes multiple gallery items by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
+                example: [{ id: 'ulid1', reason: 'Gallery item not found' }],
+              }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Gallery'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await galleryController.bulkDeleteGallery(userId, ids)
+      return c.json(result, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

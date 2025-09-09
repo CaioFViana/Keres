@@ -25,10 +25,7 @@ export class AuthenticateUserUseCase {
       { userId: user.id, username: user.username },
       '1h',
     )
-    const refreshToken = await this.jwtService.generateRefreshToken(
-      { userId: user.id },
-      '7d',
-    )
+    const refreshToken = await this.jwtService.generateRefreshToken({ userId: user.id }, '7d')
 
     return {
       id: user.id,

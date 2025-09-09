@@ -1,5 +1,6 @@
 import type {
   AddTagToEntityUseCase,
+  BulkDeleteTagUseCase,
   CreateTagUseCase,
   DeleteTagUseCase,
   GetTagsByStoryIdUseCase,
@@ -24,6 +25,7 @@ export class TagController {
     private readonly getTagsByStoryIdUseCase: GetTagsByStoryIdUseCase,
     private readonly updateTagUseCase: UpdateTagUseCase,
     private readonly deleteTagUseCase: DeleteTagUseCase,
+    private readonly bulkDeleteTagUseCase: BulkDeleteTagUseCase,
     private readonly addTagToEntityUseCase: AddTagToEntityUseCase,
     private readonly removeTagFromEntityUseCase: RemoveTagFromEntityUseCase,
   ) {}
@@ -61,6 +63,11 @@ export class TagController {
       throw new Error('Tag not found or does not belong to the specified story')
     }
     return // No content to return for 204
+  }
+
+  async bulkDeleteTags(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteTagUseCase.execute(userId, ids)
+    return result
   }
 
   async addTag(userId: string, data: TagAssignmentPayload): Promise<void> {

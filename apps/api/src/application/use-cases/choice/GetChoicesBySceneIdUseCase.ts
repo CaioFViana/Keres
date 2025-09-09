@@ -2,8 +2,9 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Import
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import
-import { ChoiceResponseSchema } from '@keres/shared'
 import type { z } from 'zod'
+
+import { ChoiceResponseSchema } from '@keres/shared'
 
 export class GetChoicesBySceneIdUseCase {
   constructor(

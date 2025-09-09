@@ -1,6 +1,6 @@
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 
 export class DeleteLocationUseCase {
   constructor(

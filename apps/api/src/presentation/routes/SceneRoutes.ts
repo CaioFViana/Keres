@@ -1,4 +1,5 @@
 import {
+  BulkDeleteSceneUseCase,
   CreateSceneUseCase,
   DeleteSceneUseCase,
   GetScenesByChapterIdUseCase,
@@ -59,6 +60,12 @@ const deleteSceneUseCase = new DeleteSceneUseCase(
   storyRepository,
   chapterRepository,
 )
+const bulkDeleteSceneUseCase = new BulkDeleteSceneUseCase(
+  sceneRepository,
+  choiceRepository,
+  storyRepository,
+  chapterRepository,
+)
 const getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(
   sceneRepository,
   chapterRepository,
@@ -70,6 +77,7 @@ const sceneController = new SceneController(
   getSceneUseCase,
   updateSceneUseCase,
   deleteSceneUseCase,
+  bulkDeleteSceneUseCase,
   getScenesByChapterIdUseCase,
 )
 
@@ -88,6 +96,11 @@ const IncludeQuerySchema = z.object({
     .string()
     .optional()
     .transform((val) => (val ? val.split(',') : [])),
+})
+
+// Define schema for bulk delete request body
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
 })
 
 // POST /
@@ -443,6 +456,69 @@ sceneRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete
+sceneRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete scenes',
+    description: 'Deletes multiple scenes by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Scenes'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await sceneController.bulkDeleteScenes(userId, ids)
+      return c.json(result, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

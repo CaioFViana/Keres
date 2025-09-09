@@ -1,10 +1,11 @@
 import type {
+  BulkDeleteCharacterRelationUseCase,
   CreateCharacterRelationUseCase,
+  CreateManyCharacterRelationsUseCase,
   DeleteCharacterRelationUseCase,
   GetCharacterRelationsByCharIdUseCase,
   GetCharacterRelationUseCase,
   UpdateCharacterRelationUseCase,
-  CreateManyCharacterRelationsUseCase,
   UpdateManyCharacterRelationsUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
@@ -21,6 +22,7 @@ export class CharacterRelationController {
     private readonly getCharacterRelationUseCase: GetCharacterRelationUseCase,
     private readonly updateCharacterRelationUseCase: UpdateCharacterRelationUseCase,
     private readonly deleteCharacterRelationUseCase: DeleteCharacterRelationUseCase,
+    private readonly bulkDeleteCharacterRelationUseCase: BulkDeleteCharacterRelationUseCase,
     private readonly getCharacterRelationsByCharIdUseCase: GetCharacterRelationsByCharIdUseCase,
     private readonly createManyCharacterRelationsUseCase: CreateManyCharacterRelationsUseCase,
     private readonly updateManyCharacterRelationsUseCase: UpdateManyCharacterRelationsUseCase,
@@ -34,7 +36,10 @@ export class CharacterRelationController {
     return CharacterRelationResponseSchema.parse(characterRelation)
   }
 
-  async createManyCharacterRelations(userId: string, data: z.infer<typeof CharacterRelationCreateSchema>[]) {
+  async createManyCharacterRelations(
+    userId: string,
+    data: z.infer<typeof CharacterRelationCreateSchema>[],
+  ) {
     const characterRelations = await this.createManyCharacterRelationsUseCase.execute(userId, data)
     return characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr))
   }
@@ -85,5 +90,10 @@ export class CharacterRelationController {
       throw new Error('Character relation not found')
     }
     return
+  }
+
+  async bulkDeleteCharacterRelations(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteCharacterRelationUseCase.execute(userId, ids)
+    return result
   }
 }

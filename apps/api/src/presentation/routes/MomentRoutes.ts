@@ -1,11 +1,12 @@
 import {
+  BulkDeleteMomentUseCase,
+  CreateManyMomentsUseCase,
   CreateMomentUseCase,
   DeleteMomentUseCase,
   GetMomentsBySceneIdUseCase,
   GetMomentUseCase,
-  UpdateMomentUseCase,
-  CreateManyMomentsUseCase,
   UpdateManyMomentsUseCase,
+  UpdateMomentUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import {
@@ -66,6 +67,12 @@ const deleteMomentUseCase = new DeleteMomentUseCase(
   chapterRepository,
   storyRepository,
 )
+const bulkDeleteMomentUseCase = new BulkDeleteMomentUseCase(
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
 const getMomentsBySceneIdUseCase = new GetMomentsBySceneIdUseCase(
   momentRepository,
   sceneRepository,
@@ -78,6 +85,7 @@ const momentController = new MomentController(
   getMomentUseCase,
   updateMomentUseCase,
   deleteMomentUseCase,
+  bulkDeleteMomentUseCase,
   getMomentsBySceneIdUseCase,
   createManyMomentsUseCase,
   updateManyMomentsUseCase,
@@ -97,6 +105,11 @@ const CreateManyMomentsSchema = z.array(CreateMomentSchema)
 
 // Define schema for batch moment update
 const UpdateManyMomentsSchema = z.array(UpdateMomentSchema)
+
+// Define schema for bulk delete request body
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+})
 
 // POST /
 momentRoutes.openapi(
@@ -545,6 +558,69 @@ momentRoutes.openapi(
     try {
       await momentController.deleteMoment(userId, params.id) // Just call the method
       return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete
+momentRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete moments',
+    description: 'Deletes multiple moments by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Moments'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await momentController.bulkDeleteMoments(userId, ids)
+      return c.json(result, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

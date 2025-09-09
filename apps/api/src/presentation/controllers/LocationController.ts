@@ -1,4 +1,5 @@
 import type {
+  BulkDeleteLocationUseCase,
   CreateLocationUseCase,
   DeleteLocationUseCase,
   GetLocationsByStoryIdUseCase,
@@ -20,6 +21,7 @@ export class LocationController {
     private readonly getLocationUseCase: GetLocationUseCase,
     private readonly updateLocationUseCase: UpdateLocationUseCase,
     private readonly deleteLocationUseCase: DeleteLocationUseCase,
+    private readonly bulkDeleteLocationUseCase: BulkDeleteLocationUseCase,
     private readonly getLocationsByStoryIdUseCase: GetLocationsByStoryIdUseCase,
   ) {}
 
@@ -56,5 +58,10 @@ export class LocationController {
       throw new Error('Location not found or does not belong to the specified story')
     }
     return
+  }
+
+  async bulkDeleteLocations(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteLocationUseCase.execute(userId, ids)
+    return result
   }
 }

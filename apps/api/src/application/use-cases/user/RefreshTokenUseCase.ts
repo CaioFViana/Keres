@@ -1,5 +1,5 @@
-import type { IJwtService } from '@domain/services/IJwtService'
 import type { IUserRepository } from '@domain/repositories/IUserRepository'
+import type { IJwtService } from '@domain/services/IJwtService'
 
 export class RefreshTokenUseCase {
   constructor(
@@ -10,7 +10,11 @@ export class RefreshTokenUseCase {
   async execute(refreshToken: string): Promise<{ token: string } | null> {
     const decodedRefreshToken = await this.jwtService.verifyRefreshToken(refreshToken)
 
-    if (!decodedRefreshToken || typeof decodedRefreshToken !== 'object' || !('userId' in decodedRefreshToken)) {
+    if (
+      !decodedRefreshToken ||
+      typeof decodedRefreshToken !== 'object' ||
+      !('userId' in decodedRefreshToken)
+    ) {
       return null // Invalid refresh token
     }
 

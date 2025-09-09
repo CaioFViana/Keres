@@ -1,6 +1,6 @@
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 
 export class DeleteGalleryUseCase {
   constructor(

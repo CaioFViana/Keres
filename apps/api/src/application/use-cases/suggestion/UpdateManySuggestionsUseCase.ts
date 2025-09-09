@@ -1,6 +1,6 @@
 import type { Suggestion } from '@domain/entities/Suggestion'
-import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 import type { SuggestionResponse, UpdateManySuggestionsPayload } from '@keres/shared'
 
 export class UpdateManySuggestionsUseCase {

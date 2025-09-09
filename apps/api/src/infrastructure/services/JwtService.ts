@@ -21,7 +21,7 @@ export class JwtService implements IJwtService {
   async verifyToken(token: string): Promise<object | null> {
     try {
       return jwt.verify(token, this.secret) as object
-    } catch (error) {
+    } catch (_error) {
       return null // Token is invalid or expired
     }
   }
@@ -33,7 +33,7 @@ export class JwtService implements IJwtService {
   async verifyRefreshToken(token: string): Promise<object | null> {
     try {
       return jwt.verify(token, this.secret) as object
-    } catch (error) {
+    } catch (_error) {
       return null // Token is invalid or expired
     }
   }

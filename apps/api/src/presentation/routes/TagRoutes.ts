@@ -1,5 +1,6 @@
 import {
   AddTagToEntityUseCase,
+  BulkDeleteTagUseCase,
   CreateTagUseCase,
   DeleteTagUseCase,
   GetTagsByStoryIdUseCase,
@@ -41,6 +42,11 @@ const getTagUseCase = new GetTagUseCase(tagRepository, storyRepository)
 const getTagsByStoryIdUseCase = new GetTagsByStoryIdUseCase(tagRepository, storyRepository)
 const updateTagUseCase = new UpdateTagUseCase(tagRepository, storyRepository)
 const deleteTagUseCase = new DeleteTagUseCase(tagRepository, storyRepository)
+const bulkDeleteTagUseCase = new BulkDeleteTagUseCase(
+  // Added
+  tagRepository,
+  storyRepository,
+)
 const addTagToEntityUseCase = new AddTagToEntityUseCase(
   tagRepository,
   storyRepository,
@@ -64,6 +70,7 @@ const tagController = new TagController(
   getTagsByStoryIdUseCase,
   updateTagUseCase,
   deleteTagUseCase,
+  bulkDeleteTagUseCase,
   addTagToEntityUseCase,
   removeTagFromEntityUseCase,
 )
@@ -75,6 +82,11 @@ const IdParamSchema = z.object({
 
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
+})
+
+// Define schema for bulk delete request body
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
 })
 
 // POST /
@@ -286,7 +298,7 @@ tagRoutes.openapi(
         },
       },
       500: {
-        description: 'Internal server error',
+        description: 'Internal Server Error',
         content: {
           'application/json': {
             schema: z.object({ error: z.string() }),
@@ -303,10 +315,13 @@ tagRoutes.openapi(
     const data = UpdateTagSchema.parse(body)
     try {
       const updatedTag = await tagController.updateTag(userId, params.id, data)
+      if (!updatedTag) {
+        return c.json({ error: 'Tag not found' }, 404)
+      }
       return c.json(updatedTag, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
@@ -374,10 +389,13 @@ tagRoutes.openapi(
     const data = UpdateTagSchema.parse(body) // UpdateTagSchema already handles optional fields
     try {
       const updatedTag = await tagController.updateTag(userId, params.id, data) // Reusing updateTag for now
+      if (!updatedTag) {
+        return c.json({ error: 'Tag not found' }, 404)
+      }
       return c.json(updatedTag, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }
@@ -559,6 +577,71 @@ tagRoutes.openapi(
     try {
       await tagController.removeTag(userId, data)
       return c.json({ message: 'Tag removed successfully' }, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete // Added
+tagRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete tags',
+    description: 'Deletes multiple tags by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
+                example: [{ id: 'ulid1', reason: 'Tag not found' }],
+              }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Tags'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await tagController.bulkDeleteTags(userId, ids)
+      return c.json(result, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

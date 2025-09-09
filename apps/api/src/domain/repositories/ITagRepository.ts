@@ -10,4 +10,5 @@ export interface ITagRepository {
   removeTagFromChapter(chapterId: string, tagId: string): Promise<void>
   addTagToScene(sceneId: string, tagId: string): Promise<void>
   removeTagFromScene(sceneId: string, tagId: string): Promise<void>
+  delete(id: string, storyId: string): Promise<void>
 }

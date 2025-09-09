@@ -1,18 +1,18 @@
-import type { z } from 'zod'
-
-import {
-  type CreateChoiceSchema,
-  type UpdateChoiceSchema,
-  ChoiceResponseSchema,
-} from '@keres/shared'
-
 import type {
+  BulkDeleteChoiceUseCase,
   CreateChoiceUseCase,
   DeleteChoiceUseCase,
   GetChoicesBySceneIdUseCase,
   GetChoiceUseCase,
   UpdateChoiceUseCase,
 } from '@application/use-cases/'
+import type { z } from 'zod'
+
+import {
+  ChoiceResponseSchema,
+  type CreateChoiceSchema,
+  type UpdateChoiceSchema,
+} from '@keres/shared'
 
 export class ChoiceController {
   constructor(
@@ -20,15 +20,22 @@ export class ChoiceController {
     private getChoiceUseCase: GetChoiceUseCase,
     private updateChoiceUseCase: UpdateChoiceUseCase,
     private deleteChoiceUseCase: DeleteChoiceUseCase,
+    private bulkDeleteChoiceUseCase: BulkDeleteChoiceUseCase,
     private getChoicesBySceneIdUseCase: GetChoicesBySceneIdUseCase,
   ) {}
 
-  async createChoice(userId: string, data: z.infer<typeof CreateChoiceSchema>): Promise<z.infer<typeof ChoiceResponseSchema>> {
+  async createChoice(
+    userId: string,
+    data: z.infer<typeof CreateChoiceSchema>,
+  ): Promise<z.infer<typeof ChoiceResponseSchema>> {
     const choice = await this.createChoiceUseCase.execute(userId, data)
     return ChoiceResponseSchema.parse(choice)
   }
 
-  async getChoice(userId: string, id: string): Promise<z.infer<typeof ChoiceResponseSchema> | null> {
+  async getChoice(
+    userId: string,
+    id: string,
+  ): Promise<z.infer<typeof ChoiceResponseSchema> | null> {
     const choice = await this.getChoiceUseCase.execute(userId, id)
     if (!choice) {
       return null
@@ -52,7 +59,15 @@ export class ChoiceController {
     await this.deleteChoiceUseCase.execute(userId, id)
   }
 
-  async getChoicesBySceneId(userId: string, sceneId: string): Promise<z.infer<typeof ChoiceResponseSchema>[]> {
+  async bulkDeleteChoices(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteChoiceUseCase.execute(userId, ids)
+    return result
+  }
+
+  async getChoicesBySceneId(
+    userId: string,
+    sceneId: string,
+  ): Promise<z.infer<typeof ChoiceResponseSchema>[]> {
     const choices = await this.getChoicesBySceneIdUseCase.execute(userId, sceneId)
     return choices.map((choice) => ChoiceResponseSchema.parse(choice))
   }

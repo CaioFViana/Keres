@@ -32,7 +32,12 @@ const createStoryUseCase = new CreateStoryUseCase(storyRepository)
 const getStoryUseCase = new GetStoryUseCase(storyRepository, characterRepository, chapterRepository) // Updated
 const updateStoryUseCase = new UpdateStoryUseCase(storyRepository)
 const deleteStoryUseCase = new DeleteStoryUseCase(storyRepository)
-const getStoriesByUserIdUseCase = new GetStoriesByUserIdUseCase(storyRepository, characterRepository, chapterRepository, locationRepository)
+const getStoriesByUserIdUseCase = new GetStoriesByUserIdUseCase(
+  storyRepository,
+  characterRepository,
+  chapterRepository,
+  locationRepository,
+)
 
 const storyController = new StoryController(
   createStoryUseCase,

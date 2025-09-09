@@ -1,4 +1,5 @@
 import type {
+  BulkDeleteWorldRuleUseCase,
   CreateWorldRuleUseCase,
   DeleteWorldRuleUseCase,
   GetWorldRulesByStoryIdUseCase,
@@ -20,6 +21,7 @@ export class WorldRuleController {
     private readonly getWorldRuleUseCase: GetWorldRuleUseCase,
     private readonly updateWorldRuleUseCase: UpdateWorldRuleUseCase,
     private readonly deleteWorldRuleUseCase: DeleteWorldRuleUseCase,
+    private readonly bulkDeleteWorldRuleUseCase: BulkDeleteWorldRuleUseCase,
     private readonly getWorldRulesByStoryIdUseCase: GetWorldRulesByStoryIdUseCase,
   ) {}
 
@@ -59,5 +61,10 @@ export class WorldRuleController {
       throw new Error('World Rule not found')
     }
     return
+  }
+
+  async bulkDeleteWorldRules(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteWorldRuleUseCase.execute(userId, ids)
+    return result
   }
 }

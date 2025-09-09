@@ -1,4 +1,5 @@
 import {
+  BulkDeleteWorldRuleUseCase,
   CreateWorldRuleUseCase,
   DeleteWorldRuleUseCase,
   GetWorldRulesByStoryIdUseCase,
@@ -25,6 +26,10 @@ const createWorldRuleUseCase = new CreateWorldRuleUseCase(worldRuleRepository, s
 const getWorldRuleUseCase = new GetWorldRuleUseCase(worldRuleRepository, storyRepository)
 const updateWorldRuleUseCase = new UpdateWorldRuleUseCase(worldRuleRepository, storyRepository)
 const deleteWorldRuleUseCase = new DeleteWorldRuleUseCase(worldRuleRepository, storyRepository)
+const bulkDeleteWorldRuleUseCase = new BulkDeleteWorldRuleUseCase(
+  worldRuleRepository,
+  storyRepository,
+)
 const getWorldRulesByStoryIdUseCase = new GetWorldRulesByStoryIdUseCase(
   worldRuleRepository,
   storyRepository,
@@ -35,6 +40,7 @@ const worldRuleController = new WorldRuleController(
   getWorldRuleUseCase,
   updateWorldRuleUseCase,
   deleteWorldRuleUseCase,
+  bulkDeleteWorldRuleUseCase,
   getWorldRulesByStoryIdUseCase,
 )
 
@@ -46,6 +52,11 @@ const IdParamSchema = z.object({
 const StoryIdParamSchema = z.object({
   storyId: z.ulid(),
 })
+
+// Define schema for bulk delete request body // Added
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+}) // Added
 
 // POST /
 worldRuleRoutes.openapi(
@@ -427,6 +438,71 @@ worldRuleRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete
+worldRuleRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete world rules',
+    description: 'Deletes multiple world rules by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
+                example: [{ id: 'ulid1', reason: 'World Rule not found' }],
+              }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['World Rules'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await worldRuleController.bulkDeleteWorldRules(userId, ids)
+      return c.json(result, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

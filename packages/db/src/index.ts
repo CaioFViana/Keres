@@ -1,5 +1,5 @@
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 
 import { getKeresDbPath } from '@keres/shared'
 import Database from 'better-sqlite3'
@@ -22,7 +22,7 @@ if (process.env.DATABASE_URL) {
 } else {
   if (appMode === 'offline') {
     // Default for offline mode: local SQLite file
-    connectionString = 'file:' + getKeresDbPath()
+    connectionString = `file:${getKeresDbPath()}`
   } else {
     // Default for online mode: local PostgreSQL
     connectionString = 'postgres://user:password@localhost:5432/keres_db'

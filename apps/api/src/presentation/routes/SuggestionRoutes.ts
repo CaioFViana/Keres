@@ -1,4 +1,5 @@
 import {
+  BulkDeleteSuggestionUseCase,
   CreateManySuggestionsUseCase,
   CreateSuggestionUseCase,
   DeleteSuggestionUseCase,
@@ -30,6 +31,10 @@ const createSuggestionUseCase = new CreateSuggestionUseCase(suggestionRepository
 const getSuggestionUseCase = new GetSuggestionUseCase(suggestionRepository, storyRepository)
 const updateSuggestionUseCase = new UpdateSuggestionUseCase(suggestionRepository, storyRepository)
 const deleteSuggestionUseCase = new DeleteSuggestionUseCase(suggestionRepository, storyRepository)
+const bulkDeleteSuggestionUseCase = new BulkDeleteSuggestionUseCase(
+  suggestionRepository,
+  storyRepository,
+)
 const getSuggestionsByUserIdUseCase = new GetSuggestionsByUserIdUseCase(suggestionRepository)
 const getSuggestionsByStoryIdUseCase = new GetSuggestionsByStoryIdUseCase(
   suggestionRepository,
@@ -62,13 +67,14 @@ const suggestionController = new SuggestionController(
   getSuggestionUseCase,
   updateSuggestionUseCase,
   deleteSuggestionUseCase,
+  bulkDeleteSuggestionUseCase,
   getSuggestionsByUserIdUseCase,
   getSuggestionsByStoryIdUseCase,
   getSuggestionsByTypeUseCase,
   getSuggestionsByUserAndTypeUseCase,
   getSuggestionsByStoryAndTypeUseCase,
   createManySuggestionsUseCase,
-  updateManySuggestionsUseCase
+  updateManySuggestionsUseCase,
 )
 
 // Define schemas for path parameters
@@ -87,6 +93,11 @@ const StoryIdParamSchema = z.object({
 const TypeParamSchema = z.object({
   type: z.string(),
 })
+
+// Define schema for bulk delete request body // Added
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+}) // Added
 
 // POST /
 suggestionRoutes.openapi(
@@ -315,7 +326,8 @@ suggestionRoutes.openapi(
   }),
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const params = UserIdParamSchema.parse(c.req.param())
+    const _params = UserIdParamSchema.parse(c.req.param())
+    // Idea could be a really far future where one could look into other's suggestions. so for now.. leave as is.
     try {
       const suggestions = await suggestionController.getSuggestionsByUserId(userId)
       return c.json(suggestions, 200)
@@ -819,6 +831,71 @@ suggestionRoutes.openapi(
     try {
       await suggestionController.deleteSuggestion(userId, params.id)
       return c.body(null, 204)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete // Added
+suggestionRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete suggestions',
+    description: 'Deletes multiple suggestions by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
+                example: [{ id: 'ulid1', reason: 'Suggestion not found' }],
+              }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Suggestions'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await suggestionController.bulkDeleteSuggestions(userId, ids)
+      return c.json(result, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

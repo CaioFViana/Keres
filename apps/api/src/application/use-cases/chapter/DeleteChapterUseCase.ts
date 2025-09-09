@@ -1,6 +1,6 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 
 export class DeleteChapterUseCase {
   constructor(

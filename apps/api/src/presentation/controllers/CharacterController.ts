@@ -1,10 +1,11 @@
 import type {
+  BulkDeleteCharacterUseCase,
   CreateCharacterUseCase,
+  CreateManyCharactersUseCase,
   DeleteCharacterUseCase,
   GetCharactersByStoryIdUseCase,
   GetCharacterUseCase,
   UpdateCharacterUseCase,
-  CreateManyCharactersUseCase,
   UpdateManyCharactersUseCase,
 } from '@application/use-cases'
 import type { z } from 'zod'
@@ -22,6 +23,7 @@ export class CharacterController {
     private readonly getCharacterUseCase: GetCharacterUseCase,
     private readonly updateCharacterUseCase: UpdateCharacterUseCase,
     private readonly deleteCharacterUseCase: DeleteCharacterUseCase,
+    private readonly bulkDeleteCharacterUseCase: BulkDeleteCharacterUseCase,
     private readonly getCharactersByStoryIdUseCase: GetCharactersByStoryIdUseCase,
     private readonly createManyCharactersUseCase: CreateManyCharactersUseCase,
     private readonly updateManyCharactersUseCase: UpdateManyCharactersUseCase,
@@ -73,5 +75,10 @@ export class CharacterController {
       throw new Error('Character not found')
     }
     return
+  }
+
+  async bulkDeleteCharacters(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteCharacterUseCase.execute(userId, ids)
+    return result
   }
 }

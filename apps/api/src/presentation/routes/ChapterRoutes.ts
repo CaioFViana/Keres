@@ -1,4 +1,5 @@
 import {
+  BulkDeleteChapterUseCase,
   CreateChapterUseCase,
   DeleteChapterUseCase,
   GetChaptersByStoryIdUseCase,
@@ -25,7 +26,16 @@ const sceneRepository = new SceneRepository()
 const createChapterUseCase = new CreateChapterUseCase(chapterRepository, storyRepository)
 const getChapterUseCase = new GetChapterUseCase(chapterRepository, storyRepository, sceneRepository)
 const updateChapterUseCase = new UpdateChapterUseCase(chapterRepository, storyRepository)
-const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository, storyRepository, sceneRepository)
+const deleteChapterUseCase = new DeleteChapterUseCase(
+  chapterRepository,
+  storyRepository,
+  sceneRepository,
+)
+const bulkDeleteChapterUseCase = new BulkDeleteChapterUseCase(
+  chapterRepository,
+  storyRepository,
+  sceneRepository,
+)
 const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(
   chapterRepository,
   storyRepository,
@@ -36,6 +46,7 @@ const chapterController = new ChapterController(
   getChapterUseCase,
   updateChapterUseCase,
   deleteChapterUseCase,
+  bulkDeleteChapterUseCase,
   getChaptersByStoryIdUseCase,
 )
 
@@ -54,6 +65,11 @@ const IncludeQuerySchema = z.object({
     .string()
     .optional()
     .transform((val) => (val ? val.split(',') : [])),
+})
+
+// Define schema for bulk delete request body
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
 })
 
 // POST /
@@ -409,6 +425,69 @@ chapterRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete
+chapterRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete chapters',
+    description: 'Deletes multiple chapters by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Chapters'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await chapterController.bulkDeleteChapters(userId, ids)
+      return c.json(result, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

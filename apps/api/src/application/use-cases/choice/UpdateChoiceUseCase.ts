@@ -2,8 +2,9 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Import
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import
-import { type UpdateChoiceSchema, ChoiceResponseSchema } from '@keres/shared'
 import type { z } from 'zod'
+
+import { ChoiceResponseSchema, type UpdateChoiceSchema } from '@keres/shared'
 
 export class UpdateChoiceUseCase {
   constructor(
@@ -13,7 +14,11 @@ export class UpdateChoiceUseCase {
     private storyRepository: IStoryRepository,
   ) {}
 
-  async execute(userId: string, id: string, data: z.infer<typeof UpdateChoiceSchema>): Promise<z.infer<typeof ChoiceResponseSchema>> {
+  async execute(
+    userId: string,
+    id: string,
+    data: z.infer<typeof UpdateChoiceSchema>,
+  ): Promise<z.infer<typeof ChoiceResponseSchema>> {
     const existingChoice = await this.choiceRepository.findById(id)
     if (!existingChoice) {
       throw new Error('Choice not found')

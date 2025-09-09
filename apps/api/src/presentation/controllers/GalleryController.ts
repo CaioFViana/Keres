@@ -1,4 +1,5 @@
 import type {
+  BulkDeleteGalleryUseCase,
   CreateGalleryUseCase,
   DeleteGalleryUseCase,
   GetGalleryByOwnerIdUseCase,
@@ -26,6 +27,7 @@ export class GalleryController {
     private readonly getGalleryUseCase: GetGalleryUseCase,
     private readonly updateGalleryUseCase: UpdateGalleryUseCase,
     private readonly deleteGalleryUseCase: DeleteGalleryUseCase,
+    private readonly bulkDeleteGalleryUseCase: BulkDeleteGalleryUseCase,
     private readonly getGalleryByOwnerIdUseCase: GetGalleryByOwnerIdUseCase,
     private readonly getGalleryByStoryIdUseCase: GetGalleryByStoryIdUseCase,
     private readonly galleryRepository: IGalleryRepository,
@@ -86,6 +88,11 @@ export class GalleryController {
       throw new Error('Gallery item not found or does not belong to the specified story/owner')
     }
     return
+  }
+
+  async bulkDeleteGallery(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteGalleryUseCase.execute(userId, ids)
+    return result
   }
 
   async getGalleryImage(userId: string, galleryId: string) {

@@ -1,4 +1,5 @@
 import type {
+  BulkDeleteNoteUseCase,
   CreateNoteUseCase,
   DeleteNoteUseCase,
   GetNotesByStoryIdUseCase,
@@ -20,6 +21,7 @@ export class NoteController {
     private readonly getNoteUseCase: GetNoteUseCase,
     private readonly updateNoteUseCase: UpdateNoteUseCase,
     private readonly deleteNoteUseCase: DeleteNoteUseCase,
+    private readonly bulkDeleteNoteUseCase: BulkDeleteNoteUseCase,
     private readonly getNotesByStoryIdUseCase: GetNotesByStoryIdUseCase,
   ) {}
 
@@ -56,5 +58,10 @@ export class NoteController {
       throw new Error('Note not found')
     }
     return
+  }
+
+  async bulkDeleteNotes(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteNoteUseCase.execute(userId, ids)
+    return result
   }
 }

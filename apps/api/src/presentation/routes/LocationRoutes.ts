@@ -1,4 +1,5 @@
 import {
+  BulkDeleteLocationUseCase,
   CreateLocationUseCase,
   DeleteLocationUseCase,
   GetLocationsByStoryIdUseCase,
@@ -29,7 +30,17 @@ const getLocationUseCase = new GetLocationUseCase(
   sceneRepository,
 ) // Updated
 const updateLocationUseCase = new UpdateLocationUseCase(locationRepository, storyRepository)
-const deleteLocationUseCase = new DeleteLocationUseCase(locationRepository, storyRepository, sceneRepository)
+const deleteLocationUseCase = new DeleteLocationUseCase(
+  locationRepository,
+  storyRepository,
+  sceneRepository,
+)
+const bulkDeleteLocationUseCase = new BulkDeleteLocationUseCase(
+  // Added
+  locationRepository,
+  storyRepository,
+  sceneRepository,
+)
 const getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(
   locationRepository,
   storyRepository,
@@ -40,6 +51,7 @@ const locationController = new LocationController(
   getLocationUseCase,
   updateLocationUseCase,
   deleteLocationUseCase,
+  bulkDeleteLocationUseCase,
   getLocationsByStoryIdUseCase,
 )
 
@@ -59,6 +71,11 @@ const IncludeQuerySchema = z.object({
     .optional()
     .transform((val) => (val ? val.split(',') : [])),
 })
+
+// Define schema for bulk delete request body // Added
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+}) // Added
 
 // POST /
 locationRoutes.openapi(
@@ -417,6 +434,71 @@ locationRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete
+locationRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete locations',
+    description: 'Deletes multiple locations by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.string()),
+              failedIds: z.array(z.object({ id: z.string(), reason: z.string() })).openapi({
+                example: [{ id: 'ulid1', reason: 'Location not found' }],
+              }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Locations'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await locationController.bulkDeleteLocations(userId, ids)
+      return c.json(result, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

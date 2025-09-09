@@ -1,5 +1,5 @@
-import { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import { IUserRepository } from '@domain/repositories/IUserRepository'
+import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
+import type { IUserRepository } from '@domain/repositories/IUserRepository'
 
 export class DeleteUserUseCase {
   constructor(

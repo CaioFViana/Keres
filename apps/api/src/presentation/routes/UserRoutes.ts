@@ -39,7 +39,7 @@ const userController = new UserController(
   createUserUseCase,
   authenticateUserUseCase,
   getUserProfileUseCase,
-  deleteUserUseCase
+  deleteUserUseCase,
 )
 
 // Define schemas for path parameters

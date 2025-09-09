@@ -1,4 +1,5 @@
 import type {
+  BulkDeleteSceneUseCase,
   CreateSceneUseCase,
   DeleteSceneUseCase,
   GetScenesByChapterIdUseCase,
@@ -20,6 +21,7 @@ export class SceneController {
     private readonly getSceneUseCase: GetSceneUseCase,
     private readonly updateSceneUseCase: UpdateSceneUseCase,
     private readonly deleteSceneUseCase: DeleteSceneUseCase,
+    private readonly bulkDeleteSceneUseCase: BulkDeleteSceneUseCase,
     private readonly getScenesByChapterIdUseCase: GetScenesByChapterIdUseCase,
   ) {}
 
@@ -56,5 +58,10 @@ export class SceneController {
       throw new Error('Scene not found or does not belong to the specified chapter')
     }
     return
+  }
+
+  async bulkDeleteScenes(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteSceneUseCase.execute(userId, ids)
+    return result
   }
 }

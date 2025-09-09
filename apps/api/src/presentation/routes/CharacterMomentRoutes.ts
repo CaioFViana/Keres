@@ -1,4 +1,5 @@
 import {
+  BulkDeleteCharacterMomentUseCase,
   CreateCharacterMomentUseCase,
   CreateManyCharacterMomentsUseCase,
   DeleteCharacterMomentUseCase,
@@ -15,7 +16,11 @@ import {
   SceneRepository,
   StoryRepository,
 } from '@infrastructure/persistence'
-import { CharacterMomentCreateSchema, CharacterMomentResponseSchema, CharacterMomentUpdateSchema } from '@keres/shared' // Import CharacterMomentResponseSchema
+import {
+  CharacterMomentCreateSchema,
+  CharacterMomentResponseSchema,
+  CharacterMomentUpdateSchema,
+} from '@keres/shared' // Import CharacterMomentResponseSchema
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
 import { z } from 'zod' // Import z for defining parameters
 
@@ -57,6 +62,15 @@ const deleteCharacterMomentUseCase = new DeleteCharacterMomentUseCase(
   storyRepository,
 )
 
+const bulkDeleteCharacterMomentUseCase = new BulkDeleteCharacterMomentUseCase(
+  characterMomentRepository,
+  characterRepository,
+  momentRepository,
+  sceneRepository,
+  chapterRepository,
+  storyRepository,
+)
+
 const createManyCharactersMomentUseCase = new CreateManyCharacterMomentsUseCase(
   characterMomentRepository,
   characterRepository,
@@ -75,14 +89,14 @@ const updateManyCharactersMomentUseCase = new UpdateManyCharacterMomentsUseCase(
   storyRepository,
 )
 
-
 const characterMomentController = new CharacterMomentController(
   createCharacterMomentUseCase,
   getCharacterMomentsByCharacterIdUseCase,
   getCharacterMomentsByMomentIdUseCase,
   deleteCharacterMomentUseCase,
+  bulkDeleteCharacterMomentUseCase,
   createManyCharactersMomentUseCase,
-  updateManyCharactersMomentUseCase
+  updateManyCharactersMomentUseCase,
 )
 
 // Define schemas for path parameters
@@ -93,6 +107,11 @@ const CharacterIdParamSchema = z.object({
 const MomentIdParamSchema = z.object({
   momentId: z.ulid(),
 })
+
+// Define schema for bulk delete request body // Added
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.object({ characterId: z.string(), momentId: z.string() })),
+}) // Added
 
 // POST /
 // POST /
@@ -164,7 +183,8 @@ characterMomentRoutes.openapi(
     method: 'post',
     path: '/batch',
     summary: 'Create multiple character moments',
-    description: 'Creates multiple associations between characters and moments in a single request.',
+    description:
+      'Creates multiple associations between characters and moments in a single request.',
     request: {
       body: {
         content: {
@@ -207,7 +227,10 @@ characterMomentRoutes.openapi(
     const body = await c.req.json()
     const data = CreateManyCharacterMomentsSchema.parse(body)
     try {
-      const newCharacterMoments = await characterMomentController.createManyCharacterMoments(userId, data)
+      const newCharacterMoments = await characterMomentController.createManyCharacterMoments(
+        userId,
+        data,
+      )
       return c.json(newCharacterMoments, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -227,7 +250,8 @@ characterMomentRoutes.openapi(
     method: 'put',
     path: '/batch',
     summary: 'Update multiple character moments',
-    description: 'Updates multiple associations between characters and moments in a single request.',
+    description:
+      'Updates multiple associations between characters and moments in a single request.',
     request: {
       body: {
         content: {
@@ -278,7 +302,10 @@ characterMomentRoutes.openapi(
     const body = await c.req.json()
     const data = UpdateManyCharacterMomentsSchema.parse(body)
     try {
-      const updatedCharacterMoments = await characterMomentController.updateManyCharacterMoments(userId, data)
+      const updatedCharacterMoments = await characterMomentController.updateManyCharacterMoments(
+        userId,
+        data,
+      )
       return c.json(updatedCharacterMoments, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -458,6 +485,81 @@ characterMomentRoutes.openapi(
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
+// POST /bulk-delete // Added
+characterMomentRoutes.openapi(
+  createRoute({
+    method: 'post',
+    path: '/bulk-delete',
+    summary: 'Bulk delete character moments',
+    description: 'Deletes multiple character moments by their IDs.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: BulkDeleteSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Bulk delete operation results',
+        content: {
+          'application/json': {
+            schema: z.object({
+              successfulIds: z.array(z.object({ characterId: z.ulid(), momentId: z.ulid() })),
+              failedIds: z
+                .array(
+                  z.object({ characterId: z.string(), momentId: z.string(), reason: z.string() }),
+                )
+                .openapi({
+                  example: [
+                    {
+                      characterId: 'ulid1',
+                      momentId: 'ulid2',
+                      reason: 'CharacterMoment not found',
+                    },
+                  ],
+                }),
+            }),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: z.object({ error: z.string() }),
+          },
+        },
+      },
+    },
+    tags: ['Character Moments'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const { ids } = BulkDeleteSchema.parse(body)
+    try {
+      const result = await characterMomentController.bulkDeleteCharacterMoments(userId, ids)
+      return c.json(result, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
       }
       return c.json({ error: 'Internal Server Error' }, 500)
     }

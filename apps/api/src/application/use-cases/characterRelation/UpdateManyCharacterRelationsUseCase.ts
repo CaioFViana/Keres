@@ -11,7 +11,10 @@ export class UpdateManyCharacterRelationsUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(userId: string, data: UpdateManyCharacterRelationsPayload): Promise<CharacterRelationResponse[]> {
+  async execute(
+    userId: string,
+    data: UpdateManyCharacterRelationsPayload,
+  ): Promise<CharacterRelationResponse[]> {
     if (data.length === 0) {
       return []
     }
@@ -30,13 +33,21 @@ export class UpdateManyCharacterRelationsUseCase {
       }
 
       // Validate character existence and ownership
-      const char1 = await this.characterRepository.findById(payload.charId1 || existingCharacterRelation.charId1)
+      const char1 = await this.characterRepository.findById(
+        payload.charId1 || existingCharacterRelation.charId1,
+      )
       if (!char1) {
-        throw new Error(`Character with ID ${payload.charId1 || existingCharacterRelation.charId1} not found`)
+        throw new Error(
+          `Character with ID ${payload.charId1 || existingCharacterRelation.charId1} not found`,
+        )
       }
-      const char2 = await this.characterRepository.findById(payload.charId2 || existingCharacterRelation.charId2)
+      const char2 = await this.characterRepository.findById(
+        payload.charId2 || existingCharacterRelation.charId2,
+      )
       if (!char2) {
-        throw new Error(`Character with ID ${payload.charId2 || existingCharacterRelation.charId2} not found`)
+        throw new Error(
+          `Character with ID ${payload.charId2 || existingCharacterRelation.charId2} not found`,
+        )
       }
 
       // Ensure both characters belong to the same story and the user owns that story

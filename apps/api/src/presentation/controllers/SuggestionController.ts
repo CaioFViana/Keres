@@ -1,4 +1,6 @@
 import type {
+  BulkDeleteSuggestionUseCase,
+  CreateManySuggestionsUseCase,
   CreateSuggestionUseCase,
   DeleteSuggestionUseCase,
   GetSuggestionsByStoryAndTypeUseCase,
@@ -7,9 +9,8 @@ import type {
   GetSuggestionsByUserAndTypeUseCase,
   GetSuggestionsByUserIdUseCase,
   GetSuggestionUseCase,
-  UpdateSuggestionUseCase,
-  CreateManySuggestionsUseCase,
   UpdateManySuggestionsUseCase,
+  UpdateSuggestionUseCase,
 } from '@application/use-cases'
 import type z from 'zod'
 
@@ -25,6 +26,7 @@ export class SuggestionController {
     private readonly getSuggestionUseCase: GetSuggestionUseCase,
     private readonly updateSuggestionUseCase: UpdateSuggestionUseCase,
     private readonly deleteSuggestionUseCase: DeleteSuggestionUseCase,
+    private readonly bulkDeleteSuggestionUseCase: BulkDeleteSuggestionUseCase,
     private readonly getSuggestionsByUserIdUseCase: GetSuggestionsByUserIdUseCase,
     private readonly getSuggestionsByStoryIdUseCase: GetSuggestionsByStoryIdUseCase,
     private readonly getSuggestionsByTypeUseCase: GetSuggestionsByTypeUseCase,
@@ -104,5 +106,10 @@ export class SuggestionController {
       throw new Error('Suggestion not found')
     }
     return
+  }
+
+  async bulkDeleteSuggestions(userId: string, ids: string[]) {
+    const result = await this.bulkDeleteSuggestionUseCase.execute(userId, ids)
+    return result
   }
 }

@@ -9,6 +9,7 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRou
 import {
   ChapterRepository,
   CharacterRepository,
+  LocationRepository,
   StoryRepository,
 } from '@infrastructure/persistence'
 import {
@@ -24,13 +25,14 @@ const storyRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for StoryController
 const storyRepository = new StoryRepository()
-const characterRepository = new CharacterRepository() // New
-const chapterRepository = new ChapterRepository() // New
+const characterRepository = new CharacterRepository()
+const chapterRepository = new ChapterRepository()
+const locationRepository = new LocationRepository()
 const createStoryUseCase = new CreateStoryUseCase(storyRepository)
 const getStoryUseCase = new GetStoryUseCase(storyRepository, characterRepository, chapterRepository) // Updated
 const updateStoryUseCase = new UpdateStoryUseCase(storyRepository)
 const deleteStoryUseCase = new DeleteStoryUseCase(storyRepository)
-const getStoriesByUserIdUseCase = new GetStoriesByUserIdUseCase(storyRepository)
+const getStoriesByUserIdUseCase = new GetStoriesByUserIdUseCase(storyRepository, characterRepository, chapterRepository, locationRepository)
 
 const storyController = new StoryController(
   createStoryUseCase,

@@ -25,7 +25,7 @@ const sceneRepository = new SceneRepository()
 const createChapterUseCase = new CreateChapterUseCase(chapterRepository, storyRepository)
 const getChapterUseCase = new GetChapterUseCase(chapterRepository, storyRepository, sceneRepository)
 const updateChapterUseCase = new UpdateChapterUseCase(chapterRepository, storyRepository)
-const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository, storyRepository)
+const deleteChapterUseCase = new DeleteChapterUseCase(chapterRepository, storyRepository, sceneRepository)
 const getChaptersByStoryIdUseCase = new GetChaptersByStoryIdUseCase(
   chapterRepository,
   storyRepository,

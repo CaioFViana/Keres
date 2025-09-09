@@ -29,7 +29,7 @@ const getLocationUseCase = new GetLocationUseCase(
   sceneRepository,
 ) // Updated
 const updateLocationUseCase = new UpdateLocationUseCase(locationRepository, storyRepository)
-const deleteLocationUseCase = new DeleteLocationUseCase(locationRepository, storyRepository)
+const deleteLocationUseCase = new DeleteLocationUseCase(locationRepository, storyRepository, sceneRepository)
 const getLocationsByStoryIdUseCase = new GetLocationsByStoryIdUseCase(
   locationRepository,
   storyRepository,

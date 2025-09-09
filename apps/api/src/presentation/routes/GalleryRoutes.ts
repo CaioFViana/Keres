@@ -47,7 +47,7 @@ const updateGalleryUseCase = new UpdateGalleryUseCase(
   noteRepository,
   locationRepository,
 )
-const deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository, storyRepository)
+const deleteGalleryUseCase = new DeleteGalleryUseCase(galleryRepository, storyRepository, noteRepository)
 const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(
   galleryRepository,
   characterRepository,

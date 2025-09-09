@@ -1,10 +1,12 @@
 import {
   AuthenticateUserUseCase,
   CreateUserUseCase,
+  DeleteUserUseCase,
   GetUserProfileUseCase,
   RefreshTokenUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
+import { StoryRepository } from '@infrastructure/persistence'
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher'
 import { JwtService } from '@infrastructure/services/JwtService'
@@ -16,8 +18,10 @@ const userRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
 // Dependencies for UserController
 const userRepository = new UserRepository()
+const storyRepository = new StoryRepository()
 const passwordHasher = new BcryptPasswordHasher()
 const createUserUseCase = new CreateUserUseCase(userRepository, passwordHasher)
+const deleteUserUseCase = new DeleteUserUseCase(userRepository, storyRepository)
 
 const jwtService = new JwtService()
 const authenticateUserUseCase = new AuthenticateUserUseCase(
@@ -35,6 +39,7 @@ const userController = new UserController(
   createUserUseCase,
   authenticateUserUseCase,
   getUserProfileUseCase,
+  deleteUserUseCase
 )
 
 // Define schemas for path parameters

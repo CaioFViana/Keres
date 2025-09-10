@@ -72,11 +72,11 @@ app.route('/locations', locationRoutes)
 app.route('/gallery', galleryRoutes)
 app.route('/character-moments', characterMomentRoutes)
 app.route('/character-relations', characterRelationRoutes)
-app.route('/choices', choiceRoutes) // Added
-app.route('/world-rules', worldRuleRoutes) // Added
-app.route('/notes', noteRoutes) // Added
-app.route('/tags', tagRoutes) // Added
-app.route('/suggestions', suggestionRoutes) // Added
-app.route('/search', searchRoutes) // Added
+app.route('/choices', choiceRoutes)
+app.route('/world-rules', worldRuleRoutes)
+app.route('/notes', noteRoutes)
+app.route('/tags', tagRoutes)
+app.route('/suggestions', suggestionRoutes)
+app.route('/search', searchRoutes)
 
 export default app

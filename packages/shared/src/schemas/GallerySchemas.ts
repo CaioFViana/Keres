@@ -10,7 +10,10 @@ export const GalleryCreateSchema = z.object({
   imagePath: z.string(), // This will be the original filename with extension
   isFavorite: z.boolean().optional(),
   extraNotes: z.string().optional(),
-  file: z.instanceof(File)
+  file: z.instanceof(File).openapi({
+    type: 'string',
+    format: 'binary',
+  }),
 })
 
 export const GalleryUpdateSchema = z.object({

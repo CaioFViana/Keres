@@ -3,7 +3,7 @@ import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { db, story } from '@infrastructure/db' // Import db and stories table
-import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
   async findById(id: string, userId: string): Promise<Story | null> {
@@ -22,26 +22,37 @@ export class StoryRepository implements IStoryRepository {
 
   async findByUserId(userId: string, query?: ListQueryParams): Promise<PaginatedResponse<Story>> {
     try {
-      let baseQuery = db.select().from(story).where(eq(story.userId, userId));
+      let baseQuery = db.select().from(story).where(eq(story.userId, userId))
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        title: story.title,
-        summary: story.summary,
-        genre: story.genre,
-        language: story.language,
-        isFavorite: story.isFavorite,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering
+      // Apply filters based on specific keys
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(and(eq(story.userId, userId), eq(column, value)));
+            const value = query.filter[key]
+            switch (key) {
+              case 'title':
+                baseQuery = baseQuery.where(and(eq(story.userId, userId), ilike(story.title, `%${value}%`)))
+                break
+              case 'type':
+                baseQuery = baseQuery.where(and(eq(story.userId, userId), eq(story.type, value)))
+                break
+              case 'summary':
+                baseQuery = baseQuery.where(and(eq(story.userId, userId), ilike(story.summary, `%${value}%`)))
+                break
+              case 'genre':
+                baseQuery = baseQuery.where(and(eq(story.userId, userId), ilike(story.genre, `%${value}%`)))
+                break
+              case 'language':
+                baseQuery = baseQuery.where(and(eq(story.userId, userId), eq(story.language, value)))
+                break
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true'
+                baseQuery = baseQuery.where(and(eq(story.userId, userId), eq(story.isFavorite, boolValue)))
+                break
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(story.userId, userId), ilike(story.extraNotes, `%${value}%`)))
+                break
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -51,15 +62,36 @@ export class StoryRepository implements IStoryRepository {
       let countQuery = db
         .select({ count: sql<number>`count(*)` })
         .from(story)
-        .where(eq(story.userId, userId)); // Start with the base where clause
+        .where(eq(story.userId, userId)) // Start with the base where clause
 
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(and(eq(story.userId, userId), eq(column, value)));
+            const value = query.filter[key]
+            switch (key) {
+              case 'title':
+                countQuery = countQuery.where(and(eq(story.userId, userId), ilike(story.title, `%${value}%`)))
+                break
+              case 'type':
+                countQuery = countQuery.where(and(eq(story.userId, userId), eq(story.type, value)))
+                break
+              case 'summary':
+                countQuery = countQuery.where(and(eq(story.userId, userId), ilike(story.summary, `%${value}%`)))
+                break
+              case 'genre':
+                countQuery = countQuery.where(and(eq(story.userId, userId), ilike(story.genre, `%${value}%`)))
+                break
+              case 'language':
+                countQuery = countQuery.where(and(eq(story.userId, userId), eq(story.language, value)))
+                break
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true'
+                countQuery = countQuery.where(and(eq(story.userId, userId), eq(story.isFavorite, boolValue)))
+                break
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(story.userId, userId), ilike(story.extraNotes, `%${value}%`)))
+                break
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -178,7 +210,7 @@ export class StoryRepository implements IStoryRepository {
         .where(
           and(
             eq(story.userId, userId),
-            or(like(story.title, `%${query}%`), like(story.summary, `%${query}%`)),
+            or(ilike(story.title, `%${query}%`), ilike(story.summary, `%${query}%`)),
           ),
         )
       return results.map(this.toDomain)

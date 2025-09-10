@@ -7,7 +7,24 @@ export const ListQuerySchema = z.object({
   order: z.enum(['asc', 'desc']).optional(),
   isFavorite: z.preprocess((val) => String(val).toLowerCase() === 'true', z.boolean()).optional(),
   hasTags: z.string().optional(),
-  filter: z.record(z.string(), z.string()).optional(),
+  filter: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined
+      try {
+        return val.split(',').reduce((acc, pair) => {
+          const [key, value] = pair.split(':')
+          if (key && value) {
+            acc[key.trim()] = value.trim()
+          }
+          return acc
+        }, {} as Record<string, string>)
+      } catch (e) {
+        console.error('Error parsing filter string:', e)
+        return undefined // Or throw an error if strict parsing is desired
+      }
+    }),
 })
 
 export type ListQueryParams = z.infer<typeof ListQuerySchema>

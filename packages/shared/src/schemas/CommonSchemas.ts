@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const ListQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional().default(1),
   limit: z.coerce.number().int().positive().optional().default(100),
-  sort_by: z.string().optional().default('asc'),
+  sort_by: z.string().optional().default('id'),
   order: z.enum(['asc', 'desc']).optional(),
   isFavorite: z.preprocess((val) => String(val).toLowerCase() === 'true', z.boolean()).optional(),
   hasTags: z.string().optional(),

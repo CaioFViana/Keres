@@ -20,6 +20,11 @@ export class SceneRepository implements ISceneRepository {
     try {
       let baseQuery = db.select().from(scenes).where(eq(scenes.chapterId, chapterId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), eq(scenes.isFavorite, query.isFavorite)));
+      }
+
       // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
@@ -38,10 +43,6 @@ export class SceneRepository implements ISceneRepository {
               case 'duration':
                 baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.duration, `%${value}%`)));
                 break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), eq(scenes.isFavorite, boolValue)));
-                break;
               case 'extraNotes':
                 baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.extraNotes, `%${value}%`)));
                 break;
@@ -56,6 +57,11 @@ export class SceneRepository implements ISceneRepository {
         .select({ count: sql<number>`count(*)` })
         .from(scenes)
         .where(eq(scenes.chapterId, chapterId)); // Start with the base where clause
+
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), eq(scenes.isFavorite, query.isFavorite)));
+      }
 
       if (query?.filter) {
         for (const key in query.filter) {
@@ -73,10 +79,6 @@ export class SceneRepository implements ISceneRepository {
                 break;
               case 'duration':
                 countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.duration, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), eq(scenes.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.extraNotes, `%${value}%`)));
@@ -135,6 +137,11 @@ export class SceneRepository implements ISceneRepository {
     try {
       let baseQuery = db.select().from(scenes).where(eq(scenes.locationId, locationId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), eq(scenes.isFavorite, query.isFavorite)));
+      }
+
       // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
@@ -153,10 +160,6 @@ export class SceneRepository implements ISceneRepository {
               case 'duration':
                 baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.duration, `%${value}%`)));
                 break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), eq(scenes.isFavorite, boolValue)));
-                break;
               case 'extraNotes':
                 baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.extraNotes, `%${value}%`)));
                 break;
@@ -171,6 +174,11 @@ export class SceneRepository implements ISceneRepository {
         .select({ count: sql<number>`count(*)` })
         .from(scenes)
         .where(eq(scenes.locationId, locationId)); // Start with the base where clause
+
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(scenes.locationId, locationId), eq(scenes.isFavorite, query.isFavorite)));
+      }
 
       if (query?.filter) {
         for (const key in query.filter) {
@@ -188,10 +196,6 @@ export class SceneRepository implements ISceneRepository {
                 break;
               case 'duration':
                 countQuery = countQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.duration, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(scenes.locationId, locationId), eq(scenes.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 countQuery = countQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.extraNotes, `%${value}%`)));

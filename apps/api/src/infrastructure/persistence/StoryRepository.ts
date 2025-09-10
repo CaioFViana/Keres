@@ -24,6 +24,11 @@ export class StoryRepository implements IStoryRepository {
     try {
       let baseQuery = db.select().from(story).where(eq(story.userId, userId))
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(story.userId, userId), eq(story.isFavorite, query.isFavorite)))
+      }
+
       // Apply filters based on specific keys
       if (query?.filter) {
         for (const key in query.filter) {
@@ -45,10 +50,6 @@ export class StoryRepository implements IStoryRepository {
               case 'language':
                 baseQuery = baseQuery.where(and(eq(story.userId, userId), eq(story.language, value)))
                 break
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true'
-                baseQuery = baseQuery.where(and(eq(story.userId, userId), eq(story.isFavorite, boolValue)))
-                break
               case 'extraNotes':
                 baseQuery = baseQuery.where(and(eq(story.userId, userId), ilike(story.extraNotes, `%${value}%`)))
                 break
@@ -63,6 +64,11 @@ export class StoryRepository implements IStoryRepository {
         .select({ count: sql<number>`count(*)` })
         .from(story)
         .where(eq(story.userId, userId)) // Start with the base where clause
+
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(story.userId, userId), eq(story.isFavorite, query.isFavorite)))
+      }
 
       if (query?.filter) {
         for (const key in query.filter) {
@@ -83,10 +89,6 @@ export class StoryRepository implements IStoryRepository {
                 break
               case 'language':
                 countQuery = countQuery.where(and(eq(story.userId, userId), eq(story.language, value)))
-                break
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true'
-                countQuery = countQuery.where(and(eq(story.userId, userId), eq(story.isFavorite, boolValue)))
                 break
               case 'extraNotes':
                 countQuery = countQuery.where(and(eq(story.userId, userId), ilike(story.extraNotes, `%${value}%`)))

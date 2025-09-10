@@ -20,6 +20,11 @@ export class ChapterRepository implements IChapterRepository {
     try {
       let baseQuery = db.select().from(chapters).where(eq(chapters.storyId, storyId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(chapters.storyId, storyId), eq(chapters.isFavorite, query.isFavorite)));
+      }
+
       // Apply hasTags filter
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -40,10 +45,6 @@ export class ChapterRepository implements IChapterRepository {
               case 'summary':
                 baseQuery = baseQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.summary, `%${value}%`)));
                 break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(chapters.storyId, storyId), eq(chapters.isFavorite, boolValue)));
-                break;
               case 'extraNotes':
                 baseQuery = baseQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.extraNotes, `%${value}%`)));
                 break;
@@ -59,6 +60,11 @@ export class ChapterRepository implements IChapterRepository {
         .select({ count: sql<number>`count(*)` })
         .from(chapters)
         .where(eq(chapters.storyId, storyId)); // Start with the base where clause
+
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(chapters.storyId, storyId), eq(chapters.isFavorite, query.isFavorite)));
+      }
 
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -77,10 +83,6 @@ export class ChapterRepository implements IChapterRepository {
                 break;
               case 'summary':
                 countQuery = countQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.summary, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(chapters.storyId, storyId), eq(chapters.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 countQuery = countQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.extraNotes, `%${value}%`)));

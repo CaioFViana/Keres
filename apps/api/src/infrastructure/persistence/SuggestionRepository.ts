@@ -20,6 +20,11 @@ export class SuggestionRepository implements ISuggestionRepository {
     try {
       let baseQuery = db.select().from(suggestions).where(eq(suggestions.userId, userId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.isFavorite, query.isFavorite)));
+      }
+
       // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
@@ -31,10 +36,6 @@ export class SuggestionRepository implements ISuggestionRepository {
                 break;
               case 'value':
                 baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), ilike(suggestions.value, `%${value}%`)));
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.isDefault, boolValue)));
                 break;
               case 'scope':
                 baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.scope, value)));
@@ -54,6 +55,11 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(eq(suggestions.userId, userId)); // Start with the base where clause
 
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.isFavorite, query.isFavorite)));
+      }
+
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
@@ -64,10 +70,6 @@ export class SuggestionRepository implements ISuggestionRepository {
                 break;
               case 'value':
                 countQuery = countQuery.where(and(eq(suggestions.userId, userId), ilike(suggestions.value, `%${value}%`)));
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.isDefault, boolValue)));
                 break;
               case 'scope':
                 countQuery = countQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.scope, value)));
@@ -130,6 +132,11 @@ export class SuggestionRepository implements ISuggestionRepository {
     try {
       let baseQuery = db.select().from(suggestions).where(eq(suggestions.storyId, storyId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.isFavorite, query.isFavorite)));
+      }
+
       // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
@@ -141,10 +148,6 @@ export class SuggestionRepository implements ISuggestionRepository {
                 break;
               case 'value':
                 baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), ilike(suggestions.value, `%${value}%`)));
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.isDefault, boolValue)));
                 break;
               case 'scope':
                 baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.scope, value)));
@@ -164,6 +167,11 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(eq(suggestions.storyId, storyId)); // Start with the base where clause
 
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.isFavorite, query.isFavorite)));
+      }
+
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
@@ -174,10 +182,6 @@ export class SuggestionRepository implements ISuggestionRepository {
                 break;
               case 'value':
                 countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), ilike(suggestions.value, `%${value}%`)));
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.isDefault, boolValue)));
                 break;
               case 'scope':
                 countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.scope, value)));
@@ -243,6 +247,11 @@ export class SuggestionRepository implements ISuggestionRepository {
 
       const conditions = [eq(suggestions.type, type)];
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        conditions.push(eq(suggestions.isFavorite, query.isFavorite));
+      }
+
       // Add user-specific filtering for global suggestions
       // If storyId is null, it means we are looking for global suggestions
       if (storyId === null) {
@@ -261,10 +270,6 @@ export class SuggestionRepository implements ISuggestionRepository {
             switch (key) {
               case 'value':
                 conditions.push(ilike(suggestions.value, `%${value}%`));
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                conditions.push(eq(suggestions.isDefault, boolValue));
                 break;
               case 'scope':
                 conditions.push(eq(suggestions.scope, value));
@@ -332,6 +337,13 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.userId, userId), eq(suggestions.type, type)));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(
+          and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.isFavorite, query.isFavorite)),
+        );
+      }
+
       // Apply generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
@@ -341,12 +353,6 @@ export class SuggestionRepository implements ISuggestionRepository {
               case 'value':
                 baseQuery = baseQuery.where(
                   and(eq(suggestions.userId, userId), eq(suggestions.type, type), ilike(suggestions.value, `%${value}%`)),
-                );
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(
-                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.isDefault, boolValue)),
                 );
                 break;
               case 'scope':
@@ -371,6 +377,13 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.userId, userId), eq(suggestions.type, type))); // Start with the base where clause
 
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(
+          and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.isFavorite, query.isFavorite)),
+        );
+      }
+
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
@@ -379,12 +392,6 @@ export class SuggestionRepository implements ISuggestionRepository {
               case 'value':
                 countQuery = countQuery.where(
                   and(eq(suggestions.userId, userId), eq(suggestions.type, type), ilike(suggestions.value, `%${value}%`)),
-                );
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(
-                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.isDefault, boolValue)),
                 );
                 break;
               case 'scope':
@@ -458,6 +465,17 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.storyId, storyId), eq(suggestions.type, type)));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(
+          and(
+            eq(suggestions.storyId, storyId),
+            eq(suggestions.type, type),
+            eq(suggestions.isFavorite, query.isFavorite),
+          ),
+        );
+      }
+
       // Apply generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
@@ -470,16 +488,6 @@ export class SuggestionRepository implements ISuggestionRepository {
                     eq(suggestions.storyId, storyId),
                     eq(suggestions.type, type),
                     ilike(suggestions.value, `%${value}%`),
-                  ),
-                );
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(
-                  and(
-                    eq(suggestions.storyId, storyId),
-                    eq(suggestions.type, type),
-                    eq(suggestions.isDefault, boolValue),
                   ),
                 );
                 break;
@@ -513,6 +521,17 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.storyId, storyId), eq(suggestions.type, type))); // Start with the base where clause
 
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(
+          and(
+            eq(suggestions.storyId, storyId),
+            eq(suggestions.type, type),
+            eq(suggestions.isFavorite, query.isFavorite),
+          ),
+        );
+      }
+
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
@@ -524,16 +543,6 @@ export class SuggestionRepository implements ISuggestionRepository {
                     eq(suggestions.storyId, storyId),
                     eq(suggestions.type, type),
                     ilike(suggestions.value, `%${value}%`),
-                  ),
-                );
-                break;
-              case 'isDefault':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(
-                  and(
-                    eq(suggestions.storyId, storyId),
-                    eq(suggestions.type, type),
-                    eq(suggestions.isDefault, boolValue),
                   ),
                 );
                 break;

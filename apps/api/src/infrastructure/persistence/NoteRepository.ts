@@ -20,6 +20,11 @@ export class NoteRepository implements INoteRepository {
     try {
       let baseQuery = db.select().from(notes).where(eq(notes.storyId, storyId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(notes.storyId, storyId), eq(notes.isFavorite, query.isFavorite)));
+      }
+
       // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
@@ -31,10 +36,6 @@ export class NoteRepository implements INoteRepository {
                 break;
               case 'body':
                 baseQuery = baseQuery.where(and(eq(notes.storyId, storyId), ilike(notes.body, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(notes.storyId, storyId), eq(notes.isFavorite, boolValue)));
                 break;
               // Add other filterable fields here as needed
             }
@@ -48,6 +49,11 @@ export class NoteRepository implements INoteRepository {
         .from(notes)
         .where(eq(notes.storyId, storyId)); // Start with the base where clause
 
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(notes.storyId, storyId), eq(notes.isFavorite, query.isFavorite)));
+      }
+
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
@@ -58,10 +64,6 @@ export class NoteRepository implements INoteRepository {
                 break;
               case 'body':
                 countQuery = countQuery.where(and(eq(notes.storyId, storyId), ilike(notes.body, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(notes.storyId, storyId), eq(notes.isFavorite, boolValue)));
                 break;
               // Add other filterable fields here as needed
             }

@@ -20,6 +20,11 @@ export class WorldRuleRepository implements IWorldRuleRepository {
     try {
       let baseQuery = db.select().from(worldRules).where(eq(worldRules.storyId, storyId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(worldRules.storyId, storyId), eq(worldRules.isFavorite, query.isFavorite)));
+      }
+
       // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
@@ -31,10 +36,6 @@ export class WorldRuleRepository implements IWorldRuleRepository {
                 break;
               case 'description':
                 baseQuery = baseQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.description, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(worldRules.storyId, storyId), eq(worldRules.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 baseQuery = baseQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.extraNotes, `%${value}%`)));
@@ -51,6 +52,11 @@ export class WorldRuleRepository implements IWorldRuleRepository {
         .from(worldRules)
         .where(eq(worldRules.storyId, storyId)); // Start with the base where clause
 
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(worldRules.storyId, storyId), eq(worldRules.isFavorite, query.isFavorite)));
+      }
+
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
@@ -61,10 +67,6 @@ export class WorldRuleRepository implements IWorldRuleRepository {
                 break;
               case 'description':
                 countQuery = countQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.description, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(worldRules.storyId, storyId), eq(worldRules.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 countQuery = countQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.extraNotes, `%${value}%`)));

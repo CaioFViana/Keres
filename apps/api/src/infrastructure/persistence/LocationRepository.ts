@@ -20,6 +20,11 @@ export class LocationRepository implements ILocationRepository {
     try {
       let baseQuery = db.select().from(locations).where(eq(locations.storyId, storyId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), eq(locations.isFavorite, query.isFavorite)));
+      }
+
       // Apply hasTags filter
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -49,10 +54,6 @@ export class LocationRepository implements ILocationRepository {
               case 'politics':
                 baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), ilike(locations.politics, `%${value}%`)));
                 break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), eq(locations.isFavorite, boolValue)));
-                break;
               case 'extraNotes':
                 baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), ilike(locations.extraNotes, `%${value}%`)));
                 break;
@@ -67,6 +68,11 @@ export class LocationRepository implements ILocationRepository {
         .select({ count: sql<number>`count(*)` })
         .from(locations)
         .where(eq(locations.storyId, storyId)); // Start with the base where clause
+
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(locations.storyId, storyId), eq(locations.isFavorite, query.isFavorite)));
+      }
 
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -94,10 +100,6 @@ export class LocationRepository implements ILocationRepository {
                 break;
               case 'politics':
                 countQuery = countQuery.where(and(eq(locations.storyId, storyId), ilike(locations.politics, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(locations.storyId, storyId), eq(locations.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 countQuery = countQuery.where(and(eq(locations.storyId, storyId), ilike(locations.extraNotes, `%${value}%`)));

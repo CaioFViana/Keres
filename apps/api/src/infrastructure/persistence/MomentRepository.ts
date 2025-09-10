@@ -35,6 +35,11 @@ export class MomentRepository implements IMomentRepository {
     try {
       let baseQuery = db.select().from(moments).where(eq(moments.sceneId, sceneId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), eq(moments.isFavorite, query.isFavorite)));
+      }
+
       // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
@@ -49,10 +54,6 @@ export class MomentRepository implements IMomentRepository {
                 break;
               case 'location':
                 baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.location, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), eq(moments.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.extraNotes, `%${value}%`)));
@@ -69,6 +70,11 @@ export class MomentRepository implements IMomentRepository {
         .from(moments)
         .where(eq(moments.sceneId, sceneId)); // Start with the base where clause
 
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), eq(moments.isFavorite, query.isFavorite)));
+      }
+
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
@@ -82,10 +88,6 @@ export class MomentRepository implements IMomentRepository {
                 break;
               case 'location':
                 countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.location, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), eq(moments.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.extraNotes, `%${value}%`)));

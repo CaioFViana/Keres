@@ -2,7 +2,7 @@ import type { Story } from '@domain/entities/Story'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, story } from '@keres/db' // Import db and stories table
+import { db, story } from '@infrastructure/db' // Import db and stories table
 import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {

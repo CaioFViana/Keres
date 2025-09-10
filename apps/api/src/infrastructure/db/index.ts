@@ -3,11 +3,31 @@ import path from 'node:path'
 
 import { getKeresDbPath } from '@keres/shared'
 import Database from 'better-sqlite3'
-import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
-import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js'
+import { BetterSQLite3Database, drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
+import { drizzle as drizzlePg, PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
 import * as schema from './schema' // Import all exports from schema.ts
+
+function initializeSqliteDb(connectionString: string): BetterSQLite3Database<typeof schema> {
+  const dbFilePath = connectionString.startsWith('file:')
+    ? connectionString.substring(5)
+    : connectionString
+  const dbDirectory = path.dirname(dbFilePath)
+
+  if (!fs.existsSync(dbDirectory)) {
+    console.log(`Creating database directory: ${dbDirectory}`)
+    fs.mkdirSync(dbDirectory, { recursive: true })
+  }
+
+  const sqlite = new Database(dbFilePath)
+  return drizzleSqlite(sqlite, { schema })
+}
+
+function initializePostgresDb(connectionString: string): PostgresJsDatabase<typeof schema> {
+  const client = postgres(connectionString)
+  return drizzlePg(client, { schema })
+}
 
 // Determine APP_MODE, defaulting to 'online'
 const appMode = process.env.APP_MODE || 'online'
@@ -29,6 +49,7 @@ if (process.env.DATABASE_URL) {
   }
 }
 
+// ANYTHING that comes here either adds to the problem or doesnt solve anything. leave as any...
 let db: any // eslint-disable-line @typescript-eslint/no-explicit-any
 
 console.log('Attempting to initialize Drizzle DB client...')
@@ -37,24 +58,10 @@ console.log(`Using database type: ${databaseType}`)
 console.log(`Using connection string: ${connectionString}`)
 
 if (databaseType === 'sqlite') {
-  // Extract the file path from the connection string (e.g., 'file:/path/to/db.sqlite')
-  const dbFilePath = connectionString.startsWith('file:')
-    ? connectionString.substring(5)
-    : connectionString
-  const dbDirectory = path.dirname(dbFilePath)
-
-  // Ensure the directory exists
-  if (!fs.existsSync(dbDirectory)) {
-    console.log(`Creating database directory: ${dbDirectory}`)
-    fs.mkdirSync(dbDirectory, { recursive: true })
-  }
-
-  const sqlite = new Database(dbFilePath)
-  db = drizzleSqlite(sqlite, { schema })
+  db = initializeSqliteDb(connectionString)
 } else if (databaseType === 'postgres') {
   // Explicitly check for postgres
-  const client = postgres(connectionString)
-  db = drizzlePg(client, { schema })
+  db = initializePostgresDb(connectionString)
 } else {
   // Handle unsupported database types or throw an error
   throw new Error(`Unsupported database type: ${databaseType}`)

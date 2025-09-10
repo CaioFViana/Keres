@@ -2,8 +2,9 @@ import type { Moment } from '@domain/entities/Moment'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { chapters, db, moments, scenes, story } from '@keres/db' // Import db and moments table
 import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm' // Import inArray
+import { chapters, moments, scenes, story } from '@infrastructure/db/schema' // Import tables from the new schema location
+import { db } from '@infrastructure/db'
 
 export class MomentRepository implements IMomentRepository {
   async findById(id: string): Promise<Moment | null> {

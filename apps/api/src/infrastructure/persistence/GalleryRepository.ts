@@ -2,7 +2,7 @@ import type { Gallery } from '@domain/entities/Gallery'
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { characters, db, gallery, locations, notes, story } from '@keres/db' // Import db and gallery table
+import { characters, db, gallery, locations, notes, story } from '@infrastructure/db' // Import db and gallery table
 import { and, eq, or } from 'drizzle-orm'
 
 export class GalleryRepository implements IGalleryRepository {

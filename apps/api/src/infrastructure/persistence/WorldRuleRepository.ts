@@ -2,7 +2,7 @@ import type { WorldRule } from '@domain/entities/WorldRule'
 import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, story, worldRules } from '@keres/db' // Import db and worldRules table
+import { db, story, worldRules } from '@infrastructure/db' // Import db and worldRules table
 import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 
 export class WorldRuleRepository implements IWorldRuleRepository {

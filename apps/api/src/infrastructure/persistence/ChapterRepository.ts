@@ -2,7 +2,7 @@ import type { Chapter } from '@domain/entities/Chapter'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { chapters, chapterTags, db, story } from '@keres/db' // Import db and chapters table
+import { chapters, chapterTags, db, story } from '@infrastructure/db' // Import db and chapters table
 import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm'
 
 export class ChapterRepository implements IChapterRepository {

@@ -1,1 +1,0 @@
-ALTER TABLE "gallery" ADD COLUMN "owner_type" text NOT NULL;

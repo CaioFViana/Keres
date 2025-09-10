@@ -1,9 +1,80 @@
 {
-  "id": "ee67632c-718d-46d9-9102-791e1a001263",
-  "prevId": "0171f96a-2a7a-4814-a3af-ba5defab59d3",
+  "id": "82c5fc98-a935-458e-a965-9c7d7c05a0ad",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
   "tables": {
+    "chapter_tags": {
+      "name": "chapter_tags",
+      "schema": "",
+      "columns": {
+        "chapter_id": {
+          "name": "chapter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "chapter_tags_chapter_id_chapters_id_fk": {
+          "name": "chapter_tags_chapter_id_chapters_id_fk",
+          "tableFrom": "chapter_tags",
+          "tableTo": "chapters",
+          "columnsFrom": [
+            "chapter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "chapter_tags_tag_id_tags_id_fk": {
+          "name": "chapter_tags_tag_id_tags_id_fk",
+          "tableFrom": "chapter_tags",
+          "tableTo": "tags",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "chapter_tags_chapter_id_tag_id_pk": {
+          "name": "chapter_tags_chapter_id_tag_id_pk",
+          "columns": [
+            "chapter_id",
+            "tag_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
     "chapters": {
       "name": "chapters",
       "schema": "",
@@ -72,9 +143,13 @@
           "name": "chapters_story_id_story_id_fk",
           "tableFrom": "chapters",
           "tableTo": "story",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -118,25 +193,36 @@
           "name": "character_moments_character_id_characters_id_fk",
           "tableFrom": "character_moments",
           "tableTo": "characters",
-          "columnsFrom": ["character_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "character_moments_moment_id_moments_id_fk": {
           "name": "character_moments_moment_id_moments_id_fk",
           "tableFrom": "character_moments",
           "tableTo": "moments",
-          "columnsFrom": ["moment_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "moment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "character_moments_character_id_moment_id_pk": {
           "name": "character_moments_character_id_moment_id_pk",
-          "columns": ["character_id", "moment_id"]
+          "columns": [
+            "character_id",
+            "moment_id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -190,22 +276,101 @@
           "name": "character_relations_char_id_1_characters_id_fk",
           "tableFrom": "character_relations",
           "tableTo": "characters",
-          "columnsFrom": ["char_id_1"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "char_id_1"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "character_relations_char_id_2_characters_id_fk": {
           "name": "character_relations_char_id_2_characters_id_fk",
           "tableFrom": "character_relations",
           "tableTo": "characters",
-          "columnsFrom": ["char_id_2"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "char_id_2"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "character_tags": {
+      "name": "character_tags",
+      "schema": "",
+      "columns": {
+        "character_id": {
+          "name": "character_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "character_tags_character_id_characters_id_fk": {
+          "name": "character_tags_character_id_characters_id_fk",
+          "tableFrom": "character_tags",
+          "tableTo": "characters",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "character_tags_tag_id_tags_id_fk": {
+          "name": "character_tags_tag_id_tags_id_fk",
+          "tableFrom": "character_tags",
+          "tableTo": "tags",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "character_tags_character_id_tag_id_pk": {
+          "name": "character_tags_character_id_tag_id_pk",
+          "columns": [
+            "character_id",
+            "tag_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "characters": {
@@ -324,9 +489,13 @@
           "name": "characters_story_id_story_id_fk",
           "tableFrom": "characters",
           "tableTo": "story",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -389,17 +558,25 @@
           "name": "choices_scene_id_scenes_id_fk",
           "tableFrom": "choices",
           "tableTo": "scenes",
-          "columnsFrom": ["scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "scene_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "choices_next_scene_id_scenes_id_fk": {
           "name": "choices_next_scene_id_scenes_id_fk",
           "tableFrom": "choices",
           "tableTo": "scenes",
-          "columnsFrom": ["next_scene_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "next_scene_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -427,7 +604,13 @@
           "name": "owner_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
+        },
+        "owner_type": {
+          "name": "owner_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         },
         "image_path": {
           "name": "image_path",
@@ -476,13 +659,88 @@
           "name": "gallery_story_id_story_id_fk",
           "tableFrom": "gallery",
           "tableTo": "story",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "location_tags": {
+      "name": "location_tags",
+      "schema": "",
+      "columns": {
+        "location_id": {
+          "name": "location_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "location_tags_location_id_locations_id_fk": {
+          "name": "location_tags_location_id_locations_id_fk",
+          "tableFrom": "location_tags",
+          "tableTo": "locations",
+          "columnsFrom": [
+            "location_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "location_tags_tag_id_tags_id_fk": {
+          "name": "location_tags_tag_id_tags_id_fk",
+          "tableFrom": "location_tags",
+          "tableTo": "tags",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "location_tags_location_id_tag_id_pk": {
+          "name": "location_tags_location_id_tag_id_pk",
+          "columns": [
+            "location_id",
+            "tag_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "locations": {
@@ -565,9 +823,13 @@
           "name": "locations_story_id_story_id_fk",
           "tableFrom": "locations",
           "tableTo": "story",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -648,9 +910,13 @@
           "name": "moments_scene_id_scenes_id_fk",
           "tableFrom": "moments",
           "tableTo": "scenes",
-          "columnsFrom": ["scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "scene_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -719,22 +985,101 @@
           "name": "notes_story_id_story_id_fk",
           "tableFrom": "notes",
           "tableTo": "story",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "notes_gallery_id_gallery_id_fk": {
           "name": "notes_gallery_id_gallery_id_fk",
           "tableFrom": "notes",
           "tableTo": "gallery",
-          "columnsFrom": ["gallery_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "gallery_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "scene_tags": {
+      "name": "scene_tags",
+      "schema": "",
+      "columns": {
+        "scene_id": {
+          "name": "scene_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "scene_tags_scene_id_scenes_id_fk": {
+          "name": "scene_tags_scene_id_scenes_id_fk",
+          "tableFrom": "scene_tags",
+          "tableTo": "scenes",
+          "columnsFrom": [
+            "scene_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "scene_tags_tag_id_tags_id_fk": {
+          "name": "scene_tags_tag_id_tags_id_fk",
+          "tableFrom": "scene_tags",
+          "tableTo": "tags",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "scene_tags_scene_id_tag_id_pk": {
+          "name": "scene_tags_scene_id_tag_id_pk",
+          "columns": [
+            "scene_id",
+            "tag_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "scenes": {
@@ -823,8 +1168,12 @@
           "name": "scenes_chapter_id_chapters_id_fk",
           "tableFrom": "scenes",
           "tableTo": "chapters",
-          "columnsFrom": ["chapter_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "chapter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -832,8 +1181,12 @@
           "name": "scenes_location_id_locations_id_fk",
           "tableFrom": "scenes",
           "tableTo": "locations",
-          "columnsFrom": ["location_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "location_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -922,8 +1275,12 @@
           "name": "story_user_id_users_id_fk",
           "tableFrom": "story",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -971,6 +1328,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -992,18 +1356,26 @@
           "name": "suggestions_user_id_users_id_fk",
           "tableFrom": "suggestions",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "suggestions_story_id_story_id_fk": {
           "name": "suggestions_story_id_story_id_fk",
           "tableFrom": "suggestions",
           "tableTo": "story",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1072,9 +1444,13 @@
           "name": "tags_story_id_story_id_fk",
           "tableFrom": "tags",
           "tableTo": "story",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1131,7 +1507,9 @@
         "users_username_unique": {
           "name": "users_username_unique",
           "nullsNotDistinct": false,
-          "columns": ["username"]
+          "columns": [
+            "username"
+          ]
         }
       }
     },
@@ -1197,9 +1575,13 @@
           "name": "world_rules_story_id_story_id_fk",
           "tableFrom": "world_rules",
           "tableTo": "story",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

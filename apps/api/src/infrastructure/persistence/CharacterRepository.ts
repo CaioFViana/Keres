@@ -2,7 +2,7 @@ import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { characters, characterTags, db, story } from '@keres/db' // Import db and characters table
+import { characters, characterTags, db, story } from '@infrastructure/db' // Import db and characters table
 import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm'
 
 export class CharacterRepository implements ICharacterRepository {

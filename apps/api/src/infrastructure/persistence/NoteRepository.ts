@@ -2,7 +2,7 @@ import type { Note } from '@domain/entities/Note'
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, notes, story } from '@keres/db' // Import db, notes and stories table
+import { db, notes, story } from '@infrastructure/db' // Import db, notes and stories table
 import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {

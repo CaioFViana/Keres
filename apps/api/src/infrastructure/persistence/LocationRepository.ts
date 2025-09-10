@@ -2,7 +2,7 @@ import type { Location } from '@domain/entities/Location'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, locations, locationTags, story } from '@keres/db' // Import db and locations table
+import { db, locations, locationTags, story } from '@infrastructure/db' // Import db and locations table
 import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm'
 
 export class LocationRepository implements ILocationRepository {

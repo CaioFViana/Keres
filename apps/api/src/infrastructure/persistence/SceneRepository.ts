@@ -2,7 +2,7 @@ import type { Scene } from '@domain/entities/Scene'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { chapters, db, scenes, story } from '@keres/db' // Import db and scenes table
+import { chapters, db, scenes, story } from '@infrastructure/db' // Import db and scenes table
 import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 
 export class SceneRepository implements ISceneRepository {

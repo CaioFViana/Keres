@@ -1,7 +1,7 @@
 import type { CharacterMoment } from '@domain/entities/CharacterMoment'
 import type { ICharacterMomentRepository } from '@domain/repositories/ICharacterMomentRepository'
 
-import { characterMoments, db } from '@keres/db' // Import db and characterMoments table
+import { characterMoments, db } from '@infrastructure/db' // Import db and characterMoments table
 import { and, eq } from 'drizzle-orm'
 
 export class CharacterMomentRepository implements ICharacterMomentRepository {

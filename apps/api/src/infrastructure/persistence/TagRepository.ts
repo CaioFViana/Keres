@@ -11,7 +11,7 @@ import {
   scenes,
   sceneTags,
   tags,
-} from '@keres/db'
+} from '@infrastructure/db'
 import { and, eq } from 'drizzle-orm'
 
 export class TagRepository implements ITagRepository {

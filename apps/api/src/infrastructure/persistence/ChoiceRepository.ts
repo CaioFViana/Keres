@@ -2,8 +2,7 @@ import type { Choice } from '@domain/entities/Choice'
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { CreateChoicePayload, UpdateChoicePayload } from '@keres/shared'
 
-import { db } from '@keres/db'
-import { chapters, choices, scenes, story } from '@keres/db/src/schema'
+import { chapters, choices, scenes, story, db } from '@infrastructure/db'
 import { and, eq, like } from 'drizzle-orm'
 import { ulid } from 'ulid'
 

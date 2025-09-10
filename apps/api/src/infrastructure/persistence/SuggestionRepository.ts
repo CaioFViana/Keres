@@ -2,7 +2,7 @@ import type { Suggestion } from '@domain/entities/Suggestion'
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, suggestions } from '@keres/db' // Import db and suggestions table
+import { db, suggestions } from '@infrastructure/db' // Import db and suggestions table
 import { and, asc, desc, eq, isNull, like, or } from 'drizzle-orm'
 
 export class SuggestionRepository implements ISuggestionRepository {

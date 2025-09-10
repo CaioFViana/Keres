@@ -1,1 +1,0 @@
-ALTER TABLE "gallery" ALTER COLUMN "owner_id" SET NOT NULL;

@@ -1,7 +1,7 @@
 import type { CharacterRelation } from '@domain/entities/CharacterRelation'
 import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
 
-import { characterRelations, db } from '@keres/db' // Import db, characterRelations
+import { characterRelations, db } from '@infrastructure/db' // Import db, characterRelations
 import { and, eq, or } from 'drizzle-orm' // Import and
 import { ulid } from 'ulid'
 

@@ -3,9 +3,6 @@ import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  optimizeDeps: {
-    include: ['@keres/db'],
-  },
   test: {
     include: ['apps/**/*.test.ts'],
     setupFiles: [path.resolve(__dirname, './vitest.setup.mts')],
@@ -31,10 +28,6 @@ export default defineConfig({
       {
         find: '@shared',
         replacement: path.resolve(__dirname, './apps/api/src/shared'),
-      },
-      {
-        find: '@keres/db',
-        replacement: path.resolve(__dirname, './packages/db'),
       },
     ],
   },

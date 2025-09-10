@@ -19,7 +19,6 @@
       "@infrastructure/*": ["./src/infrastructure/*"],
       "@presentation/*": ["./src/presentation/*"],
       "@keres/shared": ["../../packages/shared"], // Corrected alias for @keres/shared
-      "@keres/db/*": ["../../packages/db/*"] // Keep this
     }
   },
   "include": ["src/**/*.ts"],

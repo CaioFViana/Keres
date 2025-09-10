@@ -9,7 +9,8 @@ packages/shared/dist
 
 # Node
 /node_modules
-packages/db/node_modules
+/apps/api/node_modules/
+
 npm-debug.log
 yarn-error.log
 

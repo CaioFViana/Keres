@@ -1,7 +1,7 @@
 import type { User } from '@domain/entities/User'
 import type { IUserRepository } from '@domain/repositories/IUserRepository'
 
-import { db, users } from '@keres/db'
+import { db, users } from '@infrastructure/db'
 import { eq } from 'drizzle-orm'
 
 export class UserRepository implements IUserRepository {

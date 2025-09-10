@@ -1,8 +1,8 @@
 import type { Moment } from '@domain/entities/Moment'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
-import type { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
-import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm' // Import inArray
+import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm' // Import sql
 import { chapters, moments, scenes, story } from '@infrastructure/db/schema' // Import tables from the new schema location
 import { db } from '@infrastructure/db'
 
@@ -31,9 +31,9 @@ export class MomentRepository implements IMomentRepository {
     }
   }
 
-  async findBySceneId(sceneId: string, query?: ListQueryParams): Promise<Moment[]> {
+  async findBySceneId(sceneId: string, query?: ListQueryParams): Promise<PaginatedResponse<Moment>> {
     try {
-      let queryBuilder = db.select().from(moments).where(eq(moments.sceneId, sceneId))
+      let baseQuery = db.select().from(moments).where(eq(moments.sceneId, sceneId));
 
       // Define allowed filterable fields and their Drizzle column mappings
       const filterableFields = {
@@ -44,7 +44,48 @@ export class MomentRepository implements IMomentRepository {
         // Add other filterable fields here
       }
 
-      // Define allowed sortable fields and their Drizzle column mappings
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              baseQuery = baseQuery.where(
+                and(eq(moments.sceneId, sceneId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(moments)
+        .where(eq(moments.sceneId, sceneId)); // Start with the base where clause
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(
+                and(eq(moments.sceneId, sceneId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
+      // Sorting (Revised)
       const sortableFields = {
         name: moments.name,
         index: moments.index,
@@ -52,48 +93,33 @@ export class MomentRepository implements IMomentRepository {
         updatedAt: moments.updatedAt,
         // Add other sortable fields here
       }
-
-      // Generic filtering (Revised)
-      if (query?.filter) {
-        for (const key in query.filter) {
-          if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key]
-            const column = filterableFields[key as keyof typeof filterableFields]
-            if (column) {
-              queryBuilder = queryBuilder.where(
-                and(eq(moments.sceneId, sceneId), eq(column, value)),
-              )
-            }
-          }
-        }
-      }
-
-      // Sorting (Revised)
       if (query?.sort_by) {
-        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
         if (sortColumn) {
           if (query.order === 'desc') {
-            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
           } else {
-            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
           }
         }
       }
 
       // Pagination
       if (query?.limit) {
-        queryBuilder = queryBuilder.limit(query.limit)
+        finalQuery = finalQuery.limit(query.limit);
         if (query.page) {
-          const offset = (query.page - 1) * query.limit
-          queryBuilder = queryBuilder.offset(offset)
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
         }
       }
 
-      const results = await queryBuilder
-      return results.map(this.toDomain)
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
     } catch (error) {
-      console.error('Error in MomentRepository.findBySceneId:', error)
-      throw error
+      console.error('Error in MomentRepository.findBySceneId:', error);
+      throw error;
     }
   }
 

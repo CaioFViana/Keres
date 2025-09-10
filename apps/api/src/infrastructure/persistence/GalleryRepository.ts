@@ -1,9 +1,9 @@
 import type { Gallery } from '@domain/entities/Gallery'
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
-import type { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { characters, db, gallery, locations, notes, story } from '@infrastructure/db' // Import db and gallery table
-import { and, eq, or } from 'drizzle-orm'
+import { and, eq, or, sql } from 'drizzle-orm'
 
 export class GalleryRepository implements IGalleryRepository {
   async findById(id: string): Promise<Gallery | null> {
@@ -30,21 +30,48 @@ export class GalleryRepository implements IGalleryRepository {
     }
   }
 
-  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Gallery[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<PaginatedResponse<Gallery>> {
     try {
-      let queryBuilder = db.select().from(gallery).where(eq(gallery.storyId, storyId))
+      let baseQuery = db.select().from(gallery).where(eq(gallery.storyId, storyId));
 
       if (query?.isFavorite !== undefined) {
-        queryBuilder = queryBuilder.where(
+        baseQuery = baseQuery.where(
           and(eq(gallery.storyId, storyId), eq(gallery.isFavorite, query.isFavorite)),
-        )
+        );
       }
 
-      const results = await queryBuilder
-      return results.map(this.toDomain)
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(gallery)
+        .where(eq(gallery.storyId, storyId));
+
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(
+          and(eq(gallery.storyId, storyId), eq(gallery.isFavorite, query.isFavorite)),
+        );
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Apply pagination to the main query
+      let finalQuery = baseQuery;
+      if (query?.limit) {
+        finalQuery = finalQuery.limit(query.limit);
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
+        }
+      }
+
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
     } catch (error) {
-      console.error('Error in GalleryRepository.findByStoryId:', error)
-      throw error
+      console.error('Error in GalleryRepository.findByStoryId:', error);
+      throw error;
     }
   }
 
@@ -52,25 +79,18 @@ export class GalleryRepository implements IGalleryRepository {
     ownerId: string,
     userId: string,
     query?: ListQueryParams,
-  ): Promise<Gallery[]> {
+  ): Promise<PaginatedResponse<Gallery>> {
     try {
-      let queryBuilder = db.select().from(gallery).where(eq(gallery.ownerId, ownerId))
+      let baseQuery = db.select().from(gallery).where(eq(gallery.ownerId, ownerId));
 
       if (query?.isFavorite !== undefined) {
-        queryBuilder = queryBuilder.where(
+        baseQuery = baseQuery.where(
           and(eq(gallery.ownerId, ownerId), eq(gallery.isFavorite, query.isFavorite)),
-        )
+        );
       }
 
-      // This part is complex due to the polymorphic ownerId.
-      // We need to check if the ownerId belongs to a character, note, or location,
-      // and then verify if that character/note/location's story belongs to the userId.
-      // This might be better handled in the use case or by separate queries.
-      // For now, I'll implement a basic join to filter by story ownership.
-
-      // This is a simplified approach. A more robust solution might involve
-      // fetching the owner first and then filtering the gallery items.
-      const results = await queryBuilder
+      // Apply joins and user filter to the base query
+      baseQuery = baseQuery
         .leftJoin(characters, eq(gallery.ownerId, characters.id))
         .leftJoin(notes, eq(gallery.ownerId, notes.id))
         .leftJoin(locations, eq(gallery.ownerId, locations.id))
@@ -82,10 +102,49 @@ export class GalleryRepository implements IGalleryRepository {
             eq(locations.storyId, story.id),
           ),
         )
-        .where(eq(story.userId, userId))
+        .where(eq(story.userId, userId));
 
-      // Auto generated row typing.
-      return results.map(
+      // Build the count query based on the same filters and joins
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(gallery)
+        .where(eq(gallery.ownerId, ownerId));
+
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(
+          and(eq(gallery.ownerId, ownerId), eq(gallery.isFavorite, query.isFavorite)),
+        );
+      }
+
+      countQuery = countQuery
+        .leftJoin(characters, eq(gallery.ownerId, characters.id))
+        .leftJoin(notes, eq(gallery.ownerId, notes.id))
+        .leftJoin(locations, eq(gallery.ownerId, locations.id))
+        .leftJoin(
+          story,
+          or(
+            eq(characters.storyId, story.id),
+            eq(notes.storyId, story.id),
+            eq(locations.storyId, story.id),
+          ),
+        )
+        .where(eq(story.userId, userId));
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Apply pagination to the main query
+      let finalQuery = baseQuery;
+      if (query?.limit) {
+        finalQuery = finalQuery.limit(query.limit);
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
+        }
+      }
+
+      const results = await finalQuery;
+      const items = results.map(
         (row: {
           gallery: {
             id: string
@@ -100,7 +159,9 @@ export class GalleryRepository implements IGalleryRepository {
             isFile: boolean
           }
         }) => this.toDomain(row.gallery),
-      )
+      );
+
+      return { items, totalItems };
     } catch (error) {
       console.error('Error in GalleryRepository.findByOwnerId:', error)
       throw error

@@ -1,10 +1,10 @@
 import type { Character } from '@domain/entities/Character'
-import type { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 export interface ICharacterRepository {
   findById(id: string): Promise<Character | null>
   findByIds(ids: string[]): Promise<Character[]>
-  findByStoryId(storyId: string, query?: ListQueryParams): Promise<Character[]>
+  findByStoryId(storyId: string, query?: ListQueryParams): Promise<PaginatedResponse<Character>>
   save(character: Character): Promise<void>
   saveMany(characters: Character[]): Promise<void>
   update(character: Character, storyId: string): Promise<void>

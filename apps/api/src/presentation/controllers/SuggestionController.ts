@@ -19,6 +19,7 @@ import {
   type ListQueryParams,
   SuggestionResponseSchema,
   type UpdateSuggestionSchema,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class SuggestionController {
@@ -60,24 +61,59 @@ export class SuggestionController {
     return SuggestionResponseSchema.parse(suggestion)
   }
 
-  async getSuggestionsByUserId(userId: string, query: ListQueryParams) {
-    const suggestions = await this.getSuggestionsByUserIdUseCase.execute(userId, query)
-    return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+  async getSuggestionsByUserId(
+    userId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
+    const paginatedSuggestions = await this.getSuggestionsByUserIdUseCase.execute(userId, query)
+    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+
+    return {
+      items,
+      totalItems: paginatedSuggestions.totalItems,
+    }
   }
 
-  async getSuggestionsByStoryId(userId: string, storyId: string, query: ListQueryParams) {
-    const suggestions = await this.getSuggestionsByStoryIdUseCase.execute(userId, storyId, query)
-    return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+  async getSuggestionsByStoryId(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
+    const paginatedSuggestions = await this.getSuggestionsByStoryIdUseCase.execute(userId, storyId, query)
+    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+
+    return {
+      items,
+      totalItems: paginatedSuggestions.totalItems,
+    }
   }
 
-  async getSuggestionsByType(userId: string, type: string, query: ListQueryParams) {
-    const suggestions = await this.getSuggestionsByTypeUseCase.execute(userId, type, query)
-    return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+  async getSuggestionsByType(
+    userId: string,
+    type: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
+    const paginatedSuggestions = await this.getSuggestionsByTypeUseCase.execute(userId, type, query)
+    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+
+    return {
+      items,
+      totalItems: paginatedSuggestions.totalItems,
+    }
   }
 
-  async getSuggestionsByUserAndType(userId: string, type: string, query: ListQueryParams) {
-    const suggestions = await this.getSuggestionsByUserAndTypeUseCase.execute(userId, type, query)
-    return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+  async getSuggestionsByUserAndType(
+    userId: string,
+    type: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
+    const paginatedSuggestions = await this.getSuggestionsByUserAndTypeUseCase.execute(userId, type, query)
+    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+
+    return {
+      items,
+      totalItems: paginatedSuggestions.totalItems,
+    }
   }
 
   async getSuggestionsByStoryAndType(
@@ -85,14 +121,19 @@ export class SuggestionController {
     storyId: string,
     type: string,
     query: ListQueryParams,
-  ) {
-    const suggestions = await this.getSuggestionsByStoryAndTypeUseCase.execute(
+  ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
+    const paginatedSuggestions = await this.getSuggestionsByStoryAndTypeUseCase.execute(
       userId,
       storyId,
       type,
       query,
     )
-    return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+
+    return {
+      items,
+      totalItems: paginatedSuggestions.totalItems,
+    }
   }
 
   async updateSuggestion(

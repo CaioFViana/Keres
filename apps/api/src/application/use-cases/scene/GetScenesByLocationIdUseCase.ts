@@ -1,8 +1,7 @@
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { ListQueryParams, SceneResponse } from '@keres/shared'
+import type { ListQueryParams, SceneResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetScenesByLocationIdUseCase {
   constructor(
@@ -15,7 +14,7 @@ export class GetScenesByLocationIdUseCase {
     userId: string,
     locationId: string,
     query: ListQueryParams,
-  ): Promise<SceneResponse[]> {
+  ): Promise<PaginatedResponse<SceneResponse>> {
     // Verify that the location exists and belongs to the user's story
     const location = await this.locationRepository.findById(locationId)
     if (!location) {
@@ -27,8 +26,8 @@ export class GetScenesByLocationIdUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    const scenes = await this.sceneRepository.findByLocationId(locationId, query)
-    return scenes.map((scene) => ({
+    const paginatedScenes = await this.sceneRepository.findByLocationId(locationId, query)
+    const items = paginatedScenes.items.map((scene) => ({
       id: scene.id,
       chapterId: scene.chapterId,
       name: scene.name,
@@ -42,5 +41,10 @@ export class GetScenesByLocationIdUseCase {
       createdAt: scene.createdAt,
       updatedAt: scene.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedScenes.totalItems,
+    }
   }
 }

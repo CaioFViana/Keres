@@ -1,9 +1,9 @@
 import type { Note } from '@domain/entities/Note'
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
-import type { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { db, notes, story } from '@infrastructure/db' // Import db, notes and stories table
-import { and, asc, desc, eq, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {
   async findById(id: string): Promise<Note | null> {
@@ -16,9 +16,9 @@ export class NoteRepository implements INoteRepository {
     }
   }
 
-  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Note[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<PaginatedResponse<Note>> {
     try {
-      let queryBuilder = db.select().from(notes).where(eq(notes.storyId, storyId))
+      let baseQuery = db.select().from(notes).where(eq(notes.storyId, storyId));
 
       // Define allowed filterable fields and their Drizzle column mappings
       const filterableFields = {
@@ -28,53 +28,77 @@ export class NoteRepository implements INoteRepository {
         // Add other filterable fields here
       }
 
-      // Define allowed sortable fields and their Drizzle column mappings
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              baseQuery = baseQuery.where(and(eq(notes.storyId, storyId), eq(column, value)));
+            }
+          }
+        }
+      }
+
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(notes)
+        .where(eq(notes.storyId, storyId)); // Start with the base where clause
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(and(eq(notes.storyId, storyId), eq(column, value)));
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
+      // Sorting (Revised)
       const sortableFields = {
         title: notes.title,
         createdAt: notes.createdAt,
         updatedAt: notes.updatedAt,
         // Add other sortable fields here
       }
-
-      // Generic filtering (Revised)
-      if (query?.filter) {
-        for (const key in query.filter) {
-          if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key]
-            const column = filterableFields[key as keyof typeof filterableFields]
-            if (column) {
-              queryBuilder = queryBuilder.where(and(eq(notes.storyId, storyId), eq(column, value)))
-            }
-          }
-        }
-      }
-
-      // Sorting (Revised)
       if (query?.sort_by) {
-        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
         if (sortColumn) {
           if (query.order === 'desc') {
-            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
           } else {
-            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
           }
         }
       }
 
       // Pagination
       if (query?.limit) {
-        queryBuilder = queryBuilder.limit(query.limit)
+        finalQuery = finalQuery.limit(query.limit);
         if (query.page) {
-          const offset = (query.page - 1) * query.limit
-          queryBuilder = queryBuilder.offset(offset)
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
         }
       }
 
-      const results = await queryBuilder
-      return results.map(this.toDomain)
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
     } catch (error) {
-      console.error('Error in NoteRepository.findByStoryId:', error)
-      throw error
+      console.error('Error in NoteRepository.findByStoryId:', error);
+      throw error;
     }
   }
 

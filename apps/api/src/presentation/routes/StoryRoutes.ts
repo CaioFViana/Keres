@@ -20,6 +20,7 @@ import {
   StoryUpdateSchema,
   IdParamSchema,
   IncludeQuerySchema,
+  PaginatedResponseSchema,
 } from '@keres/shared' // Import StoryResponseSchema
 import { StoryController } from '@presentation/controllers/StoryController'
 import { z } from 'zod' // Import z for defining parameters
@@ -132,7 +133,7 @@ storyRoutes.openapi(
         description: 'Stories retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(StoryResponseSchema),
+            schema: PaginatedResponseSchema(StoryResponseSchema),
           },
         },
       },

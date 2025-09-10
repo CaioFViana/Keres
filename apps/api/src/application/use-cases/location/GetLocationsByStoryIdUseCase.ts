@@ -1,6 +1,6 @@
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { ListQueryParams, LocationResponse } from '@keres/shared'
+import type { ListQueryParams, LocationResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetLocationsByStoryIdUseCase {
   constructor(
@@ -12,15 +12,15 @@ export class GetLocationsByStoryIdUseCase {
     userId: string,
     storyId: string,
     query: ListQueryParams,
-  ): Promise<LocationResponse[]> {
+  ): Promise<PaginatedResponse<LocationResponse>> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
     }
 
-    const locations = await this.locationRepository.findByStoryId(storyId, query)
-    return locations.map((location) => ({
+    const paginatedLocations = await this.locationRepository.findByStoryId(storyId, query)
+    const items = paginatedLocations.items.map((location) => ({
       id: location.id,
       storyId: location.storyId,
       name: location.name,
@@ -33,5 +33,10 @@ export class GetLocationsByStoryIdUseCase {
       createdAt: location.createdAt,
       updatedAt: location.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedLocations.totalItems,
+    }
   }
 }

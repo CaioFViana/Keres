@@ -1,6 +1,6 @@
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { CharacterResponse, ListQueryParams } from '@keres/shared'
+import type { CharacterResponse, ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 export class GetCharactersByStoryIdUseCase {
   constructor(
@@ -12,15 +12,15 @@ export class GetCharactersByStoryIdUseCase {
     userId: string,
     storyId: string,
     query: ListQueryParams,
-  ): Promise<CharacterResponse[]> {
+  ): Promise<PaginatedResponse<CharacterResponse>> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
     }
 
-    const characters = await this.characterRepository.findByStoryId(storyId, query)
-    return characters.map((character) => ({
+    const paginatedCharacters = await this.characterRepository.findByStoryId(storyId, query)
+    const items = paginatedCharacters.items.map((character) => ({
       id: character.id,
       storyId: character.storyId,
       name: character.name,
@@ -39,5 +39,10 @@ export class GetCharactersByStoryIdUseCase {
       createdAt: character.createdAt,
       updatedAt: character.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedCharacters.totalItems,
+    }
   }
 }

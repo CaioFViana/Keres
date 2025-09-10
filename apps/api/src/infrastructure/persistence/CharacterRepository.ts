@@ -1,9 +1,9 @@
 import type { Character } from '@domain/entities/Character'
 import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
-import type { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { characters, characterTags, db, story } from '@infrastructure/db' // Import db and characters table
-import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
 
 export class CharacterRepository implements ICharacterRepository {
   async findById(id: string): Promise<Character | null> {
@@ -16,9 +16,9 @@ export class CharacterRepository implements ICharacterRepository {
     }
   }
 
-  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Character[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<PaginatedResponse<Character>> {
     try {
-      let queryBuilder = db.select().from(characters).where(eq(characters.storyId, storyId))
+      let baseQuery = db.select().from(characters).where(eq(characters.storyId, storyId));
 
       // Define allowed filterable fields and their Drizzle column mappings
       const filterableFields = {
@@ -30,62 +30,96 @@ export class CharacterRepository implements ICharacterRepository {
         // Add other filterable fields here
       }
 
-      // Define allowed sortable fields and their Drizzle column mappings
-      const sortableFields = {
-        name: characters.name,
-        createdAt: characters.createdAt,
-        updatedAt: characters.updatedAt,
-        // Add other sortable fields here
-      }
-
+      // Apply hasTags filter
       if (query?.hasTags) {
-        const tagIds = query.hasTags.split(',')
-        queryBuilder = queryBuilder
+        const tagIds = query.hasTags.split(',');
+        baseQuery = baseQuery
           .leftJoin(characterTags, eq(characters.id, characterTags.characterId))
-          .where(and(eq(characters.storyId, storyId), inArray(characterTags.tagId, tagIds)))
+          .where(and(eq(characters.storyId, storyId), inArray(characterTags.tagId, tagIds)));
       }
 
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key]
-            const column = filterableFields[key as keyof typeof filterableFields]
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
             if (column) {
-              queryBuilder = queryBuilder.where(
+              baseQuery = baseQuery.where(
                 and(eq(characters.storyId, storyId), eq(column, value)),
-              )
+              );
             }
           }
         }
       }
 
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(characters)
+        .where(eq(characters.storyId, storyId)); // Start with the base where clause
+
+      if (query?.hasTags) {
+        const tagIds = query.hasTags.split(',');
+        countQuery = countQuery
+          .leftJoin(characterTags, eq(characters.id, characterTags.characterId))
+          .where(and(eq(characters.storyId, storyId), inArray(characterTags.tagId, tagIds)));
+      }
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(
+                and(eq(characters.storyId, storyId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
       // Sorting (Revised)
+      const sortableFields = {
+        name: characters.name,
+        createdAt: characters.createdAt,
+        updatedAt: characters.updatedAt,
+        // Add other sortable fields here
+      }
       if (query?.sort_by) {
-        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
         if (sortColumn) {
           if (query.order === 'desc') {
-            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
           } else {
-            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
           }
         }
       }
 
       // Pagination
       if (query?.limit) {
-        queryBuilder = queryBuilder.limit(query.limit)
+        finalQuery = finalQuery.limit(query.limit);
         if (query.page) {
-          const offset = (query.page - 1) * query.limit
-          queryBuilder = queryBuilder.offset(offset)
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
         }
       }
 
-      const results = await queryBuilder
-      return results.map(this.toDomain)
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
     } catch (error) {
-      console.error('Error in CharacterRepository.findByStoryId:', error)
-      throw error
+      console.error('Error in CharacterRepository.findByStoryId:', error);
+      throw error;
     }
   }
 

@@ -30,6 +30,7 @@ import {
   UpdateManySuggestionsSchema,
   UserTypeParamSchema,
   StoryTypeParamSchema,
+  PaginatedResponseSchema,
 } from '@keres/shared'
 import { SuggestionController } from '@presentation/controllers/SuggestionController'
 import { z } from 'zod'
@@ -291,7 +292,7 @@ suggestionRoutes.openapi(
         description: 'Suggestions retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(SuggestionResponseSchema),
+            schema: PaginatedResponseSchema(SuggestionResponseSchema),
           },
         },
       },
@@ -347,7 +348,7 @@ suggestionRoutes.openapi(
         description: 'Suggestions retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(SuggestionResponseSchema),
+            schema: PaginatedResponseSchema(SuggestionResponseSchema),
           },
         },
       },
@@ -407,7 +408,7 @@ suggestionRoutes.openapi(
         description: 'Suggestions retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(SuggestionResponseSchema),
+            schema: PaginatedResponseSchema(SuggestionResponseSchema),
           },
         },
       },
@@ -466,7 +467,7 @@ suggestionRoutes.openapi(
         description: 'Suggestions retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(SuggestionResponseSchema),
+            schema: PaginatedResponseSchema(SuggestionResponseSchema),
           },
         },
       },
@@ -525,7 +526,7 @@ suggestionRoutes.openapi(
         description: 'Suggestions retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(SuggestionResponseSchema),
+            schema: PaginatedResponseSchema(SuggestionResponseSchema),
           },
         },
       },

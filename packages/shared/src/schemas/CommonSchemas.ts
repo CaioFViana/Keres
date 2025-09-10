@@ -58,6 +58,17 @@ export const SearchResponseSchema = z.array(
   }),
 )
 
+export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
+  z.object({
+    items: z.array(itemSchema),
+    totalItems: z.number(),
+  })
+
+export type PaginatedResponse<T> = {
+  items: T[]
+  totalItems: number
+}
+
 export const IdParamSchema = z.object({
   id: z.ulid(),
 })

@@ -18,6 +18,7 @@ import {
   IdParamSchema,
   StoryIdParamSchema,
   BulkDeleteSchema,
+  PaginatedResponseSchema,
 } from '@keres/shared'
 import { WorldRuleController } from '@presentation/controllers/WorldRuleController'
 import { z } from 'zod'
@@ -191,7 +192,7 @@ worldRuleRoutes.openapi(
         description: 'World Rules retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(WorldRuleResponseSchema),
+            schema: PaginatedResponseSchema(WorldRuleResponseSchema),
           },
         },
       },

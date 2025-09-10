@@ -19,6 +19,7 @@ import {
   StoryIdParamSchema,
   IncludeQuerySchema,
   BulkDeleteSchema,
+  PaginatedResponseSchema,
 } from '@keres/shared' // Import LocationResponseSchema
 import { LocationController } from '@presentation/controllers/LocationController'
 import { z } from 'zod' // Import z for defining parameters
@@ -193,7 +194,7 @@ locationRoutes.openapi(
         description: 'Locations retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(LocationResponseSchema),
+            schema: PaginatedResponseSchema(LocationResponseSchema),
           },
         },
       },

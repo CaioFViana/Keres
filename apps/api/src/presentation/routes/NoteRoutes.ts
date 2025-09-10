@@ -18,6 +18,7 @@ import {
   IdParamSchema,
   StoryIdParamSchema,
   BulkDeleteSchema,
+  PaginatedResponseSchema,
 } from '@keres/shared'
 import { NoteController } from '@presentation/controllers/NoteController'
 import { z } from 'zod'
@@ -190,7 +191,7 @@ noteRoutes.openapi(
         description: 'Notes retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(NoteResponseSchema),
+            schema: PaginatedResponseSchema(NoteResponseSchema),
           },
         },
       },

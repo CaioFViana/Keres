@@ -19,6 +19,7 @@ import {
   type GalleryUpdateSchema,
   getKeresGalleryPath,
   type ListQueryParams,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class GalleryController {
@@ -51,14 +52,32 @@ export class GalleryController {
     return GalleryResponseSchema.parse(gallery)
   }
 
-  async getGalleryByOwnerId(userId: string, ownerId: string, query: ListQueryParams) {
-    const galleryItems = await this.getGalleryByOwnerIdUseCase.execute(userId, ownerId, query)
-    return galleryItems.map((item) => GalleryResponseSchema.parse(item))
+  async getGalleryByOwnerId(
+    userId: string,
+    ownerId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof GalleryResponseSchema>>> {
+    const paginatedGalleryItems = await this.getGalleryByOwnerIdUseCase.execute(userId, ownerId, query)
+    const items = paginatedGalleryItems.items.map((item) => GalleryResponseSchema.parse(item))
+
+    return {
+      items,
+      totalItems: paginatedGalleryItems.totalItems,
+    }
   }
 
-  async getGalleryByStoryId(userId: string, storyId: string, query: ListQueryParams) {
-    const galleryItems = await this.getGalleryByStoryIdUseCase.execute(userId, storyId, query)
-    return galleryItems.map((item) => GalleryResponseSchema.parse(item))
+  async getGalleryByStoryId(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof GalleryResponseSchema>>> {
+    const paginatedGalleryItems = await this.getGalleryByStoryIdUseCase.execute(userId, storyId, query)
+    const items = paginatedGalleryItems.items.map((item) => GalleryResponseSchema.parse(item))
+
+    return {
+      items,
+      totalItems: paginatedGalleryItems.totalItems,
+    }
   }
 
   async updateGallery(

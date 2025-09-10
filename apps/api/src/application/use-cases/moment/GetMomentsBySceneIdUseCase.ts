@@ -2,7 +2,7 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository' // Import ISceneRepository
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { ListQueryParams, MomentResponse } from '@keres/shared'
+import type { ListQueryParams, MomentResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetMomentsBySceneIdUseCase {
   constructor(
@@ -16,7 +16,7 @@ export class GetMomentsBySceneIdUseCase {
     userId: string,
     sceneId: string,
     query: ListQueryParams,
-  ): Promise<MomentResponse[]> {
+  ): Promise<PaginatedResponse<MomentResponse>> {
     // Verify that the scene exists and belongs to the user's story
     const scene = await this.sceneRepository.findById(sceneId)
     if (!scene) {
@@ -31,8 +31,8 @@ export class GetMomentsBySceneIdUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    const moments = await this.momentRepository.findBySceneId(sceneId, query)
-    return moments.map((moment) => ({
+    const paginatedMoments = await this.momentRepository.findBySceneId(sceneId, query)
+    const items = paginatedMoments.items.map((moment) => ({
       id: moment.id,
       sceneId: moment.sceneId,
       name: moment.name,
@@ -44,5 +44,10 @@ export class GetMomentsBySceneIdUseCase {
       createdAt: moment.createdAt,
       updatedAt: moment.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedMoments.totalItems,
+    }
   }
 }

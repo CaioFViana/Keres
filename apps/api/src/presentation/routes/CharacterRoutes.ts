@@ -29,6 +29,7 @@ import {
   IncludeQuerySchema,
   CreateManyCharactersSchema,
   BulkDeleteSchema,
+  PaginatedResponseSchema,
 } from '@keres/shared' // Import CharacterResponseSchema
 import { CharacterController } from '@presentation/controllers/CharacterController'
 import { z } from 'zod' // Import z for defining parameters
@@ -273,7 +274,7 @@ characterRoutes.openapi(
         description: 'Characters retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(CharacterResponseSchema),
+            schema: PaginatedResponseSchema(CharacterResponseSchema),
           },
         },
       },

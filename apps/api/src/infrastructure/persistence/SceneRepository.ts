@@ -1,9 +1,9 @@
 import type { Scene } from '@domain/entities/Scene'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
-import type { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { chapters, db, scenes, story } from '@infrastructure/db' // Import db and scenes table
-import { and, asc, desc, eq, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm'
 
 export class SceneRepository implements ISceneRepository {
   async findById(id: string): Promise<Scene | null> {
@@ -16,9 +16,9 @@ export class SceneRepository implements ISceneRepository {
     }
   }
 
-  async findByChapterId(chapterId: string, query?: ListQueryParams): Promise<Scene[]> {
+  async findByChapterId(chapterId: string, query?: ListQueryParams): Promise<PaginatedResponse<Scene>> {
     try {
-      let queryBuilder = db.select().from(scenes).where(eq(scenes.chapterId, chapterId))
+      let baseQuery = db.select().from(scenes).where(eq(scenes.chapterId, chapterId));
 
       // Define allowed filterable fields and their Drizzle column mappings
       const filterableFields = {
@@ -28,7 +28,48 @@ export class SceneRepository implements ISceneRepository {
         // Add other filterable fields here
       }
 
-      // Define allowed sortable fields and their Drizzle column mappings
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              baseQuery = baseQuery.where(
+                and(eq(scenes.chapterId, chapterId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(scenes)
+        .where(eq(scenes.chapterId, chapterId)); // Start with the base where clause
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(
+                and(eq(scenes.chapterId, chapterId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
+      // Sorting (Revised)
       const sortableFields = {
         name: scenes.name,
         index: scenes.index,
@@ -36,54 +77,39 @@ export class SceneRepository implements ISceneRepository {
         updatedAt: scenes.updatedAt,
         // Add other sortable fields here
       }
-
-      // Generic filtering (Revised)
-      if (query?.filter) {
-        for (const key in query.filter) {
-          if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key]
-            const column = filterableFields[key as keyof typeof filterableFields]
-            if (column) {
-              queryBuilder = queryBuilder.where(
-                and(eq(scenes.chapterId, chapterId), eq(column, value)),
-              )
-            }
-          }
-        }
-      }
-
-      // Sorting (Revised)
       if (query?.sort_by) {
-        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
         if (sortColumn) {
           if (query.order === 'desc') {
-            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
           } else {
-            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
           }
         }
       }
 
       // Pagination
       if (query?.limit) {
-        queryBuilder = queryBuilder.limit(query.limit)
+        finalQuery = finalQuery.limit(query.limit);
         if (query.page) {
-          const offset = (query.page - 1) * query.limit
-          queryBuilder = queryBuilder.offset(offset)
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
         }
       }
 
-      const results = await queryBuilder
-      return results.map(this.toDomain)
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
     } catch (error) {
       console.error('Error in SceneRepository.findByChapterId:', error)
       throw error
     }
   }
 
-  async findByLocationId(locationId: string, query?: ListQueryParams): Promise<Scene[]> {
+  async findByLocationId(locationId: string, query?: ListQueryParams): Promise<PaginatedResponse<Scene>> {
     try {
-      let queryBuilder = db.select().from(scenes).where(eq(scenes.locationId, locationId))
+      let baseQuery = db.select().from(scenes).where(eq(scenes.locationId, locationId));
 
       // Define allowed filterable fields and their Drizzle column mappings
       const filterableFields = {
@@ -93,7 +119,48 @@ export class SceneRepository implements ISceneRepository {
         // Add other filterable fields here
       }
 
-      // Define allowed sortable fields and their Drizzle column mappings
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              baseQuery = baseQuery.where(
+                and(eq(scenes.locationId, locationId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(scenes)
+        .where(eq(scenes.locationId, locationId)); // Start with the base where clause
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(
+                and(eq(scenes.locationId, locationId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
+      // Sorting (Revised)
       const sortableFields = {
         name: scenes.name,
         index: scenes.index,
@@ -101,45 +168,30 @@ export class SceneRepository implements ISceneRepository {
         updatedAt: scenes.updatedAt,
         // Add other sortable fields here
       }
-
-      // Generic filtering (Revised)
-      if (query?.filter) {
-        for (const key in query.filter) {
-          if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key]
-            const column = filterableFields[key as keyof typeof filterableFields]
-            if (column) {
-              queryBuilder = queryBuilder.where(
-                and(eq(scenes.locationId, locationId), eq(column, value)),
-              )
-            }
-          }
-        }
-      }
-
-      // Sorting (Revised)
       if (query?.sort_by) {
-        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
         if (sortColumn) {
           if (query.order === 'desc') {
-            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
           } else {
-            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
           }
         }
       }
 
       // Pagination
       if (query?.limit) {
-        queryBuilder = queryBuilder.limit(query.limit)
+        finalQuery = finalQuery.limit(query.limit);
         if (query.page) {
-          const offset = (query.page - 1) * query.limit
-          queryBuilder = queryBuilder.offset(offset)
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
         }
       }
 
-      const results = await queryBuilder
-      return results.map(this.toDomain)
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
     } catch (error) {
       console.error('Error in SceneRepository.findByLocationId:', error)
       throw error

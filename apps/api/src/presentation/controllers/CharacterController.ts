@@ -15,6 +15,7 @@ import {
   CharacterResponseSchema,
   type CharacterUpdateSchema,
   type ListQueryParams,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class CharacterController {
@@ -52,9 +53,18 @@ export class CharacterController {
     return CharacterResponseSchema.parse(character)
   }
 
-  async getCharactersByStoryId(userId: string, storyId: string, query: ListQueryParams) {
-    const characters = await this.getCharactersByStoryIdUseCase.execute(userId, storyId, query)
-    return characters.map((character) => CharacterResponseSchema.parse(character))
+  async getCharactersByStoryId(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof CharacterResponseSchema>>> {
+    const paginatedCharacters = await this.getCharactersByStoryIdUseCase.execute(userId, storyId, query)
+    const items = paginatedCharacters.items.map((character) => CharacterResponseSchema.parse(character))
+
+    return {
+      items,
+      totalItems: paginatedCharacters.totalItems,
+    }
   }
 
   async updateCharacter(

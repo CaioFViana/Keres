@@ -10,6 +10,7 @@ import {
   type ListQueryParams,
   LocationResponseSchema,
   StoryResponseSchema,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class GetStoriesByUserIdUseCase {
@@ -24,32 +25,35 @@ export class GetStoriesByUserIdUseCase {
     userId: string,
     query: ListQueryParams,
     include: string[] = [],
-  ): Promise<z.infer<typeof StoryResponseSchema>[]> {
-    const stories = await this.storyRepository.findByUserId(userId, query)
+  ): Promise<PaginatedResponse<z.infer<typeof StoryResponseSchema>>> {
+    const paginatedStories = await this.storyRepository.findByUserId(userId, query)
 
-    const storiesWithIncludes = await Promise.all(
-      stories.map(async (story) => {
+    const items = await Promise.all(
+      paginatedStories.items.map(async (story) => {
         const storyResponse = StoryResponseSchema.parse(story)
         if (include.includes('characters')) {
-          const rawCharacters = await this.characterRepository.findByStoryId(story.id)
-          storyResponse.characters = rawCharacters.map((c) => CharacterResponseSchema.parse(c))
+          const paginatedCharacters = await this.characterRepository.findByStoryId(story.id, query)
+          storyResponse.characters = paginatedCharacters.items.map((c) => CharacterResponseSchema.parse(c))
         }
 
         if (include.includes('chapters')) {
-          const rawChapters = await this.chapterRepository.findByStoryId(story.id)
-          storyResponse.chapters = rawChapters.map((ch) => ChapterResponseSchema.parse(ch))
+          const paginatedChapters = await this.chapterRepository.findByStoryId(story.id, query)
+          storyResponse.chapters = paginatedChapters.items.map((ch) => ChapterResponseSchema.parse(ch))
         }
 
         if (include.includes('locations')) {
-          const rawLocations = await this.locationRepository.findByStoryId(story.id)
-          console.log(rawLocations)
-          storyResponse.locations = rawLocations.map((l) => LocationResponseSchema.parse(l))
+          const paginatedLocations = await this.locationRepository.findByStoryId(story.id, query)
+          console.log(paginatedLocations)
+          storyResponse.locations = paginatedLocations.items.map((l) => LocationResponseSchema.parse(l))
         }
 
         return storyResponse
       }),
     )
 
-    return storiesWithIncludes
+    return {
+      items,
+      totalItems: paginatedStories.totalItems,
+    }
   }
 }

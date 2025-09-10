@@ -13,6 +13,7 @@ import {
   type LocationCreateSchema,
   LocationResponseSchema,
   type LocationUpdateSchema,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class LocationController {
@@ -38,9 +39,18 @@ export class LocationController {
     return LocationResponseSchema.parse(location)
   }
 
-  async getLocationsByStoryId(userId: string, storyId: string, query: ListQueryParams) {
-    const locations = await this.getLocationsByStoryIdUseCase.execute(userId, storyId, query)
-    return locations.map((location) => LocationResponseSchema.parse(location))
+  async getLocationsByStoryId(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof LocationResponseSchema>>> {
+    const paginatedLocations = await this.getLocationsByStoryIdUseCase.execute(userId, storyId, query)
+    const items = paginatedLocations.items.map((location) => LocationResponseSchema.parse(location))
+
+    return {
+      items,
+      totalItems: paginatedLocations.totalItems,
+    }
   }
 
   async updateLocation(

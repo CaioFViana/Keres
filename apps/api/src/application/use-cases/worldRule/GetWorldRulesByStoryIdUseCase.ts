@@ -1,6 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
-import type { ListQueryParams, WorldRuleResponse } from '@keres/shared'
+import type { ListQueryParams, WorldRuleResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetWorldRulesByStoryIdUseCase {
   constructor(
@@ -12,15 +12,15 @@ export class GetWorldRulesByStoryIdUseCase {
     userId: string,
     storyId: string,
     query: ListQueryParams,
-  ): Promise<WorldRuleResponse[]> {
+  ): Promise<PaginatedResponse<WorldRuleResponse>> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
     }
 
-    const worldRules = await this.worldRuleRepository.findByStoryId(storyId, query)
-    return worldRules.map((worldRule) => ({
+    const paginatedWorldRules = await this.worldRuleRepository.findByStoryId(storyId, query)
+    const items = paginatedWorldRules.items.map((worldRule) => ({
       id: worldRule.id,
       storyId: worldRule.storyId,
       title: worldRule.title,
@@ -30,5 +30,10 @@ export class GetWorldRulesByStoryIdUseCase {
       createdAt: worldRule.createdAt,
       updatedAt: worldRule.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedWorldRules.totalItems,
+    }
   }
 }

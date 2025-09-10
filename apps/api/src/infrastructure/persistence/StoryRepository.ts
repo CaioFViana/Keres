@@ -1,9 +1,9 @@
 import type { Story } from '@domain/entities/Story'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { db, story } from '@infrastructure/db' // Import db and stories table
-import { and, asc, desc, eq, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm'
 
 export class StoryRepository implements IStoryRepository {
   async findById(id: string, userId: string): Promise<Story | null> {
@@ -20,9 +20,9 @@ export class StoryRepository implements IStoryRepository {
     }
   }
 
-  async findByUserId(userId: string, query?: ListQueryParams): Promise<Story[]> {
+  async findByUserId(userId: string, query?: ListQueryParams): Promise<PaginatedResponse<Story>> {
     try {
-      let queryBuilder = db.select().from(story).where(eq(story.userId, userId))
+      let baseQuery = db.select().from(story).where(eq(story.userId, userId));
 
       // Define allowed filterable fields and their Drizzle column mappings
       const filterableFields = {
@@ -34,53 +34,77 @@ export class StoryRepository implements IStoryRepository {
         // Add other filterable fields here
       }
 
-      // Define allowed sortable fields and their Drizzle column mappings
+      // Generic filtering
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              baseQuery = baseQuery.where(and(eq(story.userId, userId), eq(column, value)));
+            }
+          }
+        }
+      }
+
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(story)
+        .where(eq(story.userId, userId)); // Start with the base where clause
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(and(eq(story.userId, userId), eq(column, value)));
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
+      // Sorting
       const sortableFields = {
         title: story.title,
         createdAt: story.createdAt,
         updatedAt: story.updatedAt,
         // Add other sortable fields here
       }
-
-      // Generic filtering
-      if (query?.filter) {
-        for (const key in query.filter) {
-          if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key]
-            const column = filterableFields[key as keyof typeof filterableFields]
-            if (column) {
-              queryBuilder = queryBuilder.where(and(eq(story.userId, userId), eq(column, value)))
-            }
-          }
-        }
-      }
-
-      // Sorting
       if (query?.sort_by) {
-        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
         if (sortColumn) {
           if (query.order === 'desc') {
-            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
           } else {
-            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
           }
         }
       }
 
       // Pagination
       if (query?.limit) {
-        queryBuilder = queryBuilder.limit(query.limit)
+        finalQuery = finalQuery.limit(query.limit);
         if (query.page) {
-          const offset = (query.page - 1) * query.limit
-          queryBuilder = queryBuilder.offset(offset)
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
         }
       }
 
-      const results = await queryBuilder
-      return results.map(this.toDomain)
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
     } catch (error) {
-      console.error('Error in StoryRepository.findByUserId:', error)
-      throw error
+      console.error('Error in StoryRepository.findByUserId:', error);
+      throw error;
     }
   }
 

@@ -13,6 +13,7 @@ import {
   type ListQueryParams,
   type UpdateWorldRuleSchema,
   WorldRuleResponseSchema,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class WorldRuleController {
@@ -38,9 +39,18 @@ export class WorldRuleController {
     return WorldRuleResponseSchema.parse(worldRule)
   }
 
-  async getWorldRulesByStoryId(userId: string, storyId: string, query: ListQueryParams) {
-    const worldRules = await this.getWorldRulesByStoryIdUseCase.execute(userId, storyId, query)
-    return worldRules.map((worldRule) => WorldRuleResponseSchema.parse(worldRule))
+  async getWorldRulesByStoryId(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof WorldRuleResponseSchema>>> {
+    const paginatedWorldRules = await this.getWorldRulesByStoryIdUseCase.execute(userId, storyId, query)
+    const items = paginatedWorldRules.items.map((worldRule) => WorldRuleResponseSchema.parse(worldRule))
+
+    return {
+      items,
+      totalItems: paginatedWorldRules.totalItems,
+    }
   }
 
   async updateWorldRule(

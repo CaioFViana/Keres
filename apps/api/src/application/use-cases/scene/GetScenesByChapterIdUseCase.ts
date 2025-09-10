@@ -1,7 +1,7 @@
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository' // Import IChapterRepository
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { ListQueryParams, SceneResponse } from '@keres/shared'
+import type { ListQueryParams, SceneResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetScenesByChapterIdUseCase {
   constructor(
@@ -14,7 +14,7 @@ export class GetScenesByChapterIdUseCase {
     userId: string,
     chapterId: string,
     query: ListQueryParams,
-  ): Promise<SceneResponse[]> {
+  ): Promise<PaginatedResponse<SceneResponse>> {
     // Verify that the chapter exists and belongs to the user's story
     const chapter = await this.chapterRepository.findById(chapterId)
     if (!chapter) {
@@ -25,8 +25,8 @@ export class GetScenesByChapterIdUseCase {
       throw new Error('Story not found or not owned by user')
     }
 
-    const scenes = await this.sceneRepository.findByChapterId(chapterId, query)
-    return scenes.map((scene) => ({
+    const paginatedScenes = await this.sceneRepository.findByChapterId(chapterId, query)
+    const items = paginatedScenes.items.map((scene) => ({
       id: scene.id,
       chapterId: scene.chapterId,
       name: scene.name,
@@ -40,5 +40,10 @@ export class GetScenesByChapterIdUseCase {
       createdAt: scene.createdAt,
       updatedAt: scene.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedScenes.totalItems,
+    }
   }
 }

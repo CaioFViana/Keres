@@ -28,6 +28,7 @@ import {
   IncludeQuerySchema,
   BulkDeleteSchema,
   LocationIdParamSchema,
+  PaginatedResponseSchema,
 } from '@keres/shared' // Import SceneResponseSchema
 import { SceneController } from '@presentation/controllers/SceneController'
 import { z } from 'zod' // Import z for defining parameters
@@ -114,7 +115,7 @@ sceneRoutes.openapi(
         description: 'Scenes retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(SceneResponseSchema),
+            schema: PaginatedResponseSchema(SceneResponseSchema),
           },
         },
       },
@@ -169,7 +170,7 @@ sceneRoutes.openapi(
         description: 'Scenes retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(SceneResponseSchema),
+            schema: PaginatedResponseSchema(SceneResponseSchema),
           },
         },
       },

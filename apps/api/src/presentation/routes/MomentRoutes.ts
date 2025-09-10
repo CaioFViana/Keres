@@ -27,6 +27,7 @@ import {
   CreateManyMomentsSchema,
   UpdateManyMomentsSchema,
   BulkDeleteSchema,
+  PaginatedResponseSchema,
 } from '@keres/shared'
 import { MomentController } from '@presentation/controllers/MomentController'
 import { z } from 'zod'
@@ -632,7 +633,7 @@ momentRoutes.openapi(
         description: 'Moments retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(MomentResponseSchema),
+            schema: PaginatedResponseSchema(MomentResponseSchema),
           },
         },
       },

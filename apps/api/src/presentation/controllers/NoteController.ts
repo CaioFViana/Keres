@@ -13,6 +13,7 @@ import {
   type ListQueryParams,
   NoteResponseSchema,
   type UpdateNoteSchema,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class NoteController {
@@ -38,9 +39,18 @@ export class NoteController {
     return NoteResponseSchema.parse(note)
   }
 
-  async getNotesByStoryId(userId: string, storyId: string, query: ListQueryParams) {
-    const notes = await this.getNotesByStoryIdUseCase.execute(userId, storyId, query)
-    return notes.map((note) => NoteResponseSchema.parse(note))
+  async getNotesByStoryId(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof NoteResponseSchema>>> {
+    const paginatedNotes = await this.getNotesByStoryIdUseCase.execute(userId, storyId, query)
+    const items = paginatedNotes.items.map((note) => NoteResponseSchema.parse(note))
+
+    return {
+      items,
+      totalItems: paginatedNotes.totalItems,
+    }
   }
 
   async updateNote(userId: string, id: string, data: Omit<z.infer<typeof UpdateNoteSchema>, 'id'>) {

@@ -19,6 +19,7 @@ import {
   StoryIdParamSchema,
   IncludeQuerySchema,
   BulkDeleteSchema,
+  PaginatedResponseSchema,
 } from '@keres/shared'
 import { ChapterController } from '@presentation/controllers/ChapterController'
 import { z } from 'zod' // Import z for defining parameters
@@ -189,7 +190,7 @@ chapterRoutes.openapi(
         description: 'Chapters retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(ChapterResponseSchema),
+            schema: PaginatedResponseSchema(ChapterResponseSchema),
           },
         },
       },

@@ -1,5 +1,5 @@
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
-import type { ListQueryParams, SuggestionResponse } from '@keres/shared'
+import type { ListQueryParams, SuggestionResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetSuggestionsByUserAndTypeUseCase {
   constructor(private readonly suggestionRepository: ISuggestionRepository) {}
@@ -8,12 +8,10 @@ export class GetSuggestionsByUserAndTypeUseCase {
     userId: string,
     type: string,
     query: ListQueryParams,
-  ): Promise<SuggestionResponse[]> {
-    const suggestions = await this.suggestionRepository.findByUserAndType(userId, type, query)
-    // Ensure that all returned suggestions actually belong to the requested userId
-    const filteredSuggestions = suggestions.filter((suggestion) => suggestion.userId === userId)
+  ): Promise<PaginatedResponse<SuggestionResponse>> {
+    const paginatedSuggestions = await this.suggestionRepository.findByUserAndType(userId, type, query)
 
-    return filteredSuggestions.map((suggestion) => ({
+    const items = paginatedSuggestions.items.map((suggestion) => ({
       id: suggestion.id,
       userId: suggestion.userId,
       scope: suggestion.scope,
@@ -24,5 +22,10 @@ export class GetSuggestionsByUserAndTypeUseCase {
       createdAt: suggestion.createdAt,
       updatedAt: suggestion.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedSuggestions.totalItems,
+    }
   }
 }

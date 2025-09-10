@@ -1,14 +1,14 @@
 import type { Chapter } from '@domain/entities/Chapter'
 import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
-import type { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { chapters, chapterTags, db, story } from '@infrastructure/db' // Import db and chapters table
-import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
 
 export class ChapterRepository implements IChapterRepository {
   async findById(id: string): Promise<Chapter | null> {
     try {
-      const result = await db.select().from(chapters).where(eq(chapters.id, id)).limit(1)
+      const result = db.select().from(chapters).where(eq(chapters.id, id)).limit(1)
       return result.length > 0 ? this.toDomain(result[0]) : null
     } catch (error) {
       console.error('Error in ChapterRepository.findById:', error)
@@ -16,9 +16,9 @@ export class ChapterRepository implements IChapterRepository {
     }
   }
 
-  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<Chapter[]> {
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<PaginatedResponse<Chapter>> {
     try {
-      let queryBuilder = db.select().from(chapters).where(eq(chapters.storyId, storyId))
+      let baseQuery = db.select().from(chapters).where(eq(chapters.storyId, storyId));
 
       // Define allowed filterable fields and their Drizzle column mappings
       const filterableFields = {
@@ -28,7 +28,64 @@ export class ChapterRepository implements IChapterRepository {
         // Add other filterable fields here
       }
 
-      // Define allowed sortable fields and their Drizzle column mappings
+      // Apply hasTags filter
+      if (query?.hasTags) {
+        const tagIds = query.hasTags.split(',');
+        baseQuery = baseQuery
+          .leftJoin(chapterTags, eq(chapters.id, chapterTags.chapterId))
+          .where(and(eq(chapters.storyId, storyId), inArray(chapterTags.tagId, tagIds)));
+      }
+
+      // Generic filtering (Revised)
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              baseQuery = baseQuery.where(
+                and(eq(chapters.storyId, storyId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      // Build the count query based on the same filters
+      // This requires rebuilding the query with only the necessary parts for counting
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(chapters)
+        .where(eq(chapters.storyId, storyId)); // Start with the base where clause
+
+      if (query?.hasTags) {
+        const tagIds = query.hasTags.split(',');
+        countQuery = countQuery
+          .leftJoin(chapterTags, eq(chapters.id, chapterTags.chapterId))
+          .where(and(eq(chapters.storyId, storyId), inArray(chapterTags.tagId, tagIds)));
+      }
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(
+                and(eq(chapters.storyId, storyId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
+      // Sorting (Revised)
       const sortableFields = {
         name: chapters.name,
         index: chapters.index,
@@ -36,52 +93,30 @@ export class ChapterRepository implements IChapterRepository {
         updatedAt: chapters.updatedAt,
         // Add other sortable fields here
       }
-
-      if (query?.hasTags) {
-        const tagIds = query.hasTags.split(',')
-        queryBuilder = queryBuilder
-          .leftJoin(chapterTags, eq(chapters.id, chapterTags.chapterId))
-          .where(and(eq(chapters.storyId, storyId), inArray(chapterTags.tagId, tagIds)))
-      }
-
-      // Generic filtering (Revised)
-      if (query?.filter) {
-        for (const key in query.filter) {
-          if (Object.hasOwn(query.filter, key)) {
-            const value = query.filter[key]
-            const column = filterableFields[key as keyof typeof filterableFields]
-            if (column) {
-              queryBuilder = queryBuilder.where(
-                and(eq(chapters.storyId, storyId), eq(column, value)),
-              )
-            }
-          }
-        }
-      }
-
-      // Sorting (Revised)
       if (query?.sort_by) {
-        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields]
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
         if (sortColumn) {
           if (query.order === 'desc') {
-            queryBuilder = queryBuilder.orderBy(desc(sortColumn))
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
           } else {
-            queryBuilder = queryBuilder.orderBy(asc(sortColumn))
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
           }
         }
       }
 
       // Pagination
       if (query?.limit) {
-        queryBuilder = queryBuilder.limit(query.limit)
+        finalQuery = finalQuery.limit(query.limit);
         if (query.page) {
-          const offset = (query.page - 1) * query.limit
-          queryBuilder = queryBuilder.offset(offset)
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
         }
       }
 
-      const results = await queryBuilder
-      return results.map(this.toDomain)
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
     } catch (error) {
       console.error('Error in ChapterRepository.findByStoryId:', error)
       throw error

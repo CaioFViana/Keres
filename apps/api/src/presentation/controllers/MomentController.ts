@@ -15,6 +15,7 @@ import {
   type ListQueryParams,
   MomentResponseSchema,
   type UpdateMomentSchema,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class MomentController {
@@ -52,9 +53,18 @@ export class MomentController {
     return MomentResponseSchema.parse(moment)
   }
 
-  async getMomentsBySceneId(userId: string, sceneId: string, query: ListQueryParams) {
-    const moments = await this.getMomentsBySceneIdUseCase.execute(userId, sceneId, query)
-    return moments.map((moment) => MomentResponseSchema.parse(moment))
+  async getMomentsBySceneId(
+    userId: string,
+    sceneId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof MomentResponseSchema>>> {
+    const paginatedMoments = await this.getMomentsBySceneIdUseCase.execute(userId, sceneId, query)
+    const items = paginatedMoments.items.map((moment) => MomentResponseSchema.parse(moment))
+
+    return {
+      items,
+      totalItems: paginatedMoments.totalItems,
+    }
   }
 
   async updateMoment(

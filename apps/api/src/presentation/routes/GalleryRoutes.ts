@@ -27,6 +27,7 @@ import {
   StoryIdParamSchema,
   BulkDeleteSchema,
   GalleryDeleteQuerySchema,
+  PaginatedResponseSchema,
 } from '@keres/shared'
 import { GalleryController } from '@presentation/controllers/GalleryController'
 import { z } from 'zod'
@@ -298,7 +299,7 @@ galleryRoutes.openapi(
         description: 'Gallery items retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(GalleryResponseSchema),
+            schema: PaginatedResponseSchema(GalleryResponseSchema),
           },
         },
       },
@@ -357,7 +358,7 @@ galleryRoutes.openapi(
         description: 'Gallery items retrieved successfully',
         content: {
           'application/json': {
-            schema: z.array(GalleryResponseSchema),
+            schema: PaginatedResponseSchema(GalleryResponseSchema),
           },
         },
       },

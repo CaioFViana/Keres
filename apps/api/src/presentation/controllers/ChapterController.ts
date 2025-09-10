@@ -13,6 +13,7 @@ import {
   ChapterResponseSchema,
   type ChapterUpdateSchema,
   type ListQueryParams,
+  type PaginatedResponse,
 } from '@keres/shared'
 
 export class ChapterController {
@@ -38,9 +39,18 @@ export class ChapterController {
     return ChapterResponseSchema.parse(chapter)
   }
 
-  async getChaptersByStoryId(userId: string, storyId: string, query: ListQueryParams) {
-    const chapters = await this.getChaptersByStoryIdUseCase.execute(userId, storyId, query)
-    return chapters.map((chapter) => ChapterResponseSchema.parse(chapter))
+  async getChaptersByStoryId(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<PaginatedResponse<z.infer<typeof ChapterResponseSchema>>> {
+    const paginatedChapters = await this.getChaptersByStoryIdUseCase.execute(userId, storyId, query)
+    const items = paginatedChapters.items.map((chapter) => ChapterResponseSchema.parse(chapter))
+
+    return {
+      items,
+      totalItems: paginatedChapters.totalItems,
+    }
   }
 
   async updateChapter(

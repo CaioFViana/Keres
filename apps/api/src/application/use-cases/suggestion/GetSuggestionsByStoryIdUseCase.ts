@@ -1,6 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
-import type { ListQueryParams, SuggestionResponse } from '@keres/shared'
+import type { ListQueryParams, SuggestionResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetSuggestionsByStoryIdUseCase {
   constructor(
@@ -12,15 +12,15 @@ export class GetSuggestionsByStoryIdUseCase {
     userId: string,
     storyId: string,
     query: ListQueryParams,
-  ): Promise<SuggestionResponse[]> {
+  ): Promise<PaginatedResponse<SuggestionResponse>> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
     }
 
-    const suggestions = await this.suggestionRepository.findByStoryId(storyId, query)
-    return suggestions.map((suggestion) => ({
+    const paginatedSuggestions = await this.suggestionRepository.findByStoryId(storyId, query)
+    const items = paginatedSuggestions.items.map((suggestion) => ({
       id: suggestion.id,
       userId: suggestion.userId,
       scope: suggestion.scope,
@@ -31,5 +31,10 @@ export class GetSuggestionsByStoryIdUseCase {
       createdAt: suggestion.createdAt,
       updatedAt: suggestion.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedSuggestions.totalItems,
+    }
   }
 }

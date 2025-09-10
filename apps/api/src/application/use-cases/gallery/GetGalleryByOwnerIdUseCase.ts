@@ -3,7 +3,7 @@ import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository
 import type { ILocationRepository } from '@domain/repositories/ILocationRepository' // Import
 import type { INoteRepository } from '@domain/repositories/INoteRepository' // Import
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import
-import type { GalleryResponse, ListQueryParams } from '@keres/shared'
+import type { GalleryResponse, ListQueryParams, PaginatedResponse } from '@keres/shared' // Import PaginatedResponse
 
 export class GetGalleryByOwnerIdUseCase {
   constructor(
@@ -18,48 +18,25 @@ export class GetGalleryByOwnerIdUseCase {
     userId: string,
     ownerId: string,
     query: ListQueryParams,
-  ): Promise<GalleryResponse[]> {
-    const galleryItems = await this.galleryRepository.findByOwnerId(ownerId, userId, query)
-    const ownedGalleryItems: GalleryResponse[] = []
+  ): Promise<PaginatedResponse<GalleryResponse>> {
+    const paginatedGalleryItems = await this.galleryRepository.findByOwnerId(ownerId, userId, query)
 
-    for (const item of galleryItems) {
-      let storyId: string | null = null
+    const items = paginatedGalleryItems.items.map((item) => ({
+      id: item.id,
+      storyId: item.storyId,
+      ownerId: item.ownerId,
+      ownerType: item.ownerType,
+      imagePath: item.imagePath,
+      isFile: item.isFile,
+      isFavorite: item.isFavorite,
+      extraNotes: item.extraNotes,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }))
 
-      // Try to find owner in Character, Note, or Location
-      const character = await this.characterRepository.findById(ownerId)
-      if (character) {
-        storyId = character.storyId
-      } else {
-        const note = await this.noteRepository.findById(ownerId)
-        if (note) {
-          storyId = note.storyId
-        } else {
-          const location = await this.locationRepository.findById(ownerId)
-          if (location) {
-            storyId = location.storyId
-          }
-        }
-      }
-
-      if (storyId) {
-        // Verify that the story exists and belongs to the user
-        const story = await this.storyRepository.findById(storyId, userId)
-        if (story) {
-          ownedGalleryItems.push({
-            id: item.id,
-            storyId: item.storyId,
-            ownerId: item.ownerId,
-            imagePath: item.imagePath,
-            isFile: item.isFile,
-            isFavorite: item.isFavorite,
-            extraNotes: item.extraNotes,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-          })
-        }
-      }
+    return {
+      items,
+      totalItems: paginatedGalleryItems.totalItems,
     }
-
-    return ownedGalleryItems
   }
 }

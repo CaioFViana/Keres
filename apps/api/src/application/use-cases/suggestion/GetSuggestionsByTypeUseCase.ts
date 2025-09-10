@@ -1,6 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
-import type { ListQueryParams, SuggestionResponse } from '@keres/shared'
+import type { ListQueryParams, SuggestionResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetSuggestionsByTypeUseCase {
   constructor(
@@ -12,45 +12,26 @@ export class GetSuggestionsByTypeUseCase {
     userId: string,
     type: string,
     query: ListQueryParams,
-  ): Promise<SuggestionResponse[]> {
-    const suggestions = await this.suggestionRepository.findByType(type, query)
-    const ownedSuggestions: SuggestionResponse[] = []
+  ): Promise<PaginatedResponse<SuggestionResponse>> {
+    // In this use case, we want to get global suggestions of a specific type
+    // that are owned by the user. So, storyId is null.
+    const paginatedSuggestions = await this.suggestionRepository.findByType(type, userId, null, query)
 
-    for (const suggestion of suggestions) {
-      if (suggestion.scope === 'story') {
-        if (suggestion.storyId) {
-          // Verify that the story exists and belongs to the user
-          const story = await this.storyRepository.findById(suggestion.storyId, userId)
-          if (story) {
-            ownedSuggestions.push({
-              id: suggestion.id,
-              userId: suggestion.userId,
-              scope: suggestion.scope,
-              storyId: suggestion.storyId,
-              type: suggestion.type,
-              value: suggestion.value,
-              isDefault: suggestion.isDefault,
-              createdAt: suggestion.createdAt,
-              updatedAt: suggestion.updatedAt,
-            })
-          }
-        }
-      } else if (suggestion.scope === 'global') {
-        if (suggestion.userId === userId) {
-          ownedSuggestions.push({
-            id: suggestion.id,
-            userId: suggestion.userId,
-            scope: suggestion.scope,
-            storyId: suggestion.storyId,
-            type: suggestion.type,
-            value: suggestion.value,
-            isDefault: suggestion.isDefault,
-            createdAt: suggestion.createdAt,
-            updatedAt: suggestion.updatedAt,
-          })
-        }
-      }
+    const items = paginatedSuggestions.items.map((suggestion) => ({
+      id: suggestion.id,
+      userId: suggestion.userId,
+      scope: suggestion.scope,
+      storyId: suggestion.storyId,
+      type: suggestion.type,
+      value: suggestion.value,
+      isDefault: suggestion.isDefault,
+      createdAt: suggestion.createdAt,
+      updatedAt: suggestion.updatedAt,
+    }))
+
+    return {
+      items,
+      totalItems: paginatedSuggestions.totalItems,
     }
-    return ownedSuggestions
   }
 }

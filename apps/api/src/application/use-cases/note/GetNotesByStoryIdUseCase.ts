@@ -1,6 +1,6 @@
 import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
-import type { ListQueryParams, NoteResponse } from '@keres/shared'
+import type { ListQueryParams, NoteResponse, PaginatedResponse } from '@keres/shared'
 
 export class GetNotesByStoryIdUseCase {
   constructor(
@@ -8,15 +8,15 @@ export class GetNotesByStoryIdUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, storyId: string, query: ListQueryParams): Promise<NoteResponse[]> {
+  async execute(userId: string, storyId: string, query: ListQueryParams): Promise<PaginatedResponse<NoteResponse>> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
     }
 
-    const notes = await this.noteRepository.findByStoryId(storyId, query)
-    return notes.map((note) => ({
+    const paginatedNotes = await this.noteRepository.findByStoryId(storyId, query)
+    const items = paginatedNotes.items.map((note) => ({
       id: note.id,
       storyId: note.storyId,
       title: note.title,
@@ -26,5 +26,10 @@ export class GetNotesByStoryIdUseCase {
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedNotes.totalItems,
+    }
   }
 }

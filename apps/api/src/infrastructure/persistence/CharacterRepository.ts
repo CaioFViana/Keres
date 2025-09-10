@@ -20,6 +20,11 @@ export class CharacterRepository implements ICharacterRepository {
     try {
       let baseQuery = db.select().from(characters).where(eq(characters.storyId, storyId));
 
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), eq(characters.isFavorite, query.isFavorite)));
+      }
+
       // Apply hasTags filter
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -67,10 +72,6 @@ export class CharacterRepository implements ICharacterRepository {
               case 'plannedTimeline':
                 baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.plannedTimeline, `%${value}%`)));
                 break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), eq(characters.isFavorite, boolValue)));
-                break;
               case 'extraNotes':
                 baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.extraNotes, `%${value}%`)));
                 break;
@@ -85,6 +86,11 @@ export class CharacterRepository implements ICharacterRepository {
         .select({ count: sql<number>`count(*)` })
         .from(characters)
         .where(eq(characters.storyId, storyId)); // Start with the base where clause
+
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(characters.storyId, storyId), eq(characters.isFavorite, query.isFavorite)));
+      }
 
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -130,10 +136,6 @@ export class CharacterRepository implements ICharacterRepository {
                 break;
               case 'plannedTimeline':
                 countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.plannedTimeline, `%${value}%`)));
-                break;
-              case 'isFavorite':
-                const boolValue = value.toLowerCase() === 'true';
-                countQuery = countQuery.where(and(eq(characters.storyId, storyId), eq(characters.isFavorite, boolValue)));
                 break;
               case 'extraNotes':
                 countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.extraNotes, `%${value}%`)));

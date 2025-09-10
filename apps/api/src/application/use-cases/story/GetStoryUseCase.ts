@@ -1,14 +1,12 @@
-import type { IChapterRepository } from '@domain/repositories/IChapterRepository'
-import type { ICharacterRepository } from '@domain/repositories/ICharacterRepository'
-import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-
-import { ChapterResponseSchema, CharacterResponseSchema, type StoryResponse } from '@keres/shared'
+import type { ILocationRepository, IChapterRepository, ICharacterRepository, IStoryRepository } from '@domain/repositories'
+import { ChapterResponseSchema, CharacterResponseSchema, LocationResponseSchema, type StoryResponse } from '@keres/shared'
 
 export class GetStoryUseCase {
   constructor(
     private readonly storyRepository: IStoryRepository,
     private readonly characterRepository: ICharacterRepository,
     private readonly chapterRepository: IChapterRepository,
+    private readonly locationRepository: ILocationRepository,
   ) {}
 
   async execute(userId: string, id: string, include: string[] = []): Promise<StoryResponse | null> {
@@ -41,6 +39,10 @@ export class GetStoryUseCase {
       response.chapters = rawChapters.map((c) => ChapterResponseSchema.parse(c))
     }
 
+    if (include.includes('locations')) {
+      const rawLocations = await this.locationRepository.findByStoryId(story.id)
+      response.locations = rawLocations.map((c) => LocationResponseSchema.parse(c))
+    }
     return response
   }
 }

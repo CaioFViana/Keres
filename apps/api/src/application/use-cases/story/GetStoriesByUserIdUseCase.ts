@@ -30,7 +30,6 @@ export class GetStoriesByUserIdUseCase {
     const storiesWithIncludes = await Promise.all(
       stories.map(async (story) => {
         const storyResponse = StoryResponseSchema.parse(story)
-
         if (include.includes('characters')) {
           const rawCharacters = await this.characterRepository.findByStoryId(story.id)
           storyResponse.characters = rawCharacters.map((c) => CharacterResponseSchema.parse(c))
@@ -43,6 +42,7 @@ export class GetStoriesByUserIdUseCase {
 
         if (include.includes('locations')) {
           const rawLocations = await this.locationRepository.findByStoryId(story.id)
+          console.log(rawLocations)
           storyResponse.locations = rawLocations.map((l) => LocationResponseSchema.parse(l))
         }
 

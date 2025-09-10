@@ -3,7 +3,7 @@ import type { INoteRepository } from '@domain/repositories/INoteRepository'
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { db, notes, story } from '@infrastructure/db' // Import db, notes and stories table
-import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm'
 
 export class NoteRepository implements INoteRepository {
   async findById(id: string): Promise<Note | null> {
@@ -20,22 +20,23 @@ export class NoteRepository implements INoteRepository {
     try {
       let baseQuery = db.select().from(notes).where(eq(notes.storyId, storyId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        title: notes.title,
-        body: notes.body,
-        isFavorite: notes.isFavorite,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(and(eq(notes.storyId, storyId), eq(column, value)));
+            switch (key) {
+              case 'title':
+                baseQuery = baseQuery.where(and(eq(notes.storyId, storyId), ilike(notes.title, `%${value}%`)));
+                break;
+              case 'body':
+                baseQuery = baseQuery.where(and(eq(notes.storyId, storyId), ilike(notes.body, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(notes.storyId, storyId), eq(notes.isFavorite, boolValue)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -51,9 +52,18 @@ export class NoteRepository implements INoteRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(and(eq(notes.storyId, storyId), eq(column, value)));
+            switch (key) {
+              case 'title':
+                countQuery = countQuery.where(and(eq(notes.storyId, storyId), ilike(notes.title, `%${value}%`)));
+                break;
+              case 'body':
+                countQuery = countQuery.where(and(eq(notes.storyId, storyId), ilike(notes.body, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(notes.storyId, storyId), eq(notes.isFavorite, boolValue)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -177,7 +187,7 @@ export class NoteRepository implements INoteRepository {
         .where(
           and(
             eq(story.userId, userId),
-            or(like(notes.title, `%${query}%`), like(notes.body, `%${query}%`)),
+            or(ilike(notes.title, `%${query}%`), ilike(notes.body, `%${query}%`)),
           ),
         )
       return results.map((result: { notes: Note }) => this.toDomain(result.notes))

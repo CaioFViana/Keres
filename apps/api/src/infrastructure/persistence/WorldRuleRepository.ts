@@ -3,7 +3,7 @@ import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleReposi
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { db, story, worldRules } from '@infrastructure/db' // Import db and worldRules table
-import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm'
 
 export class WorldRuleRepository implements IWorldRuleRepository {
   async findById(id: string): Promise<WorldRule | null> {
@@ -20,24 +20,26 @@ export class WorldRuleRepository implements IWorldRuleRepository {
     try {
       let baseQuery = db.select().from(worldRules).where(eq(worldRules.storyId, storyId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        title: worldRules.title,
-        description: worldRules.description,
-        isFavorite: worldRules.isFavorite,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(worldRules.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'title':
+                baseQuery = baseQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.title, `%${value}%`)));
+                break;
+              case 'description':
+                baseQuery = baseQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.description, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(worldRules.storyId, storyId), eq(worldRules.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -53,11 +55,21 @@ export class WorldRuleRepository implements IWorldRuleRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(worldRules.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'title':
+                countQuery = countQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.title, `%${value}%`)));
+                break;
+              case 'description':
+                countQuery = countQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.description, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(worldRules.storyId, storyId), eq(worldRules.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(worldRules.storyId, storyId), ilike(worldRules.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -172,9 +184,9 @@ export class WorldRuleRepository implements IWorldRuleRepository {
           and(
             eq(story.userId, userId),
             or(
-              like(worldRules.title, `%${query}%`),
-              like(worldRules.description, `%${query}%`),
-              like(worldRules.extraNotes, `%${query}%`),
+              ilike(worldRules.title, `%${query}%`),
+              ilike(worldRules.description, `%${query}%`),
+              ilike(worldRules.extraNotes, `%${query}%`),
             ),
           ),
         )

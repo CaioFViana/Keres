@@ -2,7 +2,7 @@ import type { Moment } from '@domain/entities/Moment'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
-import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm' // Import sql
+import { and, asc, desc, eq, inArray, ilike, or, sql } from 'drizzle-orm' // Import sql
 import { chapters, moments, scenes, story } from '@infrastructure/db/schema' // Import tables from the new schema location
 import { db } from '@infrastructure/db'
 
@@ -35,25 +35,29 @@ export class MomentRepository implements IMomentRepository {
     try {
       let baseQuery = db.select().from(moments).where(eq(moments.sceneId, sceneId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        name: moments.name,
-        summary: moments.summary,
-        location: moments.location,
-        isFavorite: moments.isFavorite,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(moments.sceneId, sceneId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.name, `%${value}%`)));
+                break;
+              case 'summary':
+                baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.summary, `%${value}%`)));
+                break;
+              case 'location':
+                baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.location, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), eq(moments.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -69,11 +73,24 @@ export class MomentRepository implements IMomentRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(moments.sceneId, sceneId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.name, `%${value}%`)));
+                break;
+              case 'summary':
+                countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.summary, `%${value}%`)));
+                break;
+              case 'location':
+                countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.location, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), eq(moments.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(moments.sceneId, sceneId), ilike(moments.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -227,10 +244,10 @@ export class MomentRepository implements IMomentRepository {
           and(
             eq(story.userId, userId),
             or(
-              like(moments.name, `%${query}%`),
-              like(moments.summary, `%${query}%`),
-              like(moments.location, `%${query}%`),
-              like(moments.extraNotes, `%${query}%`),
+              ilike(moments.name, `%${query}%`),
+              ilike(moments.summary, `%${query}%`),
+              ilike(moments.location, `%${query}%`),
+              ilike(moments.extraNotes, `%${query}%`),
             ),
           ),
         )

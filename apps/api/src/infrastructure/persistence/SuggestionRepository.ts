@@ -3,7 +3,7 @@ import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepo
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { db, suggestions } from '@infrastructure/db' // Import db and suggestions table
-import { and, asc, desc, eq, isNull, like, or, sql } from 'drizzle-orm' // Import sql
+import { and, asc, desc, eq, isNull, ilike, or, sql } from 'drizzle-orm' // Import sql
 
 export class SuggestionRepository implements ISuggestionRepository {
   async findById(id: string): Promise<Suggestion | null> {
@@ -20,26 +20,29 @@ export class SuggestionRepository implements ISuggestionRepository {
     try {
       let baseQuery = db.select().from(suggestions).where(eq(suggestions.userId, userId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        type: suggestions.type,
-        value: suggestions.value,
-        isDefault: suggestions.isDefault,
-        scope: suggestions.scope,
-        storyId: suggestions.storyId,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(suggestions.userId, userId), eq(column, value)),
-              );
+            switch (key) {
+              case 'type':
+                baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), ilike(suggestions.type, `%${value}%`)));
+                break;
+              case 'value':
+                baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), ilike(suggestions.value, `%${value}%`)));
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.isDefault, boolValue)));
+                break;
+              case 'scope':
+                baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.scope, value)));
+                break;
+              case 'storyId':
+                baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.storyId, value)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -55,11 +58,24 @@ export class SuggestionRepository implements ISuggestionRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(suggestions.userId, userId), eq(column, value)),
-              );
+            switch (key) {
+              case 'type':
+                countQuery = countQuery.where(and(eq(suggestions.userId, userId), ilike(suggestions.type, `%${value}%`)));
+                break;
+              case 'value':
+                countQuery = countQuery.where(and(eq(suggestions.userId, userId), ilike(suggestions.value, `%${value}%`)));
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.isDefault, boolValue)));
+                break;
+              case 'scope':
+                countQuery = countQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.scope, value)));
+                break;
+              case 'storyId':
+                countQuery = countQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.storyId, value)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -114,24 +130,29 @@ export class SuggestionRepository implements ISuggestionRepository {
     try {
       let baseQuery = db.select().from(suggestions).where(eq(suggestions.storyId, storyId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        type: suggestions.type,
-        value: suggestions.value,
-        isDefault: suggestions.isDefault,
-        scope: suggestions.scope,
-        userId: suggestions.userId,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), eq(column, value)));
+            switch (key) {
+              case 'type':
+                baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), ilike(suggestions.type, `%${value}%`)));
+                break;
+              case 'value':
+                baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), ilike(suggestions.value, `%${value}%`)));
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.isDefault, boolValue)));
+                break;
+              case 'scope':
+                baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.scope, value)));
+                break;
+              case 'userId':
+                baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.userId, value)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -147,9 +168,24 @@ export class SuggestionRepository implements ISuggestionRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), eq(column, value)));
+            switch (key) {
+              case 'type':
+                countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), ilike(suggestions.type, `%${value}%`)));
+                break;
+              case 'value':
+                countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), ilike(suggestions.value, `%${value}%`)));
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.isDefault, boolValue)));
+                break;
+              case 'scope':
+                countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.scope, value)));
+                break;
+              case 'userId':
+                countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.userId, value)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -218,20 +254,23 @@ export class SuggestionRepository implements ISuggestionRepository {
       }
 
       // Apply generic filtering from query params
-      const filterableFields = {
-        value: suggestions.value,
-        isDefault: suggestions.isDefault,
-        scope: suggestions.scope,
-        // userId and storyId are handled by the main conditions
-      };
-
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              conditions.push(eq(column, value));
+            switch (key) {
+              case 'value':
+                conditions.push(ilike(suggestions.value, `%${value}%`));
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                conditions.push(eq(suggestions.isDefault, boolValue));
+                break;
+              case 'scope':
+                conditions.push(eq(suggestions.scope, value));
+                break;
+              // userId and storyId are handled by the main conditions
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -293,25 +332,34 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.userId, userId), eq(suggestions.type, type)));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        value: suggestions.value,
-        isDefault: suggestions.isDefault,
-        scope: suggestions.scope,
-        storyId: suggestions.storyId,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(column, value)),
-              );
+            switch (key) {
+              case 'value':
+                baseQuery = baseQuery.where(
+                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), ilike(suggestions.value, `%${value}%`)),
+                );
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(
+                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.isDefault, boolValue)),
+                );
+                break;
+              case 'scope':
+                baseQuery = baseQuery.where(
+                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.scope, value)),
+                );
+                break;
+              case 'storyId':
+                baseQuery = baseQuery.where(
+                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.storyId, value)),
+                );
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -327,11 +375,29 @@ export class SuggestionRepository implements ISuggestionRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(column, value)),
-              );
+            switch (key) {
+              case 'value':
+                countQuery = countQuery.where(
+                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), ilike(suggestions.value, `%${value}%`)),
+                );
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(
+                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.isDefault, boolValue)),
+                );
+                break;
+              case 'scope':
+                countQuery = countQuery.where(
+                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.scope, value)),
+                );
+                break;
+              case 'storyId':
+                countQuery = countQuery.where(
+                  and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.storyId, value)),
+                );
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -392,29 +458,50 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.storyId, storyId), eq(suggestions.type, type)));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        value: suggestions.value,
-        isDefault: suggestions.isDefault,
-        scope: suggestions.scope,
-        userId: suggestions.userId,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(
-                  eq(suggestions.storyId, storyId),
-                  eq(suggestions.type, type),
-                  eq(column, value),
-                ),
-              );
+            switch (key) {
+              case 'value':
+                baseQuery = baseQuery.where(
+                  and(
+                    eq(suggestions.storyId, storyId),
+                    eq(suggestions.type, type),
+                    ilike(suggestions.value, `%${value}%`),
+                  ),
+                );
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(
+                  and(
+                    eq(suggestions.storyId, storyId),
+                    eq(suggestions.type, type),
+                    eq(suggestions.isDefault, boolValue),
+                  ),
+                );
+                break;
+              case 'scope':
+                baseQuery = baseQuery.where(
+                  and(
+                    eq(suggestions.storyId, storyId),
+                    eq(suggestions.type, type),
+                    eq(suggestions.scope, value),
+                  ),
+                );
+                break;
+              case 'userId':
+                baseQuery = baseQuery.where(
+                  and(
+                    eq(suggestions.storyId, storyId),
+                    eq(suggestions.type, type),
+                    eq(suggestions.userId, value),
+                  ),
+                );
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -430,15 +517,45 @@ export class SuggestionRepository implements ISuggestionRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(
-                  eq(suggestions.storyId, storyId),
-                  eq(suggestions.type, type),
-                  eq(column, value),
-                ),
-              );
+            switch (key) {
+              case 'value':
+                countQuery = countQuery.where(
+                  and(
+                    eq(suggestions.storyId, storyId),
+                    eq(suggestions.type, type),
+                    ilike(suggestions.value, `%${value}%`),
+                  ),
+                );
+                break;
+              case 'isDefault':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(
+                  and(
+                    eq(suggestions.storyId, storyId),
+                    eq(suggestions.type, type),
+                    eq(suggestions.isDefault, boolValue),
+                  ),
+                );
+                break;
+              case 'scope':
+                countQuery = countQuery.where(
+                  and(
+                    eq(suggestions.storyId, storyId),
+                    eq(suggestions.type, type),
+                    eq(suggestions.scope, value),
+                  ),
+                );
+                break;
+              case 'userId':
+                countQuery = countQuery.where(
+                  and(
+                    eq(suggestions.storyId, storyId),
+                    eq(suggestions.type, type),
+                    eq(suggestions.userId, value),
+                  ),
+                );
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -630,7 +747,7 @@ export class SuggestionRepository implements ISuggestionRepository {
       const results = await db
         .select()
         .from(suggestions)
-        .where(and(eq(suggestions.userId, userId), or(like(suggestions.value, `%${query}%`))))
+        .where(and(eq(suggestions.userId, userId), or(ilike(suggestions.value, `%${query}%`))))
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SuggestionRepository.search:', error)

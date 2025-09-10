@@ -3,7 +3,7 @@ import type { ILocationRepository } from '@domain/repositories/ILocationReposito
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { db, locations, locationTags, story } from '@infrastructure/db' // Import db and locations table
-import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ilike, or, sql } from 'drizzle-orm'
 
 export class LocationRepository implements ILocationRepository {
   async findById(id: string): Promise<Location | null> {
@@ -20,17 +20,6 @@ export class LocationRepository implements ILocationRepository {
     try {
       let baseQuery = db.select().from(locations).where(eq(locations.storyId, storyId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        name: locations.name,
-        description: locations.description,
-        climate: locations.climate,
-        culture: locations.culture,
-        politics: locations.politics,
-        isFavorite: locations.isFavorite,
-        // Add other filterable fields here
-      }
-
       // Apply hasTags filter
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -39,16 +28,35 @@ export class LocationRepository implements ILocationRepository {
           .where(and(eq(locations.storyId, storyId), inArray(locationTags.tagId, tagIds)));
       }
 
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(locations.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), ilike(locations.name, `%${value}%`)));
+                break;
+              case 'description':
+                baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), ilike(locations.description, `%${value}%`)));
+                break;
+              case 'climate':
+                baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), ilike(locations.climate, `%${value}%`)));
+                break;
+              case 'culture':
+                baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), ilike(locations.culture, `%${value}%`)));
+                break;
+              case 'politics':
+                baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), ilike(locations.politics, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), eq(locations.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(locations.storyId, storyId), ilike(locations.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -71,11 +79,30 @@ export class LocationRepository implements ILocationRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(locations.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                countQuery = countQuery.where(and(eq(locations.storyId, storyId), ilike(locations.name, `%${value}%`)));
+                break;
+              case 'description':
+                countQuery = countQuery.where(and(eq(locations.storyId, storyId), ilike(locations.description, `%${value}%`)));
+                break;
+              case 'climate':
+                countQuery = countQuery.where(and(eq(locations.storyId, storyId), ilike(locations.climate, `%${value}%`)));
+                break;
+              case 'culture':
+                countQuery = countQuery.where(and(eq(locations.storyId, storyId), ilike(locations.culture, `%${value}%`)));
+                break;
+              case 'politics':
+                countQuery = countQuery.where(and(eq(locations.storyId, storyId), ilike(locations.politics, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(locations.storyId, storyId), eq(locations.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(locations.storyId, storyId), ilike(locations.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -196,12 +223,12 @@ export class LocationRepository implements ILocationRepository {
           and(
             eq(story.userId, userId),
             or(
-              like(locations.name, `%${query}%`),
-              like(locations.description, `%${query}%`),
-              like(locations.climate, `%${query}%`),
-              like(locations.culture, `%${query}%`),
-              like(locations.politics, `%${query}%`),
-              like(locations.extraNotes, `%${query}%`),
+              ilike(locations.name, `%${query}%`),
+              ilike(locations.description, `%${query}%`),
+              ilike(locations.climate, `%${query}%`),
+              ilike(locations.culture, `%${query}%`),
+              ilike(locations.politics, `%${query}%`),
+              ilike(locations.extraNotes, `%${query}%`),
             ),
           ),
         )

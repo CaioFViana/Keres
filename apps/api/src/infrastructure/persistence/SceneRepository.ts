@@ -3,7 +3,7 @@ import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { chapters, db, scenes, story } from '@infrastructure/db' // Import db and scenes table
-import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm'
 
 export class SceneRepository implements ISceneRepository {
   async findById(id: string): Promise<Scene | null> {
@@ -20,24 +20,32 @@ export class SceneRepository implements ISceneRepository {
     try {
       let baseQuery = db.select().from(scenes).where(eq(scenes.chapterId, chapterId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        name: scenes.name,
-        summary: scenes.summary,
-        isFavorite: scenes.isFavorite,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(scenes.chapterId, chapterId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.name, `%${value}%`)));
+                break;
+              case 'summary':
+                baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.summary, `%${value}%`)));
+                break;
+              case 'gap':
+                baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.gap, `%${value}%`)));
+                break;
+              case 'duration':
+                baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.duration, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), eq(scenes.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -53,11 +61,27 @@ export class SceneRepository implements ISceneRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(scenes.chapterId, chapterId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.name, `%${value}%`)));
+                break;
+              case 'summary':
+                countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.summary, `%${value}%`)));
+                break;
+              case 'gap':
+                countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.gap, `%${value}%`)));
+                break;
+              case 'duration':
+                countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.duration, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), eq(scenes.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(scenes.chapterId, chapterId), ilike(scenes.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -111,24 +135,32 @@ export class SceneRepository implements ISceneRepository {
     try {
       let baseQuery = db.select().from(scenes).where(eq(scenes.locationId, locationId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        name: scenes.name,
-        summary: scenes.summary,
-        isFavorite: scenes.isFavorite,
-        // Add other filterable fields here
-      }
-
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(scenes.locationId, locationId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.name, `%${value}%`)));
+                break;
+              case 'summary':
+                baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.summary, `%${value}%`)));
+                break;
+              case 'gap':
+                baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.gap, `%${value}%`)));
+                break;
+              case 'duration':
+                baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.duration, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), eq(scenes.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -144,11 +176,27 @@ export class SceneRepository implements ISceneRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(scenes.locationId, locationId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                countQuery = countQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.name, `%${value}%`)));
+                break;
+              case 'summary':
+                countQuery = countQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.summary, `%${value}%`)));
+                break;
+              case 'gap':
+                countQuery = countQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.gap, `%${value}%`)));
+                break;
+              case 'duration':
+                countQuery = countQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.duration, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(scenes.locationId, locationId), eq(scenes.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(scenes.locationId, locationId), ilike(scenes.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -371,9 +419,9 @@ export class SceneRepository implements ISceneRepository {
           and(
             eq(story.userId, userId),
             or(
-              like(scenes.name, `%${query}%`),
-              like(scenes.summary, `%${query}%`),
-              like(scenes.extraNotes, `%${query}%`),
+              ilike(scenes.name, `%${query}%`),
+              ilike(scenes.summary, `%${query}%`),
+              ilike(scenes.extraNotes, `%${query}%`),
             ),
           ),
         )

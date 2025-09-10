@@ -3,7 +3,7 @@ import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { characters, db, gallery, locations, notes, story } from '@infrastructure/db' // Import db and gallery table
-import { and, eq, or, sql } from 'drizzle-orm'
+import { and, eq, or, sql, ilike } from 'drizzle-orm'
 
 export class GalleryRepository implements IGalleryRepository {
   async findById(id: string): Promise<Gallery | null> {
@@ -34,10 +34,28 @@ export class GalleryRepository implements IGalleryRepository {
     try {
       let baseQuery = db.select().from(gallery).where(eq(gallery.storyId, storyId));
 
-      if (query?.isFavorite !== undefined) {
-        baseQuery = baseQuery.where(
-          and(eq(gallery.storyId, storyId), eq(gallery.isFavorite, query.isFavorite)),
-        );
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            switch (key) {
+              case 'imagePath':
+                baseQuery = baseQuery.where(and(eq(gallery.storyId, storyId), ilike(gallery.imagePath, `%${value}%`)));
+                break;
+              case 'ownerType':
+                baseQuery = baseQuery.where(and(eq(gallery.storyId, storyId), eq(gallery.ownerType, value)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(gallery.storyId, storyId), eq(gallery.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(gallery.storyId, storyId), ilike(gallery.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
+            }
+          }
+        }
       }
 
       // Build the count query based on the same filters
@@ -46,10 +64,28 @@ export class GalleryRepository implements IGalleryRepository {
         .from(gallery)
         .where(eq(gallery.storyId, storyId));
 
-      if (query?.isFavorite !== undefined) {
-        countQuery = countQuery.where(
-          and(eq(gallery.storyId, storyId), eq(gallery.isFavorite, query.isFavorite)),
-        );
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            switch (key) {
+              case 'imagePath':
+                countQuery = countQuery.where(and(eq(gallery.storyId, storyId), ilike(gallery.imagePath, `%${value}%`)));
+                break;
+              case 'ownerType':
+                countQuery = countQuery.where(and(eq(gallery.storyId, storyId), eq(gallery.ownerType, value)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(gallery.storyId, storyId), eq(gallery.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(gallery.storyId, storyId), ilike(gallery.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
+            }
+          }
+        }
       }
 
       const totalItemsResult = await countQuery;
@@ -83,10 +119,28 @@ export class GalleryRepository implements IGalleryRepository {
     try {
       let baseQuery = db.select().from(gallery).where(eq(gallery.ownerId, ownerId));
 
-      if (query?.isFavorite !== undefined) {
-        baseQuery = baseQuery.where(
-          and(eq(gallery.ownerId, ownerId), eq(gallery.isFavorite, query.isFavorite)),
-        );
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            switch (key) {
+              case 'imagePath':
+                baseQuery = baseQuery.where(and(eq(gallery.ownerId, ownerId), ilike(gallery.imagePath, `%${value}%`)));
+                break;
+              case 'ownerType':
+                baseQuery = baseQuery.where(and(eq(gallery.ownerId, ownerId), eq(gallery.ownerType, value)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(gallery.ownerId, ownerId), eq(gallery.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(gallery.ownerId, ownerId), ilike(gallery.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
+            }
+          }
+        }
       }
 
       // Apply joins and user filter to the base query
@@ -110,10 +164,28 @@ export class GalleryRepository implements IGalleryRepository {
         .from(gallery)
         .where(eq(gallery.ownerId, ownerId));
 
-      if (query?.isFavorite !== undefined) {
-        countQuery = countQuery.where(
-          and(eq(gallery.ownerId, ownerId), eq(gallery.isFavorite, query.isFavorite)),
-        );
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            switch (key) {
+              case 'imagePath':
+                countQuery = countQuery.where(and(eq(gallery.ownerId, ownerId), ilike(gallery.imagePath, `%${value}%`)));
+                break;
+              case 'ownerType':
+                countQuery = countQuery.where(and(eq(gallery.ownerId, ownerId), eq(gallery.ownerType, value)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(gallery.ownerId, ownerId), eq(gallery.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(gallery.ownerId, ownerId), ilike(gallery.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
+            }
+          }
+        }
       }
 
       countQuery = countQuery

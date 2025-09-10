@@ -3,7 +3,7 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { chapters, chapterTags, db, story } from '@infrastructure/db' // Import db and chapters table
-import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ilike, or, sql } from 'drizzle-orm'
 
 export class ChapterRepository implements IChapterRepository {
   async findById(id: string): Promise<Chapter | null> {
@@ -20,14 +20,6 @@ export class ChapterRepository implements IChapterRepository {
     try {
       let baseQuery = db.select().from(chapters).where(eq(chapters.storyId, storyId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        name: chapters.name,
-        summary: chapters.summary,
-        isFavorite: chapters.isFavorite,
-        // Add other filterable fields here
-      }
-
       // Apply hasTags filter
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -36,16 +28,26 @@ export class ChapterRepository implements IChapterRepository {
           .where(and(eq(chapters.storyId, storyId), inArray(chapterTags.tagId, tagIds)));
       }
 
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(chapters.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                baseQuery = baseQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.name, `%${value}%`)));
+                break;
+              case 'summary':
+                baseQuery = baseQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.summary, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(chapters.storyId, storyId), eq(chapters.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -69,11 +71,21 @@ export class ChapterRepository implements IChapterRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(chapters.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                countQuery = countQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.name, `%${value}%`)));
+                break;
+              case 'summary':
+                countQuery = countQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.summary, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(chapters.storyId, storyId), eq(chapters.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(chapters.storyId, storyId), ilike(chapters.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -191,9 +203,9 @@ export class ChapterRepository implements IChapterRepository {
           and(
             eq(story.userId, userId),
             or(
-              like(chapters.name, `%${query}%`),
-              like(chapters.summary, `%${query}%`),
-              like(chapters.extraNotes, `%${query}%`),
+              ilike(chapters.name, `%${query}%`),
+              ilike(chapters.summary, `%${query}%`),
+              ilike(chapters.extraNotes, `%${query}%`),
             ),
           ),
         )

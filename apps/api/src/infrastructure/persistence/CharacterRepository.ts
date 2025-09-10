@@ -3,7 +3,7 @@ import type { ICharacterRepository } from '@domain/repositories/ICharacterReposi
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 import { characters, characterTags, db, story } from '@infrastructure/db' // Import db and characters table
-import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ilike, or, sql } from 'drizzle-orm'
 
 export class CharacterRepository implements ICharacterRepository {
   async findById(id: string): Promise<Character | null> {
@@ -20,16 +20,6 @@ export class CharacterRepository implements ICharacterRepository {
     try {
       let baseQuery = db.select().from(characters).where(eq(characters.storyId, storyId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        name: characters.name,
-        gender: characters.gender,
-        race: characters.race,
-        subrace: characters.subrace,
-        isFavorite: characters.isFavorite,
-        // Add other filterable fields here
-      }
-
       // Apply hasTags filter
       if (query?.hasTags) {
         const tagIds = query.hasTags.split(',');
@@ -38,16 +28,53 @@ export class CharacterRepository implements ICharacterRepository {
           .where(and(eq(characters.storyId, storyId), inArray(characterTags.tagId, tagIds)));
       }
 
-      // Generic filtering (Revised)
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(characters.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.name, `%${value}%`)));
+                break;
+              case 'gender':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.gender, `%${value}%`)));
+                break;
+              case 'race':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.race, `%${value}%`)));
+                break;
+              case 'subrace':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.subrace, `%${value}%`)));
+                break;
+              case 'description':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.description, `%${value}%`)));
+                break;
+              case 'personality':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.personality, `%${value}%`)));
+                break;
+              case 'motivation':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.motivation, `%${value}%`)));
+                break;
+              case 'qualities':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.qualities, `%${value}%`)));
+                break;
+              case 'weaknesses':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.weaknesses, `%${value}%`)));
+                break;
+              case 'biography':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.biography, `%${value}%`)));
+                break;
+              case 'plannedTimeline':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.plannedTimeline, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), eq(characters.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(characters.storyId, storyId), ilike(characters.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -70,11 +97,48 @@ export class CharacterRepository implements ICharacterRepository {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(characters.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.name, `%${value}%`)));
+                break;
+              case 'gender':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.gender, `%${value}%`)));
+                break;
+              case 'race':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.race, `%${value}%`)));
+                break;
+              case 'subrace':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.subrace, `%${value}%`)));
+                break;
+              case 'description':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.description, `%${value}%`)));
+                break;
+              case 'personality':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.personality, `%${value}%`)));
+                break;
+              case 'motivation':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.motivation, `%${value}%`)));
+                break;
+              case 'qualities':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.qualities, `%${value}%`)));
+                break;
+              case 'weaknesses':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.weaknesses, `%${value}%`)));
+                break;
+              case 'biography':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.biography, `%${value}%`)));
+                break;
+              case 'plannedTimeline':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.plannedTimeline, `%${value}%`)));
+                break;
+              case 'isFavorite':
+                const boolValue = value.toLowerCase() === 'true';
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), eq(characters.isFavorite, boolValue)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(characters.storyId, storyId), ilike(characters.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -252,11 +316,11 @@ export class CharacterRepository implements ICharacterRepository {
           and(
             eq(story.userId, userId),
             or(
-              like(characters.name, `%${query}%`),
-              like(characters.description, `%${query}%`),
-              like(characters.personality, `%${query}%`),
-              like(characters.biography, `%${query}%`),
-              like(characters.extraNotes, `%${query}%`),
+              ilike(characters.name, `%${query}%`),
+              ilike(characters.description, `%${query}%`),
+              ilike(characters.personality, `%${query}%`),
+              ilike(characters.biography, `%${query}%`),
+              ilike(characters.extraNotes, `%${query}%`),
             ),
           ),
         )

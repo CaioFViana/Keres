@@ -15,6 +15,13 @@
       "when": 1757534932212,
       "tag": "0001_tranquil_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1757537213342,
+      "tag": "0002_sour_mephisto",
+      "breakpoints": true
     }
   ]
 }

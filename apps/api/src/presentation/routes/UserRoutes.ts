@@ -4,9 +4,25 @@ import {
   DeleteUserUseCase,
   GetUserProfileUseCase,
   RefreshTokenUseCase,
+  DeleteStoryUseCase,
 } from '@application/use-cases'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi' // Import createRoute and OpenAPIHono
-import { StoryRepository } from '@infrastructure/persistence'
+import {
+  StoryRepository,
+  ChapterRepository,
+  CharacterRepository,
+  ChoiceRepository,
+  GalleryRepository,
+  LocationRepository,
+  MomentRepository,
+  NoteRepository,
+  SceneRepository,
+  SuggestionRepository,
+  TagRepository,
+  WorldRuleRepository,
+  CharacterMomentRepository,
+  CharacterRelationRepository,
+} from '@infrastructure/persistence'
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher'
 import { JwtService } from '@infrastructure/services/JwtService'
@@ -27,9 +43,41 @@ const userRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 // Dependencies for UserController
 const userRepository = new UserRepository()
 const storyRepository = new StoryRepository()
+const chapterRepository = new ChapterRepository()
+const characterRepository = new CharacterRepository()
+const choiceRepository = new ChoiceRepository()
+const galleryRepository = new GalleryRepository()
+const locationRepository = new LocationRepository()
+const momentRepository = new MomentRepository()
+const noteRepository = new NoteRepository()
+const sceneRepository = new SceneRepository()
+const suggestionRepository = new SuggestionRepository()
+const tagRepository = new TagRepository()
+const worldRuleRepository = new WorldRuleRepository()
+const characterMomentRepository = new CharacterMomentRepository()
+const characterRelationRepository = new CharacterRelationRepository()
+
 const passwordHasher = new BcryptPasswordHasher()
 const createUserUseCase = new CreateUserUseCase(userRepository, passwordHasher)
-const deleteUserUseCase = new DeleteUserUseCase(userRepository, storyRepository)
+
+const deleteStoryUseCase = new DeleteStoryUseCase(
+  storyRepository,
+  chapterRepository,
+  sceneRepository,
+  choiceRepository,
+  momentRepository,
+  characterRepository,
+  locationRepository,
+  galleryRepository,
+  worldRuleRepository,
+  noteRepository,
+  tagRepository,
+  suggestionRepository,
+  characterMomentRepository,
+  characterRelationRepository,
+)
+
+const deleteUserUseCase = new DeleteUserUseCase(userRepository, storyRepository, deleteStoryUseCase)
 
 const jwtService = new JwtService()
 const authenticateUserUseCase = new AuthenticateUserUseCase(

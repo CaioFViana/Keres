@@ -11,6 +11,16 @@ import {
   CharacterRepository,
   LocationRepository,
   StoryRepository,
+  SceneRepository,
+  ChoiceRepository,
+  MomentRepository,
+  GalleryRepository,
+  WorldRuleRepository,
+  NoteRepository,
+  TagRepository,
+  SuggestionRepository,
+  CharacterMomentRepository,
+  CharacterRelationRepository,
 } from '@infrastructure/persistence'
 import {
   ErrorResponseSchema,
@@ -23,7 +33,6 @@ import {
   PaginatedResponseSchema,
 } from '@keres/shared' // Import StoryResponseSchema
 import { StoryController } from '@presentation/controllers/StoryController'
-import { z } from 'zod' // Import z for defining parameters
 
 const storyRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 
@@ -32,9 +41,37 @@ const storyRepository = new StoryRepository()
 const characterRepository = new CharacterRepository()
 const chapterRepository = new ChapterRepository()
 const locationRepository = new LocationRepository()
+const sceneRepository = new SceneRepository()
+const choiceRepository = new ChoiceRepository()
+const momentRepository = new MomentRepository()
+const galleryRepository = new GalleryRepository()
+const worldRuleRepository = new WorldRuleRepository()
+const noteRepository = new NoteRepository()
+const tagRepository = new TagRepository()
+const suggestionRepository = new SuggestionRepository()
+const characterMomentRepository = new CharacterMomentRepository()
+const characterRelationRepository = new CharacterRelationRepository()
+
 const createStoryUseCase = new CreateStoryUseCase(storyRepository)
 const updateStoryUseCase = new UpdateStoryUseCase(storyRepository)
-const deleteStoryUseCase = new DeleteStoryUseCase(storyRepository)
+
+// Because of allowing "delete the entire story", this happened."
+const deleteStoryUseCase = new DeleteStoryUseCase(
+  storyRepository,
+  chapterRepository,
+  sceneRepository,
+  choiceRepository,
+  momentRepository,
+  characterRepository,
+  locationRepository,
+  galleryRepository,
+  worldRuleRepository,
+  noteRepository,
+  tagRepository,
+  suggestionRepository,
+  characterMomentRepository,
+  characterRelationRepository,
+)
 const getStoryUseCase = new GetStoryUseCase(
   storyRepository,
   characterRepository,

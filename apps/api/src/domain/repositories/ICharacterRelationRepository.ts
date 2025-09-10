@@ -8,4 +8,5 @@ export interface ICharacterRelationRepository {
   update(characterRelation: CharacterRelation): Promise<void>
   updateMany(characterRelations: CharacterRelation[]): Promise<void>
   delete(id: string): Promise<void>
+  deleteByCharacterId(characterId: string): Promise<void>
 }

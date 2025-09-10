@@ -112,6 +112,15 @@ export class CharacterMomentRepository implements ICharacterMomentRepository {
     }
   }
 
+  async deleteByCharacterId(characterId: string): Promise<void> {
+    try {
+      await db.delete(characterMoments).where(eq(characterMoments.characterId, characterId));
+    } catch (error) {
+      console.error('Error in CharacterMomentRepository.deleteByCharacterId:', error);
+      throw error;
+    }
+  }
+
   private toDomain(data: typeof characterMoments.$inferSelect): CharacterMoment {
     return {
       characterId: data.characterId,

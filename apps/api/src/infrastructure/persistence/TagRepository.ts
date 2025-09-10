@@ -12,7 +12,8 @@ import {
   sceneTags,
   tags,
 } from '@infrastructure/db'
-import { and, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, sql } from 'drizzle-orm'
+import { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 export class TagRepository implements ITagRepository {
   async findById(tagId: string): Promise<Tag | null> {
@@ -96,6 +97,131 @@ export class TagRepository implements ITagRepository {
     } catch (error) {
       console.error('Error in TagRepository.removeTagFromScene:', error)
       throw error
+    }
+  }
+
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<PaginatedResponse<Tag>> {
+    try {
+      let baseQuery = db.select().from(tags).where(eq(tags.storyId, storyId));
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        name: tags.name,
+        isFavorite: tags.isFavorite,
+        // Add other filterable fields here
+      };
+
+      // Generic filtering
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              baseQuery = baseQuery.where(
+                and(eq(tags.storyId, storyId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(tags)
+        .where(eq(tags.storyId, storyId)); // Start with the base where clause
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(
+                and(eq(tags.storyId, storyId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
+      // Sorting
+      const sortableFields = {
+        name: tags.name,
+        createdAt: tags.createdAt,
+        updatedAt: tags.updatedAt,
+        // Add other sortable fields here
+      };
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
+          } else {
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        finalQuery = finalQuery.limit(query.limit);
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
+        }
+      }
+
+      const results = await finalQuery;
+      const items = results.map(this.toDomain);
+
+      return { items, totalItems };
+    } catch (error) {
+      console.error('Error in TagRepository.findByStoryId:', error);
+      throw error;
+    }
+  }
+
+  async deleteCharacterTagsByCharacterId(characterId: string): Promise<void> {
+    try {
+      await db.delete(characterTags).where(eq(characterTags.characterId, characterId));
+    } catch (error) {
+      console.error('Error in TagRepository.deleteCharacterTagsByCharacterId:', error);
+      throw error;
+    }
+  }
+
+  async deleteLocationTagsByLocationId(locationId: string): Promise<void> {
+    try {
+      await db.delete(locationTags).where(eq(locationTags.locationId, locationId));
+    } catch (error) {
+      console.error('Error in TagRepository.deleteLocationTagsByLocationId:', error);
+      throw error;
+    }
+  }
+
+  async deleteChapterTagsByChapterId(chapterId: string): Promise<void> {
+    try {
+      await db.delete(chapterTags).where(eq(chapterTags.chapterId, chapterId));
+    } catch (error) {
+      console.error('Error in TagRepository.deleteChapterTagsByChapterId:', error);
+      throw error;
+    }
+  }
+
+  async deleteSceneTagsBySceneId(sceneId: string): Promise<void> {
+    try {
+      await db.delete(sceneTags).where(eq(sceneTags.sceneId, sceneId));
+    } catch (error) {
+      console.error('Error in TagRepository.deleteSceneTagsBySceneId:', error);
+      throw error;
     }
   }
 

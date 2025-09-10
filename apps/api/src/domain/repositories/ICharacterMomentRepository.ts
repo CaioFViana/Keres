@@ -8,4 +8,5 @@ export interface ICharacterMomentRepository {
   saveMany(characterMoments: CharacterMoment[]): Promise<void>
   updateMany(characterMoments: CharacterMoment[]): Promise<void>
   delete(characterId: string, momentId: string): Promise<void>
+  deleteByCharacterId(characterId: string): Promise<void>
 }

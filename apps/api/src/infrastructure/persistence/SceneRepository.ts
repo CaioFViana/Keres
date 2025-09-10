@@ -198,6 +198,104 @@ export class SceneRepository implements ISceneRepository {
     }
   }
 
+  async findByStoryId(storyId: string, query?: ListQueryParams): Promise<PaginatedResponse<Scene>> {
+    try {
+      let baseQuery = db
+        .select({ scenes: scenes })
+        .from(scenes)
+        .innerJoin(chapters, eq(scenes.chapterId, chapters.id))
+        .innerJoin(story, eq(chapters.storyId, story.id))
+        .where(eq(story.id, storyId));
+
+      // Define allowed filterable fields and their Drizzle column mappings
+      const filterableFields = {
+        name: scenes.name,
+        summary: scenes.summary,
+        isFavorite: scenes.isFavorite,
+        // Add other filterable fields here
+      };
+
+      // Generic filtering
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              baseQuery = baseQuery.where(
+                and(eq(story.id, storyId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      // Build the count query based on the same filters
+      let countQuery = db
+        .select({ count: sql<number>`count(*)` })
+        .from(scenes)
+        .innerJoin(chapters, eq(scenes.chapterId, chapters.id))
+        .innerJoin(story, eq(chapters.storyId, story.id))
+        .where(eq(story.id, storyId)); // Start with the base where clause
+
+      if (query?.filter) {
+        for (const key in query.filter) {
+          if (Object.hasOwn(query.filter, key)) {
+            const value = query.filter[key];
+            const column = filterableFields[key as keyof typeof filterableFields];
+            if (column) {
+              countQuery = countQuery.where(
+                and(eq(story.id, storyId), eq(column, value)),
+              );
+            }
+          }
+        }
+      }
+
+      const totalItemsResult = await countQuery;
+      const totalItems = totalItemsResult[0].count;
+
+      // Now apply sorting and pagination to the main query
+      let finalQuery = baseQuery;
+
+      // Sorting
+      const sortableFields = {
+        name: scenes.name,
+        index: scenes.index,
+        createdAt: scenes.createdAt,
+        updatedAt: scenes.updatedAt,
+        // Add other sortable fields here
+      };
+      if (query?.sort_by) {
+        const sortColumn = sortableFields[query.sort_by as keyof typeof sortableFields];
+        if (sortColumn) {
+          if (query.order === 'desc') {
+            finalQuery = finalQuery.orderBy(desc(sortColumn));
+          } else {
+            finalQuery = finalQuery.orderBy(asc(sortColumn));
+          }
+        }
+      }
+
+      // Pagination
+      if (query?.limit) {
+        finalQuery = finalQuery.limit(query.limit);
+        if (query.page) {
+          const offset = (query.page - 1) * query.limit;
+          finalQuery = finalQuery.offset(offset);
+        }
+      }
+
+      const results = await finalQuery;
+      const items = results.map((result: { scenes: Scene }) => this.toDomain(result.scenes));
+
+      return { items, totalItems };
+    } catch (error) {
+      console.error('Error in SceneRepository.findByStoryId:', error);
+      throw error;
+    }
+  }
+
   async save(sceneData: Scene): Promise<void> {
     try {
       await db.insert(scenes).values(this.toPersistence(sceneData))

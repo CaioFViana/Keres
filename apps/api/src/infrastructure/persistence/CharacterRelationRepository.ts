@@ -169,6 +169,22 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
     }
   }
 
+  async deleteByCharacterId(characterId: string): Promise<void> {
+    try {
+      await db
+        .delete(characterRelations)
+        .where(
+          or(
+            eq(characterRelations.charId1, characterId),
+            eq(characterRelations.charId2, characterId),
+          ),
+        );
+    } catch (error) {
+      console.error('Error in CharacterRelationRepository.deleteByCharacterId:', error);
+      throw error;
+    }
+  }
+
   private toDomain(data: typeof characterRelations.$inferSelect): CharacterRelation {
     return {
       id: data.id,

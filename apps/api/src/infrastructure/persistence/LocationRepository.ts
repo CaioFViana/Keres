@@ -49,11 +49,13 @@ export class LocationRepository implements ILocationRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(locations.storyId, storyId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(locations.storyId, storyId), eq(column, value)),
+              )
             }
           }
         }
@@ -169,7 +171,7 @@ export class LocationRepository implements ILocationRepository {
             ),
           ),
         )
-      return results.map((result: { locations: Location}) => this.toDomain(result.locations))
+      return results.map((result: { locations: Location }) => this.toDomain(result.locations))
     } catch (error) {
       console.error('Error in LocationRepository.search:', error)
       throw error

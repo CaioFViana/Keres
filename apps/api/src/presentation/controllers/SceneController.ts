@@ -50,7 +50,11 @@ export class SceneController {
     return scenes.map((scene) => SceneResponseSchema.parse(scene))
   }
 
-  async updateScene(userId: string, id: string, data: Omit<z.infer<typeof SceneUpdateSchema>, 'id'>) {
+  async updateScene(
+    userId: string,
+    id: string,
+    data: Omit<z.infer<typeof SceneUpdateSchema>, 'id'>,
+  ) {
     const updatedScene = await this.updateSceneUseCase.execute(userId, id, data)
     if (!updatedScene) {
       throw new Error('Scene not found or does not belong to the specified chapter')

@@ -8,7 +8,11 @@ export class GetSuggestionsByStoryIdUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, storyId: string, query: ListQueryParams): Promise<SuggestionResponse[]> {
+  async execute(
+    userId: string,
+    storyId: string,
+    query: ListQueryParams,
+  ): Promise<SuggestionResponse[]> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {

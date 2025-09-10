@@ -1,5 +1,5 @@
 import type { Suggestion } from '@domain/entities/Suggestion'
-import { ListQueryParams } from '@keres/shared'
+import type { ListQueryParams } from '@keres/shared'
 
 export interface ISuggestionRepository {
   findById(id: string): Promise<Suggestion | null>

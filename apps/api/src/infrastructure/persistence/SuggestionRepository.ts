@@ -1,9 +1,9 @@
 import type { Suggestion } from '@domain/entities/Suggestion'
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
+import type { ListQueryParams } from '@keres/shared'
 
 import { db, suggestions } from '@keres/db' // Import db and suggestions table
 import { and, asc, desc, eq, isNull, like, or } from 'drizzle-orm'
-import { ListQueryParams } from '@keres/shared'
 
 export class SuggestionRepository implements ISuggestionRepository {
   async findById(id: string): Promise<Suggestion | null> {
@@ -42,11 +42,13 @@ export class SuggestionRepository implements ISuggestionRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(suggestions.userId, userId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(suggestions.userId, userId), eq(column, value)),
+              )
             }
           }
         }
@@ -107,11 +109,13 @@ export class SuggestionRepository implements ISuggestionRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(suggestions.storyId, storyId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(suggestions.storyId, storyId), eq(column, value)),
+              )
             }
           }
         }
@@ -171,7 +175,7 @@ export class SuggestionRepository implements ISuggestionRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
@@ -210,7 +214,11 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
-  async findByUserAndType(userId: string, type: string, query?: ListQueryParams): Promise<Suggestion[]> {
+  async findByUserAndType(
+    userId: string,
+    type: string,
+    query?: ListQueryParams,
+  ): Promise<Suggestion[]> {
     try {
       let queryBuilder = db
         .select()
@@ -237,7 +245,7 @@ export class SuggestionRepository implements ISuggestionRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
@@ -278,7 +286,11 @@ export class SuggestionRepository implements ISuggestionRepository {
     }
   }
 
-  async findByStoryAndType(storyId: string, type: string, query?: ListQueryParams): Promise<Suggestion[]> {
+  async findByStoryAndType(
+    storyId: string,
+    type: string,
+    query?: ListQueryParams,
+  ): Promise<Suggestion[]> {
     try {
       let queryBuilder = db
         .select()
@@ -305,12 +317,16 @@ export class SuggestionRepository implements ISuggestionRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
               queryBuilder = queryBuilder.where(
-                and(eq(suggestions.storyId, storyId), eq(suggestions.type, type), eq(column, value)),
+                and(
+                  eq(suggestions.storyId, storyId),
+                  eq(suggestions.type, type),
+                  eq(column, value),
+                ),
               )
             }
           }
@@ -486,14 +502,7 @@ export class SuggestionRepository implements ISuggestionRepository {
       const results = await db
         .select()
         .from(suggestions)
-        .where(
-          and(
-            eq(suggestions.userId, userId),
-            or(
-              like(suggestions.value, `%${query}%`),
-            ),
-          ),
-        )
+        .where(and(eq(suggestions.userId, userId), or(like(suggestions.value, `%${query}%`))))
       return results.map(this.toDomain)
     } catch (error) {
       console.error('Error in SuggestionRepository.search:', error)

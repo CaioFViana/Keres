@@ -4,7 +4,11 @@ import type { StoryResponse, StoryUpdatePayload } from '@keres/shared'
 export class UpdateStoryUseCase {
   constructor(private readonly storyRepository: IStoryRepository) {}
 
-  async execute(userId: string, id: string, data: Omit<StoryUpdatePayload, 'id'>): Promise<StoryResponse | null> {
+  async execute(
+    userId: string,
+    id: string,
+    data: Omit<StoryUpdatePayload, 'id'>,
+  ): Promise<StoryResponse | null> {
     const existingStory = await this.storyRepository.findById(id, userId)
     if (!existingStory) {
       return null // Story not found

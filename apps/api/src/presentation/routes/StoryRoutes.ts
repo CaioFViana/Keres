@@ -165,7 +165,7 @@ storyRoutes.openapi(
     tags: ['Stories'],
   }),
   async (c) => {
-    const userId = (c.get('jwtPayload') as { userId: string, username: string }).userId
+    const userId = (c.get('jwtPayload') as { userId: string; username: string }).userId
     const query = ListQuerySchema.parse(c.req.query())
     try {
       const stories = await storyController.getStoriesByUserId(userId, query)

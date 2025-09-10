@@ -112,7 +112,7 @@ const MomentIdParamSchema = z.object({
 
 const CharacterMomentIdDeletionParamSchema = z.object({
   momentId: z.ulid(),
-  characterId: z.ulid()
+  characterId: z.ulid(),
 })
 
 // Define schema for bulk delete request body // Added
@@ -185,7 +185,6 @@ const CreateManyCharacterMomentsSchema = z.array(CharacterMomentCreateSchema)
 
 // Define schema for batch character moment update
 const UpdateManyCharacterMomentsSchema = z.array(CharacterMomentUpdateSchema)
-
 
 // POST /batch
 characterMomentRoutes.openapi(
@@ -442,7 +441,7 @@ characterMomentRoutes.openapi(
     summary: 'Delete a character moment',
     description: 'Deletes an association between a character and a moment.',
     request: {
-      query: CharacterMomentIdDeletionParamSchema
+      query: CharacterMomentIdDeletionParamSchema,
     },
     responses: {
       204: {

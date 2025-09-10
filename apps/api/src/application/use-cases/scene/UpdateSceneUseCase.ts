@@ -12,7 +12,11 @@ export class UpdateSceneUseCase {
     private readonly chapterRepository: IChapterRepository,
   ) {}
 
-  async execute(userId: string, id: string, data: Omit<SceneUpdatePayload, 'id'>): Promise<SceneResponse> {
+  async execute(
+    userId: string,
+    id: string,
+    data: Omit<SceneUpdatePayload, 'id'>,
+  ): Promise<SceneResponse> {
     const existingScene = await this.sceneRepository.findById(id)
     if (!existingScene) {
       throw new Error('Scene not found')

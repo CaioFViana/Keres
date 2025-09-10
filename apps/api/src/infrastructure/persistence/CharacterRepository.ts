@@ -48,11 +48,13 @@ export class CharacterRepository implements ICharacterRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(characters.storyId, storyId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(characters.storyId, storyId), eq(column, value)),
+              )
             }
           }
         }
@@ -224,7 +226,7 @@ export class CharacterRepository implements ICharacterRepository {
             ),
           ),
         )
-      return results.map((result: {characters: Character}) => this.toDomain(result.characters))
+      return results.map((result: { characters: Character }) => this.toDomain(result.characters))
     } catch (error) {
       console.error('Error in CharacterRepository.search:', error)
       throw error

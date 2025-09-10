@@ -24,7 +24,7 @@ export class ChapterRepository implements IChapterRepository {
       const filterableFields = {
         name: chapters.name,
         summary: chapters.summary,
-        isFavorite: chapters.isFavorite
+        isFavorite: chapters.isFavorite,
         // Add other filterable fields here
       }
 
@@ -47,11 +47,13 @@ export class ChapterRepository implements IChapterRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(chapters.storyId, storyId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(chapters.storyId, storyId), eq(column, value)),
+              )
             }
           }
         }
@@ -160,7 +162,7 @@ export class ChapterRepository implements IChapterRepository {
             ),
           ),
         )
-      return results.map((result: {chapters: Chapter}) => this.toDomain(result.chapters))
+      return results.map((result: { chapters: Chapter }) => this.toDomain(result.chapters))
     } catch (error) {
       console.error('Error in ChapterRepository.search:', error)
       throw error

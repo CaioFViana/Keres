@@ -1,5 +1,5 @@
 import type { Choice } from '@domain/entities/Choice'
-import { CreateChoicePayload, UpdateChoicePayload } from '@keres/shared'
+import type { CreateChoicePayload, UpdateChoicePayload } from '@keres/shared'
 
 export interface IChoiceRepository {
   create(data: CreateChoicePayload): Promise<Choice>

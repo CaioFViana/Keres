@@ -8,7 +8,11 @@ export class UpdateChapterUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, id: string, data: Omit<ChapterUpdatePayload, 'id'>): Promise<ChapterResponse> {
+  async execute(
+    userId: string,
+    id: string,
+    data: Omit<ChapterUpdatePayload, 'id'>,
+  ): Promise<ChapterResponse> {
     const existingChapter = await this.chapterRepository.findById(id)
     if (!existingChapter) {
       throw new Error('Chapter not found')

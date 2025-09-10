@@ -10,7 +10,11 @@ export class UpdateNoteUseCase {
     private readonly galleryRepository: IGalleryRepository, // Added
   ) {}
 
-  async execute(userId: string, id: string, data: Omit<UpdateNotePayload, 'id'>): Promise<NoteResponse> {
+  async execute(
+    userId: string,
+    id: string,
+    data: Omit<UpdateNotePayload, 'id'>,
+  ): Promise<NoteResponse> {
     const existingNote = await this.noteRepository.findById(id)
     if (!existingNote) {
       throw new Error('Note not found')

@@ -45,7 +45,7 @@ export class StoryRepository implements IStoryRepository {
       // Generic filtering
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
@@ -154,10 +154,7 @@ export class StoryRepository implements IStoryRepository {
         .where(
           and(
             eq(story.userId, userId),
-            or(
-              like(story.title, `%${query}%`),
-              like(story.summary, `%${query}%`),
-            ),
+            or(like(story.title, `%${query}%`), like(story.summary, `%${query}%`)),
           ),
         )
       return results.map(this.toDomain)

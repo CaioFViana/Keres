@@ -8,7 +8,11 @@ export class UpdateLocationUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, id: string, data: Omit<LocationUpdatePayload, 'id'>): Promise<LocationResponse> {
+  async execute(
+    userId: string,
+    id: string,
+    data: Omit<LocationUpdatePayload, 'id'>,
+  ): Promise<LocationResponse> {
     const existingLocation = await this.locationRepository.findById(id)
     if (!existingLocation) {
       throw new Error('Location not found.')

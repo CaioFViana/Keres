@@ -43,7 +43,11 @@ export class ChapterController {
     return chapters.map((chapter) => ChapterResponseSchema.parse(chapter))
   }
 
-  async updateChapter(userId: string, id: string, data: Omit<z.infer<typeof ChapterUpdateSchema>, 'id'>) {
+  async updateChapter(
+    userId: string,
+    id: string,
+    data: Omit<z.infer<typeof ChapterUpdateSchema>, 'id'>,
+  ) {
     const updatedChapter = await this.updateChapterUseCase.execute(userId, id, data)
     if (!updatedChapter) {
       throw new Error('Chapter not found or does not belong to the specified story')

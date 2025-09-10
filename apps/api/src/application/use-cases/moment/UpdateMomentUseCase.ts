@@ -12,7 +12,11 @@ export class UpdateMomentUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, id: string, data: Omit<UpdateMomentPayload, 'id'>): Promise<MomentResponse> {
+  async execute(
+    userId: string,
+    id: string,
+    data: Omit<UpdateMomentPayload, 'id'>,
+  ): Promise<MomentResponse> {
     const existingMoment = await this.momentRepository.findById(id)
     if (!existingMoment) {
       throw new Error('Moment not found')

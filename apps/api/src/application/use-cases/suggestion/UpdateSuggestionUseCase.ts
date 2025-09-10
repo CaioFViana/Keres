@@ -8,7 +8,11 @@ export class UpdateSuggestionUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, id: string, data: Omit<UpdateSuggestionPayload, 'id'>): Promise<SuggestionResponse> {
+  async execute(
+    userId: string,
+    id: string,
+    data: Omit<UpdateSuggestionPayload, 'id'>,
+  ): Promise<SuggestionResponse> {
     const existingSuggestion = await this.suggestionRepository.findById(id)
     if (!existingSuggestion) {
       throw new Error('Suggestion not found')

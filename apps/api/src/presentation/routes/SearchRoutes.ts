@@ -1,19 +1,19 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
-import {
-  CharacterRepository,
-  NoteRepository,
-  StoryRepository,
-  WorldRuleRepository,
-  LocationRepository,
-  ChapterRepository,
-  ChoiceRepository,
-  MomentRepository,
-  SceneRepository,
-  SuggestionRepository,
-} from '@infrastructure/persistence'
 import { GlobalSearchUseCase } from '@application/use-cases/search/GlobalSearchUseCase'
-import { SearchController } from '@presentation/controllers/SearchController'
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
+import {
+  ChapterRepository,
+  CharacterRepository,
+  ChoiceRepository,
+  LocationRepository,
+  MomentRepository,
+  NoteRepository,
+  SceneRepository,
+  StoryRepository,
+  SuggestionRepository,
+  WorldRuleRepository,
+} from '@infrastructure/persistence'
 import { ErrorResponseSchema, SearchQuerySchema, SearchResponseSchema } from '@keres/shared'
+import { SearchController } from '@presentation/controllers/SearchController'
 import { z } from 'zod'
 
 const searchRoutes = new OpenAPIHono()

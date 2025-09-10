@@ -2,7 +2,7 @@ import type { WorldRule } from '@domain/entities/WorldRule'
 import type { IWorldRuleRepository } from '@domain/repositories/IWorldRuleRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, worldRules, story } from '@keres/db' // Import db and worldRules table
+import { db, story, worldRules } from '@keres/db' // Import db and worldRules table
 import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 
 export class WorldRuleRepository implements IWorldRuleRepository {
@@ -39,11 +39,13 @@ export class WorldRuleRepository implements IWorldRuleRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(worldRules.storyId, storyId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(worldRules.storyId, storyId), eq(column, value)),
+              )
             }
           }
         }
@@ -150,7 +152,7 @@ export class WorldRuleRepository implements IWorldRuleRepository {
             ),
           ),
         )
-      return results.map((result: {worldRules: WorldRule}) => this.toDomain(result.worldRules))
+      return results.map((result: { worldRules: WorldRule }) => this.toDomain(result.worldRules))
     } catch (error) {
       console.error('Error in WorldRuleRepository.search:', error)
       throw error

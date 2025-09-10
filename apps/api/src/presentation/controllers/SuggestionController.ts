@@ -16,7 +16,7 @@ import type z from 'zod'
 
 import {
   type CreateSuggestionSchema,
-  ListQueryParams,
+  type ListQueryParams,
   SuggestionResponseSchema,
   type UpdateSuggestionSchema,
 } from '@keres/shared'
@@ -80,7 +80,12 @@ export class SuggestionController {
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async getSuggestionsByStoryAndType(userId: string, storyId: string, type: string, query: ListQueryParams) {
+  async getSuggestionsByStoryAndType(
+    userId: string,
+    storyId: string,
+    type: string,
+    query: ListQueryParams,
+  ) {
     const suggestions = await this.getSuggestionsByStoryAndTypeUseCase.execute(
       userId,
       storyId,
@@ -90,7 +95,11 @@ export class SuggestionController {
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async updateSuggestion(userId: string, id: string, data: Omit<z.infer<typeof UpdateSuggestionSchema>, 'id'>) {
+  async updateSuggestion(
+    userId: string,
+    id: string,
+    data: Omit<z.infer<typeof UpdateSuggestionSchema>, 'id'>,
+  ) {
     const updatedSuggestion = await this.updateSuggestionUseCase.execute(userId, id, data)
     if (!updatedSuggestion) {
       throw new Error('Suggestion not found')

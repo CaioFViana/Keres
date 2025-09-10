@@ -1,9 +1,9 @@
 import type { Scene } from '@domain/entities/Scene'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
+import type { ListQueryParams } from '@keres/shared'
 
-import { db, scenes, chapters, story } from '@keres/db' // Import db and scenes table
-import { eq, and, like, or, desc, asc } from 'drizzle-orm'
-import { ListQueryParams } from '@keres/shared'
+import { chapters, db, scenes, story } from '@keres/db' // Import db and scenes table
+import { and, asc, desc, eq, like, or } from 'drizzle-orm'
 
 export class SceneRepository implements ISceneRepository {
   async findById(id: string): Promise<Scene | null> {
@@ -40,11 +40,13 @@ export class SceneRepository implements ISceneRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(scenes.chapterId, chapterId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(scenes.chapterId, chapterId), eq(column, value)),
+              )
             }
           }
         }
@@ -103,11 +105,13 @@ export class SceneRepository implements ISceneRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(scenes.locationId, locationId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(scenes.locationId, locationId), eq(column, value)),
+              )
             }
           }
         }
@@ -223,7 +227,7 @@ export class SceneRepository implements ISceneRepository {
             ),
           ),
         )
-      return results.map((result: {scenes: Scene}) => result.scenes)
+      return results.map((result: { scenes: Scene }) => result.scenes)
     } catch (error) {
       console.error('Error in SceneRepository.search:', error)
       throw error

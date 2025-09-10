@@ -1,11 +1,11 @@
 import type { Choice } from '@domain/entities/Choice'
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
+import type { CreateChoicePayload, UpdateChoicePayload } from '@keres/shared'
 
 import { db } from '@keres/db'
-import { choices, chapters, scenes, story } from '@keres/db/src/schema'
-import { eq, and, like } from 'drizzle-orm'
+import { chapters, choices, scenes, story } from '@keres/db/src/schema'
+import { and, eq, like } from 'drizzle-orm'
 import { ulid } from 'ulid'
-import { CreateChoicePayload, UpdateChoicePayload } from '@keres/shared'
 
 export class ChoiceRepository implements IChoiceRepository {
   async create(data: CreateChoicePayload): Promise<Choice> {
@@ -61,13 +61,8 @@ export class ChoiceRepository implements IChoiceRepository {
         .innerJoin(scenes, eq(choices.sceneId, scenes.id))
         .innerJoin(chapters, eq(scenes.chapterId, chapters.id))
         .innerJoin(story, eq(chapters.storyId, story.id))
-        .where(
-          and(
-            eq(story.userId, userId),
-            like(choices.text, `%${query}%`),
-          ),
-        )
-      return results.map((result: { choices: Choice}) => result.choices)
+        .where(and(eq(story.userId, userId), like(choices.text, `%${query}%`)))
+      return results.map((result: { choices: Choice }) => result.choices)
     } catch (error) {
       console.error('Error in ChoiceRepository.search:', error)
       throw error

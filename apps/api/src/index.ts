@@ -13,12 +13,12 @@ import locationRoutes from './presentation/routes/LocationRoutes'
 import momentRoutes from './presentation/routes/MomentRoutes'
 import noteRoutes from './presentation/routes/NoteRoutes' // Added
 import sceneRoutes from './presentation/routes/SceneRoutes'
+import searchRoutes from './presentation/routes/SearchRoutes' // Added
 import storyRoutes from './presentation/routes/StoryRoutes'
 import suggestionRoutes from './presentation/routes/SuggestionRoutes' // Added
 import tagRoutes from './presentation/routes/TagRoutes' // Added
 import userRoutes from './presentation/routes/UserRoutes'
 import worldRuleRoutes from './presentation/routes/WorldRuleRoutes' // Added
-import searchRoutes from './presentation/routes/SearchRoutes' // Added
 
 extendZodWithOpenApi(z)
 

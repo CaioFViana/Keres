@@ -39,7 +39,7 @@ export class NoteRepository implements INoteRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
@@ -153,13 +153,10 @@ export class NoteRepository implements INoteRepository {
         .where(
           and(
             eq(story.userId, userId),
-            or(
-              like(notes.title, `%${query}%`),
-              like(notes.body, `%${query}%`),
-            ),
+            or(like(notes.title, `%${query}%`), like(notes.body, `%${query}%`)),
           ),
         )
-      return results.map((result: {notes: Note}) => this.toDomain(result.notes))
+      return results.map((result: { notes: Note }) => this.toDomain(result.notes))
     } catch (error) {
       console.error('Error in NoteRepository.search:', error)
       throw error

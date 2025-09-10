@@ -8,7 +8,11 @@ export class GetSuggestionsByTypeUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, type: string, query: ListQueryParams): Promise<SuggestionResponse[]> {
+  async execute(
+    userId: string,
+    type: string,
+    query: ListQueryParams,
+  ): Promise<SuggestionResponse[]> {
     const suggestions = await this.suggestionRepository.findByType(type, query)
     const ownedSuggestions: SuggestionResponse[] = []
 

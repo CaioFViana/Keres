@@ -106,7 +106,6 @@ const BulkDeleteSchema = z.object({
 const CreateManySuggestionsSchema = z.array(CreateSuggestionSchema)
 const UpdateManySuggestionsSchema = z.array(UpdateSuggestionSchema)
 
-
 // POST /
 suggestionRoutes.openapi(
   createRoute({
@@ -391,7 +390,11 @@ suggestionRoutes.openapi(
     const params = StoryIdParamSchema.parse(c.req.param())
     const query = ListQuerySchema.parse(c.req.query())
     try {
-      const suggestions = await suggestionController.getSuggestionsByStoryId(userId, params.storyId, query)
+      const suggestions = await suggestionController.getSuggestionsByStoryId(
+        userId,
+        params.storyId,
+        query,
+      )
       return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -447,7 +450,11 @@ suggestionRoutes.openapi(
     const params = TypeParamSchema.parse(c.req.param())
     const query = ListQuerySchema.parse(c.req.query())
     try {
-      const suggestions = await suggestionController.getSuggestionsByType(userId, params.type, query)
+      const suggestions = await suggestionController.getSuggestionsByType(
+        userId,
+        params.type,
+        query,
+      )
       return c.json(suggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {

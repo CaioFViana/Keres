@@ -2,7 +2,7 @@ import type { Moment } from '@domain/entities/Moment'
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ListQueryParams } from '@keres/shared'
 
-import { db, moments, chapters, scenes, story } from '@keres/db' // Import db and moments table
+import { chapters, db, moments, scenes, story } from '@keres/db' // Import db and moments table
 import { and, asc, desc, eq, inArray, like, or } from 'drizzle-orm' // Import inArray
 
 export class MomentRepository implements IMomentRepository {
@@ -55,11 +55,13 @@ export class MomentRepository implements IMomentRepository {
       // Generic filtering (Revised)
       if (query?.filter) {
         for (const key in query.filter) {
-          if (Object.prototype.hasOwnProperty.call(query.filter, key)) {
+          if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key]
             const column = filterableFields[key as keyof typeof filterableFields]
             if (column) {
-              queryBuilder = queryBuilder.where(and(eq(moments.sceneId, sceneId), eq(column, value)))
+              queryBuilder = queryBuilder.where(
+                and(eq(moments.sceneId, sceneId), eq(column, value)),
+              )
             }
           }
         }
@@ -205,7 +207,7 @@ export class MomentRepository implements IMomentRepository {
             ),
           ),
         )
-      return results.map((result: {moments: Moment}) => result.moments)
+      return results.map((result: { moments: Moment }) => result.moments)
     } catch (error) {
       console.error('Error in MomentRepository.search:', error)
       throw error

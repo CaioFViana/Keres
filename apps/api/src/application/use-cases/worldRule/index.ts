@@ -3,6 +3,6 @@
 export * from './BulkDeleteWorldRuleUseCase'
 export * from './CreateWorldRuleUseCase'
 export * from './DeleteWorldRuleUseCase'
-export * from './GetWorldRuleUseCase'
 export * from './GetWorldRulesByStoryIdUseCase'
+export * from './GetWorldRuleUseCase'
 export * from './UpdateWorldRuleUseCase'

@@ -10,7 +10,12 @@ import { StoryRepository } from '@infrastructure/persistence'
 import { UserRepository } from '@infrastructure/persistence/UserRepository'
 import { BcryptPasswordHasher } from '@infrastructure/services/BcryptPasswordHasher'
 import { JwtService } from '@infrastructure/services/JwtService'
-import { ErrorResponseSchema, UserLoginSchema, UserProfileSchema, UserRegisterSchema } from '@keres/shared' // Import Zod schemas and UserProfileSchema
+import {
+  ErrorResponseSchema,
+  UserLoginSchema,
+  UserProfileSchema,
+  UserRegisterSchema,
+} from '@keres/shared' // Import Zod schemas and UserProfileSchema
 import { UserController } from '@presentation/controllers/UserController'
 import { z } from 'zod' // Import z for defining parameters
 

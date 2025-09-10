@@ -78,7 +78,7 @@ const getScenesByChapterIdUseCase = new GetScenesByChapterIdUseCase(
 const getScenesByLocationidUseCase = new GetScenesByLocationIdUseCase(
   sceneRepository,
   locationRepository,
-  storyRepository
+  storyRepository,
 )
 
 const sceneController = new SceneController(
@@ -88,7 +88,7 @@ const sceneController = new SceneController(
   deleteSceneUseCase,
   bulkDeleteSceneUseCase,
   getScenesByChapterIdUseCase,
-  getScenesByLocationidUseCase
+  getScenesByLocationidUseCase,
 )
 
 // Define schemas for path parameters

@@ -34,14 +34,13 @@ export const BulkDeleteCharacterMomentResponseSchema = z.object({
       momentId: z.string(),
     }),
   ),
-  failedIds: z
-    .array(
-      z.object({
-        characterId: z.string(),
-        momentId: z.string(),
-        reason: z.string(),
-      }),
-    )
+  failedIds: z.array(
+    z.object({
+      characterId: z.string(),
+      momentId: z.string(),
+      reason: z.string(),
+    }),
+  ),
 })
 
 export type BulkDeleteCharacterMomentResponse = z.infer<

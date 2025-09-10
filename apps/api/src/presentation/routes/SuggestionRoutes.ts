@@ -100,7 +100,12 @@ const TypeParamSchema = z.object({
 // Define schema for bulk delete request body // Added
 const BulkDeleteSchema = z.object({
   ids: z.array(z.ulid()),
-}) // Added
+})
+
+// Define schema for batch suggestion
+const CreateManySuggestionsSchema = z.array(CreateSuggestionSchema)
+const UpdateManySuggestionsSchema = z.array(UpdateSuggestionSchema)
+
 
 // POST /
 suggestionRoutes.openapi(
@@ -161,9 +166,6 @@ suggestionRoutes.openapi(
     }
   },
 )
-
-// Define schema for batch suggestion creation
-const CreateManySuggestionsSchema = z.array(CreateSuggestionSchema)
 
 // POST /batch
 suggestionRoutes.openapi(
@@ -581,6 +583,74 @@ suggestionRoutes.openapi(
   },
 )
 
+// PUT /batch
+suggestionRoutes.openapi(
+  createRoute({
+    method: 'put',
+    path: '/batch',
+    summary: 'Update multiple suggestions',
+    description: 'Updates multiple suggestions in a single request.',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: UpdateManySuggestionsSchema,
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Suggestions updated successfully',
+        content: {
+          'application/json': {
+            schema: z.array(SuggestionResponseSchema),
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+      404: {
+        description: 'Suggestion not found',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+    },
+    tags: ['Suggestions'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const body = await c.req.json()
+    const data = UpdateManySuggestionsSchema.parse(body)
+    try {
+      const updatedSuggestions = await suggestionController.updateManySuggestions(userId, data)
+      return c.json(updatedSuggestions, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // PUT /:id
 suggestionRoutes.openapi(
   createRoute({
@@ -719,77 +789,6 @@ suggestionRoutes.openapi(
         return c.json({ error: 'Suggestion not found' }, 404)
       }
       return c.json(updatedSuggestion, 200)
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return c.json({ error: error.message }, 400)
-      }
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
-  },
-)
-
-// Define schema for batch suggestion update
-const UpdateManySuggestionsSchema = z.array(UpdateSuggestionSchema)
-
-// PUT /batch
-suggestionRoutes.openapi(
-  createRoute({
-    method: 'put',
-    path: '/batch',
-    summary: 'Update multiple suggestions',
-    description: 'Updates multiple suggestions in a single request.',
-    request: {
-      body: {
-        content: {
-          'application/json': {
-            schema: UpdateManySuggestionsSchema,
-          },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Suggestions updated successfully',
-        content: {
-          'application/json': {
-            schema: z.array(SuggestionResponseSchema),
-          },
-        },
-      },
-      400: {
-        description: 'Bad Request',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      404: {
-        description: 'Suggestion not found',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      500: {
-        description: 'Internal Server Error',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-    tags: ['Suggestions'],
-  }),
-  async (c) => {
-    const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const body = await c.req.json()
-    const data = UpdateManySuggestionsSchema.parse(body)
-    try {
-      const updatedSuggestions = await suggestionController.updateManySuggestions(userId, data)
-      return c.json(updatedSuggestions, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 400)

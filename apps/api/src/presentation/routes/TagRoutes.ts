@@ -520,10 +520,10 @@ tagRoutes.openapi(
   },
 )
 
-// DELETE /remove
+// POST /remove
 tagRoutes.openapi(
   createRoute({
-    method: 'delete',
+    method: 'post',
     path: '/remove',
     summary: 'Remove a tag from an entity',
     description: 'Removes a tag from a specified entity (Character, Location, Chapter, or Scene).',

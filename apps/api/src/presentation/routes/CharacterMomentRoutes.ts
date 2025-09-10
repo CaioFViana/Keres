@@ -110,12 +110,16 @@ const MomentIdParamSchema = z.object({
   momentId: z.ulid(),
 })
 
+const CharacterMomentIdDeletionParamSchema = z.object({
+  momentId: z.ulid(),
+  characterId: z.ulid()
+})
+
 // Define schema for bulk delete request body // Added
 const BulkDeleteSchema = z.object({
   ids: z.array(z.object({ characterId: z.string(), momentId: z.string() })),
 }) // Added
 
-// POST /
 // POST /
 characterMomentRoutes.openapi(
   createRoute({
@@ -178,6 +182,10 @@ characterMomentRoutes.openapi(
 
 // Define schema for batch character moment creation
 const CreateManyCharacterMomentsSchema = z.array(CharacterMomentCreateSchema)
+
+// Define schema for batch character moment update
+const UpdateManyCharacterMomentsSchema = z.array(CharacterMomentUpdateSchema)
+
 
 // POST /batch
 characterMomentRoutes.openapi(
@@ -242,10 +250,6 @@ characterMomentRoutes.openapi(
     }
   },
 )
-
-// Define schema for batch character moment update
-const UpdateManyCharacterMomentsSchema = z.array(CharacterMomentUpdateSchema)
-
 // PUT /batch
 characterMomentRoutes.openapi(
   createRoute({
@@ -430,21 +434,15 @@ characterMomentRoutes.openapi(
   },
 )
 
-// DELETE /
+// DELETE /:characterId/:momentId
 characterMomentRoutes.openapi(
   createRoute({
     method: 'delete',
-    path: '/',
+    path: '/{characterId}/{momentId}',
     summary: 'Delete a character moment',
     description: 'Deletes an association between a character and a moment.',
     request: {
-      body: {
-        content: {
-          'application/json': {
-            schema: CharacterMomentCreateSchema, // Schema for deletion criteria
-          },
-        },
-      },
+      query: CharacterMomentIdDeletionParamSchema
     },
     responses: {
       204: {
@@ -480,7 +478,7 @@ characterMomentRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
-    const data = CharacterMomentCreateSchema.parse(body)
+    const data = CharacterMomentIdDeletionParamSchema.parse(body)
     try {
       await characterMomentController.deleteCharacterMoment(userId, data.characterId, data.momentId)
       return c.body(null, 204)

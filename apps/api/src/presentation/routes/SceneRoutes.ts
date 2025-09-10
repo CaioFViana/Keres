@@ -168,6 +168,61 @@ sceneRoutes.openapi(
   },
 )
 
+// GET /chapter/:chapterId
+sceneRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/chapter/{chapterId}',
+    summary: 'Get scenes by chapter ID',
+    description: 'Retrieves all scenes belonging to a specific chapter.',
+    request: {
+      params: ChapterIdParamSchema,
+      query: ListQuerySchema,
+    },
+    responses: {
+      200: {
+        description: 'Scenes retrieved successfully',
+        content: {
+          'application/json': {
+            schema: z.array(SceneResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: 'Chapter not found',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+    },
+    tags: ['Scenes'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    const params = ChapterIdParamSchema.parse(c.req.param())
+    const query = ListQuerySchema.parse(c.req.query())
+    try {
+      const scenes = await sceneController.getScenesByChapterId(userId, params.chapterId, query)
+      return c.json(scenes, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // POST /
 sceneRoutes.openapi(
   createRoute({
@@ -274,61 +329,6 @@ sceneRoutes.openapi(
     try {
       const scene = await sceneController.getScene(userId, params.id, query.include) // Pass include
       return c.json(scene, 200)
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
-      }
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
-  },
-)
-
-// GET /chapter/:chapterId
-sceneRoutes.openapi(
-  createRoute({
-    method: 'get',
-    path: '/chapter/{chapterId}',
-    summary: 'Get scenes by chapter ID',
-    description: 'Retrieves all scenes belonging to a specific chapter.',
-    request: {
-      params: ChapterIdParamSchema,
-      query: ListQuerySchema,
-    },
-    responses: {
-      200: {
-        description: 'Scenes retrieved successfully',
-        content: {
-          'application/json': {
-            schema: z.array(SceneResponseSchema),
-          },
-        },
-      },
-      404: {
-        description: 'Chapter not found',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      500: {
-        description: 'Internal Server Error',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-    tags: ['Scenes'],
-  }),
-  async (c) => {
-    const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const params = ChapterIdParamSchema.parse(c.req.param())
-    const query = ListQuerySchema.parse(c.req.query())
-    try {
-      const scenes = await sceneController.getScenesByChapterId(userId, params.chapterId, query)
-      return c.json(scenes, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)

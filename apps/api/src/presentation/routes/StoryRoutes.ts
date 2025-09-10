@@ -121,6 +121,59 @@ storyRoutes.openapi(
   },
 )
 
+// GET /all
+storyRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/all',
+    summary: 'Get stories by user ID',
+    description: 'Retrieves all stories belonging to a specific user.',
+    request: {
+      query: ListQuerySchema,
+    },
+    responses: {
+      200: {
+        description: 'Stories retrieved successfully',
+        content: {
+          'application/json': {
+            schema: z.array(StoryResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: 'User not found',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+    },
+    tags: ['Stories'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string, username: string }).userId
+    const query = ListQuerySchema.parse(c.req.query())
+    try {
+      const stories = await storyController.getStoriesByUserId(userId, query)
+      return c.json(stories, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 404)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
+
 // GET /:id
 storyRoutes.openapi(
   createRoute({
@@ -167,59 +220,6 @@ storyRoutes.openapi(
     try {
       const story = await storyController.getStory(userId, params.id, query.include) // Pass include
       return c.json(story, 200)
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return c.json({ error: error.message }, 404)
-      }
-      return c.json({ error: 'Internal Server Error' }, 500)
-    }
-  },
-)
-
-// GET /user/:userId
-storyRoutes.openapi(
-  createRoute({
-    method: 'get',
-    path: '/all',
-    summary: 'Get stories by user ID',
-    description: 'Retrieves all stories belonging to a specific user.',
-    request: {
-      query: ListQuerySchema,
-    },
-    responses: {
-      200: {
-        description: 'Stories retrieved successfully',
-        content: {
-          'application/json': {
-            schema: z.array(StoryResponseSchema),
-          },
-        },
-      },
-      404: {
-        description: 'User not found',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-      500: {
-        description: 'Internal Server Error',
-        content: {
-          'application/json': {
-            schema: ErrorResponseSchema,
-          },
-        },
-      },
-    },
-    tags: ['Stories'],
-  }),
-  async (c) => {
-    const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const query = ListQuerySchema.parse(c.req.query())
-    try {
-      const stories = await storyController.getStoriesByUserId(userId, query)
-      return c.json(stories, 200)
     } catch (error: unknown) {
       if (error instanceof Error) {
         return c.json({ error: error.message }, 404)

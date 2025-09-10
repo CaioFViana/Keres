@@ -166,6 +166,9 @@ characterRelationRoutes.openapi(
 // Define schema for batch character relation creation
 const CreateManyCharacterRelationsSchema = z.array(CharacterRelationCreateSchema)
 
+// Define schema for batch character relation update
+const UpdateManyCharacterRelationsSchema = z.array(CharacterRelationUpdateSchema)
+
 // POST /batch
 characterRelationRoutes.openapi(
   createRoute({
@@ -228,9 +231,6 @@ characterRelationRoutes.openapi(
     }
   },
 )
-
-// Define schema for batch character relation update
-const UpdateManyCharacterRelationsSchema = z.array(CharacterRelationUpdateSchema)
 
 // PUT /batch
 characterRelationRoutes.openapi(

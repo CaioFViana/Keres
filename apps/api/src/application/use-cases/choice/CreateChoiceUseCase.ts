@@ -32,6 +32,11 @@ export class CreateChoiceUseCase {
       throw new Error("Scene's story not found or not owned by user")
     }
 
+    // Prevent explicit choices in linear stories
+    if (sceneStory.type === 'linear' && !data.isImplicit) {
+      throw new Error('Explicit choices cannot be created in linear stories. Use scene management for linear story progression.')
+    }
+
     // Verify nextScene ownership
     const nextScene = await this.sceneRepository.findById(data.nextSceneId)
     if (!nextScene) {

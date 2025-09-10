@@ -38,6 +38,11 @@ export class UpdateChoiceUseCase {
       throw new Error('Story not found or not owned by user for choice')
     }
 
+    // Prevent explicit choices from being updated in linear stories
+    if (story.type === 'linear' && !existingChoice.isImplicit) {
+      throw new Error('Explicit choices cannot be updated in linear stories.')
+    }
+
     const updatedChoice = await this.choiceRepository.update(id, data, existingChoice.sceneId)
     if (!updatedChoice) {
       throw new Error('Failed to update choice')

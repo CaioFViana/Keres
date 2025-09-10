@@ -13,7 +13,7 @@ export const story = pgTable('story', {
   id: text('id').primaryKey(),
   userId: text('user_id')
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: 'cascade' }),
   type: text('type').default('linear').notNull(), // 'linear' | 'branching'
   title: text('title').notNull(),
   summary: text('summary'),
@@ -65,10 +65,10 @@ export const scenes = pgTable('scenes', {
   id: text('id').primaryKey(),
   chapterId: text('chapter_id')
     .notNull()
-    .references(() => chapters.id),
+    .references(() => chapters.id, { onDelete: 'restrict' }),
   locationId: text('location_id')
     .notNull()
-    .references(() => locations.id),
+    .references(() => locations.id, { onDelete: 'restrict' }),
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),
@@ -84,7 +84,7 @@ export const moments = pgTable('moments', {
   id: text('id').primaryKey(),
   sceneId: text('scene_id')
     .notNull()
-    .references(() => scenes.id, { onDelete: 'cascade' }),
+    .references(() => scenes.id, { onDelete: 'restrict' }),
   name: text('name').notNull(),
   location: text('location'),
   index: integer('index').notNull(),
@@ -162,10 +162,10 @@ export const choices = pgTable('choices', {
   id: text('id').primaryKey(),
   sceneId: text('scene_id')
     .notNull()
-    .references(() => scenes.id, { onDelete: 'cascade' }),
+    .references(() => scenes.id, { onDelete: 'restrict' }),
   nextSceneId: text('next_scene_id')
     .notNull()
-    .references(() => scenes.id),
+    .references(() => scenes.id, { onDelete: 'set null' }),
   text: text('text').notNull(),
   isImplicit: boolean('is_implicit').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -193,7 +193,7 @@ export const notes = pgTable('notes', {
     .references(() => story.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   body: text('body'), // Can be a very long text
-  galleryId: text('gallery_id').references(() => gallery.id), // FK to gallery.id, nullable
+  galleryId: text('gallery_id').references(() => gallery.id, { onDelete: 'set null' }),
   isFavorite: boolean('is_favorite').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -250,7 +250,7 @@ export const locationTags = pgTable(
   {
     locationId: text('location_id')
       .notNull()
-      .references(() => locations.id),
+      .references(() => locations.id, { onDelete: 'cascade' }),
     tagId: text('tag_id')
       .notNull()
       .references(() => tags.id, { onDelete: 'cascade' }),
@@ -269,7 +269,7 @@ export const chapterTags = pgTable(
   {
     chapterId: text('chapter_id')
       .notNull()
-      .references(() => chapters.id),
+      .references(() => chapters.id, { onDelete: 'cascade' }),
     tagId: text('tag_id')
       .notNull()
       .references(() => tags.id, { onDelete: 'cascade' }),

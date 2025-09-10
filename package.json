@@ -17,7 +17,7 @@
     "lint": "biome check --write .",
     "lint:fix": "biome check --write . --unsafe",
     "db:generate": "cd apps/api && drizzle-kit generate:pg",
-    "db:migrate": "cd apps/api && bun run src/infrastructure/db/migrate.ts",
+    "db:migrate": "cd apps/api/src/infrastructure/db && bun run migrate.ts",
     "db:seed": "cd apps/api && bun run src/infrastructure/db/seed.ts"
   },
   "devDependencies": {

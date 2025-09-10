@@ -57,3 +57,22 @@ export const SearchResponseSchema = z.array(
     data: z.any(), // This could be more specific, but for now, any is fine
   }),
 )
+
+export const IdParamSchema = z.object({
+  id: z.ulid(),
+})
+
+export const StoryIdParamSchema = z.object({
+  storyId: z.ulid(),
+})
+
+export const IncludeQuerySchema = z.object({
+  include: z
+    .string()
+    .optional()
+    .transform((val) => (val ? val.split(',') : [])),
+})
+
+export const BulkDeleteSchema = z.object({
+  ids: z.array(z.ulid()),
+})

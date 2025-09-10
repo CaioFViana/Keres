@@ -22,6 +22,11 @@ import {
   GalleryResponseSchema,
   GalleryUpdateSchema,
   ListQuerySchema,
+  IdParamSchema,
+  OwnerIdParamSchema,
+  StoryIdParamSchema,
+  BulkDeleteSchema,
+  GalleryDeleteQuerySchema,
 } from '@keres/shared'
 import { GalleryController } from '@presentation/controllers/GalleryController'
 import { z } from 'zod'
@@ -84,23 +89,7 @@ const galleryController = new GalleryController(
   storyRepository,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const OwnerIdParamSchema = z.object({
-  ownerId: z.ulid(),
-})
-
-const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
-})
-
-// Define schema for bulk delete request body // Added
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-}) // Added
 
 // POST /
 galleryRoutes.openapi(
@@ -597,10 +586,7 @@ galleryRoutes.openapi(
     description: 'Deletes a gallery item by its unique ID.',
     request: {
       params: IdParamSchema,
-      query: z.object({
-        storyId: z.ulid(),
-        ownerId: z.ulid(),
-      }),
+      query: GalleryDeleteQuerySchema,
     },
     responses: {
       204: {
@@ -636,12 +622,7 @@ galleryRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
-    const query = z
-      .object({
-        storyId: z.ulid(),
-        ownerId: z.ulid(),
-      })
-      .parse(c.req.query())
+    const query = GalleryDeleteQuerySchema.parse(c.req.query())
     try {
       await galleryController.deleteGallery(userId, params.id, query.storyId, query.ownerId)
       return c.body(null, 204)

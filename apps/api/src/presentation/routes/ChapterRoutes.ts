@@ -15,6 +15,10 @@ import {
   ChapterUpdateSchema,
   ErrorResponseSchema,
   ListQuerySchema,
+  IdParamSchema,
+  StoryIdParamSchema,
+  IncludeQuerySchema,
+  BulkDeleteSchema,
 } from '@keres/shared'
 import { ChapterController } from '@presentation/controllers/ChapterController'
 import { z } from 'zod' // Import z for defining parameters
@@ -52,27 +56,7 @@ const chapterController = new ChapterController(
   getChaptersByStoryIdUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
-})
-
-// Define schema for include query parameter
-const IncludeQuerySchema = z.object({
-  include: z
-    .string()
-    .optional()
-    .transform((val) => (val ? val.split(',') : [])),
-})
-
-// Define schema for bulk delete request body
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-})
 
 // POST /
 chapterRoutes.openapi(

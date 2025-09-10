@@ -21,6 +21,15 @@ import {
   ListQuerySchema,
   SuggestionResponseSchema,
   UpdateSuggestionSchema,
+  IdParamSchema,
+  UserIdParamSchema,
+  StoryIdParamSchema,
+  TypeParamSchema,
+  BulkDeleteSchema,
+  CreateManySuggestionsSchema,
+  UpdateManySuggestionsSchema,
+  UserTypeParamSchema,
+  StoryTypeParamSchema,
 } from '@keres/shared'
 import { SuggestionController } from '@presentation/controllers/SuggestionController'
 import { z } from 'zod'
@@ -80,31 +89,7 @@ const suggestionController = new SuggestionController(
   updateManySuggestionsUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const UserIdParamSchema = z.object({
-  userId: z.ulid(),
-})
-
-const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
-})
-
-const TypeParamSchema = z.object({
-  type: z.string(),
-})
-
-// Define schema for bulk delete request body // Added
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-})
-
-// Define schema for batch suggestion
-const CreateManySuggestionsSchema = z.array(CreateSuggestionSchema)
-const UpdateManySuggestionsSchema = z.array(UpdateSuggestionSchema)
 
 // POST /
 suggestionRoutes.openapi(
@@ -473,10 +458,7 @@ suggestionRoutes.openapi(
     summary: 'Get suggestions by user ID and type',
     description: 'Retrieves all suggestions associated with a specific user and type.',
     request: {
-      params: z.object({
-        userId: z.ulid(),
-        type: z.string(),
-      }),
+      params: UserTypeParamSchema,
       query: ListQuerySchema,
     },
     responses: {
@@ -509,7 +491,7 @@ suggestionRoutes.openapi(
   }),
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const params = z.object({ userId: z.ulid(), type: z.string() }).parse(c.req.param())
+    const params = UserTypeParamSchema.parse(c.req.param())
     const query = ListQuerySchema.parse(c.req.query())
     try {
       const suggestions = await suggestionController.getSuggestionsByUserAndType(
@@ -535,10 +517,7 @@ suggestionRoutes.openapi(
     summary: 'Get suggestions by story ID and type',
     description: 'Retrieves all suggestions associated with a specific story and type.',
     request: {
-      params: z.object({
-        storyId: z.ulid(),
-        type: z.string(),
-      }),
+      params: StoryTypeParamSchema,
       query: ListQuerySchema,
     },
     responses: {
@@ -571,7 +550,7 @@ suggestionRoutes.openapi(
   }),
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const params = z.object({ storyId: z.ulid(), type: z.string() }).parse(c.req.param())
+    const params = StoryTypeParamSchema.parse(c.req.param())
     const query = ListQuerySchema.parse(c.req.query())
     try {
       const suggestions = await suggestionController.getSuggestionsByStoryAndType(

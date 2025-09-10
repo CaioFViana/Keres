@@ -19,6 +19,9 @@ import {
   CreateChoiceSchema,
   ErrorResponseSchema,
   UpdateChoiceSchema,
+  IdParamSchema,
+  SceneIdParamSchema,
+  BulkDeleteSchema,
 } from '@keres/shared'
 import { ChoiceController } from '@presentation/controllers/ChoiceController'
 import { z } from 'zod'
@@ -76,19 +79,7 @@ const choiceController = new ChoiceController(
   getChoicesBySceneIdUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const SceneIdParamSchema = z.object({
-  sceneId: z.ulid(),
-})
-
-// Define schema for bulk delete request body // Added
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-}) // Added
 
 // POST /
 choiceRoutes.openapi(

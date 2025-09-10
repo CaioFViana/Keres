@@ -22,3 +22,11 @@ export const UserProfileSchema = z.object({
 export type UserRegisterPayload = z.infer<typeof UserRegisterSchema>
 export type UserLoginPayload = z.infer<typeof UserLoginSchema>
 export type UserProfileResponse = z.infer<typeof UserProfileSchema>
+
+export const RefreshTokenRequestSchema = z.object({
+  refreshToken: z.string(),
+})
+
+export const RefreshTokenResponseSchema = z.object({
+  token: z.string(),
+})

@@ -15,6 +15,10 @@ import {
   LocationCreateSchema,
   LocationResponseSchema,
   LocationUpdateSchema,
+  IdParamSchema,
+  StoryIdParamSchema,
+  IncludeQuerySchema,
+  BulkDeleteSchema,
 } from '@keres/shared' // Import LocationResponseSchema
 import { LocationController } from '@presentation/controllers/LocationController'
 import { z } from 'zod' // Import z for defining parameters
@@ -56,27 +60,7 @@ const locationController = new LocationController(
   getLocationsByStoryIdUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
-})
-
-// Define schema for include query parameter
-const IncludeQuerySchema = z.object({
-  include: z
-    .string()
-    .optional()
-    .transform((val) => (val ? val.split(',') : [])),
-})
-
-// Define schema for bulk delete request body // Added
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-}) // Added
 
 // POST /
 locationRoutes.openapi(

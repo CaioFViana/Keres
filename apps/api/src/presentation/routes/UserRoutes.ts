@@ -15,6 +15,9 @@ import {
   UserLoginSchema,
   UserProfileSchema,
   UserRegisterSchema,
+  IdParamSchema,
+  RefreshTokenRequestSchema,
+  RefreshTokenResponseSchema,
 } from '@keres/shared' // Import Zod schemas and UserProfileSchema
 import { UserController } from '@presentation/controllers/UserController'
 import { z } from 'zod' // Import z for defining parameters
@@ -47,20 +50,7 @@ const userController = new UserController(
   deleteUserUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-// Define schema for refresh token request
-const RefreshTokenRequestSchema = z.object({
-  refreshToken: z.string(),
-})
-
-// Define schema for refresh token response
-const RefreshTokenResponseSchema = z.object({
-  token: z.string(),
-})
 
 // POST /register
 userRoutes.openapi(

@@ -48,3 +48,11 @@ export const SceneResponseSchema = z.object({
 export type SceneCreatePayload = z.infer<typeof SceneCreateSchema>
 export type SceneUpdatePayload = z.infer<typeof SceneUpdateSchema>
 export type SceneResponse = z.infer<typeof SceneResponseSchema>
+
+export const ChapterIdParamSchema = z.object({
+  chapterId: z.ulid(),
+})
+
+export const LocationIdParamSchema = z.object({
+  locationId: z.ulid(),
+})

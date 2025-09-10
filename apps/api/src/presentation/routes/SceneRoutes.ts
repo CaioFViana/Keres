@@ -23,6 +23,11 @@ import {
   SceneCreateSchema,
   SceneResponseSchema,
   SceneUpdateSchema,
+  IdParamSchema,
+  ChapterIdParamSchema,
+  IncludeQuerySchema,
+  BulkDeleteSchema,
+  LocationIdParamSchema,
 } from '@keres/shared' // Import SceneResponseSchema
 import { SceneController } from '@presentation/controllers/SceneController'
 import { z } from 'zod' // Import z for defining parameters
@@ -91,27 +96,7 @@ const sceneController = new SceneController(
   getScenesByLocationidUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const ChapterIdParamSchema = z.object({
-  chapterId: z.ulid(),
-})
-
-// Define schema for include query parameter
-const IncludeQuerySchema = z.object({
-  include: z
-    .string()
-    .optional()
-    .transform((val) => (val ? val.split(',') : [])),
-})
-
-// Define schema for bulk delete request body
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-})
 
 // GET /location/:locationId
 sceneRoutes.openapi(
@@ -121,7 +106,7 @@ sceneRoutes.openapi(
     summary: 'Get scenes by location ID',
     description: 'Retrieves all scenes belonging to a specific location.',
     request: {
-      params: z.object({ locationId: z.ulid() }),
+      params: LocationIdParamSchema,
       query: ListQuerySchema,
     },
     responses: {
@@ -154,7 +139,7 @@ sceneRoutes.openapi(
   }),
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const params = z.object({ locationId: z.ulid() }).parse(c.req.param())
+    const params = LocationIdParamSchema.parse(c.req.param())
     const query = ListQuerySchema.parse(c.req.query())
     try {
       const scenes = await sceneController.getScenesByLocationId(userId, params.locationId, query)

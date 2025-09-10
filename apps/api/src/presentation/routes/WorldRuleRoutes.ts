@@ -15,6 +15,9 @@ import {
   ListQuerySchema,
   UpdateWorldRuleSchema,
   WorldRuleResponseSchema,
+  IdParamSchema,
+  StoryIdParamSchema,
+  BulkDeleteSchema,
 } from '@keres/shared'
 import { WorldRuleController } from '@presentation/controllers/WorldRuleController'
 import { z } from 'zod'
@@ -46,19 +49,7 @@ const worldRuleController = new WorldRuleController(
   getWorldRulesByStoryIdUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
-})
-
-// Define schema for bulk delete request body // Added
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-}) // Added
 
 // POST /
 worldRuleRoutes.openapi(

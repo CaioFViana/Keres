@@ -20,8 +20,13 @@ import {
   BulkDeleteCharacterMomentResponseSchema,
   CharacterMomentCreateSchema,
   CharacterMomentResponseSchema,
-  CharacterMomentUpdateSchema,
   ErrorResponseSchema,
+  CharacterIdParamSchema,
+  MomentIdParamSchema,
+  CharacterMomentIdDeletionParamSchema,
+  CreateManyCharacterMomentsSchema,
+  BulkCharacterMomentDeleteSchema,
+  UpdateManyCharacterMomentsSchema,
 } from '@keres/shared' // Import CharacterMomentResponseSchema
 import { CharacterMomentController } from '@presentation/controllers/CharacterMomentController'
 import { z } from 'zod' // Import z for defining parameters
@@ -101,24 +106,6 @@ const characterMomentController = new CharacterMomentController(
   updateManyCharactersMomentUseCase,
 )
 
-// Define schemas for path parameters
-const CharacterIdParamSchema = z.object({
-  characterId: z.ulid(),
-})
-
-const MomentIdParamSchema = z.object({
-  momentId: z.ulid(),
-})
-
-const CharacterMomentIdDeletionParamSchema = z.object({
-  momentId: z.ulid(),
-  characterId: z.ulid(),
-})
-
-// Define schema for bulk delete request body // Added
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.object({ characterId: z.string(), momentId: z.string() })),
-}) // Added
 
 // POST /
 characterMomentRoutes.openapi(
@@ -180,11 +167,9 @@ characterMomentRoutes.openapi(
   },
 )
 
-// Define schema for batch character moment creation
-const CreateManyCharacterMomentsSchema = z.array(CharacterMomentCreateSchema)
 
-// Define schema for batch character moment update
-const UpdateManyCharacterMomentsSchema = z.array(CharacterMomentUpdateSchema)
+
+
 
 // POST /batch
 characterMomentRoutes.openapi(
@@ -501,7 +486,7 @@ characterMomentRoutes.openapi(
       body: {
         content: {
           'application/json': {
-            schema: BulkDeleteSchema,
+            schema: BulkCharacterMomentDeleteSchema,
           },
         },
       },
@@ -537,7 +522,7 @@ characterMomentRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const body = await c.req.json()
-    const { ids } = BulkDeleteSchema.parse(body)
+    const { ids } = BulkCharacterMomentDeleteSchema.parse(body)
     try {
       const result = await characterMomentController.bulkDeleteCharacterMoments(userId, ids)
       return c.json(result, 200)

@@ -45,3 +45,12 @@ export const GalleryResponseSchema = z.object({
 export type GalleryCreatePayload = z.infer<typeof GalleryCreateSchema>
 export type GalleryUpdatePayload = z.infer<typeof GalleryUpdateSchema>
 export type GalleryResponse = z.infer<typeof GalleryResponseSchema>
+
+export const OwnerIdParamSchema = z.object({
+  ownerId: z.ulid(),
+})
+
+export const GalleryDeleteQuerySchema = z.object({
+  storyId: z.ulid(),
+  ownerId: z.ulid(),
+})

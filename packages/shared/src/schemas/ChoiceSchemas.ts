@@ -27,3 +27,7 @@ export const ChoiceResponseSchema = z.object({
 export type CreateChoicePayload = z.infer<typeof CreateChoiceSchema>
 export type UpdateChoicePayload = z.infer<typeof UpdateChoiceSchema>
 export type ChoiceResponse = z.infer<typeof ChoiceResponseSchema>
+
+export const SceneIdParamSchema = z.object({
+  sceneId: z.ulid(),
+})

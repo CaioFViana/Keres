@@ -25,6 +25,9 @@ import {
   TagRemovalSchema,
   TagResponseSchema,
   UpdateTagSchema,
+  IdParamSchema,
+  StoryIdParamSchema,
+  BulkDeleteSchema,
 } from '@keres/shared'
 import { TagController } from '@presentation/controllers/TagController'
 import { z } from 'zod'
@@ -77,19 +80,7 @@ const tagController = new TagController(
   removeTagFromEntityUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
-})
-
-// Define schema for bulk delete request body
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-})
 
 // POST /
 tagRoutes.openapi(

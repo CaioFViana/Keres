@@ -20,6 +20,11 @@ import {
   CharacterRelationResponseSchema,
   CharacterRelationUpdateSchema,
   ErrorResponseSchema,
+  IdParamSchema,
+  CharIdParamSchema,
+  BulkDeleteSchema,
+  CreateManyCharacterRelationsSchema,
+  UpdateManyCharacterRelationsSchema,
 } from '@keres/shared' // Import CharacterRelationResponseSchema
 import { CharacterRelationController } from '@presentation/controllers/CharacterRelationController'
 import { z } from 'zod' // Import z for defining parameters
@@ -86,20 +91,6 @@ const characterRelationController = new CharacterRelationController(
   updateManyCharacterRelationsUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
-
-const CharIdParamSchema = z.object({
-  charId: z.ulid(),
-})
-
-// Define schema for bulk delete request body // Added
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-}) // Added
-
 // POST /
 characterRelationRoutes.openapi(
   createRoute({
@@ -162,12 +153,6 @@ characterRelationRoutes.openapi(
     }
   },
 )
-
-// Define schema for batch character relation creation
-const CreateManyCharacterRelationsSchema = z.array(CharacterRelationCreateSchema)
-
-// Define schema for batch character relation update
-const UpdateManyCharacterRelationsSchema = z.array(CharacterRelationUpdateSchema)
 
 // POST /batch
 characterRelationRoutes.openapi(

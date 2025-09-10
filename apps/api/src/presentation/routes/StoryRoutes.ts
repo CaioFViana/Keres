@@ -18,6 +18,8 @@ import {
   StoryCreateSchema,
   StoryResponseSchema,
   StoryUpdateSchema,
+  IdParamSchema,
+  IncludeQuerySchema,
 } from '@keres/shared' // Import StoryResponseSchema
 import { StoryController } from '@presentation/controllers/StoryController'
 import { z } from 'zod' // Import z for defining parameters
@@ -53,18 +55,7 @@ const storyController = new StoryController(
   getStoriesByUserIdUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-// Define schema for include query parameter
-const IncludeQuerySchema = z.object({
-  include: z
-    .string()
-    .optional()
-    .transform((val) => (val ? val.split(',') : [])),
-})
 
 // POST /
 storyRoutes.openapi(

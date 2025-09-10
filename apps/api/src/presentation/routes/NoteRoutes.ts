@@ -15,6 +15,9 @@ import {
   ListQuerySchema,
   NoteResponseSchema,
   UpdateNoteSchema,
+  IdParamSchema,
+  StoryIdParamSchema,
+  BulkDeleteSchema,
 } from '@keres/shared'
 import { NoteController } from '@presentation/controllers/NoteController'
 import { z } from 'zod'
@@ -45,19 +48,7 @@ const noteController = new NoteController(
   getNotesByStoryIdUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
-})
-
-// Define schema for bulk delete request body // Added
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-}) // Added
 
 // POST /
 noteRoutes.openapi(

@@ -36,3 +36,7 @@ export const UpdateManyCharacterRelationsSchema = z.array(CharacterRelationUpdat
 
 export type CreateManyCharacterRelationsPayload = z.infer<typeof CreateManyCharacterRelationsSchema>
 export type UpdateManyCharacterRelationsPayload = z.infer<typeof UpdateManyCharacterRelationsSchema>
+
+export const CharIdParamSchema = z.object({
+  charId: z.ulid(),
+})

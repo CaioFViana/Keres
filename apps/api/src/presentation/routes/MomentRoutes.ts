@@ -22,6 +22,11 @@ import {
   ListQuerySchema,
   MomentResponseSchema,
   UpdateMomentSchema,
+  IdParamSchema,
+  SceneIdParamSchema,
+  CreateManyMomentsSchema,
+  UpdateManyMomentsSchema,
+  BulkDeleteSchema,
 } from '@keres/shared'
 import { MomentController } from '@presentation/controllers/MomentController'
 import { z } from 'zod'
@@ -93,25 +98,7 @@ const momentController = new MomentController(
   updateManyMomentsUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const SceneIdParamSchema = z.object({
-  sceneId: z.ulid(),
-})
-
-// Define schema for batch moment creation
-const CreateManyMomentsSchema = z.array(CreateMomentSchema)
-
-// Define schema for batch moment update
-const UpdateManyMomentsSchema = z.array(UpdateMomentSchema)
-
-// Define schema for bulk delete request body
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-})
 
 // POST /
 momentRoutes.openapi(

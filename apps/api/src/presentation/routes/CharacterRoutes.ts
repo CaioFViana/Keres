@@ -24,6 +24,11 @@ import {
   ErrorResponseSchema,
   ListQuerySchema,
   UpdateManyCharactersSchema,
+  IdParamSchema,
+  StoryIdParamSchema,
+  IncludeQuerySchema,
+  CreateManyCharactersSchema,
+  BulkDeleteSchema,
 } from '@keres/shared' // Import CharacterResponseSchema
 import { CharacterController } from '@presentation/controllers/CharacterController'
 import { z } from 'zod' // Import z for defining parameters
@@ -75,30 +80,7 @@ const characterController = new CharacterController(
   updateManyCharactersUseCase,
 )
 
-// Define schemas for path parameters
-const IdParamSchema = z.object({
-  id: z.ulid(),
-})
 
-const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
-})
-
-// Define schema for include query parameter
-const IncludeQuerySchema = z.object({
-  include: z
-    .string()
-    .optional()
-    .transform((val) => (val ? val.split(',') : [])),
-})
-
-// Define schema for batch character creation
-const CreateManyCharactersSchema = z.array(CharacterCreateSchema)
-
-// Define schema for bulk delete request body
-const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
-})
 
 // POST /
 characterRoutes.openapi(

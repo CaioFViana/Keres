@@ -36,3 +36,9 @@ export const MomentResponseSchema = z.object({
 export type CreateMomentPayload = z.infer<typeof CreateMomentSchema>
 export type UpdateMomentPayload = z.infer<typeof UpdateMomentSchema>
 export type MomentResponse = z.infer<typeof MomentResponseSchema>
+
+export const CreateManyMomentsSchema = z.array(CreateMomentSchema)
+export const UpdateManyMomentsSchema = z.array(UpdateMomentSchema)
+
+export type CreateManyMomentsPayload = z.infer<typeof CreateManyMomentsSchema>
+export type UpdateManyMomentsPayload = z.infer<typeof UpdateManyMomentsSchema>

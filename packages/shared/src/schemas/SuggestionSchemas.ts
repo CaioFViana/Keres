@@ -46,3 +46,21 @@ export const UpdateManySuggestionsSchema = z.array(UpdateSuggestionSchema)
 
 export type CreateManySuggestionsPayload = z.infer<typeof CreateManySuggestionsSchema>
 export type UpdateManySuggestionsPayload = z.infer<typeof UpdateManySuggestionsSchema>
+
+export const UserIdParamSchema = z.object({
+  userId: z.ulid(),
+})
+
+export const TypeParamSchema = z.object({
+  type: z.string(),
+})
+
+export const UserTypeParamSchema = z.object({
+  userId: z.ulid(),
+  type: z.string(),
+})
+
+export const StoryTypeParamSchema = z.object({
+  storyId: z.ulid(),
+  type: z.string(),
+})

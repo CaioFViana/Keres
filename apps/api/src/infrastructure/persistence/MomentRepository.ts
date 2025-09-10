@@ -136,7 +136,7 @@ export class MomentRepository implements IMomentRepository {
       if (momentsData.length === 0) {
         return
       }
-      await db.transaction(async (tx) => {
+      await db.transaction(async (tx: any) => {
         for (const momentData of momentsData) {
           await tx
             .update(moments)

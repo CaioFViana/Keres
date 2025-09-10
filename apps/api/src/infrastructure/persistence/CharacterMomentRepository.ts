@@ -77,7 +77,7 @@ export class CharacterMomentRepository implements ICharacterMomentRepository {
       if (characterMomentsData.length === 0) {
         return
       }
-      await db.transaction(async (tx) => {
+      await db.transaction(async (tx: any) => {
         for (const characterMomentData of characterMomentsData) {
           await tx
             .update(characterMoments)

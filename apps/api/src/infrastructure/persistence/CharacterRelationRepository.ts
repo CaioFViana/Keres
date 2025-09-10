@@ -80,7 +80,7 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
       if (characterRelationsData.length === 0) {
         return
       }
-      await db.transaction(async (tx) => {
+      await db.transaction(async (tx: any) => {
         for (const relationData of characterRelationsData) {
           const [canonicalCharId1, canonicalCharId2] = this.getCanonicalCharIds(
             relationData.charId1,
@@ -143,7 +143,7 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
       if (characterRelationsData.length === 0) {
         return
       }
-      await db.transaction(async (tx) => {
+      await db.transaction(async (tx: any) => {
         for (const relationData of characterRelationsData) {
           await tx
             .update(characterRelations)

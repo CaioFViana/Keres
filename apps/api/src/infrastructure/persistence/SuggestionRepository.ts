@@ -419,7 +419,7 @@ export class SuggestionRepository implements ISuggestionRepository {
       if (suggestionsData.length === 0) {
         return
       }
-      await db.transaction(async (tx) => {
+      await db.transaction(async (tx: any) => {
         for (const suggestionData of suggestionsData) {
           const conditions = [
             eq(suggestions.id, suggestionData.id),

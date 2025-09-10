@@ -142,7 +142,7 @@ export class CharacterRepository implements ICharacterRepository {
       if (charactersData.length === 0) {
         return
       }
-      await db.transaction(async (tx) => {
+      await db.transaction(async (tx: any) => {
         for (const characterData of charactersData) {
           await tx
             .update(characters)

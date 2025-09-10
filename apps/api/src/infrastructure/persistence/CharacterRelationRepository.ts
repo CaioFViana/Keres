@@ -1,10 +1,15 @@
 import type { CharacterRelation } from '@domain/entities/CharacterRelation'
 import type { ICharacterRelationRepository } from '@domain/repositories/ICharacterRelationRepository'
 
-import { characterRelations, characters, db } from '@keres/db' // Import db, characterRelations, and characters table
+import { characterRelations, db } from '@keres/db' // Import db, characterRelations
 import { and, eq, or } from 'drizzle-orm' // Import and
+import { ulid } from 'ulid'
 
 export class CharacterRelationRepository implements ICharacterRelationRepository {
+  private getCanonicalCharIds(charId1: string, charId2: string): [string, string] {
+    return charId1 < charId2 ? [charId1, charId2] : [charId2, charId1]
+  }
+
   async findById(id: string): Promise<CharacterRelation | null> {
     try {
       const result = await db
@@ -34,7 +39,36 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
 
   async save(characterRelationData: CharacterRelation): Promise<void> {
     try {
-      await db.insert(characterRelations).values(this.toPersistence(characterRelationData))
+      const [canonicalCharId1, canonicalCharId2] = this.getCanonicalCharIds(
+        characterRelationData.charId1,
+        characterRelationData.charId2,
+      )
+
+      // Check for existing relation with canonical IDs and same relationType
+      const existingRelation = await db
+        .select()
+        .from(characterRelations)
+        .where(
+          and(
+            eq(characterRelations.charId1, canonicalCharId1),
+            eq(characterRelations.charId2, canonicalCharId2),
+            eq(characterRelations.relationType, characterRelationData.relationType),
+          ),
+        )
+        .limit(1)
+
+      if (existingRelation.length > 0) {
+        throw new Error('Relation already exists between these characters with this type.')
+      }
+
+      await db.insert(characterRelations).values({
+        id: ulid(),
+        charId1: canonicalCharId1,
+        charId2: canonicalCharId2,
+        relationType: characterRelationData.relationType,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
     } catch (error) {
       console.error('Error in CharacterRelationRepository.save:', error)
       throw error
@@ -46,33 +80,58 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
       if (characterRelationsData.length === 0) {
         return
       }
-      const persistenceData = characterRelationsData.map(this.toPersistence)
-      await db.insert(characterRelations).values(persistenceData)
+      await db.transaction(async (tx) => {
+        for (const relationData of characterRelationsData) {
+          const [canonicalCharId1, canonicalCharId2] = this.getCanonicalCharIds(
+            relationData.charId1,
+            relationData.charId2,
+          )
+
+          // Check for existing relation with canonical IDs and same relationType
+          const existingRelation = await tx
+            .select()
+            .from(characterRelations)
+            .where(
+              and(
+                eq(characterRelations.charId1, canonicalCharId1),
+                eq(characterRelations.charId2, canonicalCharId2),
+                eq(characterRelations.relationType, relationData.relationType),
+              ),
+            )
+            .limit(1)
+
+          if (existingRelation.length > 0) {
+            throw new Error(
+              `Relation already exists between ${relationData.charId1} and ${relationData.charId2} with type ${relationData.relationType}.`,
+            )
+          }
+
+          await tx.insert(characterRelations).values({
+            id: ulid(),
+            charId1: canonicalCharId1,
+            charId2: canonicalCharId2,
+            relationType: relationData.relationType,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+        }
+      })
     } catch (error) {
       console.error('Error in CharacterRelationRepository.saveMany:', error)
       throw error
     }
   }
 
-  async update(
-    characterRelationData: CharacterRelation,
-    id: string,
-    storyId: string,
-  ): Promise<void> {
+  async update(characterRelationData: CharacterRelation): Promise<void> {
     try {
+      // For simplicity, only relationType can be updated. charId1 and charId2 are immutable.
       await db
         .update(characterRelations)
-        .set(this.toPersistence(characterRelationData))
-        .where(
-          and(
-            eq(characterRelations.id, id),
-            or(
-              eq(characterRelations.charId1, characters.id), // Join with characters table
-              eq(characterRelations.charId2, characters.id), // Join with characters table
-            ),
-            eq(characters.storyId, storyId), // Check storyId
-          ),
-        )
+        .set({
+          relationType: characterRelationData.relationType,
+          updatedAt: new Date(),
+        })
+        .where(eq(characterRelations.id, characterRelationData.id))
     } catch (error) {
       console.error('Error in CharacterRelationRepository.update:', error)
       throw error
@@ -88,7 +147,10 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
         for (const relationData of characterRelationsData) {
           await tx
             .update(characterRelations)
-            .set(this.toPersistence(relationData))
+            .set({
+              relationType: relationData.relationType,
+              updatedAt: new Date(),
+            })
             .where(eq(characterRelations.id, relationData.id))
         }
       })
@@ -115,19 +177,6 @@ export class CharacterRelationRepository implements ICharacterRelationRepository
       relationType: data.relationType,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
-    }
-  }
-
-  private toPersistence(
-    characterRelationData: CharacterRelation,
-  ): typeof characterRelations.$inferInsert {
-    return {
-      id: characterRelationData.id,
-      charId1: characterRelationData.charId1,
-      charId2: characterRelationData.charId2,
-      relationType: characterRelationData.relationType,
-      createdAt: characterRelationData.createdAt,
-      updatedAt: characterRelationData.updatedAt,
     }
   }
 }

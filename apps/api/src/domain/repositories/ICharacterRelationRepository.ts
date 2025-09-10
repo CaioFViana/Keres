@@ -5,7 +5,7 @@ export interface ICharacterRelationRepository {
   findByCharId(charId: string): Promise<CharacterRelation[]>
   save(characterRelation: CharacterRelation): Promise<void>
   saveMany(characterRelations: CharacterRelation[]): Promise<void>
-  update(characterRelation: CharacterRelation, id: string, storyId: string): Promise<void>
+  update(characterRelation: CharacterRelation): Promise<void>
   updateMany(characterRelations: CharacterRelation[]): Promise<void>
   delete(id: string): Promise<void>
 }

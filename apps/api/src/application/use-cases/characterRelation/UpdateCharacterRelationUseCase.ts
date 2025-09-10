@@ -29,20 +29,13 @@ export class UpdateCharacterRelationUseCase {
       throw new Error('Story not found or not owned by user for character relation')
     }
 
-    // Note: charId1 and charId2 are typically not updated for relations.
-    // If they were, additional checks would be needed here.
-
     const updatedCharacterRelation = {
       ...existingCharacterRelation,
-      ...data,
+      relationType: data.relationType || existingCharacterRelation.relationType,
       updatedAt: new Date(),
     }
 
-    await this.characterRelationRepository.update(
-      updatedCharacterRelation,
-      existingCharacterRelation.id,
-      character1.storyId,
-    )
+    await this.characterRelationRepository.update(updatedCharacterRelation)
 
     return {
       id: updatedCharacterRelation.id,

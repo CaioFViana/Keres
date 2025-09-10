@@ -73,10 +73,9 @@ export class CharacterRelationController {
     id: string,
     data: z.infer<typeof CharacterRelationUpdateSchema>,
   ) {
-    const { id: dataId, ...updateData } = data
     const updatedCharacterRelation = await this.updateCharacterRelationUseCase.execute(userId, {
       id,
-      ...updateData,
+      relationType: data.relationType,
     })
     if (!updatedCharacterRelation) {
       throw new Error('Character relation not found')

@@ -8,8 +8,6 @@ export const CharacterRelationCreateSchema = z.object({
 
 export const CharacterRelationUpdateSchema = z.object({
   id: z.string(),
-  charId1: z.string().optional(),
-  charId2: z.string().optional(),
   relationType: z.string().min(1, 'Relation type cannot be empty').optional(),
 })
 

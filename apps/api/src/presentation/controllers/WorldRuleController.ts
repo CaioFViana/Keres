@@ -43,12 +43,8 @@ export class WorldRuleController {
     return worldRules.map((worldRule) => WorldRuleResponseSchema.parse(worldRule))
   }
 
-  async updateWorldRule(userId: string, id: string, data: z.infer<typeof UpdateWorldRuleSchema>) {
-    const { id: dataId, ...updateData } = data
-    const updatedWorldRule = await this.updateWorldRuleUseCase.execute(userId, {
-      id,
-      ...updateData,
-    })
+  async updateWorldRule(userId: string, id: string, data: Omit<z.infer<typeof UpdateWorldRuleSchema>, 'id'>) {
+    const updatedWorldRule = await this.updateWorldRuleUseCase.execute(userId, id, data)
     if (!updatedWorldRule) {
       throw new Error('World Rule not found')
     }

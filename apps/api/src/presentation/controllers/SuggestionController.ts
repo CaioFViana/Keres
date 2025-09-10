@@ -90,12 +90,8 @@ export class SuggestionController {
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async updateSuggestion(userId: string, id: string, data: z.infer<typeof UpdateSuggestionSchema>) {
-    const { id: dataId, ...updateData } = data
-    const updatedSuggestion = await this.updateSuggestionUseCase.execute(userId, {
-      id,
-      ...updateData,
-    })
+  async updateSuggestion(userId: string, id: string, data: Omit<z.infer<typeof UpdateSuggestionSchema>, 'id'>) {
+    const updatedSuggestion = await this.updateSuggestionUseCase.execute(userId, id, data)
     if (!updatedSuggestion) {
       throw new Error('Suggestion not found')
     }

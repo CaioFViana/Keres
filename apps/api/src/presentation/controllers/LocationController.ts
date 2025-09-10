@@ -43,9 +43,8 @@ export class LocationController {
     return locations.map((location) => LocationResponseSchema.parse(location))
   }
 
-  async updateLocation(userId: string, id: string, data: z.infer<typeof LocationUpdateSchema>) {
-    const { id: dataId, ...updateData } = data
-    const updatedLocation = await this.updateLocationUseCase.execute(userId, { id, ...updateData })
+  async updateLocation(userId: string, id: string, data: Omit<z.infer<typeof LocationUpdateSchema>, 'id'>) {
+    const updatedLocation = await this.updateLocationUseCase.execute(userId, id, data)
     if (!updatedLocation) {
       throw new Error('Location not found or does not belong to the specified story')
     }

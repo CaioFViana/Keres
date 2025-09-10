@@ -8,8 +8,8 @@ export class UpdateWorldRuleUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, data: UpdateWorldRulePayload): Promise<WorldRuleResponse> {
-    const existingWorldRule = await this.worldRuleRepository.findById(data.id)
+  async execute(userId: string, id: string, data: Omit<UpdateWorldRulePayload, 'id'>): Promise<WorldRuleResponse> {
+    const existingWorldRule = await this.worldRuleRepository.findById(id)
     if (!existingWorldRule) {
       throw new Error('World Rule not found')
     }
@@ -23,6 +23,7 @@ export class UpdateWorldRuleUseCase {
     const updatedWorldRule = {
       ...existingWorldRule,
       ...data,
+      id: id, // Ensure ID is set from the URL parameter
       updatedAt: new Date(),
     }
 

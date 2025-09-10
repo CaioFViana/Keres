@@ -16,7 +16,6 @@ export const SceneCreateSchema = z.object({
 })
 
 export const SceneUpdateSchema = z.object({
-  id: z.string(),
   chapterId: z.string().optional(), // chapterId should not be updatable in practice
   locationId: z.string().optional(),
   name: z.string().min(1, 'Name cannot be empty').optional(),

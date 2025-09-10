@@ -301,7 +301,9 @@ chapterRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = ChapterUpdateSchema.parse(body)
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = ChapterUpdateSchema.parse(restOfBody)
     try {
       const updatedChapter = await chapterController.updateChapter(userId, params.id, data)
       return c.json(updatedChapter, 200)
@@ -372,7 +374,9 @@ chapterRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = ChapterUpdateSchema.parse(body) // ChapterUpdateSchema already handles optional fields
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = ChapterUpdateSchema.parse(restOfBody) // ChapterUpdateSchema already handles optional fields
     try {
       const updatedChapter = await chapterController.updateChapter(userId, params.id, data) // Reusing updateChapter for now
       return c.json(updatedChapter, 200)

@@ -21,7 +21,6 @@ export const CharacterCreateSchema = z.object({
 })
 
 export const CharacterUpdateSchema = z.object({
-  id: z.string(),
   name: z.string().min(1, 'Name cannot be empty').optional(),
   gender: z.string().optional(),
   race: z.string().optional(),

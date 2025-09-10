@@ -9,7 +9,6 @@ export const CreateNoteSchema = z.object({
 })
 
 export const UpdateNoteSchema = z.object({
-  id: z.ulid(),
   title: z.string().min(1, 'Title cannot be empty').optional(),
   body: z.string().nullable().optional(),
   galleryId: z.ulid().nullable().optional(),

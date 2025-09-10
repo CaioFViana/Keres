@@ -11,7 +11,6 @@ export const CreateMomentSchema = z.object({
 })
 
 export const UpdateMomentSchema = z.object({
-  id: z.string(),
   sceneId: z.string().optional(), // sceneId should not be updatable in practice
   name: z.string().min(1, 'Name cannot be empty').optional(),
   location: z.string().optional(),

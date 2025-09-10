@@ -309,7 +309,9 @@ locationRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = LocationUpdateSchema.parse(body)
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = LocationUpdateSchema.parse(restOfBody)
     try {
       const updatedLocation = await locationController.updateLocation(userId, params.id, data)
       return c.json(updatedLocation, 200)
@@ -380,7 +382,9 @@ locationRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = LocationUpdateSchema.parse(body) // LocationUpdateSchema already handles optional fields
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = LocationUpdateSchema.parse(restOfBody) // LocationUpdateSchema already handles optional fields
     try {
       const updatedLocation = await locationController.updateLocation(userId, params.id, data) // Reusing updateLocation for now
       return c.json(updatedLocation, 200)

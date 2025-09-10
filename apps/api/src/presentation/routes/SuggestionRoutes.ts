@@ -708,7 +708,9 @@ suggestionRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = UpdateSuggestionSchema.parse(body)
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = UpdateSuggestionSchema.parse(restOfBody)
     try {
       const updatedSuggestion = await suggestionController.updateSuggestion(userId, params.id, data)
       if (!updatedSuggestion) {

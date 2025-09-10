@@ -43,9 +43,8 @@ export class NoteController {
     return notes.map((note) => NoteResponseSchema.parse(note))
   }
 
-  async updateNote(userId: string, id: string, data: z.infer<typeof UpdateNoteSchema>) {
-    const { id: dataId, ...updateData } = data
-    const updatedNote = await this.updateNoteUseCase.execute(userId, { id, ...updateData })
+  async updateNote(userId: string, id: string, data: Omit<z.infer<typeof UpdateNoteSchema>, 'id'>) {
+    const updatedNote = await this.updateNoteUseCase.execute(userId, id, data)
     if (!updatedNote) {
       throw new Error('Note not found')
     }

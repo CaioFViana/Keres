@@ -57,12 +57,8 @@ export class CharacterController {
     return characters.map((character) => CharacterResponseSchema.parse(character))
   }
 
-  async updateCharacter(userId: string, id: string, data: z.infer<typeof CharacterUpdateSchema>) {
-    const { id: dataId, ...updateData } = data
-    const updatedCharacter = await this.updateCharacterUseCase.execute(userId, {
-      id,
-      ...updateData,
-    })
+  async updateCharacter(userId: string, id: string, data: Omit<z.infer<typeof CharacterUpdateSchema>, 'id'>) {
+    const updatedCharacter = await this.updateCharacterUseCase.execute(userId, id, data)
     if (!updatedCharacter) {
       throw new Error('Character not found')
     }

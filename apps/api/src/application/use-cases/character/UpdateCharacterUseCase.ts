@@ -8,8 +8,8 @@ export class UpdateCharacterUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, data: CharacterUpdatePayload): Promise<CharacterResponse> {
-    const existingCharacter = await this.characterRepository.findById(data.id)
+  async execute(userId: string, id: string, data: Omit<CharacterUpdatePayload, 'id'>): Promise<CharacterResponse> {
+    const existingCharacter = await this.characterRepository.findById(id)
     if (!existingCharacter) {
       throw new Error('Character not found')
     }
@@ -23,6 +23,7 @@ export class UpdateCharacterUseCase {
     const updatedCharacter = {
       ...existingCharacter,
       ...data,
+      id: id, // Ensure ID is set from the URL parameter
       updatedAt: new Date(),
     }
 

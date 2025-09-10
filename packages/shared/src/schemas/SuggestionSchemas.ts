@@ -19,7 +19,6 @@ export const CreateSuggestionSchema = z
   })
 
 export const UpdateSuggestionSchema = z.object({
-  id: z.ulid(),
   scope: z.union([z.literal('global'), z.literal('story')]).optional(),
   storyId: z.ulid().nullable().optional(),
   type: z.string().min(1, 'Type cannot be empty').optional(),

@@ -41,9 +41,8 @@ export class StoryController {
     return stories.map((story) => StoryResponseSchema.parse(story))
   }
 
-  async updateStory(userId: string, id: string, data: z.infer<typeof StoryUpdateSchema>) {
-    const { id: dataId, ...updateData } = data
-    const updatedStory = await this.updateStoryUseCase.execute(userId, { id, ...updateData })
+  async updateStory(userId: string, id: string, data: Omit<z.infer<typeof StoryUpdateSchema>, 'id'>) {
+    const updatedStory = await this.updateStoryUseCase.execute(userId, id, data)
     if (!updatedStory) {
       throw new Error('Story not found')
     }

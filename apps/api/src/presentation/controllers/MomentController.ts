@@ -57,9 +57,8 @@ export class MomentController {
     return moments.map((moment) => MomentResponseSchema.parse(moment))
   }
 
-  async updateMoment(userId: string, id: string, data: z.infer<typeof UpdateMomentSchema>) {
-    const { id: dataId, ...updateData } = data
-    const updatedMoment = await this.updateMomentUseCase.execute(userId, { id, ...updateData })
+  async updateMoment(userId: string, id: string, data: Omit<z.infer<typeof UpdateMomentSchema>, 'id'>) {
+    const updatedMoment = await this.updateMomentUseCase.execute(userId, id, data)
     if (!updatedMoment) {
       throw new Error('Moment not found') // Simplified error message
     }

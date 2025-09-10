@@ -12,7 +12,6 @@ export const ChapterCreateSchema = z.object({
 })
 
 export const ChapterUpdateSchema = z.object({
-  id: z.string(),
   name: z.string().min(1, 'Name cannot be empty').optional(),
   index: z.number().int().min(0, 'Index must be a non-negative integer').optional(),
   summary: z.string().optional(),

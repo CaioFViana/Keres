@@ -300,7 +300,9 @@ worldRuleRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = UpdateWorldRuleSchema.parse(body)
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = UpdateWorldRuleSchema.parse(restOfBody)
     try {
       const updatedWorldRule = await worldRuleController.updateWorldRule(userId, params.id, data)
       if (!updatedWorldRule) {
@@ -374,7 +376,9 @@ worldRuleRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = UpdateWorldRuleSchema.parse(body) // UpdateWorldRuleSchema already handles optional fields
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = UpdateWorldRuleSchema.parse(restOfBody) // UpdateWorldRuleSchema already handles optional fields
     try {
       const updatedWorldRule = await worldRuleController.updateWorldRule(userId, params.id, data) // Reusing updateWorldRule for now
       if (!updatedWorldRule) {

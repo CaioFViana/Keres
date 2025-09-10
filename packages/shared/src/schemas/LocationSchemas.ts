@@ -14,7 +14,6 @@ export const LocationCreateSchema = z.object({
 })
 
 export const LocationUpdateSchema = z.object({
-  id: z.string(),
   name: z.string().min(1, 'Name cannot be empty').optional(),
   description: z.string().optional(),
   climate: z.string().optional(),

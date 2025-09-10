@@ -12,8 +12,8 @@ export class UpdateSceneUseCase {
     private readonly chapterRepository: IChapterRepository,
   ) {}
 
-  async execute(userId: string, data: SceneUpdatePayload): Promise<SceneResponse> {
-    const existingScene = await this.sceneRepository.findById(data.id)
+  async execute(userId: string, id: string, data: Omit<SceneUpdatePayload, 'id'>): Promise<SceneResponse> {
+    const existingScene = await this.sceneRepository.findById(id)
     if (!existingScene) {
       throw new Error('Scene not found')
     }
@@ -31,6 +31,7 @@ export class UpdateSceneUseCase {
     const updatedScene = {
       ...existingScene,
       ...data,
+      id: id, // Ensure ID is set from the URL parameter
       updatedAt: new Date(),
     }
 

@@ -8,8 +8,8 @@ export class UpdateSuggestionUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, data: UpdateSuggestionPayload): Promise<SuggestionResponse> {
-    const existingSuggestion = await this.suggestionRepository.findById(data.id)
+  async execute(userId: string, id: string, data: Omit<UpdateSuggestionPayload, 'id'>): Promise<SuggestionResponse> {
+    const existingSuggestion = await this.suggestionRepository.findById(id)
     if (!existingSuggestion) {
       throw new Error('Suggestion not found')
     }
@@ -34,6 +34,7 @@ export class UpdateSuggestionUseCase {
     const updatedSuggestion = {
       ...existingSuggestion,
       ...data,
+      id: id, // Ensure ID is set from the URL parameter
       updatedAt: new Date(),
     }
 

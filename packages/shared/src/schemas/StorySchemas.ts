@@ -16,7 +16,6 @@ export const StoryCreateSchema = z.object({
 })
 
 export const StoryUpdateSchema = z.object({
-  id: z.string(),
   type: z.enum(['linear', 'branching']).optional(),
   title: z.string().min(1, 'Name cannot be empty').optional(),
   summary: z.string().optional(),

@@ -295,7 +295,9 @@ noteRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = UpdateNoteSchema.parse(body)
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = UpdateNoteSchema.parse(restOfBody)
     try {
       const updatedNote = await noteController.updateNote(userId, params.id, data)
       if (!updatedNote) {
@@ -369,7 +371,9 @@ noteRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = UpdateNoteSchema.parse(body) // UpdateNoteSchema already handles optional fields
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = UpdateNoteSchema.parse(restOfBody) // UpdateNoteSchema already handles optional fields
     try {
       const updatedNote = await noteController.updateNote(userId, params.id, data) // Reusing updateNote for now
       if (!updatedNote) {

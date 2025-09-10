@@ -391,7 +391,9 @@ characterRoutes.openapi(
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.json()
-    const data = CharacterUpdateSchema.parse(body)
+    // Explicitly remove 'id' from the body before parsing
+    const { id, ...restOfBody } = body
+    const data = CharacterUpdateSchema.parse(restOfBody)
     try {
       const updatedCharacter = await characterController.updateCharacter(userId, params.id, data)
       return c.json(updatedCharacter, 200)

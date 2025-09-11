@@ -17,7 +17,8 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.11.3",
     "ulid": "^2.3.0",
-    "zod": "^3.22.0"
+    "zod": "^3.22.0",
+    "@keres/shared": "workspace:^"
   },
   "devDependencies": {
     "@types/bun": "^1.1.1",

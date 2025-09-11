@@ -37,13 +37,17 @@ export class NodeFileSystemService implements IFileSystemService {
     await fs.mkdir(dirPath, { recursive: true })
   }
 
-  async writeFile(filePath: string, data: string): Promise<void> {
-    // Assuming data is a Base64 string for binary files like images
-    const buffer = Buffer.from(data, 'base64')
+  async writeFile(filePath: string, data: ArrayBuffer): Promise<void> {
+    const buffer = Buffer.from(data)
     await fs.writeFile(filePath, buffer)
   }
 
   async deleteFile(filePath: string): Promise<void> {
     await fs.unlink(filePath)
+  }
+
+  async readFile(filePath: string): Promise<ArrayBuffer> {
+    const buffer = await fs.readFile(filePath);
+    return buffer.buffer as ArrayBuffer; // Convert Node.js Buffer to ArrayBuffer
   }
 }

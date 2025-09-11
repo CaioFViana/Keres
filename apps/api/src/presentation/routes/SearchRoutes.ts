@@ -14,7 +14,6 @@ import {
 } from '@infrastructure/persistence'
 import { ErrorResponseSchema, SearchQuerySchema, SearchResponseSchema } from '@keres/shared'
 import { SearchController } from '@presentation/controllers/SearchController'
-import { z } from 'zod'
 
 const searchRoutes = new OpenAPIHono()
 

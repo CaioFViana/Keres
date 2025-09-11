@@ -31,7 +31,6 @@ import {
   PaginatedResponseSchema,
 } from '@keres/shared' // Import SceneResponseSchema
 import { SceneController } from '@presentation/controllers/SceneController'
-import { z } from 'zod' // Import z for defining parameters
 
 const sceneRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 

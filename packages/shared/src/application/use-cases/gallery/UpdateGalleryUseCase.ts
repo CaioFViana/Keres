@@ -21,7 +21,7 @@ export class UpdateGalleryUseCase {
   async execute(
     userId: string,
     data: GalleryUpdatePayload,
-    fileBuffer?: string,
+    fileBuffer?: ArrayBuffer,
   ): Promise<GalleryResponse> {
     const existingGallery = await this.galleryRepository.findById(data.id)
     if (!existingGallery) {

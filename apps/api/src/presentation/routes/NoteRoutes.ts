@@ -21,7 +21,6 @@ import {
   PaginatedResponseSchema,
 } from '@keres/shared'
 import { NoteController } from '@presentation/controllers/NoteController'
-import { z } from 'zod'
 
 const noteRoutes = new OpenAPIHono()
 

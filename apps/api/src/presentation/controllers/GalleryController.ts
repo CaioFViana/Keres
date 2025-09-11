@@ -10,8 +10,9 @@ import type {
 import type { IGalleryRepository } from '@domain/repositories/IGalleryRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
 import type z from 'zod'
-import fs from 'node:fs/promises'
+import type { IFileSystemService } from '@domain/services/IFileSystemService'
 import path from 'node:path'
+
 
 import {
   type GalleryCreateSchema,
@@ -34,14 +35,15 @@ export class GalleryController {
     private readonly getGalleryByStoryIdUseCase: GetGalleryByStoryIdUseCase,
     private readonly galleryRepository: IGalleryRepository,
     private readonly storyRepository: IStoryRepository,
+    private readonly fileSystemService: IFileSystemService, // Added
   ) {}
 
   async createGallery(
     userId: string,
     data: z.infer<typeof GalleryCreateSchema>,
-    fileBuffer: Buffer,
+    fileBuffer: ArrayBuffer,
   ) {
-    const gallery = await this.createGalleryUseCase.execute(userId, data, fileBuffer.toBase64())
+    const gallery = await this.createGalleryUseCase.execute(userId, data, fileBuffer)
     return GalleryResponseSchema.parse(gallery)
   }
 
@@ -85,13 +87,13 @@ export class GalleryController {
     userId: string,
     id: string,
     data: z.infer<typeof GalleryUpdateSchema>,
-    fileBuffer?: Buffer,
+    fileBuffer?: ArrayBuffer,
   ) {
     const { id: dataId, ...updateData } = data
     const updatedGallery = await this.updateGalleryUseCase.execute(
       userId,
       { id, ...updateData },
-      fileBuffer?.toBase64(),
+      fileBuffer
     )
     if (!updatedGallery) {
       throw new Error('Gallery item not found or does not belong to the specified story/owner')
@@ -128,12 +130,12 @@ export class GalleryController {
       throw new Error('Story not found or not owned by user')
     }
 
-    const fileSystem = new NodeFileSystemService()
-    const galleryPath = fileSystem.getKeresGalleryPath()
-    const imageFilePath = path.join(galleryPath, galleryItem.imagePath)
+    
+    const galleryPath = this.fileSystemService.getKeresGalleryPath()
+    const imageFilePath = `${galleryPath}/${galleryItem.imagePath}`
 
     try {
-      const fileContent = await fs.readFile(imageFilePath)
+      const fileContent = await this.fileSystemService.readFile(imageFilePath)
       const ext = path.extname(galleryItem.imagePath).toLowerCase()
       let contentType = 'application/octet-stream' // Default to binary
 

@@ -22,7 +22,7 @@ export class CreateGalleryUseCase {
   async execute(
     userId: string,
     data: GalleryCreatePayload,
-    fileBuffer: string,
+    fileBuffer: ArrayBuffer,
   ): Promise<GalleryResponse> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(data.storyId, userId)

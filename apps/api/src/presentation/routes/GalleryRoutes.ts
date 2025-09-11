@@ -88,6 +88,7 @@ const galleryController = new GalleryController(
   getGalleryByStoryIdUseCase,
   galleryRepository,
   storyRepository,
+  nodefsSystemService, // Added
 )
 
 
@@ -142,11 +143,11 @@ galleryRoutes.openapi(
 
     const parsedBody = GalleryCreateSchema.parse(body)
 
-    let fileBuffer: Buffer
+    let fileBuffer: ArrayBuffer
     if (!parsedBody.file) {
       throw new Error('File is required.')
     }
-    fileBuffer = Buffer.from(await parsedBody.file.arrayBuffer())
+    fileBuffer = await (parsedBody.file as File).arrayBuffer()
 
     const data = {
       storyId: parsedBody.storyId,
@@ -461,11 +462,11 @@ galleryRoutes.openapi(
 
     const parsedBody = GalleryUpdateSchema.parse(body)
 
-    let fileBuffer: Buffer
+    let fileBuffer: ArrayBuffer
     if (!parsedBody.file) {
       throw new Error('File is required when isFile is true')
     }
-    fileBuffer = Buffer.from(await parsedBody.file.arrayBuffer())
+    fileBuffer = await (parsedBody.file as File).arrayBuffer()
 
     const data = {
       id: parsedBody.id,
@@ -554,11 +555,11 @@ galleryRoutes.openapi(
     const params = IdParamSchema.parse(c.req.param())
     const body = await c.req.parseBody()
     const data = GalleryUpdateSchema.parse(body) // GalleryUpdateSchema already handles optional fields
-    let fileBuffer: Buffer | undefined
+    let fileBuffer: ArrayBuffer | undefined
 
     if (data.file) {
       // Check if file is provided in the partial update
-      fileBuffer = Buffer.from(await data.file.arrayBuffer())
+      fileBuffer = await (data.file as File).arrayBuffer()
     }
 
     try {

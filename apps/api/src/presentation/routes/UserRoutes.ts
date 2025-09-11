@@ -36,7 +36,6 @@ import {
   RefreshTokenResponseSchema,
 } from '@keres/shared' // Import Zod schemas and UserProfileSchema
 import { UserController } from '@presentation/controllers/UserController'
-import { z } from 'zod' // Import z for defining parameters
 
 const userRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 

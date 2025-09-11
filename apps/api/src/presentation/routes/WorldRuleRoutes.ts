@@ -21,7 +21,6 @@ import {
   PaginatedResponseSchema,
 } from '@keres/shared'
 import { WorldRuleController } from '@presentation/controllers/WorldRuleController'
-import { z } from 'zod'
 
 const worldRuleRoutes = new OpenAPIHono()
 

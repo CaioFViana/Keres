@@ -3,7 +3,7 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { IMomentRepository } from '@domain/repositories/IMomentRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { MomentResponse, UpdateMomentPayload } from '@keres/shared'
+import type { MomentResponse, UpdateManyMomentsPayload } from '@keres/shared'
 
 export class UpdateManyMomentsUseCase {
   constructor(
@@ -13,7 +13,7 @@ export class UpdateManyMomentsUseCase {
     private readonly storyRepository: IStoryRepository,
   ) {}
 
-  async execute(userId: string, data: UpdateMomentPayload[]): Promise<MomentResponse[]> {
+  async execute(userId: string, data: UpdateManyMomentsPayload): Promise<MomentResponse[]> {
     if (data.length === 0) {
       return []
     }

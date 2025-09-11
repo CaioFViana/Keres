@@ -38,7 +38,7 @@ export class DeleteSceneUseCase {
         userId,
       )
       if (storyForImplicit && storyForImplicit.type === 'linear') {
-        const scenesInChapter = await this.sceneRepository.findByChapterId(existingScene.chapterId)
+        const scenesInChapter = (await this.sceneRepository.findByChapterId(existingScene.chapterId)).items
         scenesInChapter.sort((a, b) => a.index - b.index)
 
         // Remove any existing implicit choices for the chapter to recreate them

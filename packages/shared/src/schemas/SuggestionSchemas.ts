@@ -42,7 +42,11 @@ export type UpdateSuggestionPayload = z.infer<typeof UpdateSuggestionSchema>
 export type SuggestionResponse = z.infer<typeof SuggestionResponseSchema>
 
 export const CreateManySuggestionsSchema = z.array(CreateSuggestionSchema)
-export const UpdateManySuggestionsSchema = z.array(UpdateSuggestionSchema)
+export const UpdateManySuggestionsSchema = z.array(
+  UpdateSuggestionSchema.extend({
+    id: z.string(),
+  })
+)
 
 export type CreateManySuggestionsPayload = z.infer<typeof CreateManySuggestionsSchema>
 export type UpdateManySuggestionsPayload = z.infer<typeof UpdateManySuggestionsSchema>

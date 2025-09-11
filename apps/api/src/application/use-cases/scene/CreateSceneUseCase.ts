@@ -63,7 +63,7 @@ export class CreateSceneUseCase {
         userId,
       )
       if (storyForImplicit && storyForImplicit.type === 'linear') {
-        const scenesInChapter = await this.sceneRepository.findByChapterId(newScene.chapterId)
+        const scenesInChapter = (await this.sceneRepository.findByChapterId(newScene.chapterId)).items
         scenesInChapter.sort((a, b) => a.index - b.index)
 
         // Remove any existing implicit choices for the chapter to recreate them

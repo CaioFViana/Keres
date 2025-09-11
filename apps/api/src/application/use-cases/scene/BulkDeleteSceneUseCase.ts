@@ -2,7 +2,7 @@ import type { IChapterRepository } from '@domain/repositories/IChapterRepository
 import type { IChoiceRepository } from '@domain/repositories/IChoiceRepository'
 import type { ISceneRepository } from '@domain/repositories/ISceneRepository'
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository'
-import type { BulkDeleteResponse } from '@keres/shared'
+import type { BulkDeleteResponse, ListQueryParams } from '@keres/shared'
 
 export class BulkDeleteSceneUseCase {
   constructor(
@@ -46,9 +46,9 @@ export class BulkDeleteSceneUseCase {
             userId,
           )
           if (storyForImplicit && storyForImplicit.type === 'linear') {
-            const scenesInChapter = await this.sceneRepository.findByChapterId(
-              existingScene.chapterId,
-            )
+            const scenesInChapter = (await this.sceneRepository.findByChapterId(
+              existingScene.chapterId
+            )).items
             scenesInChapter.sort((a, b) => a.index - b.index)
 
             for (const scene of scenesInChapter) {

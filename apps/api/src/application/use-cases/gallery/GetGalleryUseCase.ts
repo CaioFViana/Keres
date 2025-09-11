@@ -24,6 +24,7 @@ export class GetGalleryUseCase {
       id: gallery.id,
       storyId: gallery.storyId,
       ownerId: gallery.ownerId,
+      ownerType: gallery.ownerType,
       imagePath: gallery.imagePath,
       isFile: gallery.isFile,
       isFavorite: gallery.isFavorite,

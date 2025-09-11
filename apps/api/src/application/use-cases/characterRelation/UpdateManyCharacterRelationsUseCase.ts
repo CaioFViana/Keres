@@ -33,27 +33,14 @@ export class UpdateManyCharacterRelationsUseCase {
       }
 
       // Validate character existence and ownership
-      const char1 = await this.characterRepository.findById(
-        payload.charId1 || existingCharacterRelation.charId1,
-      )
+      const char1 = await this.characterRepository.findById(existingCharacterRelation.charId1)
       if (!char1) {
         throw new Error(
-          `Character with ID ${payload.charId1 || existingCharacterRelation.charId1} not found`,
-        )
-      }
-      const char2 = await this.characterRepository.findById(
-        payload.charId2 || existingCharacterRelation.charId2,
-      )
-      if (!char2) {
-        throw new Error(
-          `Character with ID ${payload.charId2 || existingCharacterRelation.charId2} not found`,
+          `Character with ID ${existingCharacterRelation.charId1} not found`,
         )
       }
 
-      // Ensure both characters belong to the same story and the user owns that story
-      if (char1.storyId !== char2.storyId) {
-        throw new Error('Characters must belong to the same story')
-      }
+      // Ensure user owns that story
       const story = await this.storyRepository.findById(char1.storyId, userId)
       if (!story) {
         throw new Error('Story not found or not owned by user')

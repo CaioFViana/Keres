@@ -1,5 +1,23 @@
 {
   "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "baseUrl": ".",
+    "rootDir": ".",
+    "paths": {
+      "@keres/shared": ["../../packages/shared/dist"],
+      "@domain/*": ["../../packages/shared/dist/domain/*"],
+      "@application/*": ["../../packages/shared/dist/application/*"],
+    }
+  },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["**/node_modules", "**/Pods"]
 }

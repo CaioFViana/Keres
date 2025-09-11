@@ -16,6 +16,8 @@ import {
   type CharacterUpdateSchema,
   type ListQueryParams,
   type PaginatedResponse,
+  CreateManyCharactersSchema,
+  UpdateManyCharactersSchema,
 } from '@keres/shared'
 
 export class CharacterController {
@@ -35,12 +37,12 @@ export class CharacterController {
     return CharacterResponseSchema.parse(character)
   }
 
-  async createManyCharacters(userId: string, data: z.infer<typeof CharacterCreateSchema>[]) {
+  async createManyCharacters(userId: string, data: z.infer<typeof CreateManyCharactersSchema>) {
     const characters = await this.createManyCharactersUseCase.execute(userId, data)
     return characters.map((character) => CharacterResponseSchema.parse(character))
   }
 
-  async updateManyCharacters(userId: string, data: z.infer<typeof CharacterUpdateSchema>[]) {
+  async updateManyCharacters(userId: string, data: z.infer<typeof UpdateManyCharactersSchema>) {
     const characters = await this.updateManyCharactersUseCase.execute(userId, data)
     return characters.map((character) => CharacterResponseSchema.parse(character))
   }

@@ -70,5 +70,5 @@ export type CharacterCreatePayload = z.infer<typeof CharacterCreateSchema>
 export type CharacterUpdatePayload = z.infer<typeof CharacterUpdateSchema>
 export type CharacterResponse = z.infer<typeof CharacterResponseSchema>
 export type CreateManyCharactersPayload = z.infer<typeof CreateManyCharactersSchema>
-export type CharacterBulkUpdateItemPayload = z.infer<typeof UpdateManyCharactersSchema>[number]
+export type CharacterBulkUpdateItemPayload = z.infer<typeof UpdateManyCharactersSchema>
 export type UpdateManyCharactersPayload = z.infer<typeof UpdateManyCharactersSchema>

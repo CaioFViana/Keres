@@ -14,6 +14,8 @@ import {
   type CharacterRelationCreateSchema,
   CharacterRelationResponseSchema,
   type CharacterRelationUpdateSchema,
+  CreateManyCharacterRelationsSchema,
+  UpdateManyCharacterRelationsSchema,
 } from '@keres/shared'
 
 export class CharacterRelationController {
@@ -38,7 +40,7 @@ export class CharacterRelationController {
 
   async createManyCharacterRelations(
     userId: string,
-    data: z.infer<typeof CharacterRelationCreateSchema>[],
+    data: z.infer<typeof CreateManyCharacterRelationsSchema>,
   ) {
     const characterRelations = await this.createManyCharacterRelationsUseCase.execute(userId, data)
     return characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr))
@@ -46,7 +48,7 @@ export class CharacterRelationController {
 
   async updateManyCharacterRelations(
     userId: string,
-    data: z.infer<typeof CharacterRelationUpdateSchema>[],
+    data: z.infer<typeof UpdateManyCharacterRelationsSchema>,
   ) {
     const characterRelations = await this.updateManyCharacterRelationsUseCase.execute(userId, data)
     return characterRelations.map((cr) => CharacterRelationResponseSchema.parse(cr))

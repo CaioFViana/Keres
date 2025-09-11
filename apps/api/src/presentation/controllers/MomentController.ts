@@ -16,6 +16,7 @@ import {
   MomentResponseSchema,
   type UpdateMomentSchema,
   type PaginatedResponse,
+  UpdateManyMomentsSchema,
 } from '@keres/shared'
 
 export class MomentController {
@@ -40,7 +41,7 @@ export class MomentController {
     return moments.map((moment) => MomentResponseSchema.parse(moment))
   }
 
-  async updateManyMoments(userId: string, data: z.infer<typeof UpdateMomentSchema>[]) {
+  async updateManyMoments(userId: string, data: z.infer<typeof UpdateManyMomentsSchema>) {
     const moments = await this.updateManyMomentsUseCase.execute(userId, data)
     return moments.map((moment) => MomentResponseSchema.parse(moment))
   }

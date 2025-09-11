@@ -20,6 +20,7 @@ import {
   SuggestionResponseSchema,
   type UpdateSuggestionSchema,
   type PaginatedResponse,
+  UpdateManySuggestionsSchema,
 } from '@keres/shared'
 
 export class SuggestionController {
@@ -48,7 +49,7 @@ export class SuggestionController {
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }
 
-  async updateManySuggestions(userId: string, data: z.infer<typeof UpdateSuggestionSchema>[]) {
+  async updateManySuggestions(userId: string, data: z.infer<typeof UpdateManySuggestionsSchema>) {
     const suggestions = await this.updateManySuggestionsUseCase.execute(userId, data)
     return suggestions.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
   }

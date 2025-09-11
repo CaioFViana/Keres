@@ -29,7 +29,7 @@ import {
   StoryIdParamSchema,
   BulkDeleteSchema,
   PaginatedResponseSchema,
-  ListQuerySchema,
+  ListQuerySchema
 } from '@keres/shared'
 import { TagController } from '@presentation/controllers/TagController'
 import { z } from 'zod'

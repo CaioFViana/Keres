@@ -13,8 +13,10 @@ import type { z } from 'zod'
 import {
   type CreateTagSchema,
   ListQueryParams,
+  PaginatedResponse,
   type TagAssignmentPayload,
   type TagRemovalPayload,
+  TagResponse,
   TagResponseSchema,
   type UpdateTagSchema,
 } from '@keres/shared'
@@ -44,9 +46,9 @@ export class TagController {
     return TagResponseSchema.parse(tag)
   }
 
-  async getTagsByStoryId(userId: string, storyId: string, query: ListQueryParams) {
+  async getTagsByStoryId(userId: string, storyId: string, query: ListQueryParams) : Promise<PaginatedResponse<TagResponse>>{
     const paginatedTags = await this.getTagsByStoryIdUseCase.execute(userId, storyId, query)
-    const items = paginatedTags.items.map((tag) => TagResponseSchema.parse(tag))
+    const items = paginatedTags.items.map((tag: TagResponse) => TagResponseSchema.parse(tag))
     return {
       items,
       totalItems: paginatedTags.totalItems,

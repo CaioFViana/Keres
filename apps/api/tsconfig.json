@@ -15,11 +15,11 @@
     "outDir": "./dist",
     // Path aliases for Clean Architecture layers
     "paths": {
-      "@domain/*": ["./src/domain/*"],
-      "@application/*": ["./src/application/*"],
+      "@keres/shared": ["../../packages/shared/dist"],
+      "@domain/*": ["../../packages/shared/dist/domain/*"],
+      "@application/*": ["../../packages/shared/dist/application/*"],
       "@infrastructure/*": ["./src/infrastructure/*"],
       "@presentation/*": ["./src/presentation/*"],
-      "@keres/shared": ["../../packages/shared"], // Corrected alias for @keres/shared
     }
   },
   "include": ["src/**/*.ts"],

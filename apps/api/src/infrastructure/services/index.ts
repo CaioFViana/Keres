@@ -2,3 +2,4 @@
 
 export * from './BcryptPasswordHasher'
 export * from './JwtService'
+export * from './NodeFileSystemService'

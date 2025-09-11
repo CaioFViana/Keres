@@ -6,10 +6,7 @@ export const ListQuerySchema = z.object({
   sort_by: z.string().optional().default('id'),
   order: z.enum(['asc', 'desc']).optional(),
   isFavorite: z.preprocess((val) => String(val).toLowerCase() === 'true', z.boolean()).optional(),
-  hasTags: z.string().optional().openapi({
-    description: 'Comma-separated list of tag IDs to filter by. Example: `01h6j2m3k4p5q6r7s8t9u0v1w2,01h6j2m3k4p5q6r7s8t9u0v1w3`',
-    example: '01h6j2m3k4p5q6r7s8t9u0v1w2,01h6j2m3k4p5q6r7s8t9u0v1w3',
-  }),
+  hasTags: z.string().optional(),
   filter: z
     .string()
     .optional()
@@ -28,10 +25,6 @@ export const ListQuerySchema = z.object({
         return undefined // Or throw an error if strict parsing is desired
       }
     })
-    .openapi({
-      description: 'Comma-separated key:value pairs for filtering. Example: `title:MyStory,isFavorite:true`',
-      example: 'title:MyStory,isFavorite:true',
-    }),
 })
 
 export type ListQueryParams = z.infer<typeof ListQuerySchema>

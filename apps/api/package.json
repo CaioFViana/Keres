@@ -6,17 +6,18 @@
     "build": "bun tsc",
     "dev": "bun --watch src/index.ts",
     "start": "node dist/index.js",
-    "lint": "eslint . --ext .ts",
-    "clean": "rm -rf dist"
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {
-    "hono": "^4.2.3",
-    "drizzle-orm": "^0.29.3",
-    "ulid": "^2.3.0",
-    "zod": "^3.22.0",
+    "@hono/swagger-ui": "^0.5.2",
+    "@hono/zod-openapi": "^1.1.0",
     "bcrypt": "^5.1.0",
+    "drizzle-orm": "^0.29.3",
+    "hono": "^4.2.3",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "ulid": "^2.3.0",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/bun": "^1.1.1",

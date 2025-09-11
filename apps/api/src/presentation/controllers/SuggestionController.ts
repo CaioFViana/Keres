@@ -21,6 +21,7 @@ import {
   type UpdateSuggestionSchema,
   type PaginatedResponse,
   UpdateManySuggestionsSchema,
+  SuggestionResponse,
 } from '@keres/shared'
 
 export class SuggestionController {
@@ -67,7 +68,7 @@ export class SuggestionController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
     const paginatedSuggestions = await this.getSuggestionsByUserIdUseCase.execute(userId, query)
-    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+    const items = paginatedSuggestions.items.map((suggestion: SuggestionResponse) => SuggestionResponseSchema.parse(suggestion))
 
     return {
       items,
@@ -81,7 +82,7 @@ export class SuggestionController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
     const paginatedSuggestions = await this.getSuggestionsByStoryIdUseCase.execute(userId, storyId, query)
-    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+    const items = paginatedSuggestions.items.map((suggestion: SuggestionResponse) => SuggestionResponseSchema.parse(suggestion))
 
     return {
       items,
@@ -95,7 +96,7 @@ export class SuggestionController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
     const paginatedSuggestions = await this.getSuggestionsByTypeUseCase.execute(userId, type, query)
-    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+    const items = paginatedSuggestions.items.map((suggestion: SuggestionResponse) => SuggestionResponseSchema.parse(suggestion))
 
     return {
       items,
@@ -109,7 +110,7 @@ export class SuggestionController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof SuggestionResponseSchema>>> {
     const paginatedSuggestions = await this.getSuggestionsByUserAndTypeUseCase.execute(userId, type, query)
-    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+    const items = paginatedSuggestions.items.map((suggestion: SuggestionResponse) => SuggestionResponseSchema.parse(suggestion))
 
     return {
       items,
@@ -129,7 +130,7 @@ export class SuggestionController {
       type,
       query,
     )
-    const items = paginatedSuggestions.items.map((suggestion) => SuggestionResponseSchema.parse(suggestion))
+    const items = paginatedSuggestions.items.map((suggestion: SuggestionResponse) => SuggestionResponseSchema.parse(suggestion))
 
     return {
       items,

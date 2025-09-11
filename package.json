@@ -11,7 +11,7 @@
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "clean": "turbo run clean && rm -rf node_modules",
+    
     "start:api": "bun --cwd apps/api dev",
     "start:client": "bun --cwd apps/client start",
     "start:desktop": "bun --cwd apps/desktop dev",

@@ -22,7 +22,6 @@ import {
   PaginatedResponseSchema,
 } from '@keres/shared'
 import { ChapterController } from '@presentation/controllers/ChapterController'
-import { z } from 'zod' // Import z for defining parameters
 
 const chapterRoutes = new OpenAPIHono() // Change Hono to OpenAPIHono
 

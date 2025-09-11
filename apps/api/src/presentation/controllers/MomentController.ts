@@ -17,6 +17,7 @@ import {
   type UpdateMomentSchema,
   type PaginatedResponse,
   UpdateManyMomentsSchema,
+  MomentResponse,
 } from '@keres/shared'
 
 export class MomentController {
@@ -60,7 +61,7 @@ export class MomentController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof MomentResponseSchema>>> {
     const paginatedMoments = await this.getMomentsBySceneIdUseCase.execute(userId, sceneId, query)
-    const items = paginatedMoments.items.map((moment) => MomentResponseSchema.parse(moment))
+    const items = paginatedMoments.items.map((moment: MomentResponse) => MomentResponseSchema.parse(moment))
 
     return {
       items,

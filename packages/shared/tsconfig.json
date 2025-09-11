@@ -8,10 +8,16 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@domain/*": ["domain/*"],
+      "@application/*": ["application/*"]
+    },
 
     "outDir": "./dist", // Added
     "declaration": true, // Added, to generate .d.ts files
-    "noEmit": false // Changed to false
+    "noEmit": false,
+    "rootDir": "./src" // Added this line
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

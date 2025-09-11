@@ -11,7 +11,6 @@
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    
     "start:api": "bun --cwd apps/api dev",
     "start:client": "bun --cwd apps/client start",
     "start:desktop": "bun --cwd apps/desktop dev",
@@ -26,6 +25,8 @@
   },
   "packageManager": "bun@1.2.19",
   "dependencies": {
-    "@expo/metro-runtime": "~3.1.3"
+    "@expo/metro-runtime": "~3.1.3",
+    "@hono/zod-openapi": "^1.1.0",
+    "zod": "^4.1.8"
   }
 }

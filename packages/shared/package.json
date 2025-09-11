@@ -8,8 +8,10 @@
     "build": "tsc"
   },
   "dependencies": {
-    "zod": "^3.22.0",
     "ulid": "^2.3.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

@@ -41,9 +41,11 @@ export class GalleryController {
   async createGallery(
     userId: string,
     data: z.infer<typeof GalleryCreateSchema>,
-    fileBuffer: ArrayBuffer,
   ) {
-    const gallery = await this.createGalleryUseCase.execute(userId, data, fileBuffer)
+    const { file: fileContentBase64, ...createData } = data;
+    const buffer = Buffer.from(fileContentBase64, 'base64');
+    const fileBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+    const gallery = await this.createGalleryUseCase.execute(userId, createData, fileBuffer)
     return GalleryResponseSchema.parse(gallery)
   }
 
@@ -87,12 +89,16 @@ export class GalleryController {
     userId: string,
     id: string,
     data: z.infer<typeof GalleryUpdateSchema>,
-    fileBuffer?: ArrayBuffer,
   ) {
-    const { id: dataId, ...updateData } = data
+    let fileBuffer: ArrayBuffer | undefined
+    const { file: fileContentBase64, ...updateDataWithoutFile } = data;
+    if (fileContentBase64) {
+      const buffer = Buffer.from(fileContentBase64, 'base64');
+      fileBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+    }
     const updatedGallery = await this.updateGalleryUseCase.execute(
       userId,
-      { id, ...updateData },
+      updateDataWithoutFile,
       fileBuffer
     )
     if (!updatedGallery) {

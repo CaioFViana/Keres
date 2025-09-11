@@ -33,6 +33,14 @@ import {
 import { GalleryController } from '@presentation/controllers/GalleryController'
 import { z } from 'zod'
 
+const GalleryCreateApiSchema = GalleryCreateSchema.extend({
+  file: z.string()
+})
+
+const GalleryUpdateApiSchema = GalleryUpdateSchema.extend({
+  file: z.string().optional(),
+})
+
 const galleryRoutes = new OpenAPIHono()
 
 // Dependencies for GalleryController
@@ -103,8 +111,8 @@ galleryRoutes.openapi(
     request: {
       body: {
         content: {
-          'multipart/form-data': {
-            schema: GalleryCreateSchema,
+          'application/json': {
+            schema: GalleryCreateApiSchema,
           },
         },
       },
@@ -139,29 +147,12 @@ galleryRoutes.openapi(
   }),
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
-    const body = await c.req.parseBody()
+    const body = await c.req.json()
 
     const parsedBody = GalleryCreateSchema.parse(body)
 
-    let fileBuffer: ArrayBuffer
-    if (!parsedBody.file) {
-      throw new Error('File is required.')
-    }
-    fileBuffer = await (parsedBody.file as File).arrayBuffer()
-
-    const data = {
-      storyId: parsedBody.storyId,
-      ownerId: parsedBody.ownerId,
-      ownerType: parsedBody.ownerType,
-      imagePath: parsedBody.imagePath,
-      isFile: true, // For this project phase, always true. in the future URL could be allowed so leaving because of it.
-      isFavorite: parsedBody.isFavorite,
-      extraNotes: parsedBody.extraNotes,
-      file: parsedBody.file,
-    }
-
     try {
-      const gallery = await galleryController.createGallery(userId, data, fileBuffer)
+      const gallery = await galleryController.createGallery(userId, parsedBody)
       return c.json(gallery, 201)
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -413,8 +404,8 @@ galleryRoutes.openapi(
       params: IdParamSchema,
       body: {
         content: {
-          'multipart/form-data': {
-            schema: GalleryUpdateSchema,
+          'application/json': {
+            schema: GalleryUpdateApiSchema,
           },
         },
       },
@@ -458,33 +449,15 @@ galleryRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
-    const body = await c.req.parseBody()
+    const body = await c.req.json()
 
     const parsedBody = GalleryUpdateSchema.parse(body)
-
-    let fileBuffer: ArrayBuffer
-    if (!parsedBody.file) {
-      throw new Error('File is required when isFile is true')
-    }
-    fileBuffer = await (parsedBody.file as File).arrayBuffer()
-
-    const data = {
-      id: parsedBody.id,
-      ownerId: parsedBody.ownerId,
-      ownerType: parsedBody.ownerType,
-      imagePath: parsedBody.imagePath,
-      isFile: true,
-      isFavorite: parsedBody.isFavorite,
-      extraNotes: parsedBody.extraNotes,
-      file: parsedBody.file,
-    }
 
     try {
       const updatedGallery = await galleryController.updateGallery(
         userId,
         params.id,
-        data,
-        fileBuffer,
+        parsedBody,
       )
       return c.json(updatedGallery, 200)
     } catch (error: unknown) {
@@ -508,8 +481,8 @@ galleryRoutes.openapi(
       params: IdParamSchema,
       body: {
         content: {
-          'multipart/form-data': {
-            schema: GalleryUpdateSchema, // GalleryUpdateSchema already has optional fields
+          'application/json': {
+            schema: GalleryUpdateApiSchema, // GalleryUpdateSchema already has optional fields
           },
         },
       },
@@ -553,21 +526,14 @@ galleryRoutes.openapi(
   async (c) => {
     const userId = (c.get('jwtPayload') as { userId: string }).userId
     const params = IdParamSchema.parse(c.req.param())
-    const body = await c.req.parseBody()
+    const body = await c.req.json()
     const data = GalleryUpdateSchema.parse(body) // GalleryUpdateSchema already handles optional fields
-    let fileBuffer: ArrayBuffer | undefined
-
-    if (data.file) {
-      // Check if file is provided in the partial update
-      fileBuffer = await (data.file as File).arrayBuffer()
-    }
 
     try {
       const updatedGallery = await galleryController.updateGallery(
         userId,
         params.id,
         data,
-        fileBuffer,
       )
       return c.json(updatedGallery, 200)
     } catch (error: unknown) {

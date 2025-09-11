@@ -23,7 +23,7 @@ export class BulkDeleteChapterUseCase {
         }
 
         const scenes = await this.sceneRepository.findByChapterId(id)
-        if (scenes && scenes.length > 0) {
+        if (scenes && scenes.totalItems > 0) {
           failedIds.push({
             id,
             reason: 'Chapter cannot be deleted because it has associated scenes.',

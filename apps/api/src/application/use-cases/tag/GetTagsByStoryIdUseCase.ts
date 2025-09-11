@@ -1,6 +1,6 @@
 import type { IStoryRepository } from '@domain/repositories/IStoryRepository' // Import IStoryRepository
 import type { ITagRepository } from '@domain/repositories/ITagRepository'
-import type { TagResponse } from '@keres/shared'
+import type { ListQueryParams, PaginatedResponse, TagResponse } from '@keres/shared'
 
 export class GetTagsByStoryIdUseCase {
   constructor(
@@ -8,15 +8,15 @@ export class GetTagsByStoryIdUseCase {
     private readonly storyRepository: IStoryRepository, // Inject IStoryRepository
   ) {}
 
-  async execute(userId: string, storyId: string): Promise<TagResponse[]> {
+  async execute(userId: string, storyId: string, query: ListQueryParams): Promise<PaginatedResponse<TagResponse>> {
     // Verify that the story exists and belongs to the user
     const story = await this.storyRepository.findById(storyId, userId)
     if (!story) {
       throw new Error('Story not found or not owned by user')
     }
 
-    const tags = await this.tagRepository.findByStoryId(storyId)
-    return tags.map((tag) => ({
+    const paginatedTags = await this.tagRepository.findByStoryId(storyId, query)
+    const items = paginatedTags.items.map((tag) => ({
       id: tag.id,
       storyId: tag.storyId,
       name: tag.name,
@@ -26,5 +26,10 @@ export class GetTagsByStoryIdUseCase {
       createdAt: tag.createdAt,
       updatedAt: tag.updatedAt,
     }))
+
+    return {
+      items,
+      totalItems: paginatedTags.totalItems,
+    }
   }
 }

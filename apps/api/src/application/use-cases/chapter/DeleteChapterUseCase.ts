@@ -16,7 +16,7 @@ export class DeleteChapterUseCase {
     }
 
     const scenes = await this.sceneRepository.findByChapterId(id)
-    if (scenes && scenes.length > 0) {
+    if (scenes.totalItems > 0) {
       throw new Error('Chapter cannot be deleted because it has associated scenes.')
     }
 

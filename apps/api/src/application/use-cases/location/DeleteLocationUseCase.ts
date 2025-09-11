@@ -16,7 +16,7 @@ export class DeleteLocationUseCase {
     }
 
     const scenes = await this.sceneRepository.findByLocationId(id)
-    if (scenes && scenes.length > 0) {
+    if (scenes.totalItems > 0) {
       throw new Error('Location cannot be deleted because it is referenced by scenes.')
     }
 

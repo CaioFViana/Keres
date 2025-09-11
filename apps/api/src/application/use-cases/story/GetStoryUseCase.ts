@@ -42,17 +42,17 @@ export class GetStoryUseCase {
 
     if (include.includes('characters')) {
       const rawCharacters = await this.characterRepository.findByStoryId(story.id)
-      response.characters = rawCharacters.map((c) => CharacterResponseSchema.parse(c))
+      response.characters = rawCharacters.items.map((c) => CharacterResponseSchema.parse(c))
     }
 
     if (include.includes('chapters')) {
       const rawChapters = await this.chapterRepository.findByStoryId(story.id)
-      response.chapters = rawChapters.map((c) => ChapterResponseSchema.parse(c))
+      response.chapters = rawChapters.items.map((c) => ChapterResponseSchema.parse(c))
     }
 
     if (include.includes('locations')) {
       const rawLocations = await this.locationRepository.findByStoryId(story.id)
-      response.locations = rawLocations.map((c) => LocationResponseSchema.parse(c))
+      response.locations = rawLocations.items.map((c) => LocationResponseSchema.parse(c))
     }
     return response
   }

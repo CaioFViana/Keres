@@ -23,7 +23,7 @@ export class BulkDeleteLocationUseCase {
         }
 
         const scenes = await this.sceneRepository.findByLocationId(id)
-        if (scenes && scenes.length > 0) {
+        if (scenes.totalItems > 0) {
           failedIds.push({
             id,
             reason: 'Location cannot be deleted because it is referenced by scenes.',

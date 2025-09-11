@@ -37,7 +37,7 @@ export class GetChapterUseCase {
 
     if (include.includes('scenes')) {
       const rawScenes = await this.sceneRepository.findByChapterId(chapter.id)
-      response.scenes = rawScenes.map((s) => SceneResponseSchema.parse(s))
+      response.scenes = rawScenes.items.map((s) => SceneResponseSchema.parse(s))
     }
 
     return response

@@ -12,6 +12,7 @@ import type { z } from 'zod'
 
 import {
   type CreateTagSchema,
+  ListQueryParams,
   type TagAssignmentPayload,
   type TagRemovalPayload,
   TagResponseSchema,
@@ -43,9 +44,13 @@ export class TagController {
     return TagResponseSchema.parse(tag)
   }
 
-  async getTagsByStoryId(userId: string, storyId: string) {
-    const tags = await this.getTagsByStoryIdUseCase.execute(userId, storyId)
-    return tags.map((tag) => TagResponseSchema.parse(tag))
+  async getTagsByStoryId(userId: string, storyId: string, query: ListQueryParams) {
+    const paginatedTags = await this.getTagsByStoryIdUseCase.execute(userId, storyId, query)
+    const items = paginatedTags.items.map((tag) => TagResponseSchema.parse(tag))
+    return {
+      items,
+      totalItems: paginatedTags.totalItems,
+    }
   }
 
   async updateTag(userId: string, id: string, data: z.infer<typeof UpdateTagSchema>) {

@@ -48,7 +48,7 @@ export class GetSceneUseCase {
 
     if (include.includes('moments')) {
       const rawMoments = await this.momentRepository.findBySceneId(scene.id)
-      response.moments = rawMoments.map((m) => MomentResponseSchema.parse(m))
+      response.moments = rawMoments.items.map((m) => MomentResponseSchema.parse(m))
     }
 
     if (include.includes('choices')) {

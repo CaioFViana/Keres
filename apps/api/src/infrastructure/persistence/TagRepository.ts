@@ -12,7 +12,7 @@ import {
   sceneTags,
   tags,
 } from '@infrastructure/db'
-import { and, asc, desc, eq, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ilike, sql } from 'drizzle-orm'
 import { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 export class TagRepository implements ITagRepository {
@@ -104,23 +104,27 @@ export class TagRepository implements ITagRepository {
     try {
       let baseQuery = db.select().from(tags).where(eq(tags.storyId, storyId));
 
-      // Define allowed filterable fields and their Drizzle column mappings
-      const filterableFields = {
-        name: tags.name,
-        isFavorite: tags.isFavorite,
-        // Add other filterable fields here
-      };
+      // Apply isFavorite filter directly
+      if (query?.isFavorite !== undefined) {
+        baseQuery = baseQuery.where(and(eq(tags.storyId, storyId), eq(tags.isFavorite, query.isFavorite)));
+      }
 
-      // Generic filtering
+      // Apply generic filters
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              baseQuery = baseQuery.where(
-                and(eq(tags.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                baseQuery = baseQuery.where(and(eq(tags.storyId, storyId), ilike(tags.name, `%${value}%`)));
+                break;
+              case 'color':
+                baseQuery = baseQuery.where(and(eq(tags.storyId, storyId), ilike(tags.color, `%${value}%`)));
+                break;
+              case 'extraNotes':
+                baseQuery = baseQuery.where(and(eq(tags.storyId, storyId), ilike(tags.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }
@@ -132,15 +136,26 @@ export class TagRepository implements ITagRepository {
         .from(tags)
         .where(eq(tags.storyId, storyId)); // Start with the base where clause
 
+      // Apply isFavorite filter directly to count query
+      if (query?.isFavorite !== undefined) {
+        countQuery = countQuery.where(and(eq(tags.storyId, storyId), eq(tags.isFavorite, query.isFavorite)));
+      }
+
       if (query?.filter) {
         for (const key in query.filter) {
           if (Object.hasOwn(query.filter, key)) {
             const value = query.filter[key];
-            const column = filterableFields[key as keyof typeof filterableFields];
-            if (column) {
-              countQuery = countQuery.where(
-                and(eq(tags.storyId, storyId), eq(column, value)),
-              );
+            switch (key) {
+              case 'name':
+                countQuery = countQuery.where(and(eq(tags.storyId, storyId), ilike(tags.name, `%${value}%`)));
+                break;
+              case 'color':
+                countQuery = countQuery.where(and(eq(tags.storyId, storyId), ilike(tags.color, `%${value}%`)));
+                break;
+              case 'extraNotes':
+                countQuery = countQuery.where(and(eq(tags.storyId, storyId), ilike(tags.extraNotes, `%${value}%`)));
+                break;
+              // Add other filterable fields here as needed
             }
           }
         }

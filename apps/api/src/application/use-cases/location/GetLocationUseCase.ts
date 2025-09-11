@@ -39,7 +39,7 @@ export class GetLocationUseCase {
 
     if (include.includes('scenes')) {
       const rawScenes = await this.sceneRepository.findByLocationId(location.id)
-      response.scenes = rawScenes.map((s) => SceneResponseSchema.parse(s))
+      response.scenes = rawScenes.items.map((s) => SceneResponseSchema.parse(s))
     }
 
     return response

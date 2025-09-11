@@ -10,6 +10,7 @@ import type { z } from 'zod'
 
 import {
   type ChapterCreateSchema,
+  ChapterResponse,
   ChapterResponseSchema,
   type ChapterUpdateSchema,
   type ListQueryParams,
@@ -45,7 +46,7 @@ export class ChapterController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof ChapterResponseSchema>>> {
     const paginatedChapters = await this.getChaptersByStoryIdUseCase.execute(userId, storyId, query)
-    const items = paginatedChapters.items.map((chapter) => ChapterResponseSchema.parse(chapter))
+    const items = paginatedChapters.items.map((chapter: ChapterResponse) => ChapterResponseSchema.parse(chapter))
 
     return {
       items,

@@ -14,6 +14,7 @@ import {
   NoteResponseSchema,
   type UpdateNoteSchema,
   type PaginatedResponse,
+  NoteResponse,
 } from '@keres/shared'
 
 export class NoteController {
@@ -45,7 +46,7 @@ export class NoteController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof NoteResponseSchema>>> {
     const paginatedNotes = await this.getNotesByStoryIdUseCase.execute(userId, storyId, query)
-    const items = paginatedNotes.items.map((note) => NoteResponseSchema.parse(note))
+    const items = paginatedNotes.items.map((note: NoteResponse) => NoteResponseSchema.parse(note))
 
     return {
       items,

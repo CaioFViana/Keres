@@ -1,13 +1,15 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { getKeresDbPath } from '@keres/shared'
+import { NodeFileSystemService } from '@infrastructure/services'
 import Database from 'better-sqlite3'
 import { BetterSQLite3Database, drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
 import { drizzle as drizzlePg, PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
 import * as schema from './schema' // Import all exports from schema.ts
+
+const fileSystem = new NodeFileSystemService()
 
 function initializeSqliteDb(connectionString: string): BetterSQLite3Database<typeof schema> {
   const dbFilePath = connectionString.startsWith('file:')
@@ -42,7 +44,7 @@ if (process.env.DATABASE_URL) {
 } else {
   if (appMode === 'offline') {
     // Default for offline mode: local SQLite file
-    connectionString = `file:${getKeresDbPath()}`
+    connectionString = `file:${fileSystem.getKeresDbPath()}`
   } else {
     // Default for online mode: local PostgreSQL
     connectionString = 'postgres://user:password@localhost:5432/keres_db'

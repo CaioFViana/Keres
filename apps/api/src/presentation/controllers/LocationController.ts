@@ -11,6 +11,7 @@ import type { z } from 'zod'
 import {
   type ListQueryParams,
   type LocationCreateSchema,
+  LocationResponse,
   LocationResponseSchema,
   type LocationUpdateSchema,
   type PaginatedResponse,
@@ -45,7 +46,7 @@ export class LocationController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof LocationResponseSchema>>> {
     const paginatedLocations = await this.getLocationsByStoryIdUseCase.execute(userId, storyId, query)
-    const items = paginatedLocations.items.map((location) => LocationResponseSchema.parse(location))
+    const items = paginatedLocations.items.map((location: LocationResponse) => LocationResponseSchema.parse(location))
 
     return {
       items,

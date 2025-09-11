@@ -14,6 +14,7 @@ import {
   type UpdateWorldRuleSchema,
   WorldRuleResponseSchema,
   type PaginatedResponse,
+  WorldRuleResponse,
 } from '@keres/shared'
 
 export class WorldRuleController {
@@ -45,7 +46,7 @@ export class WorldRuleController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof WorldRuleResponseSchema>>> {
     const paginatedWorldRules = await this.getWorldRulesByStoryIdUseCase.execute(userId, storyId, query)
-    const items = paginatedWorldRules.items.map((worldRule) => WorldRuleResponseSchema.parse(worldRule))
+    const items = paginatedWorldRules.items.map((worldRule: WorldRuleResponse) => WorldRuleResponseSchema.parse(worldRule))
 
     return {
       items,

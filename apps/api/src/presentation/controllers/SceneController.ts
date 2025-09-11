@@ -15,6 +15,7 @@ import {
   SceneResponseSchema,
   type SceneUpdateSchema,
   type PaginatedResponse,
+  SceneResponse,
 } from '@keres/shared'
 
 export class SceneController {
@@ -47,7 +48,7 @@ export class SceneController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof SceneResponseSchema>>> {
     const paginatedScenes = await this.getScenesByChapterIdUseCase.execute(userId, chapterId, query)
-    const items = paginatedScenes.items.map((scene) => SceneResponseSchema.parse(scene))
+    const items = paginatedScenes.items.map((scene: SceneResponse) => SceneResponseSchema.parse(scene))
 
     return {
       items,
@@ -61,7 +62,7 @@ export class SceneController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof SceneResponseSchema>>> {
     const paginatedScenes = await this.getScenesByLocationIdUseCase.execute(userId, locationId, query)
-    const items = paginatedScenes.items.map((scene) => SceneResponseSchema.parse(scene))
+    const items = paginatedScenes.items.map((scene: SceneResponse) => SceneResponseSchema.parse(scene))
 
     return {
       items,

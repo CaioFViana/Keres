@@ -13,6 +13,7 @@ import {
   StoryResponseSchema,
   type StoryUpdateSchema,
   type PaginatedResponse,
+  StoryResponse,
 } from '@keres/shared'
 
 export class StoryController {
@@ -43,7 +44,7 @@ export class StoryController {
     include: string[] = [],
   ): Promise<PaginatedResponse<z.infer<typeof StoryResponseSchema>>> {
     const paginatedStories = await this.getStoriesByUserIdUseCase.execute(userId, query, include)
-    const items = paginatedStories.items.map((story) => StoryResponseSchema.parse(story))
+    const items = paginatedStories.items.map((story: StoryResponse) => StoryResponseSchema.parse(story))
 
     return {
       items,

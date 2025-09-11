@@ -15,12 +15,13 @@ import path from 'node:path'
 
 import {
   type GalleryCreateSchema,
+  GalleryResponse,
   GalleryResponseSchema,
   type GalleryUpdateSchema,
-  getKeresGalleryPath,
   type ListQueryParams,
   type PaginatedResponse,
 } from '@keres/shared'
+import { NodeFileSystemService } from '@infrastructure/services'
 
 export class GalleryController {
   constructor(
@@ -40,7 +41,7 @@ export class GalleryController {
     data: z.infer<typeof GalleryCreateSchema>,
     fileBuffer: Buffer,
   ) {
-    const gallery = await this.createGalleryUseCase.execute(userId, data, fileBuffer)
+    const gallery = await this.createGalleryUseCase.execute(userId, data, fileBuffer.toBase64())
     return GalleryResponseSchema.parse(gallery)
   }
 
@@ -58,7 +59,7 @@ export class GalleryController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof GalleryResponseSchema>>> {
     const paginatedGalleryItems = await this.getGalleryByOwnerIdUseCase.execute(userId, ownerId, query)
-    const items = paginatedGalleryItems.items.map((item) => GalleryResponseSchema.parse(item))
+    const items = paginatedGalleryItems.items.map((item: GalleryResponse) => GalleryResponseSchema.parse(item))
 
     return {
       items,
@@ -72,7 +73,7 @@ export class GalleryController {
     query: ListQueryParams,
   ): Promise<PaginatedResponse<z.infer<typeof GalleryResponseSchema>>> {
     const paginatedGalleryItems = await this.getGalleryByStoryIdUseCase.execute(userId, storyId, query)
-    const items = paginatedGalleryItems.items.map((item) => GalleryResponseSchema.parse(item))
+    const items = paginatedGalleryItems.items.map((item: GalleryResponse) => GalleryResponseSchema.parse(item))
 
     return {
       items,
@@ -90,7 +91,7 @@ export class GalleryController {
     const updatedGallery = await this.updateGalleryUseCase.execute(
       userId,
       { id, ...updateData },
-      fileBuffer,
+      fileBuffer?.toBase64(),
     )
     if (!updatedGallery) {
       throw new Error('Gallery item not found or does not belong to the specified story/owner')
@@ -127,7 +128,8 @@ export class GalleryController {
       throw new Error('Story not found or not owned by user')
     }
 
-    const galleryPath = getKeresGalleryPath()
+    const fileSystem = new NodeFileSystemService()
+    const galleryPath = fileSystem.getKeresGalleryPath()
     const imageFilePath = path.join(galleryPath, galleryItem.imagePath)
 
     try {

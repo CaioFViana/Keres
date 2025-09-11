@@ -15,6 +15,7 @@ import {
   NoteRepository,
   StoryRepository,
 } from '@infrastructure/persistence'
+import { NodeFileSystemService } from '@infrastructure/services'
 import {
   BulkDeleteResponseSchema,
   ErrorResponseSchema,
@@ -40,6 +41,7 @@ const storyRepository = new StoryRepository()
 const characterRepository = new CharacterRepository()
 const noteRepository = new NoteRepository()
 const locationRepository = new LocationRepository()
+const nodefsSystemService = new NodeFileSystemService()
 
 const createGalleryUseCase = new CreateGalleryUseCase(
   galleryRepository,
@@ -47,6 +49,7 @@ const createGalleryUseCase = new CreateGalleryUseCase(
   characterRepository,
   noteRepository,
   locationRepository,
+  nodefsSystemService
 )
 const getGalleryUseCase = new GetGalleryUseCase(galleryRepository, storyRepository)
 const updateGalleryUseCase = new UpdateGalleryUseCase(
@@ -55,6 +58,7 @@ const updateGalleryUseCase = new UpdateGalleryUseCase(
   characterRepository,
   noteRepository,
   locationRepository,
+  nodefsSystemService
 )
 const deleteGalleryUseCase = new DeleteGalleryUseCase(
   galleryRepository,

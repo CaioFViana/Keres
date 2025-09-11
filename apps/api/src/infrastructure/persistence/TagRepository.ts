@@ -12,7 +12,7 @@ import {
   sceneTags,
   tags,
 } from '@infrastructure/db'
-import { and, asc, desc, eq, inArray, ilike, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike, sql } from 'drizzle-orm'
 import { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
 export class TagRepository implements ITagRepository {
@@ -204,6 +204,27 @@ export class TagRepository implements ITagRepository {
     }
   }
 
+  async save(tagData: Tag): Promise<void> {
+    try {
+      await db.insert(tags).values(tagData);
+    } catch (error) {
+      console.error('Error in TagRepository.save:', error);
+      throw error;
+    }
+  }
+
+  async update(tagData: Tag, storyId: string): Promise<void> {
+    try {
+      await db
+        .update(tags)
+        .set(tagData)
+        .where(and(eq(tags.id, tagData.id), eq(tags.storyId, storyId)));
+    } catch (error) {
+      console.error('Error in TagRepository.update:', error);
+      throw error;
+    }
+  }
+
   async deleteCharacterTagsByCharacterId(characterId: string): Promise<void> {
     try {
       await db.delete(characterTags).where(eq(characterTags.characterId, characterId));
@@ -247,6 +268,19 @@ export class TagRepository implements ITagRepository {
       console.error('Error in TagRepository.delete:', error)
       throw error
     }
+  }
+
+  private toPersistence(tagData: Tag): typeof tags.$inferInsert {
+    return {
+      id: tagData.id,
+      storyId: tagData.storyId,
+      name: tagData.name,
+      color: tagData.color,
+      isFavorite: tagData.isFavorite,
+      extraNotes: tagData.extraNotes,
+      createdAt: tagData.createdAt,
+      updatedAt: tagData.updatedAt,
+    };
   }
 
   private toDomain(data: typeof tags.$inferSelect): Tag {

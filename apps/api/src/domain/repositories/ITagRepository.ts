@@ -16,5 +16,7 @@ export interface ITagRepository {
   deleteLocationTagsByLocationId(locationId: string): Promise<void>
   deleteChapterTagsByChapterId(chapterId: string): Promise<void>
   deleteSceneTagsBySceneId(sceneId: string): Promise<void>
+  save(tag: Tag): Promise<void>
+  update(tag: Tag, storyId: string): Promise<void>
   delete(id: string, storyId: string): Promise<void>
 }

@@ -1,16 +1,10 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import React, { useState } from 'react';
+import { StatusBar, StyleSheet, useColorScheme, View, Text } from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import WelcomeScreen from './src/screens/WelcomeScreen';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -25,13 +19,24 @@ function App() {
 
 function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
+  const [selectedMode, setSelectedMode] = useState<'online' | 'offline' | null>(null);
+
+  const handleSelectMode = (mode: 'online' | 'offline') => {
+    setSelectedMode(mode);
+    console.log(`Selected mode: ${mode}`);
+    // Here you would navigate to the appropriate screen based on the mode
+  };
 
   return (
     <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
+      {selectedMode === null ? (
+        <WelcomeScreen onSelectMode={handleSelectMode} />
+      ) : (
+        <View style={styles.modeSelectedContainer}>
+          <Text style={styles.modeSelectedText}>Mode Selected: {selectedMode}</Text>
+          <Text style={styles.modeSelectedText}>This will navigate to the next screen.</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -39,6 +44,16 @@ function AppContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  modeSelectedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modeSelectedText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 });
 

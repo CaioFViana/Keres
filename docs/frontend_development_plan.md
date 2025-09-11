@@ -137,12 +137,12 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 
 ### 5.9. Gerenciamento de Galeria
 
-*   **`POST /gallery`**: Criar novo item de galeria (suporta `multipart/form-data`).
+*   **`POST /gallery`**: Criar novo item de galeria.
 *   **`GET /gallery/:id`**: Obter item de galeria por ID.
 *   **`GET /gallery/images/:id`**: Servir arquivo de imagem da galeria por ID.
 *   **`GET /gallery/owner/:ownerId`**: Obter itens de galeria por ID do proprietário.
 *   **`GET /gallery/story/:storyId`**: Obter itens de galeria por ID da história.
-*   **`PUT /gallery/:id`**: Atualizar item de galeria por ID (suporta `multipart/form-data`).
+*   **`PUT /gallery/:id`**: Atualizar item de galeria por ID.
 *   **`PATCH /gallery/:id`**: Atualização parcial de item de galeria.
 *   **`DELETE /gallery/:id`**: Excluir item de galeria.
 *   **`POST /gallery/bulk-delete`**: Exclusão em massa de itens de galeria.

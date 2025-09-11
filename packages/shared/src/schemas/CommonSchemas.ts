@@ -94,11 +94,11 @@ export type PaginatedResponse<T> = {
 }
 
 export const IdParamSchema = z.object({
-  id: z.ulid(),
+  id: z.string().ulid(),
 })
 
 export const StoryIdParamSchema = z.object({
-  storyId: z.ulid(),
+  storyId: z.string().ulid(),
 })
 
 export const IncludeQuerySchema = z.object({
@@ -109,5 +109,5 @@ export const IncludeQuerySchema = z.object({
 })
 
 export const BulkDeleteSchema = z.object({
-  ids: z.array(z.ulid()),
+  ids: z.array(z.string().ulid()),
 })

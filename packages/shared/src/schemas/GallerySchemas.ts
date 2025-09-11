@@ -47,10 +47,10 @@ export type GalleryUpdatePayload = z.infer<typeof GalleryUpdateSchema>
 export type GalleryResponse = z.infer<typeof GalleryResponseSchema>
 
 export const OwnerIdParamSchema = z.object({
-  ownerId: z.ulid(),
+  ownerId: z.string().ulid(),
 })
 
 export const GalleryDeleteQuerySchema = z.object({
-  storyId: z.ulid(),
-  ownerId: z.ulid(),
+  storyId: z.string().ulid(),
+  ownerId: z.string().ulid(),
 })

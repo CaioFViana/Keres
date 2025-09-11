@@ -1,26 +1,26 @@
 import { z } from 'zod'
 
 export const CreateNoteSchema = z.object({
-  storyId: z.ulid(),
+  storyId: z.string().ulid(),
   title: z.string().min(1, 'Title cannot be empty'),
   body: z.string().nullable().optional(),
-  galleryId: z.ulid().nullable().optional(),
+  galleryId: z.string().ulid().nullable().optional(),
   isFavorite: z.boolean().optional(),
 })
 
 export const UpdateNoteSchema = z.object({
   title: z.string().min(1, 'Title cannot be empty').optional(),
   body: z.string().nullable().optional(),
-  galleryId: z.ulid().nullable().optional(),
+  galleryId: z.string().ulid().nullable().optional(),
   isFavorite: z.boolean().optional(),
 })
 
 export const NoteResponseSchema = z.object({
-  id: z.ulid(),
-  storyId: z.ulid(),
+  id: z.string().ulid(),
+  storyId: z.string().ulid(),
   title: z.string(),
   body: z.string().nullable(),
-  galleryId: z.ulid().nullable(),
+  galleryId: z.string().ulid().nullable(),
   isFavorite: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),

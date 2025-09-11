@@ -1,0 +1,52 @@
+{
+  "name": "keres-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "electron-builder",
+    "build:api": "bun --cwd ../api build",
+    "build:client": "bun --cwd ../client build:web",
+    "clean": "rm -rf dist out"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    
+  },
+  "build": {
+    "appId": "com.keres.desktopbuild",
+    "productName": "Keres",
+    "electronVersion": "29.0.0",
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json",
+      {
+        "from": "../api/dist",
+        "to": "api/dist",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../client/web-build",
+        "to": "client/web-build",
+        "filter": ["**/*"]
+      }
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "extraResources": [
+      {
+        "from": "./data",
+        "to": "data",
+        "filter": ["**/*"]
+      }
+    ]
+  }
+}

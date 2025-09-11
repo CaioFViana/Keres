@@ -1,14 +1,10 @@
-import type { Config } from 'drizzle-kit'
+import type { Config } from 'drizzle-kit';
 
-const databaseType = process.env.DATABASE_TYPE || 'postgres'
-
-const config: Config = {
+export default {
   schema: './src/infrastructure/db/schema.ts',
-  out: './src/infrastructure/db/migrations',
-  driver: databaseType === 'sqlite' ? 'better-sqlite3' : 'pg',
+  out: './drizzle',
+  driver: 'pg',
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL ?? '',
+    connectionString: process.env.DATABASE_URL!,
   },
-}
-
-export default config
+} satisfies Config;

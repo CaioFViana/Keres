@@ -1,6 +1,6 @@
 import type { IJwtService } from '@domain/services/IJwtService'
 
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
 
 export class JwtService implements IJwtService {
   private readonly secret: string
@@ -15,7 +15,8 @@ export class JwtService implements IJwtService {
   }
 
   async generateToken(payload: object, expiresIn: string): Promise<string> {
-    return jwt.sign(payload, this.secret, { expiresIn })
+    const options: SignOptions = { expiresIn: expiresIn as any };
+    return jwt.sign(payload, this.secret, options)
   }
 
   async verifyToken(token: string): Promise<object | null> {
@@ -27,7 +28,8 @@ export class JwtService implements IJwtService {
   }
 
   async generateRefreshToken(payload: object, expiresIn: string): Promise<string> {
-    return jwt.sign(payload, this.secret, { expiresIn })
+    const options: SignOptions = { expiresIn: expiresIn as any };
+    return jwt.sign(payload, this.secret, options)
   }
 
   async verifyRefreshToken(token: string): Promise<object | null> {

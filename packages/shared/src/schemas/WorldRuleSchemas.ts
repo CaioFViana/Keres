@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const CreateWorldRuleSchema = z.object({
-  storyId: z.ulid(),
+  storyId: z.string().ulid(),
   title: z.string().min(1, 'Title cannot be empty'),
   description: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
@@ -16,8 +16,8 @@ export const UpdateWorldRuleSchema = z.object({
 })
 
 export const WorldRuleResponseSchema = z.object({
-  id: z.ulid(),
-  storyId: z.ulid(),
+  id: z.string().ulid(),
+  storyId: z.string().ulid(),
   title: z.string(),
   description: z.string().nullable(),
   isFavorite: z.boolean(),

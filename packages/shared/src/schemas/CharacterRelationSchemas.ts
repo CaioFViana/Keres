@@ -38,5 +38,5 @@ export type CreateManyCharacterRelationsPayload = z.infer<typeof CreateManyChara
 export type UpdateManyCharacterRelationsPayload = z.infer<typeof UpdateManyCharacterRelationsSchema>
 
 export const CharIdParamSchema = z.object({
-  charId: z.ulid(),
+  charId: z.string().ulid(),
 })

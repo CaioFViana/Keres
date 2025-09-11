@@ -1,51 +1,31 @@
 {
-  "name": "keres-story-organizer",
+  "name": "keres-monorepo",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "echo \"Run specific app/package dev script, e.g., bun --filter=./apps/api dev\"",
-    "dev:back": "bun --filter=./apps/api dev",
-    "build": "echo \"Run specific app/package build script\"",
-    "build:shared": "cd packages/shared && tsc",
-    "test": "vitest run",
-    "coverage": "vitest run --coverage",
-    "start:back": "bun run apps/api/src/index.ts",
-    "start:front": "",
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "start:api": "bun --cwd apps/api dev",
+    "start:client": "bun --cwd apps/client start",
+    "start:desktop": "bun --cwd apps/desktop dev",
     "craft": "barrel-craft",
     "type-check": "tsc --noEmit",
-    "lint": "biome check --write .",
-    "lint:fix": "biome check --write . --unsafe",
     "db:generate": "cd apps/api && drizzle-kit generate:pg",
-    "db:migrate": "cd apps/api/src/infrastructure/db && bun run migrate.ts",
-    "db:seed": "cd apps/api && bun run src/infrastructure/db/seed.ts"
+    "db:migrate": "bun run --cwd apps/api/src/infrastructure/db migrate.ts",
+    "db:seed": "bun run --cwd apps/api/src/infrastructure/db src/infrastructure/db/seed.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.2",
-    "@types/pg": "^8.15.5",
-    "@vitest/coverage-v8": "^1.2.2",
-    "barrel-craft": "^0.1.0",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^1.2.2"
+    "turbo": "^2.5.6"
   },
+  "packageManager": "bun@1.2.19",
   "dependencies": {
-    "@hono/swagger-ui": "^0.5.2",
-    "@hono/zod-openapi": "^1.1.0",
-    "@hono/zod-validator": "^0.7.2",
-    "@react-navigation/native": "^7.1.17",
-    "@react-navigation/stack": "^7.4.8",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/jsonwebtoken": "^9.0.10",
-    "bcrypt": "^6.0.0",
-    "hono-openapi": "^0.4.8",
-    "portfinder": "^1.0.37",
-    "postgres": "^3.4.7",
-    "react-native-paper": "^5.14.5",
-    "react-native-safe-area-context": "^5.6.1",
-    "react-native-screens": "^4.15.4",
-    "react-native-vector-icons": "^10.3.0",
-    "ulid": "^3.0.1",
-    "zod": "^4.1.5",
-    "zod-openapi": "^5.4.0"
+    "@expo/metro-runtime": "~3.1.3"
   }
 }

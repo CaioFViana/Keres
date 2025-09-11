@@ -20,10 +20,7 @@ export class SuggestionRepository implements ISuggestionRepository {
     try {
       let baseQuery = db.select().from(suggestions).where(eq(suggestions.userId, userId));
 
-      // Apply isFavorite filter directly
-      if (query?.isFavorite !== undefined) {
-        baseQuery = baseQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.isFavorite, query.isFavorite)));
-      }
+      // isFavorite is ignored on suggestion
 
       // Apply generic filters
       if (query?.filter) {
@@ -55,10 +52,7 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(eq(suggestions.userId, userId)); // Start with the base where clause
 
-      // Apply isFavorite filter directly to count query
-      if (query?.isFavorite !== undefined) {
-        countQuery = countQuery.where(and(eq(suggestions.userId, userId), eq(suggestions.isFavorite, query.isFavorite)));
-      }
+      // isFavorite is ignored on suggestion
 
       if (query?.filter) {
         for (const key in query.filter) {
@@ -132,10 +126,7 @@ export class SuggestionRepository implements ISuggestionRepository {
     try {
       let baseQuery = db.select().from(suggestions).where(eq(suggestions.storyId, storyId));
 
-      // Apply isFavorite filter directly
-      if (query?.isFavorite !== undefined) {
-        baseQuery = baseQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.isFavorite, query.isFavorite)));
-      }
+      // isFavorite is ignored on suggestion
 
       // Apply generic filters
       if (query?.filter) {
@@ -167,10 +158,7 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(eq(suggestions.storyId, storyId)); // Start with the base where clause
 
-      // Apply isFavorite filter directly to count query
-      if (query?.isFavorite !== undefined) {
-        countQuery = countQuery.where(and(eq(suggestions.storyId, storyId), eq(suggestions.isFavorite, query.isFavorite)));
-      }
+      // isFavorite is ignored on suggestion
 
       if (query?.filter) {
         for (const key in query.filter) {
@@ -247,10 +235,7 @@ export class SuggestionRepository implements ISuggestionRepository {
 
       const conditions = [eq(suggestions.type, type)];
 
-      // Apply isFavorite filter directly
-      if (query?.isFavorite !== undefined) {
-        conditions.push(eq(suggestions.isFavorite, query.isFavorite));
-      }
+      // isFavorite is ignored on suggestion
 
       // Add user-specific filtering for global suggestions
       // If storyId is null, it means we are looking for global suggestions
@@ -337,12 +322,7 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.userId, userId), eq(suggestions.type, type)));
 
-      // Apply isFavorite filter directly
-      if (query?.isFavorite !== undefined) {
-        baseQuery = baseQuery.where(
-          and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.isFavorite, query.isFavorite)),
-        );
-      }
+      // isFavorite is ignored on suggestion
 
       // Apply generic filtering (Revised)
       if (query?.filter) {
@@ -377,12 +357,7 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.userId, userId), eq(suggestions.type, type))); // Start with the base where clause
 
-      // Apply isFavorite filter directly to count query
-      if (query?.isFavorite !== undefined) {
-        countQuery = countQuery.where(
-          and(eq(suggestions.userId, userId), eq(suggestions.type, type), eq(suggestions.isFavorite, query.isFavorite)),
-        );
-      }
+      // isFavorite is ignored on suggestion
 
       if (query?.filter) {
         for (const key in query.filter) {
@@ -465,16 +440,7 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.storyId, storyId), eq(suggestions.type, type)));
 
-      // Apply isFavorite filter directly
-      if (query?.isFavorite !== undefined) {
-        baseQuery = baseQuery.where(
-          and(
-            eq(suggestions.storyId, storyId),
-            eq(suggestions.type, type),
-            eq(suggestions.isFavorite, query.isFavorite),
-          ),
-        );
-      }
+      // isFavorite is ignored on suggestion
 
       // Apply generic filtering (Revised)
       if (query?.filter) {
@@ -521,16 +487,7 @@ export class SuggestionRepository implements ISuggestionRepository {
         .from(suggestions)
         .where(and(eq(suggestions.storyId, storyId), eq(suggestions.type, type))); // Start with the base where clause
 
-      // Apply isFavorite filter directly to count query
-      if (query?.isFavorite !== undefined) {
-        countQuery = countQuery.where(
-          and(
-            eq(suggestions.storyId, storyId),
-            eq(suggestions.type, type),
-            eq(suggestions.isFavorite, query.isFavorite),
-          ),
-        );
-      }
+      // isFavorite is ignored on suggestion
 
       if (query?.filter) {
         for (const key in query.filter) {

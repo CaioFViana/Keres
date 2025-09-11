@@ -4,14 +4,15 @@
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": true,
+    
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "noEmit": true,
+    "noEmit": false,
     "baseUrl": ".",
     "rootDir": "./src",
+    "outDir": "./dist",
     // Path aliases for Clean Architecture layers
     "paths": {
       "@domain/*": ["./src/domain/*"],

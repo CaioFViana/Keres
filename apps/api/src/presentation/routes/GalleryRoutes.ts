@@ -67,11 +67,7 @@ const bulkDeleteGalleryUseCase = new BulkDeleteGalleryUseCase(
   noteRepository,
 )
 const getGalleryByOwnerIdUseCase = new GetGalleryByOwnerIdUseCase(
-  galleryRepository,
-  characterRepository,
-  noteRepository,
-  locationRepository,
-  storyRepository,
+  galleryRepository
 )
 const getGalleryByStoryIdUseCase = new GetGalleryByStoryIdUseCase(
   galleryRepository,

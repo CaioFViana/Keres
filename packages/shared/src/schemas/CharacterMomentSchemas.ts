@@ -48,16 +48,16 @@ export type BulkDeleteCharacterMomentResponse = z.infer<
 >
 
 export const CharacterIdParamSchema = z.object({
-  characterId: z.ulid(),
+  characterId: z.string().ulid(),
 })
 
 export const MomentIdParamSchema = z.object({
-  momentId: z.ulid(),
+  momentId: z.string().ulid(),
 })
 
 export const CharacterMomentIdDeletionParamSchema = z.object({
-  momentId: z.ulid(),
-  characterId: z.ulid(),
+  momentId: z.string().ulid(),
+  characterId: z.string().ulid(),
 })
 
 export const BulkCharacterMomentDeleteSchema = z.object({

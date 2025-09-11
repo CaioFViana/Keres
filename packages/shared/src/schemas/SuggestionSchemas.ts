@@ -2,9 +2,9 @@ import { z } from 'zod'
 
 export const CreateSuggestionSchema = z
   .object({
-    userId: z.ulid(),
+    userId: z.string().ulid(),
     scope: z.union([z.literal('global'), z.literal('story')]),
-    storyId: z.ulid().nullable().optional(),
+    storyId: z.string().ulid().nullable().optional(),
     type: z.string().min(1, 'Type cannot be empty'),
     value: z.string().min(1, 'Value cannot be empty'),
   })
@@ -20,16 +20,16 @@ export const CreateSuggestionSchema = z
 
 export const UpdateSuggestionSchema = z.object({
   scope: z.union([z.literal('global'), z.literal('story')]).optional(),
-  storyId: z.ulid().nullable().optional(),
+  storyId: z.string().ulid().nullable().optional(),
   type: z.string().min(1, 'Type cannot be empty').optional(),
   value: z.string().min(1, 'Value cannot be empty').optional(),
 })
 
 export const SuggestionResponseSchema = z.object({
-  id: z.ulid(),
-  userId: z.ulid(),
+  id: z.string().ulid(),
+  userId: z.string().ulid(),
   scope: z.union([z.literal('global'), z.literal('story')]),
-  storyId: z.ulid().nullable(),
+  storyId: z.string().ulid().nullable(),
   type: z.string(),
   value: z.string(),
   isDefault: z.boolean(),
@@ -52,7 +52,7 @@ export type CreateManySuggestionsPayload = z.infer<typeof CreateManySuggestionsS
 export type UpdateManySuggestionsPayload = z.infer<typeof UpdateManySuggestionsSchema>
 
 export const UserIdParamSchema = z.object({
-  userId: z.ulid(),
+  userId: z.string().ulid(),
 })
 
 export const TypeParamSchema = z.object({
@@ -60,11 +60,11 @@ export const TypeParamSchema = z.object({
 })
 
 export const UserTypeParamSchema = z.object({
-  userId: z.ulid(),
+  userId: z.string().ulid(),
   type: z.string(),
 })
 
 export const StoryTypeParamSchema = z.object({
-  storyId: z.ulid(),
+  storyId: z.string().ulid(),
   type: z.string(),
 })

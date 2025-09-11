@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const CreateTagSchema = z.object({
-  storyId: z.ulid(),
+  storyId: z.string().ulid(),
   name: z.string().min(1, 'Name cannot be empty'),
   color: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
@@ -9,7 +9,7 @@ export const CreateTagSchema = z.object({
 })
 
 export const UpdateTagSchema = z.object({
-  id: z.ulid(),
+  id: z.string().ulid(),
   name: z.string().min(1, 'Name cannot be empty').optional(),
   color: z.string().nullable().optional(),
   isFavorite: z.boolean().optional(),
@@ -17,8 +17,8 @@ export const UpdateTagSchema = z.object({
 })
 
 export const TagResponseSchema = z.object({
-  id: z.ulid(),
-  storyId: z.ulid(),
+  id: z.string().ulid(),
+  storyId: z.string().ulid(),
   name: z.string(),
   color: z.string().nullable(),
   isFavorite: z.boolean(),
@@ -30,15 +30,15 @@ export const TagResponseSchema = z.object({
 export const TagTargetTypeSchema = z.enum(['Character', 'Location', 'Chapter', 'Scene'])
 
 export const TagAssignmentSchema = z.object({
-  tagId: z.ulid(),
+  tagId: z.string().ulid(),
   targetType: TagTargetTypeSchema,
-  targetId: z.ulid(),
+  targetId: z.string().ulid(),
 })
 
 export const TagRemovalSchema = z.object({
-  tagId: z.ulid(),
+  tagId: z.string().ulid(),
   targetType: TagTargetTypeSchema,
-  targetId: z.ulid(),
+  targetId: z.string().ulid(),
 })
 
 export type CreateTagPayload = z.infer<typeof CreateTagSchema>

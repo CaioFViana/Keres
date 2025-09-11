@@ -1,14 +1,14 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
-/dist
-/tmp
+dist
+tmp
+release
 /out-tsc
 /bazel-out
-packages/shared/dist
 
 # Node
-/node_modules
+node_modules
 /apps/api/node_modules/
 
 npm-debug.log
@@ -39,6 +39,7 @@ yarn-error.log
 /libpeerconnection.log
 testem.log
 /typings
+.turbo
 
 # System files
 .DS_Store

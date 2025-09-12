@@ -1,28 +1,31 @@
 import { swaggerUI } from '@hono/swagger-ui'
 import { extendZodWithOpenApi, OpenAPIHono } from '@hono/zod-openapi'
-import { authMiddleware } from '@presentation/middlewares/AuthMiddleware' // Added
+import { authMiddleware } from '@presentation/middlewares/AuthMiddleware'; // Added
+import { cors } from 'hono/cors'
 import { z } from 'zod'
 
 import chapterRoutes from './presentation/routes/ChapterRoutes'
 import characterMomentRoutes from './presentation/routes/CharacterMomentRoutes'
 import characterRelationRoutes from './presentation/routes/CharacterRelationRoutes'
 import characterRoutes from './presentation/routes/CharacterRoutes'
-import choiceRoutes from './presentation/routes/ChoiceRoutes' // Added
+import choiceRoutes from './presentation/routes/ChoiceRoutes'; // Added
 import galleryRoutes from './presentation/routes/GalleryRoutes'
 import locationRoutes from './presentation/routes/LocationRoutes'
 import momentRoutes from './presentation/routes/MomentRoutes'
-import noteRoutes from './presentation/routes/NoteRoutes' // Added
+import noteRoutes from './presentation/routes/NoteRoutes'; // Added
 import sceneRoutes from './presentation/routes/SceneRoutes'
-import searchRoutes from './presentation/routes/SearchRoutes' // Added
+import searchRoutes from './presentation/routes/SearchRoutes'; // Added
 import storyRoutes from './presentation/routes/StoryRoutes'
-import suggestionRoutes from './presentation/routes/SuggestionRoutes' // Added
-import tagRoutes from './presentation/routes/TagRoutes' // Added
+import suggestionRoutes from './presentation/routes/SuggestionRoutes'; // Added
+import tagRoutes from './presentation/routes/TagRoutes'; // Added
 import userRoutes from './presentation/routes/UserRoutes'
-import worldRuleRoutes from './presentation/routes/WorldRuleRoutes' // Added
+import worldRuleRoutes from './presentation/routes/WorldRuleRoutes'; // Added
 
 extendZodWithOpenApi(z)
 
 const app = new OpenAPIHono() // Change Hono to OpenAPIHono
+
+app.use(cors()) // Apply CORS middleware globally
 
 app.onError((err, c) => {
   console.error(`${err}`)

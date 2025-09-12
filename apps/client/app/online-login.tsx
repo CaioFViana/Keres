@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, Alert } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, StyleSheet, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+
+import { ApiClient } from '@/src/infrastructure/api/ApiClient';
+import { ApiAuthRepository } from '@/src/infrastructure/repositories/ApiAuthRepository';
+
+// Instantiate API client and repository outside the component to avoid re-creation on re-renders
+const apiClient = new ApiClient();
+const authRepository = new ApiAuthRepository(apiClient);
 
 export default function OnlineLoginScreen() {
   const [baseUrl, setBaseUrl] = useState('');
@@ -11,21 +18,26 @@ export default function OnlineLoginScreen() {
   const [password, setPassword] = useState('');
   const { signIn } = useAuth();
 
-  const handleLogin = async () => {
-    // TODO: Implement actual API call to /users/login
-    // For now, simulate a successful login
-    if (username === 'test' && password === 'password') {
-      // Simulate API response with a token and refresh token
-      const mockUserId = 'mock-online-user-id';
-      const mockToken = 'mock-online-jwt-token';
-      const mockRefreshToken = 'mock-online-refresh-token';
+  useEffect(() => {
+    // Load last used base URL on component mount
+    const loadLastBaseUrl = async () => {
+      const lastUrl = await ApiAuthRepository.getLastBaseUrl();
+      if (lastUrl) {
+        setBaseUrl(lastUrl);
+      }
+    };
+    loadLastBaseUrl();
+  }, []);
 
-      signIn(mockUserId, mockToken, mockRefreshToken);
+  const handleLogin = async () => {
+    try {
+      const authTokens = await authRepository.login(username, password, baseUrl);
+      signIn(authTokens.userId, authTokens.token, authTokens.refreshToken);
       Alert.alert('Login Successful', 'You are now logged in online!');
-    } else {
-      Alert.alert('Login Failed', 'Invalid username or password.');
+    } catch (error: any) {
+      Alert.alert('Login Failed', error.message || 'An unknown error occurred.');
+      console.error('Online login error:', error);
     }
-    console.log('Attempting online login...', { baseUrl, username, password });
   };
 
   return (
@@ -57,7 +69,7 @@ export default function OnlineLoginScreen() {
 
       <Button title="Login" onPress={handleLogin} />
 
-      {/* TODO: Implement URL history/suggestions using AsyncStorage */}
+      {/* TODO: Implement URL history/suggestions UI */}
     </ThemedView>
   );
 }

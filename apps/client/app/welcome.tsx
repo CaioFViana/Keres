@@ -4,12 +4,18 @@ import { StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-export default function ModalScreen() {
+export default function WelcomeScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">This is a modal</ThemedText>
-      <Link href="/" dismissTo style={styles.link}>
-        <ThemedText type="link">Go to home screen</ThemedText>
+      <ThemedText type="title">Welcome to Keres!</ThemedText>
+      <ThemedText type="subtitle">Choose your adventure mode:</ThemedText>
+
+      <Link href="/online-login" style={styles.link}>
+        <ThemedText type="link">Online Mode</ThemedText>
+      </Link>
+
+      <Link href="/offline-login" style={styles.link}>
+        <ThemedText type="link">Offline Mode</ThemedText>
       </Link>
     </ThemedView>
   );

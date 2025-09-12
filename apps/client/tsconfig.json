@@ -5,7 +5,10 @@
     "paths": {
       "@/*": [
         "./*"
-      ]
+      ],
+      "@keres/shared": ["../../packages/shared/dist"],
+      "@domain/*": ["../../packages/shared/dist/domain/*"],
+      "@application/*": ["../../packages/shared/dist/application/*"]
     }
   },
   "include": [

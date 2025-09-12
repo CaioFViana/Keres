@@ -18,7 +18,7 @@
     "type-check": "tsc --noEmit",
     "db:generate": "cd apps/api && drizzle-kit generate:pg",
     "db:migrate": "bun run --cwd apps/api/src/infrastructure/db migrate.ts",
-    "db:seed": "bun run --cwd apps/api/src/infrastructure/db src/infrastructure/db/seed.ts"
+    "db:seed": "bun run --cwd apps/api/src/infrastructure/db seed.ts"
   },
   "devDependencies": {
     "turbo": "^2.5.6"

@@ -1,6 +1,7 @@
-import React from 'react';
-import { StyleSheet, Button, Alert } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -9,22 +10,22 @@ import { ThemedView } from '@/components/themed-view';
 const OFFLINE_USER_ID = '01K48ZX9A7P34EGK8SSQNKERES';
 
 export default function OfflineLoginScreen() {
-  const { signInOffline } = useAuth();
+  const { isAuthenticated, isOfflineMode, signInOffline } = useAuth();
 
-  const handleOfflineLogin = () => {
-    // In offline mode, we don't perform actual authentication.
-    // We simply set the user context with the fixed offline ID.
-    signInOffline(OFFLINE_USER_ID);
-    Alert.alert('Offline Mode', `Entering offline mode with User ID: ${OFFLINE_USER_ID}`);
-    console.log('Entering offline mode with User ID:', OFFLINE_USER_ID);
-  };
+  useEffect(() => {
+    // If already authenticated in offline mode, redirect to dashboard
+    if (isAuthenticated && isOfflineMode) {
+      router.replace('/(authenticated)/dashboard');
+    } else if (!isAuthenticated) {
+      // If not authenticated, automatically sign in as offline user
+      signInOffline(OFFLINE_USER_ID);
+    }
+  }, [isAuthenticated, isOfflineMode, signInOffline]);
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Offline Mode</ThemedText>
-      <ThemedText>You can work offline with local data.</ThemedText>
-
-      <Button title="Enter Offline Mode" onPress={handleOfflineLogin} />
+      <ThemedText type="title">Entering Offline Mode...</ThemedText>
+      <ThemedText>Please wait while we set up your offline session.</ThemedText>
     </ThemedView>
   );
 }

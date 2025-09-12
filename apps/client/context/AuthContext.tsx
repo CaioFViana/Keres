@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { deleteItem, getItem, setItem } from '@/utils/storage'; // Import from our storage utility
 import { router, useSegments } from 'expo-router';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -20,43 +21,97 @@ export function useAuth() {
   return context;
 }
 
+const USER_ID_KEY = 'user_id';
+const AUTH_TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+const LAST_MODE_KEY = 'last_app_mode'; // Key to store last chosen mode
+
+// Keres' fixed user ID for offline mode, as defined in the backend's AuthMiddleware
+const OFFLINE_USER_ID = '01K48ZX9A7P34EGK8SSQNKERES';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // New state for loading authentication status
   const segments = useSegments();
 
-  // This effect runs once on mount and whenever authentication state changes
+  // Effect to load authentication state from secure store on app start
   useEffect(() => {
+    const loadAuthData = async () => {
+      try {
+        const lastMode = await getItem(LAST_MODE_KEY);
+
+        if (lastMode === 'offline') {
+          setUserId(OFFLINE_USER_ID);
+          setIsAuthenticated(true);
+          setIsOfflineMode(true);
+        } else if (lastMode === 'online') {
+          const storedUserId = await getItem(USER_ID_KEY);
+          const storedAuthToken = await getItem(AUTH_TOKEN_KEY);
+          const storedRefreshToken = await getItem(REFRESH_TOKEN_KEY);
+
+          if (storedUserId && storedAuthToken && storedRefreshToken) {
+            setUserId(storedUserId);
+            setIsAuthenticated(true);
+            setIsOfflineMode(false);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load auth data from secure store:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAuthData();
+  }, []);
+
+  // Effect for redirection based on authentication status
+  useEffect(() => {
+    if (isLoading) return; // Wait until authentication state is loaded
+
     const inAuthGroup = segments[0] === '(authenticated)';
 
     if (!isAuthenticated && inAuthGroup) {
-      // Redirect to welcome screen if not authenticated and trying to access protected routes
       router.replace('/welcome');
     } else if (isAuthenticated && !inAuthGroup) {
-      // Redirect to dashboard if authenticated and trying to access public routes (like login/welcome)
       router.replace('/(authenticated)/dashboard');
     }
-  }, [isAuthenticated, segments]);
+  }, [isAuthenticated, segments, isLoading]);
 
-  const signIn = (id: string, token: string, refreshToken: string) => {
-    // TODO: Store token and refresh token securely (e.g., using expo-secure-store)
+  const signIn = async (id: string, token: string, refreshToken: string) => {
+    await setItem(USER_ID_KEY, id);
+    await setItem(AUTH_TOKEN_KEY, token);
+    await setItem(REFRESH_TOKEN_KEY, refreshToken);
+    await setItem(LAST_MODE_KEY, 'online'); // Save last chosen mode
+
     setUserId(id);
     setIsAuthenticated(true);
     setIsOfflineMode(false);
   };
 
-  const signInOffline = (id: string) => {
+  const signInOffline = async (id: string) => {
+    await setItem(USER_ID_KEY, id); // Store offline user ID
+    await setItem(LAST_MODE_KEY, 'offline'); // Save last chosen mode
+    await deleteItem(AUTH_TOKEN_KEY); // Clear online tokens if switching to offline
+    await deleteItem(REFRESH_TOKEN_KEY);
+
     setUserId(id);
     setIsAuthenticated(true);
     setIsOfflineMode(true);
   };
 
-  const signOut = () => {
-    // TODO: Clear stored tokens
+  const signOut = async () => {
+    await deleteItem(USER_ID_KEY);
+    await deleteItem(AUTH_TOKEN_KEY);
+    await deleteItem(REFRESH_TOKEN_KEY);
+    await deleteItem(LAST_MODE_KEY);
+
     setUserId(null);
     setIsAuthenticated(false);
     setIsOfflineMode(false);
+    router.replace('/welcome'); // Redirect to welcome after sign out
   };
 
   return (

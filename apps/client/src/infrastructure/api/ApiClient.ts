@@ -25,6 +25,7 @@ export class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('API Client Error Data:', errorData);
       throw new Error(errorData.error || `API request failed with status ${response.status}`);
     }
 

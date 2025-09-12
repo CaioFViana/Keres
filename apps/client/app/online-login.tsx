@@ -1,6 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, StyleSheet, TextInput } from 'react-native';
+import { Button, StyleSheet, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -16,6 +16,7 @@ export default function OnlineLoginScreen() {
   const [baseUrl, setBaseUrl] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { signIn } = useAuth();
 
   useEffect(() => {
@@ -29,14 +30,41 @@ export default function OnlineLoginScreen() {
     loadLastBaseUrl();
   }, []);
 
+  const validateUrl = (url: string) => {
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
   const handleLogin = async () => {
+    setErrorMessage(null); // Clear previous errors
+
+    if (!validateUrl(baseUrl)) {
+      setErrorMessage('Please enter a valid Base URL (e.g., http://localhost:3000).');
+      return;
+    }
+
+    if (!username || !password) {
+      setErrorMessage('Please enter both username and password.');
+      return;
+    }
+
     try {
       const authTokens = await authRepository.login(username, password, baseUrl);
       signIn(authTokens.userId, authTokens.token, authTokens.refreshToken);
-      Alert.alert('Login Successful', 'You are now logged in online!');
+      // No Alert.alert needed, AuthContext handles redirection
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'An unknown error occurred.');
-      console.error('Online login error:', error);
+      console.error('Online login error object:', error);
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
+        setErrorMessage('Could not connect to the server. Please check the Base URL and your internet connection.');
+      } else if (error.message) {
+        setErrorMessage(`Login Failed: ${error.message}`);
+      } else {
+        setErrorMessage('An unknown error occurred during login.');
+      }
     }
   };
 
@@ -67,6 +95,8 @@ export default function OnlineLoginScreen() {
         secureTextEntry
       />
 
+      {errorMessage && <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>}
+
       <Button title="Login" onPress={handleLogin} />
 
       {/* TODO: Implement URL history/suggestions UI */}
@@ -90,5 +120,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     color: '#000', // Ensure text is visible in both themes
     backgroundColor: '#fff', // Ensure background is visible in both themes
+  },
+  errorText: {
+    color: 'red',
+    marginTop: 10,
+    textAlign: 'center',
   },
 });

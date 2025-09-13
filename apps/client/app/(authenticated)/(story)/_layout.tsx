@@ -1,17 +1,66 @@
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerContentScrollView, DrawerItem, DrawerItemList } from '@react-navigation/drawer';
+import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer'; // Removed DrawerItemList
 import { Drawer } from 'expo-router/drawer';
 import React from 'react';
 import { useWindowDimensions } from 'react-native';
 
-// Custom Drawer Content to include Sign Out button
-function CustomDrawerContent(props: any) {
+// Custom Drawer Content to include Sign Out button and groupings
+function CustomDrawerContent({ staticRoutes, ...props }: any) {
   const { signOut } = useAuth();
+  const { state, navigation, descriptors } = props; // Added navigation and descriptors
+
+  // Helper function to render DrawerItems for a given set of routes
+  const renderDrawerItems = (routesToRender: any[]) => {
+    return routesToRender.map((route: any) => {
+      const staticRoute = staticRoutes.find((sr: any) => sr.name === route.name);
+      return (
+        <DrawerItem
+          key={route.key}
+          label={staticRoute?.label || route.name} // Use staticRoute.label if available
+          onPress={() => navigation.navigate(route.name)}
+          icon={({ color, size }) => (
+            <Ionicons name={staticRoute?.icon as any} size={size} color={color} />
+          )}
+        />
+      );
+    });
+  };
+
+  // Filter routes by group
+  const storyDetailsRoutes = staticRoutes.filter((route: any) => route.group === 'Story Details');
+  const plotRoutes = staticRoutes.filter((route: any) => route.group === 'Plot');
+  const elementsRoutes = staticRoutes.filter((route: any) => route.group === 'Elements');
+  const managementRoutes = staticRoutes.filter((route: any) => route.group === 'Management');
+  const utilitiesRoutes = staticRoutes.filter((route: any) => route.group === 'Utilities');
+  const userSettingsRoutes = staticRoutes.filter((route: any) => route.group === 'User/Settings');
+
   return (
     <DrawerContentScrollView {...props}>
-      <DrawerItemList {...props} />
+      {/* Story Details */}
+      {renderDrawerItems(storyDetailsRoutes)}
+
+      {/* Plot Group */}
+      <ThemedText style={{ fontWeight: 'bold', paddingLeft: 16, marginTop: 10 }}>Plot</ThemedText>
+      {renderDrawerItems(plotRoutes)}
+
+      {/* Elements Group */}
+      <ThemedText style={{ fontWeight: 'bold', paddingLeft: 16, marginTop: 10 }}>Elements</ThemedText>
+      {renderDrawerItems(elementsRoutes)}
+
+      {/* Management Group */}
+      <ThemedText style={{ fontWeight: 'bold', paddingLeft: 16, marginTop: 10 }}>Management</ThemedText>
+      {renderDrawerItems(managementRoutes)}
+
+      {/* Utilities Group */}
+      <ThemedText style={{ fontWeight: 'bold', paddingLeft: 16, marginTop: 10 }}>Utilities</ThemedText>
+      {renderDrawerItems(utilitiesRoutes)}
+
+      {/* User/Settings Group */}
+      <ThemedText style={{ fontWeight: 'bold', paddingLeft: 16, marginTop: 10 }}>User/Settings</ThemedText>
+      {renderDrawerItems(userSettingsRoutes)}
+
       <DrawerItem
         label="Sign Out"
         icon={({ color, size }) => <Ionicons name="log-out" size={size} color={color} />}
@@ -21,6 +70,114 @@ function CustomDrawerContent(props: any) {
   );
 }
 
+const staticDrawerRoutes = [
+  {
+    name: '[id]',
+    label: 'Story Details',
+    title: 'Story Details',
+    icon: 'book',
+    group: 'Story Details',
+  },
+  {
+    name: 'roteiro/chapters',
+    label: 'Chapters',
+    title: 'Chapters',
+    icon: 'layers',
+    group: 'Plot',
+  },
+  {
+    name: 'roteiro/scenes',
+    label: 'Scenes',
+    title: 'Scenes',
+    icon: 'videocam',
+    group: 'Plot',
+  },
+  {
+    name: 'roteiro/moments',
+    label: 'Moments',
+    title: 'Moments',
+    icon: 'time',
+    group: 'Plot',
+  },
+  {
+    name: 'roteiro/choices',
+    label: 'Choices',
+    title: 'Choices',
+    icon: 'git-branch',
+    group: 'Plot',
+  },
+  {
+    name: 'elements/characters',
+    label: 'Characters',
+    title: 'Characters',
+    icon: 'people',
+    group: 'Elements',
+  },
+  {
+    name: 'elements/locations',
+    label: 'Locations',
+    title: 'Locations',
+    icon: 'map',
+    group: 'Elements',
+  },
+  {
+    name: 'elements/world-rules',
+    label: 'World Rules',
+    title: 'World Rules',
+    icon: 'globe',
+    group: 'Elements',
+  },
+  {
+    name: 'elements/notes',
+    label: 'Notes',
+    title: 'Notes',
+    icon: 'document',
+    group: 'Elements',
+  },
+  {
+    name: 'gallery',
+    label: 'Gallery',
+    title: 'Gallery',
+    icon: 'image',
+    group: 'Management',
+  },
+  {
+    name: 'suggestions',
+    label: 'Suggestions',
+    title: 'Suggestions',
+    icon: 'bulb',
+    group: 'Management',
+  },
+  {
+    name: 'tags',
+    label: 'Tags',
+    title: 'Tags',
+    icon: 'pricetag',
+    group: 'Management',
+  },
+  {
+    name: 'search',
+    label: 'Search',
+    title: 'Search',
+    icon: 'search',
+    group: 'Utilities',
+  },
+  {
+    name: 'export-import',
+    label: 'Export / Import',
+    title: 'Export / Import',
+    icon: 'swap-horizontal',
+    group: 'Utilities',
+  },
+  {
+    name: 'user-profile',
+    label: 'Profile',
+    title: 'User Profile',
+    icon: 'person',
+    group: 'User/Settings',
+  },
+];
+
 export default function StoryLayout() {
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768; // Define your breakpoint for desktop
@@ -29,28 +186,18 @@ export default function StoryLayout() {
     headerShown: true, // Show header by default for all authenticated screens
   };
 
-  // This layout will only be active for large screens, as per the original design intent for the drawer
-  if (!isLargeScreen) {
-    // For small screens, we might want a different navigation or no sidebar for story details
-    // For simplicity, let's just return a Stack with the story content
-    return (
-      <Drawer.Screen
-        name="[id]" // This will be the story content screen
-        options={{
-          headerShown: true,
-          title: 'Story Details',
-        }}
-      />
-    );
-  }
-
   return (
-    <Drawer drawerContent={(props) => <CustomDrawerContent {...props} />}>
+    <Drawer
+      drawerContent={(props) => <CustomDrawerContent {...props} staticRoutes={staticDrawerRoutes} />}
+      screenOptions={{
+        ...commonScreenOptions, // Apply common options
+        drawerType: isLargeScreen ? 'permanent' : 'front', // Dynamic drawer type
+      }}
+    >
       {/* The main story content screen */}
       <Drawer.Screen
         name="[id]"
         options={{
-          ...commonScreenOptions,
           drawerLabel: 'Story Details',
           title: 'Story Details',
           drawerIcon: ({ color, size }) => (
@@ -59,169 +206,8 @@ export default function StoryLayout() {
         }}
       />
 
-      {/* Roteiro */}
-      <Drawer.Screen
-        name="roteiro/chapters"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Chapters',
-          title: 'Chapters',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="layers" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="roteiro/scenes"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Scenes',
-          title: 'Scenes',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="videocam" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="roteiro/moments"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Moments',
-          title: 'Moments',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="time" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="roteiro/choices"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Choices',
-          title: 'Choices',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="git-branch" size={size} color={color} />
-          ),
-        }}
-      />
-
-      {/* Elementos */}
-      <Drawer.Screen
-        name="elements/characters"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Characters',
-          title: 'Characters',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="elements/locations"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Locations',
-          title: 'Locations',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="map" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="elements/world-rules"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'World Rules',
-          title: 'World Rules',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="globe" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="elements/notes"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Notes',
-          title: 'Notes',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="document" size={size} color={color} />
-          ),
-        }}
-      />
-
-      {/* Management */}
-      <Drawer.Screen
-        name="gallery"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Gallery',
-          title: 'Gallery',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="image" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="suggestions"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Suggestions',
-          title: 'Suggestions',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="bulb" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="tags"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Tags',
-          title: 'Tags',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="pricetag" size={size} color={color} />
-          ),
-        }}
-      />
-
-      {/* Utilitários */}
-      <Drawer.Screen
-        name="search"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Search',
-          title: 'Search',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="export-import"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Export / Import',
-          title: 'Export / Import',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="swap-horizontal" size={size} color={color} />
-          ),
-        }}
-      />
-
-      {/* Usuário/Configurações */}
-      <Drawer.Screen
-        name="user-profile"
-        options={{
-          ...commonScreenOptions,
-          drawerLabel: 'Profile',
-          title: 'User Profile',
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
+      
+      
     </Drawer>
   );
 }

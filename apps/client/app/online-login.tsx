@@ -54,7 +54,7 @@ export default function OnlineLoginScreen() {
 
     try {
       const authTokens = await authRepository.login(username, password, baseUrl);
-      signIn(authTokens.userId, authTokens.token, authTokens.refreshToken);
+      signIn(authTokens.userId, authTokens.token, authTokens.refreshToken, baseUrl);
       // No Alert.alert needed, AuthContext handles redirection
     } catch (error: any) {
       console.error('Online login error object:', error);

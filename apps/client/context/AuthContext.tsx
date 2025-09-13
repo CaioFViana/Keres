@@ -1,15 +1,16 @@
 import { deleteItem, getItem, setItem } from '@/utils/storage'; // Import from our storage utility
 import { router, useSegments } from 'expo-router';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { ApiClient } from '../src/infrastructure/api/ApiClient'; // Added this import
 
 interface AuthContextType {
   isAuthenticated: boolean;
   userId: string | null;
   isOfflineMode: boolean;
-  token: string | null; // Added
-  apiClient: ApiClient | null; // Added
-  signIn: (userId: string, token: string, refreshToken: string, baseUrl: string) => void; // Modified
+  token: string | null;
+  refreshToken: string | null; // Added
+  apiClient: ApiClient | null;
+  signIn: (userId: string, token: string, refreshToken: string, baseUrl: string) => void;
   signInOffline: (userId: string) => void;
   signOut: () => void;
 }
@@ -39,8 +40,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isOfflineMode, setIsOfflineMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // New state for loading authentication status
   const [token, setToken] = useState<string | null>(null); // Added
+  const [refreshToken, setRefreshToken] = useState<string | null>(null); // Added
   const [apiClient, setApiClient] = useState<ApiClient | null>(null); // Added
   const segments = useSegments();
+
+  const signOut = useCallback(async () => {
+    await deleteItem(USER_ID_KEY);
+    await deleteItem(AUTH_TOKEN_KEY);
+    await deleteItem(REFRESH_TOKEN_KEY);
+    await deleteItem(LAST_MODE_KEY);
+    await deleteItem(BASE_URL_KEY); // Clear baseUrl
+
+    setUserId(null);
+    setToken(null); // Clear token
+    setRefreshToken(null); // Clear refreshToken
+    setApiClient(null); // Clear apiClient
+    setIsAuthenticated(false);
+    setIsOfflineMode(false);
+    router.replace('/'); // Redirect to welcome after sign out
+  }, [setUserId, setToken, setRefreshToken, setApiClient, setIsAuthenticated, setIsOfflineMode]);
+
+  const refreshAccessToken = useCallback(async (): Promise<string> => {
+    if (!refreshToken || !userId) {
+      throw new Error('No refresh token or user ID available.');
+    }
+
+    const currentBaseUrl = await getItem(BASE_URL_KEY);
+    if (!currentBaseUrl) {
+      throw new Error('Base URL not found for refreshing token.');
+    }
+
+    try {
+      const refreshClient = new ApiClient();
+      refreshClient.setDefaultBaseUrl(currentBaseUrl);
+
+      const response = await refreshClient.request<{ token: string }>(
+        '/users/refresh-token',
+        {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken }),
+        }
+      );
+
+      const newAccessToken = response.token;
+      // Assuming the refresh token endpoint also returns a new refresh token if it rotates
+      // For now, we'll just update the access token.
+      await setItem(AUTH_TOKEN_KEY, newAccessToken);
+      setToken(newAccessToken);
+      return newAccessToken;
+    } catch (error: any) {
+      console.error('Failed to refresh access token:', error);
+      // If refresh token fails, sign out the user
+      signOut();
+      throw error;
+    }
+  }, [refreshToken, userId, setToken, signOut]);
 
   // Effect to load authentication state from secure store on app start
   useEffect(() => {
@@ -66,9 +120,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsAuthenticated(true);
             setIsOfflineMode(false);
             setToken(storedAuthToken);
+            setRefreshToken(storedRefreshToken); // Set refreshToken on load
 
             const client = new ApiClient();
             client.setDefaultBaseUrl(effectiveBaseUrl);
+            client.setOnTokenRefresh(refreshAccessToken); // Set the refresh token callback
             setApiClient(client);
           }
         }
@@ -80,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadAuthData();
-  }, []);
+  }, [refreshAccessToken]); // Added refreshAccessToken to dependencies
 
   // Effect for redirection based on authentication status
   useEffect(() => {
@@ -108,11 +164,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUserId(id);
     setToken(token);
+    setRefreshToken(refreshToken); // Set refreshToken
     setIsAuthenticated(true);
     setIsOfflineMode(false);
 
     const client = new ApiClient();
     client.setDefaultBaseUrl(baseUrl);
+    client.setOnTokenRefresh(refreshAccessToken); // Set the refresh token callback
     setApiClient(client);
   };
 
@@ -126,26 +184,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(true);
     setIsOfflineMode(true);
     setToken(null); // Clear token
+    setRefreshToken(null); // Clear refreshToken
     setApiClient(null); // Clear apiClient
-  };
-
-  const signOut = async () => {
-    await deleteItem(USER_ID_KEY);
-    await deleteItem(AUTH_TOKEN_KEY);
-    await deleteItem(REFRESH_TOKEN_KEY);
-    await deleteItem(LAST_MODE_KEY);
-    await deleteItem(BASE_URL_KEY); // Clear baseUrl
-
-    setUserId(null);
-    setToken(null); // Clear token
-    setApiClient(null); // Clear apiClient
-    setIsAuthenticated(false);
-    setIsOfflineMode(false);
-    router.replace('/'); // Redirect to welcome after sign out
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userId, isOfflineMode, token, apiClient, signIn, signInOffline, signOut }}>
+    <AuthContext.Provider value={{ isAuthenticated, userId, isOfflineMode, token, refreshToken, apiClient, signIn, signInOffline, signOut }}>
       {children}
     </AuthContext.Provider>
   );

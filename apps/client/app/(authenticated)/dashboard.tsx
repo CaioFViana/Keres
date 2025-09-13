@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -7,21 +7,32 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { StoryResponse } from '@keres/shared';
 import { Link } from 'expo-router';
+import { Colors } from '@/constants/theme'; // Added this import
 
 export default function DashboardScreen() {
   const { signOut, apiClient, token, isAuthenticated } = useAuth();
   const buttonBackgroundColor = useThemeColor({}, 'tint');
+  const buttonTextColor = useThemeColor({}, 'buttonText');
+  const storyItemBackgroundColor = useThemeColor({}, 'cardBackground');
+  console.log('Dashboard: storyItemBackgroundColor:', storyItemBackgroundColor);
 
   const [stories, setStories] = useState<StoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) {
+      return; // Prevent re-fetching on subsequent renders/strict mode double invocation
+    }
+
     const fetchStories = async () => {
       if (!isAuthenticated || !apiClient || !token) {
         setLoading(false);
         return;
       }
+
+      hasFetched.current = true; // Mark as fetched to prevent future calls
 
       try {
         setLoading(true);
@@ -47,24 +58,30 @@ export default function DashboardScreen() {
     fetchStories();
   }, [isAuthenticated, apiClient, token]);
 
-  const renderStoryItem = ({ item }: { item: StoryResponse }) => (
+  const renderStoryItem = useCallback(({ item }: { item: StoryResponse }) => (
     <Link href={{ pathname: "/(authenticated)/(story)/[id]", params: { id: item.id } }} asChild>
-      <TouchableOpacity style={styles.storyItem}>
+      <TouchableOpacity style={{
+        padding: 15,
+        marginVertical: 5,
+        borderRadius: 5,
+        width: '100%',
+        backgroundColor: storyItemBackgroundColor,
+      }}>
         <ThemedText>{item.title}</ThemedText>
       </TouchableOpacity>
     </Link>
-  );
+  ), [storyItemBackgroundColor, buttonTextColor]);
 
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title">Welcome to your Dashboard!</ThemedText>
 
       <TouchableOpacity style={[styles.button, { backgroundColor: buttonBackgroundColor }]} onPress={() => console.log('Create new Story pressed')}>
-        <ThemedText>Create new Story</ThemedText>
+        <ThemedText style={{ color: buttonTextColor }}>Create new Story</ThemedText>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={signOut} style={[styles.button, { backgroundColor: buttonBackgroundColor }]}>
-        <ThemedText>Log out</ThemedText>
+        <ThemedText style={{ color: buttonTextColor }}>Log out</ThemedText>
       </TouchableOpacity>
 
       <ThemedText type="subtitle" style={styles.sectionTitle}>Your Stories:</ThemedText>
@@ -113,12 +130,5 @@ const styles = StyleSheet.create({
   storyList: {
     width: '100%',
     marginTop: 10,
-  },
-  storyItem: {
-    padding: 15,
-    marginVertical: 5,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-    width: '100%',
   },
 });

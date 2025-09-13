@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Button, ScrollView, StyleSheet, Switch, TextInput, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Switch, TextInput, View, useWindowDimensions } from 'react-native';
 
+import ModalButton from '@/components/ModalButton';
+import SuggestionModal from '@/components/SuggestionModal';
 import SuggestionSelect from '@/components/SuggestionSelect'; // Added this import
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/AuthContext';
-import { StoryCreatePayload } from '@keres/shared';
+import { StoryCreatePayload, SuggestionResponse } from '@keres/shared';
 import { router } from 'expo-router';
 
 export default function CreateStoryScreen() {
@@ -22,6 +24,80 @@ export default function CreateStoryScreen() {
   const [extraNotes, setExtraNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // State for Genre Suggestion Modal
+  const [showGenreModal, setShowGenreModal] = useState(false);
+  const [suggestionTypes, setSuggestionTypes] = useState<string[]>([]);
+  const [selectedSuggestionType, setSelectedSuggestionType] = useState<string>('');
+  const [suggestionsForType, setSuggestionsForType] = useState<{ label: string; value: string }[]>([]);
+  const [loadingSuggestionTypes, setLoadingSuggestionTypes] = useState(true);
+  const [loadingSuggestionsForType, setLoadingSuggestionsForType] = useState(false);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
+
+  // Fetch unique suggestion types on component mount for the modal
+  useEffect(() => {
+    const fetchTypes = async () => {
+      if (!apiClient || !token || !userId) {
+        setLoadingSuggestionTypes(false);
+        return;
+      }
+
+      try {
+        setLoadingSuggestionTypes(true);
+        setSuggestionError(null);
+        const response = await apiClient.request<string[]>('/suggestions/types', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setSuggestionTypes(response);
+        if (response.length > 0) {
+          setSelectedSuggestionType(response[0]); // Select the first type by default
+        }
+      } catch (err: any) {
+        console.error('Failed to fetch suggestion types for modal:', err);
+        setSuggestionError(err.message || 'Failed to fetch types');
+      } finally {
+        setLoadingSuggestionTypes(false);
+      }
+    };
+
+    fetchTypes();
+  }, [apiClient, token, userId]);
+
+  // Fetch suggestions for the selected type for the modal
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!selectedSuggestionType || selectedSuggestionType === '' || !apiClient || !token || !userId) {
+        setSuggestionsForType([]);
+        setLoadingSuggestionsForType(false);
+        return;
+      }
+
+      try {
+        setLoadingSuggestionsForType(true);
+        setSuggestionError(null);
+        const response = await apiClient.request<{ items: SuggestionResponse[]; totalItems: number }>(
+          `/suggestions/user/${userId}/type/${selectedSuggestionType}`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setSuggestionsForType(response.items.map(item => ({ label: item.value, value: item.value })));
+      } catch (err: any) {
+        console.error(`Failed to fetch suggestions for type ${selectedSuggestionType} for modal:`, err);
+        setSuggestionError(err.message || 'Failed to fetch suggestions');
+      } finally {
+        setLoadingSuggestionsForType(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, [selectedSuggestionType, apiClient, token, userId]);
 
   const handleCreateStory = async () => {
     if (!apiClient || !token || !userId) {
@@ -125,12 +201,20 @@ export default function CreateStoryScreen() {
 
         <View style={isLargeScreen ? styles.twoColumnContainer : styles.singleColumnContainer}>
           <View style={isLargeScreen && styles.columnItem}>
-            <View style={{ flex: 1 }}>
-              <SuggestionSelect
-                label="Genre"
+            <View style={styles.genreInputContainer}>
+              <ThemedText style={styles.label}>Genre:</ThemedText>
+              <TextInput
+                style={[styles.input, styles.genreTextInput]}
+                placeholder="Enter Genre"
                 value={genre}
                 onChangeText={setGenre}
-                placeholder="Genre"
+                autoCapitalize="words"
+              />
+              <ModalButton
+                title="💡"
+                onPress={() => setShowGenreModal(true)}
+                buttonStyle={styles.suggestionButton}
+                textStyle={styles.suggestionButtonText}
               />
             </View>
           </View>
@@ -156,6 +240,26 @@ export default function CreateStoryScreen() {
         </View>
 
         <Button title={loading ? "Creating..." : "Create Story"} onPress={handleCreateStory} disabled={loading} />
+
+        <SuggestionModal
+          isVisible={showGenreModal}
+          onClose={() => setShowGenreModal(false)}
+          onSelect={(selectedValue) => {
+            setGenre(selectedValue);
+            setShowGenreModal(false);
+          }}
+          label1="Suggestion Type"
+          options1={suggestionTypes.map(type => ({ label: type, value: type }))}
+          value1={selectedSuggestionType}
+          onChange1={setSelectedSuggestionType}
+          label2="Suggestion"
+          options2={suggestionsForType}
+          value2={genre} // Use genre as the selected value for the second picker
+          onChange2={(val) => {
+            // This onChange2 is primarily for internal modal state,
+            // the onSelect prop handles updating the form's genre state
+          }}
+        />
       </ScrollView>
     </ThemedView>
   );
@@ -216,6 +320,26 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     color: '#000', // Ensure text is visible
     backgroundColor: '#fff', // Ensure background is visible
+  },
+  genreInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1, // Allow it to take up available space in columnItem
+  },
+  genreTextInput: {
+    flex: 1, // Allow TextInput to take up available space
+    marginRight: 10, // Space between input and button
+  },
+  suggestionButton: {
+    borderRadius: 5, // Match input border radius
+    padding: 10,
+    backgroundColor: '#e0e0e0', // A neutral background color
+    elevation: 1,
+  },
+  suggestionButtonText: {
+    color: '#333', // A neutral text color
+    fontWeight: 'bold',
+    fontSize: 18, // Make icon visible
   },
   switchContainer: {
     flexDirection: 'row',

@@ -1,6 +1,6 @@
 import { deleteItem, getItem, setItem } from '@/utils/storage'; // Import from our storage utility
 import { router, useSegments } from 'expo-router';
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { ApiClient } from '../src/infrastructure/api/ApiClient'; // Added this import
 
 interface AuthContextType {

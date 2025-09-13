@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -6,15 +6,13 @@ import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { StoryResponse } from '@keres/shared';
-import { Link } from 'expo-router';
-import { Colors } from '@/constants/theme'; // Added this import
+import { Link, router } from 'expo-router';
 
 export default function DashboardScreen() {
   const { signOut, apiClient, token, isAuthenticated } = useAuth();
   const buttonBackgroundColor = useThemeColor({}, 'tint');
   const buttonTextColor = useThemeColor({}, 'buttonText');
   const storyItemBackgroundColor = useThemeColor({}, 'cardBackground');
-  console.log('Dashboard: storyItemBackgroundColor:', storyItemBackgroundColor);
 
   const [stories, setStories] = useState<StoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +65,10 @@ export default function DashboardScreen() {
         width: '100%',
         backgroundColor: storyItemBackgroundColor,
       }}>
-        <ThemedText>{item.title}</ThemedText>
+        <ThemedText type="subtitle">{item.title}</ThemedText>
+        <ThemedText style={{ fontSize: 14, marginTop: 5 }}>Type: {item.type}</ThemedText>
+        {item.genre && <ThemedText style={{ fontSize: 14 }}>Genre: {item.genre}</ThemedText>}
+        {item.isFavorite && <ThemedText style={{ fontSize: 14, color: 'gold' }}>★ Favorite</ThemedText>}
       </TouchableOpacity>
     </Link>
   ), [storyItemBackgroundColor, buttonTextColor]);
@@ -76,7 +77,7 @@ export default function DashboardScreen() {
     <ThemedView style={styles.container}>
       <ThemedText type="title">Welcome to your Dashboard!</ThemedText>
 
-      <TouchableOpacity style={[styles.button, { backgroundColor: buttonBackgroundColor }]} onPress={() => console.log('Create new Story pressed')}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: buttonBackgroundColor }]} onPress={() => router.push('/(authenticated)/create-story')}>
         <ThemedText style={{ color: buttonTextColor }}>Create new Story</ThemedText>
       </TouchableOpacity>
 

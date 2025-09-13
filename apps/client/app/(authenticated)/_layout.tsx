@@ -13,6 +13,13 @@ export default function AuthenticatedLayout() {
           }}
         />
         <Stack.Screen
+          name="create-story"
+          options={{
+            headerShown: true,
+            title: 'Create Story',
+          }}
+        />
+        <Stack.Screen
           name="(story)"
           options={{ headerShown: false }}
         />

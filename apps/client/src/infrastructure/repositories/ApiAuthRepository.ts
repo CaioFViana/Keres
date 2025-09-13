@@ -1,6 +1,7 @@
 import { IAuthRepository, AuthTokens } from './IAuthRepository';
 import { ApiClient } from '../api/ApiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserProfileResponse } from '@keres/shared'; // Added this import
 
 const BASE_URL_KEY = 'last_base_url';
 
@@ -11,12 +12,16 @@ export class ApiAuthRepository implements IAuthRepository {
     this.apiClient.setDefaultBaseUrl(baseUrl);
     await AsyncStorage.setItem(BASE_URL_KEY, baseUrl);
 
-    const response = await this.apiClient.request<AuthTokens>('/users/login', {
+    const apiResponse = await this.apiClient.request<UserProfileResponse>('/users/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     });
 
-    return response;
+    return {
+      userId: apiResponse.id,
+      token: apiResponse.token || '',
+      refreshToken: apiResponse.refreshToken || '',
+    };
   }
 
   static async getLastBaseUrl(): Promise<string | null> {

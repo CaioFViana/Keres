@@ -30,6 +30,7 @@
         "@hono/zod-openapi": "^1.1.0",
         "@keres/shared": "workspace:^",
         "bcrypt": "^5.1.0",
+        "better-sqlite3": "^12.2.0",
         "drizzle-orm": "^0.29.3",
         "hono": "^4.2.3",
         "hono-openapi": "^0.4.8",
@@ -40,6 +41,7 @@
       },
       "devDependencies": {
         "@types/bcrypt": "^5.0.0",
+        "@types/better-sqlite3": "^7.6.13",
         "@types/bun": "^1.1.1",
         "@types/jsonwebtoken": "^9.0.0",
         "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -675,6 +677,8 @@
     "@types/babel__traverse": ["@types/babel__traverse@7.28.0", "", { "dependencies": { "@babel/types": "^7.28.2" } }, "sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q=="],
 
     "@types/bcrypt": ["@types/bcrypt@5.0.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-6atioO8Y75fNcbmj0G7UjI9lXN2pQ/IGJ2FWT4a/btd0Lk9lQalHLKhkgKVZ3r+spnmWUKfbMi1GEe9wyHQfNQ=="],
+
+    "@types/better-sqlite3": ["@types/better-sqlite3@7.6.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-NMv9ASNARoKksWtsq/SHakpYAYnhBrQgGD8zkLYk/jaK8jUGn08CfEdTRgYhMypUQAfzSP8W6gNLe0q19/t4VA=="],
 
     "@types/bun": ["@types/bun@1.2.21", "", { "dependencies": { "bun-types": "1.2.21" } }, "sha512-NiDnvEqmbfQ6dmZ3EeUO577s4P5bf4HCTXtI6trMc6f6RzirY5IrF3aIookuSpyslFzrnvv2lmEWv5HyC1X79A=="],
 

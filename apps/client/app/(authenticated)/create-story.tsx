@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, ScrollView, Switch, View } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { Button, ScrollView, StyleSheet, Switch, TextInput, View, useWindowDimensions } from 'react-native';
 
+import SuggestionSelect from '@/components/SuggestionSelect'; // Added this import
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/AuthContext';
-import { router } from 'expo-router';
 import { StoryCreatePayload } from '@keres/shared';
+import { router } from 'expo-router';
 
 export default function CreateStoryScreen() {
   const { apiClient, token, userId } = useAuth();
+  const { width } = useWindowDimensions();
+  const isLargeScreen = width >= 768; // Define your breakpoint for desktop
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState<'linear' | 'branching'>('linear');
@@ -65,66 +67,93 @@ export default function CreateStoryScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <ThemedText type="title">Create New Story</ThemedText>
+      <ScrollView
+        style={styles.fullWidthScrollView} // New style to ensure ScrollView takes full width
+        contentContainerStyle={[
+          styles.scrollContainer, // flexGrow: 1, paddingBottom: 20
+          isLargeScreen
+            ? { width: '80%', alignSelf: 'center', ...styles.contentPaddingLarge } // Constrain, center, and add padding for large screens
+            : { width: '90%', alignSelf: 'center', ...styles.contentPaddingSmall } // Constrain, center, and add padding for small screens
+        ]}
+      >
+        <View style={[styles.headerContainer, isLargeScreen && styles.headerContainerLarge]}>
+          <ThemedText type="title">Create New Story</ThemedText>
+          {error && <ThemedText style={styles.errorText}>{error}</ThemedText>}
+        </View>
 
-        {error && <ThemedText style={styles.errorText}>{error}</ThemedText>}
-
-        <TextInput
-          style={styles.input}
-          placeholder="Title *"
-          value={title}
-          onChangeText={setTitle}
-          autoCapitalize="words"
-        />
-
-        <ThemedText style={styles.label}>Story Type:</ThemedText>
-        <Picker
-          selectedValue={type}
-          onValueChange={(itemValue) => setType(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Linear" value="linear" />
-          <Picker.Item label="Branching" value="branching" />
-        </Picker>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Summary"
-          value={summary}
-          onChangeText={setSummary}
-          multiline
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Genre"
-          value={genre}
-          onChangeText={setGenre}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Language"
-          value={language}
-          onChangeText={setLanguage}
-        />
-
-        <View style={styles.switchContainer}>
-          <ThemedText style={styles.label}>Favorite:</ThemedText>
-          <Switch
-            value={isFavorite}
-            onValueChange={setIsFavorite}
+        <View style={styles.singleColumnContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Title *"
+            value={title}
+            onChangeText={setTitle}
+            autoCapitalize="words"
           />
         </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Extra Notes"
-          value={extraNotes}
-          onChangeText={setExtraNotes}
-          multiline
-        />
+        <View style={isLargeScreen ? styles.twoColumnContainer : styles.singleColumnContainer}>
+          <View style={isLargeScreen && styles.columnItem}>
+            <View style={[styles.switchContainer, { flex: 1 }]}>
+              <ThemedText style={styles.label}>Story Type: {type === 'linear' ? 'Linear' : 'Branching'}</ThemedText>
+              <Switch
+                value={type === 'branching'} // True if branching, false if linear
+                onValueChange={(value) => setType(value ? 'branching' : 'linear')}
+              />
+            </View>
+          </View>
+
+          <View style={isLargeScreen && styles.columnItem}>
+            <View style={[styles.switchContainer, { flex: 1 }]}>
+              <ThemedText style={styles.label}>Favorite:</ThemedText>
+              <Switch
+                value={isFavorite}
+                onValueChange={setIsFavorite}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.singleColumnContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Summary"
+            value={summary}
+            onChangeText={setSummary}
+            multiline
+          />
+        </View>
+
+        <View style={isLargeScreen ? styles.twoColumnContainer : styles.singleColumnContainer}>
+          <View style={isLargeScreen && styles.columnItem}>
+            <View style={{ flex: 1 }}>
+              <SuggestionSelect
+                label="Genre"
+                value={genre}
+                onChangeText={setGenre}
+                placeholder="Genre"
+              />
+            </View>
+          </View>
+
+          <View style={isLargeScreen && styles.columnItem}>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Language"
+              value={language}
+              onChangeText={setLanguage}
+            />
+          </View>
+        </View>
+
+        <View style={styles.singleColumnContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Extra Notes"
+            value={extraNotes}
+            onChangeText={setExtraNotes}
+            multiline
+          />
+        </View>
 
         <Button title={loading ? "Creating..." : "Create Story"} onPress={handleCreateStory} disabled={loading} />
       </ScrollView>
@@ -135,41 +164,68 @@ export default function CreateStoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    alignItems: 'center', // Center content horizontally in the container
+  },
+    fullWidthScrollView: {
+    flex: 1, // Allow ScrollView to take available vertical space
+    width: '100%', // Ensure ScrollView takes full horizontal space
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingBottom: 20, // Add some padding at the bottom for scrollable content
+  },
+  contentPaddingLarge: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  contentPaddingSmall: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  scrollContentContainerLarge: {
+    // Removed alignItems: 'center' to allow content to align to start
+  },
+  headerContainer: {
+    width: '100%',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  headerContainerLarge: {
+    alignItems: 'center', // Center title on large screens
+  },
+  twoColumnContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 10,
+  },
+  singleColumnContainer: {
+    width: '100%',
+    marginBottom: 10,
+  },
+  columnItem: {
+    flex: 1, // Allow items to take up available space
+    marginHorizontal: 5, // Add horizontal margin for spacing
+    marginBottom: 10, // Spacing between items
   },
   input: {
-    width: '100%',
     padding: 10,
-    marginVertical: 10,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
     color: '#000', // Ensure text is visible
     backgroundColor: '#fff', // Ensure background is visible
   },
-  picker: {
-    width: '100%',
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   label: {
     alignSelf: 'flex-start',
     marginTop: 10,
     marginBottom: 5,
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginVertical: 10,
   },
   errorText: {
     color: 'red',

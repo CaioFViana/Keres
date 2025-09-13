@@ -9,6 +9,7 @@ import {
   GetSuggestionsByUserAndTypeUseCase,
   GetSuggestionsByUserIdUseCase,
   GetSuggestionUseCase,
+  GetUniqueSuggestionTypesUseCase, // Added this import
   UpdateManySuggestionsUseCase,
   UpdateSuggestionUseCase,
 } from '@application/use-cases'
@@ -16,21 +17,21 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import { StoryRepository, SuggestionRepository } from '@infrastructure/persistence'
 import {
   BulkDeleteResponseSchema,
-  CreateSuggestionSchema,
-  ErrorResponseSchema,
-  ListQuerySchema,
-  SuggestionResponseSchema,
-  UpdateSuggestionSchema,
-  IdParamSchema,
-  UserIdParamSchema,
-  StoryIdParamSchema,
-  TypeParamSchema,
   BulkDeleteSchema,
   CreateManySuggestionsSchema,
-  UpdateManySuggestionsSchema,
-  UserTypeParamSchema,
-  StoryTypeParamSchema,
+  CreateSuggestionSchema,
+  ErrorResponseSchema,
+  IdParamSchema,
+  ListQuerySchema,
   PaginatedResponseSchema,
+  StoryIdParamSchema,
+  StoryTypeParamSchema,
+  SuggestionResponseSchema,
+  TypeParamSchema,
+  UpdateManySuggestionsSchema,
+  UpdateSuggestionSchema,
+  UserIdParamSchema,
+  UserTypeParamSchema,
 } from '@keres/shared'
 import { SuggestionController } from '@presentation/controllers/SuggestionController'
 import { z } from 'zod'
@@ -64,6 +65,7 @@ const getSuggestionsByStoryAndTypeUseCase = new GetSuggestionsByStoryAndTypeUseC
   suggestionRepository,
   storyRepository,
 )
+const getUniqueSuggestionTypesUseCase = new GetUniqueSuggestionTypesUseCase(suggestionRepository) // Instantiated
 
 const createManySuggestionsUseCase = new CreateManySuggestionsUseCase(
   suggestionRepository,
@@ -88,9 +90,58 @@ const suggestionController = new SuggestionController(
   getSuggestionsByStoryAndTypeUseCase,
   createManySuggestionsUseCase,
   updateManySuggestionsUseCase,
+  getUniqueSuggestionTypesUseCase, // Passed to controller
 )
 
 
+// GET /types
+suggestionRoutes.openapi(
+  createRoute({
+    method: 'get',
+    path: '/types',
+    summary: 'Get unique suggestion types',
+    description: 'Retrieves all unique suggestion types for the authenticated user.',
+    responses: {
+      200: {
+        description: 'Unique suggestion types retrieved successfully',
+        content: {
+          'application/json': {
+            schema: z.array(z.string()), // Response is an array of strings
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+      500: {
+        description: 'Internal Server Error',
+        content: {
+          'application/json': {
+            schema: ErrorResponseSchema,
+          },
+        },
+      },
+    },
+    tags: ['Suggestions'],
+  }),
+  async (c) => {
+    const userId = (c.get('jwtPayload') as { userId: string }).userId
+    try {
+      const types = await suggestionController.getUniqueTypes(userId)
+      return c.json(types, 200)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return c.json({ error: error.message }, 400)
+      }
+      return c.json({ error: 'Internal Server Error' }, 500)
+    }
+  },
+)
 
 // POST /
 suggestionRoutes.openapi(

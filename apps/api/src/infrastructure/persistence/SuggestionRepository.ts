@@ -2,8 +2,8 @@ import type { Suggestion } from '@domain/entities/Suggestion'
 import type { ISuggestionRepository } from '@domain/repositories/ISuggestionRepository'
 import type { ListQueryParams, PaginatedResponse } from '@keres/shared'
 
-import { db, suggestions } from '@infrastructure/db' // Import db and suggestions table
-import { and, asc, desc, eq, isNull, ilike, or, sql } from 'drizzle-orm' // Import sql
+import { db, suggestions } from '@infrastructure/db'; // Import db and suggestions table
+import { and, asc, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm'; // Import sql
 
 export class SuggestionRepository implements ISuggestionRepository {
   async findById(id: string): Promise<Suggestion | null> {
@@ -718,6 +718,19 @@ export class SuggestionRepository implements ISuggestionRepository {
     } catch (error) {
       console.error('Error in SuggestionRepository.search:', error)
       throw error
+    }
+  }
+
+  async getUniqueTypesByUserId(userId: string): Promise<string[]> {
+    try {
+      const results = await db
+        .selectDistinct({ type: suggestions.type }) // Select distinct 'type'
+        .from(suggestions)
+        .where(eq(suggestions.userId, userId)); // Filter by userId
+      return results.map((row: {type: string}) => row.type);
+    } catch (error) {
+      console.error('Error in SuggestionRepository.getUniqueTypesByUserId:', error);
+      throw error;
     }
   }
 }

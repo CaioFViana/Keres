@@ -10,5 +10,6 @@ export * from './GetSuggestionsByTypeUseCase'
 export * from './GetSuggestionsByUserAndTypeUseCase'
 export * from './GetSuggestionsByUserIdUseCase'
 export * from './GetSuggestionUseCase'
+export * from './GetUniqueSuggestionTypesUseCase' // Added this export
 export * from './UpdateManySuggestionsUseCase'
 export * from './UpdateSuggestionUseCase'

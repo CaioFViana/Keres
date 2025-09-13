@@ -9,6 +9,7 @@ import type {
   GetSuggestionsByUserAndTypeUseCase,
   GetSuggestionsByUserIdUseCase,
   GetSuggestionUseCase,
+  GetUniqueSuggestionTypesUseCase,
   UpdateManySuggestionsUseCase,
   UpdateSuggestionUseCase,
 } from '@application/use-cases'
@@ -17,11 +18,11 @@ import type z from 'zod'
 import {
   type CreateSuggestionSchema,
   type ListQueryParams,
-  SuggestionResponseSchema,
-  type UpdateSuggestionSchema,
   type PaginatedResponse,
-  UpdateManySuggestionsSchema,
   SuggestionResponse,
+  SuggestionResponseSchema,
+  UpdateManySuggestionsSchema,
+  type UpdateSuggestionSchema,
 } from '@keres/shared'
 
 export class SuggestionController {
@@ -38,6 +39,7 @@ export class SuggestionController {
     private readonly getSuggestionsByStoryAndTypeUseCase: GetSuggestionsByStoryAndTypeUseCase,
     private readonly createManySuggestionsUseCase: CreateManySuggestionsUseCase,
     private readonly updateManySuggestionsUseCase: UpdateManySuggestionsUseCase,
+    private readonly getUniqueSuggestionTypesUseCase: GetUniqueSuggestionTypesUseCase, // Added this injection
   ) {}
 
   async createSuggestion(userId: string, data: z.infer<typeof CreateSuggestionSchema>) {
@@ -61,6 +63,10 @@ export class SuggestionController {
       throw new Error('Suggestion not found')
     }
     return SuggestionResponseSchema.parse(suggestion)
+  }
+
+  async getUniqueTypes(userId: string): Promise<string[]> {
+    return this.getUniqueSuggestionTypesUseCase.execute(userId);
   }
 
   async getSuggestionsByUserId(

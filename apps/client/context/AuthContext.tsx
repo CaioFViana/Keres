@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === '(authenticated)';
 
     if (!isAuthenticated && inAuthGroup) {
-      router.replace('/welcome');
+      router.replace('/');
     } else if (isAuthenticated && !inAuthGroup) {
       router.replace('/(authenticated)/dashboard');
     }
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserId(null);
     setIsAuthenticated(false);
     setIsOfflineMode(false);
-    router.replace('/welcome'); // Redirect to welcome after sign out
+    router.replace('/'); // Redirect to welcome after sign out
   };
 
   return (

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Switch, TextInput, View, useWindowDimensions } from 'react-native';
+import { Button, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, useWindowDimensions } from 'react-native';
 
 import ModalButton from '@/components/ModalButton';
 import SuggestionModal from '@/components/SuggestionModal';
-import SuggestionSelect from '@/components/SuggestionSelect'; // Added this import
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/AuthContext';
@@ -149,36 +148,42 @@ export default function CreateStoryScreen() {
           styles.scrollContainer, // flexGrow: 1, paddingBottom: 20
           isLargeScreen
             ? { width: '80%', alignSelf: 'center', ...styles.contentPaddingLarge } // Constrain, center, and add padding for large screens
-            : { width: '90%', alignSelf: 'center', ...styles.contentPaddingSmall } // Constrain, center, and add padding for small screens
+            : { width: '90%', alignSelf: 'center' } // Constrain and center for small screens (padding handled by columnItem)
         ]}
       >
         <View style={[styles.headerContainer, isLargeScreen && styles.headerContainerLarge]}>
           <ThemedText type="title">Create New Story</ThemedText>
-          {error && <ThemedText style={styles.errorText}>{error}</ThemedText>}
+          {error ? <ThemedText style={styles.errorText}>{error}</ThemedText> : null}
         </View>
-
         <View style={styles.singleColumnContainer}>
+          <ThemedText style={styles.label}>Title *:</ThemedText>
           <TextInput
             style={[styles.input, { flex: 1 }]}
-            placeholder="Title *"
+            placeholder="Enter Title"
             value={title}
             onChangeText={setTitle}
             autoCapitalize="words"
           />
         </View>
-
         <View style={isLargeScreen ? styles.twoColumnContainer : styles.singleColumnContainer}>
           <View style={isLargeScreen && styles.columnItem}>
-            <View style={[styles.switchContainer, { flex: 1 }]}>
-              <ThemedText style={styles.label}>Story Type: {type === 'linear' ? 'Linear' : 'Branching'}</ThemedText>
-              <Switch
-                value={type === 'branching'} // True if branching, false if linear
-                onValueChange={(value) => setType(value ? 'branching' : 'linear')}
-              />
+            <ThemedText style={styles.label}>Story Type:</ThemedText>
+            <View style={styles.typeToggleButtonContainer}>
+              <Pressable
+                style={[styles.typeToggleButton, type === 'linear' && styles.typeToggleButtonActive]}
+                onPress={() => setType('linear')}
+              >
+                <ThemedText style={[styles.typeToggleButtonText, type === 'linear' && styles.typeToggleButtonTextActive]}>Linear</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.typeToggleButton, type === 'branching' && styles.typeToggleButtonActive]}
+                onPress={() => setType('branching')}
+              >
+                <ThemedText style={[styles.typeToggleButtonText, type === 'branching' && styles.typeToggleButtonTextActive]}>Branching</ThemedText>
+              </Pressable>
             </View>
           </View>
-
-          <View style={isLargeScreen && styles.columnItem}>
+                    <View style={isLargeScreen && styles.columnItem}>
             <View style={[styles.switchContainer, { flex: 1 }]}>
               <ThemedText style={styles.label}>Favorite:</ThemedText>
               <Switch
@@ -188,21 +193,20 @@ export default function CreateStoryScreen() {
             </View>
           </View>
         </View>
-
         <View style={styles.singleColumnContainer}>
+          <ThemedText style={styles.label}>Summary:</ThemedText>
           <TextInput
             style={styles.input}
-            placeholder="Summary"
+            placeholder="Enter Summary"
             value={summary}
             onChangeText={setSummary}
             multiline
           />
         </View>
-
         <View style={isLargeScreen ? styles.twoColumnContainer : styles.singleColumnContainer}>
           <View style={isLargeScreen && styles.columnItem}>
+            <ThemedText style={styles.label}>Genre:</ThemedText>
             <View style={styles.genreInputContainer}>
-              <ThemedText style={styles.label}>Genre:</ThemedText>
               <TextInput
                 style={[styles.input, styles.genreTextInput]}
                 placeholder="Enter Genre"
@@ -218,29 +222,27 @@ export default function CreateStoryScreen() {
               />
             </View>
           </View>
-
           <View style={isLargeScreen && styles.columnItem}>
+            <ThemedText style={styles.label}>Language:</ThemedText>
             <TextInput
               style={[styles.input, { flex: 1 }]}
-              placeholder="Language"
+              placeholder="Enter Language"
               value={language}
               onChangeText={setLanguage}
             />
           </View>
         </View>
-
         <View style={styles.singleColumnContainer}>
+          <ThemedText style={styles.label}>Extra Notes:</ThemedText>
           <TextInput
             style={[styles.input, { flex: 1 }]}
-            placeholder="Extra Notes"
+            placeholder="Add any extra notes"
             value={extraNotes}
             onChangeText={setExtraNotes}
             multiline
           />
         </View>
-
         <Button title={loading ? "Creating..." : "Create Story"} onPress={handleCreateStory} disabled={loading} />
-
         <SuggestionModal
           isVisible={showGenreModal}
           onClose={() => setShowGenreModal(false)}
@@ -283,7 +285,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   contentPaddingSmall: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 20, // Increased to match container padding
     paddingVertical: 10,
   },
   scrollContentContainerLarge: {
@@ -302,16 +304,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 10,
+    marginBottom: 10, // Reverted
   },
   singleColumnContainer: {
     width: '100%',
-    marginBottom: 10,
+    marginBottom: 10, // Reverted
   },
   columnItem: {
     flex: 1, // Allow items to take up available space
-    marginHorizontal: 5, // Add horizontal margin for spacing
-    marginBottom: 10, // Spacing between items
+    //marginHorizontal: 5, // Removed to allow content to go to edges
+    marginBottom: 10, // Reverted
+    //paddingHorizontal: 20, // Add horizontal padding to columnItem itself
   },
   input: {
     padding: 10,
@@ -335,6 +338,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#e0e0e0', // A neutral background color
     elevation: 1,
+    marginRight: 10
   },
   suggestionButtonText: {
     color: '#333', // A neutral text color
@@ -345,10 +349,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 8, // Increased click area
+    paddingHorizontal: 8, // Increased click area
+  },
+  typeToggleButtonContainer: {
+    flexDirection: 'row',
+    marginTop: 5,
+    marginBottom: 10,
+    borderRadius: 5,
+    overflow: 'hidden', // Ensures children respect border radius
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  typeToggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f0f0f0', // Default background
+  },
+  typeToggleButtonActive: {
+    backgroundColor: '#007bff', // Active background
+  },
+  typeToggleButtonText: {
+    color: '#333', // Default text color
+    fontWeight: 'normal',
+  },
+  typeToggleButtonTextActive: {
+    color: 'white', // Active text color
+    fontWeight: 'bold',
   },
   label: {
-    alignSelf: 'flex-start',
-    marginTop: 10,
+    // alignSelf: 'flex-start', // Removed to allow parent alignItems to work
+    // marginTop: 10,
     marginBottom: 5,
   },
   errorText: {

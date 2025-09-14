@@ -30,13 +30,7 @@ export default function PickerSelect({
         style={[styles.picker, { borderColor: inputBorderColor }]}
       >
         {placeholder && <Picker.Item label={placeholder.trim()} value="" />}
-        {options.length === 0 ? (
-          <Picker.Item label="No options available" value="" />
-        ) : (
-          options.map((option) => (
-            <Picker.Item key={option.value} label={option.label.trim()} value={option.value} />
-          ))
-        )}
+        {options.length === 0 ? (<Picker.Item label="No options available" value="" />) : (options.map((option) => (<Picker.Item key={option.value} label={option.label.trim()} value={option.value} />)))}
       </Picker>
     </View>
   );

@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     padding: 10,
     elevation: 2,
     backgroundColor: '#2196F3', // Example background color
-    marginTop: 15,
+    // marginTop: 15, // Removed
   },
   textStyle: {
     color: 'white',

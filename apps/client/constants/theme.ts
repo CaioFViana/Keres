@@ -9,6 +9,7 @@ export const Colors = {
     buttonText: '#ffffff', // White text for light mode buttons
     cardBackground: '#f0f0f0', // Very light gray for cards in light mode
     borderColor: '#ccc', // Light gray for borders
+    contrastBlue: '#007bff', // New contrast blue color
   },
   dark: {
     text: '#ecf0f1',
@@ -20,5 +21,6 @@ export const Colors = {
     buttonText: '#000000', // Black text for dark mode buttons
     cardBackground: '#2c2c2c', // Dark gray for cards in dark mode
     borderColor: '#555', // Darker gray for borders
+    contrastBlue: '#007bff', // New contrast blue color
   },
 };

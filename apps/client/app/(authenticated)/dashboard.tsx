@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -8,9 +8,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { StoryResponse } from '@keres/shared';
 import { Link, router } from 'expo-router';
-import { setLanguage } from '../../utils/storage';
-import PickerSelect from '../../components/PickerSelect';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import PickerSelect from '../../components/PickerSelect';
+import { setLanguage } from '../../utils/storage';
 
 export default function DashboardScreen() {
   const { signOut, apiClient, token, isAuthenticated } = useAuth();
@@ -145,22 +145,24 @@ export default function DashboardScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <View style={styles.headerRow}>
+        <View style={styles.leftButtonsContainer}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: buttonBackgroundColor, marginRight: 10 }]} onPress={() => router.push('/(authenticated)/create-story')}>
+            <ThemedText style={{ color: buttonTextColor }}>{t('dashboard.createNewStory')}</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.button, { backgroundColor: buttonBackgroundColor }]} onPress={signOut}>
+            <ThemedText style={{ color: buttonTextColor }}>{t('dashboard.logout')}</ThemedText>
+          </TouchableOpacity>
+        </View><PickerSelect // TODO: Bug with . cant be child of view. its here but cant pinpoint where.
+          selectedValue={selectedLanguage}
+          onValueChange={handleLanguageChange}
+          options={languageOptions}
+          placeholder={{ label: t('dashboard.selectLanguage'), value: null }}
+          style={styles.languagePicker}
+        />
+      </View>
+
       <ThemedText type="title">{t('dashboard.welcomeMessage')}</ThemedText>
-
-      <PickerSelect
-        selectedValue={selectedLanguage}
-        onValueChange={handleLanguageChange}
-        options={languageOptions}
-        placeholder={{ label: t('dashboard.selectLanguage'), value: null }}
-      />
-
-      <TouchableOpacity style={[styles.button, { backgroundColor: buttonBackgroundColor }]} onPress={() => router.push('/(authenticated)/create-story')}>
-        <ThemedText style={{ color: buttonTextColor }}>{t('dashboard.createNewStory')}</ThemedText>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={signOut} style={[styles.button, { backgroundColor: buttonBackgroundColor }]}>
-        <ThemedText style={{ color: buttonTextColor }}>{t('dashboard.logout')}</ThemedText>
-      </TouchableOpacity>
 
       <ThemedText type="subtitle" style={styles.sectionTitle}>{t('dashboard.yourStories')}:</ThemedText>
       {loading && <ThemedText>{t('dashboard.loadingStories')}</ThemedText>}
@@ -228,5 +230,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     flex: 1,
     alignItems: 'center',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+  leftButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  languagePicker: {
+    width: 150, // Fixed width for the language picker
   },
 });

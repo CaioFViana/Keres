@@ -28,7 +28,9 @@
       "cancelButton": "Cancelar",
       "helpText": "Sugestões são valores pré-definidos para ajudar a preencher informações de forma rápida e consistente.\n\nPrimeiro, selecione um 'Tipo' de sugestão (por exemplo, 'Gênero', 'Traço de Personagem').\nEm seguida, escolha uma 'Sugestão' específica da lista.\n\nA sugestão selecionada aparecerá no campo de texto abaixo, que você também pode editar manualmente.",
       "selectLabel1Placeholder": "Selecionar {{label}}",
-      "selectLabel2Placeholder": "Selecionar {{label}}"
+      "selectLabel2Placeholder": "Selecionar {{label}}",
+      "failedToFetchTypes": "Falha ao buscar tipos de sugestão",
+      "failedToFetchSuggestions": "Falha ao buscar sugestões"
     }
   },
   "welcomeScreen": {
@@ -62,11 +64,26 @@
     "yourStories": "Suas Histórias",
     "loadingStories": "Carregando histórias...",
     "error": "Erro",
-    "noStoriesFound": "Nenhuma história encontrada. Crie uma!"
+    "noStoriesFound": "Nenhuma história encontrada. Crie uma!",
+    "confirmDeleteTitle": "Confirmar Exclusão",
+    "confirmDeleteMessage": "Tem certeza de que deseja excluir esta história? Esta ação não pode ser desfeita.",
+    "failedToDeleteStory": "Falha ao excluir história"
   },
   "common": {
     "type": "Tipo",
     "genre": "Gênero",
-    "favorite": "★ Favorito"
+    "favorite": "★ Favorito",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "authRequired": "Autenticação necessária."
+  },
+  "editStoryScreen": {
+    "title": "Editar História",
+    "failedToLoadStory": "Falha ao carregar detalhes da história.",
+    "failedToUpdateStory": "Falha ao atualizar história.",
+    "loadingStoryDetails": "Carregando detalhes da história...",
+    "updatingStoryButton": "Atualizando...",
+    "updateStoryButton": "Atualizar História"
   }
 }

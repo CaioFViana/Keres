@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
@@ -17,6 +17,8 @@ export default function DashboardScreen() {
   const buttonBackgroundColor = useThemeColor({}, 'tint');
   const buttonTextColor = useThemeColor({}, 'buttonText');
   const storyItemBackgroundColor = useThemeColor({}, 'cardBackground');
+  const editButtonColor = useThemeColor({}, 'editButton');
+  const deleteButtonColor = useThemeColor({}, 'deleteButton');
 
   const [stories, setStories] = useState<StoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,59 +37,106 @@ export default function DashboardScreen() {
     await setLanguage(lang);
   }, [i18n]);
 
+  const fetchStories = useCallback(async () => {
+    if (!isAuthenticated || !apiClient || !token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiClient.request<{ items: StoryResponse[]; totalItems: number }>(
+        '/stories/all',
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setStories(response.items);
+    } catch (err: any) {
+      console.error('Failed to fetch stories:', err);
+      setError(err.message || 'Failed to fetch stories');
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated, apiClient, token]);
+
   useEffect(() => {
     if (hasFetched.current) {
       return; // Prevent re-fetching on subsequent renders/strict mode double invocation
     }
-
-    const fetchStories = async () => {
-      if (!isAuthenticated || !apiClient || !token) {
-        setLoading(false);
-        return;
-      }
-
-      hasFetched.current = true; // Mark as fetched to prevent future calls
-
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await apiClient.request<{ items: StoryResponse[]; totalItems: number }>(
-          '/stories/all',
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setStories(response.items);
-      } catch (err: any) {
-        console.error('Failed to fetch stories:', err);
-        setError(err.message || 'Failed to fetch stories');
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    hasFetched.current = true; // Mark as fetched to prevent future calls
     fetchStories();
-  }, [isAuthenticated, apiClient, token]);
+  }, [fetchStories]);
+
+  const handleDeleteStory = useCallback(async (storyId: string) => {
+    Alert.alert(
+      t('dashboard.confirmDeleteTitle'),
+      t('dashboard.confirmDeleteMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          onPress: async () => {
+            if (!apiClient || !token) {
+              setError(t('common.authRequired'));
+              return;
+            }
+            try {
+              await apiClient.request(`/stories/${storyId}`, {
+                method: 'DELETE',
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              fetchStories(); // Re-fetch stories after deletion
+            } catch (err: any) {
+              console.error('Failed to delete story:', err);
+              setError(err.message || t('dashboard.failedToDeleteStory'));
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
+  }, [apiClient, token, fetchStories, t]);
 
   const renderStoryItem = useCallback(({ item }: { item: StoryResponse }) => (
-    <Link href={{ pathname: "/(authenticated)/(story)/[id]", params: { id: item.id } }} asChild>
-      <TouchableOpacity style={{
-        padding: 15,
-        marginVertical: 5,
-        borderRadius: 5,
-        width: '100%',
-        backgroundColor: storyItemBackgroundColor,
-      }}>
-        <ThemedText type="subtitle">{item.title}</ThemedText>
-        <ThemedText style={{ fontSize: 14, marginTop: 5 }}>{t('common.type')}: {item.type}</ThemedText>
-        {item.genre && <ThemedText style={{ fontSize: 14 }}>{t('common.genre')}: {item.genre}</ThemedText>}
-        {item.isFavorite && <ThemedText style={{ fontSize: 14, color: 'gold' }}>{t('common.favorite')}</ThemedText>}
-      </TouchableOpacity>
-    </Link>
-  ), [storyItemBackgroundColor, buttonTextColor, t]);
+    <View style={{
+      padding: 15,
+      marginVertical: 5,
+      borderRadius: 5,
+      width: '100%',
+      backgroundColor: storyItemBackgroundColor,
+    }}>
+      <Link href={{ pathname: "/(authenticated)/(story)/[id]", params: { id: item.id } }} asChild>
+        <TouchableOpacity style={{ flex: 1 }}>
+          <ThemedText type="subtitle">{item.title}</ThemedText>
+          <ThemedText style={{ fontSize: 14, marginTop: 5 }}>{t('common.type')}: {item.type}</ThemedText>
+          {item.genre && <ThemedText style={{ fontSize: 14 }}>{t('common.genre')}: {item.genre}</ThemedText>}
+          {item.isFavorite && <ThemedText style={{ fontSize: 14, color: 'gold' }}>{t('common.favorite')}</ThemedText>}
+        </TouchableOpacity>
+      </Link>
+      <View style={styles.storyItemButtonsContainer}>
+        <TouchableOpacity
+          style={[styles.storyItemButton, { backgroundColor: editButtonColor }]} // Use editButtonColor
+          onPress={() => router.push(`/(authenticated)/edit-story/${item.id}`)}
+        >
+          <ThemedText style={{ color: buttonTextColor }}>{t('common.edit')}</ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.storyItemButton, { backgroundColor: deleteButtonColor }]} // Use deleteButtonColor
+          onPress={() => handleDeleteStory(item.id)}
+        >
+          <ThemedText style={{ color: buttonTextColor }}>{t('common.delete')}</ThemedText>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ), [storyItemBackgroundColor, buttonTextColor, editButtonColor, deleteButtonColor, handleDeleteStory, t]);
 
   return (
     <ThemedView style={styles.container}>
@@ -154,5 +203,17 @@ const styles = StyleSheet.create({
   storyList: {
     width: '100%',
     marginTop: 10,
+  },
+  storyItemButtonsContainer: {
+    flexDirection: 'row',
+    marginTop: 10,
+    justifyContent: 'space-around',
+  },
+  storyItemButton: {
+    padding: 8,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    flex: 1,
+    alignItems: 'center',
   },
 });

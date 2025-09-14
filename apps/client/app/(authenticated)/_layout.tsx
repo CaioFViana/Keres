@@ -41,6 +41,13 @@ export default function AuthenticatedLayout() {
           }}
         />
         <Stack.Screen
+          name="edit-story/[id]"
+          options={{
+            headerShown: true,
+            title: 'Edit Story',
+          }}
+        />
+        <Stack.Screen
           name="(story)"
           options={{ headerShown: false }}
         />

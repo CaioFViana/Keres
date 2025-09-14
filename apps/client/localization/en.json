@@ -1,0 +1,72 @@
+{
+  "createStoryScreen": {
+    "title": "Create New Story",
+    "titleLabel": "Title *:",
+    "enterTitlePlaceholder": "Enter Title",
+    "storyTypeLabel": "Story Type:",
+    "linearType": "Linear",
+    "branchingType": "Branching",
+    "favoriteLabel": "Favorite:",
+    "summaryLabel": "Summary:",
+    "enterSummaryPlaceholder": "Enter Summary",
+    "genreLabel": "Genre:",
+    "enterGenrePlaceholder": "Enter Genre",
+    "languageLabel": "Language:",
+    "enterLanguagePlaceholder": "Enter Language",
+    "extraNotesLabel": "Extra Notes:",
+    "addExtraNotesPlaceholder": "Add any extra notes",
+    "createStoryButton": "Create Story",
+    "creatingStoryButton": "Creating...",
+    "authRequiredError": "Authentication required.",
+    "titleEmptyError": "Title cannot be empty.",
+    "failedToCreateStoryError": "Failed to create story",
+    "selectGenreButton": "Select Genre",
+    "suggestionModal": {
+      "title": "Select Suggestion",
+      "typeLabel": "Suggestion Type",
+      "suggestionLabel": "Suggestion",
+      "cancelButton": "Cancel",
+      "helpText": "Suggestions are pre-defined values to help you quickly and consistently fill in information.\n\nFirst, select a 'Type' of suggestion (e.g., 'Genre', 'Character Trait').\nThen, choose a specific 'Suggestion' from the list.\n\nThe selected suggestion will appear in the text field below, which you can also edit manually.",
+      "selectLabel1Placeholder": "Select {{label}}",
+      "selectLabel2Placeholder": "Select {{label}}"
+    }
+  },
+  "welcomeScreen": {
+    "title": "Welcome to Keres!",
+    "subtitle": "Choose your adventure mode:",
+    "onlineMode": "Online Mode",
+    "offlineMode": "Offline Mode"
+  },
+  "onlineLoginScreen": {
+    "title": "Online Login",
+    "subtitle": "Enter your server details to log in.",
+    "baseUrlPlaceholder": "Base URL (e.g., http://localhost:3000)",
+    "usernamePlaceholder": "Username",
+    "passwordPlaceholder": "Password",
+    "loginButton": "Login",
+    "invalidUrlError": "Please enter a valid Base URL (e.g., http://localhost:3000).",
+    "missingCredentialsError": "Please enter both username and password.",
+    "connectionError": "Could not connect to the server. Please check the Base URL and your internet connection.",
+    "loginFailedError": "Login Failed: {{message}}",
+    "unknownError": "An unknown error occurred during login."
+  },
+  "offlineLoginScreen": {
+    "title": "Entering Offline Mode...",
+    "subtitle": "Please wait while we set up your offline session."
+  },
+  "dashboard": {
+    "welcomeMessage": "Welcome to your Dashboard!",
+    "selectLanguage": "Select Language",
+    "createNewStory": "Create new Story",
+    "logout": "Log out",
+    "yourStories": "Your Stories",
+    "loadingStories": "Loading stories...",
+    "error": "Error",
+    "noStoriesFound": "No stories found. Create one!"
+  },
+  "common": {
+    "type": "Type",
+    "genre": "Genre",
+    "favorite": "★ Favorite"
+  }
+}

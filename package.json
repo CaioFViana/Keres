@@ -34,9 +34,12 @@
     "@react-navigation/bottom-tabs": "^7.4.7",
     "@react-navigation/drawer": "^7.5.8",
     "better-sqlite3": "^12.2.0",
+    "expo-localization": "^17.0.7",
     "expo-secure-store": "^15.0.7",
     "expo-sqlite": "^16.0.8",
+    "i18next": "^25.5.2",
     "postgres": "^3.4.7",
+    "react-i18next": "^15.7.3",
     "react-native-collapsible": "^1.6.2",
     "zod": "^4.1.8"
   }

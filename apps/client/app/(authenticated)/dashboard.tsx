@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -7,9 +8,12 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { StoryResponse } from '@keres/shared';
 import { Link, router } from 'expo-router';
+import { setLanguage } from '../../utils/storage';
+import PickerSelect from '../../components/PickerSelect';
 
 export default function DashboardScreen() {
   const { signOut, apiClient, token, isAuthenticated } = useAuth();
+  const { t, i18n } = useTranslation();
   const buttonBackgroundColor = useThemeColor({}, 'tint');
   const buttonTextColor = useThemeColor({}, 'buttonText');
   const storyItemBackgroundColor = useThemeColor({}, 'cardBackground');
@@ -18,6 +22,18 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasFetched = useRef(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+
+  const languageOptions = [
+    { label: 'English', value: 'en' },
+    { label: 'Português', value: 'pt' },
+  ];
+
+  const handleLanguageChange = useCallback(async (lang: string) => {
+    setSelectedLanguage(lang);
+    await i18n.changeLanguage(lang);
+    await setLanguage(lang);
+  }, [i18n]);
 
   useEffect(() => {
     if (hasFetched.current) {
@@ -66,30 +82,37 @@ export default function DashboardScreen() {
         backgroundColor: storyItemBackgroundColor,
       }}>
         <ThemedText type="subtitle">{item.title}</ThemedText>
-        <ThemedText style={{ fontSize: 14, marginTop: 5 }}>Type: {item.type}</ThemedText>
-        {item.genre && <ThemedText style={{ fontSize: 14 }}>Genre: {item.genre}</ThemedText>}
-        {item.isFavorite && <ThemedText style={{ fontSize: 14, color: 'gold' }}>★ Favorite</ThemedText>}
+        <ThemedText style={{ fontSize: 14, marginTop: 5 }}>{t('common.type')}: {item.type}</ThemedText>
+        {item.genre && <ThemedText style={{ fontSize: 14 }}>{t('common.genre')}: {item.genre}</ThemedText>}
+        {item.isFavorite && <ThemedText style={{ fontSize: 14, color: 'gold' }}>{t('common.favorite')}</ThemedText>}
       </TouchableOpacity>
     </Link>
-  ), [storyItemBackgroundColor, buttonTextColor]);
+  ), [storyItemBackgroundColor, buttonTextColor, t]);
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Welcome to your Dashboard!</ThemedText>
+      <ThemedText type="title">{t('dashboard.welcomeMessage')}</ThemedText>
+
+      <PickerSelect
+        selectedValue={selectedLanguage}
+        onValueChange={handleLanguageChange}
+        options={languageOptions}
+        placeholder={{ label: t('dashboard.selectLanguage'), value: null }}
+      />
 
       <TouchableOpacity style={[styles.button, { backgroundColor: buttonBackgroundColor }]} onPress={() => router.push('/(authenticated)/create-story')}>
-        <ThemedText style={{ color: buttonTextColor }}>Create new Story</ThemedText>
+        <ThemedText style={{ color: buttonTextColor }}>{t('dashboard.createNewStory')}</ThemedText>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={signOut} style={[styles.button, { backgroundColor: buttonBackgroundColor }]}>
-        <ThemedText style={{ color: buttonTextColor }}>Log out</ThemedText>
+        <ThemedText style={{ color: buttonTextColor }}>{t('dashboard.logout')}</ThemedText>
       </TouchableOpacity>
 
-      <ThemedText type="subtitle" style={styles.sectionTitle}>Your Stories:</ThemedText>
-      {loading && <ThemedText>Loading stories...</ThemedText>}
-      {error && <ThemedText style={{ color: 'red' }}>Error: {error}</ThemedText>}
+      <ThemedText type="subtitle" style={styles.sectionTitle}>{t('dashboard.yourStories')}:</ThemedText>
+      {loading && <ThemedText>{t('dashboard.loadingStories')}</ThemedText>}
+      {error && <ThemedText style={{ color: 'red' }}>{t('dashboard.error')}: {error}</ThemedText>}
       {!loading && !error && stories.length === 0 && (
-        <ThemedText>No stories found. Create one!</ThemedText>
+        <ThemedText>{t('dashboard.noStoriesFound')}</ThemedText>
       )}
       {!loading && !error && stories.length > 0 && (
         <FlatList

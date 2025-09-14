@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Pressable, ScrollView, StyleSheet, Switch, TextInput, View, useWindowDimensions } from 'react-native';
 
 import ModalButton from '@/components/ModalButton';
@@ -11,6 +12,7 @@ import { router } from 'expo-router';
 
 export default function CreateStoryScreen() {
   const { apiClient, token, userId } = useAuth();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768; // Define your breakpoint for desktop
 
@@ -152,14 +154,14 @@ export default function CreateStoryScreen() {
         ]}
       >
         <View style={[styles.headerContainer, isLargeScreen && styles.headerContainerLarge]}>
-          <ThemedText type="title">Create New Story</ThemedText>
+          <ThemedText type="title">{t('createStoryScreen.title')}</ThemedText>
           {error ? <ThemedText style={styles.errorText}>{error}</ThemedText> : null}
         </View>
         <View style={styles.singleColumnContainer}>
-          <ThemedText style={styles.label}>Title *:</ThemedText>
+          <ThemedText style={styles.label}>{t('createStoryScreen.titleLabel')}</ThemedText>
           <TextInput
             style={[styles.input, { flex: 1 }]}
-            placeholder="Enter Title"
+            placeholder={t('createStoryScreen.enterTitlePlaceholder')}
             value={title}
             onChangeText={setTitle}
             autoCapitalize="words"
@@ -167,25 +169,25 @@ export default function CreateStoryScreen() {
         </View>
         <View style={isLargeScreen ? styles.twoColumnContainer : styles.singleColumnContainer}>
           <View style={isLargeScreen && styles.columnItem}>
-            <ThemedText style={styles.label}>Story Type:</ThemedText>
+            <ThemedText style={styles.label}>{t('createStoryScreen.storyTypeLabel')}</ThemedText>
             <View style={styles.typeToggleButtonContainer}>
               <Pressable
                 style={[styles.typeToggleButton, type === 'linear' && styles.typeToggleButtonActive]}
                 onPress={() => setType('linear')}
               >
-                <ThemedText style={[styles.typeToggleButtonText, type === 'linear' && styles.typeToggleButtonTextActive]}>Linear</ThemedText>
+                <ThemedText style={[styles.typeToggleButtonText, type === 'linear' && styles.typeToggleButtonTextActive]}>{t('createStoryScreen.linearType')}</ThemedText>
               </Pressable>
               <Pressable
                 style={[styles.typeToggleButton, type === 'branching' && styles.typeToggleButtonActive]}
                 onPress={() => setType('branching')}
               >
-                <ThemedText style={[styles.typeToggleButtonText, type === 'branching' && styles.typeToggleButtonTextActive]}>Branching</ThemedText>
+                <ThemedText style={[styles.typeToggleButtonText, type === 'branching' && styles.typeToggleButtonTextActive]}>{t('createStoryScreen.branchingType')}</ThemedText>
               </Pressable>
             </View>
           </View>
                     <View style={isLargeScreen && styles.columnItem}>
             <View style={[styles.switchContainer, { flex: 1 }]}>
-              <ThemedText style={styles.label}>Favorite:</ThemedText>
+              <ThemedText style={styles.label}>{t('createStoryScreen.favoriteLabel')}</ThemedText>
               <Switch
                 value={isFavorite}
                 onValueChange={setIsFavorite}
@@ -194,10 +196,10 @@ export default function CreateStoryScreen() {
           </View>
         </View>
         <View style={styles.singleColumnContainer}>
-          <ThemedText style={styles.label}>Summary:</ThemedText>
+          <ThemedText style={styles.label}>{t('createStoryScreen.summaryLabel')}</ThemedText>
           <TextInput
             style={styles.input}
-            placeholder="Enter Summary"
+            placeholder={t('createStoryScreen.enterSummaryPlaceholder')}
             value={summary}
             onChangeText={setSummary}
             multiline
@@ -205,11 +207,11 @@ export default function CreateStoryScreen() {
         </View>
         <View style={isLargeScreen ? styles.twoColumnContainer : styles.singleColumnContainer}>
           <View style={isLargeScreen && styles.columnItem}>
-            <ThemedText style={styles.label}>Genre:</ThemedText>
+            <ThemedText style={styles.label}>{t('createStoryScreen.genreLabel')}</ThemedText>
             <View style={styles.genreInputContainer}>
               <TextInput
                 style={[styles.input, styles.genreTextInput]}
-                placeholder="Enter Genre"
+                placeholder={t('createStoryScreen.enterGenrePlaceholder')}
                 value={genre}
                 onChangeText={setGenre}
                 autoCapitalize="words"
@@ -223,26 +225,26 @@ export default function CreateStoryScreen() {
             </View>
           </View>
           <View style={isLargeScreen && styles.columnItem}>
-            <ThemedText style={styles.label}>Language:</ThemedText>
+            <ThemedText style={styles.label}>{t('createStoryScreen.languageLabel')}</ThemedText>
             <TextInput
               style={[styles.input, { flex: 1 }]}
-              placeholder="Enter Language"
+              placeholder={t('createStoryScreen.enterLanguagePlaceholder')}
               value={language}
               onChangeText={setLanguage}
             />
           </View>
         </View>
         <View style={styles.singleColumnContainer}>
-          <ThemedText style={styles.label}>Extra Notes:</ThemedText>
+          <ThemedText style={styles.label}>{t('createStoryScreen.extraNotesLabel')}</ThemedText>
           <TextInput
             style={[styles.input, { flex: 1 }]}
-            placeholder="Add any extra notes"
+            placeholder={t('createStoryScreen.addExtraNotesPlaceholder')}
             value={extraNotes}
             onChangeText={setExtraNotes}
             multiline
           />
         </View>
-        <Button title={loading ? "Creating..." : "Create Story"} onPress={handleCreateStory} disabled={loading} />
+        <Button title={loading ? t('createStoryScreen.creatingStoryButton') : t('createStoryScreen.createStoryButton')} onPress={handleCreateStory} disabled={loading} />
         <SuggestionModal
           isVisible={showGenreModal}
           onClose={() => setShowGenreModal(false)}
@@ -250,11 +252,11 @@ export default function CreateStoryScreen() {
             setGenre(selectedValue);
             setShowGenreModal(false);
           }}
-          label1="Suggestion Type"
+          label1={t('createStoryScreen.suggestionModal.typeLabel')}
           options1={suggestionTypes.map(type => ({ label: type, value: type }))}
           value1={selectedSuggestionType}
           onChange1={setSelectedSuggestionType}
-          label2="Suggestion"
+          label2={t('createStoryScreen.suggestionModal.suggestionLabel')}
           options2={suggestionsForType}
           value2={genre} // Use genre as the selected value for the second picker
           onChange2={(val) => {

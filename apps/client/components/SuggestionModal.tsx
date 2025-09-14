@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Modal, StyleSheet, View, Pressable } from 'react-native';
+import PickerSelect from '@/components/PickerSelect'; // Using generic PickerSelect
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import PickerSelect from '@/components/PickerSelect'; // Using generic PickerSelect
+import React, { useState } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface SuggestionModalProps {
   isVisible: boolean;
@@ -33,6 +34,9 @@ export default function SuggestionModal({
   value2,
   onChange2,
 }: SuggestionModalProps) {
+  const { t } = useTranslation();
+  const [showHelp, setShowHelp] = useState(false); // New state for help text visibility
+
   const handleSelectAndClose = (selectedValue: string) => {
     onSelect(selectedValue);
     onClose();
@@ -47,14 +51,25 @@ export default function SuggestionModal({
     >
       <View style={styles.centeredView}>
         <ThemedView style={styles.modalView}>
-          <ThemedText type="subtitle">Select Suggestion</ThemedText>
+          <View style={styles.modalHeader}> {/* New View for header alignment */}
+            <ThemedText type="subtitle">{t('createStoryScreen.suggestionModal.title')}</ThemedText>
+            <Pressable onPress={() => setShowHelp(!showHelp)} style={styles.helpIconContainer}>
+              <ThemedText style={styles.helpIcon}>?</ThemedText>
+            </Pressable>
+          </View>
+
+          {showHelp && (
+            <ThemedText style={styles.helpText}>
+              {t('createStoryScreen.suggestionModal.helpText')}
+            </ThemedText>
+          )}
 
           <PickerSelect
             label={label1}
             options={options1}
             selectedValue={value1}
             onValueChange={onChange1}
-            placeholder={`Select ${label1}`}
+            placeholder={t('createStoryScreen.suggestionModal.selectLabel1Placeholder', { label: label1 })}
           />
 
           <PickerSelect
@@ -65,14 +80,14 @@ export default function SuggestionModal({
               onChange2(val);
               handleSelectAndClose(val);
             }}
-            placeholder={`Select ${label2}`}
+            placeholder={t('createStoryScreen.suggestionModal.selectLabel2Placeholder', { label: label2 })}
           />
 
           <Pressable
             style={[styles.button, styles.buttonClose]}
             onPress={onClose}
           >
-            <ThemedText style={styles.textStyle}>Cancel</ThemedText>
+            <ThemedText style={styles.textStyle}>{t('createStoryScreen.suggestionModal.cancelButton')}</ThemedText>
           </Pressable>
         </ThemedView>
       </View>
@@ -115,6 +130,36 @@ const styles = StyleSheet.create({
   textStyle: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 15,
+  },
+  helpIconContainer: {
+    marginLeft: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#007bff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  helpIcon: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  helpText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: '#e9e9e9',
+    borderRadius: 8,
     textAlign: 'center',
   },
 });

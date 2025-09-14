@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -10,6 +11,7 @@ import { ThemedView } from '@/components/themed-view';
 const OFFLINE_USER_ID = '01K48ZX9A7P34EGK8SSQNKERES';
 
 export default function OfflineLoginScreen() {
+  const { t } = useTranslation();
   const { isAuthenticated, isOfflineMode, signInOffline } = useAuth();
 
   useEffect(() => {
@@ -24,8 +26,8 @@ export default function OfflineLoginScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Entering Offline Mode...</ThemedText>
-      <ThemedText>Please wait while we set up your offline session.</ThemedText>
+      <ThemedText type="title">{t('offlineLoginScreen.title')}</ThemedText>
+      <ThemedText>{t('offlineLoginScreen.subtitle')}</ThemedText>
     </ThemedView>
   );
 }

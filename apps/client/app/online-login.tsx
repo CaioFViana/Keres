@@ -1,6 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
 import React, { useEffect, useState } from 'react';
 import { Button, StyleSheet, TextInput } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -13,6 +14,7 @@ const apiClient = new ApiClient();
 const authRepository = new ApiAuthRepository(apiClient);
 
 export default function OnlineLoginScreen() {
+  const { t } = useTranslation();
   const [baseUrl, setBaseUrl] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -43,12 +45,12 @@ export default function OnlineLoginScreen() {
     setErrorMessage(null); // Clear previous errors
 
     if (!validateUrl(baseUrl)) {
-      setErrorMessage('Please enter a valid Base URL (e.g., http://localhost:3000).');
+      setErrorMessage(t('onlineLoginScreen.invalidUrlError'));
       return;
     }
 
     if (!username || !password) {
-      setErrorMessage('Please enter both username and password.');
+      setErrorMessage(t('onlineLoginScreen.missingCredentialsError'));
       return;
     }
 
@@ -59,37 +61,37 @@ export default function OnlineLoginScreen() {
     } catch (error: any) {
       console.error('Online login error object:', error);
       if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
-        setErrorMessage('Could not connect to the server. Please check the Base URL and your internet connection.');
+        setErrorMessage(t('onlineLoginScreen.connectionError'));
       } else if (error.message) {
-        setErrorMessage(`Login Failed: ${error.message}`);
+        setErrorMessage(t('onlineLoginScreen.loginFailedError', { message: error.message }));
       } else {
-        setErrorMessage('An unknown error occurred during login.');
+        setErrorMessage(t('onlineLoginScreen.unknownError'));
       }
     }
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Online Login</ThemedText>
-      <ThemedText>Enter your server details to log in.</ThemedText>
+      <ThemedText type="title">{t('onlineLoginScreen.title')}</ThemedText>
+      <ThemedText>{t('onlineLoginScreen.subtitle')}</ThemedText>
 
       <TextInput
         style={styles.input}
-        placeholder="Base URL (e.g., http://localhost:3000)"
+        placeholder={t('onlineLoginScreen.baseUrlPlaceholder')}
         value={baseUrl}
         onChangeText={setBaseUrl}
         autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
-        placeholder="Username"
+        placeholder={t('onlineLoginScreen.usernamePlaceholder')}
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder={t('onlineLoginScreen.passwordPlaceholder')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -97,7 +99,7 @@ export default function OnlineLoginScreen() {
 
       {errorMessage && <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>}
 
-      <Button title="Login" onPress={handleLogin} />
+      <Button title={t('onlineLoginScreen.loginButton')} onPress={handleLogin} />
 
       {/* TODO: Implement URL history/suggestions UI */}
     </ThemedView>

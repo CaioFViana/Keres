@@ -5,31 +5,29 @@ import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface PickerSelectProps {
-  label: string;
+  placeholder: { label: string; value: string | null };
   options: { label: string; value: string }[];
   selectedValue: string;
   onValueChange: (itemValue: string) => void;
-  placeholder?: string;
 }
 
 export default function PickerSelect({
-  label,
+  placeholder,
   options,
   selectedValue,
   onValueChange,
-  placeholder,
 }: PickerSelectProps) {
   const inputBorderColor = useThemeColor({}, 'borderColor');
 
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.label}>{label}</ThemedText>
+      {placeholder && <ThemedText style={styles.label}>{placeholder.label}</ThemedText>}
       <Picker
         selectedValue={selectedValue}
         onValueChange={onValueChange}
         style={[styles.picker, { borderColor: inputBorderColor }]}
       >
-        {placeholder && <Picker.Item label={placeholder.trim()} value="" />}
+        {placeholder && <Picker.Item label={placeholder.label} value={placeholder.value} />}
         {options.length === 0 ? (<Picker.Item label="No options available" value="" />) : (options.map((option) => (<Picker.Item key={option.value} label={option.label.trim()} value={option.value} />)))}
       </Picker>
     </View>

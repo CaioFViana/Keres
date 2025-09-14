@@ -10,6 +10,8 @@ export const Colors = {
     cardBackground: '#f0f0f0', // Very light gray for cards in light mode
     borderColor: '#ccc', // Light gray for borders
     contrastBlue: '#007bff', // New contrast blue color
+    editButton: '#6495ED', // Cornflower Blue
+    deleteButton: '#DC143C', // Crimson
   },
   dark: {
     text: '#ecf0f1',
@@ -22,5 +24,7 @@ export const Colors = {
     cardBackground: '#2c2c2c', // Dark gray for cards in dark mode
     borderColor: '#555', // Darker gray for borders
     contrastBlue: '#007bff', // New contrast blue color
+    editButton: '#4682B4', // Steel Blue
+    deleteButton: '#B22222', // Firebrick
   },
 };

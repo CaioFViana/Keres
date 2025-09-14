@@ -55,6 +55,12 @@ export class ApiClient {
       throw new Error(errorMessage);
     }
 
+    // For successful responses, check if there's content to parse as JSON
+    const contentType = response.headers.get('content-type');
+    if (response.status === 204 || !contentType || !contentType.includes('application/json')) {
+      return {} as T; // Return an empty object or null for no-content responses
+    }
+
     return response.json() as Promise<T>;
   }
 }

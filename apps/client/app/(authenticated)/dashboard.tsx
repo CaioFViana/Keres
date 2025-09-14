@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
@@ -10,6 +10,7 @@ import { StoryResponse } from '@keres/shared';
 import { Link, router } from 'expo-router';
 import { setLanguage } from '../../utils/storage';
 import PickerSelect from '../../components/PickerSelect';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 export default function DashboardScreen() {
   const { signOut, apiClient, token, isAuthenticated } = useAuth();
@@ -25,6 +26,9 @@ export default function DashboardScreen() {
   const [error, setError] = useState<string | null>(null);
   const hasFetched = useRef(false);
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [storyToDelete, setStoryToDelete] = useState<string | null>(null);
 
   const languageOptions = [
     { label: 'English', value: 'en' },
@@ -72,38 +76,39 @@ export default function DashboardScreen() {
     fetchStories();
   }, [fetchStories]);
 
-  const handleDeleteStory = useCallback(async (storyId: string) => {
-    Alert.alert(
-      t('dashboard.confirmDeleteTitle'),
-      t('dashboard.confirmDeleteMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          onPress: async () => {
-            if (!apiClient || !token) {
-              setError(t('common.authRequired'));
-              return;
-            }
-            try {
-              await apiClient.request(`/stories/${storyId}`, {
-                method: 'DELETE',
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              });
-              fetchStories(); // Re-fetch stories after deletion
-            } catch (err: any) {
-              console.error('Failed to delete story:', err);
-              setError(err.message || t('dashboard.failedToDeleteStory'));
-            }
-          },
-          style: 'destructive',
+  const confirmDelete = useCallback(async () => {
+    if (!storyToDelete) return;
+
+    if (!apiClient || !token) {
+      setError(t('common.authRequired'));
+      return;
+    }
+    try {
+      await apiClient.request(`/stories/${storyToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      ],
-      { cancelable: true }
-    );
-  }, [apiClient, token, fetchStories, t]);
+      });
+      fetchStories(); // Re-fetch stories after deletion
+      setShowDeleteModal(false);
+      setStoryToDelete(null);
+    } catch (err: any) {
+      console.error('Failed to delete story:', err);
+      setError(err.message || t('dashboard.failedToDeleteStory'));
+    }
+  }, [apiClient, token, storyToDelete, fetchStories, t]);
+
+  const cancelDelete = useCallback(() => {
+    setShowDeleteModal(false);
+    setStoryToDelete(null);
+  }, []);
+
+  const handleDeleteStory = useCallback(async (storyId: string) => {
+    console.log('handleDeleteStory called for storyId:', storyId);
+    setStoryToDelete(storyId);
+    setShowDeleteModal(true);
+  }, []);
 
   const renderStoryItem = useCallback(({ item }: { item: StoryResponse }) => (
     <View style={{
@@ -171,6 +176,14 @@ export default function DashboardScreen() {
           style={styles.storyList}
         />
       )}
+
+      <ConfirmationModal
+        isVisible={showDeleteModal}
+        title={t('dashboard.confirmDeleteTitle')}
+        message={t('dashboard.confirmDeleteMessage')}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </ThemedView>
   );
 }

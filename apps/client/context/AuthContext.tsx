@@ -125,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const client = new ApiClient();
             client.setDefaultBaseUrl(effectiveBaseUrl);
             client.setOnTokenRefresh(refreshAccessToken); // Set the refresh token callback
+            client.setOnSignOut(signOut); // Set the sign out callback
             setApiClient(client);
           }
         }
@@ -171,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const client = new ApiClient();
     client.setDefaultBaseUrl(baseUrl);
     client.setOnTokenRefresh(refreshAccessToken); // Set the refresh token callback
+    client.setOnSignOut(signOut); // Set the sign out callback
     setApiClient(client);
   };
 

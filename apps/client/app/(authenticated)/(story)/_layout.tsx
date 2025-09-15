@@ -2,12 +2,13 @@ import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer'; // Removed DrawerItemList
+import { useLocalSearchParams } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWindowDimensions } from 'react-native';
 
 // Custom Drawer Content to include Sign Out button and groupings
-function CustomDrawerContent({ staticRoutes, ...props }: any) {
+function CustomDrawerContent({ staticRoutes, storyTitle, ...props }: any) {
   const { signOut } = useAuth();
   const { state, navigation, descriptors } = props; // Added navigation and descriptors
 
@@ -15,10 +16,14 @@ function CustomDrawerContent({ staticRoutes, ...props }: any) {
   const renderDrawerItems = (routesToRender: any[]) => {
     return routesToRender.map((route: any) => {
       const staticRoute = staticRoutes.find((sr: any) => sr.name === route.name);
+      let label = staticRoute?.label || route.name;
+      if (route.name === '[id]' && storyTitle) {
+        label = storyTitle;
+      }
       return (
         <DrawerItem
           key={route.key}
-          label={staticRoute?.label || route.name} // Use staticRoute.label if available
+          label={label} // Use dynamic label for story details
           onPress={() => navigation.navigate(route.name)}
           icon={({ color, size }) => (
             <Ionicons name={staticRoute?.icon as any} size={size} color={color} />
@@ -181,6 +186,24 @@ const staticDrawerRoutes = [
 export default function StoryLayout() {
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768; // Define your breakpoint for desktop
+  const { id } = useLocalSearchParams();
+  const { apiClient } = useAuth();
+  const [storyTitle, setStoryTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (id && apiClient) {
+      const fetchStoryTitle = async () => {
+        try {
+          const story = await apiClient.request<{ title: string }>(`/stories/${id}`);
+          setStoryTitle(story.title);
+        } catch (error) {
+          console.error('Failed to fetch story title:', error);
+          setStoryTitle('Story Details'); // Fallback
+        }
+      };
+      fetchStoryTitle();
+    }
+  }, [id, apiClient]);
 
   const commonScreenOptions = {
     headerShown: true, // Show header by default for all authenticated screens
@@ -188,7 +211,7 @@ export default function StoryLayout() {
 
   return (
     <Drawer
-      drawerContent={(props) => <CustomDrawerContent {...props} staticRoutes={staticDrawerRoutes} />}
+      drawerContent={(props) => <CustomDrawerContent {...props} staticRoutes={staticDrawerRoutes} storyTitle={storyTitle} />}
       screenOptions={{
         ...commonScreenOptions, // Apply common options
         drawerType: isLargeScreen ? 'permanent' : 'front', // Dynamic drawer type
@@ -198,8 +221,8 @@ export default function StoryLayout() {
       <Drawer.Screen
         name="[id]"
         options={{
-          drawerLabel: 'Story Details',
-          title: 'Story Details',
+          drawerLabel: storyTitle || 'Story Details',
+          title: storyTitle || 'Story Details',
           drawerIcon: ({ color, size }) => (
             <Ionicons name="book" size={size} color={color} />
           ),

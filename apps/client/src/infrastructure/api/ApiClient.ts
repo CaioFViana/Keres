@@ -6,6 +6,7 @@ interface RequestOptions extends RequestInit {
 export class ApiClient {
   private defaultBaseUrl: string | null = null;
   private onTokenRefresh: (() => Promise<string>) | null = null; // Callback for token refresh
+  private onSignOut: (() => void) | null = null; // Callback for sign out
 
   setDefaultBaseUrl(url: string) {
     this.defaultBaseUrl = url;
@@ -13,6 +14,10 @@ export class ApiClient {
 
   setOnTokenRefresh(callback: () => Promise<string>) {
     this.onTokenRefresh = callback;
+  }
+
+  setOnSignOut(callback: () => void) {
+    this.onSignOut = callback;
   }
 
   async request<T>(endpoint: string, options?: RequestOptions): Promise<T> {
@@ -30,13 +35,21 @@ export class ApiClient {
     let response = await fetch(url, { ...options, headers });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData: any = {};
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // If response is not JSON, or empty, errorData remains empty object
+        console.warn('API Client: Could not parse error response as JSON:', e);
+      }
       const errorMessage = errorData.error || `API request failed with status ${response.status}`;
 
       // Check for unauthorized and attempt token refresh
-      if (response.status === 401 && errorMessage === 'Unauthorized: Invalid token' && this.onTokenRefresh && (options?.retryCount || 0) < 1) {
+      if (response.status === 401 && this.onTokenRefresh && (options?.retryCount || 0) < 1) {
+        console.log('API Client: 401 Unauthorized. Attempting token refresh...');
         try {
           const newAccessToken = await this.onTokenRefresh();
+          console.log('API Client: Token refreshed. Retrying request...');
           // Retry the original request with the new token
           const retryHeaders = {
             ...headers,
@@ -45,8 +58,10 @@ export class ApiClient {
           // Recursively call request with updated headers and incremented retryCount
           return this.request<T>(endpoint, { ...options, headers: retryHeaders, retryCount: (options?.retryCount || 0) + 1 });
         } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          // If refresh fails, re-throw the original error to trigger sign out
+          console.error('API Client: Token refresh failed:', refreshError);
+          if (this.onSignOut) {
+            this.onSignOut();
+          }
           throw new Error(errorMessage);
         }
       }

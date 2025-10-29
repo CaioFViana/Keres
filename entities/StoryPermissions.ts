@@ -4,5 +4,4 @@ export interface StoryPermissions {
   permission: string
   createdAt: Date
   updatedAt: Date
-  version: number
 }

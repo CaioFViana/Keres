@@ -43,6 +43,6 @@ Em histórias ramificadas (Interactive Fiction/CYOA), o autor tem controle total
     *   Cada escolha explícita define um texto e uma cena de destino, permitindo que uma cena tenha múltiplas saídas.
     *   A navegação não é ditada pelo `index` das cenas, mas sim pelas escolhas definidas pelo autor.
 
-## 3. Conexão entre Cenas e Implicações (Referência: TODO 8)
+## 3. Conexão entre Cenas e Implicações
 
 Atualmente, todas as escolhas (implícitas ou explícitas) conectam uma `sceneId` a uma `nextSceneId`. Isso significa que a granularidade da ramificação ocorre no nível da cena.

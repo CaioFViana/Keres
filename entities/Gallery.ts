@@ -1,0 +1,10 @@
+export interface Gallery {
+  id: string
+  storyId: string
+  ownerId: string // Can refer to character.id, notes.id, or locations.id
+  imagePath: string
+  isFavorite: boolean
+  extraNotes: string | null
+  createdAt: Date
+  updatedAt: Date
+}

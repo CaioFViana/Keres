@@ -1,8 +1,8 @@
 # Keres - Story Organizer Project Plan
 
-Um projeto self-hosted e/ou offline para organização de histórias (solo ou colaborativa). O objetivo é fornecer uma ferramenta robusta e intuitiva para escritores, permitindo que organizem todos os aspectos de suas narrativas, desde personagens e locais até a estrutura de cenas e regras do mundo. O sistema será projetado para ser acessível e fácil de usar, com foco na organização eficiente do conteúdo da história.
+Um projeto offline-first para organização de histórias (solo ou colaborativa), com sincronização inteligente entre dispositivos locais e servidor remoto. O objetivo é fornecer uma ferramenta robusta e intuitiva para escritores, permitindo que organizem todos os aspectos de suas narrativas, desde personagens e locais até a estrutura de cenas e regras do mundo. O sistema será projetado para ser acessível e fácil de usar, com foco na organização eficiente do conteúdo da história.
 
-Backend com **Hono** + **Zod** para rotas/validação, **Drizzle ORM** para persistência, **ULID** como identificadores. Frontend pode ser React/Tauri/Electron para desktop, com suporte a SQLite (modo offline).
+Backend com **Elysia (Bun)** + **Zod** para rotas/validação, **Drizzle ORM** para persistência, **ULID** como identificadores. Frontend (React Native/Expo para mobile, Tauri + React para desktop) terá suporte a SQLite local em um modelo offline-first com engine de sincronização.
 
 ---
 
@@ -11,9 +11,9 @@ Backend com **Hono** + **Zod** para rotas/validação, **Drizzle ORM** para pers
 ```
 story-organizer/
 ├── apps/
-│ ├── api/ # API Hono
+│ ├── api/ # API Elysia (Bun)
 │ │ ├── src/
-│ │ │ ├── index.ts # bootstrap Hono app
+│ │ │ ├── index.ts # bootstrap Elysia app
 │ │ │ ├── routes/ # rotas agrupadas por recurso
 │ │ │ ├── schemas/ # validações Zod
 │ │ │ ├── db/ # config Drizzle
@@ -98,7 +98,6 @@ gallery
 - id (ulid, pk)
 - story_id (ulid, fk)
 - owner_id (ulid) # ID do personagem/nota/local
-- image_path (text) # URL ou caminho do arquivo
 - is_file (bool) # Sempre será true nesta faze. um dia talvez permitiremos URL (salvo em image_path). Mas não tão cedo.
 - is_favorite (boolean) # Indica se o objeto é favorito
 - extra_notes (text) # Notas adicionais sobre o objeto
@@ -123,7 +122,7 @@ chapters
 ```
 
 ### Scenes
-Uma coleção de momentos. Ex: "esta manhã na escola", "a caminhada para casa", "o jantar chique".
+Unidades narrativas fundamentais.
 
 ```ts
 scenes
@@ -134,24 +133,9 @@ scenes
 - index (int) # Para ordem
 - summary (text)
 - gap (interval/int) # Quanto tempo se passou desde a última cena no universo? Permite planejar saltos no tempo.
+- gapType (enum) # Qual a unidade de medida do tempo?
 - duration (interval/int) # Quanto tempo esta cena deve durar no universo?
-- is_favorite (boolean) # Indica se o objeto é favorito
-- extra_notes (text) # Notas adicionais sobre o objeto
-- created_at (timestamp)
-- updated_at (timestamp)
-```
-
-### Moments
-O "átomo" do planejamento da história. Um diálogo, um sinal, um evento...
-
-```ts
-moments
-- id (ulid, pk)
-- scene_id (ulid, fk)
-- name (text) # Nome do acontecimento
-- location_id (ulid, fk → locations.id, optional) # Para especificação mais especifica caso a cena não seja suficiente.
-- index (int) # Para ordem
-- summary (text)
+- durationType (enum) # Qual a unidade de medida do tempo?
 - is_favorite (boolean) # Indica se o objeto é favorito
 - extra_notes (text) # Notas adicionais sobre o objeto
 - created_at (timestamp)
@@ -178,13 +162,13 @@ locations
 
 ### Relational Tables
 
-#### Character X Moment
+#### Character X Scene
 Lista quem estava onde e quando.
 
 ```ts
-character_moments
+character_scenes
 - character_id (ulid, fk)
-- moment_id (ulid, fk)
+- scene_id (ulid, fk)
 - created_at (timestamp)
 - updated_at (timestamp)
 ```
@@ -293,8 +277,7 @@ suggestions
 - scope (enum: "global" | "story") # Define se a sugestão é global do usuário ou específica de uma história
 - story_id (ulid, nullable) # Se o escopo for "story", FK para a história à qual a sugestão pertence
 - type (text) # Categoria da sugestão (ex: "genre", "character_gender", "race", "relation_type")
-- value (text) # O valor da sugestão (ex: "Fantasia", "Não-binário", "Elfo da Floresta", "Mentor")
-- is_default (boolean) # Indica se a sugestão é padrão do sistema ou criada pelo usuário
+- value (text) # O valor da sugestão (ex: "Fantasia", "Não-binário", "Elfo da Floresta", "Mentor")n- is_default (boolean) # Indica se a sugestão é padrão do sistema ou criada pelo usuário
 - created_at (timestamp)
 - updated_at (timestamp)
 ```
@@ -316,92 +299,66 @@ graph LR
 
     chapters --> scenes
     locations -- occurs on--> scenes
-    locations -- can be more specified to happen on (optional) --> moments
 
-    scenes --> moments
     scenes -- source --> choices
     choices -- target (next_scene_id) --> scenes
 
-    characters --> character_moments
-    character_moments --> moments
+    characters --> character_scenes
+    character_scenes --> scenes
 
     tags -- via relational table --> chapters/scenes/characters/locations
     characters --> character_relations
     character_relations --> characters
 
     notes -- can have --> gallery
-
 ```
 
 ## 🔗 Fluxo de Arquitetura
 
 - **API** (`apps/api`)
-  - Hono expõe rotas REST/JSON.
+  - Elysia (Bun) expõe rotas REST/JSON.
   - Zod valida inputs/outputs.
   - Drizzle manipula DB.
   - ULID gera IDs.
+  - Engine de Sincronização (op-based replication)
 
 - **Frontend** (`apps/client`)
   - Desenvolvido com React Native, Expo e React Native Web para uma base de código unificada.
-  - Consome API (online).
-  - Suporte a SQLite local (offline).
-  - Sincronização futura entre offline ↔ online.
+  - Opera de forma offline-first com SQLite local.
+  - Sincroniza automaticamente com a API remota via o engine de sincronização.
 
-- **Offline Mode**
-  - Botão "Modo Offline" na tela de login.
-  - SQLite local independente.
-  - Export/Import de stories em JSON para sincronização.
+### Configuração de Ambiente
 
-### Configuração de Ambiente (Modos Online/Offline)
+O Keres adota uma abordagem offline-first, onde a configuração de ambiente para o banco de dados é adaptada para suportar tanto o uso local (SQLite) quanto a conexão com um servidor remoto (PostgreSQL).
 
-O Keres suporta dois modos de operação principais: **Online** e **Offline**, controlados por variáveis de ambiente. Esta abordagem permite flexibilidade na implantação e no uso, adaptando o comportamento do aplicativo e a conexão com o banco de dados.
+#### Variável `DATABASE_URL`
 
-#### Variável `APP_MODE`
+A string de conexão para o banco de dados é a principal forma de configurar a persistência.
 
-A variável de ambiente `APP_MODE` é a chave para alternar entre os modos.
+*   **Para uso local (offline-first):** O cliente usará um banco de dados SQLite local, tipicamente um arquivo no sistema de arquivos do usuário (ex: `file:./data/keres.sqlite`).
+*   **Para conexão ao servidor:** O servidor se conectará a um banco de dados PostgreSQL (ex: `postgres://user:password@localhost:5432/keres_db`).
 
-*   **`APP_MODE=online`**: O aplicativo se conectará a um banco de dados PostgreSQL remoto (ou local, se configurado) e operará como um serviço de backend tradicional. Este é o modo padrão se `APP_MODE` não for definido.
-*   **`APP_MODE=offline`**: O aplicativo se conectará a um banco de dados SQLite local (geralmente um arquivo no sistema de arquivos do usuário). Neste modo, a verificação de JWT é simplificada para permitir o uso sem um servidor de autenticação externo.
+#### Variável `JWT_SECRET`
 
-#### Configuração de Banco de Dados
+O segredo usado para assinar e verificar JSON Web Tokens (JWTs) é configurável:
 
-A conexão com o banco de dados é determinada por `APP_MODE`, mas pode ser explicitamente sobrescrita:
-
-*   **`DATABASE_TYPE`**: Define o tipo de banco de dados (`postgres` ou `sqlite`).
-    *   Se `APP_MODE=online` (ou não definido), o padrão é `postgres`.
-    *   Se `APP_MODE=offline`, o padrão é `sqlite`.
-    *   Pode ser definido explicitamente para sobrescrever o padrão (ex: `DATABASE_TYPE=sqlite` mesmo em `APP_MODE=online` para testes).
-*   **`DATABASE_URL`**: A string de conexão para o banco de dados.
-    *   **Para `APP_MODE=online` (ou padrão):** O padrão é `postgres://user:password@localhost:5432/keres_db`.
-    *   **Para `APP_MODE=offline`:** O padrão é `file:./data/keres.sqlite` (um arquivo SQLite local).
-    *   Sempre pode ser definido explicitamente para apontar para qualquer URL de conexão válida.
-
-#### Configuração de JWT
-
-O segredo usado para assinar e verificar JSON Web Tokens (JWTs) também é configurável:
-
-*   **`JWT_SECRET`**: A chave secreta para JWTs.
-    *   **Para `APP_MODE=online`:** Recomenda-se um segredo forte e aleatório, gerenciado com segurança.
-    *   **Para `APP_MODE=offline`:** Pode ser um segredo fixo (menos crítico, pois o "servidor" é local) ou gerado na primeira execução.
+*   **Para o servidor:** Recomenda-se um segredo forte e aleatório, gerenciado com segurança.
+*   **Para o cliente (offline-first):** Pode ser um segredo fixo ou gerado na primeira execução, usado para verificações de tokens locais.
 
 #### Exemplo de Arquivos `.env`
 
 Você pode usar arquivos `.env` para gerenciar essas variáveis de ambiente.
 
-**`.env` para Modo Online:**
+**`.env` para o Servidor:**
 
 ```dotenv
-APP_MODE=online
-DATABASE_TYPE=postgres
 DATABASE_URL=postgres://seu_usuario:sua_senha@seu_host_db:5432/seu_db_nome
 JWT_SECRET=seu_segredo_jwt_forte_para_online
 ```
 
-**`.env` para Modo Offline:**
+**`.env` para o Cliente (Offline-First):**
 
 ```dotenv
-APP_MODE=offline
-DATABASE_TYPE=sqlite
 DATABASE_URL=file:./data/keres.sqlite # Caminho para o arquivo SQLite local
 JWT_SECRET=segredo_jwt_fixo_para_offline # Ou gerado dinamicamente
 ```
@@ -413,5 +370,5 @@ JWT_SECRET=segredo_jwt_fixo_para_offline # Ou gerado dinamicamente
 - Definir migrations no `packages/db` (Drizzle).
 - Criar contratos Zod no `packages/shared`.
 - Implementar rotas CRUD base (users, stories, characters).
-- Adicionar suporte a export/import JSON.
+- Desenvolver o engine de sincronização.
 - Criar app desktop com SQLite integrado (Tauri/Electron).

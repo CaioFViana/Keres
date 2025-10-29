@@ -1,6 +1,6 @@
 # Plano de Desenvolvimento do Frontend Keres
 
-Este documento detalha o plano de desenvolvimento para o frontend do aplicativo Keres, abrangendo tecnologias, modos de operação, interação com a API e funcionalidades principais.
+Este documento detalha o plano de desenvolvimento para o frontend do aplicativo Keres, abrangendo tecnologias, a abordagem offline-first, interação com a API e funcionalidades principais.
 
 ## 1. Tecnologias Principais
 
@@ -14,25 +14,15 @@ O frontend do Keres será desenvolvido utilizando:
 
 O frontend reside no diretório `apps/client` dentro da estrutura monorepo do Keres. Isso facilita o compartilhamento de código (como schemas Zod e tipos definidos em `packages/shared`) e a orquestração de builds via Turborepo.
 
-## 3. Modos de Experiência do Usuário (UX Híbrida)
+## 3. Abordagem Offline-First e Sincronização
 
-O Keres oferecerá uma experiência de usuário híbrida, com modos Online e Offline, conforme detalhado em `docs/offline_strategy.md`.
+O Keres adota uma abordagem "offline-first", onde o cliente opera primariamente com um banco de dados local (SQLite via Drizzle ORM). A sincronização com um servidor remoto ocorre de forma assíncrona e transparente quando a conexão está disponível.
 
-### 3.1. Modo Online
-
-*   O aplicativo se conectará a um backend remoto (API Hono) para todas as operações de dados.
-*   Permitirá acesso a dados compartilhados e, futuramente, funcionalidades de colaboração.
-
-### 3.2. Modo Offline
-
-*   O aplicativo se conectará a um backend local, utilizando um banco de dados SQLite local e independente.
-*   **Desktop (via Electron):** O `apps/api` será empacotado junto com o frontend Electron, operando como um serviço local que se conecta ao SQLite.
-*   **Mobile:** O aplicativo móvel provavelmente interagirá diretamente com um banco de dados SQLite local (via bibliotecas React Native específicas para SQLite), sem a necessidade de empacotar o backend Hono completo no dispositivo móvel.
-
-### 3.3. Isolamento de Dados e Sincronização Manual
-
-*   Os dados nos modos online e offline serão **completamente isolados**, sem sincronização automática.
-*   A transferência de dados entre os modos será feita manualmente através de funcionalidades de **exportação e importação JSON** de histórias completas.
+*   **Banco de Dados Local:** O aplicativo sempre utiliza um banco de dados SQLite local para todas as operações de dados, garantindo funcionalidade completa mesmo sem conexão com a internet.
+*   **Sincronização de Operações (Oplog):** As operações realizadas localmente (criação, atualização, exclusão de entidades) são registradas em um "oplog" (log de operações).
+*   **Engine de Sincronização:** Um mecanismo proprietário baseado em replicação de operações (op-based replication) gerencia a comunicação com o servidor remoto. Quando online, o cliente envia seu lote de operações (pushOps) para o servidor, que as aplica, versiona e devolve quaisquer diferenças pendentes (pullOps). O cliente então aplica essas diferenças e marca as versões como sincronizadas.
+*   **Resolução de Conflitos:** Conflitos são resolvidos via regras de domínio (merge preferencial ou interativo), utilizando `id`, `updated_at`, `deleted?` e `version` para detecção.
+*   **Isolamento e Transferência de Dados:** Não há sincronização automática entre o banco de dados local e o remoto no sentido tradicional de "espelhamento". A sincronização é baseada em operações incrementais. A transferência de dados entre diferentes instâncias (ex: de um dispositivo para outro) é gerenciada pelo engine de sincronização.
 
 ## 4. Estruturas de História Dinâmicas
 
@@ -52,7 +42,7 @@ O frontend adaptará sua interface com base no `type` da entidade `Story` (`'lin
 
 ## 5. Interação com a API (Baseado nas Rotas Existentes)
 
-O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados. As principais funcionalidades da API que o frontend irá interagir incluem:
+O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados, que serão intermediadas pelo engine de sincronização. As principais funcionalidades da API que o frontend irá interagir incluem:
 
 ### 5.1. Autenticação e Usuários
 
@@ -91,19 +81,7 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`DELETE /scenes/:id`**: Excluir cena.
 *   **`POST /scenes/bulk-delete`**: Exclusão em massa de cenas.
 
-### 5.5. Gerenciamento de Momentos
-
-*   **`POST /moments`**: Criar novo momento.
-*   **`POST /moments/batch`**: Criar múltiplos momentos.
-*   **`GET /moments/:id`**: Obter momento por ID.
-*   **`GET /moments/scene/:sceneId`**: Obter momentos por ID da cena.
-*   **`PUT /moments/:id`**: Atualizar momento por ID.
-*   **`PUT /moments/batch`**: Atualizar múltiplos momentos.
-*   **`PATCH /moments/:id`**: Atualização parcial de momento.
-*   **`DELETE /moments/:id`**: Excluir momento.
-*   **`POST /moments/bulk-delete`**: Exclusão em massa de momentos.
-
-### 5.6. Gerenciamento de Personagens
+### 5.5. Gerenciamento de Personagens
 
 *   **`POST /characters`**: Criar novo personagem.
 *   **`POST /characters/batch`**: Criar múltiplos personagens.
@@ -115,7 +93,7 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`DELETE /characters/:id`**: Excluir personagem.
 *   **`POST /characters/bulk-delete`**: Exclusão em massa de personagens.
 
-### 5.7. Gerenciamento de Locais
+### 5.6. Gerenciamento de Locais
 
 *   **`POST /locations`**: Criar novo local.
 *   **`GET /locations/:id`**: Obter local por ID.
@@ -125,7 +103,7 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`DELETE /locations/:id`**: Excluir local.
 *   **`POST /locations/bulk-delete`**: Exclusão em massa de locais.
 
-### 5.8. Gerenciamento de Escolhas
+### 5.7. Gerenciamento de Escolhas
 
 *   **`POST /choices`**: Criar nova escolha.
 *   **`GET /choices/:id`**: Obter escolha por ID.
@@ -135,7 +113,7 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`DELETE /choices/:id`**: Excluir escolha.
 *   **`POST /choices/bulk-delete`**: Exclusão em massa de escolhas.
 
-### 5.9. Gerenciamento de Galeria
+### 5.8. Gerenciamento de Galeria
 
 *   **`POST /gallery`**: Criar novo item de galeria.
 *   **`GET /gallery/:id`**: Obter item de galeria por ID.
@@ -147,7 +125,7 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`DELETE /gallery/:id`**: Excluir item de galeria.
 *   **`POST /gallery/bulk-delete`**: Exclusão em massa de itens de galeria.
 
-### 5.10. Gerenciamento de Notas
+### 5.9. Gerenciamento de Notas
 
 *   **`POST /notes`**: Criar nova nota.
 *   **`GET /notes/:id`**: Obter nota por ID.
@@ -157,7 +135,7 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`DELETE /notes/:id`**: Excluir nota.
 *   **`POST /notes/bulk-delete`**: Exclusão em massa de notas.
 
-### 5.11. Gerenciamento de Tags
+### 5.10. Gerenciamento de Tags
 
 *   **`POST /tags`**: Criar nova tag.
 *   **`GET /tags/:id`**: Obter tag por ID.
@@ -169,7 +147,7 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`POST /tags/remove`**: Remover tag de uma entidade.
 *   **`POST /tags/bulk-delete`**: Exclusão em massa de tags.
 
-### 5.12. Gerenciamento de Regras do Mundo
+### 5.11. Gerenciamento de Regras do Mundo
 
 *   **`POST /world-rules`**: Criar nova regra do mundo.
 *   **`GET /world-rules/:id`**: Obter regra do mundo por ID.
@@ -179,7 +157,7 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`DELETE /world-rules/:id`**: Excluir regra do mundo.
 *   **`POST /world-rules/bulk-delete`**: Exclusão em massa de regras do mundo.
 
-### 5.13. Gerenciamento de Sugestões (Listas Customizáveis)
+### 5.12. Gerenciamento de Sugestões (Listas Customizáveis)
 
 *   **`POST /suggestions`**: Criar nova sugestão.
 *   **`POST /suggestions/batch`**: Criar múltiplas sugestões.
@@ -195,15 +173,15 @@ O frontend consumirá a API Hono (`apps/api`) para todas as operações de dados
 *   **`DELETE /suggestions/:id`**: Excluir sugestão.
 *   **`POST /suggestions/bulk-delete`**: Exclusão em massa de sugestões.
 
-### 5.14. Outras Funcionalidades
+### 5.13. Outras Funcionalidades
 
-*   **`POST /character-moments`**: Criar associação entre personagem e momento.
-*   **`POST /character-moments/batch`**: Criar múltiplas associações.
-*   **`PUT /character-moments/batch`**: Atualizar múltiplas associações.
-*   **`GET /character-moments/character/:characterId`**: Obter momentos de personagem por ID do personagem.
-*   **`GET /character-moments/moment/:momentId`**: Obter momentos de personagem por ID do momento.
-*   **`DELETE /character-moments/:characterId/:momentId`**: Excluir associação.
-*   **`POST /character-moments/bulk-delete`**: Exclusão em massa de associações.
+*   **`POST /character-scenes`**: Criar associação entre personagem e cena.
+*   **`POST /character-scenes/batch`**: Criar múltiplas associações.
+*   **`PUT /character-scenes/batch`**: Atualizar múltiplas associações.
+*   **`GET /character-scenes/character/:characterId`**: Obter cenas de personagem por ID do personagem.
+*   **`GET /character-scenes/scene/:sceneId`**: Obter cenas de personagem por ID da cena.
+*   **`DELETE /character-scenes/:characterId/:sceneId`**: Excluir associação.
+*   **`POST /character-scenes/bulk-delete`**: Exclusão em massa de associações.
 
 *   **`POST /character-relations`**: Criar nova relação entre personagens.
 *   **`POST /character-relations/batch`**: Criar múltiplas relações.
@@ -228,6 +206,6 @@ Para desenvolver o frontend, você pode usar os seguintes comandos na raiz do pr
 
 ## 7. Considerações Futuras
 
-*   **Colaboração em Tempo Real:** Implementar funcionalidades de colaboração em tempo real para escrita conjunta.
+*   **Colaboração em Tempo Real:** O engine de sincronização é a base para futuras funcionalidades de colaboração em tempo real para escrita conjunta.
 *   **Ferramentas de Visualização Avançadas:** Desenvolver ferramentas mais sofisticadas para visualização de narrativas ramificadas (gráficos interativos, etc.).
-*   **Sincronização Automática:** Embora a estratégia inicial seja de isolamento, uma sincronização mais avançada (com resolução de conflitos) pode ser considerada no futuro.
+*   **Otimização do Engine de Sincronização:** Melhorias contínuas no desempenho e na robustez do mecanismo de sincronização.

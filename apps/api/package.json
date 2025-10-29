@@ -1,0 +1,12 @@
+{
+  "name": "@keres/api",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "bun run src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true
+}

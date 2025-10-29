@@ -16,4 +16,5 @@ export interface Character {
   extraNotes: string | null
   createdAt: Date
   updatedAt: Date
+  version: number
 }

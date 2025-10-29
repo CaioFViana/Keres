@@ -7,4 +7,5 @@ export interface Tag {
   extraNotes: string | null
   createdAt: Date
   updatedAt: Date
+  version: number
 }

@@ -7,4 +7,5 @@ export interface Gallery {
   extraNotes: string | null
   createdAt: Date
   updatedAt: Date
+  version: number
 }

@@ -10,4 +10,5 @@ export interface Location {
   extraNotes: string | null
   createdAt: Date
   updatedAt: Date
+  version: number
 }

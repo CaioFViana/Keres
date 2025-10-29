@@ -6,4 +6,5 @@ export interface Suggestion {
   isDefault: boolean
   createdAt: Date
   updatedAt: Date
+  version: number
 }

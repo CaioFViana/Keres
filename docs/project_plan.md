@@ -39,6 +39,8 @@ story-organizer/
 ### Usuários
 Para permitir múltiplos logins. Cada usuário pode ter quantas histórias desejar, sem que as tabelas de outras histórias interfiram (Ex: "raças" de uma história não devem aparecer em outra).
 
+**Nota Importante sobre Sincronização:** Para suportar a engine de sincronização offline-first, todas as entidades persistentes (como `Story`, `Character`, `Chapter`, etc.) incluirão um campo `version: number;`. Este campo é crucial para a detecção e resolução de conflitos durante o processo de sincronização entre clientes e o servidor, garantindo a consistência dos dados.
+
 ```ts
 users
 - id (ulid, pk)

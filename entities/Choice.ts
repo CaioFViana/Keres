@@ -7,4 +7,5 @@ export interface Choice {
   isImplicit: boolean
   createdAt: Date
   updatedAt: Date
+  version: number
 }

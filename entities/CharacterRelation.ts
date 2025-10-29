@@ -6,4 +6,5 @@ export interface CharacterRelation {
   relationType: string
   createdAt: Date
   updatedAt: Date
+  version: number
 }

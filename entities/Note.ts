@@ -8,4 +8,5 @@ export interface Note {
   extraNotes: string | null
   createdAt: Date
   updatedAt: Date
+  version: number
 }

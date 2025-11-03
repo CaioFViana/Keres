@@ -8,9 +8,11 @@ export * from "./entities/Location";
 export * from "./entities/Note";
 export * from "./entities/Scene";
 export * from "./entities/Story";
-export * from "./entities/StoryPermissions";
-export * from "./entities/StoryUpdates";
 export * from "./entities/Suggestion";
+export * from "./entities/sync/Server";
+export * from "./entities/sync/StoryPermissions";
+export * from "./entities/sync/StoryUpdates";
+export * from "./entities/sync/User";
 export * from "./entities/Tag";
-export * from "./entities/User";
 export * from "./entities/WorldRule";
+

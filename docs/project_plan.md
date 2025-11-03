@@ -39,6 +39,9 @@ story-organizer/
 ### Usuários
 Para permitir múltiplos logins. Cada usuário pode ter quantas histórias desejar, sem que as tabelas de outras histórias interfiram (Ex: "raças" de uma história não devem aparecer em outra).
 
+**Nota sobre a Tabela `User` Local (Cliente):**
+A tabela `User` no banco de dados local do cliente funcionará primariamente como um **cache de dados de referência**. Ela armazenará informações mínimas de usuários remotos (como `id`, `username`, `displayName`, `avatarUrl`, `version`) que são referenciados por histórias ou outras entidades que o usuário local possui ou com as quais interage. Esta tabela **não** se destina a ser uma cópia completa de todos os usuários do servidor remoto, nem uma "lista de amigos" social. O motor de sincronização será responsável por popular e manter este cache, garantindo que os dados de usuários relevantes estejam disponíveis offline para manter a integridade referencial das histórias.
+
 **Nota Importante sobre Sincronização:** Para suportar a engine de sincronização offline-first, todas as entidades persistentes (como `Story`, `Character`, `Chapter`, etc.) incluirão um campo `version: number;`. Este campo é crucial para a detecção e resolução de conflitos durante o processo de sincronização entre clientes e o servidor, garantindo a consistência dos dados.
 
 ### Story
@@ -140,9 +143,24 @@ graph LR
   - ULID gera IDs.
   - Engine de Sincronização (op-based replication)
 
+### Estratégia de Resolução de Conflitos
+
+Para garantir a integridade dos dados e uma experiência de usuário consistente em um ambiente colaborativo e offline-first, o Keres adotará uma estratégia híbrida de resolução de conflitos:
+
+*   **Conflitos de Edição (mesmo campo):** Será aplicada a regra **Última Escrita Vence (Last-Write-Wins - LWW)**, utilizando o campo `version` (ou `updatedAt` timestamp) da entidade. A alteração mais recente prevalecerá.
+*   **Conflitos de Edição (campos diferentes):** Se diferentes clientes editarem campos distintos da mesma entidade, as alterações serão **mescladas** automaticamente.
+*   **Conflitos Envolvendo Exclusões:** A **exclusão sempre vencerá uma edição**. Para isso, as entidades que podem ser excluídas e sincronizadas incluirão os campos `isDeleted: boolean` e `deletedAt: number | null` (tombstones). Se um item for marcado como excluído por um cliente e editado por outro, a exclusão será priorizada, garantindo que a intenção de remover o item seja respeitada.
+
+### Estratégias de Armazenamento de Atualizações para Sincronização
+
+Para otimizar o desempenho e o uso de recursos, a estratégia de armazenamento de atualizações (`StoryUpdates`) variará conforme o estado de sincronização da história:
+
+*   **Histórias Online (Sincronizadas com Servidor):** Para histórias que já foram sincronizadas com um servidor remoto, todas as atualizações desde a última sincronização bem-sucedida devem ser armazenadas. Isso garante que nenhum dado seja perdido e que a replicação seja completa quando a conexão for restabelecida.
+*   **Histórias Offline (Nunca Sincronizadas):** Para histórias que são estritamente locais e nunca foram sincronizadas com um servidor, apenas as últimas 500 atualizações devem ser mantidas. Isso evita o acúmulo excessivo de dados de histórico que não seriam utilizados para sincronização remota, mantendo o banco de dados local leve e eficiente.
+
 - **Frontend** (`apps/client`)
   - Desenvolvido com React Native, Expo e React Native Web para uma base de código unificada.
-  - Opera de forma offline-first com SQLite local.
+  - Opera de forma offline-first utilizando **WatermelonDB** como banco de dados local. A escolha do WatermelonDB se deve à sua alta performance, reatividade, suporte nativo a sincronização e robustez para aplicações offline-first em múltiplas plataformas.
   - Sincroniza automaticamente com a API remota via o engine de sincronização.
 
 ### Configuração de Ambiente

@@ -147,7 +147,7 @@ graph LR
 
 Para garantir a integridade dos dados e uma experiência de usuário consistente em um ambiente colaborativo e offline-first, o Keres adotará uma estratégia híbrida de resolução de conflitos:
 
-*   **Conflitos de Edição (mesmo campo):** Será aplicada a regra **Última Escrita Vence (Last-Write-Wins - LWW)**, utilizando o campo `version` (ou `updatedAt` timestamp) da entidade. A alteração mais recente prevalecerá.
+*   **Conflitos de Edição (mesmo campo):** Será aplicada a regra **Última Escrita Vence (Last-Write-Wins - LWW)**, utilizando o campo `updated_at` (timestamp) da entidade. A alteração mais recente prevalecerá. O campo `version`, gerenciado pelo servidor, será usado para garantir atualizações sequenciais e detectar dados de cliente desatualizados.
 *   **Conflitos de Edição (campos diferentes):** Se diferentes clientes editarem campos distintos da mesma entidade, as alterações serão **mescladas** automaticamente.
 *   **Conflitos Envolvendo Exclusões:** A **exclusão sempre vencerá uma edição**. Para isso, as entidades que podem ser excluídas e sincronizadas incluirão os campos `isDeleted: boolean` e `deletedAt: number | null` (tombstones). Se um item for marcado como excluído por um cliente e editado por outro, a exclusão será priorizada, garantindo que a intenção de remover o item seja respeitada.
 
@@ -158,9 +158,25 @@ Para otimizar o desempenho e o uso de recursos, a estratégia de armazenamento d
 *   **Histórias Online (Sincronizadas com Servidor):** Para histórias que já foram sincronizadas com um servidor remoto, todas as atualizações desde a última sincronização bem-sucedida devem ser armazenadas. Isso garante que nenhum dado seja perdido e que a replicação seja completa quando a conexão for restabelecida.
 *   **Histórias Offline (Nunca Sincronizadas):** Para histórias que são estritamente locais e nunca foram sincronizadas com um servidor, apenas as últimas 500 atualizações devem ser mantidas. Isso evita o acúmulo excessivo de dados de histórico que não seriam utilizados para sincronização remota, mantendo o banco de dados local leve e eficiente.
 
+### Mecanismo Detalhado de Sincronização
+
+1.  **Formato das Operações (`StoryUpdates`):** As operações serão definidas como objetos JSON que descrevem a mudança. Exemplos:
+    *   `{"type": "create", "entity": "NomeDaEntidade", "data": {...}}`
+    *   `{"type": "update", "entity": "NomeDaEntidade", "id": "ulid", "changes": {"campo": "novo_valor"}}`
+    *   `{"type": "delete", "entity": "NomeDaEntidade", "id": "ulid"}`
+2.  **Mecanismo de Rastreamento de Mudanças:** O ORM do lado do cliente (ou camada de banco de dados customizada) irá interceptar todas as operações de criação, atualização e exclusão. Para cada operação, ele gerará um registro `StoryUpdate` (conforme definido acima) e o armazenará em uma tabela local de "log de operações". Este log será a fonte para a sincronização.
+3.  **Protocolo de Comunicação:** WebSockets serão utilizados para notificações em tempo real de mudanças. Uma API REST será empregada para puxar e empurrar informações, permitindo também solicitações manuais de mudanças.
+4.  **Autenticação e Autorização:** JWT (JSON Web Tokens) será usado para autenticação. O administrador do servidor registrará os clientes, e estes receberão uma chave de API ou usarão login/senha para obter um JWT e um refresh token.
+5.  **Sincronização Inicial (Bootstrapping):** Haverá uma função de importação/exportação de histórias a partir de JSON, permitindo que o servidor envie uma história inteira de uma vez. As tabelas de história são agnósticas ao ID do usuário e utilizam ULIDs para garantir unicidade universal.
+6.  **Lógica de Mesclagem de Campos Diferentes:** Para campos diferentes dentro da mesma entidade, todas as alterações não conflitantes de ambos os lados serão aplicadas. Se houver conflito no *mesmo* campo, a estratégia LWW (Última Escrita Vence), baseada no campo `updated_at` (timestamp), será aplicada.
+7.  **Gerenciamento das "Últimas 500 Atualizações":** Uma tabela dedicada de "log de operações" armazenará as atualizações. Para histórias offline, quando o número de entradas exceder 500, as entradas mais antigas serão excluídas. Isso pode ser determinado usando `ROW_NUMBER()` ordenado por `updated_at` em ordem decrescente.
+8.  **Tratamento de Erros e Retentativas:** Cada operação de sincronização enviada será tratada como uma transação. Se nem todas as operações do servidor forem enviadas com sucesso, nenhuma alteração será aplicada (tudo ou nada).
+9.  **Integração do Banco de Dados Local Customizado:** A pasta `packages/shared/entities` contém o mapeamento inicial e idealizado das tabelas. A implementação do banco de dados local customizado aderirá a essas definições de entidade.
+10. **Detecção de Conflitos Complexos:** Se um campo foi atualizado recentemente (por exemplo, nas últimas horas), uma notificação será exibida na tela para informar o usuário sobre a alteração recente.
+
 - **Frontend** (`apps/client`)
   - Desenvolvido com React Native, Expo e React Native Web para uma base de código unificada.
-  - Opera de forma offline-first utilizando **WatermelonDB** como banco de dados local. A escolha do WatermelonDB se deve à sua alta performance, reatividade, suporte nativo a sincronização e robustez para aplicações offline-first em múltiplas plataformas.
+  - Opera de forma offline-first utilizando **um banco de dados local customizado**.
   - Sincroniza automaticamente com a API remota via o engine de sincronização.
 
 ### Configuração de Ambiente

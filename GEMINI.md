@@ -48,7 +48,7 @@ The client is built with React Native/Expo for a unified codebase across mobile 
 *   **Presentation Layer (UI/Views):** React Native Components & Screens, React Navigation.
 *   **Application Layer (State Management & Business Logic):** Zustand for global state, Use Cases/Services for business logic.
 *   **Data Layer:**
-    *   **Local Database:** SQLite (via `expo-sqlite` or WatermelonDB) for primary data persistence.
+    *   **Local Database:** SQLite (via `expo-sqlite`) for primary data persistence, managed by a custom synchronization engine.
     *   **API Client:** Axios for remote API communication.
     *   **Synchronization Engine:** A critical component for:
         *   Tracking local changes.
@@ -84,7 +84,23 @@ The backend (`apps/api`) will use:
 *   **Offline-First:** All user interactions and changes are first persisted to the local database.
 *   **Change Tracking:** The sync engine monitors local DB for pending operations.
 *   **Online Sync:** When online, pending operations are uploaded to the backend, and then updates are downloaded from the server.
-*   **Conflict Resolution:** The `version` field on entities is crucial for resolving conflicts, prioritizing the most recent version or applying specific rules.
+*   **Conflict Resolution:** The `updated_at` timestamp will be the primary field for Last-Write-Wins (LWW) conflict resolution. The `version` field, managed by the server, will be used to ensure sequential updates and detect outdated client data.
+
+### Detailed Synchronization Mechanism
+
+1.  **Format of Operations (`StoryUpdates`):** Operations will be defined as JSON objects describing the change.
+    *   `{"type": "create", "entity": "EntityName", "data": {...}}`
+    *   `{"type": "update", "entity": "EntityName", "id": "ulid", "changes": {"field": "new_value"}}`
+    *   `{"type": "delete", "entity": "EntityName", "id": "ulid"}`
+2.  **Mechanism for Change Tracking:** The client-side ORM (or custom database layer) will intercept all create, update, and delete operations. For each operation, it will generate a `StoryUpdate` record (as defined above) and store it in a local "operations log" table. This log will be the source for synchronization.
+3.  **Communication Protocol:** WebSockets will be used for real-time notifications of changes. A REST API will be used for pulling and pushing information, allowing for manual requests for changes.
+4.  **Authentication and Authorization:** JWT (JSON Web Tokens) will be used for authentication. The server administrator will register clients, and clients will receive either an API key or use login/password to obtain a JWT and a refresh token.
+5.  **Initial Synchronization (Bootstrapping):** The system will support an import/export function for stories as JSON. The server can send an entire story at once. Story tables are agnostic to user IDs and use ULIDs for universal uniqueness.
+6.  **Logic for Merging Different Fields:** For changes to different fields within the same entity, all non-conflicting changes from both sides will be applied. If a conflict occurs on the *same* field, the Last-Write-Wins (LWW) strategy (based on the `updated_at` timestamp) will be applied.
+7.  **Management of "Last 500 Updates":** A dedicated "operations log" table will store updates. For offline stories, when the number of entries exceeds 500, the oldest entries will be deleted. This can be determined using `ROW_NUMBER()` ordered by `updated_at` in descending order.
+8.  **Error Handling and Retries:** Each synchronization operation sent will be treated as a transaction. If not all operations from the server are successfully processed, no changes will be applied (all or nothing).
+9.  **Integration of Custom Local Database:** The `packages/shared/entities` directory contains the initial, idealized mapping of tables. The custom local database implementation will adhere to these entity definitions.
+10. **Complex Conflict Detection:** If a field has been updated recently (e.g., within a few hours), a notification will be displayed on the screen to inform the user of the recent change.
 
 ## 7. Development Environment & Tools
 

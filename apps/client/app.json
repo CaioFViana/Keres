@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "keres-client",
-    "slug": "keres-client",
+    "name": "Keres-Client",
+    "slug": "Keres-Client",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

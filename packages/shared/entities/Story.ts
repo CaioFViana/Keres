@@ -1,8 +1,9 @@
 export interface Story {
   id: string
+  userId: string // ID of the user who owns this story
   title: string
   type: 'linear' | 'branching'
-  summary: string | null
+  description: string | null // Changed from summary to description
   genre: string | null
   language: string | null
   isFavorite: boolean

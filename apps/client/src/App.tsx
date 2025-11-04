@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Text, View, ActivityIndicator, StyleSheet } from 'react-native';
-import { migrateDb } from './db/migrate';
-import { ThemeProvider } from './theme/ThemeProvider';
-import AppNavigator from './navigation/AppNavigator';
-import './utils/i18n'; // Import i18n configuration
-import { I18nextProvider } from 'react-i18next';
-import i18n from './utils/i18n';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
+import React, { useEffect, useState } from 'react';
+import { I18nextProvider } from 'react-i18next';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { migrateDb } from './db/migrate';
+import AppNavigator from './navigation/AppNavigator';
+import { ThemeProvider } from './theme/ThemeProvider';
+import './utils/i18n'; // Import i18n configuration
+import i18n from './utils/i18n';
 
 const DatabaseInitializer = ({ children }: { children: React.ReactNode }) => {
   const db = useSQLiteContext();

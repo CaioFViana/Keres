@@ -1,5 +1,5 @@
 import React, { useState } from 'react'; // Import useState
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native'; // Removed TouchableWithoutFeedback
 import DropDownPicker from 'react-native-dropdown-picker'; // Import DropDownPicker
 import { useTheme } from '../../theme';
 
@@ -38,7 +38,6 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
   const [open, setOpen] = useState(false); // State for dropdown open/close
   const [internalValue, setInternalValue] = useState<string | null>(value); // Internal state for DropDownPicker
 
-  // Update internalValue when external value prop changes
   React.useEffect(() => {
     setInternalValue(value);
   }, [value]);
@@ -61,7 +60,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
       borderRadius: 5,
       backgroundColor: colors.surface,
       justifyContent: 'center',
-      zIndex: 1000, // Ensure dropdown is above other elements
+      zIndex: 10000, // Ensure dropdown is above other elements
     },
     style: {
       backgroundColor: colors.surface,
@@ -75,10 +74,14 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
       color: colors.textSecondary,
       fontSize: 16,
     },
+    textStyle: { // New style for dropdown items
+      fontSize: 16,
+      color: colors.text,
+    },
     dropDownContainerStyle: {
       backgroundColor: colors.surface,
       borderColor: colors.border,
-      zIndex: 1000, // Ensure dropdown is above other elements
+      zIndex: 10000, // Ensure dropdown is above other elements
     },
     itemSeparator: {
       height: 1,
@@ -92,7 +95,9 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
         open={open}
         value={internalValue}
         items={convertedDropdownItems}
-        setOpen={setOpen}
+        setOpen={(val) => {
+          setOpen(val);
+        }}
         setValue={(callback) => {
           const newValue = callback(internalValue);
           setInternalValue(newValue);
@@ -100,10 +105,14 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
             onValueChange(newValue as string);
           }
         }}
+        onClose={() => {
+          setOpen(false);
+        }} // Explicitly close on close event
         placeholder={placeholder} // Use DropDownPicker's placeholder prop
         placeholderStyle={dropdownStyles.placeholderStyle}
         style={dropdownStyles.style}
         labelStyle={dropdownStyles.labelStyle}
+        textStyle={dropdownStyles.textStyle}
         dropDownContainerStyle={dropdownStyles.dropDownContainerStyle}
         itemSeparator={true}
         itemSeparatorStyle={dropdownStyles.itemSeparator}

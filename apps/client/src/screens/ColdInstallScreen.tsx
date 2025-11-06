@@ -3,9 +3,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Button from '../components/common/Button/Button';
+import FormContainer from '../components/common/FormContainer/FormContainer'; // Import FormContainer
 import Select from '../components/Select/Select'; // Import our new Select component
+import TextInput from '../components/common/TextInput/TextInput';
 import { useDrizzle } from '../db'; // Import useDrizzle
 import { migrate } from '../db/migrate'; // Import migrate
 import { createClientSettings } from '../services/ClientSettingsService'; // Import createClientSettings
@@ -24,6 +26,8 @@ type ColdInstallScreenNavigationProp = NativeStackNavigationProp<RootStackParamL
 
 const ColdInstallScreen = () => {
   const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [languageError, setLanguageError] = useState<string | null>(null);
   const { t } = useTranslation();
   const navigation = useNavigation<ColdInstallScreenNavigationProp>();
   const { colors } = useTheme();
@@ -37,6 +41,26 @@ const ColdInstallScreen = () => {
 
 
   const handleProceed = async () => {
+    let isValid = true;
+
+    if (!selectedLanguage) {
+      setLanguageError(t('select_language_error'));
+      isValid = false;
+    } else {
+      setLanguageError(null);
+    }
+
+    if (username.length < 3 || username.length > 99) {
+      setUsernameError(t('username_length_error'));
+      isValid = false;
+    } else {
+      setUsernameError(null);
+    }
+
+    if (!isValid) {
+      return;
+    }
+
     // Run database migrations first
     await migrate(db); // Use the raw db instance for migrations
 
@@ -62,34 +86,22 @@ const ColdInstallScreen = () => {
     }
   };
 
+  const isProceedDisabled = !selectedLanguage || username.length < 3 || username.length > 99;
+
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors.background,
-      padding: 20,
-    },
     title: {
       fontSize: 24,
       fontWeight: 'bold',
       marginBottom: 20,
       color: colors.text,
     },
-    input: {
-      width: '80%',
-      height: 40,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 5,
-      paddingHorizontal: 10,
-      marginBottom: 20,
-      color: colors.text,
-      backgroundColor: colors.surface,
-    },
     pickerContainer: {
       width: '80%',
       marginBottom: 20,
+    },
+    errorText: {
+      color: colors.error,
+      marginBottom: 10,
     },
   });
 
@@ -99,15 +111,14 @@ const ColdInstallScreen = () => {
   ];
 
   return (
-    <View style={styles.container}>
+    <FormContainer>
       <Text style={styles.title}>{t('welcome')}</Text>
       <TextInput
-        style={styles.input}
         placeholder={t('enter_username')}
-        placeholderTextColor={colors.textSecondary}
         value={username}
         onChangeText={setUsername}
       />
+      {usernameError && <Text style={styles.errorText}>{usernameError}</Text>}
       <View style={styles.pickerContainer}>
         <Select
           options={languageOptions}
@@ -116,8 +127,9 @@ const ColdInstallScreen = () => {
           placeholder={t('select_language')}
         />
       </View>
-      <Button onPress={handleProceed}>{t('proceed')}</Button>
-    </View>
+      {languageError && <Text style={styles.errorText}>{languageError}</Text>}
+      <Button onPress={handleProceed} disabled={isProceedDisabled}>{t('proceed')}</Button>
+    </FormContainer>
   );
 };
 

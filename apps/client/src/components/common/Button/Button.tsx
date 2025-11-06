@@ -6,9 +6,10 @@ interface ButtonProps {
   onPress: () => void;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
 }
 
-const Button: React.FC<ButtonProps> = ({ onPress, children, style }) => {
+const Button: React.FC<ButtonProps> = ({ onPress, children, style, disabled }) => {
   const { colors } = useTheme();
 
   const styles = StyleSheet.create({
@@ -20,6 +21,9 @@ const Button: React.FC<ButtonProps> = ({ onPress, children, style }) => {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    disabledButton: {
+      opacity: 0.6,
+    },
     buttonText: {
       color: colors.onPrimary,
       fontSize: 16,
@@ -28,7 +32,11 @@ const Button: React.FC<ButtonProps> = ({ onPress, children, style }) => {
   });
 
   return (
-    <TouchableOpacity style={[styles.button, style]} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.button, disabled && styles.disabledButton, style]}
+      onPress={onPress}
+      disabled={disabled}
+    >
       {typeof children === 'string' ? (
         <Text style={styles.buttonText}>{children}</Text>
       ) : (

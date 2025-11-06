@@ -129,7 +129,7 @@ const StorySelectionScreen = () => {
 
 
   return (
-    <View style={styles.mainContentContainer}> {/* Replaced SafeAreaView with a regular View */}
+    <View style={styles.mainContentContainer}>
       <View>
         <Text style={styles.title}>Welcome to Story Selection!</Text>
         <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>

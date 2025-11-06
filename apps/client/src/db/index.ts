@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { SQLiteDatabase } from 'expo-sqlite';
 import * as schema from './schema';
 import React, { createContext, useContext } from 'react'; // Import React Context utilities
+import { createStoryService } from '../services/StoryService'; // Import createStoryService
 
 let _drizzleDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
@@ -27,8 +28,6 @@ export function initializeDrizzle(dbInstance: SQLiteDatabase) {
   return _drizzleDb; // Return the initialized client
 }
 
-// Remove getDb() as it will be replaced by useDrizzle
-// export async function getDb() { ... }
-
 export * from './schema';
 export { schema };
+export { createStoryService }; // Export createStoryService

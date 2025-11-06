@@ -1,16 +1,17 @@
 import { Story } from '@keres/shared/entities/Story';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { schema, StoryInsert, useDrizzle } from '../db'; // Import useDrizzle
+import { createStoryService, useDrizzle } from '../db';
 import { useStoryStore } from '../state/storyStore';
-import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
-import { useUserSettingsStore } from '../state/userSettingsStore'; // Import useUserSettingsStore
+import { useThemeStore } from '../state/themeStore';
+import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
-import { createULID } from '../utils/ulid';
 
-
+// Define a type for the data needed to create a new story,
+// omitting fields handled by the service
+type NewStoryData = Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>;
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -18,17 +19,14 @@ type RootStackParamList = {
   MainSystem: { storyId: string };
 };
 
-
 type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StorySelection'>;
-
-// Infer the insert type from the Drizzle schema
 
 const StorySelectionScreen = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors } = useTheme();
-  // const db = useSQLiteContext(); // Removed
-  const drizzleDb = useDrizzle(); // Get the Drizzle client from context
+  const drizzleClient = useDrizzle();
+  const storyService = useRef(createStoryService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
 
   // Get client settings from stores
@@ -38,9 +36,8 @@ const StorySelectionScreen = () => {
 
   const fetchStories = async () => {
     try {
-      // const drizzleDb = await getDb(); // Removed
-      const result = await drizzleDb.select().from(schema.stories).all(); // Using Drizzle query builder
-      setStories(result as Story[]); // Cast to Story[]
+      const result = await storyService.getAllStories();
+      setStories(result as Story[]);
     } catch (error) {
       console.error('Error fetching stories:', error);
       Alert.alert('Error', 'Failed to load stories.');
@@ -60,8 +57,7 @@ const StorySelectionScreen = () => {
 
 
   const handleCreateNewStory = async () => {
-    const newStoryData: StoryInsert = {
-      id: createULID(),
+    const newStoryData: NewStoryData = {
       userId: 'placeholder-user-id', // TODO: Replace with actual user ID from authStore
       title: `New Story ${stories.length + 1}`,
       type: 'linear',
@@ -70,32 +66,13 @@ const StorySelectionScreen = () => {
       language: 'en',
       isFavorite: false,
       extraNotes: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      version: 1,
-      isDeleted: false,
-      deletedAt: null,
       serverId: null,
     };
 
 
     try {
-      // const drizzleDb = await getDb(); // Removed
-      await drizzleDb.insert(schema.stories).values(newStoryData).run(); // Using Drizzle query builder
-
-      fetchStories(); // Refresh the list of stories
-      // We need to create a Story object from newStoryData to pass to handleSelectStory
-      const createdStory: Story = {
-        ...newStoryData,
-        description: newStoryData.description ?? null,
-        genre: newStoryData.genre ?? null,
-        language: newStoryData.language ?? null,
-        extraNotes: newStoryData.extraNotes ?? null,
-        deletedAt: newStoryData.deletedAt ?? null,
-        serverId: newStoryData.serverId ?? null,
-        createdAt: newStoryData.createdAt,
-        updatedAt: newStoryData.updatedAt,
-      };
+      const createdStory = await storyService.createStory(newStoryData);
+      fetchStories();
       handleSelectStory(createdStory);
     } catch (error) {
       console.error('Error creating new story:', error);
@@ -115,10 +92,12 @@ const StorySelectionScreen = () => {
 
 
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
+    // Removed safeArea style
+    mainContentContainer: {
+      flex: 1, // Ensure it takes full height
       padding: 20,
+      justifyContent: 'space-between',
+      backgroundColor: colors.background, // Apply background color here
     },
     title: {
       fontSize: 24,
@@ -150,17 +129,20 @@ const StorySelectionScreen = () => {
 
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Story Selection!</Text>
-      <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
-        User: {username || 'N/A'}, Language: {language || 'N/A'}, Dark Mode: {darkMode ? 'Yes' : 'No'}
-      </Text>
-      <Text style={styles.title}>Your Stories</Text>
+    <View style={styles.mainContentContainer}> {/* Replaced SafeAreaView with a regular View */}
+      <View>
+        <Text style={styles.title}>Welcome to Story Selection!</Text>
+        <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
+            User: {username || 'N/A'}, Language: {language || 'N/A'}, Dark Mode: {darkMode ? 'Yes' : 'No'}
+        </Text>
+        <Text style={styles.title}>Your Stories</Text>
+      </View>
       <FlatList
         data={stories}
         renderItem={renderStoryItem}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={<Text style={{ color: colors.textSecondary }}>No stories found. Create one!</Text>}
+        style={{ flex: 1 }}
       />
       <View style={styles.createButtonContainer}>
         <Button title="Create New Story" onPress={handleCreateNewStory} color={colors.primary} />

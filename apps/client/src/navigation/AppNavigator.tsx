@@ -5,10 +5,10 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native'; // Import Ac
 import ColdInstallStack from './ColdInstallStack';
 import StorySelectionStack from './StorySelectionStack';
 import MainSystemStack from './MainSystemStack';
-import { getClientSettings } from '../services/ClientSettingsService'; // Import getClientSettings
-import { useUserSettingsStore } from '../state/userSettingsStore'; // Import useUserSettingsStore
-import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
-import { useDrizzle } from '../db'; // Import useDrizzle
+import { getClientSettings } from '../services/ClientSettingsService';
+import { useUserSettingsStore } from '../state/userSettingsStore';
+import { useThemeStore } from '../state/themeStore';
+import { useDrizzle } from '../db';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -26,30 +26,28 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isColdInstallNeeded, setIsColdInstallNeeded] = useState(false);
 
-  const drizzleDb = useDrizzle(); // Get the Drizzle client from context
+  const drizzleDb = useDrizzle();
 
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
   const initializeThemeSettings = useThemeStore((state) => state.initializeTheme);
 
   useEffect(() => {
     if (!dbInitialized) {
-      return; // Don't run until DB is initialized
+      return;
     }
 
     const checkColdInstall = async () => {
       try {
-        const settings = await getClientSettings(drizzleDb); // Pass drizzleDb
+        const settings = await getClientSettings(drizzleDb);
         if (!settings) {
           setIsColdInstallNeeded(true);
         } else {
-          // Initialize stores with existing settings
           await initializeUserSettings(drizzleDb);
           await initializeThemeSettings(drizzleDb);
           setIsColdInstallNeeded(false);
         }
       } catch (error) {
         console.error('Error checking for client settings:', error);
-        // In case of error, assume cold install is needed to be safe
         setIsColdInstallNeeded(true);
       } finally {
         setIsLoading(false);
@@ -57,7 +55,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
     };
 
     checkColdInstall();
-  }, [dbInitialized, initializeUserSettings, initializeThemeSettings, drizzleDb]); // Add drizzleDb to dependencies
+  }, [dbInitialized, initializeUserSettings, initializeThemeSettings, drizzleDb]);
 
   if (isLoading) {
     return (

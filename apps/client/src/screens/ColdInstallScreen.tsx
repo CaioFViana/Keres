@@ -3,7 +3,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
+import Button from '../components/common/Button/Button';
 import Select from '../components/Select/Select'; // Import our new Select component
 import { useDrizzle } from '../db'; // Import useDrizzle
 import { migrate } from '../db/migrate'; // Import migrate
@@ -115,7 +116,7 @@ const ColdInstallScreen = () => {
           placeholder={t('select_language')}
         />
       </View>
-      <Button title={t('proceed')} onPress={handleProceed} color={colors.primary} />
+      <Button onPress={handleProceed}>{t('proceed')}</Button>
     </View>
   );
 };

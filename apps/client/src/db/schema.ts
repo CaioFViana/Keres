@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { InferInsertModel, InferSelectModel } from 'drizzle-orm'; // Import these
 
 export const stories = sqliteTable('stories', {
   id: text('id').primaryKey(),
@@ -17,3 +18,23 @@ export const stories = sqliteTable('stories', {
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   serverId: text('server_id'),
 });
+
+// Export inferred types for stories
+export type StoryInsert = InferInsertModel<typeof stories>;
+export type StorySelect = InferSelectModel<typeof stories>;
+
+export const clientSettings = sqliteTable('client_settings', {
+  id: text('id').primaryKey(),
+  localUsername: text('local_username').notNull(),
+  language: text('language').notNull(),
+  darkMode: integer('dark_mode', { mode: 'boolean' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  version: integer('version').notNull(),
+  isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }),
+});
+
+// Export inferred types for clientSettings
+export type ClientSettingsInsert = InferInsertModel<typeof clientSettings>;
+export type ClientSettingsSelect = InferSelectModel<typeof clientSettings>;

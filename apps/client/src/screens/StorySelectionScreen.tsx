@@ -1,14 +1,16 @@
+import { Story } from '@keres/shared/entities/Story';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
-import { Button, FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
-import { useTheme } from '../theme';
-import { useSQLiteContext } from 'expo-sqlite';
-import { schema } from '../db';
-import { sql } from 'drizzle-orm';
+import { Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { schema, StoryInsert, useDrizzle } from '../db'; // Import useDrizzle
 import { useStoryStore } from '../state/storyStore';
-import { ulid } from '../utils/ulid';
-import { Story } from '@keres/shared/entities/Story';
+import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
+import { useUserSettingsStore } from '../state/userSettingsStore'; // Import useUserSettingsStore
+import { useTheme } from '../theme';
+import { createULID } from '../utils/ulid';
+
+
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -16,38 +18,50 @@ type RootStackParamList = {
   MainSystem: { storyId: string };
 };
 
+
 type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StorySelection'>;
+
+// Infer the insert type from the Drizzle schema
 
 const StorySelectionScreen = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors } = useTheme();
-  const db = useSQLiteContext();
+  // const db = useSQLiteContext(); // Removed
+  const drizzleDb = useDrizzle(); // Get the Drizzle client from context
   const { setSelectedStory } = useStoryStore();
+
+  // Get client settings from stores
+  const { username, language } = useUserSettingsStore();
+  const { darkMode } = useThemeStore();
+
 
   const fetchStories = async () => {
     try {
-      const prepared = sql`SELECT * FROM stories;`.toSql();
-      const result = await db.getAllAsync<Story>(prepared.sql, prepared.params);
-      setStories(result);
+      // const drizzleDb = await getDb(); // Removed
+      const result = await drizzleDb.select().from(schema.stories).all(); // Using Drizzle query builder
+      setStories(result as Story[]); // Cast to Story[]
     } catch (error) {
       console.error('Error fetching stories:', error);
       Alert.alert('Error', 'Failed to load stories.');
     }
   };
 
+
   useEffect(() => {
     fetchStories();
   }, []);
+
 
   const handleSelectStory = (story: Story) => {
     setSelectedStory(story);
     navigation.replace('MainSystem', { storyId: story.id });
   };
 
+
   const handleCreateNewStory = async () => {
-    const newStory: Story = {
-      id: ulid(),
+    const newStoryData: StoryInsert = {
+      id: createULID(),
       userId: 'placeholder-user-id', // TODO: Replace with actual user ID from authStore
       title: `New Story ${stories.length + 1}`,
       type: 'linear',
@@ -56,25 +70,39 @@ const StorySelectionScreen = () => {
       language: 'en',
       isFavorite: false,
       extraNotes: null,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       version: 1,
       isDeleted: false,
       deletedAt: null,
       serverId: null,
     };
 
-    try {
-      const prepared = sql`INSERT INTO stories ("id", "userId", "title", "type", "description", "genre", "language", "isFavorite", "extraNotes", "createdAt", "updatedAt", "version", "isDeleted", "deletedAt", "serverId") VALUES (${newStory.id}, ${newStory.userId}, ${newStory.title}, ${newStory.type}, ${newStory.description}, ${newStory.genre}, ${newStory.language}, ${newStory.isFavorite}, ${newStory.extraNotes}, ${newStory.createdAt}, ${newStory.updatedAt}, ${newStory.version}, ${newStory.isDeleted}, ${newStory.deletedAt}, ${newStory.serverId});`.toSql();
 
-      await db.runAsync(prepared.sql, prepared.params);
+    try {
+      // const drizzleDb = await getDb(); // Removed
+      await drizzleDb.insert(schema.stories).values(newStoryData).run(); // Using Drizzle query builder
+
       fetchStories(); // Refresh the list of stories
-      handleSelectStory(newStory);
+      // We need to create a Story object from newStoryData to pass to handleSelectStory
+      const createdStory: Story = {
+        ...newStoryData,
+        description: newStoryData.description ?? null,
+        genre: newStoryData.genre ?? null,
+        language: newStoryData.language ?? null,
+        extraNotes: newStoryData.extraNotes ?? null,
+        deletedAt: newStoryData.deletedAt ?? null,
+        serverId: newStoryData.serverId ?? null,
+        createdAt: newStoryData.createdAt,
+        updatedAt: newStoryData.updatedAt,
+      };
+      handleSelectStory(createdStory);
     } catch (error) {
       console.error('Error creating new story:', error);
       Alert.alert('Error', 'Failed to create new story.');
     }
   };
+
 
   const renderStoryItem = ({ item }: { item: Story }) => (
     <TouchableOpacity style={styles.storyItem} onPress={() => handleSelectStory(item)}>
@@ -84,6 +112,7 @@ const StorySelectionScreen = () => {
       </View>
     </TouchableOpacity>
   );
+
 
   const styles = StyleSheet.create({
     container: {
@@ -119,8 +148,13 @@ const StorySelectionScreen = () => {
     },
   });
 
+
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Welcome to Story Selection!</Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
+        User: {username || 'N/A'}, Language: {language || 'N/A'}, Dark Mode: {darkMode ? 'Yes' : 'No'}
+      </Text>
       <Text style={styles.title}>Your Stories</Text>
       <FlatList
         data={stories}
@@ -134,5 +168,6 @@ const StorySelectionScreen = () => {
     </View>
   );
 };
+
 
 export default StorySelectionScreen;

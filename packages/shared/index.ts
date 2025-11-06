@@ -15,4 +15,5 @@ export * from "./entities/sync/StoryUpdates";
 export * from "./entities/sync/User";
 export * from "./entities/Tag";
 export * from "./entities/WorldRule";
+export * from "./entities/ClientSettings";
 

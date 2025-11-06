@@ -1,13 +1,7 @@
 import { SQLiteDatabase } from 'expo-sqlite';
-// Removed: import { sql } from 'drizzle-orm';
 
-// Import all migration files
-import migration_0001 from './migrations/0001_initial_schema';
-
-const migrations = [
-  { id: 1, name: '0001_initial_schema', run: migration_0001 },
-  // Add new migrations here in order
-];
+// Import all migration files dynamically
+import migrations from './migrations/index'; // Import the generated migrations array
 
 export async function migrate(expoDb: SQLiteDatabase) { // Renamed db to expoDb for clarity
   console.log('migrate: Starting custom Drizzle client-side migrations...');
@@ -24,7 +18,7 @@ export async function migrate(expoDb: SQLiteDatabase) { // Renamed db to expoDb 
   const appliedMigrations = await expoDb.getAllAsync<{ name: string }>(`SELECT name FROM _migrations`);
   const appliedMigrationNames = new Set(appliedMigrations.map((m) => m.name));
 
-  for (const migration of migrations) {
+  for (const migration of migrations) { // Use the dynamically imported migrations
     if (!appliedMigrationNames.has(migration.name)) {
       console.log(`migrate: Applying migration: ${migration.name}`);
       try {

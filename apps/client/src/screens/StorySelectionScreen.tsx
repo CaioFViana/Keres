@@ -8,6 +8,7 @@ import { useStoryStore } from '../state/storyStore';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
+import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 
 // Define a type for the data needed to create a new story,
 // omitting fields handled by the service
@@ -148,17 +149,6 @@ const StorySelectionScreen = () => {
       marginBottom: 20,
       color: colors.text,
     },
-    summaryContainer: {
-      marginBottom: 20,
-      padding: 15,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-    },
-    summaryText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
     storyItem: {
       padding: 15,
       backgroundColor: colors.card,
@@ -190,20 +180,7 @@ const StorySelectionScreen = () => {
             User: {username || 'N/A'}, Language: {language || 'N/A'}, Dark Mode: {darkMode ? 'Yes' : 'No'}
         </Text>
 
-        {summary && (
-          <View style={styles.summaryContainer}>
-            <Text style={styles.summaryText}>Total Stories: {summary.totalStories} {summary.branchingStories > 0 && `(${summary.branchingStories} branching)`}</Text>
-            <Text style={styles.summaryText}>Characters: {summary.characterCount}</Text>
-            {summary.branchingStories > 0 && (
-              <Text style={styles.summaryText}>Choices: {summary.choiceCount}</Text>
-            )}
-            <Text style={styles.summaryText}>Locations: {summary.locationCount}</Text>
-            <Text style={styles.summaryText}>Chapters: {summary.chapterCount}</Text>
-            <Text style={styles.summaryText}>Scenes: {summary.sceneCount}</Text>
-            <Text style={styles.summaryText}>Notes: {summary.noteCount}</Text>
-            <Text style={styles.summaryText}>World Rules: {summary.worldRuleCount}</Text>
-          </View>
-        )}
+        {summary && <SummaryCard {...summary} title="Global Summary" />}
 
         <Text style={styles.title}>Your Stories</Text>
       </View>

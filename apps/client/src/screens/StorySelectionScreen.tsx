@@ -21,8 +21,21 @@ type RootStackParamList = {
 
 type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StorySelection'>;
 
+interface StorySummary {
+  totalStories: number;
+  branchingStories: number;
+  characterCount: number;
+  choiceCount: number;
+  locationCount: number;
+  chapterCount: number;
+  sceneCount: number;
+  noteCount: number;
+  worldRuleCount: number;
+}
+
 const StorySelectionScreen = () => {
   const [stories, setStories] = useState<Story[]>([]);
+  const [summary, setSummary] = useState<StorySummary | null>(null);
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors } = useTheme();
   const drizzleClient = useDrizzle();
@@ -44,9 +57,38 @@ const StorySelectionScreen = () => {
     }
   };
 
+  const fetchSummary = async () => {
+    try {
+      const storyCounts = await storyService.getStoryCounts();
+      const characterCount = await storyService.getCharacterCount();
+      const choiceCount = await storyService.getChoiceCount();
+      const locationCount = await storyService.getLocationCount();
+      const chapterCount = await storyService.getChapterCount();
+      const sceneCount = await storyService.getSceneCount();
+      const noteCount = await storyService.getNoteCount();
+      const worldRuleCount = await storyService.getWorldRuleCount();
+
+      setSummary({
+        totalStories: storyCounts.totalStories,
+        branchingStories: storyCounts.branchingStories,
+        characterCount,
+        choiceCount: storyCounts.branchingStories > 0 ? choiceCount : 0, // Only show choices if there are branching stories
+        locationCount,
+        chapterCount,
+        sceneCount,
+        noteCount,
+        worldRuleCount,
+      });
+    } catch (error) {
+      console.error('Error fetching summary:', error);
+      Alert.alert('Error', 'Failed to load summary data.');
+    }
+  };
+
 
   useEffect(() => {
     fetchStories();
+    fetchSummary();
   }, []);
 
 
@@ -73,6 +115,7 @@ const StorySelectionScreen = () => {
     try {
       const createdStory = await storyService.createStory(newStoryData);
       fetchStories();
+      fetchSummary(); // Refresh summary after creating a new story
       handleSelectStory(createdStory);
     } catch (error) {
       console.error('Error creating new story:', error);
@@ -105,6 +148,17 @@ const StorySelectionScreen = () => {
       marginBottom: 20,
       color: colors.text,
     },
+    summaryContainer: {
+      marginBottom: 20,
+      padding: 15,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+    },
+    summaryText: {
+      fontSize: 16,
+      color: colors.text,
+      marginBottom: 5,
+    },
     storyItem: {
       padding: 15,
       backgroundColor: colors.card,
@@ -135,6 +189,22 @@ const StorySelectionScreen = () => {
         <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
             User: {username || 'N/A'}, Language: {language || 'N/A'}, Dark Mode: {darkMode ? 'Yes' : 'No'}
         </Text>
+
+        {summary && (
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryText}>Total Stories: {summary.totalStories} {summary.branchingStories > 0 && `(${summary.branchingStories} branching)`}</Text>
+            <Text style={styles.summaryText}>Characters: {summary.characterCount}</Text>
+            {summary.branchingStories > 0 && (
+              <Text style={styles.summaryText}>Choices: {summary.choiceCount}</Text>
+            )}
+            <Text style={styles.summaryText}>Locations: {summary.locationCount}</Text>
+            <Text style={styles.summaryText}>Chapters: {summary.chapterCount}</Text>
+            <Text style={styles.summaryText}>Scenes: {summary.sceneCount}</Text>
+            <Text style={styles.summaryText}>Notes: {summary.noteCount}</Text>
+            <Text style={styles.summaryText}>World Rules: {summary.worldRuleCount}</Text>
+          </View>
+        )}
+
         <Text style={styles.title}>Your Stories</Text>
       </View>
       <FlatList

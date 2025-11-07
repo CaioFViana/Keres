@@ -3,11 +3,13 @@
 
 import migration_1 from './0000_shocking_mister_sinister';
 import migration_2 from './0001_glamorous_makkari';
+import migration_3 from './0002_friendly_bishop';
 
 
 const migrations = [
 { id: 1, name: '0000_shocking_mister_sinister', run: migration_1 },
   { id: 2, name: '0001_glamorous_makkari', run: migration_2 },
+  { id: 3, name: '0002_friendly_bishop', run: migration_3 },
 ];
 
 export default migrations;

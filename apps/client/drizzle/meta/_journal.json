@@ -15,6 +15,13 @@
       "when": 1762453337931,
       "tag": "0001_glamorous_makkari",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1762483628384,
+      "tag": "0002_friendly_bishop",
+      "breakpoints": true
     }
   ]
 }

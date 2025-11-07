@@ -42,19 +42,50 @@ export type ClientSettingsSelect = InferSelectModel<typeof clientSettings>;
 // New tables below
 
 export const users = sqliteTable('users', {
-  id: text('id').primaryKey(),
-  username: text('username').notNull(),
+  idUser: text('id_user').primaryKey(),
+  idServer: text('id_server').notNull(),
   displayName: text('display_name'),
-  avatarUrl: text('avatar_url'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
-  sourceServerId: text('source_server_id'),
 });
 export type UserInsert = InferInsertModel<typeof users>;
 export type UserSelect = InferSelectModel<typeof users>;
+
+export const servers = sqliteTable('servers', {
+  id: text('id').primaryKey(),
+  idUser: text('id_user').notNull(),
+  userName: text('user_name').notNull(),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  lastSyncDate: integer('last_sync_date', { mode: 'timestamp' }), // Nullable
+  apiKey: text('api_key').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  version: integer('version').notNull(),
+  isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(), // Added for consistency
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }), // Added for consistency
+});
+export type ServerInsert = InferInsertModel<typeof servers>;
+export type ServerSelect = InferSelectModel<typeof servers>;
+
+export const storyPermissions = sqliteTable('story_permissions', {
+  id: text('id').primaryKey(), // Added for consistency
+  userId: text('user_id').notNull(),
+  storyId: text('story_id').notNull(),
+  serverId: text('server_id').notNull(),
+  permission: text('permission').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  version: integer('version').notNull(), // Added for consistency
+  isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(), // Added for consistency
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }), // Added for consistency
+});
+export type StoryPermissionInsert = InferInsertModel<typeof storyPermissions>;
+export type StoryPermissionSelect = InferSelectModel<typeof storyPermissions>;
+
 
 export const chapters = sqliteTable('chapters', {
   id: text('id').primaryKey(),

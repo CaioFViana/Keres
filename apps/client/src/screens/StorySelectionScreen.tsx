@@ -3,12 +3,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../db';
 import { useStoryStore } from '../state/storyStore';
+import { useSummaryStore } from '../state/summaryStore'; // Import the new summary store
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
-import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 
 // Define a type for the data needed to create a new story,
 // omitting fields handled by the service
@@ -22,26 +23,16 @@ type RootStackParamList = {
 
 type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StorySelection'>;
 
-interface StorySummary {
-  totalStories: number;
-  branchingStories: number;
-  characterCount: number;
-  choiceCount: number;
-  locationCount: number;
-  chapterCount: number;
-  sceneCount: number;
-  noteCount: number;
-  worldRuleCount: number;
-}
-
 const StorySelectionScreen = () => {
   const [stories, setStories] = useState<Story[]>([]);
-  const [summary, setSummary] = useState<StorySummary | null>(null);
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors } = useTheme();
   const drizzleClient = useDrizzle();
   const storyService = useRef(createStoryService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
+
+  // Get summary state from Zustand store
+  const { summary, updateSummary } = useSummaryStore();
 
   // Get client settings from stores
   const { username, language } = useUserSettingsStore();
@@ -69,7 +60,7 @@ const StorySelectionScreen = () => {
       const noteCount = await storyService.getNoteCount();
       const worldRuleCount = await storyService.getWorldRuleCount();
 
-      setSummary({
+      updateSummary({ // Update the Zustand store
         totalStories: storyCounts.totalStories,
         branchingStories: storyCounts.branchingStories,
         characterCount,
@@ -115,9 +106,66 @@ const StorySelectionScreen = () => {
 
     try {
       const createdStory = await storyService.createStory(newStoryData);
+      const storyId = createdStory.id;
+
+      // Create dummy entities for testing
+      await storyService.createCharacter({
+        storyId,
+        name: 'Hero Character',
+        gender: 'male',
+        race: 'human',
+        isFavorite: false,
+      });
+
+      const chapter = await storyService.createChapter({
+        storyId,
+        name: 'Chapter 1',
+        index: 1,
+        isFavorite: false,
+      });
+
+      const location = await storyService.createLocation({
+        storyId,
+        name: 'Enchanted Forest',
+        isFavorite: false,
+      });
+
+      const scene = await storyService.createScene({
+        storyId,
+        chapterId: chapter.id,
+        locationId: location.id,
+        name: 'Forest Entrance',
+        index: 1,
+        isFavorite: false,
+      });
+
+      await storyService.createNote({
+        storyId,
+        title: 'First Draft Ideas',
+        body: 'Initial thoughts on the story.',
+        isFavorite: false,
+      });
+
+      await storyService.createWorldRule({
+        storyId,
+        title: 'Magic System Basics',
+        description: 'How magic works in this world.',
+        isFavorite: false,
+      });
+
+      if (createdStory.type === 'branching') {
+        await storyService.createChoice({
+          storyId,
+          sceneId: scene.id,
+          nextSceneId: scene.id, // For simplicity, self-referencing
+          text: 'Go deeper into the forest',
+          isImplicit: false,
+        });
+      }
+
       fetchStories();
-      fetchSummary(); // Refresh summary after creating a new story
-      handleSelectStory(createdStory);
+      fetchSummary(); // Refresh summary after creating a new story and entities
+      // Removed: handleSelectStory(createdStory); // Do not navigate for testing purposes
     } catch (error) {
       console.error('Error creating new story:', error);
       Alert.alert('Error', 'Failed to create new story.');

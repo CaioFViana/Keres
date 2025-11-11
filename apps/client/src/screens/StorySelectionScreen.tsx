@@ -1,13 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Story } from '@keres/shared/entities/Story';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
 import { Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../db';
 import { useStoryStore } from '../state/storyStore';
-import { useSummaryStore } from '../state/summaryStore'; // Import the new summary store
+import { useSummaryStore } from '../state/summaryStore';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
@@ -97,8 +98,8 @@ const StorySelectionScreen = () => {
       userId: 'placeholder-user-id', // TODO: Replace with actual user ID from authStore
       title: `${t('new_story')} ${stories.length + 1}`,
       type: 'linear',
-      description: null,
-      genre: null,
+      description: 'This is a dummy description for a new linear story. It should be long enough to be truncated.', // Add description
+      genre: 'Fantasy', // Add genre
       language: 'en',
       isFavorite: false,
       extraNotes: null,
@@ -179,8 +180,8 @@ const StorySelectionScreen = () => {
       userId: 'placeholder-user-id', // TODO: Replace with actual user ID from authStore
       title: `${t('new_branching_story')} ${stories.length + 1}`,
       type: 'branching', // Set type to branching
-      description: null,
-      genre: null,
+      description: 'This is a dummy description for a new branching story. It also needs to be long enough to be truncated.', // Add description
+      genre: 'Sci-Fi', // Add genre
       language: 'en',
       isFavorite: false,
       extraNotes: null,
@@ -253,13 +254,42 @@ const StorySelectionScreen = () => {
     }
   };
 
+  const toggleFavorite = async (storyId: string, currentFavoriteStatus: boolean) => {
+    try {
+      await storyService.updateStoryFavoriteStatus(storyId, !currentFavoriteStatus);
+      // Update local state to reflect the change
+      setStories((prevStories) =>
+        prevStories.map((story) =>
+          story.id === storyId ? { ...story, isFavorite: !currentFavoriteStatus } : story
+        )
+      );
+    } catch (error) {
+      console.error('Error toggling favorite status:', error);
+      Alert.alert(t('error'), t('failed_to_update_favorite_status'));
+    }
+  };
 
   const renderStoryItem = ({ item }: { item: Story }) => (
     <TouchableOpacity style={styles.storyItem} onPress={() => handleSelectStory(item)}>
-      <View>
+      <View style={styles.storyItemContent}>
         <Text style={styles.storyTitle}>{item.title}</Text>
-        <Text style={styles.storyServer}>ID: {item.id}</Text>
+        {item.description && (
+          <Text style={styles.storyDescription}>
+            {item.description.length > 50
+              ? `${item.description.substring(0, 50)}...`
+              : item.description}
+          </Text>
+        )}
+        {item.genre && <Text style={styles.storyDetail}>{t('genre')}: {item.genre}</Text>}
+        {item.serverId && <Text style={styles.storyDetail}>{t('server')}: {item.serverId}</Text>}
       </View>
+      <TouchableOpacity onPress={() => toggleFavorite(item.id, item.isFavorite)} style={styles.favoriteButton}>
+        <Ionicons
+          name={item.isFavorite ? 'star' : 'star-outline'}
+          size={24}
+          color={item.isFavorite ? colors.star : colors.textSecondary}
+        />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -287,13 +317,27 @@ const StorySelectionScreen = () => {
       justifyContent: 'space-between',
       alignItems: 'center',
     },
+    storyItemContent: {
+      flex: 1, // Take up available space
+      marginRight: 10,
+    },
     storyTitle: {
       fontSize: 18,
+      fontWeight: 'bold',
       color: colors.text,
     },
-    storyServer: {
+    storyDescription: {
       fontSize: 14,
       color: colors.textSecondary,
+      marginTop: 5,
+    },
+    storyDetail: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    favoriteButton: {
+      padding: 5,
     },
     createButtonContainer: {
       marginTop: 20,

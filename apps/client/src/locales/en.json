@@ -62,5 +62,7 @@
   "failed_to_create_new_story": "Failed to create new story.",
   "error_creating_new_branching_story": "Error creating new branching story:",
   "failed_to_create_new_branching_story": "Failed to create new branching story.",
-  "error": "Error"
+  "error": "Error",
+  "genre": "Genre",
+  "failed_to_update_favorite_status": "Failed to update favorite status."
 }

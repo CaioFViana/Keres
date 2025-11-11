@@ -40,6 +40,8 @@ export interface StoryService {
   createNote(noteData: Create<NoteInsert>): Promise<NoteSelect>;
   createWorldRule(worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect>;
   createChoice(choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect>;
+
+  updateStoryFavoriteStatus(storyId: string, isFavorite: boolean): Promise<void>;
 }
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
@@ -152,6 +154,13 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newChoice = prepareNewEntityData<ChoiceInsert>(choiceData);
       const result = await db.insert(choices).values(newChoice).returning().get();
       return result;
+    },
+
+    async updateStoryFavoriteStatus(storyId: string, isFavorite: boolean): Promise<void> {
+      await db.update(stories)
+        .set({ isFavorite, updatedAt: new Date() })
+        .where(eq(stories.id, storyId))
+        .run();
     },
   };
 };

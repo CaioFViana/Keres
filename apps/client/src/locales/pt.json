@@ -62,5 +62,7 @@
   "failed_to_create_new_story": "Falha ao criar nova história.",
   "error_creating_new_branching_story": "Erro ao criar nova história ramificada:",
   "failed_to_create_new_branching_story": "Falha ao criar nova história ramificada.",
-  "error": "Erro"
+  "error": "Erro",
+  "genre": "Gênero",
+  "failed_to_update_favorite_status": "Falha ao atualizar status de favorito."
 }

@@ -15,6 +15,7 @@ export const lightColors = {
   textSecondary: '#666666',
   border: '#CCCCCC',
   card: '#F5F5F5',
+  star: '#FFD700', // Gold color for star
 };
 
 export const darkColors = {
@@ -34,6 +35,7 @@ export const darkColors = {
   textSecondary: '#AAAAAA',
   border: '#444444',
   card: '#1E1E1E',
+  star: '#FFD700', // Gold color for star
 };
 
 export type Colors = typeof lightColors;

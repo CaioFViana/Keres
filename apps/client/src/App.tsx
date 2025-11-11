@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle } from './db';
 import { migrate } from './db/migrate'; // Import the new migrate function
 import AppNavigator from './navigation/AppNavigator';
+import { useUserSettingsStore } from './state/userSettingsStore'; // Import useUserSettingsStore
 import { ThemeProvider } from './theme/ThemeProvider';
 import './utils/i18n'; // Import i18n configuration
 import i18n from './utils/i18n';
@@ -13,6 +14,8 @@ const DatabaseInitializer = () => {
   const db = useSQLiteContext();
   const [dbInitialized, setDbInitialized] = useState(false);
   const [drizzleClient, setDrizzleClient] = useState<AppDrizzleClient | null>(null);
+  const [userSettingsLoaded, setUserSettingsLoaded] = useState(false); // New state for user settings
+  const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings); // Get the initializer
 
   console.log('DatabaseInitializer: db context', db);
 
@@ -25,8 +28,18 @@ const DatabaseInitializer = () => {
         setDrizzleClient(initializedDrizzle);
         setDbInitialized(true);
         console.log('DatabaseInitializer: Database initialized successfully.');
+
+        // Initialize user settings and apply language
+        const settings = await initializeUserSettings(initializedDrizzle);
+        if (settings?.language) {
+          i18n.changeLanguage(settings.language);
+          console.log(`DatabaseInitializer: Language set to ${settings.language}`);
+        }
+        setUserSettingsLoaded(true); // Mark user settings as loaded
+        console.log('DatabaseInitializer: User settings loaded and language applied.');
+
       } catch (e) {
-        console.error('DatabaseInitializer: Failed to initialize database', e);
+        console.error('DatabaseInitializer: Failed to initialize database or load settings', e);
         // Handle error appropriately, maybe show an error screen
       }
     };
@@ -36,13 +49,13 @@ const DatabaseInitializer = () => {
     } else {
       console.log('DatabaseInitializer: db context is null, waiting...');
     }
-  }, [db]);
+  }, [db, initializeUserSettings]); // Add initializeUserSettings to dependencies
 
-  if (!dbInitialized || !drizzleClient) {
+  if (!dbInitialized || !drizzleClient || !userSettingsLoaded) { // Wait for user settings
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Loading application...</Text>
+        <Text>{i18n.t('loading_application')}</Text>
       </View>
     );
   }

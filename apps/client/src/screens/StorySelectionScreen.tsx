@@ -2,6 +2,7 @@ import { Story } from '@keres/shared/entities/Story';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../db';
@@ -30,6 +31,7 @@ const StorySelectionScreen = () => {
   const drizzleClient = useDrizzle();
   const storyService = useRef(createStoryService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
+  const { t } = useTranslation(); // Initialize useTranslation
 
   // Get summary state from Zustand store
   const { summary, updateSummary } = useSummaryStore();
@@ -44,8 +46,8 @@ const StorySelectionScreen = () => {
       const result = await storyService.getAllStories();
       setStories(result as Story[]);
     } catch (error) {
-      console.error('Error fetching stories:', error);
-      Alert.alert('Error', 'Failed to load stories.');
+      console.error(t('error_fetching_stories'), error);
+      Alert.alert(t('error'), t('failed_to_load_stories'));
     }
   };
 
@@ -72,8 +74,8 @@ const StorySelectionScreen = () => {
         worldRuleCount,
       });
     } catch (error) {
-      console.error('Error fetching summary:', error);
-      Alert.alert('Error', 'Failed to load summary data.');
+      console.error(t('error_fetching_summary'), error);
+      Alert.alert(t('error'), t('failed_to_load_summary_data'));
     }
   };
 
@@ -93,7 +95,7 @@ const StorySelectionScreen = () => {
   const handleCreateNewStory = async () => {
     const newStoryData: NewStoryData = {
       userId: 'placeholder-user-id', // TODO: Replace with actual user ID from authStore
-      title: `New Story ${stories.length + 1}`,
+      title: `${t('new_story')} ${stories.length + 1}`,
       type: 'linear',
       description: null,
       genre: null,
@@ -167,8 +169,87 @@ const StorySelectionScreen = () => {
       fetchSummary(); // Refresh summary after creating a new story and entities
       // Removed: handleSelectStory(createdStory); // Do not navigate for testing purposes
     } catch (error) {
-      console.error('Error creating new story:', error);
-      Alert.alert('Error', 'Failed to create new story.');
+      console.error(t('error_creating_new_story'), error);
+      Alert.alert(t('error'), t('failed_to_create_new_story'));
+    }
+  };
+
+  const handleCreateNewBranchingStory = async () => {
+    const newStoryData: NewStoryData = {
+      userId: 'placeholder-user-id', // TODO: Replace with actual user ID from authStore
+      title: `${t('new_branching_story')} ${stories.length + 1}`,
+      type: 'branching', // Set type to branching
+      description: null,
+      genre: null,
+      language: 'en',
+      isFavorite: false,
+      extraNotes: null,
+      serverId: null,
+    };
+
+    try {
+      const createdStory = await storyService.createStory(newStoryData);
+      const storyId = createdStory.id;
+
+      // Create dummy entities for testing
+      await storyService.createCharacter({
+        storyId,
+        name: 'Branching Hero',
+        gender: 'female',
+        race: 'elf',
+        isFavorite: false,
+      });
+
+      const chapter = await storyService.createChapter({
+        storyId,
+        name: 'Branching Chapter 1',
+        index: 1,
+        isFavorite: false,
+      });
+
+      const location = await storyService.createLocation({
+        storyId,
+        name: 'Crossroads',
+        isFavorite: false,
+      });
+
+      const scene1 = await storyService.createScene({
+        storyId,
+        chapterId: chapter.id,
+        locationId: location.id,
+        name: 'Path A',
+        index: 1,
+        isFavorite: false,
+      });
+
+      // Create multiple choices for scene1 to test average
+      await storyService.createChoice({
+        storyId,
+        sceneId: scene1.id,
+        nextSceneId: scene1.id, // Self-referencing for dummy data
+        text: 'Take the left path',
+        isImplicit: false,
+      });
+      await storyService.createChoice({
+        storyId,
+        sceneId: scene1.id,
+        nextSceneId: scene1.id, // Self-referencing for dummy data
+        text: 'Take the right path',
+        isImplicit: false,
+      });
+      await storyService.createChoice({
+        storyId,
+        sceneId: scene1.id,
+        nextSceneId: scene1.id, // Self-referencing for dummy data
+        text: 'Go straight',
+        isImplicit: false,
+      });
+
+      fetchStories();
+      fetchSummary(); // Refresh summary after creating a new story and entities
+    } catch (error) {
+      console.error(t('error_creating_new_branching_story'), error);
+      Alert.alert(t('error'), t('failed_to_create_new_branching_story'));
     }
   };
 
@@ -216,6 +297,8 @@ const StorySelectionScreen = () => {
     },
     createButtonContainer: {
       marginTop: 20,
+      flexDirection: 'row', // Arrange buttons horizontally
+      justifyContent: 'space-around', // Distribute space evenly
     },
   });
 
@@ -223,24 +306,25 @@ const StorySelectionScreen = () => {
   return (
     <View style={styles.mainContentContainer}>
       <View>
-        <Text style={styles.title}>Welcome to Story Selection!</Text>
+        <Text style={styles.title}>{t('welcome_to_story_selection')}</Text>
         <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
-            User: {username || 'N/A'}, Language: {language || 'N/A'}, Dark Mode: {darkMode ? 'Yes' : 'No'}
+            {t('user_info', { username: username || 'N/A', language: language || 'N/A', darkMode: darkMode ? t('yes') : t('no') })}
         </Text>
 
-        {summary && <SummaryCard {...summary} title="Global Summary" />}
+        {summary && <SummaryCard {...summary} title={t('global_summary')} />}
 
-        <Text style={styles.title}>Your Stories</Text>
+        <Text style={styles.title}>{t('your_stories')}</Text>
       </View>
       <FlatList
         data={stories}
         renderItem={renderStoryItem}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={{ color: colors.textSecondary }}>No stories found. Create one!</Text>}
+        ListEmptyComponent={<Text style={{ color: colors.textSecondary }}>{t('no_stories_found_create_one')}</Text>}
         style={{ flex: 1 }}
       />
       <View style={styles.createButtonContainer}>
-        <Button title="Create New Story" onPress={handleCreateNewStory} color={colors.primary} />
+        <Button title={t('create_new_story')} onPress={handleCreateNewStory} color={colors.primary} />
+        <Button title={t('create_new_branching_story')} onPress={handleCreateNewBranchingStory} color={colors.primary} />
       </View>
     </View>
   );

@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../../../theme';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../../theme';
+import CollapsibleCard from '../CollapsibleCard/CollapsibleCard'; // Import CollapsibleCard
 
 interface SummaryTileProps {
   iconName: keyof typeof Ionicons.glyphMap; // Type for icon names
@@ -74,21 +76,9 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   title,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const styles = StyleSheet.create({
-    card: {
-      marginBottom: 20,
-      padding: 15,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-    },
-    cardTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-      textAlign: 'center',
-    },
     summaryGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -98,29 +88,29 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   });
 
   const tilesData = [
-    { label: 'Branching', count: branchingStories, icon: 'git-branch', color: '#FFD700' }, // gold
-    { label: 'Characters', count: characterCount, icon: 'people', color: '#00C9FF' }, // light blue
-    { label: 'Choices', count: choiceCount, icon: 'shuffle', color: '#FF9800' }, // orange
-    { label: 'Locations', count: locationCount, icon: 'map', color: '#8BC34A' }, // light green
-    { label: 'Chapters', count: chapterCount, icon: 'bookmarks', color: '#F44336' }, // red
-    { label: 'Scenes', count: sceneCount, icon: 'easel', color: '#9C27B0' }, // purple
-    { label: 'Notes', count: noteCount, icon: 'document', color: '#03A9F4' }, // blue
-    { label: 'World Rules', count: worldRuleCount, icon: 'globe', color: '#FFEB3B' }, // yellow
+    { label: t('branching'), count: branchingStories, icon: 'git-branch', color: '#FFD700' }, // gold
+    { label: t('characters'), count: characterCount, icon: 'people', color: '#00C9FF' }, // light blue
+    { label: t('choices'), count: choiceCount, icon: 'shuffle', color: '#FF9800' }, // orange
+    { label: t('locations'), count: locationCount, icon: 'map', color: '#8BC34A' }, // light green
+    { label: t('chapters'), count: chapterCount, icon: 'bookmarks', color: '#F44336' }, // red
+    { label: t('scenes'), count: sceneCount, icon: 'easel', color: '#9C27B0' }, // purple
+    { label: t('notes'), count: noteCount, icon: 'document', color: '#03A9F4' }, // blue
+    { label: t('world_rules'), count: worldRuleCount, icon: 'globe', color: '#FFEB3B' }, // yellow
   ];
 
   return (
-    <View style={styles.card}>
-      {totalStories !== undefined && (
-        <Text style={styles.cardTitle}>
-          {totalStories} Stories {branchingStories !== undefined && branchingStories > 0 && `(${branchingStories} branching)`}
-        </Text>
-      )} 
-      {title && totalStories === undefined && <Text style={styles.cardTitle}>{title}</Text>}
-
+    <CollapsibleCard
+      title={
+        totalStories !== undefined
+          ? `${t('total_stories_summary', { totalStories })}${t('branching_summary', { count: branchingStories || 0 })}`
+          : title || t('summary')
+      }
+      initialExpanded={false}
+    >
       <View style={styles.summaryGrid}>
         {tilesData.map((data, index) => {
           if (data.count !== undefined) {
-            if (data.label === 'Choices') {
+            if (data.label === t('choices')) {
               return branchingStories && branchingStories > 0 ? (
                 <SummaryTile
                   key={index}
@@ -131,7 +121,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
                   textColor={colors.onPrimary}
                 />
               ) : null;
-            } else if (data.label === 'Branching') {
+            } else if (data.label === t('branching')) {
               return data.count > 0 ? (
                 <SummaryTile
                   key={index}
@@ -158,7 +148,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
           return null;
         })}
       </View>
-    </View>
+    </CollapsibleCard>
   );
 };
 

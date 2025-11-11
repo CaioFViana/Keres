@@ -1,0 +1,1 @@
+ALTER TABLE `stories` ADD `theme` text;

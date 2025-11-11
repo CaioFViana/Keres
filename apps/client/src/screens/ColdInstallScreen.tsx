@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '../components/common/Button/Button';
 import FormContainer from '../components/common/FormContainer/FormContainer'; // Import FormContainer
-import Select from '../components/Select/Select'; // Import our new Select component
+import Select from '../components/common/Select/Select'; // Import our new Select component
 import TextInput from '../components/common/TextInput/TextInput';
 import { useDrizzle } from '../db'; // Import useDrizzle
 import { migrate } from '../db/migrate'; // Import migrate

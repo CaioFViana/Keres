@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle } from 'react-native'; // Use View for web compatibility
-import { useTheme } from '../../theme';
+import { useTheme } from '../../../theme';
 
 interface SelectOption {
   label: string;

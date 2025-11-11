@@ -1,7 +1,7 @@
 import React, { useState } from 'react'; // Import useState
 import { StyleSheet, View } from 'react-native'; // Removed TouchableWithoutFeedback
 import DropDownPicker from 'react-native-dropdown-picker'; // Import DropDownPicker
-import { useTheme } from '../../theme';
+import { useTheme } from '../../../theme';
 
 interface SelectOption {
   label: string;

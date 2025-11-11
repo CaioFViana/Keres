@@ -64,5 +64,7 @@
   "failed_to_create_new_branching_story": "Failed to create new branching story.",
   "error": "Error",
   "genre": "Genre",
-  "failed_to_update_favorite_status": "Failed to update favorite status."
+  "failed_to_update_favorite_status": "Failed to update favorite status.",
+  "select_theme": "Select Theme",
+  "select_theme_placeholder": "Choose a theme"
 }

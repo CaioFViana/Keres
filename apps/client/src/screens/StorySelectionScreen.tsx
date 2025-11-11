@@ -28,7 +28,7 @@ type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackPar
 const StorySelectionScreen = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
-  const { colors } = useTheme();
+  const { colors, setTheme } = useTheme(); // Get setTheme from useTheme
   const drizzleClient = useDrizzle();
   const storyService = useRef(createStoryService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
@@ -89,6 +89,7 @@ const StorySelectionScreen = () => {
 
   const handleSelectStory = (story: Story) => {
     setSelectedStory(story);
+    setTheme(story.theme || 'default'); // Apply story's theme
     navigation.replace('MainSystem', { storyId: story.id });
   };
 
@@ -104,6 +105,7 @@ const StorySelectionScreen = () => {
       isFavorite: false,
       extraNotes: null,
       serverId: null,
+      theme: 'ocean', // Use 'ocean' theme for linear stories
     };
 
 
@@ -186,6 +188,7 @@ const StorySelectionScreen = () => {
       isFavorite: false,
       extraNotes: null,
       serverId: null,
+      theme: 'forest', // Use 'forest' theme for branching stories
     };
 
     try {
@@ -282,6 +285,7 @@ const StorySelectionScreen = () => {
         )}
         {item.genre && <Text style={styles.storyDetail}>{t('genre')}: {item.genre}</Text>}
         {item.serverId && <Text style={styles.storyDetail}>{t('server')}: {item.serverId}</Text>}
+        {item.theme && <Text style={styles.storyDetail}>{t('theme')}: {item.theme}</Text>}
       </View>
       <TouchableOpacity onPress={() => toggleFavorite(item.id, item.isFavorite)} style={styles.favoriteButton}>
         <Ionicons
@@ -289,6 +293,9 @@ const StorySelectionScreen = () => {
           size={24}
           color={item.isFavorite ? colors.star : colors.textSecondary}
         />
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.dummyButton, { backgroundColor: colors.primary }]} onPress={() => { /* Dummy action */ }}>
+        <Text style={[styles.dummyButtonText, { color: colors.onPrimary }]}>Test</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -343,6 +350,16 @@ const StorySelectionScreen = () => {
       marginTop: 20,
       flexDirection: 'row', // Arrange buttons horizontally
       justifyContent: 'space-around', // Distribute space evenly
+    },
+    dummyButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 5,
+      marginLeft: 10,
+    },
+    dummyButtonText: {
+      fontSize: 14,
+      fontWeight: 'bold',
     },
   });
 

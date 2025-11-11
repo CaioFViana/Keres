@@ -3,11 +3,12 @@ export interface Story {
   userId: string // ID of the user who owns this story
   title: string
   type: 'linear' | 'branching'
-  description: string | null // Changed from summary to description
+  description: string | null
   genre: string | null
   language: string | null
   isFavorite: boolean
   extraNotes: string | null
+  theme: string | null
   // Optional: ID of the server this story is synchronized with.
   // This ID references an entry in the local 'Server' entity.
   // If null or undefined, the story is considered offline-only.

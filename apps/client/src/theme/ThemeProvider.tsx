@@ -1,24 +1,52 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
-import { lightColors, darkColors, Colors } from './colors';
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import { ThemeColors } from './types';
+import { themes } from './palettes';
+import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
 
 interface ThemeContextType {
-  colors: Colors;
+  colors: ThemeColors;
   isDarkMode: boolean;
   toggleTheme: () => void;
+  currentThemeName: string;
+  setTheme: (themeName: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+interface ThemeProviderProps {
+  children: React.ReactNode;
+  defaultThemeName?: string; // Make defaultThemeName optional
+}
 
-  const toggleTheme = () => {
-    setIsDarkMode(prevMode => !prevMode);
-  };
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, defaultThemeName = 'default' }) => {
+  const { darkMode, toggleDarkMode } = useThemeStore(); // Use darkMode from themeStore
+  const [currentThemeName, setCurrentThemeName] = useState(defaultThemeName);
 
-  const colors = useMemo(() => (isDarkMode ? darkColors : lightColors), [isDarkMode]);
+  const toggleTheme = useCallback(() => {
+    toggleDarkMode(); // Toggle darkMode in the store
+  }, [toggleDarkMode]);
 
-  const value = useMemo(() => ({ colors, isDarkMode, toggleTheme }), [colors, isDarkMode, toggleTheme]);
+  const setTheme = useCallback((themeName: string) => {
+    if (themes[themeName]) {
+      setCurrentThemeName(themeName);
+    } else {
+      console.warn(`Theme "${themeName}" not found. Falling back to default theme.`);
+      setCurrentThemeName('default');
+    }
+  }, []);
+
+  const colors = useMemo(() => {
+    const selectedTheme = themes[currentThemeName];
+    return darkMode ? selectedTheme.darkColors : selectedTheme.lightColors;
+  }, [darkMode, currentThemeName]);
+
+  const value = useMemo(() => ({
+    colors,
+    isDarkMode: darkMode,
+    toggleTheme,
+    currentThemeName,
+    setTheme
+  }), [colors, darkMode, toggleTheme, currentThemeName, setTheme]);
 
   return (
     <ThemeContext.Provider value={value}>

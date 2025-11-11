@@ -1,4 +1,6 @@
-export const lightColors = {
+import { ThemeColors } from '../types';
+
+const lightColors: ThemeColors = {
   primary: '#6200EE',
   primaryVariant: '#3700B3',
   secondary: '#03DAC6',
@@ -13,12 +15,13 @@ export const lightColors = {
   onError: '#FFFFFF',
   text: '#000000',
   textSecondary: '#666666',
-  border: '#CCCCCC',
   card: '#F5F5F5',
-  star: '#FFD700', // Gold color for star
+  border: '#E0E0E0',
+  notification: '#FFC107',
+  star: '#FFD700',
 };
 
-export const darkColors = {
+const darkColors: ThemeColors = {
   primary: '#BB86FC',
   primaryVariant: '#3700B3',
   secondary: '#03DAC6',
@@ -33,9 +36,10 @@ export const darkColors = {
   onError: '#000000',
   text: '#FFFFFF',
   textSecondary: '#AAAAAA',
-  border: '#444444',
   card: '#1E1E1E',
-  star: '#FFD700', // Gold color for star
+  border: '#333333',
+  notification: '#FFC107',
+  star: '#FFD700',
 };
 
-export type Colors = typeof lightColors;
+export const defaultTheme = { lightColors, darkColors };

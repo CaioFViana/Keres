@@ -51,7 +51,6 @@
   "no": "No",
   "global_summary": "Global Summary",
   "no_stories_found_create_one": "No stories found. Create one!",
-  "create_new_branching_story": "Create New Branching Story",
   "new_story": "New Story",
   "new_branching_story": "New Branching Story",
   "error_fetching_stories": "Error fetching stories:",
@@ -60,12 +59,12 @@
   "failed_to_load_summary_data": "Failed to load summary data.",
   "error_creating_new_story": "Error creating new story:",
   "failed_to_create_new_story": "Failed to create new story.",
-  "error_creating_new_branching_story": "Error creating new branching story:",
-  "failed_to_create_new_branching_story": "Failed to create new branching story.",
   "error": "Error",
   "genre": "Genre",
   "failed_to_update_favorite_status": "Failed to update favorite status.",
   "select_theme": "Select Theme",
   "select_theme_placeholder": "Choose a theme",
-  "press_back_again_to_exit": "Press back again to exit"
+  "press_back_again_to_exit": "Press back again to exit",
+  "create_new_story_screen_title": "Create New Story",
+  "create_new_story_screen_description": "Fill in the details to create your new story."
 }

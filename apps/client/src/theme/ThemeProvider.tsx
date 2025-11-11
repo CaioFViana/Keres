@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import { ThemeColors } from './types';
-import { themes } from './palettes';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
+import { themes } from './palettes';
+import { ThemeColors } from './types';
 
 interface ThemeContextType {
   colors: ThemeColors;

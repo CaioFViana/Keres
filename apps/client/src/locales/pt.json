@@ -51,7 +51,6 @@
   "no": "Não",
   "global_summary": "Resumo Global",
   "no_stories_found_create_one": "Nenhuma história encontrada. Crie uma!",
-  "create_new_branching_story": "Criar Nova História Ramificada",
   "new_story": "Nova História",
   "new_branching_story": "Nova História Ramificada",
   "error_fetching_stories": "Erro ao buscar histórias:",
@@ -60,12 +59,12 @@
   "failed_to_load_summary_data": "Falha ao carregar dados de resumo.",
   "error_creating_new_story": "Erro ao criar nova história:",
   "failed_to_create_new_story": "Falha ao criar nova história.",
-  "error_creating_new_branching_story": "Erro ao criar nova história ramificada:",
-  "failed_to_create_new_branching_story": "Falha ao criar nova história ramificada.",
   "error": "Erro",
   "genre": "Gênero",
   "failed_to_update_favorite_status": "Falha ao atualizar status de favorito.",
   "select_theme": "Selecionar Tema",
   "select_theme_placeholder": "Escolha um tema",
-  "press_back_again_to_exit": "Pressione voltar novamente para sair"
+  "press_back_again_to_exit": "Pressione voltar novamente para sair",
+  "create_new_story_screen_title": "Criar Nova História",
+  "create_new_story_screen_description": "Preencha os detalhes para criar sua nova história."
 }

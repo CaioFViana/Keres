@@ -1,5 +1,5 @@
-import { ThemeColors } from './types';
 import { StyleSheet } from 'react-native';
+import { ThemeColors } from './types';
 
 // Helper function to slightly saturate a hex color
 export const saturateColor = (hex: string, factor: number = 1.1): string => {
@@ -30,4 +30,27 @@ export const getCommonCardStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: 'bold',
     color: colors.onSurface,
   },
+});
+
+export const getCommonContainerStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    padding: 20,
+  },
+  // Add other common container styles here if needed
+});
+
+export const getCommonInputStyles = (colors: ThemeColors) => StyleSheet.create({
+  input: {
+    height: 50,
+    borderColor: colors.primary,
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    color: colors.text,
+    backgroundColor: colors.surface,
+  },
+  // Add other common input styles here if needed
 });

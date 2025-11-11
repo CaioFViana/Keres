@@ -14,6 +14,7 @@ import { createClientSettings } from '../services/ClientSettingsService'; // Imp
 import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles'; // Import common styles
 import i18n from '../utils/i18n';
 
 type RootStackParamList = {
@@ -38,6 +39,9 @@ const ColdInstallScreen = () => {
 
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
   const initializeThemeSettings = useThemeStore((state) => state.initializeTheme);
+
+  const commonContainerStyles = getCommonContainerStyles(colors); // Get common container styles
+  const commonInputStyles = getCommonInputStyles(colors); // Get common input styles
 
 
   const handleProceed = async () => {
@@ -111,12 +115,13 @@ const ColdInstallScreen = () => {
   ];
 
   return (
-    <FormContainer>
+    <FormContainer style={commonContainerStyles.container}>
       <Text style={styles.title}>{t('welcome')}</Text>
       <TextInput
         placeholder={t('enter_username')}
         value={username}
         onChangeText={setUsername}
+        style={commonInputStyles.input} // Apply common input style
       />
       {usernameError && <Text style={styles.errorText}>{usernameError}</Text>}
       <View style={styles.pickerContainer}>

@@ -12,6 +12,7 @@ import { useSummaryStore } from '../state/summaryStore';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
+import { getCommonContainerStyles, getCommonCardStyles } from '../theme/commonStyles'; // Import getCommonContainerStyles and getCommonCardStyles
 
 // Define a type for the data needed to create a new story,
 // omitting fields handled by the service
@@ -40,6 +41,9 @@ const StorySelectionScreen = () => {
   // Get client settings from stores
   const { username, language } = useUserSettingsStore();
   const { darkMode } = useThemeStore();
+
+  const commonContainerStyles = getCommonContainerStyles(colors); // Get common container styles
+  const commonCardStyles = getCommonCardStyles(colors); // Get common card styles
 
 
   const fetchStories = async () => {
@@ -273,7 +277,7 @@ const StorySelectionScreen = () => {
   };
 
   const renderStoryItem = ({ item }: { item: Story }) => (
-    <TouchableOpacity style={styles.storyItem} onPress={() => handleSelectStory(item)}>
+    <TouchableOpacity style={[commonCardStyles.cardContainer, styles.storyItemBase]} onPress={() => handleSelectStory(item)}>
       <View style={styles.storyItemContent}>
         <Text style={styles.storyTitle}>{item.title}</Text>
         {item.description && (
@@ -294,32 +298,19 @@ const StorySelectionScreen = () => {
           color={item.isFavorite ? colors.star : colors.textSecondary}
         />
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.dummyButton, { backgroundColor: colors.primary }]} onPress={() => { /* Dummy action */ }}>
-        <Text style={[styles.dummyButtonText, { color: colors.onPrimary }]}>Test</Text>
-      </TouchableOpacity>
     </TouchableOpacity>
   );
 
 
   const styles = StyleSheet.create({
-    // Removed safeArea style
-    mainContentContainer: {
-      flex: 1, // Ensure it takes full height
-      padding: 20,
-      justifyContent: 'space-between',
-      backgroundColor: colors.background, // Apply background color here
-    },
     title: {
       fontSize: 24,
       fontWeight: 'bold',
       marginBottom: 20,
       color: colors.text,
     },
-    storyItem: {
-      padding: 15,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      marginBottom: 10,
+    storyItemBase: {
+      marginBottom: 10, // Keep margin bottom for spacing between items
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -365,7 +356,7 @@ const StorySelectionScreen = () => {
 
 
   return (
-    <View style={styles.mainContentContainer}>
+    <View style={commonContainerStyles.container}>
       <View>
         <Text style={styles.title}>{t('welcome_to_story_selection')}</Text>
         <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>

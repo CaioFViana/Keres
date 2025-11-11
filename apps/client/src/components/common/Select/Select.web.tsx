@@ -24,7 +24,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
   const selectStyles: React.CSSProperties = {
     height: 50,
     width: '100%',
-    borderColor: colors.border,
+    borderColor: colors.primary,
     borderWidth: 1,
     borderRadius: 5,
     backgroundColor: colors.surface,

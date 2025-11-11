@@ -55,16 +55,16 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
   const dropdownStyles = StyleSheet.create({
     container: {
       width: '100%',
-      borderColor: colors.border,
+      borderColor: colors.primary,
       borderWidth: 1,
       borderRadius: 5,
       backgroundColor: colors.surface,
       justifyContent: 'center',
-      zIndex: 10000, // Ensure dropdown is above other elements
+      zIndex: 10000,
     },
     style: {
       backgroundColor: colors.surface,
-      borderColor: 'transparent', // Hide default border
+      borderColor: 'transparent',
     },
     labelStyle: {
       color: colors.text,

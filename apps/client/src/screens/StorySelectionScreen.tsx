@@ -287,9 +287,6 @@ const StorySelectionScreen = () => {
       <TouchableOpacity onPress={handleSettingsPress} style={styles.floatingSettingsButton}>
         <Ionicons name="settings-outline" size={24} color={colors.onPrimary} />
       </TouchableOpacity>
-      <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
-          {t('user_info', { username: username || 'N/A', language: language || 'N/A', darkMode: darkMode ? t('yes') : t('no') })}
-      </Text>
 
       {summary && <SummaryCard {...summary} title={t('global_summary')} />}
 

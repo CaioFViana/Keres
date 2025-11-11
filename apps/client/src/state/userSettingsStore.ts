@@ -9,6 +9,7 @@ interface UserSettingsState {
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
   setLanguage: (db: AppDrizzleClient, language: string) => Promise<void>;
+  resetSettings: () => void;
 }
 
 export const useUserSettingsStore = create<UserSettingsState>((set) => ({
@@ -31,5 +32,9 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   setLanguage: async (db: AppDrizzleClient, language: string) => {
     await updateClientSettings(db, { language });
     set({ language });
+  },
+
+  resetSettings: () => {
+    set({ username: null, language: null }); // Reset to default null values
   },
 }));

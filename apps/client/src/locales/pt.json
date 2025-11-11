@@ -69,5 +69,11 @@
   "press_back_again_to_exit": "Pressione voltar novamente para sair",
   "create_new_story_screen_title": "Criar Nova História",
   "create_new_story_screen_description": "Preencha os detalhes para criar sua nova história.",
-  "username": "Usuário"
+  "username": "Usuário",
+  "reset_application": "Redefinir Aplicativo",
+  "reset_application_title": "Redefinir Aplicativo",
+  "reset_application_message": "Tem certeza de que deseja redefinir todo o aplicativo? Isso excluirá todas as suas histórias e configurações, e você retornará à tela de instalação inicial.",
+  "cancel": "Cancelar",
+  "reset": "Redefinir",
+  "reset_application_error": "Falha ao redefinir o aplicativo. Por favor, tente novamente."
 }

@@ -1,15 +1,27 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, StyleSheet, Switch, Text, View } from 'react-native'; // Import Alert
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import NativeStackNavigationProp
 import Select from '../components/common/Select/Select';
 import TextInput from '../components/common/TextInput/TextInput';
-import { useDrizzle } from '../db';
+import { useDrizzle, resetDatabase } from '../db'; // Import resetDatabase
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
 import i18n from '../utils/i18n';
 import { getLanguageOptions } from '../utils/languageOptions';
+import { useSQLiteContext } from 'expo-sqlite';
+import Button from '../components/common/Button/Button';
+
+type RootStackParamList = {
+  ColdInstall: undefined;
+  StorySelection: undefined;
+  MainSystem: undefined;
+};
+
+type SettingsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ColdInstall'>;
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
@@ -17,9 +29,10 @@ const SettingsScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleClient = useDrizzle(); // Initialize useDrizzle
-
-  const { username, language, setUsername, setLanguage } = useUserSettingsStore();
-  const { darkMode, setDarkMode } = useThemeStore();
+  const db = useSQLiteContext(); 
+  const navigation = useNavigation<SettingsScreenNavigationProp>();
+  const { username, language, setUsername, setLanguage, resetSettings } = useUserSettingsStore();
+  const { darkMode, setDarkMode, resetTheme } = useThemeStore();
 
   const handleUsernameChange = (newUsername: string) => {
     setUsername(drizzleClient, newUsername);
@@ -32,6 +45,42 @@ const SettingsScreen = () => {
 
   const handleDarkModeToggle = (value: boolean) => {
     setDarkMode(drizzleClient, value);
+  };
+
+  const handleResetApplication = () => {
+    Alert.alert(
+      t('reset_application_title'),
+      t('reset_application_message'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('reset'),
+          onPress: async () => {
+            try {
+              await resetDatabase(db);
+              console.log('Database reset complete.');
+
+              // Reset Zustand stores
+              resetSettings();
+              resetTheme();
+              console.log('Zustand stores reset.');
+
+              // Navigate to ColdInstallScreen and reset navigation stack
+              navigation.replace('ColdInstall');
+              console.log('Navigated to ColdInstallScreen.');
+            } catch (error) {
+              console.error('Error resetting application:', error);
+              Alert.alert(t('error'), t('reset_application_error'));
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const languageOptions = getLanguageOptions(t);
@@ -73,6 +122,10 @@ const SettingsScreen = () => {
           thumbColor={darkMode ? colors.onPrimary : colors.textSecondary}
         />
       </View>
+
+      <Button onPress={handleResetApplication} style={{ marginTop: 20 }}>
+        {t('reset_application')}
+      </Button>
     </View>
   );
 };

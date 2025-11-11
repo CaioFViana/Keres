@@ -7,6 +7,7 @@ interface ThemeState {
   initializeTheme: (db: AppDrizzleClient) => Promise<void>;
   setDarkMode: (db: AppDrizzleClient, darkMode: boolean) => Promise<void>;
   toggleDarkMode: (db: AppDrizzleClient) => Promise<void>;
+  resetTheme: () => void; // Add resetTheme to the interface
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
@@ -28,5 +29,9 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     const currentDarkMode = get().darkMode;
     await updateClientSettings(db, { darkMode: !currentDarkMode });
     set({ darkMode: !currentDarkMode });
+  },
+
+  resetTheme: () => {
+    set({ darkMode: false }); // Reset to default light mode
   },
 }));

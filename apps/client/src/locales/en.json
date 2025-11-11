@@ -69,5 +69,11 @@
   "press_back_again_to_exit": "Press back again to exit",
   "create_new_story_screen_title": "Create New Story",
   "create_new_story_screen_description": "Fill in the details to create your new story.",
-  "username": "Username"
+  "username": "Username",
+  "reset_application": "Reset Application",
+  "reset_application_title": "Reset Application",
+  "reset_application_message": "Are you sure you want to reset the entire application? This will delete all your stories and settings, and you will return to the cold install screen.",
+  "cancel": "Cancel",
+  "reset": "Reset",
+  "reset_application_error": "Failed to reset application. Please try again."
 }

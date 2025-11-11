@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, BackHandler, Button, FlatList, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../db';
 import { useStoryStore } from '../state/storyStore';
@@ -44,6 +44,26 @@ const StorySelectionScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors); // Get common container styles
   const commonCardStyles = getCommonCardStyles(colors); // Get common card styles
+
+  const backPressTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (backPressTimer.current && Date.now() - backPressTimer.current < 2000) {
+        // If pressed again within 2 seconds, exit the app
+        BackHandler.exitApp();
+        return true; // Event handled
+      } else {
+        backPressTimer.current = Date.now();
+        ToastAndroid.show(t('press_back_again_to_exit'), ToastAndroid.SHORT);
+        return true; // Event handled, but don't exit yet
+      }
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [t]);
 
 
   const fetchStories = async () => {

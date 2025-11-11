@@ -66,5 +66,6 @@
   "genre": "Gênero",
   "failed_to_update_favorite_status": "Falha ao atualizar status de favorito.",
   "select_theme": "Selecionar Tema",
-  "select_theme_placeholder": "Escolha um tema"
+  "select_theme_placeholder": "Escolha um tema",
+  "press_back_again_to_exit": "Pressione voltar novamente para sair"
 }

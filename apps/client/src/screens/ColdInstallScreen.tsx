@@ -1,9 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { BackHandler, StyleSheet, Text, ToastAndroid, View } from 'react-native';
 import Button from '../components/common/Button/Button';
 import FormContainer from '../components/common/FormContainer/FormContainer'; // Import FormContainer
 import Select from '../components/common/Select/Select'; // Import our new Select component
@@ -42,6 +42,26 @@ const ColdInstallScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors); // Get common container styles
   const commonInputStyles = getCommonInputStyles(colors); // Get common input styles
+
+  const backPressTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (backPressTimer.current && Date.now() - backPressTimer.current < 2000) {
+        // If pressed again within 2 seconds, exit the app
+        BackHandler.exitApp();
+        return true; // Event handled
+      } else {
+        backPressTimer.current = Date.now();
+        ToastAndroid.show(t('press_back_again_to_exit'), ToastAndroid.SHORT);
+        return true; // Event handled, but don't exit yet
+      }
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [t]);
 
 
   const handleProceed = async () => {

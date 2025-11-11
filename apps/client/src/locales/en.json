@@ -37,6 +37,8 @@
   "graph_visualization_placeholder": "Graph visualization of choices will be implemented here.",
   "loading_application": "Loading application...",
   "select_language": "Select Language",
+  "language_english": "English",
+  "language_portuguese": "Portuguese",
   "branching": "Branching",
   "notes": "Notes",
   "world_rules": "World Rules",
@@ -66,5 +68,6 @@
   "select_theme_placeholder": "Choose a theme",
   "press_back_again_to_exit": "Press back again to exit",
   "create_new_story_screen_title": "Create New Story",
-  "create_new_story_screen_description": "Fill in the details to create your new story."
+  "create_new_story_screen_description": "Fill in the details to create your new story.",
+  "username": "Username"
 }

@@ -16,6 +16,7 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles'; // Import common styles
 import i18n from '../utils/i18n';
+import { getLanguageOptions } from '../utils/languageOptions'; // Import getLanguageOptions
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -129,10 +130,7 @@ const ColdInstallScreen = () => {
     },
   });
 
-  const languageOptions = [
-    { label: 'English', value: 'en' },
-    { label: 'Português', value: 'pt' },
-  ];
+  const languageOptions = getLanguageOptions(t);
 
   return (
     <FormContainer style={commonContainerStyles.container}>

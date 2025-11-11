@@ -1,17 +1,19 @@
 import React from 'react';
 import { TextInput as RNTextInput, StyleSheet, TextInputProps } from 'react-native';
 import { useTheme } from '../../../theme';
+import { getCommonInputStyles } from '../../../theme/commonStyles';
 
 interface CustomTextInputProps extends TextInputProps {}
 
 const TextInput: React.FC<CustomTextInputProps> = ({ style, ...rest }) => {
   const { colors } = useTheme();
+  const commonInputStyles = getCommonInputStyles(colors);
 
   const styles = StyleSheet.create({
     input: {
       width: '80%',
       height: 50,
-      borderColor: colors.border,
+      borderColor: colors.primary,
       borderWidth: 1,
       borderRadius: 5,
       paddingHorizontal: 10,
@@ -24,7 +26,7 @@ const TextInput: React.FC<CustomTextInputProps> = ({ style, ...rest }) => {
 
   return (
     <RNTextInput
-      style={[styles.input, style]}
+      style={[commonInputStyles.input, styles.input, style]}
       placeholderTextColor={colors.textSecondary}
       {...rest}
     />

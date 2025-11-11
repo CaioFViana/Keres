@@ -37,6 +37,8 @@
   "graph_visualization_placeholder": "A visualização em grafo das escolhas será implementada aqui.",
   "loading_application": "Carregando aplicação...",
   "select_language": "Selecionar Idioma",
+  "language_english": "Inglês",
+  "language_portuguese": "Português",
   "branching": "Ramificações",
   "notes": "Notas",
   "world_rules": "Regras do Mundo",
@@ -66,5 +68,6 @@
   "select_theme_placeholder": "Escolha um tema",
   "press_back_again_to_exit": "Pressione voltar novamente para sair",
   "create_new_story_screen_title": "Criar Nova História",
-  "create_new_story_screen_description": "Preencha os detalhes para criar sua nova história."
+  "create_new_story_screen_description": "Preencha os detalhes para criar sua nova história.",
+  "username": "Usuário"
 }

@@ -20,6 +20,7 @@ type RootStackParamList = {
   StorySelection: undefined;
   MainSystem: { storyId: string };
   StoryForm: undefined;
+  Settings: undefined; // Added Settings to RootStackParamList
 };
 
 type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StorySelection'>;
@@ -248,21 +249,51 @@ const StorySelectionScreen = () => {
       fontSize: 30,
       lineHeight: 30, // Adjust line height to center the '+'
     },
+    headerContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    floatingSettingsButton: {
+      position: 'absolute',
+      bottom: 90, // Position above the floatingButton (bottom: 20 + height: 60 + some margin)
+      right: 30,
+      backgroundColor: colors.primary,
+      width: 40, // Consistent size with floatingButton
+      height: 40, // Consistent size with floatingButton
+      borderRadius: 30, // Consistent with floatingButton
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 8,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      zIndex: 1,
+    },
   });
 
 
+  const handleSettingsPress = () => {
+    navigation.navigate('Settings');
+  };
+
   return (
     <View style={commonContainerStyles.container}>
-      <View>
+      <View style={styles.headerContainer}>
         <Text style={styles.title}>{t('welcome_to_story_selection')}</Text>
-        <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
-            {t('user_info', { username: username || 'N/A', language: language || 'N/A', darkMode: darkMode ? t('yes') : t('no') })}
-        </Text>
-
-        {summary && <SummaryCard {...summary} title={t('global_summary')} />}
-
-        <Text style={styles.title}>{t('your_stories')}</Text>
       </View>
+      <TouchableOpacity onPress={handleSettingsPress} style={styles.floatingSettingsButton}>
+        <Ionicons name="settings-outline" size={24} color={colors.onPrimary} />
+      </TouchableOpacity>
+      <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
+          {t('user_info', { username: username || 'N/A', language: language || 'N/A', darkMode: darkMode ? t('yes') : t('no') })}
+      </Text>
+
+      {summary && <SummaryCard {...summary} title={t('global_summary')} />}
+
+      <Text style={styles.title}>{t('your_stories')}</Text>
       <FlatList
         data={stories}
         renderItem={({ item }) => (

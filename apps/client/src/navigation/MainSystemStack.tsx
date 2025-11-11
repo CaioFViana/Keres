@@ -6,7 +6,7 @@ import MainDashboardScreen from '../screens/MainDashboardScreen';
 import ListingScreen from '../screens/common/ListingScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import GalleryScreen from '../screens/GalleryScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+
 import ImportExportScreen from '../screens/ImportExportScreen';
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
@@ -55,7 +55,7 @@ const MainSystemNavigator = () => {
       <Drawer.Screen name="Gallery" component={GalleryScreen} />
       <Drawer.Screen name="CharacterRelations" component={CharacterRelationsScreen} />
       <Drawer.Screen name="Choices" component={ChoicesScreen} />
-      <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="StorySettings" component={StorySettingsScreen} />
       <Drawer.Screen name="ImportExport" component={ImportExportScreen} />
     </Drawer.Navigator>
   );

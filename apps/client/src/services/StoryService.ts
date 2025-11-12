@@ -44,6 +44,7 @@ export interface StoryService {
   createChoice(choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect>;
 
   updateStoryFavoriteStatus(storyId: string, isFavorite: boolean): Promise<void>;
+  deleteStory(storyId: string): Promise<void>;
 }
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
@@ -172,6 +173,12 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     async updateStoryFavoriteStatus(storyId: string, isFavorite: boolean): Promise<void> {
       await db.update(stories)
         .set({ isFavorite, updatedAt: new Date() })
+        .where(eq(stories.id, storyId))
+        .run();
+    },
+
+    async deleteStory(storyId: string): Promise<void> {
+      await db.delete(stories)
         .where(eq(stories.id, storyId))
         .run();
     },

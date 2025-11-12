@@ -132,6 +132,40 @@ const StoryFormScreen = () => {
     }
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      t('delete_story_title'),
+      t('delete_story_message'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('delete'),
+          onPress: async () => {
+            if (storyId) {
+              try {
+                setLoading(true);
+                await storyService().deleteStory(storyId);
+                Alert.alert(t('success'), t('story_deleted_successfully'));
+                navigation.goBack();
+              } catch (err) {
+                console.error('Failed to delete story:', err);
+                setError(t('failed_to_delete_story'));
+                Alert.alert(t('error'), t('failed_to_delete_story'));
+              } finally {
+                setLoading(false);
+              }
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   const storyTypeOptions = [
     { label: t('linear'), value: 'linear' },
     { label: t('branching'), value: 'branching' },
@@ -253,12 +287,18 @@ const StoryFormScreen = () => {
             {storyId ? t('update_story') : t('create_story')}
           </Button>
 
+          {storyId && (
+            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+              {t('delete_story')}
+            </Button>
+          )}
+
           <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>    
     </KeyboardAvoidingView>
-  ); // Last view of 90 size is to avoid a bug that happened with the screen scrolling.
-};
+  );
+}; // Last view of 90 size is to avoid a bug that happened with the screen scrolling.
 
 const styles = StyleSheet.create({
   scrollViewContent: {
@@ -286,6 +326,9 @@ const styles = StyleSheet.create({
   saveButton: {
     marginTop: 30,
     marginBottom: 20,
+  },
+  deleteButton: {
+    backgroundColor: 'red', // Destructive color
   },
   centered: {
     flex: 1,

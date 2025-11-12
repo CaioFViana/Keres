@@ -105,5 +105,10 @@
   "ocean_theme": "Ocean Theme",
   "update_story": "Update Story",
   "create_story": "Create Story",
-  "user_not_identified": "User not identified. Please ensure your settings are configured."
+  "user_not_identified": "User not identified. Please ensure your settings are configured.",
+  "delete_story_title": "Delete Story",
+  "delete_story_message": "Are you sure you want to delete this story? This action cannot be undone.",
+  "delete": "Delete",
+  "story_deleted_successfully": "Story deleted successfully!",
+  "failed_to_delete_story": "Failed to delete story."
 }

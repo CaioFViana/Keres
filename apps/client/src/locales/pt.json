@@ -105,5 +105,10 @@
   "ocean_theme": "Tema Oceano",
   "update_story": "Atualizar História",
   "create_story": "Criar História",
-  "user_not_identified": "Usuário não identificado. Certifique-se de que suas configurações estejam configuradas."
+  "user_not_identified": "Usuário não identificado. Certifique-se de que suas configurações estejam configuradas.",
+  "delete_story_title": "Excluir História",
+  "delete_story_message": "Tem certeza de que deseja excluir esta história? Esta ação é irreversível e não poderá ser desfeita.",
+  "delete": "Excluir",
+  "story_deleted_successfully": "História excluída com sucesso!",
+  "failed_to_delete_story": "Falha ao excluir história."
 }

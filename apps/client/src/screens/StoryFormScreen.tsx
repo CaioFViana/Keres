@@ -289,7 +289,7 @@ const StoryFormScreen = () => {
 
           {storyId && (
             <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_story')}
+              {t('delete_story_title')}
             </Button>
           )}
 

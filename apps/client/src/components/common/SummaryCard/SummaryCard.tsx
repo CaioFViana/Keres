@@ -90,10 +90,10 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   });
 
   const tilesData = [
-    { label: t('characters'), count: characterCount, icon: 'people', color: '#00C9FF' }, // light blue
-    { label: t('locations'), count: locationCount, icon: 'map', color: '#8BC34A' }, // light green
     { label: t('chapters'), count: chapterCount, icon: 'bookmarks', color: '#F44336' }, // red
-    { label: t('scenes'), count: sceneCount, icon: 'easel', color: '#9C27B0' }, // purple
+    { label: t('scenes'), count: sceneCount, icon: 'easel', color: '#a13fb3ff' }, // purple
+    { label: t('locations'), count: locationCount, icon: 'map', color: '#8BC34A' }, // light green
+    { label: t('characters'), count: characterCount, icon: 'people', color: '#37afa5ff' }, // light blue
     { label: t('notes'), count: noteCount, icon: 'document', color: '#FFEB3B' }, // yellow
     { label: t('world_rules'), count: worldRuleCount, icon: 'globe', color: '#03A9F4' }, // blue
   ];

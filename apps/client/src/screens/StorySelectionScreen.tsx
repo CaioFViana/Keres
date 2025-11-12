@@ -156,10 +156,11 @@ const StorySelectionScreen = () => {
       const sceneCount = await storyService.getSceneCount();
       const noteCount = await storyService.getNoteCount();
       const worldRuleCount = await storyService.getWorldRuleCount();
+      const branchingStoryForkCount = await storyService.getBranchingStoryForkCount();
 
       updateSummary({
         totalStories: storyCounts.totalStories,
-        branchingStories: storyCounts.branchingStories,
+        branchingStories: storyCounts.branchingStories, // Keep this for now, will remove later
         characterCount,
         choiceCount: storyCounts.branchingStories > 0 ? choiceCount : 0,
         locationCount,
@@ -167,6 +168,7 @@ const StorySelectionScreen = () => {
         sceneCount,
         noteCount,
         worldRuleCount,
+        branchingStoryForkCount,
       });
     } catch (error) {
       console.error(t('error_fetching_summary'), error);

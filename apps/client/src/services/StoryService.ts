@@ -1,4 +1,4 @@
-import { count, eq } from 'drizzle-orm';
+import { and, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import {
   ChapterInsert, ChapterSelect,
@@ -22,9 +22,9 @@ import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import C
 
 export interface StoryService {
   getAllStories(): Promise<StorySelect[]>;
-  getStoryById(storyId: string): Promise<StorySelect | undefined>; // Added
+  getStoryById(storyId: string): Promise<StorySelect | undefined>;
   createStory(storyData: Create<StoryInsert>): Promise<StorySelect>;
-  updateStory(storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'>>): Promise<void>; // Added
+  updateStory(storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'>>): Promise<void>;
   getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }>;
   getCharacterCount(storyId?: string): Promise<number>;
   getChoiceCount(storyId?: string): Promise<number>;
@@ -45,6 +45,7 @@ export interface StoryService {
 
   updateStoryFavoriteStatus(storyId: string, isFavorite: boolean): Promise<void>;
   deleteStory(storyId: string): Promise<void>;
+  getBranchingStoryForkCount(): Promise<number>;
 }
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
@@ -81,49 +82,57 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
     async getCharacterCount(storyId?: string): Promise<number> {
       const result = await db.select({ count: count() }).from(characters)
-        .where(storyId ? eq(characters.storyId, storyId) : undefined)
+        .innerJoin(stories, eq(characters.storyId, stories.id)) // Join with stories to filter by isDeleted
+        .where(storyId ? and(eq(characters.storyId, storyId), eq(stories.isDeleted, false)) : eq(stories.isDeleted, false))
         .get();
       return result?.count || 0;
     },
 
     async getChoiceCount(storyId?: string): Promise<number> {
       const result = await db.select({ count: count() }).from(choices)
-        .where(storyId ? eq(choices.storyId, storyId) : undefined)
+        .innerJoin(scenes, eq(choices.sceneId, scenes.id))
+        .innerJoin(stories, eq(scenes.storyId, stories.id))
+        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false)) : eq(stories.isDeleted, false))
         .get();
       return result?.count || 0;
     },
 
     async getLocationCount(storyId?: string): Promise<number> {
       const result = await db.select({ count: count() }).from(locations)
-        .where(storyId ? eq(locations.storyId, storyId) : undefined)
+        .innerJoin(stories, eq(locations.storyId, stories.id))
+        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false)) : eq(stories.isDeleted, false))
         .get();
       return result?.count || 0;
     },
 
     async getChapterCount(storyId?: string): Promise<number> {
       const result = await db.select({ count: count() }).from(chapters)
-        .where(storyId ? eq(chapters.storyId, storyId) : undefined)
+        .innerJoin(stories, eq(chapters.storyId, stories.id))
+        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false)) : eq(stories.isDeleted, false))
         .get();
       return result?.count || 0;
     },
 
     async getSceneCount(storyId?: string): Promise<number> {
       const result = await db.select({ count: count() }).from(scenes)
-        .where(storyId ? eq(scenes.storyId, storyId) : undefined)
+        .innerJoin(stories, eq(scenes.storyId, stories.id))
+        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false)) : eq(stories.isDeleted, false))
         .get();
       return result?.count || 0;
     },
 
     async getNoteCount(storyId?: string): Promise<number> {
       const result = await db.select({ count: count() }).from(notes)
-        .where(storyId ? eq(notes.storyId, storyId) : undefined)
+        .innerJoin(stories, eq(notes.storyId, stories.id))
+        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false)) : eq(stories.isDeleted, false))
         .get();
       return result?.count || 0;
     },
 
     async getWorldRuleCount(storyId?: string): Promise<number> {
       const result = await db.select({ count: count() }).from(worldRules)
-        .where(storyId ? eq(worldRules.storyId, storyId) : undefined)
+        .innerJoin(stories, eq(worldRules.storyId, stories.id))
+        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false)) : eq(stories.isDeleted, false))
         .get();
       return result?.count || 0;
     },
@@ -178,9 +187,26 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     },
 
     async deleteStory(storyId: string): Promise<void> {
+      // While story components delete only via marking for deletion, deleting a story should delete it all!
+      // Rest of delete (its components) will come in due time. for now this is enough.
       await db.delete(stories)
         .where(eq(stories.id, storyId))
         .run();
+    },
+
+    async getBranchingStoryForkCount(): Promise<number> {
+      const result = await db.select({
+        count: count(scenes.id)
+      })
+        .from(scenes)
+        .innerJoin(stories, eq(scenes.storyId, stories.id))
+        .leftJoin(choices, eq(scenes.id, choices.sceneId))
+        .where(and(eq(stories.type, 'branching'), eq(stories.isDeleted, false)))
+        .groupBy(scenes.id)
+        .having(sql`count(${choices.id}) > 1`)
+        .all();
+
+      return result.length;
     },
   };
 };

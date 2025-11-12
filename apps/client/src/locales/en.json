@@ -110,5 +110,6 @@
   "delete_story_message": "Are you sure you want to delete this story? This action cannot be undone.",
   "delete": "Delete",
   "story_deleted_successfully": "Story deleted successfully!",
-  "failed_to_delete_story": "Failed to delete story."
+  "failed_to_delete_story": "Failed to delete story.",
+  "forks": "Forks"
 }

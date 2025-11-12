@@ -10,6 +10,7 @@ interface StorySummary {
   sceneCount: number;
   noteCount: number;
   worldRuleCount: number;
+  branchingStoryForkCount: number;
 }
 
 interface SummaryState {

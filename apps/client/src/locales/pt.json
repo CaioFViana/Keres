@@ -110,5 +110,6 @@
   "delete_story_message": "Tem certeza de que deseja excluir esta história? Esta ação é irreversível e não poderá ser desfeita.",
   "delete": "Excluir",
   "story_deleted_successfully": "História excluída com sucesso!",
-  "failed_to_delete_story": "Falha ao excluir história."
+  "failed_to_delete_story": "Falha ao excluir história.",
+  "forks": "Bifurcações"
 }

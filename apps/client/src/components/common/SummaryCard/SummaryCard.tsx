@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import CollapsibleCard from '../CollapsibleCard/CollapsibleCard'; // Import CollapsibleCard
 
@@ -60,6 +60,7 @@ interface SummaryCardProps {
   sceneCount?: number;
   noteCount?: number;
   worldRuleCount?: number;
+  branchingStoryForkCount?: number; // New prop for the count of forks in branching stories
   title?: string; // Optional title for the card, e.g., "Global Summary" or "Story Summary"
 }
 
@@ -73,6 +74,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   sceneCount,
   noteCount,
   worldRuleCount,
+  branchingStoryForkCount,
   title,
 }) => {
   const { colors } = useTheme();
@@ -88,15 +90,19 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   });
 
   const tilesData = [
-    { label: t('branching'), count: branchingStories, icon: 'git-branch', color: '#FFD700' }, // gold
     { label: t('characters'), count: characterCount, icon: 'people', color: '#00C9FF' }, // light blue
-    { label: t('choices'), count: choiceCount, icon: 'shuffle', color: '#FF9800' }, // orange
     { label: t('locations'), count: locationCount, icon: 'map', color: '#8BC34A' }, // light green
     { label: t('chapters'), count: chapterCount, icon: 'bookmarks', color: '#F44336' }, // red
     { label: t('scenes'), count: sceneCount, icon: 'easel', color: '#9C27B0' }, // purple
-    { label: t('notes'), count: noteCount, icon: 'document', color: '#03A9F4' }, // blue
-    { label: t('world_rules'), count: worldRuleCount, icon: 'globe', color: '#FFEB3B' }, // yellow
+    { label: t('notes'), count: noteCount, icon: 'document', color: '#FFEB3B' }, // yellow
+    { label: t('world_rules'), count: worldRuleCount, icon: 'globe', color: '#03A9F4' }, // blue
   ];
+
+  // Add "Forks" tile only if there are branching stories
+  if (branchingStories && branchingStories > 0) {
+    tilesData.unshift({ label: t('choices'), count: choiceCount, icon: 'shuffle', color: '#FF9800' }) // orange
+    tilesData.unshift({ label: t('forks'), count: branchingStoryForkCount, icon: 'git-branch', color: '#FFD700' }) // gold
+  }
 
   return (
     <CollapsibleCard
@@ -110,40 +116,16 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
       <View style={styles.summaryGrid}>
         {tilesData.map((data, index) => {
           if (data.count !== undefined) {
-            if (data.label === t('choices')) {
-              return branchingStories && branchingStories > 0 ? (
-                <SummaryTile
-                  key={index}
-                  iconName={data.icon as keyof typeof Ionicons.glyphMap}
-                  label={data.label}
-                  count={data.count}
-                  backgroundColor={data.color}
-                  textColor={colors.onPrimary}
-                />
-              ) : null;
-            } else if (data.label === t('branching')) {
-              return data.count > 0 ? (
-                <SummaryTile
-                  key={index}
-                  iconName={data.icon as keyof typeof Ionicons.glyphMap}
-                  label={data.label}
-                  count={data.count}
-                  backgroundColor={data.color}
-                  textColor={colors.onPrimary}
-                />
-              ) : null;
-            } else {
-              return (
-                <SummaryTile
-                  key={index}
-                  iconName={data.icon as keyof typeof Ionicons.glyphMap}
-                  label={data.label}
-                  count={data.count}
-                  backgroundColor={data.color}
-                  textColor={colors.onPrimary}
-                />
-              );
-            }
+            return (
+              <SummaryTile
+                key={index}
+                iconName={data.icon as keyof typeof Ionicons.glyphMap}
+                label={data.label}
+                count={data.count}
+                backgroundColor={data.color}
+                textColor={colors.onPrimary}
+              />
+            );
           }
           return null;
         })}

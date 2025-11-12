@@ -3,7 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, StyleSheet, Text, ToastAndroid, View } from 'react-native';
+import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, ToastAndroid, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../components/common/Button/Button';
 import FormContainer from '../components/common/FormContainer/FormContainer'; // Import FormContainer
 import Select from '../components/common/Select/Select'; // Import our new Select component
@@ -16,7 +16,7 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles'; // Import common styles
 import i18n from '../utils/i18n';
-import { getLanguageOptions } from '../utils/languageOptions'; // Import getLanguageOptions
+import { getLanguageOptions } from '../utils/languageOptions';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -133,26 +133,34 @@ const ColdInstallScreen = () => {
   const languageOptions = getLanguageOptions(t);
 
   return (
-    <FormContainer style={commonContainerStyles.container}>
-      <Text style={styles.title}>{t('welcome')}</Text>
-      <TextInput
-        placeholder={t('enter_username')}
-        value={username}
-        onChangeText={setUsername}
-        style={commonInputStyles.input} // Apply common input style
-      />
-      {usernameError && <Text style={styles.errorText}>{usernameError}</Text>}
-      <View style={styles.pickerContainer}>
-        <Select
-          options={languageOptions}
-          value={selectedLanguage}
-          onValueChange={handleLanguageChange}
-          placeholder={t('select_language')}
-        />
-      </View>
-      {languageError && <Text style={styles.errorText}>{languageError}</Text>}
-      <Button onPress={handleProceed} disabled={isProceedDisabled}>{t('proceed')}</Button>
-    </FormContainer>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust this value as needed
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <FormContainer style={commonContainerStyles.container}>
+          <Text style={styles.title}>{t('welcome')}</Text>
+          <TextInput
+            placeholder={t('enter_username')}
+            value={username}
+            onChangeText={setUsername}
+            style={[commonInputStyles.input, { width: '80%', marginBottom: 20 }]}
+          />
+          {usernameError && <Text style={styles.errorText}>{usernameError}</Text>}
+          <View style={styles.pickerContainer}>
+            <Select
+              options={languageOptions}
+              value={selectedLanguage}
+              onValueChange={handleLanguageChange}
+              placeholder={t('select_language')}
+            />
+          </View>
+          {languageError && <Text style={styles.errorText}>{languageError}</Text>}
+          <Button onPress={handleProceed} disabled={isProceedDisabled}>{t('proceed')}</Button>
+        </FormContainer>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -36,7 +36,7 @@ export const getCommonContainerStyles = (colors: ThemeColors) => StyleSheet.crea
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    padding: 20,
+    padding: 20
   },
   // Add other common container styles here if needed
 });
@@ -48,9 +48,10 @@ export const getCommonInputStyles = (colors: ThemeColors) => StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    marginBottom: 10,
+    marginBottom: 0,
     color: colors.text,
     backgroundColor: colors.surface,
+    width: '100%',
   },
   // Add other common input styles here if needed
 });

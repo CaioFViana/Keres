@@ -19,8 +19,8 @@ type RootStackParamList = {
   ColdInstall: undefined;
   StorySelection: undefined;
   MainSystem: { storyId: string };
-  StoryForm: undefined;
-  Settings: undefined; // Added Settings to RootStackParamList
+  StoryForm: { storyId?: string }; // Updated to accept optional storyId
+  Settings: undefined;
 };
 
 type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StorySelection'>;
@@ -30,15 +30,17 @@ interface ThemedStoryItemProps {
   story: Story;
   onSelectStory: (story: Story) => void;
   onToggleFavorite: (storyId: string, currentFavoriteStatus: boolean) => void;
-  commonCardStyles: any; // Type for common card styles
-  styles: any; // Type for local styles
-  t: (key: string) => string; // Type for translation function
+  onEditStory: (storyId: string) => void;
+  commonCardStyles: any;
+  styles: any;
+  t: (key: string) => string;
 }
 
 const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
   story,
   onSelectStory,
   onToggleFavorite,
+  onEditStory,
   commonCardStyles,
   styles,
   t,
@@ -66,13 +68,18 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
           </Text>
         )}
       </View>
-      <TouchableOpacity onPress={() => onToggleFavorite(story.id, story.isFavorite)} style={styles.favoriteButton}>
-        <Ionicons
-          name={story.isFavorite ? 'star' : 'star-outline'}
-          size={24}
-          color={story.isFavorite ? storyThemeColors.star : storyThemeColors.textSecondary}
-        />
-      </TouchableOpacity>
+      <View style={styles.storyItemActions}>
+        <TouchableOpacity onPress={() => onToggleFavorite(story.id, story.isFavorite)} style={styles.actionButton}>
+          <Ionicons
+            name={story.isFavorite ? 'star' : 'star-outline'}
+            size={24}
+            color={story.isFavorite ? storyThemeColors.star : storyThemeColors.textSecondary}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => onEditStory(story.id)} style={styles.actionButton}>
+          <Ionicons name="pencil-outline" size={24} color={storyThemeColors.textSecondary} />
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -81,46 +88,44 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
 const StorySelectionScreen = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
-  const { colors, setTheme } = useTheme(); // Get setTheme from useTheme
+  const { colors, setTheme } = useTheme();
   const drizzleClient = useDrizzle();
   const storyService = useRef(createStoryService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
 
-  // Get summary state from Zustand store
-  const { summary, updateSummary } = useSummaryStore();
+  const summary = useSummaryStore((state) => state.summary);
+  const updateSummary = useSummaryStore((state) => state.updateSummary);
 
-  // Get client settings from stores
   const { username, language } = useUserSettingsStore();
   const { darkMode } = useThemeStore();
 
-  const commonContainerStyles = getCommonContainerStyles(colors); // Get common container styles
-  const commonCardStyles = getCommonCardStyles(colors); // Get common card styles
+  const commonContainerStyles = getCommonContainerStyles(colors);
+  const commonCardStyles = getCommonCardStyles(colors);
 
   const backPressTimer = useRef<number | null>(null);
-  const isFocused = useIsFocused(); // Initialize useIsFocused
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (!isFocused) {
-      return; // Only add listener if screen is focused
+      return;
     }
 
     const backAction = () => {
       if (backPressTimer.current && Date.now() - backPressTimer.current < 2000) {
-        // If pressed again within 2 seconds, exit the app
         BackHandler.exitApp();
-        return true; // Event handled
+        return true;
       } else {
         backPressTimer.current = Date.now();
         ToastAndroid.show(t('press_back_again_to_exit'), ToastAndroid.SHORT);
-        return true; // Event handled, but don't exit yet
+        return true;
       }
     };
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => backHandler.remove();
-  }, [isFocused, t]); // Depend on isFocused and t
+  }, [isFocused, t]);
 
 
   const fetchStories = async () => {
@@ -144,11 +149,11 @@ const StorySelectionScreen = () => {
       const noteCount = await storyService.getNoteCount();
       const worldRuleCount = await storyService.getWorldRuleCount();
 
-      updateSummary({ // Update the Zustand store
+      updateSummary({
         totalStories: storyCounts.totalStories,
         branchingStories: storyCounts.branchingStories,
         characterCount,
-        choiceCount: storyCounts.branchingStories > 0 ? choiceCount : 0, // Only show choices if there are branching stories
+        choiceCount: storyCounts.branchingStories > 0 ? choiceCount : 0,
         locationCount,
         chapterCount,
         sceneCount,
@@ -163,25 +168,31 @@ const StorySelectionScreen = () => {
 
 
   useEffect(() => {
-    fetchStories();
-    fetchSummary();
-  }, []);
+    if (isFocused) { // Only fetch if the screen is focused
+      fetchStories();
+      fetchSummary();
+      setTheme('default'); // Reset theme to default when screen is focused
+    }
+  }, [isFocused, setTheme]); // Add setTheme to dependencies
 
 
   const handleSelectStory = (story: Story) => {
     setSelectedStory(story);
-    setTheme(story.theme || 'default'); // Apply story's theme
+    setTheme(story.theme || 'default');
     navigation.replace('MainSystem', { storyId: story.id });
   };
 
   const handleCreateNewStory = () => {
-    navigation.navigate('StoryForm');
+    navigation.navigate('StoryForm', {}); // Navigate to StoryForm without storyId for creation
+  };
+
+  const handleEditStory = (storyId: string) => {
+    navigation.navigate('StoryForm', { storyId }); // Navigate to StoryForm with storyId for editing
   };
 
   const toggleFavorite = async (storyId: string, currentFavoriteStatus: boolean) => {
     try {
       await storyService.updateStoryFavoriteStatus(storyId, !currentFavoriteStatus);
-      // Update local state to reflect the change
       setStories((prevStories) =>
         prevStories.map((story) =>
           story.id === storyId ? { ...story, isFavorite: !currentFavoriteStatus } : story
@@ -201,14 +212,22 @@ const StorySelectionScreen = () => {
       color: colors.text,
     },
     storyItemBase: {
-      marginBottom: 10, // Keep margin bottom for spacing between items
+      marginBottom: 10,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
     storyItemContent: {
-      flex: 1, // Take up available space
+      flex: 1,
       marginRight: 10,
+    },
+    storyItemActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    actionButton: {
+      padding: 5,
+      marginLeft: 10, // Space between buttons
     },
     storyTitle: {
       fontSize: 18,
@@ -247,7 +266,7 @@ const StorySelectionScreen = () => {
     floatingButtonText: {
       color: colors.primary,
       fontSize: 30,
-      lineHeight: 30, // Adjust line height to center the '+'
+      lineHeight: 30,
     },
     headerContainer: {
       flexDirection: 'row',
@@ -257,12 +276,12 @@ const StorySelectionScreen = () => {
     },
     floatingSettingsButton: {
       position: 'absolute',
-      bottom: 90, // Position above the floatingButton (bottom: 20 + height: 60 + some margin)
+      bottom: 90,
       right: 30,
       backgroundColor: colors.primary,
-      width: 40, // Consistent size with floatingButton
-      height: 40, // Consistent size with floatingButton
-      borderRadius: 30, // Consistent with floatingButton
+      width: 40,
+      height: 40,
+      borderRadius: 30,
       justifyContent: 'center',
       alignItems: 'center',
       elevation: 8,
@@ -298,6 +317,7 @@ const StorySelectionScreen = () => {
             story={item}
             onSelectStory={handleSelectStory}
             onToggleFavorite={toggleFavorite}
+            onEditStory={handleEditStory} // Pass the new handler
             commonCardStyles={commonCardStyles}
             styles={styles}
             t={t}
@@ -312,7 +332,7 @@ const StorySelectionScreen = () => {
         onPress={handleCreateNewStory}
         onLongPress={() => ToastAndroid.show(t('create_new_story'), ToastAndroid.SHORT)}
       >
-        <Ionicons name="create-outline" size={30} color={colors.onPrimary} />
+        <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
       </TouchableOpacity>
     </View>
   );

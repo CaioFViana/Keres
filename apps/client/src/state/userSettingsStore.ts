@@ -4,6 +4,7 @@ import { AppDrizzleClient } from '../db';
 import { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
 
 interface UserSettingsState {
+  userId: string | null; // Add userId to state
   username: string | null;
   language: string | null;
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
@@ -13,13 +14,14 @@ interface UserSettingsState {
 }
 
 export const useUserSettingsStore = create<UserSettingsState>((set) => ({
+  userId: null, // Initialize userId
   username: null,
   language: null,
 
   initializeSettings: async (db: AppDrizzleClient) => {
     const settings = await getClientSettings(db);
     if (settings) {
-      set({ username: settings.localUsername, language: settings.language });
+      set({ userId: settings.id, username: settings.localUsername, language: settings.language }); // Set userId
     }
     return settings; // Return the settings object
   },
@@ -35,6 +37,6 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   },
 
   resetSettings: () => {
-    set({ username: null, language: null }); // Reset to default null values
+    set({ userId: null, username: null, language: null }); // Reset userId
   },
 }));

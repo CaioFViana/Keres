@@ -60,7 +60,6 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
       borderRadius: 5,
       backgroundColor: colors.surface,
       justifyContent: 'center',
-      zIndex: 10000,
     },
     style: {
       backgroundColor: colors.surface,
@@ -117,6 +116,11 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
         itemSeparator={true}
         itemSeparatorStyle={dropdownStyles.itemSeparator}
         listMode="SCROLLVIEW" // Use ScrollView for better performance with many items
+        scrollViewProps={{
+          nestedScrollEnabled: true,
+        }}
+        zIndex={10000} // Ensure dropdown is above other elements
+        zIndexInverse={1000} // For other elements to go below
       />
     </View>
   );

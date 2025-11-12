@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Switch, Text, View } from 'react-native'; // Import Alert
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Import Alert
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import NativeStackNavigationProp
 import Select from '../components/common/Select/Select';
@@ -86,47 +86,55 @@ const SettingsScreen = () => {
   const languageOptions = getLanguageOptions(t);
 
   return (
-    <View style={commonContainerStyles.container}>
-      <Text style={[styles.title, { color: colors.text }]}>{t('settings')}</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust this value as needed
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={commonContainerStyles.container}>
+          <Text style={[styles.title, { color: colors.text }]}>{t('settings')}</Text>
 
-      <View style={styles.settingItem}>
-        <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            value={username || 'Keres User'}
-            onChangeText={handleUsernameChange}
-            placeholder={t('enter_username')}
-            style={[commonInputStyles.input, styles.input]}
-          />
+          <View style={styles.settingItem}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                value={username || 'Keres User'}
+                onChangeText={handleUsernameChange}
+                placeholder={t('enter_username')}
+                style={[commonInputStyles.input, styles.input]}
+              />
+            </View>
+          </View>
+
+          <View style={styles.settingItem}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('select_language')}</Text>
+            <View style={styles.selectWrapper}>
+              <Select
+                options={languageOptions}
+                value={language || 'en'}
+                onValueChange={handleLanguageChange}
+                placeholder={t('select_language')}
+              />
+            </View>
+          </View>
+
+          <View style={styles.settingItem}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('dark_mode')}</Text>
+            <Switch
+              value={darkMode}
+              onValueChange={handleDarkModeToggle}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={darkMode ? colors.onPrimary : colors.textSecondary}
+            />
+          </View>
+
+          <Button onPress={handleResetApplication} style={{ marginTop: 20 }}>
+            {t('reset_application')}
+          </Button>
         </View>
-      </View>
-
-      <View style={styles.settingItem}>
-        <Text style={[styles.settingLabel, { color: colors.text }]}>{t('select_language')}</Text>
-        <View style={styles.selectWrapper}>
-          <Select
-            options={languageOptions}
-            value={language || 'en'}
-            onValueChange={handleLanguageChange}
-            placeholder={t('select_language')}
-          />
-        </View>
-      </View>
-
-      <View style={styles.settingItem}>
-        <Text style={[styles.settingLabel, { color: colors.text }]}>{t('dark_mode')}</Text>
-        <Switch
-          value={darkMode}
-          onValueChange={handleDarkModeToggle}
-          trackColor={{ false: colors.border, true: colors.primary }}
-          thumbColor={darkMode ? colors.onPrimary : colors.textSecondary}
-        />
-      </View>
-
-      <Button onPress={handleResetApplication} style={{ marginTop: 20 }}>
-        {t('reset_application')}
-      </Button>
-    </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 

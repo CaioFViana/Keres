@@ -22,7 +22,9 @@ import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import C
 
 export interface StoryService {
   getAllStories(): Promise<StorySelect[]>;
+  getStoryById(storyId: string): Promise<StorySelect | undefined>; // Added
   createStory(storyData: Create<StoryInsert>): Promise<StorySelect>;
+  updateStory(storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'>>): Promise<void>; // Added
   getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }>;
   getCharacterCount(storyId?: string): Promise<number>;
   getChoiceCount(storyId?: string): Promise<number>;
@@ -50,10 +52,21 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       return db.select().from(stories).all();
     },
 
+    async getStoryById(storyId: string): Promise<StorySelect | undefined> {
+      return db.select().from(stories).where(eq(stories.id, storyId)).get();
+    },
+
     async createStory(storyData): Promise<StorySelect> {
       const newStory = prepareNewEntityData<StoryInsert>(storyData);
       const result = await db.insert(stories).values(newStory).returning().get();
       return result;
+    },
+
+    async updateStory(storyId: string, storyData): Promise<void> {
+      await db.update(stories)
+        .set({ ...storyData, updatedAt: new Date() })
+        .where(eq(stories.id, storyId))
+        .run();
     },
 
     async getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }> {

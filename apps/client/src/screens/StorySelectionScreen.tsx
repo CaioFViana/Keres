@@ -57,7 +57,15 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
       onPress={() => onSelectStory(story)}
     >
       <View style={styles.storyItemContent}>
-        <Text style={[styles.storyTitle, { color: storyThemeColors.text }]}>{story.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons
+            name={story.type === 'branching' ? 'git-branch-outline' : 'book-outline'}
+            size={20}
+            color={storyThemeColors.text}
+            style={{ marginRight: 8 }}
+          />
+          <Text style={[styles.storyTitle, { color: storyThemeColors.text }]}>{story.title}</Text>
+        </View>
         {story.genre && <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>{t('genre')}: {story.genre}</Text>}
         {story.serverId && <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>{t('server')}: {story.serverId}</Text>}
         {story.description && (

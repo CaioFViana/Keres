@@ -6,7 +6,8 @@ export interface Server {
   name: string; // Nome amigável do servidor (ex: "Keres Cloud")
   url: string; // URL base do servidor (ex: "https://keres.com")
   lastSyncDate?: Date;
-  apiKey: string;
+  jwtToken?: string;
+  refreshToken?: string;
   createdAt: Date;
   updatedAt: Date;
   version: number;

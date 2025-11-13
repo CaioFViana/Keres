@@ -111,5 +111,19 @@
   "delete": "Excluir",
   "story_deleted_successfully": "História excluída com sucesso!",
   "failed_to_delete_story": "Falha ao excluir história.",
-  "forks": "Bifurcações"
+  "forks": "Bifurcações",
+  "manage_servers": "Gerenciar Servidores",
+  "server_management_placeholder": "A funcionalidade de gerenciamento de servidores será implementada aqui.",
+  "failed_to_load_servers": "Falha ao carregar servidores.",
+  "no_servers_found": "Nenhum servidor encontrado.",
+  "delete_server_title": "Excluir Servidor",
+  "delete_server_message": "Tem certeza de que deseja excluir este servidor? Esta ação é irreversível e não poderá ser desfeita.",
+  "server_deleted_successfully": "Servidor excluído com sucesso!",
+  "failed_to_delete_server": "Falha ao excluir servidor.",
+  "loading_servers": "Carregando servidores.",
+  "ping_result": "Resultado do Ping",
+  "server_online": "Servidor está online!",
+  "server_offline": "Servidor {{serverName}} está offline.",
+  "last_sync": "Última Sincronização",
+  "created_at": "Criado Em"
 }

@@ -1,27 +1,22 @@
+import { useNavigation, StackActions } from '@react-navigation/native'; // Import useNavigation and StackActions
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import NativeStackNavigationProp
+import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Import Alert
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import NativeStackNavigationProp
+import Button from '../components/common/Button/Button';
 import Select from '../components/common/Select/Select';
 import TextInput from '../components/common/TextInput/TextInput';
-import { useDrizzle, resetDatabase } from '../db'; // Import resetDatabase
+import { resetDatabase, useDrizzle } from '../db'; // Import resetDatabase
+import { StorySelectionStackParamList } from '../navigation/StorySelectionStack';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
 import i18n from '../utils/i18n';
 import { getLanguageOptions } from '../utils/languageOptions';
-import { useSQLiteContext } from 'expo-sqlite';
-import Button from '../components/common/Button/Button';
 
-type RootStackParamList = {
-  ColdInstall: undefined;
-  StorySelection: undefined;
-  MainSystem: undefined;
-};
-
-type SettingsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ColdInstall'>;
+type SettingsScreenNavigationProp = NativeStackNavigationProp<StorySelectionStackParamList, 'Settings'>;
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
@@ -47,6 +42,10 @@ const SettingsScreen = () => {
     setDarkMode(drizzleClient, value);
   };
 
+  const handleManageServers = () => {
+    navigation.navigate('ServerManagement');
+  };
+
   const handleResetApplication = () => {
     Alert.alert(
       t('reset_application_title'),
@@ -69,7 +68,7 @@ const SettingsScreen = () => {
               console.log('Zustand stores reset.');
 
               // Navigate to ColdInstallScreen and reset navigation stack
-              navigation.replace('ColdInstall');
+              navigation.dispatch(StackActions.replace('ColdInstall'));
               console.log('Navigated to ColdInstallScreen.');
             } catch (error) {
               console.error('Error resetting application:', error);
@@ -129,7 +128,11 @@ const SettingsScreen = () => {
             />
           </View>
 
-          <Button onPress={handleResetApplication} style={{ marginTop: 20 }}>
+          <Button onPress={handleManageServers} style={{ marginTop: 20 }}>
+            {t('manage_servers')}
+          </Button>
+
+          <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
             {t('reset_application')}
           </Button>
         </View>

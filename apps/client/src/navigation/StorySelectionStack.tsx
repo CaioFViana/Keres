@@ -1,13 +1,15 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import SettingsScreen from '../screens/SettingsScreen'; // Import SettingsScreen
+import SettingsScreen from '../screens/SettingsScreen';
 import StoryFormScreen from '../screens/StoryFormScreen';
 import StorySelectionScreen from '../screens/StorySelectionScreen';
+import ServerManagementScreen from '../screens/ServerManagementScreen';
 
-type StorySelectionStackParamList = {
+export type StorySelectionStackParamList = {
   StorySelectionScreen: undefined;
   StoryForm: undefined;
-  Settings: undefined; // Added Settings to the stack
+  Settings: undefined;
+  ServerManagement: undefined;
 };
 
 const StorySelectionStack = createNativeStackNavigator<StorySelectionStackParamList>();
@@ -18,6 +20,7 @@ const StorySelectionNavigator = () => {
       <StorySelectionStack.Screen name="StorySelectionScreen" component={StorySelectionScreen} />
       <StorySelectionStack.Screen name="StoryForm" component={StoryFormScreen} />
       <StorySelectionStack.Screen name="Settings" component={SettingsScreen} />
+      <StorySelectionStack.Screen name="ServerManagement" component={ServerManagementScreen} />
     </StorySelectionStack.Navigator>
   );
 };

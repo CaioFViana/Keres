@@ -29,6 +29,13 @@
       "when": 1762822870314,
       "tag": "0003_keen_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1762996349243,
+      "tag": "0004_daffy_katie_power",
+      "breakpoints": true
     }
   ]
 }

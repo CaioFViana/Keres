@@ -111,5 +111,19 @@
   "delete": "Delete",
   "story_deleted_successfully": "Story deleted successfully!",
   "failed_to_delete_story": "Failed to delete story.",
-  "forks": "Forks"
+  "forks": "Forks",
+  "manage_servers": "Manage Servers",
+  "server_management_placeholder": "Server management functionality will be implemented here.",
+  "failed_to_load_servers": "Failed to load servers.",
+  "no_servers_found": "No servers found.",
+  "delete_server_title": "Delete Server",
+  "delete_server_message": "Are you sure you want to delete this server? This action cannot be undone.",
+  "server_deleted_successfully": "Server deleted successfully!",
+  "failed_to_delete_server": "Failed to delete server.",
+  "loading_servers": "Loading servers.",
+  "ping_result": "Ping Result",
+  "server_online": "Server is online!",
+  "server_offline": "Server {{serverName}} is offline.",
+  "last_sync": "Last Sync",
+  "created_at": "Created At"
 }

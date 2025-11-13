@@ -77,7 +77,11 @@ const app = new Elysia()
       throw new Error('Invalid token');
     }
   })
-  //.get('/', () => 'Welcome to Keres API!')
+  .get('/', () => 'Welcome to Keres API!')
+  .get('/kerescheck', ({ set }) => {
+    set.status = 200;
+    return { version: env.SERVER_VERSION };
+  })
   .group('/auth', (app) => app.use(authRoutes))
   .listen(env.PORT, ({ hostname, port }) => {
     console.log(`🦊 Elysia is running at http://${hostname}:${port}`);

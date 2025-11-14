@@ -1,57 +1,27 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import axios, { AxiosError } from 'axios'; // Import axios and AxiosError
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../db';
 import { ServerSelect } from '../db/schema';
+import { StorySelectionStackParamList } from '../navigation/StorySelectionStack';
 import { createServerService } from '../services/ServerService';
 import { useTheme } from '../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../theme/commonStyles';
-import { createULID } from '../utils/ulid';
-import { StorySelectionStackParamList } from '../navigation/StorySelectionStack';
 
 interface ServerWithStatus extends ServerSelect {
   pingStatus: 'idle' | 'pending' | 'online' | 'offline';
 }
 
-const initialMockServers: ServerWithStatus[] = [
-  {
-    id: createULID(),
-    idUser: 'user123',
-    userName: 'KeresUser1',
-    name: 'Keres Cloud EU',
-    url: 'https://eu.keres.cloud',
-    lastSyncDate: new Date(Date.now() - 3600000), // 1 hour ago
-    jwtToken: 'mock_jwt_eu',
-    refreshToken: 'mock_refresh_eu',
-    createdAt: new Date(Date.now() - 86400000 * 5), // 5 days ago
-    updatedAt: new Date(Date.now() - 3600000),
-    version: 1,
-    isDeleted: false,
-    deletedAt: null,
-    pingStatus: 'idle',
-  },
-  {
-    id: createULID(),
-    idUser: 'user456',
-    userName: 'KeresUser2',
-    name: 'Keres Cloud US',
-    url: 'https://us.keres.cloud',
-    lastSyncDate: new Date(Date.now() - 7200000), // 2 hours ago
-    jwtToken: 'mock_jwt_us',
-    refreshToken: 'mock_refresh_us',
-    createdAt: new Date(Date.now() - 86400000 * 10), // 10 days ago
-    updatedAt: new Date(Date.now() - 7200000),
-    version: 1,
-    isDeleted: false,
-    deletedAt: null,
-    pingStatus: 'idle',
-  },
-];
-
 type ServerManagementScreenNavigationProp = NativeStackNavigationProp<StorySelectionStackParamList, 'ServerManagement'>;
+
+// Helper function to log errors safely
+const safeLogError = (message: string) => {
+  console.error(message);
+};
 
 const ServerManagementScreen = () => {
   const { t } = useTranslation();
@@ -63,8 +33,8 @@ const ServerManagementScreen = () => {
   const serverService = useRef(createServerService(drizzleDb)).current;
   const isFocused = useIsFocused();
 
-  const [servers, setServers] = useState<ServerWithStatus[]>(initialMockServers);
-  const [loading, setLoading] = useState(false);
+  const [servers, setServers] = useState<ServerWithStatus[]>([]);
+  const [loading, setLoading] = useState(true); // Set to true initially to load servers
   const [error, setError] = useState<string | null>(null);
 
   // Ref to hold the latest servers state
@@ -76,21 +46,62 @@ const ServerManagementScreen = () => {
   }, [servers]);
 
   const pingServer = async (server: ServerWithStatus): Promise<ServerWithStatus> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500)); // 0.5 to 1.5 seconds delay
+    try {
+      const checkUrl = `${server.url}/kerescheck`;
+      const response = await axios.get(checkUrl, {
+        timeout: 5000, // 5 seconds timeout
+        validateStatus: () => true, // Always resolve, don't reject on HTTP status codes
+      });
 
-    const isOnline = Math.random() > 0.3; // 70% chance of being online for mock
-
-    return {
-      ...server,
-      pingStatus: isOnline ? 'online' : 'offline',
-    };
+      if (response.status === 200 && response.data && typeof response.data.version === 'string') {
+        return { ...server, pingStatus: 'online' };
+      } else {
+        safeLogError(`Ping failed for ${server.url}: Server responded with status ${response.status} or unexpected data.`);
+        return { ...server, pingStatus: 'offline' };
+      }
+    } catch (err) {
+      let errorMessage = `Ping failed for ${server.url}: `;
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        if (axiosError.code === 'ERR_NETWORK') {
+          errorMessage += 'Network error (no response). Check server address or internet connection.';
+        } else if (axiosError.code === 'ECONNABORTED') {
+          errorMessage += 'Timeout error. Server took too long to respond.';
+        } else {
+          errorMessage += `Request setup error - ${axiosError.message}`;
+        }
+      } else if (err instanceof Error) {
+        errorMessage += `An unexpected error occurred - ${err.message}`;
+      } else {
+        errorMessage += `An unknown error occurred.`;
+      }
+      safeLogError(errorMessage); // Use the safe logging function
+      return Promise.resolve({ ...server, pingStatus: 'offline' });
+    }
   };
 
-  const pingAllServers = useCallback(async () => {
-    const currentServersToPing = serversRef.current; // Get the latest servers from ref
+  const loadServers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const fetchedServers = await serverService.getAllServers();
+      const serversWithStatus: ServerWithStatus[] = fetchedServers.map(s => ({
+        ...s,
+        pingStatus: 'idle', // Initialize ping status
+      }));
+      setServers(serversWithStatus);
+    } catch (err) {
+      console.error('Failed to load servers:', err);
+      setError(t('failed_to_load_servers'));
+    } finally {
+      setLoading(false);
+    }
+  }, [serverService, t]);
 
-    // First, set all to 'pending'
+  const pingAllServers = useCallback(async () => {
+    const currentServersToPing = serversRef.current;
+
+    // Set all to 'pending' first
     setServers(prevServers =>
       prevServers.map(server => ({ ...server, pingStatus: 'pending' }))
     );
@@ -101,15 +112,15 @@ const ServerManagementScreen = () => {
     );
 
     setServers(updatedServers);
-  }, []); // No dependency on 'servers' here, making pingAllServers stable
+  }, []);
 
   useEffect(() => {
     if (isFocused) {
-      pingAllServers(); // Initial ping
+      loadServers(); // Load servers when screen is focused
       const intervalId = setInterval(pingAllServers, 7000); // Ping every 7 seconds
       return () => clearInterval(intervalId); // Cleanup on unmount or unfocus
     }
-  }, [isFocused, pingAllServers]); // Depend on pingAllServers (which is now stable)
+  }, [isFocused, loadServers, pingAllServers]);
 
   const handleDeleteServer = (serverId: string) => {
     Alert.alert(
@@ -124,8 +135,7 @@ const ServerManagementScreen = () => {
           text: t('delete'),
           onPress: async () => {
             try {
-              // In a real scenario, you would delete from the database
-              // await serverService.deleteServer(serverId);
+              await serverService.deleteServer(serverId); // Delete from the database
               setServers(prev => prev.filter(server => server.id !== serverId)); // Update servers state directly
               Alert.alert(t('success'), t('server_deleted_successfully'));
             } catch (err) {
@@ -189,7 +199,8 @@ const ServerManagementScreen = () => {
   if (loading) {
     return (
       <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading_servers')}</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ color: colors.text, marginTop: 10 }}>{t('loading_servers')}</Text>
       </View>
     );
   }

@@ -1,10 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import axios, { AxiosError } from 'axios'; // Import AxiosError
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../components/common/Button/Button';
 import TextInput from '../components/common/TextInput/TextInput';
+import { useDrizzle } from '../db';
+import { createServerService } from '../services/ServerService';
+import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
 
@@ -21,32 +25,104 @@ const ServerRegistrationScreen = () => {
   const navigation = useNavigation<ServerRegistrationScreenNavigationProp>();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
+  const drizzleDb = useDrizzle();
+  const serverService = useRef(createServerService(drizzleDb)).current;
+  const { userId } = useUserSettingsStore();
 
   const [serverAddress, setServerAddress] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false); // Not used yet, but good to have for future functionality
+  const [serverName, setServerName] = useState(''); // New state for server name
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleRegisterServer = () => {
+  const handleRegisterServer = useCallback(async () => {
     if (!serverAddress.trim() || !username.trim() || !password.trim()) {
       Alert.alert(t('error'), t('all_fields_required'));
       return;
     }
 
-    // TODO: Implement actual server registration logic here
-    console.log('Register Server:', {
-      address: serverAddress,
-      username: username,
-      password: password,
-    });
-    Alert.alert(t('server_registration_mock_title'), t('server_registration_mock_message'));
-    // Clear form
-    setServerAddress('');
-    setUsername('');
-    setPassword('');
-    // Optionally navigate back or to server management screen
-    // navigation.goBack();
-  };
+    if (!userId) {
+      Alert.alert(t('error'), t('user_not_identified'));
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 1. Server Check (/kerescheck)
+      const keresCheckUrl = `${serverAddress}/kerescheck`;
+      const checkResponse = await axios.get(keresCheckUrl, { timeout: 5000 }); // Add timeout
+
+      if (checkResponse.status !== 200 || !checkResponse.data || typeof checkResponse.data.version !== 'string') {
+        throw new Error(t('invalid_keres_server'));
+      }
+      const serverVersion = checkResponse.data.version;
+
+      // 2. Login (/auth/login)
+      const loginUrl = `${serverAddress}/auth/login`;
+      const loginResponse = await axios.post(loginUrl, { username, password }, { timeout: 5000 }); // Add timeout
+
+      if (loginResponse.status !== 200 || !loginResponse.data || !loginResponse.data.accessToken || !loginResponse.data.refreshToken) {
+        throw new Error(t('invalid_credentials'));
+      }
+      const { accessToken, refreshToken } = loginResponse.data;
+
+      // 3. Save Server
+      await serverService.createServer({
+        idUser: userId,
+        userName: username,
+        name: serverName || serverAddress,
+        url: serverAddress,
+        jwtToken: accessToken,
+        refreshToken: refreshToken,
+        lastSyncDate: new Date(), // Set initial sync date
+      });
+
+      Alert.alert(t('success'), t('server_registered_successfully'));
+      // Clear form and navigate back
+      setServerAddress('');
+      setUsername('');
+      setPassword('');
+      setServerName('');
+      navigation.goBack();
+
+    } catch (err) {
+      console.error('Server registration failed:', err);
+      let errorMessage = t('failed_to_register_server');
+
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        if (axiosError.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          if (axiosError.response.status === 401) {
+            errorMessage = t('invalid_credentials');
+          } else if (axiosError.response.status === 409) {
+            errorMessage = t('user_already_exists'); // Assuming 409 for user exists
+          } else if (axiosError.response.data && typeof axiosError.response.data === 'object' && 'message' in axiosError.response.data) {
+            errorMessage = axiosError.response.data.message as string;
+          } else {
+            errorMessage = `${t('server_error')}: ${axiosError.response.status}`;
+          }
+        } else if (axiosError.request) {
+          // The request was made but no response was received
+          errorMessage = t('network_error_no_response');
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          errorMessage = `${t('request_setup_error')}: ${axiosError.message}`;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
+      Alert.alert(t('error'), errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [serverAddress, username, password, serverName, userId, serverService, navigation, t]);
 
   return (
     <KeyboardAvoidingView
@@ -71,6 +147,14 @@ const ServerRegistrationScreen = () => {
             autoCapitalize="none"
           />
 
+          <Text style={[styles.label, { color: colors.text }]}>{t('server_name_optional')}</Text>
+          <TextInput
+            placeholder={t('server_name_placeholder')}
+            value={serverName}
+            onChangeText={setServerName}
+            style={commonInputStyles.input}
+          />
+
           <Text style={[styles.label, { color: colors.text }]}>{t('username')}</Text>
           <TextInput
             placeholder={t('username_placeholder')}
@@ -89,9 +173,11 @@ const ServerRegistrationScreen = () => {
             secureTextEntry
           />
 
-          <Button onPress={handleRegisterServer} style={styles.registerButton}>
-            {t('register_server')}
+          <Button onPress={handleRegisterServer} style={styles.registerButton} disabled={loading}>
+            {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('register_server')}
           </Button>
+
+          {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
 
           <View style={{ height: 90 }} />
         </ScrollView>
@@ -119,6 +205,10 @@ const styles = StyleSheet.create({
   registerButton: {
     marginTop: 30,
     marginBottom: 20,
+  },
+  errorText: {
+    marginTop: 10,
+    textAlign: 'center',
   },
 });
 

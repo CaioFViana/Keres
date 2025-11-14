@@ -23,6 +23,7 @@
     "@react-navigation/drawer": "^7.7.2",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "axios": "^1.13.2",
     "drizzle-orm": "^0.44.7",
     "expo": "~54.0.22",
     "expo-constants": "~18.0.10",

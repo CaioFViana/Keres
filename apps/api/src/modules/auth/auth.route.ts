@@ -5,9 +5,9 @@ import { eq } from 'drizzle-orm';
 import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { env } from '../../config/env';
+import { jwtRefresh } from '../../config/jwt';
 import { db } from '../../db';
 import { users } from '../../db/schema';
-import { jwtRefresh } from '../../config/jwt';
 
 export const authRoutes = new Elysia()
   .use(
@@ -44,11 +44,11 @@ export const authRoutes = new Elysia()
         return { message: 'Invalid credentials' };
       }
 
-      // Sign JWT with userId and email as per the schema defined in index.ts
+      // Sign JWT with userId and username as per the schema defined in index.ts
       const accessToken = await jwt.sign({ userId: user.id, username: user.username });
       const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username }); // Use jwtRefresh for refresh token
 
-      return { accessToken, refreshToken };
+      return { accessToken, refreshToken, username: user.username };
     },
     {
       body: t.Object({
@@ -91,11 +91,11 @@ export const authRoutes = new Elysia()
         return { message: 'Failed to create user' };
       }
 
-      // Sign JWT with userId and email as per the schema defined in index.ts
+      // Sign JWT with userId and username as per the schema defined in index.ts
       const accessToken = await jwt.sign({ userId: newUser.id, username: newUser.username });
       const refreshToken = await jwtRefresh.sign({ userId: newUser.id, username: newUser.username }); // Use jwtRefresh for refresh token
 
-      return { accessToken, refreshToken };
+      return { accessToken, refreshToken, username: newUser.username };
     },
     {
       body: t.Object({
@@ -123,7 +123,7 @@ export const authRoutes = new Elysia()
       // Sign a new access token with the payload from the refresh token
       const newAccessToken = await jwt.sign({ userId: payload.userId, username: payload.username });
 
-      return { accessToken: newAccessToken };
+      return { accessToken: newAccessToken, username: payload.username };
     },
     {
       body: t.Object({

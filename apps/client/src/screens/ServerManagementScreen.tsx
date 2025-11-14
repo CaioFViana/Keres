@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -9,6 +10,7 @@ import { createServerService } from '../services/ServerService';
 import { useTheme } from '../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../theme/commonStyles';
 import { createULID } from '../utils/ulid';
+import { StorySelectionStackParamList } from '../navigation/StorySelectionStack';
 
 interface ServerWithStatus extends ServerSelect {
   pingStatus: 'idle' | 'pending' | 'online' | 'offline';
@@ -49,9 +51,12 @@ const initialMockServers: ServerWithStatus[] = [
   },
 ];
 
+type ServerManagementScreenNavigationProp = NativeStackNavigationProp<StorySelectionStackParamList, 'ServerManagement'>;
+
 const ServerManagementScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const navigation = useNavigation<ServerManagementScreenNavigationProp>();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonCardStyles = getCommonCardStyles(colors);
   const drizzleDb = useDrizzle();
@@ -207,7 +212,10 @@ const ServerManagementScreen = () => {
         ListEmptyComponent={<Text style={{ color: colors.textSecondary, textAlign: 'center' }}>{t('no_servers_found')}</Text>}
         contentContainerStyle={styles.listContentContainer}
       />
-      <TouchableOpacity style={[styles.floatingButton, { backgroundColor: colors.primary }]} onPress={() => { console.log('Add Server clicked'); /* TODO: Implement add functionality */ }}>
+      <TouchableOpacity
+        style={[styles.floatingButton, { backgroundColor: colors.primary }]}
+        onPress={() => navigation.navigate('ServerRegistration')}
+      >
         <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
       </TouchableOpacity>
     </View>

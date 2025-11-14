@@ -7,6 +7,7 @@ import { ulid } from 'ulid';
 import { env } from '../../config/env';
 import { db } from '../../db';
 import { users } from '../../db/schema';
+import { jwtRefresh } from '../../config/jwt';
 
 export const authRoutes = new Elysia()
   .use(
@@ -20,10 +21,11 @@ export const authRoutes = new Elysia()
       })
     })
   )
+  .use(jwtRefresh) // Register jwtRefresh plugin
   .use(bearer())
   .post(
     '/login',
-    async ({ jwt, body, set }) => {
+    async ({ jwt, jwtRefresh, body, set }) => { // Destructure jwtRefresh
       const { username, password } = body;
 
       const user = await db.query.users.findFirst({
@@ -43,9 +45,10 @@ export const authRoutes = new Elysia()
       }
 
       // Sign JWT with userId and email as per the schema defined in index.ts
-      const token = await jwt.sign({ userId: user.id, username: user.username }); // Assuming username is used as email for now
+      const accessToken = await jwt.sign({ userId: user.id, username: user.username });
+      const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username }); // Use jwtRefresh for refresh token
 
-      return { token };
+      return { accessToken, refreshToken };
     },
     {
       body: t.Object({
@@ -60,7 +63,7 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/register',
-    async ({ jwt, body, set }) => {
+    async ({ jwt, jwtRefresh, body, set }) => { // Destructure jwtRefresh
       const { username, password } = body;
 
       const existingUser = await db.query.users.findFirst({
@@ -89,9 +92,10 @@ export const authRoutes = new Elysia()
       }
 
       // Sign JWT with userId and email as per the schema defined in index.ts
-      const token = await jwt.sign({ userId: newUser.id, username: newUser.username });
+      const accessToken = await jwt.sign({ userId: newUser.id, username: newUser.username });
+      const refreshToken = await jwtRefresh.sign({ userId: newUser.id, username: newUser.username }); // Use jwtRefresh for refresh token
 
-      return { token };
+      return { accessToken, refreshToken };
     },
     {
       body: t.Object({
@@ -100,6 +104,33 @@ export const authRoutes = new Elysia()
       }),
       detail: {
         summary: 'User registration',
+        tags: ['Auth'],
+      },
+    }
+  )
+  .post(
+    '/refresh',
+    async ({ jwt, jwtRefresh, body, set }) => { // Destructure jwtRefresh
+      const { refreshToken } = body;
+
+      const payload = await jwtRefresh.verify(refreshToken); // Use jwtRefresh to verify
+
+      if (!payload || !payload.userId || !payload.username) {
+        set.status = 401;
+        return { message: 'Invalid or expired refresh token' };
+      }
+
+      // Sign a new access token with the payload from the refresh token
+      const newAccessToken = await jwt.sign({ userId: payload.userId, username: payload.username });
+
+      return { accessToken: newAccessToken };
+    },
+    {
+      body: t.Object({
+        refreshToken: t.String(),
+      }),
+      detail: {
+        summary: 'Refresh access token',
         tags: ['Auth'],
       },
     }

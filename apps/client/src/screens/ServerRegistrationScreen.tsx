@@ -53,7 +53,10 @@ const ServerRegistrationScreen = () => {
     try {
       // 1. Server Check (/kerescheck)
       const keresCheckUrl = `${serverAddress}/kerescheck`;
-      const checkResponse = await axios.get(keresCheckUrl, { timeout: 5000 }); // Add timeout
+      const checkResponse = await axios.get(keresCheckUrl, {
+        timeout: 5000, // Add timeout
+        validateStatus: () => true, // Always resolve, don't reject on HTTP status codes
+      });
 
       if (checkResponse.status !== 200 || !checkResponse.data || typeof checkResponse.data.version !== 'string') {
         throw new Error(t('invalid_keres_server'));
@@ -62,10 +65,20 @@ const ServerRegistrationScreen = () => {
 
       // 2. Login (/auth/login)
       const loginUrl = `${serverAddress}/auth/login`;
-      const loginResponse = await axios.post(loginUrl, { username, password }, { timeout: 5000 }); // Add timeout
+      const loginResponse = await axios.post(loginUrl, { username, password }, {
+        timeout: 5000, // Add timeout
+        validateStatus: () => true, // Always resolve, don't reject on HTTP status codes
+      });
 
       if (loginResponse.status !== 200 || !loginResponse.data || !loginResponse.data.accessToken || !loginResponse.data.refreshToken) {
-        throw new Error(t('invalid_credentials'));
+        // More specific error message for login failure
+        if (loginResponse.status === 401) {
+          throw new Error(t('invalid_credentials'));
+        } else if (loginResponse.status === 409) {
+          throw new Error(t('user_already_exists'));
+        } else {
+          throw new Error(`${t('server_error')}: ${loginResponse.status}`);
+        }
       }
       const { accessToken, refreshToken } = loginResponse.data;
 
@@ -89,25 +102,13 @@ const ServerRegistrationScreen = () => {
       navigation.goBack();
 
     } catch (err) {
-      console.error('Server registration failed:', err);
+      // Removed console.error to prevent crashes in Expo development environment
       let errorMessage = t('failed_to_register_server');
 
       if (axios.isAxiosError(err)) {
         const axiosError = err as AxiosError;
-        if (axiosError.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          if (axiosError.response.status === 401) {
-            errorMessage = t('invalid_credentials');
-          } else if (axiosError.response.status === 409) {
-            errorMessage = t('user_already_exists'); // Assuming 409 for user exists
-          } else if (axiosError.response.data && typeof axiosError.response.data === 'object' && 'message' in axiosError.response.data) {
-            errorMessage = axiosError.response.data.message as string;
-          } else {
-            errorMessage = `${t('server_error')}: ${axiosError.response.status}`;
-          }
-        } else if (axiosError.request) {
-          // The request was made but no response was received
+        if (axiosError.request) {
+          // The request was made but no response was received (network error)
           errorMessage = t('network_error_no_response');
         } else {
           // Something happened in setting up the request that triggered an Error

@@ -56,26 +56,11 @@ const ServerManagementScreen = () => {
       if (response.status === 200 && response.data && typeof response.data.version === 'string') {
         return { ...server, pingStatus: 'online' };
       } else {
-        safeLogError(`Ping failed for ${server.url}: Server responded with status ${response.status} or unexpected data.`);
+        // Removed safeLogError to completely eliminate any logging of the error object
         return { ...server, pingStatus: 'offline' };
       }
     } catch (err) {
-      let errorMessage = `Ping failed for ${server.url}: `;
-      if (axios.isAxiosError(err)) {
-        const axiosError = err as AxiosError;
-        if (axiosError.code === 'ERR_NETWORK') {
-          errorMessage += 'Network error (no response). Check server address or internet connection.';
-        } else if (axiosError.code === 'ECONNABORTED') {
-          errorMessage += 'Timeout error. Server took too long to respond.';
-        } else {
-          errorMessage += `Request setup error - ${axiosError.message}`;
-        }
-      } else if (err instanceof Error) {
-        errorMessage += `An unexpected error occurred - ${err.message}`;
-      } else {
-        errorMessage += `An unknown error occurred.`;
-      }
-      safeLogError(errorMessage); // Use the safe logging function
+      // Removed safeLogError to completely eliminate any logging of the error object
       return Promise.resolve({ ...server, pingStatus: 'offline' });
     }
   };

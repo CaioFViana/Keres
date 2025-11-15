@@ -5,10 +5,12 @@ import { swagger } from '@elysiajs/swagger';
 import { Elysia, t } from 'elysia';
 import { env } from './config/env';
 import { authRoutes } from './modules/auth/auth.route';
+import { syncRoute } from './modules/sync/sync.route'; // Import the new syncRoute
+import { storyRoutes } from './modules/story/story.route'; // Import the new storyRoutes
 
 // Define a placeholder type for the JWT payload
 // In a real application, this would be derived from your User entity
-interface JWTPayload {
+export interface JWTPayload { // Export JWTPayload
   userId: string;
   username: string;
 }
@@ -83,6 +85,8 @@ const app = new Elysia()
     return { version: env.SERVER_VERSION };
   })
   .group('/auth', (app) => app.use(authRoutes))
+  .group('/sync', (app) => app.use(syncRoute)) // Register the sync route using app.group
+  .group('/stories', (app) => app.use(storyRoutes)) // Register the story route
   .listen(env.PORT, ({ hostname, port }) => {
     console.log(`🦊 Elysia is running at http://${hostname}:${port}`);
     console.log(`📖 Swagger UI at http://${hostname}:${port}/swagger`);

@@ -15,6 +15,27 @@
       "when": 1763057323360,
       "tag": "0001_ambitious_starjammers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763225101270,
+      "tag": "0002_curvy_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763229542430,
+      "tag": "0003_military_marvel_apes",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763231818333,
+      "tag": "0004_omniscient_loners",
+      "breakpoints": true
     }
   ]
 }

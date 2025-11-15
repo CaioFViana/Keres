@@ -1,4 +1,4 @@
-import { and, eq, max, sql } from 'drizzle-orm'; // Import 'sql' for incrementing version
+import { and, eq, gt, max, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { characters, operationLog, operationTypeEnum, stories } from '../db/schema'; // Import 'characters'
@@ -182,11 +182,67 @@ export class SyncService {
     // TODO: Implement StoryPermissions check here if collaborative editing is enabled
     // For now, only owner can sync.
 
-    // TODO: Implement logic to fetch updates from the operationLog table
-    // for the given storyId and where operationVersion > lastOperationVersion.
-    // For now, return an empty array.
-    console.log(`Fetching updates for storyId: ${storyId} since operationVersion: ${lastOperationVersion}`);
-    return [];
+    const fetchedOperations = await db.query.operationLog.findMany({
+      where: and(
+        eq(operationLog.storyId, storyId),
+        gt(operationLog.operationVersion, lastOperationVersion)
+      ),
+      orderBy: [operationLog.operationVersion],
+    });
+
+    // Map operationLog entries back to StoryUpdate objects
+    const updates: StoryUpdate[] = fetchedOperations.map(op => {
+      let version: number | undefined;
+      let data: Record<string, any> | undefined;
+      let changes: Record<string, any> | undefined;
+
+      // Explicitly cast op.payload to Record<string, any>
+      const payloadAsRecord = op.payload as Record<string, any>;
+
+      // Extract version and payload types correctly based on operationType
+      if (op.operationType === 'create') {
+        data = payloadAsRecord;
+        version = payloadAsRecord.version; // Client should send version for create
+      } else if (op.operationType === 'update') {
+        changes = payloadAsRecord;
+        version = payloadAsRecord.version; // Version is expected in changes
+      } else if (op.operationType === 'delete') {
+        // For delete, payload might only contain id, version might be part of the initial update object
+        // If the client sends version with delete, it would be in update.version, not payload.
+        // For now, we assume it might be in payload if client chose to send it.
+        version = payloadAsRecord.version; // Placeholder, review client's DeleteStoryUpdate structure
+      }
+
+      // Reconstruct the StoryUpdate object
+      if (op.operationType === 'create') {
+        return {
+          type: 'create',
+          entity: op.entityType,
+          id: op.entityId,
+          data: data!,
+          version: version,
+        } as CreateStoryUpdate;
+      } else if (op.operationType === 'update') {
+        return {
+          type: 'update',
+          entity: op.entityType,
+          id: op.entityId,
+          changes: changes!,
+          version: version,
+        } as UpdateStoryUpdate;
+      } else if (op.operationType === 'delete') {
+        return {
+          type: 'delete',
+          entity: op.entityType,
+          id: op.entityId,
+          version: version, // This version property on DeleteStoryUpdate should come from the original client update
+        } as DeleteStoryUpdate;
+      }
+      // Fallback or throw error for unknown operation types
+      throw new Error(`Unknown operation type: ${op.operationType}`);
+    });
+
+    return updates;
   }
 }
 

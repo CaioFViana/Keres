@@ -1,10 +1,25 @@
-import { and, eq, gt, max, sql } from 'drizzle-orm';
+import { and, eq, gt, max } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
-import { characters, operationLog, operationTypeEnum, stories } from '../db/schema'; // Import 'characters'
+import { operationLog, operationTypeEnum, stories } from '../db/schema';
 import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '../schemas/SyncSchemas';
+import { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
+import { StorySyncHandler } from './entity-sync-handlers/StorySyncHandler';
+import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
 
 export class SyncService {
+  private entityHandlers: Map<string, SyncEntityHandler>;
+
+  constructor() {
+    this.entityHandlers = new Map<string, SyncEntityHandler>();
+    this.registerEntityHandler(new StorySyncHandler());
+    this.registerEntityHandler(new CharacterSyncHandler());
+  }
+
+  private registerEntityHandler(handler: SyncEntityHandler) {
+    this.entityHandlers.set(handler.entityName, handler);
+  }
+
   async processAndRecordUpdates(userId: string, storyId: string, updates: StoryUpdate[]): Promise<{ lastOperationVersion: number }> {
     // Authorization check: Verify story ownership
     const story = await db.query.stories.findFirst({
@@ -28,6 +43,11 @@ export class SyncService {
     for (const update of updates) {
       currentMaxOperationVersion++;
 
+      const handler = this.entityHandlers.get(update.entity);
+      if (!handler) {
+        throw new Error(`No sync handler registered for entity type: ${update.entity}`);
+      }
+
       // Determine the original payload based on the update type for operation log
       let originalPayload: Record<string, any> = {};
       if (update.type === 'create') {
@@ -39,114 +59,32 @@ export class SyncService {
       }
 
       // --- Entity Processing and Conflict Resolution ---
-      if (update.entity === 'Story') {
-        const currentStory = await db.query.stories.findFirst({
-          where: eq(stories.id, update.id!),
-        });
+      const currentEntity = await handler.findById(update.id!);
 
-        if (update.type === 'create') {
-          // If story already exists, it's a conflict
-          if (currentStory) {
-            throw new Error(`Conflict: Story with ID ${update.id} already exists.`);
-          }
-          await db.insert(stories).values({
-            id: update.id!,
-            userId: userId, // Assign to the user making the request
-            title: (update as CreateStoryUpdate).data.title,
-            type: (update as CreateStoryUpdate).data.type,
-            version: 1,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            // Other fields will be default or null
-          });
-        } else if (update.type === 'update') {
-          if (!currentStory) {
-            throw new Error(`Not Found: Story with ID ${update.id} does not exist.`);
-          }
-          // Conflict resolution: Last-Write-Wins based on version
-          if ((update as UpdateStoryUpdate).changes.version < currentStory.version) {
-            throw new Error(`Conflict: Story ${update.id} is outdated. Client version ${
-              (update as UpdateStoryUpdate).changes.version
-            } < Server version ${currentStory.version}.`);
-          }
-          await db.update(stories)
-            .set({
-              ...((update as UpdateStoryUpdate).changes as Partial<typeof stories.$inferInsert>),
-              version: sql`${stories.version} + 1`, // Increment server version
-              updatedAt: new Date(),
-            })
-            .where(eq(stories.id, update.id!));
-        } else if (update.type === 'delete') {
-          if (!currentStory) {
-            throw new Error(`Not Found: Story with ID ${update.id} does not exist.`);
-          }
-          // Conflict resolution: Last-Write-Wins based on version
-          if ((update as DeleteStoryUpdate).version! < currentStory.version) {
-            throw new Error(`Conflict: Story ${update.id} is outdated. Client version ${
-              (update as DeleteStoryUpdate).version
-            } < Server version ${currentStory.version}.`);
-          }
-          await db.update(stories)
-            .set({
-              isDeleted: true,
-              deletedAt: new Date(),
-              version: sql`${stories.version} + 1`, // Increment server version
-              updatedAt: new Date(),
-            })
-            .where(eq(stories.id, update.id!));
-        }
-      } else if (update.entity === 'Character') {
-        const currentCharacter = await db.query.characters.findFirst({
-          where: eq(characters.id, update.id!),
-        });
+      // Check if the entity belongs to the story (if applicable)
+      if (currentEntity && !handler.checkBelongsToStory(currentEntity, storyId)) {
+        throw new Error(`Unauthorized: Entity ${update.id} does not belong to story ${storyId}.`);
+      }
 
-        if (update.type === 'create') {
-          if (currentCharacter) {
-            throw new Error(`Conflict: Character with ID ${update.id} already exists.`);
-          }
-          await db.insert(characters).values({
-            id: update.id!,
-            storyId: storyId, // Character must belong to this story
-            name: (update as CreateStoryUpdate).data.name,
-            version: 1,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            // Other fields will be default or null
-          });
-        } else if (update.type === 'update') {
-          if (!currentCharacter) {
-            throw new Error(`Not Found: Character with ID ${update.id} does not exist.`);
-          }
-          if ((update as UpdateStoryUpdate).changes.version < currentCharacter.version) {
-            throw new Error(`Conflict: Character ${update.id} is outdated. Client version ${
-              (update as UpdateStoryUpdate).changes.version
-            } < Server version ${currentCharacter.version}.`);
-          }
-          await db.update(characters)
-            .set({
-              ...((update as UpdateStoryUpdate).changes as Partial<typeof characters.$inferInsert>),
-              version: sql`${characters.version} + 1`,
-              updatedAt: new Date(),
-            })
-            .where(eq(characters.id, update.id!));
-        } else if (update.type === 'delete') {
-          if (!currentCharacter) {
-            throw new Error(`Not Found: Character with ID ${update.id} does not exist.`);
-          }
-          if ((update as DeleteStoryUpdate).version! < currentCharacter.version) {
-            throw new Error(`Conflict: Character ${update.id} is outdated. Client version ${
-              (update as DeleteStoryUpdate).version
-            } < Server version ${currentCharacter.version}.`);
-          }
-          await db.update(characters)
-            .set({
-              isDeleted: true,
-              deletedAt: new Date(),
-              version: sql`${characters.version} + 1`,
-              updatedAt: new Date(),
-            })
-            .where(eq(characters.id, update.id!));
+      // Check if the user has permission to modify this entity (if applicable)
+      // For now, only owner can sync, so this check is redundant with the story ownership check above
+      // but it's good to have for future collaborative editing.
+      if (currentEntity && !handler.checkOwnership(currentEntity, userId)) {
+        throw new Error(`Unauthorized: User ${userId} does not own entity ${update.id}.`);
+      }
+
+      if (update.type === 'create') {
+        await handler.create(userId, storyId, update as CreateStoryUpdate);
+      } else if (update.type === 'update') {
+        if (!currentEntity) {
+          throw new Error(`Not Found: ${update.entity} with ID ${update.id} does not exist.`);
         }
+        await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
+      } else if (update.type === 'delete') {
+        if (!currentEntity) {
+          throw new Error(`Not Found: ${update.entity} with ID ${update.id} does not exist.`);
+        }
+        await handler.delete(userId, storyId, update as DeleteStoryUpdate, currentEntity);
       }
       // --- End Entity Processing ---
 

@@ -5,8 +5,9 @@ import { swagger } from '@elysiajs/swagger';
 import { Elysia, t } from 'elysia';
 import { env } from './config/env';
 import { authRoutes } from './modules/auth/auth.route';
-import { syncRoute } from './modules/sync/sync.route'; // Import the new syncRoute
-import { storyRoutes } from './modules/story/story.route'; // Import the new storyRoutes
+import { storyRoutes } from './modules/story/story.route';
+import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route'; // Import the new route
+import { syncRoute } from './modules/sync/sync.route';
 
 // Define a placeholder type for the JWT payload
 // In a real application, this would be derived from your User entity
@@ -79,14 +80,29 @@ const app = new Elysia()
       throw new Error('Invalid token');
     }
   })
-  .get('/', () => 'Welcome to Keres API!')
+  .get('/', ({ redirect }) => {
+    redirect('/swagger')
+  }, {
+    detail: {
+      summary: 'Redirect to Swagger UI',
+      description: 'Redirects the user to the API documentation provided by Swagger UI.',
+      tags: ['Documentation'],
+    },
+  })
   .get('/kerescheck', ({ set }) => {
     set.status = 200;
     return { version: env.SERVER_VERSION };
+  }, {
+    detail: {
+      summary: 'Check API Status',
+      description: 'Returns the current version of the Keres API, useful for health checks.',
+      tags: ['Health Check'],
+    },
   })
   .group('/auth', (app) => app.use(authRoutes))
-  .group('/sync', (app) => app.use(syncRoute)) // Register the sync route using app.group
-  .group('/stories', (app) => app.use(storyRoutes)) // Register the story route
+  .group('/sync', (app) => app.use(syncRoute))
+  .group('/stories', (app) => app.use(storyRoutes))
+  .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
   .listen(env.PORT, ({ hostname, port }) => {
     console.log(`🦊 Elysia is running at http://${hostname}:${port}`);
     console.log(`📖 Swagger UI at http://${hostname}:${port}/swagger`);

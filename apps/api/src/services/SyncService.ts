@@ -6,6 +6,7 @@ import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } 
 import { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { StorySyncHandler } from './entity-sync-handlers/StorySyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
+import { storyPermissionService } from './StoryPermissionService'; // Import storyPermissionService
 
 export class SyncService {
   private entityHandlers: Map<string, SyncEntityHandler>;
@@ -21,17 +22,28 @@ export class SyncService {
   }
 
   async processAndRecordUpdates(userId: string, storyId: string, updates: StoryUpdate[]): Promise<{ lastOperationVersion: number }> {
-    // Authorization check: Verify story ownership
+    // Authorization check
     const story = await db.query.stories.findFirst({
-      where: and(eq(stories.id, storyId), eq(stories.userId, userId)),
+      where: eq(stories.id, storyId),
     });
 
     if (!story) {
-      throw new Error('Unauthorized: Story not found or not owned by user.');
+      throw new Error('Story not found.');
     }
 
-    // TODO: Implement StoryPermissions check here if collaborative editing is enabled
-    // For now, only owner can sync.
+    let hasWritePermission = false;
+    if (story.userId === userId) {
+      hasWritePermission = true; // User is the owner
+    } else {
+      const permission = await storyPermissionService.getUserPermissionForStory(userId, storyId);
+      if (permission && permission.permissionType === 'writer') {
+        hasWritePermission = true;
+      }
+    }
+
+    if (!hasWritePermission) {
+      throw new Error('Unauthorized: User does not have write permission for this story.');
+    }
 
     const operationsToInsert = [];
     let currentMaxOperationVersion = (await db
@@ -67,11 +79,12 @@ export class SyncService {
       }
 
       // Check if the user has permission to modify this entity (if applicable)
-      // For now, only owner can sync, so this check is redundant with the story ownership check above
-      // but it's good to have for future collaborative editing.
-      if (currentEntity && !handler.checkOwnership(currentEntity, userId)) {
-        throw new Error(`Unauthorized: User ${userId} does not own entity ${update.id}.`);
-      }
+      // This check is primarily for entities that might have their own userId,
+      // separate from the story owner (e.g., if a user can own a specific character within a shared story).
+      // For now, we rely on the story-level write permission.
+      // if (currentEntity && !handler.checkOwnership(currentEntity, userId)) {
+      //   throw new Error(`Unauthorized: User ${userId} does not own entity ${update.id}.`);
+      // }
 
       if (update.type === 'create') {
         await handler.create(userId, storyId, update as CreateStoryUpdate);
@@ -91,6 +104,7 @@ export class SyncService {
       operationsToInsert.push({
         id: ulid(),
         storyId: storyId,
+        userId: userId, // Add the userId here
         operationVersion: currentMaxOperationVersion,
         operationType: operationTypeEnum.enumValues.includes(update.type as any) ? update.type as any : 'update',
         entityType: update.entity,
@@ -108,17 +122,28 @@ export class SyncService {
   }
 
   async getUpdatesForStory(userId: string, storyId: string, lastOperationVersion: number): Promise<StoryUpdate[]> {
-    // Authorization check: Verify story ownership
+    // Authorization check
     const story = await db.query.stories.findFirst({
-      where: and(eq(stories.id, storyId), eq(stories.userId, userId)),
+      where: eq(stories.id, storyId),
     });
 
     if (!story) {
-      throw new Error('Unauthorized: Story not found or not owned by user.');
+      throw new Error('Story not found.');
     }
 
-    // TODO: Implement StoryPermissions check here if collaborative editing is enabled
-    // For now, only owner can sync.
+    let hasReadPermission = false;
+    if (story.userId === userId) {
+      hasReadPermission = true; // User is the owner
+    } else {
+      const permission = await storyPermissionService.getUserPermissionForStory(userId, storyId);
+      if (permission && (permission.permissionType === 'reader' || permission.permissionType === 'writer')) {
+        hasReadPermission = true;
+      }
+    }
+
+    if (!hasReadPermission) {
+      throw new Error('Unauthorized: User does not have read permission for this story.');
+    }
 
     const fetchedOperations = await db.query.operationLog.findMany({
       where: and(

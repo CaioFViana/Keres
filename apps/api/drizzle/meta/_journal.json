@@ -36,6 +36,20 @@
       "when": 1763231818333,
       "tag": "0004_omniscient_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1763324373064,
+      "tag": "0005_sour_kylun",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1763327740245,
+      "tag": "0006_lethal_iron_lad",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,2 @@
+ALTER TABLE "operation_log" ADD COLUMN "user_id" text NOT NULL;--> statement-breakpoint
+ALTER TABLE "operation_log" ADD CONSTRAINT "operation_log_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

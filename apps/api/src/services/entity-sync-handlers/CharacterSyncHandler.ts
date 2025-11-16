@@ -2,12 +2,12 @@ import { characters } from '../../db/schema';
 import { CreateStoryUpdate } from '../../schemas/SyncSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 import { db } from '../../db';
-import { CharacterSchema, PartialCharacterSchema } from '../../schemas/CharacterSchemas'; // Import schemas
+import { CharacterSchema, PartialCharacterSchema, CreateCharacterDataSchema } from '../../schemas/CharacterSchemas';
 import { z } from 'zod';
 
-type CharacterCreateType = z.infer<typeof CharacterSchema>;
+type CharacterCreateType = z.infer<typeof CreateCharacterDataSchema>;
 
-export class CharacterSyncHandler extends BaseSyncEntityHandler<typeof CharacterSchema, typeof PartialCharacterSchema> {
+export class CharacterSyncHandler extends BaseSyncEntityHandler<typeof CreateCharacterDataSchema, typeof PartialCharacterSchema> {
   entityName = 'Character';
 
   constructor() {
@@ -15,8 +15,8 @@ export class CharacterSyncHandler extends BaseSyncEntityHandler<typeof Character
       'characters', // Pass table name as string
       'id',
       'version',
-      CharacterSchema, // Pass create schema
-      PartialCharacterSchema, // Pass update schema
+      CreateCharacterDataSchema,
+      PartialCharacterSchema,
       {
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
@@ -36,20 +36,8 @@ export class CharacterSyncHandler extends BaseSyncEntityHandler<typeof Character
 
     await db.insert(characters).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
-      storyId: storyId, // Ensure storyId is set
-      name: validatedData.name,
-      gender: validatedData.gender,
-      race: validatedData.race,
-      subrace: validatedData.subrace,
-      description: validatedData.description,
-      personality: validatedData.personality,
-      motivation: validatedData.motivation,
-      qualities: validatedData.qualities,
-      weaknesses: validatedData.weaknesses,
-      biography: validatedData.biography,
-      plannedTimeline: validatedData.plannedTimeline,
-      isFavorite: validatedData.isFavorite,
-      extraNotes: validatedData.extraNotes,
+      storyId: storyId, // Ensure storyId is set from the context
+      ...validatedData, // Spread the validated data from the client
       version: 1, // Ensure version starts at 1 for new creations
       createdAt: new Date(), // Ensure createdAt is set
       updatedAt: new Date(), // Ensure updatedAt is set

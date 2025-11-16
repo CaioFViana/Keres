@@ -4,6 +4,7 @@ import { relations } from 'drizzle-orm';
 // Enums
 export const storyTypeEnum = pgEnum('story_type', ['linear', 'branching']);
 export const operationTypeEnum = pgEnum('operation_type', ['create', 'update', 'delete']);
+export const storyPermissionTypeEnum = pgEnum('story_permission_type', ['reader', 'writer']);
 
 // Tables
 export const users = pgTable('users', {
@@ -57,9 +58,22 @@ export const characters = pgTable('characters', {
   deletedAt: timestamp('deleted_at'),
 });
 
+export const storyPermissions = pgTable('story_permissions', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  userId: text('user_id').notNull().references(() => users.id),
+  permissionType: storyPermissionTypeEnum('permission_type').notNull(),
+  version: integer('version').notNull().default(1),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+});
+
 export const operationLog = pgTable('operation_log', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull().references(() => stories.id),
+  userId: text('user_id').notNull().references(() => users.id),
   operationVersion: integer('operation_version').notNull(), // Unique per storyId
   operationType: operationTypeEnum('operation_type').notNull(),
   entityType: text('entity_type').notNull(),
@@ -71,6 +85,8 @@ export const operationLog = pgTable('operation_log', {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   stories: many(stories),
+  storyPermissions: many(storyPermissions),
+  operationLogs: many(operationLog),
 }));
 
 export const storiesRelations = relations(stories, ({ one, many }) => ({
@@ -79,6 +95,7 @@ export const storiesRelations = relations(stories, ({ one, many }) => ({
     references: [users.id],
   }),
   characters: many(characters), // Add relation to characters
+  storyPermissions: many(storyPermissions),
   operationLog: many(operationLog), // Add relation to operationLog
 }));
 
@@ -89,9 +106,24 @@ export const charactersRelations = relations(characters, ({ one }) => ({
   }),
 }));
 
+export const storyPermissionsRelations = relations(storyPermissions, ({ one }) => ({
+  story: one(stories, {
+    fields: [storyPermissions.storyId],
+    references: [stories.id],
+  }),
+  user: one(users, {
+    fields: [storyPermissions.userId],
+    references: [users.id],
+  }),
+}));
+
 export const operationLogRelations = relations(operationLog, ({ one }) => ({
   story: one(stories, {
     fields: [operationLog.storyId],
     references: [stories.id],
+  }),
+  user: one(users, {
+    fields: [operationLog.userId],
+    references: [users.id],
   }),
 }));

@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '../db';
-import { storyPermissions, stories, users } from '../db/schema';
 import { ulid } from 'ulid';
+import { db } from '../db';
+import { stories, storyPermissions, users } from '../db/schema';
 
 export class StoryPermissionService {
   async upsertStoryPermission(
@@ -132,6 +132,25 @@ export class StoryPermissionService {
       where: and(eq(storyPermissions.storyId, storyId), eq(storyPermissions.userId, userId)),
     });
     return permission;
+  }
+
+  async isStoryOwner(userId: string, storyId: string): Promise<boolean> {
+    const story = await db.query.stories.findFirst({
+      where: and(eq(stories.id, storyId), eq(stories.userId, userId)),
+    });
+    return !!story;
+  }
+
+  async hasPermission(userId: string, storyId: string): Promise<boolean> {
+    // Check if the user is the owner of the story
+    const owner = await this.isStoryOwner(userId, storyId);
+    if (owner) {
+      return true;
+    }
+
+    // Check if the user has explicit read/write permission
+    const permission = await this.getUserPermissionForStory(userId, storyId);
+    return !!permission; // If a permission record exists, they have some access
   }
 }
 

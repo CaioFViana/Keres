@@ -3,11 +3,13 @@ import { cookie } from '@elysiajs/cookie';
 import { jwt } from '@elysiajs/jwt';
 import { swagger } from '@elysiajs/swagger';
 import { Elysia, t } from 'elysia';
+import * as path from 'path'; // Import path module
 import { env } from './config/env';
 import { authRoutes } from './modules/auth/auth.route';
 import { storyRoutes } from './modules/story/story.route';
-import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route'; // Import the new route
+import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route';
 import { syncRoute } from './modules/sync/sync.route';
+import { wsRoutes } from './modules/websocket/webSocket.route';
 
 // Define a placeholder type for the JWT payload
 // In a real application, this would be derived from your User entity
@@ -55,10 +57,13 @@ const app = new Elysia()
       })
     }),
   )
-  .derive(async ({ jwt, headers, set }) => {
-    const authHeader = headers['authorization'];
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
+  .derive(async ({ jwt, headers, set, cookie }) => {
+    let token: string | null | undefined = headers['authorization']?.startsWith('Bearer ') ? headers['authorization'].slice(7) : null;
+    console.log("token A: ",token)
+    if (!token && typeof cookie['access_token'].value === 'string') {
+      token = cookie['access_token'].value;
+    }
+    console.log("token B: ",token)
     if (!token) {
       // If no token, user is not authenticated.
       // We don't throw an error here, but rather return null for the user,
@@ -99,13 +104,25 @@ const app = new Elysia()
       tags: ['Health Check'],
     },
   })
+  .get('/test-client', async () => {
+    const htmlFilePath = path.join(process.cwd(), 'test_client.html');
+    return Bun.file(htmlFilePath);
+  }, {
+    detail: {
+      summary: 'Serve Test Client HTML',
+      description: 'Serves a simple HTML page for testing API authentication and WebSocket connectivity.',
+      tags: ['Test'],
+    },
+  })
   .group('/auth', (app) => app.use(authRoutes))
   .group('/sync', (app) => app.use(syncRoute))
   .group('/stories', (app) => app.use(storyRoutes))
   .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
+  .group('/ws', (app) => app.use(wsRoutes))
   .listen(env.PORT, ({ hostname, port }) => {
     console.log(`🦊 Elysia is running at http://${hostname}:${port}`);
     console.log(`📖 Swagger UI at http://${hostname}:${port}/swagger`);
+    console.log(`🧪 Test Client at http://${hostname}:${port}/test-client`);
   });
 
 export type App = typeof app;

@@ -9,6 +9,7 @@ const envSchema = z.object({
   JWT_SECRET_REFRESH: z.string().min(32, 'JWT_SECRET_REFRESH must be at least 32 characters long'),
   PORT: z.string().optional().default('3000'),
   SERVER_VERSION: z.string().optional().default('1.0.0'),
+  NODE_ENV: z.string().optional().default("development")
 });
 
 export const env = envSchema.parse(process.env);

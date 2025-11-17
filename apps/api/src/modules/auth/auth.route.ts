@@ -25,7 +25,7 @@ export const authRoutes = new Elysia()
   .use(bearer())
   .post(
     '/login',
-    async ({ jwt, jwtRefresh, body, set }) => { // Destructure jwtRefresh
+    async ({ jwt, jwtRefresh, body, set, cookie }) => { // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
       const user = await db.query.users.findFirst({
@@ -48,6 +48,22 @@ export const authRoutes = new Elysia()
       const accessToken = await jwt.sign({ userId: user.id, username: user.username });
       const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username }); // Use jwtRefresh for refresh token
 
+      cookie['access_token'].set({
+        value: accessToken,
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 3600, // 1 hour
+      });
+
+      cookie['refresh_token'].set({
+        value: refreshToken,
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 7 * 24 * 3600, // 7 days
+      });
+
       return { accessToken, refreshToken, username: user.username };
     },
     {
@@ -63,7 +79,7 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/register',
-    async ({ jwt, jwtRefresh, body, set }) => { // Destructure jwtRefresh
+    async ({ jwt, jwtRefresh, body, set, cookie }) => { // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
       const existingUser = await db.query.users.findFirst({
@@ -95,6 +111,22 @@ export const authRoutes = new Elysia()
       const accessToken = await jwt.sign({ userId: newUser.id, username: newUser.username });
       const refreshToken = await jwtRefresh.sign({ userId: newUser.id, username: newUser.username }); // Use jwtRefresh for refresh token
 
+      cookie['access_token'].set({
+        value: accessToken,
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 3600, // 1 hour
+      });
+
+      cookie['refresh_token'].set({
+        value: refreshToken,
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 7 * 24 * 3600, // 7 days
+      });
+
       return { accessToken, refreshToken, username: newUser.username };
     },
     {
@@ -110,8 +142,17 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/refresh',
-    async ({ jwt, jwtRefresh, body, set }) => { // Destructure jwtRefresh
-      const { refreshToken } = body;
+    async ({ jwt, jwtRefresh, body, set, cookie }) => { // Destructure jwtRefresh and cookie
+      let refreshToken: string | undefined = body.refreshToken;
+
+      if (!refreshToken && typeof cookie['refresh_token'].value === 'string') {
+        refreshToken = cookie['refresh_token'].value;
+      }
+
+      if (!refreshToken) {
+        set.status = 401;
+        return { message: 'Refresh token not found' };
+      }
 
       const payload = await jwtRefresh.verify(refreshToken); // Use jwtRefresh to verify
 
@@ -122,12 +163,29 @@ export const authRoutes = new Elysia()
 
       // Sign a new access token with the payload from the refresh token
       const newAccessToken = await jwt.sign({ userId: payload.userId, username: payload.username });
+      const newRefreshToken = await jwtRefresh.sign({ userId: payload.userId, username: payload.username }); // Generate a new refresh token
 
-      return { accessToken: newAccessToken, username: payload.username };
+      cookie['access_token'].set({
+        value: newAccessToken,
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 3600, // 1 hour
+      });
+
+      cookie['refresh_token'].set({
+        value: newRefreshToken,
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 7 * 24 * 3600, // 7 days
+      });
+
+      return { accessToken: newAccessToken, refreshToken: newRefreshToken, username: payload.username };
     },
     {
       body: t.Object({
-        refreshToken: t.String(),
+        refreshToken: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Refresh access token',

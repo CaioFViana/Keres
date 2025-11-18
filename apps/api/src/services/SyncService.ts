@@ -3,15 +3,16 @@ import { ulid } from 'ulid';
 import { db } from '../db';
 import { operationLog, operationTypeEnum, stories } from '../db/schema';
 import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '../schemas/SyncSchemas';
+import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
-import { StorySyncHandler } from './entity-sync-handlers/StorySyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
-import { storyPermissionService } from './StoryPermissionService'; // Import storyPermissionService
+import { StorySyncHandler } from './entity-sync-handlers/StorySyncHandler';
+import { storyPermissionService } from './StoryPermissionService';
 
 export class SyncService {
   private entityHandlers: Map<string, SyncEntityHandler>;
 
-  constructor() {
+  constructor() { // No longer accepts elysiaApp
     this.entityHandlers = new Map<string, SyncEntityHandler>();
     this.registerEntityHandler(new StorySyncHandler());
     this.registerEntityHandler(new CharacterSyncHandler());
@@ -116,6 +117,13 @@ export class SyncService {
 
     if (operationsToInsert.length > 0) {
       await db.insert(operationLog).values(operationsToInsert);
+      // Broadcast the updates to WebSocket clients subscribed to this storyId
+      eventManager.emit(`storyUpdate:${storyId}`, {
+        type: 'story_update',
+        storyId: storyId,
+        updates: operationsToInsert.length,
+        originatingUser: userId,
+      });
     }
 
     return { lastOperationVersion: currentMaxOperationVersion };

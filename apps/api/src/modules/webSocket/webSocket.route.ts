@@ -1,18 +1,19 @@
 import { Elysia } from 'elysia';
 import { JWTPayload } from '../../index';
-import { storyPermissionService } from '../../services/StoryPermissionService'; // Import the instantiated service
+import { storyPermissionService } from '../../services/StoryPermissionService';
+import { eventManager } from '../../utils/EventManager'; // Import eventManager
 
 export const wsRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
     .ws('/story/:storyid', {
-        async beforeHandle({ params, set, user }) { // Access user directly from context
+        async beforeHandle({ params, set, user }) {
             if (!user) {
                 set.status = 401;
                 return 'Unauthorized: No user found. Please provide a valid JWT.';
             }
 
             const storyId = params.storyid;
-            const userId = user.userId; // Use userId from the authenticated user
+            const userId = user.userId;
 
             const hasPermission = await storyPermissionService.hasPermission(userId, storyId);
 
@@ -24,20 +25,36 @@ export const wsRoutes = new Elysia()
             // If successful, do not return anything to allow the WebSocket connection to proceed.
         },
         open(ws) {
-            // When a new WebSocket connection opens, subscribe it to a channel based on storyId
-            const storyId = ws.data.params.storyid; // Access storyId from ws.data.params
+            const storyId = ws.data.params.storyid;
             ws.subscribe(storyId);
             console.log(`User ${ws.data.user?.userId} joined story channel: ${storyId}`);
+
+            // Define the callback for story updates
+            const storyUpdateCallback = (payload: any) => {
+                // Only send to this specific WebSocket if it's subscribed to the storyId
+                // Elysia's ws.send will handle sending to the connected client
+                ws.send(JSON.stringify(payload));
+            };
+
+            // Subscribe this WebSocket to events for its storyId
+            eventManager.on(`storyUpdate:${storyId}`, storyUpdateCallback);
+
+            // Store the callback on the ws object so we can unsubscribe later
+            (ws as any).storyUpdateCallback = storyUpdateCallback;
         },
         message(ws, {}) {
             // This channel is for listening to server-sent updates, not for receiving client messages.
             ws.send(JSON.stringify({"message": "This channel does not accept messages. Only listening."}));
         },
         close(ws) {
-            // When a WebSocket connection closes, unsubscribe it from the channel
-            const storyId = ws.data.params.storyid; // Access storyId from ws.data.params
+            const storyId = ws.data.params.storyid;
             ws.unsubscribe(storyId);
             console.log(`User ${ws.data.user?.userId} left story channel: ${storyId}`);
+
+            // Unsubscribe this WebSocket from events
+            if ((ws as any).storyUpdateCallback) {
+                eventManager.off(`storyUpdate:${storyId}`, (ws as any).storyUpdateCallback);
+            }
         }
     }
   );

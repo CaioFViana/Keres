@@ -5,17 +5,23 @@ import { operationLog, operationTypeEnum, stories } from '../db/schema';
 import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '../schemas/SyncSchemas';
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
+import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
+import { LocationSyncHandler } from './entity-sync-handlers/LocationSyncHandler';
+import { SceneSyncHandler } from './entity-sync-handlers/SceneSyncHandler';
 import { StorySyncHandler } from './entity-sync-handlers/StorySyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
 
 export class SyncService {
   private entityHandlers: Map<string, SyncEntityHandler>;
 
-  constructor() { // No longer accepts elysiaApp
+  constructor() {
     this.entityHandlers = new Map<string, SyncEntityHandler>();
     this.registerEntityHandler(new StorySyncHandler());
     this.registerEntityHandler(new CharacterSyncHandler());
+    this.registerEntityHandler(new ChapterSyncHandler());
+    this.registerEntityHandler(new LocationSyncHandler());
+    this.registerEntityHandler(new SceneSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {

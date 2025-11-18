@@ -1,9 +1,7 @@
-import { stories } from '../../db/schema';
+import { z } from 'zod';
+import { CreateStoryDataSchema, PartialStorySchema } from '../../schemas/StorySchemas'; // Import schemas
 import { CreateStoryUpdate } from '../../schemas/SyncSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
-import { db } from '../../db';
-import { StorySchema, PartialStorySchema, CreateStoryDataSchema } from '../../schemas/StorySchemas'; // Import schemas
-import { z } from 'zod';
 
 type CreateStoryDataType = z.infer<typeof CreateStoryDataSchema>;
 

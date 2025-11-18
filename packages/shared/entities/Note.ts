@@ -3,7 +3,6 @@ export interface Note {
   storyId: string
   title: string
   body: string | null
-  galleryId: string | null
   isFavorite: boolean
   extraNotes: string | null
   createdAt: Date

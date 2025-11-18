@@ -11,3 +11,17 @@ export interface Tag {
   isDeleted: boolean // Added for conflict resolution (tombstones)
   deletedAt: number | null // Added for conflict resolution (tombstones)
 }
+
+export interface TagRelation {
+  id: string
+  storyId: string
+  tagId: string
+  relationId: string
+  relationType: string // One of specific entities. Like Character, Location, Scene...
+  
+  createdAt: Date
+  updatedAt: Date
+  version: number
+  isDeleted: boolean // Added for conflict resolution (tombstones)
+  deletedAt: number | null // Added for conflict resolution (tombstones)
+}

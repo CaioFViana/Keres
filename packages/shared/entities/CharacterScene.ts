@@ -1,4 +1,5 @@
 export interface CharacterScene {
+  id: string
   characterId: string
   storyId: string
   sceneId: string

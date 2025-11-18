@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core';
 
 // Enums
 export const storyTypeEnum = pgEnum('story_type', ['linear', 'branching']);
@@ -164,6 +164,152 @@ export const notes = pgTable('notes', {
   deletedAt: timestamp('deleted_at'),
 });
 
+export const worldRules = pgTable('world_rules', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  title: text('title').notNull(),
+  description: text('description'),
+  isFavorite: boolean('is_favorite').notNull().default(false),
+  extraNotes: text('extra_notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export const choices = pgTable('choices', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  sceneId: text('scene_id').notNull().references(() => scenes.id),
+  nextSceneId: text('next_scene_id').notNull().references(() => scenes.id),
+  text: text('text').notNull(),
+  isImplicit: boolean('is_implicit').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export const suggestions = pgTable('suggestions', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  type: text('type').notNull(),
+  value: text('value').notNull(),
+  isFavorite: boolean('is_favorite').notNull().default(false),
+  extraNotes: text('extra_notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => {
+  return {
+    unq: unique('story_suggestion_type_value_unq').on(table.storyId, table.type, table.value),
+  };
+});
+
+export const characterScenes = pgTable('character_scenes', {
+  id: text('id').primaryKey(),
+  characterId: text('character_id').notNull().references(() => characters.id),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  sceneId: text('scene_id').notNull().references(() => scenes.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export const characterRelations = pgTable('character_relations', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  character1Id: text('character1_id').notNull().references(() => characters.id),
+  character2Id: text('character2_id').notNull().references(() => characters.id),
+  relationType: text('relation_type').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => {
+  return {
+    unq: unique('story_char1_char2_unq').on(table.storyId, table.character1Id, table.character2Id),
+  };
+});
+
+export const items = pgTable('items', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  characterOwnerId: text('character_owner_id').references(() => characters.id),
+  name: text('name').notNull(),
+  category: text('category'),
+  description: text('description'),
+  initialState: text('initial_state'),
+  isFavorite: boolean('is_favorite').notNull().default(false),
+  extraNotes: text('extra_notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export const itemJourneys = pgTable('item_journeys', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  itemId: text('item_id').notNull().references(() => items.id),
+  sceneId: text('scene_id').notNull().references(() => scenes.id),
+  newCharacterOwnerId: text('new_character_owner_id').references(() => characters.id),
+  newState: text('new_state').notNull(),
+  extraNotes: text('extra_notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => {
+  return {
+    unq: unique('story_item_scene_unq').on(table.storyId, table.itemId, table.sceneId),
+  };
+});
+
+export const tags = pgTable('tags', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  name: text('name').notNull(),
+  color: text('color'),
+  isFavorite: boolean('is_favorite').notNull().default(false),
+  extraNotes: text('extra_notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => {
+  return {
+    unq: unique('story_name_unq').on(table.storyId, table.name),
+  };
+});
+
+export const tagRelations = pgTable('tag_relations', {
+  id: text('id').primaryKey(),
+  storyId: text('story_id').notNull().references(() => stories.id),
+  tagId: text('tag_id').notNull().references(() => tags.id),
+  relationId: text('relation_id').notNull(),
+  relationType: text('relation_type').notNull(), // e.g., 'Character', 'Location', 'Scene'
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+  isDeleted: boolean('is_deleted').notNull().default(false),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => {
+  return {
+    unq: unique('story_tag_relation_unq').on(table.storyId, table.tagId, table.relationId, table.relationType),
+  };
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   stories: many(stories),
@@ -183,14 +329,39 @@ export const storiesRelations = relations(stories, ({ one, many }) => ({
   locations: many(locations),
   scenes: many(scenes),
   notes: many(notes),
-  galleries: many(galleries)
+  galleries: many(galleries),
+  worldRules: many(worldRules),
+  choices: many(choices),
+  characterRelations: many(characterRelations),
+  items: many(items),
+  itemJourneys: many(itemJourneys), // Add itemJourneys
+  tagRelations: many(tagRelations), // Add tagRelations
+  suggestions: many(suggestions), // Add suggestions
 }));
 
-export const charactersRelations = relations(characters, ({ one }) => ({
+export const charactersRelations = relations(characters, ({ one, many }) => ({
   story: one(stories, {
     fields: [characters.storyId],
     references: [stories.id],
   }),
+  characterScenes: many(characterScenes),
+  characterRelations1: many(characterRelations, { relationName: 'character1' }),
+  characterRelations2: many(characterRelations, { relationName: 'character2' }),
+  ownedItems: many(items, { relationName: 'ownedItems' }),
+  itemJourneys: many(itemJourneys, { relationName: 'changedItemJourneys' }), // Add itemJourneys relation for newCharacterOwnerId
+}));
+
+export const itemsRelations = relations(items, ({ one, many }) => ({
+  story: one(stories, {
+    fields: [items.storyId],
+    references: [stories.id],
+  }),
+  characterOwner: one(characters, {
+    fields: [items.characterOwnerId],
+    references: [characters.id],
+    relationName: 'currentOwner',
+  }),
+  itemJourneys: many(itemJourneys), // Add itemJourneys to items
 }));
 
 export const chaptersRelations = relations(chapters, ({ one, many }) => ({
@@ -201,15 +372,7 @@ export const chaptersRelations = relations(chapters, ({ one, many }) => ({
   scenes: many(scenes),
 }));
 
-export const locationsRelations = relations(locations, ({ one, many }) => ({
-  story: one(stories, {
-    fields: [locations.storyId],
-    references: [stories.id],
-  }),
-  scenes: many(scenes),
-}));
-
-export const scenesRelations = relations(scenes, ({ one }) => ({
+export const scenesRelations = relations(scenes, ({ one, many }) => ({
   story: one(stories, {
     fields: [scenes.storyId],
     references: [stories.id],
@@ -222,6 +385,9 @@ export const scenesRelations = relations(scenes, ({ one }) => ({
     fields: [scenes.locationId],
     references: [locations.id],
   }),
+  choices: many(choices),
+  characterScenes: many(characterScenes),
+  itemJourneys: many(itemJourneys), // Add itemJourneys to scenes
 }));
 
 export const galleriesRelations = relations(galleries, ({ one }) => ({
@@ -235,6 +401,30 @@ export const notesRelations = relations(notes, ({ one }) => ({
   story: one(stories, {
     fields: [notes.storyId],
     references: [stories.id],
+  }),
+}));
+
+export const worldRulesRelations = relations(worldRules, ({ one }) => ({
+  story: one(stories, {
+    fields: [worldRules.storyId],
+    references: [stories.id],
+  }),
+}));
+
+export const choicesRelations = relations(choices, ({ one }) => ({
+  story: one(stories, {
+    fields: [choices.storyId],
+    references: [stories.id],
+  }),
+  scene: one(scenes, {
+    fields: [choices.sceneId],
+    references: [scenes.id],
+    relationName: 'fromScene',
+  }),
+  nextScene: one(scenes, {
+    fields: [choices.nextSceneId],
+    references: [scenes.id],
+    relationName: 'toScene',
   }),
 }));
 
@@ -257,5 +447,12 @@ export const operationLogRelations = relations(operationLog, ({ one }) => ({
   user: one(users, {
     fields: [operationLog.userId],
     references: [users.id],
+  }),
+}));
+
+export const suggestionsRelations = relations(suggestions, ({ one }) => ({
+  story: one(stories, {
+    fields: [suggestions.storyId],
+    references: [stories.id],
   }),
 }));

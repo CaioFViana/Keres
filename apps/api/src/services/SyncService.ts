@@ -6,10 +6,21 @@ import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } 
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
+import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
+import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
+import { ChoiceSyncHandler } from './entity-sync-handlers/ChoiceSyncHandler';
+import { GallerySyncHandler } from './entity-sync-handlers/GallerySyncHandler';
+import { ItemJourneySyncHandler } from './entity-sync-handlers/ItemJourneySyncHandler';
+import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
 import { LocationSyncHandler } from './entity-sync-handlers/LocationSyncHandler';
+import { NoteSyncHandler } from './entity-sync-handlers/NoteSyncHandler';
 import { SceneSyncHandler } from './entity-sync-handlers/SceneSyncHandler';
 import { StorySyncHandler } from './entity-sync-handlers/StorySyncHandler';
+import { SuggestionSyncHandler } from './entity-sync-handlers/SuggestionSyncHandler';
+import { TagRelationSyncHandler } from './entity-sync-handlers/TagRelationSyncHandler';
+import { TagSyncHandler } from './entity-sync-handlers/TagSyncHandler';
+import { WorldRuleSyncHandler } from './entity-sync-handlers/WorldRuleSyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
 
 export class SyncService {
@@ -22,6 +33,17 @@ export class SyncService {
     this.registerEntityHandler(new ChapterSyncHandler());
     this.registerEntityHandler(new LocationSyncHandler());
     this.registerEntityHandler(new SceneSyncHandler());
+    this.registerEntityHandler(new GallerySyncHandler());
+    this.registerEntityHandler(new NoteSyncHandler());
+    this.registerEntityHandler(new WorldRuleSyncHandler());
+    this.registerEntityHandler(new ChoiceSyncHandler());
+    this.registerEntityHandler(new CharacterSceneSyncHandler());
+    this.registerEntityHandler(new CharacterRelationSyncHandler());
+    this.registerEntityHandler(new ItemSyncHandler());
+    this.registerEntityHandler(new ItemJourneySyncHandler());
+    this.registerEntityHandler(new SuggestionSyncHandler());
+    this.registerEntityHandler(new TagSyncHandler());
+    this.registerEntityHandler(new TagRelationSyncHandler())
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {

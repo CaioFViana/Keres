@@ -42,14 +42,40 @@ export const DeleteStoryUpdateSchema = BaseStoryUpdateSchema.extend({
 });
 export type DeleteStoryUpdate = z.infer<typeof DeleteStoryUpdateSchema>;
 
-// 6. Union type para todas as operações de StoryUpdate
+// Define a Zod schema for the items within the reorder update
+export const ReorderItemSchema = z.object({
+  id: UlidSchema,
+  newIndex: z.number().int().min(1),
+});
+
+// 6. Schema para operações de reordenação de cenas dentro de um capítulo
+export const ChapterReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
+  type: z.literal('reorder'),
+  entity: z.literal('Chapter'), // Entity to which reorderItems belong
+  id: UlidSchema, // ID of the Chapter whose scenes are being reordered
+  reorderItems: z.array(ReorderItemSchema), // Array of scene IDs and their new indices
+});
+export type ChapterReorderingStoryUpdate = z.infer<typeof ChapterReorderingStoryUpdateSchema>;
+
+// 7. Schema para operações de reordenação de capítulos dentro de uma história
+export const StoryReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
+  type: z.literal('reorder'),
+  entity: z.literal('Story'), // Entity to which reorderItems belong
+  id: UlidSchema, // ID of the Story whose chapters are being reordered
+  reorderItems: z.array(ReorderItemSchema), // Array of chapter IDs and their new indices
+});
+export type StoryReorderingStoryUpdate = z.infer<typeof StoryReorderingStoryUpdateSchema>;
+
+// 8. Union type para todas as operações de StoryUpdate
 export const StoryUpdateSchema = z.union([
   CreateStoryUpdateSchema,
   UpdateStoryUpdateSchema,
   DeleteStoryUpdateSchema,
+  ChapterReorderingStoryUpdateSchema,
+  StoryReorderingStoryUpdateSchema,
 ]);
 export type StoryUpdate = z.infer<typeof StoryUpdateSchema>;
 
-// 7. Schema para um array de StoryUpdates (o que o servidor receberá)
+// 9. Schema para um array de StoryUpdates (o que o servidor receberá)
 export const StoryUpdatesArraySchema = z.array(StoryUpdateSchema);
 export type StoryUpdatesArray = z.infer<typeof StoryUpdatesArraySchema>;

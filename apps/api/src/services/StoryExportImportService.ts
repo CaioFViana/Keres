@@ -1,0 +1,412 @@
+import { ulid } from 'ulid'; // Import ulid for generating new IDs
+import { db } from '../db';
+import * as dbSchema from '../db/schema';
+import { FullStoryExportSchema, FullStoryExportType } from '../schemas/FullStorySchemas';
+
+export class StoryExportImportService {
+    async exportStory(storyId: string): Promise<FullStoryExportType> { // storyId type should be string
+        // Fetch the main story
+        const story = await db.query.stories.findFirst({
+            where: (stories, { eq }) => eq(stories.id, storyId),
+        });
+
+        if (!story) {
+            throw new Error(`Story with ID ${storyId} not found.`);
+        }
+
+        // Fetch all related entities
+        const chapters = await db.query.chapters.findMany({
+            where: (chapters, { eq }) => eq(chapters.storyId, storyId),
+        });
+        const scenes = await db.query.scenes.findMany({
+            where: (scenes, { eq }) => eq(scenes.storyId, storyId),
+        });
+        const choices = await db.query.choices.findMany({
+            where: (choices, { eq }) => eq(choices.storyId, storyId),
+        });
+        const characters = await db.query.characters.findMany({
+            where: (characters, { eq }) => eq(characters.storyId, storyId),
+        });
+        const locations = await db.query.locations.findMany({
+            where: (locations, { eq }) => eq(locations.storyId, storyId),
+        });
+        const worldRules = await db.query.worldRules.findMany({
+            where: (worldRules, { eq }) => eq(worldRules.storyId, storyId),
+        });
+        const notes = await db.query.notes.findMany({
+            where: (notes, { eq }) => eq(notes.storyId, storyId),
+        });
+        const tags = await db.query.tags.findMany({
+            where: (tags, { eq }) => eq(tags.storyId, storyId),
+        });
+        const suggestions = await db.query.suggestions.findMany({
+            where: (suggestions, { eq }) => eq(suggestions.storyId, storyId),
+        });
+        const characterRelations = await db.query.characterRelations.findMany({
+            where: (characterRelations, { eq }) => eq(characterRelations.storyId, storyId),
+        });
+        const characterScenes = await db.query.characterScenes.findMany({
+            where: (characterScenes, { eq }) => eq(characterScenes.storyId, storyId),
+        });
+        const galleryItems = await db.query.galleries.findMany({
+            where: (galleries, { eq }) => eq(galleries.storyId, storyId),
+        });
+        const items = await db.query.items.findMany({
+            where: (items, { eq }) => eq(items.storyId, storyId),
+        });
+        const itemJourneys = await db.query.itemJourneys.findMany({
+            where: (itemJourneys, { eq }) => eq(itemJourneys.storyId, storyId),
+        });
+        const tagRelations = await db.query.tagRelations.findMany({
+            where: (tagRelations, { eq }) => eq(tagRelations.storyId, storyId),
+        });
+
+
+        const fullStory = FullStoryExportSchema.parse({
+            story,
+            chapters,
+            scenes,
+            choices,
+            characters,
+            locations,
+            worldRules,
+            notes,
+            tags,
+            suggestions,
+            characterRelations,
+            characterScenes,
+            galleryItems,
+            items,
+            itemJourneys,
+            tagRelations,
+        });
+
+        return fullStory;
+    }
+
+    async importStory(userId: string, fullStoryJSON: FullStoryExportType, newStoryId?: string): Promise<string> {
+        const validatedFullStory = FullStoryExportSchema.parse(fullStoryJSON);
+
+        // Determine the target story ID. If newStoryId is provided, use it. Otherwise, generate a new one.
+        const targetStoryId = newStoryId || ulid();
+
+        await db.transaction(async (tx) => {
+            const now = new Date();
+
+            // If newStoryId was provided, check if a story with this ID already exists for the user.
+            // Overwriting is not allowed, so if it exists, throw an error.
+            if (newStoryId) { // Only check if newStoryId was explicitly provided
+                const existingStory = await tx.query.stories.findFirst({
+                    where: (stories, { eq, and }) => and(
+                        eq(stories.id, targetStoryId),
+                        eq(stories.userId, userId)
+                    ),
+                });
+
+                if (existingStory) {
+                    throw new Error(`Story with ID ${targetStoryId} already exists for this user. Import not allowed as overwriting is disabled.`);
+                }
+            }
+
+            // Map old IDs to new IDs for all entities to avoid conflicts and link correctly to the new story ID
+            const idMap: Map<string, string> = new Map();
+            idMap.set(validatedFullStory.story.id, targetStoryId); // Map old story ID to new story ID
+
+            // --- Story ---
+            const newStoryData = {
+                ...validatedFullStory.story,
+                id: targetStoryId,
+                userId: userId, // Ensure story is owned by the importing user
+                version: 1,
+                createdAt: now,
+                updatedAt: now,
+                isDeleted: false,
+                deletedAt: null,
+            };
+            await tx.insert(dbSchema.stories).values(newStoryData);
+
+            // --- Chapters ---
+            const newChaptersData = validatedFullStory.chapters.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newChaptersData.length > 0) {
+                await tx.insert(dbSchema.chapters).values(newChaptersData);
+            }
+
+            // --- Scenes ---
+            const newScenesData = validatedFullStory.scenes.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                const mappedChapterId = idMap.get(original.chapterId);
+                if (!mappedChapterId) {
+                    throw new Error(`Import Error: Chapter ID ${original.chapterId} not found in ID map for scene ${original.id}.`);
+                }
+                const mappedLocationId = idMap.get(original.locationId); // Strict mapping
+                if (!mappedLocationId) {
+                    throw new Error(`Import Error: Location ID ${original.locationId} not found in ID map for scene ${original.id}.`);
+                }
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    chapterId: mappedChapterId,
+                    locationId: mappedLocationId, // Use strictly mapped locationId
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newScenesData.length > 0) {
+                await tx.insert(dbSchema.scenes).values(newScenesData);
+            }
+
+            // --- Choices ---
+            const newChoicesData = validatedFullStory.choices.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                const mappedSceneId = idMap.get(original.sceneId);
+                if (!mappedSceneId) {
+                    throw new Error(`Import Error: Scene ID ${original.sceneId} not found in ID map for choice ${original.id}.`);
+                }
+                const mappedNextSceneId = idMap.get(original.nextSceneId);
+                if (!mappedNextSceneId) {
+                    throw new Error(`Import Error: Next Scene ID ${original.nextSceneId} not found in ID map for choice ${original.id}.`);
+                }
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    sceneId: mappedSceneId,
+                    nextSceneId: mappedNextSceneId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newChoicesData.length > 0) {
+                await tx.insert(dbSchema.choices).values(newChoicesData);
+            }
+
+            // --- Characters ---
+            const newCharactersData = validatedFullStory.characters.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newCharactersData.length > 0) {
+                await tx.insert(dbSchema.characters).values(newCharactersData);
+            }
+
+            // --- Locations ---
+            const newLocationsData = validatedFullStory.locations.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newLocationsData.length > 0) {
+                await tx.insert(dbSchema.locations).values(newLocationsData);
+            }
+
+            // --- WorldRules ---
+            const newWorldRulesData = validatedFullStory.worldRules.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newWorldRulesData.length > 0) {
+                await tx.insert(dbSchema.worldRules).values(newWorldRulesData);
+            }
+
+            // --- Notes ---
+            const newNotesData = validatedFullStory.notes.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newNotesData.length > 0) {
+                await tx.insert(dbSchema.notes).values(newNotesData);
+            }
+
+            // --- Tags ---
+            const newTagsData = validatedFullStory.tags.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newTagsData.length > 0) {
+                await tx.insert(dbSchema.tags).values(newTagsData);
+            }
+
+            // --- Suggestions ---
+            const newSuggestionsData = validatedFullStory.suggestions.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newSuggestionsData.length > 0) {
+                await tx.insert(dbSchema.suggestions).values(newSuggestionsData);
+            }
+
+            // --- CharacterRelations ---
+            const newCharacterRelationsData = validatedFullStory.characterRelations.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                const mappedCharacterId1 = idMap.get(original.character1Id);
+                if (!mappedCharacterId1) {
+                    throw new Error(`Import Error: Character ID 1 ${original.character1Id} not found in ID map for character relation ${original.id}.`);
+                }
+                const mappedCharacterId2 = idMap.get(original.character2Id);
+                if (!mappedCharacterId2) {
+                    throw new Error(`Import Error: Character ID 2 ${original.character2Id} not found in ID map for character relation ${original.id}.`);
+                }
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    characterId1: mappedCharacterId1,
+                    characterId2: mappedCharacterId2,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newCharacterRelationsData.length > 0) {
+                await tx.insert(dbSchema.characterRelations).values(newCharacterRelationsData);
+            }
+
+            // --- CharacterScenes ---
+            const newCharacterScenesData = validatedFullStory.characterScenes.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                const mappedCharacterId = idMap.get(original.characterId);
+                if (!mappedCharacterId) {
+                    throw new Error(`Import Error: Character ID ${original.characterId} not found in ID map for character scene ${original.id}.`);
+                }
+                const mappedSceneId = idMap.get(original.sceneId);
+                if (!mappedSceneId) {
+                    throw new Error(`Import Error: Scene ID ${original.sceneId} not found in ID map for character scene ${original.id}.`);
+                }
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    characterId: mappedCharacterId,
+                    sceneId: mappedSceneId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newCharacterScenesData.length > 0) {
+                await tx.insert(dbSchema.characterScenes).values(newCharacterScenesData);
+            }
+
+            // --- GalleryItems ---
+            const newGalleryItemsData = validatedFullStory.galleryItems.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newGalleryItemsData.length > 0) {
+                await tx.insert(dbSchema.galleries).values(newGalleryItemsData);
+            }
+
+            // --- Items (Optional) ---
+            if (validatedFullStory.items && validatedFullStory.items.length > 0) {
+                const newItemsData = validatedFullStory.items.map(original => {
+                    const newId = ulid();
+                    idMap.set(original.id, newId);
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.items).values(newItemsData);
+            }
+
+            // --- ItemJourneys (Optional, map item ID) ---
+            if (validatedFullStory.itemJourneys && validatedFullStory.itemJourneys.length > 0) {
+                const newItemJourneysData = validatedFullStory.itemJourneys.map(original => {
+                    const newId = ulid();
+                    idMap.set(original.id, newId);
+                    const mappedItemId = idMap.get(original.itemId);
+                    if (!mappedItemId) {
+                        throw new Error(`Import Error: Item ID ${original.itemId} not found in ID map for item journey ${original.id}.`);
+                    }
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        itemId: mappedItemId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.itemJourneys).values(newItemJourneysData);
+            }
+
+            // --- TagRelations (Optional, map relation ID and tag ID) ---
+            if (validatedFullStory.tagRelations && validatedFullStory.tagRelations.length > 0) {
+                const newTagRelationsData = validatedFullStory.tagRelations.map(original => {
+                    const newId = ulid();
+                    idMap.set(original.id, newId);
+                    const mappedTagId = idMap.get(original.tagId);
+                    if (!mappedTagId) {
+                        throw new Error(`Import Error: Tag ID ${original.tagId} not found in ID map for tag relation ${original.id}.`);
+                    }
+                    const mappedRelationId = idMap.get(original.relationId); // Corrected property name
+                    if (!mappedRelationId) {
+                        throw new Error(`Import Error: Relation ID ${original.relationId} not found in ID map for tag relation ${original.id}. This indicates a missing entity in export or an unhandled foreign key.`);
+                    }
+
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        tagId: mappedTagId,
+                        relationId: mappedRelationId, // Use mapped relationId
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.tagRelations).values(newTagRelationsData);
+            }
+        });
+
+        return targetStoryId;
+    }
+}

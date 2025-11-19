@@ -141,7 +141,7 @@ export class StoryPermissionService {
     return !!story;
   }
 
-  async hasPermission(userId: string, storyId: string): Promise<boolean> {
+  async hasPermission(userId: string, storyId: string, minimumPermissionType: 'reader' | 'writer'): Promise<boolean> {
     // Check if the user is the owner of the story
     const owner = await this.isStoryOwner(userId, storyId);
     if (owner) {
@@ -150,7 +150,19 @@ export class StoryPermissionService {
 
     // Check if the user has explicit read/write permission
     const permission = await this.getUserPermissionForStory(userId, storyId);
-    return !!permission; // If a permission record exists, they have some access
+    if (!permission) {
+      return false; // No permission record exists
+    }
+
+    // Compare permission level
+    if (minimumPermissionType === 'reader') {
+      // 'reader' or 'writer' satisfies 'reader' requirement
+      return permission.permissionType === 'reader' || permission.permissionType === 'writer';
+    } else if (minimumPermissionType === 'writer') {
+      // Only 'writer' satisfies 'writer' requirement
+      return permission.permissionType === 'writer';
+    }
+    return false; // Should not reach here
   }
 }
 

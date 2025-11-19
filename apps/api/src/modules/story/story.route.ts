@@ -1,8 +1,11 @@
 import { Elysia, t } from 'elysia';
+import { ulid } from 'ulid';
 import { db } from '../../db';
 import { stories, storyTypeEnum } from '../../db/schema';
-import { ulid } from 'ulid';
-import { JWTPayload } from '../../index'; // Import JWTPayload
+import { JWTPayload } from '../../index';
+import { FullStoryExportSchema } from '../../schemas/FullStorySchemas';
+import { StoryExportImportService } from '../../services/StoryExportImportService';
+import { storyPermissionService } from '../../services/StoryPermissionService';
 
 // Convert the enumValues array to an object for t.Enum()
 const storyTypeEnumObject = storyTypeEnum.enumValues.reduce((acc, val) => {
@@ -10,8 +13,11 @@ const storyTypeEnumObject = storyTypeEnum.enumValues.reduce((acc, val) => {
   return acc;
 }, {} as Record<string, (typeof storyTypeEnum.enumValues)[number]>);
 
+const storyExportImportService = new StoryExportImportService();
+
 export const storyRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
+  // Route to create a new story
   .post('/', async ({ body, user, set }) => {
     if (!user || !user.userId) {
       set.status = 401;
@@ -44,6 +50,49 @@ export const storyRoutes = new Elysia()
     detail: {
       summary: 'Create a new story',
       description: 'Creates a new story associated with the authenticated user.',
+      tags: ['Story'],
+    },
+  })
+  // Route to export a full story
+  .get('/:storyId/export', async ({ params, user, set }) => {
+    if (!user || !user.userId) {
+      set.status = 401;
+      throw new Error('Unauthorized: User not authenticated.');
+    }
+
+    // Validate if the user has at least 'reader' permission for the story
+    const hasReadPermission = await storyPermissionService.hasPermission(user.userId, params.storyId, 'reader');
+    if (!hasReadPermission) {
+      set.status = 404;
+      throw new Error('Story not found or not authorized for export.');
+    }
+
+    const fullStory = await storyExportImportService.exportStory(params.storyId);
+    return fullStory;
+  }, {
+    params: t.Object({
+      storyId: t.String({ format: 'ulid' }),
+    }),
+    detail: {
+      summary: 'Export a full story',
+      description: 'Exports a full story, including all its related entities, as a single JSON object.',
+      tags: ['Story'],
+    },
+  })
+  // Route to import a full story
+  .post('/import', async ({ body, user, set }) => {
+    if (!user || !user.userId) {
+      set.status = 401;
+      throw new Error('Unauthorized: User not authenticated.');
+    }
+
+    const newStoryId = await storyExportImportService.importStory(user.userId, body);
+    return { storyId: newStoryId };
+  }, {
+    body: FullStoryExportSchema, // Use the schema for validation
+    detail: {
+      summary: 'Import a full story',
+      description: 'Imports a full story from a JSON object, creating all related entities. Generates new IDs for all imported entities.',
       tags: ['Story'],
     },
   });

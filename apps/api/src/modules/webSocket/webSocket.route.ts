@@ -15,7 +15,7 @@ export const wsRoutes = new Elysia()
             const storyId = params.storyid;
             const userId = user.userId;
 
-            const hasPermission = await storyPermissionService.hasPermission(userId, storyId);
+            const hasPermission = await storyPermissionService.hasPermission(userId, storyId, 'reader');
 
             if (!hasPermission) {
                 set.status = 403;

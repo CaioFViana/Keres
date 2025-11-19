@@ -1,9 +1,9 @@
-import { and, eq, inArray, not, sql, SQL } from 'drizzle-orm';
-import { ulid } from 'ulid';
+import { and, eq, not, sql, SQL } from 'drizzle-orm';
 import { db } from '../../db';
-import { chapters, choices, locations, scenes, stories } from '../../db/schema';
+import { chapters, locations, scenes, stories } from '../../db/schema';
 import { CreateSceneDataSchema, CreateSceneDataType, PartialSceneSchema } from '../../schemas/SceneSchemas';
 import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas';
+import { recreateImplicitChoicesForChapter } from '../reorderingUtils';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDataSchema, typeof PartialSceneSchema> {
@@ -84,47 +84,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
         .where(and(...whereConditions));
   }
 
-  private async recreateImplicitChoicesForChapter(storyId: string, chapterId: string): Promise<void> {
-    const chapterScenes = await db.query.scenes.findMany({
-      where: and(
-        eq(scenes.chapterId, chapterId),
-        eq(scenes.isDeleted, false),
-        eq(scenes.storyId, storyId)
-      ),
-      orderBy: scenes.index,
-    });
 
-    const chapterSceneIds = chapterScenes.map(s => s.id);
-
-    await db.delete(choices).where(and(
-      eq(choices.storyId, storyId),
-      eq(choices.isImplicit, true),
-      chapterSceneIds.length > 0 ? inArray(choices.sceneId, chapterSceneIds) : undefined
-    ));
-
-    const newImplicitChoices = [];
-    for (let i = 0; i < chapterScenes.length - 1; i++) {
-      const currentScene = chapterScenes[i];
-      const nextScene = chapterScenes[i + 1];
-      newImplicitChoices.push({
-        id: ulid(),
-        storyId: storyId,
-        sceneId: currentScene.id,
-        nextSceneId: nextScene.id,
-        text: 'Auto Generated For Linear.',
-        isImplicit: true,
-        version: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isDeleted: false,
-        deletedAt: null,
-      });
-    }
-
-    if (newImplicitChoices.length > 0) {
-      await db.insert(choices).values(newImplicitChoices);
-    }
-  }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
     const validatedData: CreateSceneDataType = this.createSchema.parse(update.data);
@@ -153,7 +113,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
     });
 
     if (isLinear) {
-      await this.recreateImplicitChoicesForChapter(storyId, validatedData.chapterId);
+      await recreateImplicitChoicesForChapter(storyId, validatedData.chapterId);
     }
   }
 
@@ -228,13 +188,13 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
 
     if (isLinear && (validatedChanges.chapterId !== undefined || validatedChanges.index !== undefined)) {
       if (validatedChanges.chapterId !== undefined && validatedChanges.chapterId !== oldChapterId) {
-          await this.recreateImplicitChoicesForChapter(storyId, oldChapterId);
-          await this.recreateImplicitChoicesForChapter(storyId, newChapterId);
+          await recreateImplicitChoicesForChapter(storyId, oldChapterId);
+          await recreateImplicitChoicesForChapter(storyId, newChapterId);
       } else {
-          await this.recreateImplicitChoicesForChapter(storyId, newChapterId);
+          await recreateImplicitChoicesForChapter(storyId, newChapterId);
       }
     } else if (isLinear) {
-        await this.recreateImplicitChoicesForChapter(storyId, oldChapterId);
+        await recreateImplicitChoicesForChapter(storyId, oldChapterId);
     }
   }
 
@@ -247,7 +207,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
     const isLinear = await this._isStoryLinear(storyId);
     if (isLinear) {
       await this._shiftSceneIndexes(storyId, oldChapterId, oldIndex, -1, currentEntity.id);
-      await this.recreateImplicitChoicesForChapter(storyId, oldChapterId);
+      await recreateImplicitChoicesForChapter(storyId, oldChapterId);
     }
   }
 }

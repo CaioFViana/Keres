@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { Location } from '@keres/shared/entities/Location';
 
 export const LocationSchema = z.object({
   id: z.string(),

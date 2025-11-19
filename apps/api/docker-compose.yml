@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   db:
+    container_name: keres_database
     image: postgres:16-alpine
     restart: always
     environment:
@@ -13,23 +14,25 @@ services:
     ports:
       - "5432:5432"
 
-  #api:
-  #  build:
-  #    context: .
-  #    dockerfile: Dockerfile
-  #  restart: always
-  #  ports:
-  #    - "3000:3000"
-  #  environment:
-  #    DATABASE_URL: postgresql://user:password@db:5432/keres_db
-  #    JWT_SECRET: supersecretjwtkey
-  #    PORT: 3000
-  #  depends_on:
-  #    - db
+  api:
+    container_name: keres_api
+    build:
+      context: ../../ # Build context is the monorepo root
+      dockerfile: apps/api/Dockerfile # Dockerfile is in apps/api
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../../apps/api/.env
+    environment:
+      PORT: 3000
+    depends_on:
+      - db
     # Optional: Mount the local code for development, so changes are reflected without rebuilding
-  #  volumes:
-  #     - .:/app
-    #   - ../../node_modules # Exclude node_modules from host mount to prevent issues
+    volumes:
+      - ../../apps/api:/app/apps/api # Mount API specific code
+      - ../../packages:/app/packages # Mount shared packages
+      - /app/node_modules # Exclude node_modules from host mount to prevent issues
 
 volumes:
   db_data:

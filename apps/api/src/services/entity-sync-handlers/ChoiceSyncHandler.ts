@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { choices, scenes } from '../../db/schema';
+import { choices, scenes, stories } from '../../db/schema'; // Import stories
 import { CreateChoiceDataSchema, CreateChoiceDataType, PartialChoiceSchema } from '../../schemas/ChoiceSchemas';
-import { CreateStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas';
+import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas'; // Added DeleteStoryUpdate
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoiceDataSchema, typeof PartialChoiceSchema> {
@@ -41,9 +41,27 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
     }
   }
 
+  // Private helper to check if the story is linear
+  private async _isStoryLinear(storyId: string): Promise<boolean> {
+    const story = await db.query.stories.findFirst({
+      where: eq(stories.id, storyId),
+      columns: {
+        type: true,
+      },
+    });
+    return story?.type === 'linear';
+  }
+
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+    // If story is linear, prevent direct creation of choices
+    if (await this._isStoryLinear(storyId)) {
+      throw new Error('Cannot create choices directly in a linear story. Choices are managed implicitly by scene operations.');
+    }
+
     // Validate incoming data against the create schema
     const validatedData: CreateChoiceDataType = this.createSchema.parse(update.data);
+
+    validatedData.isImplicit = false;
 
     const currentChoice = await this.findById(update.id!);
     if (currentChoice) {
@@ -65,6 +83,16 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
   }
 
   async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+    // If story is linear, prevent direct updates of choices
+    if (await this._isStoryLinear(storyId)) {
+      throw new Error('Cannot update choices directly in a linear story. Choices are managed implicitly by scene operations.');
+    }
+
+    // Prevent updating implicit choices (which should only exist in linear stories, but as a safeguard)
+    if (currentEntity.isImplicit === true) {
+      throw new Error('Cannot update implicit choices.');
+    }
+
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     const newSceneId = validatedChanges.sceneId !== undefined ? validatedChanges.sceneId : currentEntity.sceneId;
@@ -82,5 +110,19 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
         eq(choices.id, update.id!),
         eq(choices.version, currentEntity.version)
       ));
+  }
+
+  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+    // If story is linear, prevent direct deletion of choices
+    if (await this._isStoryLinear(storyId)) {
+      throw new Error('Cannot delete choices directly in a linear story. Choices are managed implicitly by scene operations.');
+    }
+
+    // Prevent deleting implicit choices
+    if (currentEntity.isImplicit === true) {
+      throw new Error('Cannot delete implicit choices.');
+    }
+
+    await super.delete(userId, storyId, update, currentEntity);
   }
 }

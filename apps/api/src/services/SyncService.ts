@@ -243,6 +243,7 @@ export class SyncService {
 
     return updates;
   }
+
 }
 
 export const syncService = new SyncService();

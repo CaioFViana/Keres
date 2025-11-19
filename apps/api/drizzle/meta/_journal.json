@@ -50,6 +50,13 @@
       "when": 1763327740245,
       "tag": "0006_lethal_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1763520720626,
+      "tag": "0007_fixed_prima",
+      "breakpoints": true
     }
   ]
 }

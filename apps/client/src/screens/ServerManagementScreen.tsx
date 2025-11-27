@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import axios, { AxiosError } from 'axios'; // Import axios and AxiosError
+import axios from 'axios'; // Import axios and AxiosError
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -14,6 +14,7 @@ import { getCommonCardStyles, getCommonContainerStyles } from '../theme/commonSt
 
 interface ServerWithStatus extends ServerSelect {
   pingStatus: 'idle' | 'pending' | 'online' | 'offline';
+  apiVersion: string | null;
 }
 
 type ServerManagementScreenNavigationProp = NativeStackNavigationProp<StorySelectionStackParamList, 'ServerManagement'>;
@@ -49,12 +50,12 @@ const ServerManagementScreen = () => {
       });
 
       if (response.status === 200 && response.data && typeof response.data.version === 'string') {
-        return { ...server, pingStatus: 'online' };
+        return { ...server, pingStatus: 'online', apiVersion: response.data.version };
       } else {
-        return { ...server, pingStatus: 'offline' };
+        return { ...server, pingStatus: 'offline', apiVersion: null };
       }
     } catch (err) {
-      return Promise.resolve({ ...server, pingStatus: 'offline' });
+      return Promise.resolve({ ...server, pingStatus: 'offline', apiVersion: null });
     }
   };
 
@@ -66,6 +67,7 @@ const ServerManagementScreen = () => {
       const serversWithStatus: ServerWithStatus[] = fetchedServers.map(s => ({
         ...s,
         pingStatus: 'idle', // Initialize ping status
+        apiVersion: null, // Initialize version
       }));
       setServers(serversWithStatus);
     } catch (err) {
@@ -156,6 +158,11 @@ const ServerManagementScreen = () => {
         <Text style={[styles.serverDetail, { color: colors.textSecondary }]}>
           {t('created_at')}: {new Date(item.createdAt).toLocaleString()}
         </Text>
+        {item.version && (
+          <Text style={[styles.serverDetail, { color: colors.textSecondary }]}>
+            Version: {item.version}
+          </Text>
+        )}
       </View>
       <View style={styles.serverActions}>
         <Ionicons

@@ -4,7 +4,7 @@ import * as schema from './schema';
 import React, { createContext, useContext } from 'react'; // Import React Context utilities
 import { createStoryService } from '../services/StoryService'; // Import createStoryService
 
-let _drizzleDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
+export let db: AppDrizzleClient | null = null; // Export the Drizzle client
 
 // Define the type for the Drizzle client
 export type AppDrizzleClient = ReturnType<typeof drizzle<typeof schema>>;
@@ -22,22 +22,22 @@ export const useDrizzle = () => {
 };
 
 export function initializeDrizzle(dbInstance: SQLiteDatabase) {
-  if (!_drizzleDb) {
-    _drizzleDb = drizzle(dbInstance, { schema });
+  if (!db) { // Use the exported 'db' variable
+    db = drizzle(dbInstance, { schema });
   }
-  return _drizzleDb; // Return the initialized client
+  return db; // Return the initialized client
 }
 
-export async function resetDatabase(db: SQLiteDatabase) {
+export async function resetDatabase(dbInstance: SQLiteDatabase) { // Renamed parameter to avoid conflict
   console.log('Resetting database...');
   // Get all table names
-  const tableNamesResult = await db.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';");
+  const tableNamesResult = await dbInstance.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';");
   const tableNames = tableNamesResult.map(row => row.name);
 
   // Drop all tables
   for (const tableName of tableNames) {
     console.log(`Dropping table: ${tableName}`);
-    await db.execAsync(`DROP TABLE IF EXISTS ${tableName};`);
+    await dbInstance.execAsync(`DROP TABLE IF EXISTS ${tableName};`);
   }
   console.log('All tables dropped.');
 }

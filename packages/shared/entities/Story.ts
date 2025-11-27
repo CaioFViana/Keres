@@ -13,6 +13,9 @@ export interface Story {
   // This ID references an entry in the local 'Server' entity.
   // If null or undefined, the story is considered offline-only.
   serverId: string | null
+  lastOperationLog: number,
+  lastServerSyncedLog: number,
+
   createdAt: Date
   updatedAt: Date
   version: number

@@ -1,4 +1,4 @@
-import { schema, ClientSettingsInsert, ClientSettingsSelect, AppDrizzleClient } from '../db'; // Import AppDrizzleClient
+import { schema, ClientSettingsInsert, ClientSettingsSelect, AppDrizzleClient } from '../db';
 import { eq } from 'drizzle-orm';
 import { createULID } from '../utils/ulid';
 

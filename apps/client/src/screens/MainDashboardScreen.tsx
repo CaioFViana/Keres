@@ -1,11 +1,67 @@
-import React from 'react';
-import { View, Text, StyleSheet, TextInput, Button, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useDrizzle } from '../db'; // Import useDrizzle
+import { createServerService } from '../services/ServerService'; // Import createServerService
+import { syncEngineService } from '../services/SyncEngineService';
+import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
-import { getCommonCardStyles, saturateColor } from '../theme/commonStyles';
+import { getCommonCardStyles } from '../theme/commonStyles';
 
 const MainDashboardScreen = () => {
   const { colors } = useTheme();
   const commonCardStyles = getCommonCardStyles(colors);
+  const { selectedStory } = useStoryStore();
+  const [syncedServerUrl, setSyncedServerUrl] = useState<string | null>(null);
+  const db = useDrizzle(); // Get the Drizzle client
+
+  useEffect(() => {
+    // Inject the db instance into the syncEngineService
+    syncEngineService.setDbInstance(db);
+
+    async function configureAndStartSync() {
+      if (selectedStory?.id) {
+        console.log(`MainDashboard: Selected story changed to ${selectedStory.id}.`);
+        let serverUrl: string | null = null;
+
+        if (selectedStory.serverId) {
+          try {
+            const serverService = createServerService(db);
+            const server = await serverService.getServerById(selectedStory.serverId);
+            if (server?.url) {
+              serverUrl = server.url;
+              setSyncedServerUrl(server.url);
+            } else {
+              console.warn(`Server with ID ${selectedStory.serverId} not found or no URL configured.`);
+              setSyncedServerUrl(null);
+            }
+          } catch (error) {
+            console.error('Error fetching server details:', error);
+            setSyncedServerUrl(null);
+          }
+        } else {
+          setSyncedServerUrl(null);
+        }
+
+        syncEngineService.configure(selectedStory.id, serverUrl);
+        if (serverUrl) {
+          syncEngineService.startSync();
+        } else {
+          syncEngineService.stopSync();
+        }
+      } else {
+        console.log('MainDashboard: No story selected or story deselected. Stopping sync engine.');
+        syncEngineService.stopSync();
+        setSyncedServerUrl(null);
+      }
+    }
+
+    configureAndStartSync();
+
+    return () => {
+      console.log('MainDashboard: Unmounting or story changed. Stopping sync engine.');
+      syncEngineService.stopSync();
+    };
+  }, [selectedStory, db]); // Re-run effect if selectedStory or db changes
 
   const styles = StyleSheet.create({
     container: {
@@ -69,8 +125,10 @@ const MainDashboardScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Current Story Title</Text>
-      <Text style={styles.text}>Synchronized with: My Keres Server</Text>
+      <Text style={styles.title}>{selectedStory?.title || 'No Story Selected'}</Text>
+      <Text style={styles.text}>
+        Synchronized with: {syncedServerUrl || 'Not configured'} (Last server synced log: {selectedStory?.lastServerSyncedLog || 0})
+      </Text>
 
       <Text style={styles.subtitle}>Story Overview</Text>
       <Text style={styles.text}>Characters: 15</Text>
@@ -107,3 +165,4 @@ const MainDashboardScreen = () => {
 };
 
 export default MainDashboardScreen;
+

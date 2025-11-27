@@ -36,6 +36,20 @@
       "when": 1762996349243,
       "tag": "0004_daffy_katie_power",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1764261602174,
+      "tag": "0005_aberrant_kronos",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1764262011175,
+      "tag": "0006_rainy_cardiac",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,8 @@ import migration_2 from './0001_glamorous_makkari';
 import migration_3 from './0002_friendly_bishop';
 import migration_4 from './0003_keen_the_captain';
 import migration_5 from './0004_daffy_katie_power';
+import migration_6 from './0005_aberrant_kronos';
+import migration_7 from './0006_rainy_cardiac';
 
 
 const migrations = [
@@ -14,6 +16,8 @@ const migrations = [
   { id: 3, name: '0002_friendly_bishop', run: migration_3 },
   { id: 4, name: '0003_keen_the_captain', run: migration_4 },
   { id: 5, name: '0004_daffy_katie_power', run: migration_5 },
+  { id: 6, name: '0005_aberrant_kronos', run: migration_6 },
+  { id: 7, name: '0006_rainy_cardiac', run: migration_7 },
 ];
 
 export default migrations;

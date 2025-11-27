@@ -63,4 +63,32 @@ export const syncRoute = new Elysia()
       description: 'Allows clients to request story updates from the server for a specific story since their last known operation version.',
       tags: ['Sync'],
     },
+  })
+  .get('/pullpreviews', async ({ user, set }) => {
+    if (!user || !user.userId) {
+      set.status = 401;
+      throw new Error('Unauthorized: User not authenticated.');
+    }
+
+    const storyPreviews = await syncService.getStoriesWithLastOperationVersionForUser(user.userId);
+
+    return {
+      message: 'Successfully fetched story previews.',
+      storyPreviews: storyPreviews,
+    };
+  }, {
+    detail: {
+      summary: 'Get previews of all stories accessible by the user',
+      description: 'Returns a list of story IDs and their latest operation versions for all stories the authenticated user owns or has read/write permissions for.',
+      tags: ['Sync'],
+    },
+    response: t.Object({
+      message: t.String(),
+      storyPreviews: t.Array(
+        t.Object({
+          storyId: t.String(),
+          lastOperationVersion: t.Number(),
+        })
+      ),
+    }),
   });

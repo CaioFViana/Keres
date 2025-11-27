@@ -1,7 +1,7 @@
-import { and, eq, gt, max } from 'drizzle-orm';
+import { and, eq, gt, max, or } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
-import { operationLog, operationTypeEnum, stories } from '../db/schema';
+import { operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
 import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '../schemas/SyncSchemas';
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
@@ -244,6 +244,49 @@ export class SyncService {
     return updates;
   }
 
+  async getStoriesWithLastOperationVersionForUser(userId: string): Promise<{ storyId: string; lastOperationVersion: number }[]> {
+    const ownedStories = await db.query.stories.findMany({
+      where: and(eq(stories.userId, userId), eq(stories.isDeleted, false)),
+      columns: {
+        id: true,
+        version: true,
+      },
+    });
+
+    const permittedStories = await db.query.storyPermissions.findMany({
+      where: and(
+        eq(storyPermissions.userId, userId),
+        eq(storyPermissions.isDeleted, false),
+        or(eq(storyPermissions.permissionType, 'reader'), eq(storyPermissions.permissionType, 'writer'))
+      ),
+      with: {
+        story: {
+          columns: {
+            id: true,
+            version: true,
+            isDeleted: true,
+          },
+        },
+      },
+    });
+
+    const storyMap = new Map<string, number>();
+
+    ownedStories.forEach(story => {
+      storyMap.set(story.id, story.version);
+    });
+
+    permittedStories.forEach(permission => {
+      if (permission.story && !permission.story.isDeleted) {
+        storyMap.set(permission.story.id, permission.story.version);
+      }
+    });
+
+    return Array.from(storyMap.entries()).map(([storyId, lastOperationVersion]) => ({
+      storyId,
+      lastOperationVersion,
+    }));
+  }
 }
 
 export const syncService = new SyncService();

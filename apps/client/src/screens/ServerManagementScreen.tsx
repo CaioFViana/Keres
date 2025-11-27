@@ -18,11 +18,6 @@ interface ServerWithStatus extends ServerSelect {
 
 type ServerManagementScreenNavigationProp = NativeStackNavigationProp<StorySelectionStackParamList, 'ServerManagement'>;
 
-// Helper function to log errors safely
-const safeLogError = (message: string) => {
-  console.error(message);
-};
-
 const ServerManagementScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -56,11 +51,9 @@ const ServerManagementScreen = () => {
       if (response.status === 200 && response.data && typeof response.data.version === 'string') {
         return { ...server, pingStatus: 'online' };
       } else {
-        // Removed safeLogError to completely eliminate any logging of the error object
         return { ...server, pingStatus: 'offline' };
       }
     } catch (err) {
-      // Removed safeLogError to completely eliminate any logging of the error object
       return Promise.resolve({ ...server, pingStatus: 'offline' });
     }
   };
@@ -171,7 +164,7 @@ const ServerManagementScreen = () => {
           color={getPingIconColor(item.pingStatus)}
           style={{ marginRight: 10 }}
         />
-        <TouchableOpacity onPress={() => { /* TODO: Implement edit functionality */ }}>
+        <TouchableOpacity onPress={() => navigation.navigate('ServerRegistration', { serverId: item.id })}>
           <Ionicons name="pencil-outline" size={24} color={colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDeleteServer(item.id)} style={{ marginLeft: 10 }}>
@@ -210,7 +203,7 @@ const ServerManagementScreen = () => {
       />
       <TouchableOpacity
         style={[styles.floatingButton, { backgroundColor: colors.primary }]}
-        onPress={() => navigation.navigate('ServerRegistration')}
+        onPress={() => navigation.navigate('ServerRegistration', {})}
       >
         <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
       </TouchableOpacity>

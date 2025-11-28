@@ -12,7 +12,7 @@ export interface Item {
   updatedAt: Date
   version: number
   isDeleted: boolean // Added for conflict resolution (tombstones)
-  deletedAt: number | null // Added for conflict resolution (tombstones)
+  deletedAt: Date | null // Added for conflict resolution (tombstones)
 }
 export interface ItemJourney {
   id: string
@@ -27,5 +27,5 @@ export interface ItemJourney {
   updatedAt: Date
   version: number
   isDeleted: boolean // Added for conflict resolution (tombstones)
-  deletedAt: number | null // Added for conflict resolution (tombstones)
+  deletedAt: Date | null // Added for conflict resolution (tombstones)
 }

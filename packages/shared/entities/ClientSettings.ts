@@ -7,5 +7,5 @@ export interface ClientSettings {
   updatedAt: Date;
   version: number; // For synchronization and conflict resolution
   isDeleted: boolean; // For tombstone-based conflict resolution
-  deletedAt: number | null; // For tombstone-based conflict resolution
+  deletedAt: Date | null; // For tombstone-based conflict resolution
 }

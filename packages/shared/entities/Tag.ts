@@ -9,7 +9,7 @@ export interface Tag {
   updatedAt: Date
   version: number
   isDeleted: boolean // Added for conflict resolution (tombstones)
-  deletedAt: number | null // Added for conflict resolution (tombstones)
+  deletedAt: Date | null // Added for conflict resolution (tombstones)
 }
 
 export interface TagRelation {
@@ -23,5 +23,5 @@ export interface TagRelation {
   updatedAt: Date
   version: number
   isDeleted: boolean // Added for conflict resolution (tombstones)
-  deletedAt: number | null // Added for conflict resolution (tombstones)
+  deletedAt: Date | null // Added for conflict resolution (tombstones)
 }

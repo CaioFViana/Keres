@@ -10,5 +10,5 @@ export interface Chapter {
   updatedAt: Date
   version: number
   isDeleted: boolean // Added for conflict resolution (tombstones)
-  deletedAt: number | null // Added for conflict resolution (tombstones)
+  deletedAt: Date | null // Added for conflict resolution (tombstones)
 }

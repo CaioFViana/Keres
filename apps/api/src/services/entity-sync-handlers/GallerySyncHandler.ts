@@ -1,8 +1,8 @@
+import { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, galleries, locations, notes, scenes } from '../../db/schema';
 import { CreateGalleryDataSchema, CreateGalleryDataType, PartialGallerySchema } from '../../schemas/GallerySchemas';
-import { CreateStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalleryDataSchema, typeof PartialGallerySchema> {

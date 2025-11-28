@@ -1,7 +1,7 @@
+import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, choices, galleries, items, locations, notes, scenes, tagRelations, tags, worldRules } from '../../db/schema'; // Import all possible relation tables
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas';
 import { CreateTagRelationDataSchema, CreateTagRelationDataType, PartialTagRelationSchema } from '../../schemas/TagRelationSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 

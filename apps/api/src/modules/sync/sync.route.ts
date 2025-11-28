@@ -1,7 +1,7 @@
+import { StoryUpdatesArraySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { StoryUpdatesArraySchema } from '../../schemas/SyncSchemas';
-import { syncService } from '../../services/SyncService'; // Import the syncService
-import { JWTPayload } from '../../index'; // Import JWTPayload
+import { JWTPayload } from '../../index';
+import { syncService } from '../../services/SyncService';
 
 export const syncRoute = new Elysia()
   .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property

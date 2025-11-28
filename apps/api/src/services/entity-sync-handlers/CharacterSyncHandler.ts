@@ -1,9 +1,9 @@
-import { characters } from '../../db/schema';
-import { CreateStoryUpdate } from '../../schemas/SyncSchemas';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
-import { db } from '../../db';
-import { CharacterSchema, PartialCharacterSchema, CreateCharacterDataSchema } from '../../schemas/CharacterSchemas';
+import { CreateStoryUpdate } from '@keres/shared';
 import { z } from 'zod';
+import { db } from '../../db';
+import { characters } from '../../db/schema';
+import { CreateCharacterDataSchema, PartialCharacterSchema } from '../../schemas/CharacterSchemas';
+import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 type CharacterCreateType = z.infer<typeof CreateCharacterDataSchema>;
 

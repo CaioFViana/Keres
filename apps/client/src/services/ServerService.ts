@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { ServerInsert, ServerSelect, servers } from '../db/schema';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
@@ -14,11 +14,15 @@ export interface ServerService {
 export const createServerService = (db: AppDrizzleClient): ServerService => {
   return {
     async getAllServers(): Promise<ServerSelect[]> {
-      return db.select().from(servers).where(eq(servers.isDeleted, false)).all();
+      return db.query.servers.findMany({
+        where: eq(servers.isDeleted, false),
+      });
     },
 
     async getServerById(serverId: string): Promise<ServerSelect | undefined> {
-      return db.select().from(servers).where(eq(servers.id, serverId)).where(eq(servers.isDeleted, false)).get();
+      return db.query.servers.findFirst({
+        where: and(eq(servers.id, serverId), eq(servers.isDeleted, false)),
+      });
     },
 
     async createServer(serverData): Promise<ServerSelect> {

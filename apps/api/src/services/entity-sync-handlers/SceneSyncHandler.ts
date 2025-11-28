@@ -1,8 +1,8 @@
+import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq, not, sql, SQL } from 'drizzle-orm';
 import { db } from '../../db';
 import { chapters, locations, scenes, stories } from '../../db/schema';
 import { CreateSceneDataSchema, CreateSceneDataType, PartialSceneSchema } from '../../schemas/SceneSchemas';
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas';
 import { recreateImplicitChoicesForChapter } from '../reorderingUtils';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 

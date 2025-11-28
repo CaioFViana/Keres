@@ -10,7 +10,8 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@keres/shared": ["../../packages/shared/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],

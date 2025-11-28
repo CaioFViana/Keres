@@ -1,8 +1,8 @@
+import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { items, scenes, characters, itemJourneys } from '../../db/schema';
+import { characters, itemJourneys, items, scenes } from '../../db/schema';
 import { CreateItemJourneyDataSchema, CreateItemJourneyDataType, PartialItemJourneySchema } from '../../schemas/ItemJourneySchemas';
-import { CreateStoryUpdate, UpdateStoryUpdate, DeleteStoryUpdate } from '../../schemas/SyncSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class ItemJourneySyncHandler extends BaseSyncEntityHandler<typeof CreateItemJourneyDataSchema, typeof PartialItemJourneySchema> {

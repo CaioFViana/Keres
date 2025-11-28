@@ -10,6 +10,7 @@ import GalleryScreen from '../screens/GalleryScreen';
 import ImportExportScreen from '../screens/ImportExportScreen';
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
+import StorySettingsScreen from '../screens/StorySettingsScreen';
 
 type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -24,6 +25,7 @@ type MainSystemDrawerParamList = {
   CharacterRelations: undefined;
   Choices: undefined;
   Settings: undefined;
+  StorySettings: undefined;
   ImportExport: undefined;
 };
 

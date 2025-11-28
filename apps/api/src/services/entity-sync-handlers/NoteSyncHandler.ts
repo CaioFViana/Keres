@@ -1,8 +1,8 @@
+import { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { notes } from '../../db/schema';
 import { CreateNoteDataSchema, CreateNoteDataType, PartialNoteSchema } from '../../schemas/NoteSchemas';
-import { CreateStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class NoteSyncHandler extends BaseSyncEntityHandler<typeof CreateNoteDataSchema, typeof PartialNoteSchema> {

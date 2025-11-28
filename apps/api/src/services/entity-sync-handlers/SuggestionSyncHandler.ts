@@ -1,8 +1,8 @@
+import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { suggestions } from '../../db/schema';
 import { CreateSuggestionDataSchema, CreateSuggestionDataType, PartialSuggestionSchema } from '../../schemas/SuggestionSchemas';
-import { CreateStoryUpdate, UpdateStoryUpdate, DeleteStoryUpdate } from '../../schemas/SyncSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class SuggestionSyncHandler extends BaseSyncEntityHandler<typeof CreateSuggestionDataSchema, typeof PartialSuggestionSchema> {

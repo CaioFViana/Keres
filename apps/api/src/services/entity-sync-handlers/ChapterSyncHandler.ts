@@ -1,10 +1,10 @@
+import { ChapterReorderingStoryUpdate, ChapterReorderingStoryUpdateSchema, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared'; // Corrected import
+import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
 import { db } from '../../db';
 import { chapters, scenes } from '../../db/schema'; // Import scenes table
 import { CreateChapterDataSchema, CreateChapterDataType, PartialChapterSchema } from '../../schemas/ChapterSchemas';
-import { CreateStoryUpdate, ChapterReorderingStoryUpdate, ChapterReorderingStoryUpdateSchema, UpdateStoryUpdate } from '../../schemas/SyncSchemas'; // Corrected import
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 import { recreateImplicitChoicesForChapter } from '../reorderingUtils'; // Import the utility
-import { and, eq, sql } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
+import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class ChapterSyncHandler extends BaseSyncEntityHandler<typeof CreateChapterDataSchema, typeof PartialChapterSchema> {
   entityName = 'Chapter';

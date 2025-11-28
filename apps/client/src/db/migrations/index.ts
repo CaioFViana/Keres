@@ -8,6 +8,7 @@ import migration_4 from './0003_keen_the_captain';
 import migration_5 from './0004_daffy_katie_power';
 import migration_6 from './0005_aberrant_kronos';
 import migration_7 from './0006_rainy_cardiac';
+import migration_8 from './0007_medical_komodo';
 
 
 const migrations = [
@@ -18,6 +19,7 @@ const migrations = [
   { id: 5, name: '0004_daffy_katie_power', run: migration_5 },
   { id: 6, name: '0005_aberrant_kronos', run: migration_6 },
   { id: 7, name: '0006_rainy_cardiac', run: migration_7 },
+  { id: 8, name: '0007_medical_komodo', run: migration_8 },
 ];
 
 export default migrations;

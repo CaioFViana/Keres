@@ -1,8 +1,8 @@
+import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq, gt, max, or } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
-import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '../schemas/SyncSchemas';
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';

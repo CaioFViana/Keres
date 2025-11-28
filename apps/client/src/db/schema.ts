@@ -18,8 +18,8 @@ export const stories = sqliteTable('stories', {
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   serverId: text('server_id'),
-  lastOperationLog: integer('last_operation_log'),
-  lastServerSyncedLog: integer('last_server_synced_log'),
+  lastOperationLog: integer('last_operation_log').notNull().default(0),
+  lastServerSyncedLog: integer('last_server_synced_log').notNull().default(0),
 });
 
 // Export inferred types for stories

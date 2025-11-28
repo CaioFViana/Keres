@@ -1,9 +1,9 @@
+import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { SQL, eq, sql } from 'drizzle-orm';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { z } from 'zod'; // Import Zod
 import { db } from '../../db';
 import * as dbSchema from '../../db/schema'; // Import the entire schema
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas';
 
 export interface SyncEntityHandler {
   entityName: string;

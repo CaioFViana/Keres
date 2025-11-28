@@ -1,5 +1,5 @@
+import { UlidSchema } from '@keres/shared';
 import { z } from 'zod';
-import { UlidSchema } from './SyncSchemas';
 
 export const StoryTypeSchema = z.enum(['linear', 'branching']);
 

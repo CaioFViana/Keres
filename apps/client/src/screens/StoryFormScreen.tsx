@@ -113,6 +113,8 @@ const StoryFormScreen = () => {
         isFavorite,
         extraNotes,
         theme,
+        lastOperationLog: 0,
+        lastServerSyncedLog: 0,
       };
 
       if (storyId) {

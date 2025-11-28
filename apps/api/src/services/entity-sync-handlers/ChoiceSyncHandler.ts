@@ -1,8 +1,8 @@
+import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared'; // Added DeleteStoryUpdate
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { choices, scenes, stories } from '../../db/schema'; // Import stories
 import { CreateChoiceDataSchema, CreateChoiceDataType, PartialChoiceSchema } from '../../schemas/ChoiceSchemas';
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '../../schemas/SyncSchemas'; // Added DeleteStoryUpdate
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoiceDataSchema, typeof PartialChoiceSchema> {

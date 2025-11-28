@@ -1,18 +1,17 @@
+import { StoryUpdate } from '@keres/shared';
 import axios, { AxiosInstance } from 'axios';
 import { eq } from 'drizzle-orm';
-import { ToastAndroid } from 'react-native'; // For simple notifications, will refine later
+import { ToastAndroid } from 'react-native';
+import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
-import { AppDrizzleClient } from '../db'; // Import the type for the Drizzle client
+import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
+import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
 
 interface SyncPreview {
   storyId: string;
-  serverVersion: number; // Corrected type: API returns number
+  serverVersion: number;
   lastUpdatedAt: string;
-  entityUpdates: {
-    entityType: string;
-    ulid: string;
-    operation: 'create' | 'update' | 'delete';
-  }[];
+  entityUpdates: StoryUpdate[];
 }
 
 class SyncEngineService {
@@ -20,11 +19,16 @@ class SyncEngineService {
   private syncInterval: number | null = null;
   private storyId: string | null = null;
   private client: AxiosInstance;
-  private intervalTimeMs: number = 30000; // Default to 30 seconds
-  private _db: AppDrizzleClient | null = null; // Private property to hold the Drizzle client
+  private intervalTimeMs: number = 30000;
+  private _db: AppDrizzleClient | null = null;
+  private entityHandlers: Map<string, ClientSyncEntityHandler>; // Map to hold entity handlers
 
   private constructor() {
-    this.client = axios.create(); // Will be configured with base URL and auth in configure()
+    this.client = axios.create();
+    this.entityHandlers = new Map<string, ClientSyncEntityHandler>();
+    // Register handlers
+    this.registerEntityHandler(new StoryClientSyncHandler());
+    // TODO: Register other entity handlers here
   }
 
   public static getInstance(): SyncEngineService {
@@ -34,9 +38,14 @@ class SyncEngineService {
     return SyncEngineService.instance;
   }
 
-  // Method to inject the Drizzle client
+  private registerEntityHandler(handler: ClientSyncEntityHandler) {
+    this.entityHandlers.set(handler.entityName, handler);
+  }
+
   public setDbInstance(dbInstance: AppDrizzleClient) {
     this._db = dbInstance;
+    // Propagate the db instance to all registered handlers
+    this.entityHandlers.forEach(handler => handler.setDb(dbInstance));
   }
 
   public async configure(storyId: string, serverUrl: string | null) {
@@ -47,7 +56,7 @@ class SyncEngineService {
       console.log(`SyncEngineService configured for story ${storyId} with server: ${serverUrl}`);
     } else {
       console.warn('SyncEngineService configured without a server URL. Sync will be disabled.');
-      this.stopSync(); // Stop sync if no server URL is provided
+      this.stopSync();
     }
   }
 
@@ -67,7 +76,6 @@ class SyncEngineService {
       return;
     }
 
-    // Ensure db is set before starting sync
     if (!this._db) {
       console.error('Cannot start sync: Drizzle client (db) is not set. Call setDbInstance() first.');
       return;
@@ -76,7 +84,6 @@ class SyncEngineService {
     this.intervalTimeMs = intervalTimeMs || this.intervalTimeMs;
     console.log(`Starting sync for story ${this.storyId} with interval ${this.intervalTimeMs / 1000}s`);
 
-    // Perform an immediate sync first
     this.performSync();
 
     this.syncInterval = setInterval(() => {
@@ -91,7 +98,7 @@ class SyncEngineService {
       console.log('Sync engine stopped.');
     }
     this.storyId = null;
-    this.client.defaults.baseURL = undefined; // Clear base URL on stop
+    this.client.defaults.baseURL = undefined;
   }
 
   private async performSync() {
@@ -102,7 +109,7 @@ class SyncEngineService {
 
     if (!this.client.defaults.baseURL) {
       console.error('No server URL set for sync operation.');
-      this.stopSync(); // Stop sync if server URL disappears
+      this.stopSync();
       return;
     }
 
@@ -125,34 +132,58 @@ class SyncEngineService {
 
       if (!localStory) {
         console.error(`Story with ID ${this.storyId} not found locally.`);
-        this.stopSync(); // Stop sync if story is gone
+        this.stopSync();
         return;
       }
 
-      // Use lastServerSyncedLog as the 'sinceVersion' for the API call
-      const sinceVersion = localStory.lastServerSyncedLog || 0; // Default to 0 if not set
+      const sinceVersion = localStory.lastServerSyncedLog || 0;
 
       // 2. Call API for pull previews
       const response = await this.client.get<SyncPreview[]>(`/sync/pullpreviews/${this.storyId}?sinceVersion=${sinceVersion}`);
       const previews = response.data;
 
       if (previews && previews.length > 0) {
-        console.log(`Received ${previews.length} sync previews for story ${this.storyId}`);
-
         let totalUpdates = 0;
-        previews.forEach(preview => {
+        let lastOriginatingUser: string | null = null; // Will need to be extracted from actual update
+        let entitiesUpdated: string[] = [];
+
+        for (const preview of previews) {
           totalUpdates += preview.entityUpdates.length;
-        });
+          // For now, previews don't contain originating user info directly,
+          // so this part of notification will be generic until actual operations are pulled.
 
-        // Display notification
-        const message = `${totalUpdates} updates available.`;
-        ToastAndroid.show(message, ToastAndroid.LONG); // This is a placeholder, will refine later
+          // Apply entity updates locally using handlers
+          for (const update of preview.entityUpdates) {
+            const handler = this.entityHandlers.get(update.entity); // Use update.entity for entityType
+            if (!handler) {
+              console.warn(`No client sync handler registered for entity type: ${update.entity}`);
+              continue;
+            }
 
-        // TODO: Implement actual application of changes and update local story lastServerSyncedLog
-        // For now, just logging and updating lastServerSyncedLog
+            try {
+              if (update.type === 'create') {
+                await handler.applyCreate(update);
+              } else if (update.type === 'update') {
+                await handler.applyUpdate(update);
+              } else if (update.type === 'delete') {
+                await handler.applyDelete(update);
+              }
+              if (!entitiesUpdated.includes(update.entity)) {
+                entitiesUpdated.push(update.entity);
+              }
+            } catch (handlerError) {
+              console.error(`Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`, handlerError);
+            }
+          }
+        }
+
+        const message = `${totalUpdates} updates available. Updated: ${entitiesUpdated.join(', ')}.`;
+        ToastAndroid.show(message, ToastAndroid.LONG);
+
+        // Update lastServerSyncedLog with the latest server version received
         const latestServerVersion = parseInt(previews[previews.length - 1].serverVersion.toString(), 10);
         await this._db.update(schema.stories)
-          .set({ lastServerSyncedLog: latestServerVersion }) // Update with the latest server version received
+          .set({ lastServerSyncedLog: latestServerVersion })
           .where(eq(schema.stories.id, this.storyId));
 
       } else {

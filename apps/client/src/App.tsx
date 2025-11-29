@@ -13,6 +13,8 @@ import { ThemeProvider } from './theme/ThemeProvider';
 import { isColorLight } from './theme/utils'; // Import isColorLight
 import './utils/i18n';
 import i18n from './utils/i18n';
+import apiClient from './services/apiClient';
+import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
 
 // Create a wrapper component for safe area
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -47,6 +49,11 @@ const DatabaseInitializer = () => {
         setDrizzleClient(initializedDrizzle);
         setDbInitialized(true);
         console.log('DatabaseInitializer: Database initialized successfully.');
+
+        // Initialize AuthTokenManager with the Drizzle DB instance
+        setAuthDb(initializedDrizzle);
+        // Set the authTokenManager as the token provider for the API client
+        apiClient.setTokenProvider(authTokenManager);
 
         const settings = await initializeUserSettings(initializedDrizzle);
         if (settings?.language) {

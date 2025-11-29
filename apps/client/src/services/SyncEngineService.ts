@@ -1,9 +1,11 @@
 import { StoryUpdate } from '@keres/shared';
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { eq } from 'drizzle-orm';
 import { ToastAndroid } from 'react-native';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
+import { createStoryService } from './StoryService';
+import { createKeresAxiosInstance } from './apiClient';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
 
@@ -12,6 +14,11 @@ interface SyncPreview {
   serverVersion: number;
   lastUpdatedAt: string;
   entityUpdates: StoryUpdate[];
+}
+
+interface ServerStoryPreview {
+  storyId: string;
+  lastOperationVersion: number;
 }
 
 class SyncEngineService {
@@ -24,7 +31,7 @@ class SyncEngineService {
   private entityHandlers: Map<string, ClientSyncEntityHandler>; // Map to hold entity handlers
 
   private constructor() {
-    this.client = axios.create();
+    this.client = createKeresAxiosInstance();
     this.entityHandlers = new Map<string, ClientSyncEntityHandler>();
     // Register handlers
     this.registerEntityHandler(new StoryClientSyncHandler());
@@ -48,14 +55,14 @@ class SyncEngineService {
     this.entityHandlers.forEach(handler => handler.setDb(dbInstance));
   }
 
-  public async configure(storyId: string, serverUrl: string | null) {
-    this.storyId = storyId;
+  public async configure(storyId: string | undefined, serverUrl: string | null) {
+    this.storyId = storyId || null;
     if (serverUrl) {
-      this.client.defaults.baseURL = serverUrl;
-      // Add auth headers here once implemented
-      console.log(`SyncEngineService configured for story ${storyId} with server: ${serverUrl}`);
+      this.client = createKeresAxiosInstance({ baseURL: serverUrl });
+      // The JWT handling is now centralized in the apiClient interceptor, so no need to add headers here.
+      console.log(`SyncEngineService configured for story ${this.storyId} with server: ${serverUrl}`);
     } else {
-      console.warn('SyncEngineService configured without a server URL. Sync will be disabled.');
+      console.log('SyncEngineService configured without a server URL. Sync will be disabled.');
       this.stopSync();
     }
   }
@@ -67,17 +74,17 @@ class SyncEngineService {
     }
 
     if (!this.storyId) {
-      console.error('Cannot start sync: storyId is not set. Call configure() first.');
+      console.log('Cannot start sync: storyId is not set. Call configure() first.');
       return;
     }
 
     if (!this.client.defaults.baseURL) {
-      console.error('Cannot start sync: server URL is not set. Call configure() with a valid serverUrl.');
+      console.log('Cannot start sync: server URL is not set. Call configure() with a valid serverUrl.');
       return;
     }
 
     if (!this._db) {
-      console.error('Cannot start sync: Drizzle client (db) is not set. Call setDbInstance() first.');
+      console.log('Cannot start sync: Drizzle client (db) is not set. Call setDbInstance() first.');
       return;
     }
 
@@ -101,20 +108,84 @@ class SyncEngineService {
     this.client.defaults.baseURL = undefined;
   }
 
+  public async fetchServerStoryPreviews(serverUrl: string): Promise<ServerStoryPreview[]> {
+    if (!serverUrl) {
+      console.log('Server URL is required to fetch story previews.');
+      return [];
+    }
+
+    // Use a new instance from the factory, configured with the specific serverUrl
+    // JWT handling is done by the interceptor if a tokenProvider is set
+    const tempClient = createKeresAxiosInstance({
+      baseURL: serverUrl,
+    });
+
+    try {
+      const response = await tempClient.get<{ message: string; storyPreviews: ServerStoryPreview[] }>('/sync/pullpreviews');
+      return response.data.storyPreviews;
+    } catch (error) {
+      console.log(`Error fetching server story previews from ${serverUrl}:`, error);
+      return [];
+    }
+  }
+
+  public async downloadAndImportStory(serverUrl: string, storyId: string, userId: string): Promise<void> {
+    if (!this._db) {
+      ToastAndroid.show(`Failed to download story '${storyId}': Database not set.`, ToastAndroid.LONG);
+      //console.log('Drizzle client (db) is not set. Cannot download and import story.');
+      return;
+    }
+    if (!serverUrl) {
+      ToastAndroid.show(`Failed to download story '${storyId}': Server URL not set.`, ToastAndroid.LONG);
+      //console.log('Server URL is required to download story.');
+      return;
+    }
+    if (!userId) {
+      ToastAndroid.show(`Failed to download story '${storyId}': User ID not set.`, ToastAndroid.LONG);
+      //console.log('User ID is required to import story.');
+      return;
+    }
+
+    // Use a new instance from the factory, configured with the specific serverUrl
+    // JWT handling is done by the interceptor if a tokenProvider is set
+    const tempClient = createKeresAxiosInstance({
+      baseURL: serverUrl,
+    });
+
+    try {
+      const exportUrl = `/stories/${storyId}/export`;
+      console.log(`Attempting to download story ${storyId} from ${serverUrl}${exportUrl}`);
+      const response = await tempClient.get(exportUrl);
+      const fullStoryData = response.data; // This should be of type FullStoryExport
+
+      // Create a story service instance using the injected db
+      const storyService = createStoryService(this._db);
+      await storyService.importFullStory(userId, fullStoryData);
+      console.log(`Successfully downloaded and imported story ${storyId}`);
+      ToastAndroid.show(`Story '${storyId}' downloaded and imported!`, ToastAndroid.LONG);
+
+    } catch (error) {
+      console.log(`Error downloading or importing story ${storyId} from ${serverUrl}:`, error);
+      ToastAndroid.show(`Failed to download story '${storyId}'.`, ToastAndroid.LONG);
+      // We do not re-throw here, as the ToastAndroid is the intended user feedback for now.
+    }
+  }
+
+
   private async performSync() {
     if (!this.storyId) {
-      console.error('No storyId set for sync operation.');
+      console.log('No storyId set for sync operation.');
       return;
     }
 
     if (!this.client.defaults.baseURL) {
-      console.error('No server URL set for sync operation.');
+      console.log('No server URL set for sync operation.');
       this.stopSync();
       return;
     }
 
     if (!this._db) {
-      console.error('Drizzle client (db) is not initialized. Cannot perform sync.');
+      console.log('Drizzle client (db) is not initialized. Cannot perform sync.');
       this.stopSync();
       return;
     }
@@ -131,7 +202,7 @@ class SyncEngineService {
       });
 
       if (!localStory) {
-        console.error(`Story with ID ${this.storyId} not found locally.`);
+        console.log(`Story with ID ${this.storyId} not found locally.`);
         this.stopSync();
         return;
       }
@@ -156,11 +227,14 @@ class SyncEngineService {
           for (const update of preview.entityUpdates) {
             const handler = this.entityHandlers.get(update.entity); // Use update.entity for entityType
             if (!handler) {
-              console.warn(`No client sync handler registered for entity type: ${update.entity}`);
+              console.log(`No client sync handler registered for entity type: ${update.entity}`);
               continue;
             }
 
             try {
+              // The update object from API is a simplified version (preview)
+              // For actual application, we'd need full StoryUpdate objects from the server
+              // This is a placeholder for how full updates would be applied.
               if (update.type === 'create') {
                 await handler.applyCreate(update);
               } else if (update.type === 'update') {
@@ -172,7 +246,7 @@ class SyncEngineService {
                 entitiesUpdated.push(update.entity);
               }
             } catch (handlerError) {
-              console.error(`Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`, handlerError);
+              console.log(`Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`, handlerError);
             }
           }
         }
@@ -191,7 +265,7 @@ class SyncEngineService {
       }
 
     } catch (error) {
-      console.error('Error during sync operation:', error);
+      console.log('Error during sync operation:', error);
       // Implement more robust error handling (e.g., exponential backoff)
     }
   }

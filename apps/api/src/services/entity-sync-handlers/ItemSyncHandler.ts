@@ -1,8 +1,7 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateItemDataSchema, CreateItemDataType, CreateStoryUpdate, DeleteStoryUpdate, PartialItemSchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { characters, items } from '../../db/schema'; // Import characters table
-import { CreateItemDataSchema, CreateItemDataType, PartialItemSchema } from '../../schemas/ItemSchemas';
+import { characters, items } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class ItemSyncHandler extends BaseSyncEntityHandler<typeof CreateItemDataSchema, typeof PartialItemSchema> {

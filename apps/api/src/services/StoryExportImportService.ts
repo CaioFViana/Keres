@@ -1,7 +1,8 @@
+import { FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
+import { eq, sql } from 'drizzle-orm'; // Import sql for aggregate functions
 import { ulid } from 'ulid'; // Import ulid for generating new IDs
 import { db } from '../db';
 import * as dbSchema from '../db/schema';
-import { FullStoryExportSchema, FullStoryExportType } from '../schemas/FullStorySchemas';
 
 export class StoryExportImportService {
     async exportStory(storyId: string): Promise<FullStoryExportType> { // storyId type should be string
@@ -62,6 +63,18 @@ export class StoryExportImportService {
         });
 
 
+        // Query for the maximum operationVersion for this story
+        const latestOperation = await db.select({
+            version: sql<number>`max(${dbSchema.operationLog.operationVersion})`.as('maxVersion'),
+        })
+        .from(dbSchema.operationLog)
+        .where(eq(dbSchema.operationLog.storyId, storyId))
+        .execute()
+        .then(res => res[0]);
+
+        const serverLastOperationVersion = latestOperation?.version || 1; // Default to 1 if no operations found
+
+
         const fullStory = FullStoryExportSchema.parse({
             story,
             chapters,
@@ -79,6 +92,7 @@ export class StoryExportImportService {
             items,
             itemJourneys,
             tagRelations,
+            serverLastOperationVersion: serverLastOperationVersion,
         });
 
         return fullStory;

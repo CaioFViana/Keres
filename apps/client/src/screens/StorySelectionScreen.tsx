@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Story } from '@keres/shared/entities/Story';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, BackHandler, FlatList, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../db';
+import { createServerService } from '../services/ServerService';
+import { syncEngineService } from '../services/SyncEngineService';
 import { useStoryStore } from '../state/storyStore';
 import { useSummaryStore } from '../state/summaryStore';
 import { useThemeStore } from '../state/themeStore';
@@ -105,7 +107,7 @@ const StorySelectionScreen = () => {
   const summary = useSummaryStore((state) => state.summary);
   const updateSummary = useSummaryStore((state) => state.updateSummary);
 
-  const { username, language } = useUserSettingsStore();
+  const { username, language, userId } = useUserSettingsStore();
   const { darkMode } = useThemeStore();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -113,6 +115,69 @@ const StorySelectionScreen = () => {
 
   const backPressTimer = useRef<number | null>(null);
   const isFocused = useIsFocused();
+
+  const fetchStories = useCallback(async () => {
+    try {
+      const result = await storyService.getAllStories();
+      setStories(result as Story[]);
+    } catch (error) {
+      console.error(t('error_fetching_stories'), error);
+      Alert.alert(t('error'), t('failed_to_load_stories'));
+    }
+  }, [storyService, t]);
+
+  const syncStoriesWithServers = useCallback(async () => {
+    if (!drizzleClient || !userId) {
+      console.warn('Drizzle client or userId not available for sync. Skipping.');
+      return;
+    }
+
+    // Set DB instance for sync engine
+    syncEngineService.setDbInstance(drizzleClient);
+
+    const serverService = createServerService(drizzleClient);
+    const localStories = await storyService.getAllStories();
+    const servers = await serverService.getAllServers();
+
+    for (let server of servers) { // Use 'let' for server to allow re-assignment
+      if (!server.url) {
+        console.warn(`Server ${server.name} has no URL configured. Skipping.`);
+        continue;
+      }
+
+      console.log(`Checking server ${server.name} at ${server.url} for new stories...`);
+      try {
+        // Attempt to refresh JWT token if expired
+        server = await serverService.refreshServerToken(server);
+
+        const serverStoryPreviews = await syncEngineService.fetchServerStoryPreviews(server.url);
+
+        const localStoryIds = new Set(localStories.map(s => s.id));
+        const newStoriesOnServer = serverStoryPreviews.filter(
+          preview => !localStoryIds.has(preview.storyId)
+        );
+
+        if (newStoriesOnServer.length > 0) {
+          console.log(`Found ${newStoriesOnServer.length} new stories on server ${server.name}:`);
+          for (const storyPreview of newStoriesOnServer) {
+            console.log(`  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`);
+            try {
+              await syncEngineService.downloadAndImportStory(server.url, storyPreview.storyId, server.idUser, server.jwtToken!);
+              console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
+              // After successful import, re-fetch stories to update the list
+              fetchStories(); 
+            } catch (downloadError) {
+              console.error(`Failed to download and import story ${storyPreview.storyId}:`, downloadError);
+            }
+          }
+        } else {
+          console.log(`No new stories found on server ${server.name}.`);
+        }
+      } catch (error) {
+        console.error(`Error during sync with server ${server.name} at ${server.url}:`, error);
+      }
+    }
+  }, [drizzleClient, userId, storyService, fetchStories]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -135,18 +200,7 @@ const StorySelectionScreen = () => {
     return () => backHandler.remove();
   }, [isFocused, t]);
 
-
-  const fetchStories = async () => {
-    try {
-      const result = await storyService.getAllStories();
-      setStories(result as Story[]);
-    } catch (error) {
-      console.error(t('error_fetching_stories'), error);
-      Alert.alert(t('error'), t('failed_to_load_stories'));
-    }
-  };
-
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     try {
       const storyCounts = await storyService.getStoryCounts();
       const characterCount = await storyService.getCharacterCount();
@@ -174,16 +228,23 @@ const StorySelectionScreen = () => {
       console.error(t('error_fetching_summary'), error);
       Alert.alert(t('error'), t('failed_to_load_summary_data'));
     }
-  };
-
+  }, [storyService, updateSummary, t]);
 
   useEffect(() => {
     if (isFocused) { // Only fetch if the screen is focused
       fetchStories();
       fetchSummary();
       setTheme('default'); // Reset theme to default when screen is focused
+      
+      // Initial sync and then set up interval for periodic sync
+      syncStoriesWithServers();
+      const syncInterval = setInterval(syncStoriesWithServers, 1800000); // Every 30 minutes
+
+      return () => {
+        clearInterval(syncInterval); // Clear interval on unmount or blur
+      };
     }
-  }, [isFocused, setTheme]); // Add setTheme to dependencies
+  }, [isFocused, setTheme, syncStoriesWithServers, fetchStories, fetchSummary]); // Updated dependencies
 
 
   const handleSelectStory = (story: Story) => {

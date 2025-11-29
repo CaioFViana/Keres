@@ -2,6 +2,9 @@ import { and, eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { ServerInsert, ServerSelect, servers } from '../db/schema';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
+import { isJwtExpired } from '../utils/jwtUtils'; // Added
+import { authTokenManager } from './AuthTokenManager';
+import { ToastAndroid } from 'react-native'; // Import ToastAndroid
 
 export interface ServerService {
   getAllServers(): Promise<ServerSelect[]>;
@@ -9,6 +12,7 @@ export interface ServerService {
   createServer(serverData: Create<ServerInsert>): Promise<ServerSelect>;
   updateServer(serverId: string, serverData: Partial<Omit<ServerInsert, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
   deleteServer(serverId: string): Promise<void>;
+  refreshServerToken(server: ServerSelect): Promise<ServerSelect>; // Added
 }
 
 export const createServerService = (db: AppDrizzleClient): ServerService => {
@@ -43,6 +47,56 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
         .where(eq(servers.id, serverId))
         .run();
+    },
+
+    async refreshServerToken(server: ServerSelect): Promise<ServerSelect> {
+      if (!server.jwtToken || !server.refreshToken) {
+        const message = `Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`;
+        console.log(message);
+        ToastAndroid.show(message, ToastAndroid.LONG);
+        return server;
+      }
+
+      // Check if the JWT is actually expired before trying to refresh
+      if (!isJwtExpired(server.jwtToken)) {
+        console.log(`JWT for server ${server.name} is not expired. No refresh needed.`);
+        return server; // Return current server if not expired
+      }
+
+      console.log(`Attempting to refresh token for server ${server.name}...`);
+      try {
+        // Trigger the token refresh via the AuthTokenManager
+        // This will update the tokens in the database and the user settings store
+        const refreshedTokens = await authTokenManager.refreshAccessToken(server.refreshToken);
+
+        if (!refreshedTokens) {
+          const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;
+          console.log(message);
+          ToastAndroid.show(message, ToastAndroid.LONG);
+          return server; // Return original server if refresh failed
+        }
+
+        // Fetch the updated server object from the database to ensure consistency
+        const updatedServer = await db.query.servers.findFirst({
+          where: eq(servers.id, server.id),
+        });
+
+        if (!updatedServer) {
+            const message = `Could not find updated server with ID ${server.id} after token refresh. Please check server status.`;
+            console.log(message);
+            ToastAndroid.show(message, ToastAndroid.LONG);
+            return server;
+        }
+
+        console.log(`Successfully refreshed tokens for server ${server.name}.`);
+        return updatedServer;
+
+      } catch (error) {
+        const message = `Failed to refresh token for server ${server.name}. Please re-authenticate.`;
+        console.log(message, error);
+        ToastAndroid.show(message, ToastAndroid.LONG);
+        return server; // Return original server on any refresh error
+      }
     },
   };
 };

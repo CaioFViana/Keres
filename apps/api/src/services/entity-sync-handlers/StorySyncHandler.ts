@@ -1,5 +1,7 @@
 import {
+  CreateStoryDataSchema,
   CreateStoryUpdate,
+  PartialStorySchema,
   StoryReorderingStoryUpdate,
   StoryReorderingStoryUpdateSchema,
   UpdateStoryUpdate,
@@ -8,7 +10,6 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../db';
 import { chapters, stories } from '../../db/schema';
-import { CreateStoryDataSchema, PartialStorySchema } from '../../schemas/StorySchemas'; // Import schemas
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 type CreateStoryDataType = z.infer<typeof CreateStoryDataSchema>;

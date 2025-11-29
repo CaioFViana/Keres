@@ -1,8 +1,7 @@
-import { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateStoryUpdate, CreateWorldRuleDataSchema, CreateWorldRuleDataType, PartialWorldRuleSchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { worldRules } from '../../db/schema';
-import { CreateWorldRuleDataSchema, CreateWorldRuleDataType, PartialWorldRuleSchema } from '../../schemas/WorldRuleSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWorldRuleDataSchema, typeof PartialWorldRuleSchema> {

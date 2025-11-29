@@ -1,8 +1,7 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateStoryUpdate, CreateTagRelationDataSchema, CreateTagRelationDataType, DeleteStoryUpdate, PartialTagRelationSchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, choices, galleries, items, locations, notes, scenes, tagRelations, tags, worldRules } from '../../db/schema'; // Import all possible relation tables
-import { CreateTagRelationDataSchema, CreateTagRelationDataType, PartialTagRelationSchema } from '../../schemas/TagRelationSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class TagRelationSyncHandler extends BaseSyncEntityHandler<typeof CreateTagRelationDataSchema, typeof PartialTagRelationSchema> {

@@ -1,6 +1,6 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
-import axios, { AxiosError } from 'axios'; // Import AxiosError
+import apiClient from '../services/apiClient'; 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
@@ -88,13 +88,14 @@ const ServerRegistrationScreen = () => {
       try {
         // 1. Server Check (/kerescheck) - always check if server is reachable
         const keresCheckUrl = `${serverAddress}/kerescheck`;
-        const checkResponse = await axios.get(keresCheckUrl, {
+        const checkResponse = await apiClient.get(keresCheckUrl, {
           timeout: 5000,
           validateStatus: () => true,
         });
   
         if (checkResponse.status !== 200 || !checkResponse.data || typeof checkResponse.data.version !== 'string') {
-          throw new Error(t('invalid_keres_server'));
+          Alert.alert(t('error'), t('invalid_keres_server'));
+          return;
         }
         const serverVersion = checkResponse.data.version;
   
@@ -103,18 +104,21 @@ const ServerRegistrationScreen = () => {
         let refreshToken = '';
         if (!serverId || password.trim()) { // If new server or password provided for update
           const loginUrl = `${serverAddress}/auth/login`;
-          const loginResponse = await axios.post(loginUrl, { username, password }, {
+          const loginResponse = await apiClient.post(loginUrl, { username, password }, {
             timeout: 5000,
             validateStatus: () => true,
           });
   
           if (loginResponse.status !== 200 || !loginResponse.data || !loginResponse.data.accessToken || !loginResponse.data.refreshToken) {
             if (loginResponse.status === 401) {
-              throw new Error(t('invalid_credentials'));
+              Alert.alert(t('error'), t('invalid_credentials'));
+              return;
             } else if (loginResponse.status === 409) {
-              throw new Error(t('user_already_exists'));
+              Alert.alert(t('error'), t('user_already_exists'));
+              return;
             } else {
-              throw new Error(`${t('server_error')}: ${loginResponse.status}`);
+              Alert.alert(t('error'), `${t('server_error')}: ${loginResponse.status}`);
+              return;
             }
           }
           accessToken = loginResponse.data.accessToken;
@@ -122,7 +126,7 @@ const ServerRegistrationScreen = () => {
         }
   
         const serverData = {
-          idUser: userId,
+          idUser: userId!, // Assert userId as non-null
           userName: username,
           name: serverName || serverAddress,
           url: serverAddress,
@@ -142,14 +146,7 @@ const ServerRegistrationScreen = () => {
       } catch (err) {
         let errorMessage = t('failed_to_save_server'); // New translation key
   
-        if (axios.isAxiosError(err)) {
-          const axiosError = err as AxiosError;
-          if (axiosError.request) {
-            errorMessage = t('network_error_no_response');
-          } else {
-            errorMessage = `${t('request_setup_error')}: ${axiosError.message}`;
-          }
-        } else if (err instanceof Error) {
+        if (err instanceof Error) {
           errorMessage = err.message;
         }
   

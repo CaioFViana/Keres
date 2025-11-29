@@ -1,8 +1,7 @@
-import { CreateStoryUpdate } from '@keres/shared';
+import { CreateCharacterDataSchema, CreateStoryUpdate, PartialCharacterSchema } from '@keres/shared';
 import { z } from 'zod';
 import { db } from '../../db';
 import { characters } from '../../db/schema';
-import { CreateCharacterDataSchema, PartialCharacterSchema } from '../../schemas/CharacterSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 type CharacterCreateType = z.infer<typeof CreateCharacterDataSchema>;

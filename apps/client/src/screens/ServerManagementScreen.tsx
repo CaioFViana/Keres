@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import axios from 'axios'; // Import axios and AxiosError
+import apiClient from '../services/apiClient'; // Import axios and AxiosError
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -44,7 +44,7 @@ const ServerManagementScreen = () => {
   const pingServer = async (server: ServerWithStatus): Promise<ServerWithStatus> => {
     try {
       const checkUrl = `${server.url}/kerescheck`;
-      const response = await axios.get(checkUrl, {
+      const response = await apiClient.get(checkUrl, {
         timeout: 5000, // 5 seconds timeout
         validateStatus: () => true, // Always resolve, don't reject on HTTP status codes
       });

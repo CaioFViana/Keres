@@ -2,14 +2,18 @@ import { create } from 'zustand';
 import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 import { AppDrizzleClient } from '../db';
 import { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
+import { ServerSelect } from '../db/schema';
 
 interface UserSettingsState {
   userId: string | null; // Add userId to state
   username: string | null;
   language: string | null;
+  activeServer: ServerSelect | null;
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
   setLanguage: (db: AppDrizzleClient, language: string) => Promise<void>;
+  setActiveServer: (server: ServerSelect | null) => void;
+  clearActiveServer: () => void;
   resetSettings: () => void;
 }
 
@@ -17,6 +21,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   userId: null, // Initialize userId
   username: null,
   language: null,
+  activeServer: null,
 
   initializeSettings: async (db: AppDrizzleClient) => {
     const settings = await getClientSettings(db);
@@ -36,7 +41,15 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
     set({ language });
   },
 
+  setActiveServer: (server: ServerSelect | null) => {
+    set({ activeServer: server });
+  },
+
+  clearActiveServer: () => {
+    set({ activeServer: null });
+  },
+
   resetSettings: () => {
-    set({ userId: null, username: null, language: null }); // Reset userId
+    set({ userId: null, username: null, language: null, activeServer: null }); // Reset all settings including activeServer
   },
 }));

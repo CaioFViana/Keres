@@ -1,4 +1,4 @@
-import { UlidSchema } from '@keres/shared';
+import { UlidSchema } from '../schemas/SyncSchemas'; // Adjusted path
 import { z } from 'zod';
 
 export const StoryTypeSchema = z.enum(['linear', 'branching']);

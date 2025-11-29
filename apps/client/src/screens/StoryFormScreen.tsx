@@ -104,7 +104,7 @@ const StoryFormScreen = () => {
 
     try {
       const storyData: Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'> = {
-        userId: userId, // Include userId here
+        userId: userId!, // Include userId here, asserted as non-null
         title: title.trim(),
         type,
         description,

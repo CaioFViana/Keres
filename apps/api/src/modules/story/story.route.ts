@@ -1,9 +1,9 @@
+import { FullStoryExportSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { db } from '../../db';
 import { stories, storyTypeEnum } from '../../db/schema';
 import { JWTPayload } from '../../index';
-import { FullStoryExportSchema } from '../../schemas/FullStorySchemas';
 import { StoryExportImportService } from '../../services/StoryExportImportService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 
@@ -71,7 +71,7 @@ export const storyRoutes = new Elysia()
     return fullStory;
   }, {
     params: t.Object({
-      storyId: t.String({ format: 'ulid' }),
+      storyId: t.String(),
     }),
     detail: {
       summary: 'Export a full story',

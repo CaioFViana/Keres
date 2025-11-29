@@ -1,8 +1,7 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateCharacterRelationDataSchema, CreateCharacterRelationDataType, CreateStoryUpdate, DeleteStoryUpdate, PartialCharacterRelationSchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characterRelations, characters } from '../../db/schema';
-import { CreateCharacterRelationDataSchema, CreateCharacterRelationDataType, PartialCharacterRelationSchema } from '../../schemas/CharacterRelationSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<typeof CreateCharacterRelationDataSchema, typeof PartialCharacterRelationSchema> {

@@ -1,14 +1,15 @@
 import { z } from 'zod';
-import { storyPermissionTypeEnum } from '../db/schema';
+
+export const SharedStoryPermissionTypeEnum = z.enum(['reader', 'writer']); // New shared enum
 
 export const CreateStoryPermissionSchema = z.object({
   storyId: z.string().ulid(),
   targetUserId: z.string().ulid(),
-  permissionType: z.enum(storyPermissionTypeEnum.enumValues),
+  permissionType: SharedStoryPermissionTypeEnum, // Use the shared enum
 });
 
 export const UpdateStoryPermissionSchema = z.object({
-  permissionType: z.enum(storyPermissionTypeEnum.enumValues),
+  permissionType: SharedStoryPermissionTypeEnum, // Use the shared enum
 });
 
 export const StoryPermissionIdParam = z.object({

@@ -1,7 +1,6 @@
-import { CreateStoryUpdate } from '@keres/shared';
+import { CreateLocationDataSchema, CreateLocationDataType, CreateStoryUpdate, PartialLocationSchema } from '@keres/shared';
 import { db } from '../../db';
 import { locations } from '../../db/schema';
-import { CreateLocationDataSchema, CreateLocationDataType, PartialLocationSchema } from '../../schemas/LocationSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class LocationSyncHandler extends BaseSyncEntityHandler<typeof CreateLocationDataSchema, typeof PartialLocationSchema> {

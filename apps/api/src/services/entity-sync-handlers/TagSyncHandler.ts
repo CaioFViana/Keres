@@ -1,8 +1,7 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateStoryUpdate, CreateTagDataSchema, CreateTagDataType, DeleteStoryUpdate, PartialTagSchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { tags } from '../../db/schema';
-import { CreateTagDataSchema, CreateTagDataType, PartialTagSchema } from '../../schemas/TagSchemas';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class TagSyncHandler extends BaseSyncEntityHandler<typeof CreateTagDataSchema, typeof PartialTagSchema> {

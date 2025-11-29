@@ -1,10 +1,10 @@
-import { Elysia } from 'elysia';
-import { JWTPayload } from '../../index'; // Import JWTPayload
 import {
   CreateStoryPermissionSchema,
   StoryAndTargetUserParams, // Import the new schema
   StoryIdParam,
-} from '../../schemas/StoryPermissionSchemas';
+} from '@keres/shared';
+import { Elysia } from 'elysia';
+import { JWTPayload } from '../../index'; // Import JWTPayload
 import { storyPermissionService } from '../../services/StoryPermissionService';
 
 export const storyPermissionRoutes = new Elysia()

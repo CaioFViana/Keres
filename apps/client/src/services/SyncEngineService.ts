@@ -1,9 +1,9 @@
 import { StoryUpdate } from '@keres/shared';
 import { AxiosInstance } from 'axios';
 import { eq } from 'drizzle-orm';
-import { ToastAndroid } from 'react-native';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
+import { useNotificationStore } from '../state/notificationStore'; // Added
 import { createStoryService } from './StoryService';
 import { createKeresAxiosInstance } from './apiClient';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
@@ -130,18 +130,19 @@ class SyncEngineService {
   }
 
   public async downloadAndImportStory(serverUrl: string, storyId: string, userId: string): Promise<void> {
+    const { showNotification } = useNotificationStore.getState();
     if (!this._db) {
-      ToastAndroid.show(`Failed to download story '${storyId}': Database not set.`, ToastAndroid.LONG);
+      showNotification(`Failed to download story '${storyId}': Database not set.`, 'error');
       //console.log('Drizzle client (db) is not set. Cannot download and import story.');
       return;
     }
     if (!serverUrl) {
-      ToastAndroid.show(`Failed to download story '${storyId}': Server URL not set.`, ToastAndroid.LONG);
+      showNotification(`Failed to download story '${storyId}': Server URL not set.`, 'error');
       //console.log('Server URL is required to download story.');
       return;
     }
     if (!userId) {
-      ToastAndroid.show(`Failed to download story '${storyId}': User ID not set.`, ToastAndroid.LONG);
+      showNotification(`Failed to download story '${storyId}': User ID not set.`, 'error');
       //console.log('User ID is required to import story.');
       return;
     }
@@ -162,17 +163,17 @@ class SyncEngineService {
       const storyService = createStoryService(this._db);
       await storyService.importFullStory(userId, fullStoryData);
       console.log(`Successfully downloaded and imported story ${storyId}`);
-      ToastAndroid.show(`Story '${storyId}' downloaded and imported!`, ToastAndroid.LONG);
+      showNotification(`Story '${storyId}' downloaded and imported!`, 'success');
 
     } catch (error) {
       console.log(`Error downloading or importing story ${storyId} from ${serverUrl}:`, error);
-      ToastAndroid.show(`Failed to download story '${storyId}'.`, ToastAndroid.LONG);
-      // We do not re-throw here, as the ToastAndroid is the intended user feedback for now.
+      showNotification(`Failed to download story '${storyId}'.`, 'error');
     }
   }
 
 
   private async performSync() {
+    const { showNotification } = useNotificationStore.getState();
     if (!this.storyId) {
       console.log('No storyId set for sync operation.');
       return;
@@ -252,7 +253,8 @@ class SyncEngineService {
         }
 
         const message = `${totalUpdates} updates available. Updated: ${entitiesUpdated.join(', ')}.`;
-        ToastAndroid.show(message, ToastAndroid.LONG);
+        
+        showNotification(message, 'info');
 
         // Update lastServerSyncedLog with the latest server version received
         const latestServerVersion = parseInt(previews[previews.length - 1].serverVersion.toString(), 10);

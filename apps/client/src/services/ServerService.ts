@@ -4,7 +4,7 @@ import { ServerInsert, ServerSelect, servers } from '../db/schema';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added
 import { authTokenManager } from './AuthTokenManager';
-import { ToastAndroid } from 'react-native'; // Import ToastAndroid
+import { useNotificationStore } from '../state/notificationStore';
 
 export interface ServerService {
   getAllServers(): Promise<ServerSelect[]>;
@@ -16,6 +16,8 @@ export interface ServerService {
 }
 
 export const createServerService = (db: AppDrizzleClient): ServerService => {
+  const { showNotification } = useNotificationStore.getState();
+
   return {
     async getAllServers(): Promise<ServerSelect[]> {
       return db.query.servers.findMany({
@@ -53,7 +55,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       if (!server.jwtToken || !server.refreshToken) {
         const message = `Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`;
         console.log(message);
-        ToastAndroid.show(message, ToastAndroid.LONG);
+        showNotification(message, 'error');
         return server;
       }
 
@@ -72,7 +74,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         if (!refreshedTokens) {
           const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;
           console.log(message);
-          ToastAndroid.show(message, ToastAndroid.LONG);
+          showNotification(message, 'error');
           return server; // Return original server if refresh failed
         }
 
@@ -84,17 +86,18 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         if (!updatedServer) {
             const message = `Could not find updated server with ID ${server.id} after token refresh. Please check server status.`;
             console.log(message);
-            ToastAndroid.show(message, ToastAndroid.LONG);
+            showNotification(message, 'error');
             return server;
         }
 
         console.log(`Successfully refreshed tokens for server ${server.name}.`);
+        showNotification(`Tokens for ${server.name} refreshed successfully.`, 'success');
         return updatedServer;
 
       } catch (error) {
         const message = `Failed to refresh token for server ${server.name}. Please re-authenticate.`;
         console.log(message, error);
-        ToastAndroid.show(message, ToastAndroid.LONG);
+        showNotification(message, 'error');
         return server; // Return original server on any refresh error
       }
     },

@@ -3,7 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, ToastAndroid, TouchableWithoutFeedback, View } from 'react-native';
+import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../components/common/Button/Button';
 import FormContainer from '../components/common/FormContainer/FormContainer'; // Import FormContainer
 import Select from '../components/common/Select/Select'; // Import our new Select component
@@ -11,6 +11,7 @@ import TextInput from '../components/common/TextInput/TextInput';
 import { useDrizzle } from '../db'; // Import useDrizzle
 import { migrate } from '../db/migrate'; // Import migrate
 import { createClientSettings } from '../services/ClientSettingsService'; // Import createClientSettings
+import { useNotificationStore } from '../state/notificationStore'; // Import useNotificationStore
 import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
@@ -34,6 +35,7 @@ const ColdInstallScreen = () => {
   const navigation = useNavigation<ColdInstallScreenNavigationProp>();
   const { colors } = useTheme();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const { showNotification } = useNotificationStore(); // Destructure showNotification
 
   const db = useSQLiteContext(); // Get the raw SQLite database instance
   const drizzleDb = useDrizzle(); // Get the Drizzle client from context
@@ -54,7 +56,7 @@ const ColdInstallScreen = () => {
         return true; // Event handled
       } else {
         backPressTimer.current = Date.now();
-        ToastAndroid.show(t('press_back_again_to_exit'), ToastAndroid.SHORT);
+        showNotification(t('press_back_again_to_exit'), 'info');
         return true; // Event handled, but don't exit yet
       }
     };
@@ -62,7 +64,7 @@ const ColdInstallScreen = () => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => backHandler.remove();
-  }, [t]);
+  }, [t, showNotification]);
 
 
   const handleProceed = async () => {
@@ -136,7 +138,7 @@ const ColdInstallScreen = () => {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust this value as needed
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <FormContainer style={commonContainerStyles.container}>

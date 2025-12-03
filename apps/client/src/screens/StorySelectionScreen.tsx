@@ -4,11 +4,12 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, BackHandler, FlatList, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native';
+import { Alert, BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../db';
 import { createServerService } from '../services/ServerService';
 import { syncEngineService } from '../services/SyncEngineService';
+import { useNotificationStore } from '../state/notificationStore';
 import { useStoryStore } from '../state/storyStore';
 import { useSummaryStore } from '../state/summaryStore';
 import { useThemeStore } from '../state/themeStore';
@@ -103,6 +104,7 @@ const StorySelectionScreen = () => {
   const storyService = useRef(createStoryService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
   const { t } = useTranslation();
+  const { showNotification } = useNotificationStore();
 
   const summary = useSummaryStore((state) => state.summary);
   const updateSummary = useSummaryStore((state) => state.updateSummary);
@@ -162,7 +164,7 @@ const StorySelectionScreen = () => {
           for (const storyPreview of newStoriesOnServer) {
             console.log(`  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`);
             try {
-              await syncEngineService.downloadAndImportStory(server.url, storyPreview.storyId, server.idUser, server.jwtToken!);
+              await syncEngineService.downloadAndImportStory(server.url, storyPreview.storyId, server.idUser);
               console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
               // After successful import, re-fetch stories to update the list
               fetchStories(); 
@@ -190,7 +192,7 @@ const StorySelectionScreen = () => {
         return true;
       } else {
         backPressTimer.current = Date.now();
-        ToastAndroid.show(t('press_back_again_to_exit'), ToastAndroid.SHORT);
+        showNotification(t('press_back_again_to_exit'), 'info');
         return true;
       }
     };
@@ -401,7 +403,7 @@ const StorySelectionScreen = () => {
       <TouchableOpacity
         style={styles.floatingButton}
         onPress={handleCreateNewStory}
-        onLongPress={() => ToastAndroid.show(t('create_new_story'), ToastAndroid.SHORT)}
+        onLongPress={() => showNotification(t('create_new_story'), 'info')}
       >
         <Ionicons name="add-outline" size={30} color={colors.onPrimary} />
       </TouchableOpacity>

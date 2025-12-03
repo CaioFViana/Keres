@@ -15,6 +15,7 @@ import './utils/i18n';
 import i18n from './utils/i18n';
 import apiClient from './services/apiClient';
 import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
+import NotificationPopup from './components/NotificationPopup'; // Import NotificationPopup
 
 // Create a wrapper component for safe area
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -27,6 +28,7 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: colors.background }}>
       <StatusBar style={statusBarStyle} />
       {children}
+      <NotificationPopup /> {/* Render NotificationPopup here */}
     </View>
   );
 };

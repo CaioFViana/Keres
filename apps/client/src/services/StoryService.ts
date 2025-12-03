@@ -55,7 +55,7 @@ export interface StoryService {
   updateStoryFavoriteStatus(storyId: string, isFavorite: boolean): Promise<void>;
   deleteStory(storyId: string): Promise<void>;
   getBranchingStoryForkCount(): Promise<number>;
-  importFullStory(userId: string, fullStoryData: FullStoryExportType): Promise<string>; // Added importFullStory to interface
+  importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null): Promise<string>;
 }
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
@@ -219,7 +219,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       return result.length;
     },
 
-    async importFullStory(userId: string, fullStoryData: FullStoryExportType): Promise<string> {
+    async importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null): Promise<string> {
       return db.transaction(async (tx) => {
         // 1. Process Story
         const originalStory = fullStoryData.story;
@@ -232,7 +232,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           isDeleted: false, // Ensure it's not deleted locally upon import
           deletedAt: null, // Ensure it's not deleted locally upon import
           lastOperationLog: fullStoryData.serverLastOperationVersion, // Use the server's current operation version
-          lastServerSyncedLog: fullStoryData.serverLastOperationVersion
+          lastServerSyncedLog: fullStoryData.serverLastOperationVersion,
+          serverId: queriedServerId,
         };
         await tx.insert(stories).values(storyToInsert).run();
 

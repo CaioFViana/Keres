@@ -1,5 +1,5 @@
 import React from 'react';
-import { Keyboard, ScrollView, StyleSheet, View, StyleProp, ViewStyle } from 'react-native'; // Re-import Keyboard and add StyleProp, ViewStyle
+import { Keyboard, ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native'; // Re-import Keyboard and add StyleProp, ViewStyle
 import { useTheme } from '../../../theme';
 
 interface FormContainerProps {
@@ -26,7 +26,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ children, style }) => {
   return (
     <ScrollView
       style={styles.scrollView}
-      contentContainerStyle={[styles.innerContainer, style]} // Apply external style here
+      contentContainerStyle={[styles.innerContainer, style]}
       keyboardShouldPersistTaps="handled"
       onResponderRelease={Keyboard.dismiss}
     >

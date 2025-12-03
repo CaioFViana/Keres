@@ -100,14 +100,14 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
         setValue={(callback) => {
           const newValue = callback(internalValue);
           setInternalValue(newValue);
-          if (newValue !== null) { // Change back to null
+          if (newValue !== null) {
             onValueChange(newValue as string);
           }
         }}
         onClose={() => {
           setOpen(false);
-        }} // Explicitly close on close event
-        placeholder={placeholder} // Use DropDownPicker's placeholder prop
+        }}
+        placeholder={placeholder}
         placeholderStyle={dropdownStyles.placeholderStyle}
         style={dropdownStyles.style}
         labelStyle={dropdownStyles.labelStyle}
@@ -115,12 +115,12 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
         dropDownContainerStyle={dropdownStyles.dropDownContainerStyle}
         itemSeparator={true}
         itemSeparatorStyle={dropdownStyles.itemSeparator}
-        listMode="SCROLLVIEW" // Use ScrollView for better performance with many items
+        listMode="SCROLLVIEW"
         scrollViewProps={{
           nestedScrollEnabled: true,
         }}
-        zIndex={10000} // Ensure dropdown is above other elements
-        zIndexInverse={1000} // For other elements to go below
+        zIndex={10000}
+        zIndexInverse={1000}
       />
     </View>
   );

@@ -1,21 +1,21 @@
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import NotificationPopup from './components/NotificationPopup'; // Import NotificationPopup
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle } from './db';
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
+import apiClient from './services/apiClient';
+import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
 import { useUserSettingsStore } from './state/userSettingsStore';
 import { useTheme } from './theme';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { isColorLight } from './theme/utils'; // Import isColorLight
 import './utils/i18n';
 import i18n from './utils/i18n';
-import apiClient from './services/apiClient';
-import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
-import NotificationPopup from './components/NotificationPopup'; // Import NotificationPopup
 
 // Create a wrapper component for safe area
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -28,7 +28,7 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: colors.background }}>
       <StatusBar style={statusBarStyle} />
       {children}
-      <NotificationPopup /> {/* Render NotificationPopup here */}
+      <NotificationPopup />
     </View>
   );
 };
@@ -81,7 +81,7 @@ const DatabaseInitializer = () => {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{i18n.t('loading_application')}</Text>
+        <Text>{i18n.t('loading_application') || 'Loading...'}</Text>
       </View>
     );
   }

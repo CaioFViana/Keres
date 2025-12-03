@@ -1,11 +1,15 @@
+import { eq } from 'drizzle-orm';
 import React, { useEffect, useState } from 'react';
-import { Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { useDrizzle } from '../db'; // Import useDrizzle
+import * as schema from '../db/schema';
 import { createServerService } from '../services/ServerService'; // Import createServerService
 import { syncEngineService } from '../services/SyncEngineService';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { getCommonCardStyles } from '../theme/commonStyles';
+
 
 const MainDashboardScreen = () => {
   const { colors } = useTheme();
@@ -13,6 +17,15 @@ const MainDashboardScreen = () => {
   const { selectedStory } = useStoryStore();
   const [syncedServerUrl, setSyncedServerUrl] = useState<string | null>(null);
   const db = useDrizzle(); // Get the Drizzle client
+
+  const [characterCount, setCharacterCount] = useState<number | undefined>(undefined);
+  const [locationCount, setLocationCount] = useState<number | undefined>(undefined);
+  const [chapterCount, setChapterCount] = useState<number | undefined>(undefined);
+  const [sceneCount, setSceneCount] = useState<number | undefined>(undefined);
+  const [choiceCount, setChoiceCount] = useState<number | undefined>(undefined);
+  const [noteCount, setNoteCount] = useState<number | undefined>(undefined);
+  const [worldRuleCount, setWorldRuleCount] = useState<number | undefined>(undefined);
+
 
   useEffect(() => {
     // Inject the db instance into the syncEngineService
@@ -55,7 +68,46 @@ const MainDashboardScreen = () => {
       }
     }
 
+    async function fetchCounts() {
+      if (selectedStory?.id && db) {
+        try {
+          const characters = await db.select().from(schema.characters).where(eq(schema.characters.storyId, selectedStory.id)).execute();
+          setCharacterCount(characters.length);
+
+          const locations = await db.select().from(schema.locations).where(eq(schema.locations.storyId, selectedStory.id)).execute();
+          setLocationCount(locations.length);
+
+          const chapters = await db.select().from(schema.chapters).where(eq(schema.chapters.storyId, selectedStory.id)).execute();
+          setChapterCount(chapters.length);
+
+          const scenes = await db.select().from(schema.scenes).where(eq(schema.scenes.storyId, selectedStory.id)).execute();
+          setSceneCount(scenes.length);
+
+          const choices = await db.select().from(schema.choices).where(eq(schema.choices.storyId, selectedStory.id)).execute();
+          setChoiceCount(choices.length);
+
+          const notes = await db.select().from(schema.notes).where(eq(schema.notes.storyId, selectedStory.id)).execute();
+          setNoteCount(notes.length);
+
+          const worldRules = await db.select().from(schema.worldRules).where(eq(schema.worldRules.storyId, selectedStory.id)).execute();
+          setWorldRuleCount(worldRules.length);
+
+        } catch (error) {
+          console.error('Error fetching entity counts:', error);
+        }
+      } else {
+        setCharacterCount(undefined);
+        setLocationCount(undefined);
+        setChapterCount(undefined);
+        setSceneCount(undefined);
+        setChoiceCount(undefined);
+        setNoteCount(undefined);
+        setWorldRuleCount(undefined);
+      }
+    }
+
     configureAndStartSync();
+    fetchCounts();
 
     return () => {
       console.log('MainDashboard: Unmounting or story changed. Stopping sync engine.');
@@ -124,45 +176,27 @@ const MainDashboardScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>{selectedStory?.title || 'No Story Selected'}</Text>
       <Text style={styles.text}>
         Synchronized with: {syncedServerUrl || 'Not configured'} (Last server synced log: {selectedStory?.lastServerSyncedLog || 0})
       </Text>
 
-      <Text style={styles.subtitle}>Story Overview</Text>
-      <Text style={styles.text}>Characters: 15</Text>
-      <Text style={styles.text}>Locations: 8</Text>
-      <Text style={styles.text}>Chapters: 5</Text>
-      <Text style={styles.text}>Scenes: 30</Text>
-      <Text style={styles.text}>Choices: 12 (Branching Story)</Text>
-
-      <Text style={styles.subtitle}>Recent Activity</Text>
-      <Text style={styles.text}>- Character 'Elara' updated (5 mins ago)</Text>
-      <Text style={styles.text}>- New scene 'Forest Encounter' added (1 hour ago)</Text>
-      <Text style={styles.text}>- Location 'Whispering Woods' modified (yesterday)</Text>
-
-      <Text style={styles.themedText}>This text uses the primary theme color.</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Test input field"
-        placeholderTextColor={colors.textSecondary}
+      <SummaryCard
+        title="Story Overview"
+        characterCount={characterCount}
+        locationCount={locationCount}
+        chapterCount={chapterCount}
+        sceneCount={sceneCount}
+        choiceCount={selectedStory?.type === 'branching' ? choiceCount : undefined}
+        noteCount={noteCount}
+        worldRuleCount={worldRuleCount}
       />
 
-      <View style={styles.buttonContainer}>
-        <Button title="Test Button" color={colors.primary} onPress={() => {}} />
-      </View>
-
-      <Text style={styles.subtitle}>Test List</Text>
-      <FlatList
-        data={testData}
-        renderItem={renderTestItem}
-        keyExtractor={(item) => item.id}
-      />
-    </View>
+    </ScrollView>
   );
 };
 
 export default MainDashboardScreen;
+
 

@@ -164,7 +164,7 @@ const StorySelectionScreen = () => {
           for (const storyPreview of newStoriesOnServer) {
             console.log(`  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`);
             try {
-              await syncEngineService.downloadAndImportStory(server.url, storyPreview.storyId, server.idUser);
+              await syncEngineService.downloadAndImportStory(server.id, storyPreview.storyId, server.idUser);
               console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
               // After successful import, re-fetch stories to update the list
               fetchStories(); 

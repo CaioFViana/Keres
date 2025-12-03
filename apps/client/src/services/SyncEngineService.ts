@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore'; // Added
+import { createServerService } from './ServerService'; // Import createServerService
 import { createStoryService } from './StoryService';
 import { createKeresAxiosInstance } from './apiClient';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
@@ -129,21 +130,37 @@ class SyncEngineService {
     }
   }
 
-  public async downloadAndImportStory(serverUrl: string, storyId: string, userId: string): Promise<void> {
+  public async downloadAndImportStory(queriedServerId: string, storyId: string, userId: string): Promise<void> {
     const { showNotification } = useNotificationStore.getState();
     if (!this._db) {
       showNotification(`Failed to download story '${storyId}': Database not set.`, 'error');
       //console.log('Drizzle client (db) is not set. Cannot download and import story.');
       return;
     }
-    if (!serverUrl) {
-      showNotification(`Failed to download story '${storyId}': Server URL not set.`, 'error');
-      //console.log('Server URL is required to download story.');
+    if (!queriedServerId) {
+      showNotification(`Failed to download story '${storyId}': Server ID not set.`, 'error');
       return;
     }
     if (!userId) {
       showNotification(`Failed to download story '${storyId}': User ID not set.`, 'error');
       //console.log('User ID is required to import story.');
+      return;
+    }
+
+    let serverUrl: string | null = null;
+    try {
+      const serverService = createServerService(this._db);
+      const server = await serverService.getServerById(queriedServerId);
+      if (server?.url) {
+        serverUrl = server.url;
+      }
+      else {
+        showNotification(`Failed to download story '${storyId}': Server URL not found for ID ${queriedServerId}.`, 'error');
+        return;
+      }
+    } catch (error) {
+      console.error('Error fetching server details by ID:', error);
+      showNotification(`Failed to download story '${storyId}': Error retrieving server details.`, 'error');
       return;
     }
 
@@ -161,7 +178,7 @@ class SyncEngineService {
 
       // Create a story service instance using the injected db
       const storyService = createStoryService(this._db);
-      await storyService.importFullStory(userId, fullStoryData);
+      await storyService.importFullStory(userId, fullStoryData, queriedServerId);
       console.log(`Successfully downloaded and imported story ${storyId}`);
       showNotification(`Story '${storyId}' downloaded and imported!`, 'success');
 

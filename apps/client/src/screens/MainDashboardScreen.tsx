@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { BackHandler, ScrollView, StyleSheet, Text, View } from 'react-native';
 import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { useDrizzle } from '../db'; // Import useDrizzle
 import * as schema from '../db/schema';
@@ -9,6 +9,19 @@ import { syncEngineService } from '../services/SyncEngineService';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { getCommonCardStyles } from '../theme/commonStyles';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNotificationStore } from '../state/notificationStore';
+import { useTranslation } from 'react-i18next';
+
+
+type RootStackParamList = {
+  ColdInstall: undefined;
+  StorySelection: undefined;
+  MainSystem: { storyId: string };
+};
+
+type MainDashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainSystem'>;
 
 
 const MainDashboardScreen = () => {
@@ -17,6 +30,10 @@ const MainDashboardScreen = () => {
   const { selectedStory } = useStoryStore();
   const [syncedServerUrl, setSyncedServerUrl] = useState<string | null>(null);
   const db = useDrizzle(); // Get the Drizzle client
+  const navigation = useNavigation<MainDashboardScreenNavigationProp>();
+  const { showNotification } = useNotificationStore();
+  const { t } = useTranslation();
+
 
   const [characterCount, setCharacterCount] = useState<number | undefined>(undefined);
   const [locationCount, setLocationCount] = useState<number | undefined>(undefined);
@@ -25,6 +42,26 @@ const MainDashboardScreen = () => {
   const [choiceCount, setChoiceCount] = useState<number | undefined>(undefined);
   const [noteCount, setNoteCount] = useState<number | undefined>(undefined);
   const [worldRuleCount, setWorldRuleCount] = useState<number | undefined>(undefined);
+
+  const backPressTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (backPressTimer.current && Date.now() - backPressTimer.current < 2000) {
+        // If pressed again within 2 seconds, navigate to StorySelection
+        navigation.replace('StorySelection');
+        return true; // Event handled
+      } else {
+        backPressTimer.current = Date.now();
+        showNotification(t('press_back_again_to_exit'), 'info'); // Using translation
+        return true; // Event handled, but don't exit yet
+      }
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [navigation, showNotification, t]); // Add t to dependencies
 
 
   useEffect(() => {

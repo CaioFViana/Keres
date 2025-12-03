@@ -228,7 +228,7 @@ class SyncEngineService {
       const sinceVersion = localStory.lastServerSyncedLog || 0;
 
       // 2. Call API for pull previews
-      const response = await this.client.get<SyncPreview[]>(`/sync/pullpreviews/${this.storyId}?sinceVersion=${sinceVersion}`);
+      const response = await this.client.get<SyncPreview[]>(`/sync/${this.storyId}/pull?lastOperationVersion=${sinceVersion}`);
       const previews = response.data;
 
       if (previews && previews.length > 0) {

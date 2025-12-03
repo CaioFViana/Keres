@@ -1,6 +1,9 @@
 import React from 'react';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useNavigation, RouteProp, DrawerActions } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
 
 import MainDashboardScreen from '../screens/MainDashboardScreen';
 import ListingScreen from '../screens/common/ListingScreen';
@@ -11,6 +14,8 @@ import ImportExportScreen from '../screens/ImportExportScreen';
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
 import StorySettingsScreen from '../screens/StorySettingsScreen';
+import { useTheme } from '../theme';
+import { useStoryStore } from '../state/storyStore';
 
 type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -43,22 +48,52 @@ const ListingDetailStack = ({ route }: any) => {
   );
 };
 
-const MainSystemNavigator = () => {
+type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
+type MainDashboardScreenRouteProp = RouteProp<MainSystemDrawerParamList, 'MainDashboard'>;
+
+const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => {
+  const { colors } = useTheme();
   return (
-    <Drawer.Navigator screenOptions={{ headerShown: false }}>
-      <Drawer.Screen name="MainDashboard" component={MainDashboardScreen} />
-      <Drawer.Screen name="Characters" component={ListingDetailStack} initialParams={{ entityType: 'Characters' }} />
-      <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} />
-      <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} />
-      <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} />
-      <Drawer.Screen name="Tags" component={ListingDetailStack} initialParams={{ entityType: 'Tags' }} />
-      <Drawer.Screen name="WorldRules" component={ListingDetailStack} initialParams={{ entityType: 'WorldRules' }} />
-      <Drawer.Screen name="Notes" component={ListingDetailStack} initialParams={{ entityType: 'Notes' }} />
-      <Drawer.Screen name="Gallery" component={GalleryScreen} />
-      <Drawer.Screen name="CharacterRelations" component={CharacterRelationsScreen} />
-      <Drawer.Screen name="Choices" component={ChoicesScreen} />
-      <Drawer.Screen name="StorySettings" component={StorySettingsScreen} />
-      <Drawer.Screen name="ImportExport" component={ImportExportScreen} />
+    <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={{ marginLeft: 15 }}>
+      <Ionicons name="menu" size={30} color={colors.text} />
+    </TouchableOpacity>
+  );
+};
+
+const MainSystemNavigator = () => {
+  const { colors } = useTheme();
+  const { selectedStory } = useStoryStore();
+
+  return (
+    <Drawer.Navigator
+      defaultStatus="closed"
+      screenOptions={({ navigation }) => ({
+        headerShown: true,
+        headerStatusBarHeight: 0,
+        headerStyle: {
+          backgroundColor: colors.surface,
+        },
+        headerTintColor: colors.text,
+        headerLeft: () => <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />,
+      })}
+    >
+      <Drawer.Screen
+        name="MainDashboard"
+        component={MainDashboardScreen}
+        options={{ title: selectedStory?.title || 'Dashboard' }}
+      />
+      <Drawer.Screen name="Characters" component={ListingDetailStack} initialParams={{ entityType: 'Characters' }} options={{ title: 'Characters' }} />
+      <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: 'Locations' }} />
+      <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: 'Chapters' }} />
+      <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: 'Scenes' }} />
+      <Drawer.Screen name="Tags" component={ListingDetailStack} initialParams={{ entityType: 'Tags' }} options={{ title: 'Tags' }} />
+      <Drawer.Screen name="WorldRules" component={ListingDetailStack} initialParams={{ entityType: 'WorldRules' }} options={{ title: 'World Rules' }} />
+      <Drawer.Screen name="Notes" component={ListingDetailStack} initialParams={{ entityType: 'Notes' }} options={{ title: 'Notes' }} />
+      <Drawer.Screen name="Gallery" component={GalleryScreen} options={{ title: 'Gallery' }} />
+      <Drawer.Screen name="CharacterRelations" component={CharacterRelationsScreen} options={{ title: 'Character Relations' }} />
+      <Drawer.Screen name="Choices" component={ChoicesScreen} options={{ title: 'Choices' }} />
+      <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: 'Story Settings' }} />
+      <Drawer.Screen name="ImportExport" component={ImportExportScreen} options={{ title: 'Import/Export' }} />
     </Drawer.Navigator>
   );
 };

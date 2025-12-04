@@ -246,7 +246,7 @@ const StorySelectionScreen = () => {
         clearInterval(syncInterval); // Clear interval on unmount or blur
       };
     }
-  }, [isFocused, setTheme, syncStoriesWithServers, fetchStories, fetchSummary]); // Updated dependencies
+  }, [isFocused, setTheme, fetchStories, fetchSummary]);
 
 
   const handleSelectStory = (story: Story) => {

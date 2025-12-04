@@ -30,7 +30,7 @@ const ServerRegistrationScreen = () => {
     const commonInputStyles = getCommonInputStyles(colors);
     const drizzleDb = useDrizzle();
     const serverService = useRef(createServerService(drizzleDb)).current;
-    const { userId } = useUserSettingsStore();
+    const { userId, setActiveServer } = useUserSettingsStore();
   
     const [serverAddress, setServerAddress] = useState('');
     const [username, setUsername] = useState('');
@@ -134,12 +134,18 @@ const ServerRegistrationScreen = () => {
           refreshToken: refreshToken,
         };
   
+        let savedServer;
         if (serverId) {
           await serverService.updateServer(serverId, serverData);
+          savedServer = await serverService.getServerById(serverId); // Retrieve updated server
           Alert.alert(t('success'), t('server_updated_successfully'));
         } else {
-          await serverService.createServer({ ...serverData, lastSyncDate: new Date() }); // Only set initial sync date for new servers
+          savedServer = await serverService.createServer({ ...serverData, lastSyncDate: new Date() }); // Create and get the new server
           Alert.alert(t('success'), t('server_registered_successfully'));
+        }
+        
+        if (savedServer) {
+          setActiveServer(savedServer); // Set the active server in Zustand store
         }
         navigation.goBack();
   

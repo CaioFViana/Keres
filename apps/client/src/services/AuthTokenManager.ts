@@ -3,6 +3,7 @@ import { AppDrizzleClient } from '../db';
 import { servers } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { createKeresAxiosInstance, TokenProvider } from './apiClient';
+import { createServerService } from './ServerService';
 
 let drizzleDb: AppDrizzleClient | null = null;
 
@@ -51,41 +52,57 @@ class AuthTokenManager implements TokenProvider {
                 jwtToken: accessToken,
                 refreshToken: refreshToken,
             });
-            console.log(`Tokens updated for server: ${activeServer.name}`);
+            // console.log(`Tokens updated for server: ${activeServer.name}`);
         } catch (error) {
             console.log('Failed to update tokens in DB/store:', error);
         }
     }
 
-    public async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null> {
-        const serverUrl = this.getServerUrl();
-        if (!serverUrl) {
-            console.log('No server URL available for token refresh.');
+    public async refreshAccessToken(serverId: string, currentRefreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null> {
+        if (!drizzleDb) {
+            console.log('AuthTokenManager: Database not set for token refresh.');
+            return null;
+        }
+
+        const serverService = createServerService(drizzleDb);
+        const server = await serverService.getServerById(serverId);
+
+        if (!server || !server.url) {
+            console.log(`AuthTokenManager: Server with ID ${serverId} not found or no URL available.`);
+            this.clearAuth(); // Clear auth if server info is missing
+            return null;
+        }
+
+        // Use the refresh token from the database, which should be the most up-to-date
+        // The currentRefreshToken parameter is a fallback or for initial checks, but the DB is authoritative.
+        const refreshTokenToUse = server.refreshToken || currentRefreshToken;
+
+        if (!refreshTokenToUse) {
+            console.log('AuthTokenManager: No refresh token available for server. Clearing authentication.');
+            this.clearAuth();
             return null;
         }
 
         try {
-            // Use a temporary axios instance (without the token interceptors) to prevent recursion
-            // and ensure the refresh request itself isn't blocked.
             const refreshInstance = createKeresAxiosInstance({
-                baseURL: serverUrl,
+                baseURL: server.url,
             });
 
-            // The refresh endpoint might not need the Authorization header,
-            // or it might expect the refresh token in the body.
-            // For now, we are sending it in the body as per the common pattern.
+            const refreshEndpoint = '/auth/refresh';
+
             const response = await refreshInstance.post<{ accessToken: string; refreshToken: string }>(
-                '/auth/refresh',
-                { refreshToken: refreshToken }
+                refreshEndpoint,
+                { refreshToken: refreshTokenToUse }
             );
 
             const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
 
             await this.updateTokens(newAccessToken, newRefreshToken);
+            console.log('AuthTokenManager: Tokens refreshed successfully for server:', server.name);
 
             return { accessToken: newAccessToken, refreshToken: newRefreshToken };
         } catch (error) {
-            console.log('Error during token refresh:', error);
+            console.log('AuthTokenManager: Error during token refresh for server:', server.name, error);
             this.clearAuth(); // Clear auth if refresh fails
             return null;
         }
@@ -102,13 +119,13 @@ class AuthTokenManager implements TokenProvider {
             return;
         }
 
-        console.log(`Clearing authentication for server: ${activeServer.name}`);
+        // console.log(`Clearing authentication for server: ${activeServer.name}`);
         drizzleDb.update(servers)
             .set({ jwtToken: null, refreshToken: null })
             .where(eq(servers.id, activeServer.id))
             .then(() => {
                 useUserSettingsStore.getState().clearActiveServer();
-                console.log(`Auth cleared for server: ${activeServer.name}`);
+                // console.log(`Auth cleared for server: ${activeServer.name}`);
             })
             .catch(error => console.log('Failed to clear auth in DB:', error));
     }

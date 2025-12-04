@@ -1,10 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { ServerInsert, ServerSelect, servers } from '../db/schema';
+import { useNotificationStore } from '../state/notificationStore';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added
 import { authTokenManager } from './AuthTokenManager';
-import { useNotificationStore } from '../state/notificationStore';
 
 export interface ServerService {
   getAllServers(): Promise<ServerSelect[]>;
@@ -69,7 +69,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       try {
         // Trigger the token refresh via the AuthTokenManager
         // This will update the tokens in the database and the user settings store
-        const refreshedTokens = await authTokenManager.refreshAccessToken(server.refreshToken);
+        const refreshedTokens = await authTokenManager.refreshAccessToken(server.id, server.refreshToken);
 
         if (!refreshedTokens) {
           const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;

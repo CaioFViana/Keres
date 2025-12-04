@@ -6,6 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
 
+import CharactersScreen from '../screens/CharactersScreen'; // Import CharactersScreen
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
@@ -21,7 +22,7 @@ import { useTheme } from '../theme';
 
 type MainSystemDrawerParamList = {
   MainDashboard: undefined;
-  Characters: { entityType: string };
+  Characters: undefined; // Updated type
   Locations: { entityType: string };
   Chapters: { entityType: string };
   Scenes: { entityType: string };
@@ -86,7 +87,7 @@ const MainSystemNavigator = () => {
         component={MainDashboardScreen}
         options={{ title: selectedStory?.title || t('dashboard_title') }}
       />
-      <Drawer.Screen name="Characters" component={ListingDetailStack} initialParams={{ entityType: 'Characters' }} options={{ title: t('characters_title') }} />
+      <Drawer.Screen name="Characters" component={CharactersScreen} options={{ title: t('characters_title') }} />
       <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: t('locations_title') }} />
       <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />
       <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: t('scenes_title') }} />

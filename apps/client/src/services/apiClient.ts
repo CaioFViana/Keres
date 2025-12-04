@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
+import { useUserSettingsStore } from '../state/userSettingsStore'; // Import useUserSettingsStore
 
 // Flag to prevent multiple refresh token requests at once
 let isRefreshing = false;
@@ -11,7 +12,7 @@ export interface TokenProvider {
   getAccessToken(): string | null;
   getRefreshToken(): string | null;
   getServerUrl(): string | null;
-  refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null>;
+  refreshAccessToken(serverId: string, refreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null>;
   clearAuth(): void;
 }
 
@@ -80,40 +81,31 @@ function applyInterceptors(instance: AxiosInstance): void {
           isRefreshing = true;
 
           const refreshToken = tokenProvider.getRefreshToken();
-          const serverUrl = tokenProvider.getServerUrl();
+          const activeServer = useUserSettingsStore.getState().activeServer;
 
-          if (!refreshToken || !serverUrl) {
-            console.log('No refresh token or server URL available for token refresh. Clearing auth.');
+          if (!refreshToken || !activeServer?.id) {
+            console.log('No refresh token or active server ID available for token refresh. Clearing auth.');
             tokenProvider.clearAuth();
-            processQueue(new AxiosError('Token refresh failed: No refresh token or server URL available.', 'TOKEN_REFRESH_FAILED', originalRequest));
+            processQueue(new AxiosError('Token refresh failed: No refresh token or server ID available.', 'TOKEN_REFRESH_FAILED', originalRequest));
             return Promise.reject(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
           }
 
           try {
-            // Create a temporary axios instance without interceptors to prevent recursion
-            // and avoid attaching a stale or new access token to the refresh request itself.
-            const refreshInstance = axios.create();
-            const refreshResponse = await refreshInstance.post<{ accessToken: string; refreshToken: string }>(
-              `${serverUrl}/auth/refresh`,
-              { refreshToken: refreshToken }
-            );
+            const refreshResult = await tokenProvider.refreshAccessToken(activeServer.id, refreshToken);
 
-            const newAccessToken = refreshResponse.data.accessToken;
-            const newRefreshToken = refreshResponse.data.refreshToken;
+            if (refreshResult) {
+                const newAccessToken = refreshResult.accessToken;
+                // Update the original request with the new access token
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
-            // Update tokens in the provider
-            // This assumes the provider has a mechanism to update its stored tokens
-            if (tokenProvider && 'updateTokens' in tokenProvider && typeof (tokenProvider as any).updateTokens === 'function') {
-                (tokenProvider as any).updateTokens(newAccessToken, newRefreshToken);
+                processQueue(null, newAccessToken); // Resolve all queued requests
+                return instance(originalRequest); // Retry the original request
             } else {
-                console.log('TokenProvider does not have an updateTokens method. Tokens might not be persisted.');
+                console.log('Token refresh failed: refreshAccessToken returned null.');
+                tokenProvider.clearAuth();
+                processQueue(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
+                return Promise.reject(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
             }
-
-            // Update the original request with the new access token
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-            processQueue(null, newAccessToken); // Resolve all queued requests
-            return instance(originalRequest); // Retry the original request
           } catch (refreshError: any) {
             console.log('Error refreshing token:', refreshError);
             tokenProvider.clearAuth();

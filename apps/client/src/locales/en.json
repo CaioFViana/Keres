@@ -58,6 +58,7 @@
   "failed_to_save_server": "Failed to save server.",
   "failed_to_save_story": "Failed to save story.",
   "failed_to_update_favorite_status": "Failed to update favorite status.",
+  "filter": "Filter",
   "forest_theme": "Forest Theme",
   "forks": "Forks",
   "from": "From",
@@ -97,6 +98,7 @@
   "no_character_relations": "No character relations defined.",
   "no_choices_defined": "No choices defined for this story.",
   "no_gallery_items": "No gallery items found.",
+  "no_items_found": "No items found.",
   "no_servers_found": "No servers found.",
   "no_stories_found": "No stories found. Create one!",
   "no_stories_found_create_one": "No stories found. Create one!",
@@ -121,6 +123,8 @@
   "reset_application_title": "Reset Application",
   "scenes": "Scenes",
   "scenes_title": "Scenes",
+  "search": "Search",
+  "search_characters": "Search Characters",
   "select_language": "Select Language",
   "select_story_type": "Select story type",
   "select_theme": "Select Theme",
@@ -141,6 +145,12 @@
   "server_not_found": "Server not found.",
   "server_updated_successfully": "Server updated successfully!",
   "settings": "Settings",
+  "sort_by": "Sort By",
+  "sort_by_created_at": "Sort by Created At",
+  "sort_by_name": "Sort by Name",
+  "sort_by_updated_at": "Sort by Updated At",
+  "ascending": "Ascending",
+  "descending": "Descending",
   "story_choices": "Story Choices",
   "story_created_successfully": "Story created successfully!",
   "story_deleted_successfully": "Story deleted successfully!",
@@ -175,4 +185,3 @@
   "change_password_warning": "Leaving the password field empty will keep the current password. Enter a new password to change it.",
   "story_selection_title": "Story Selection"
 }
-

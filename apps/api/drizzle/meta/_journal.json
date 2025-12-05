@@ -57,6 +57,13 @@
       "when": 1763520720626,
       "tag": "0007_fixed_prima",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1764954015502,
+      "tag": "0008_flowery_kid_colt",
+      "breakpoints": true
     }
   ]
 }

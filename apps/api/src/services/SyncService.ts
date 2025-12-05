@@ -157,7 +157,7 @@ export class SyncService {
     return { lastOperationVersion: currentMaxOperationVersion };
   }
 
-  async getUpdatesForStory(userId: string, storyId: string, lastOperationVersion: number): Promise<StoryUpdate[]> {
+  async getUpdatesForStory(userId: string, storyId: string, lastOperationVersion: number): Promise<{ updates: StoryUpdate[]; serverMaxOperationVersion: number }> {
     // Authorization check
     const story = await db.query.stories.findFirst({
       where: eq(stories.id, storyId),
@@ -220,6 +220,7 @@ export class SyncService {
           id: op.entityId,
           data: data!,
           version: version,
+          operationVersion: op.operationVersion, // Include operationVersion
         } as CreateStoryUpdate;
       } else if (op.operationType === 'update') {
         return {
@@ -228,20 +229,29 @@ export class SyncService {
           id: op.entityId,
           changes: changes!,
           version: version,
+          operationVersion: op.operationVersion, // Include operationVersion
         } as UpdateStoryUpdate;
       } else if (op.operationType === 'delete') {
         return {
           type: 'delete',
           entity: op.entityType,
           id: op.entityId,
-          version: version, // This version property on DeleteStoryUpdate should come from the original client update
+          version: version,
+          operationVersion: op.operationVersion, // Include operationVersion
         } as DeleteStoryUpdate;
       }
       // Fallback or throw error for unknown operation types
       throw new Error(`Unknown operation type: ${op.operationType}`);
     });
 
-    return updates;
+    // Fetch the current maximum operation version for the story
+    const serverMaxOperationVersion = (await db
+      .select({ maxVersion: max(operationLog.operationVersion) })
+      .from(operationLog)
+      .where(eq(operationLog.storyId, storyId))
+    ).at(0)?.maxVersion || 0;
+
+    return { updates, serverMaxOperationVersion };
   }
 
   async getStoriesWithLastOperationVersionForUser(userId: string): Promise<{ storyId: string; lastOperationVersion: number }[]> {

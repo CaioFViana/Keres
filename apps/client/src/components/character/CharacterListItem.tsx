@@ -46,6 +46,12 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onTogg
       fontWeight: 'bold',
       marginRight: 10,
     },
+    title: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontStyle: 'italic',
+      marginRight: 10,
+    },
     headerRight: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -62,6 +68,12 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onTogg
     },
     content: {
       padding: 10,
+    },
+    itemTitle: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+      marginBottom: 5,
     },
     summaryText: {
       color: colors.textSecondary,
@@ -122,6 +134,7 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onTogg
 
       {isOpen && (
         <View style={styles.content}>
+          {character.title && <Text style={styles.itemTitle}>{character.title}</Text>}
           {(character.gender || character.race) && (
             <Text style={styles.summaryText}>
               {character.gender ? `${character.gender}` : ''}

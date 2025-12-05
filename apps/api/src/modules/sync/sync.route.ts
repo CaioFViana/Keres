@@ -43,13 +43,14 @@ export const syncRoute = new Elysia()
     const { storyId } = params;
     const { lastOperationVersion } = query;
 
-    const updates = await syncService.getUpdatesForStory(user.userId, storyId, lastOperationVersion);
+    const { updates, serverMaxOperationVersion } = await syncService.getUpdatesForStory(user.userId, storyId, lastOperationVersion);
 
-    console.log(`Received pull request for storyId: ${storyId} with lastOperationVersion: ${lastOperationVersion}. Found ${updates.length} updates.`);
+    console.log(`Received pull request for storyId: ${storyId} with lastOperationVersion: ${lastOperationVersion}. Found ${updates.length} updates. Server max operation version: ${serverMaxOperationVersion}`);
 
     return {
       message: `Pull request received for story ${storyId}`,
       updates: updates,
+      serverMaxOperationVersion: serverMaxOperationVersion, // Include the server's max operation version
     };
   }, {
     params: t.Object({
@@ -63,6 +64,11 @@ export const syncRoute = new Elysia()
       description: 'Allows clients to request story updates from the server for a specific story since their last known operation version.',
       tags: ['Sync'],
     },
+    response: t.Object({ // Update the response schema
+      message: t.String(),
+      updates: t.Array(t.Any()), // updates are StoryUpdate objects, using t.Any() for simplicity, can be more specific
+      serverMaxOperationVersion: t.Number(),
+    }),
   })
   .get('/pullpreviews', async ({ user, set }) => {
     if (!user || !user.userId) {

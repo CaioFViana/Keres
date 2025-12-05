@@ -10,6 +10,7 @@ import migration_6 from './0005_aberrant_kronos';
 import migration_7 from './0006_rainy_cardiac';
 import migration_8 from './0007_medical_komodo';
 import migration_9 from './0008_steep_spencer_smythe';
+import migration_10 from './0009_nappy_nextwave';
 
 
 const migrations = [
@@ -22,6 +23,7 @@ const migrations = [
   { id: 7, name: '0006_rainy_cardiac', run: migration_7 },
   { id: 8, name: '0007_medical_komodo', run: migration_8 },
   { id: 9, name: '0008_steep_spencer_smythe', run: migration_9 },
+  { id: 10, name: '0009_nappy_nextwave', run: migration_10 },
 ];
 
 export default migrations;

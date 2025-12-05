@@ -2,6 +2,7 @@ export interface Character {
   id: string
   storyId: string
   name: string
+  title: string | null
   gender: string | null
   race: string | null
   subrace: string | null

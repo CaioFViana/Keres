@@ -14,8 +14,10 @@ export const BaseStoryUpdateSchema = z.object({
   entity: z.string().min(1, 'Entity name cannot be empty'), // Nome da entidade (ex: 'Story', 'Character')
   // O ID é opcional aqui porque 'create' não terá um ID ainda
   id: UlidSchema.optional(),
-  // A versão é crucial para o controle de concorrência e LWW
+  // A versão do *entidade* é crucial para o controle de concorrência e LWW
   version: z.number().int().min(0).optional(),
+  // A versão da *operação* no log de operações do servidor
+  operationVersion: z.number().int().min(0).optional(),
 });
 
 // 3. Schema para operações de criação

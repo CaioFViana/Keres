@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { characters, CharacterSelect, tagRelations, tags, TagSelect } from '../db/schema';
 
@@ -8,6 +8,7 @@ export interface CharacterService {
   getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], sortBy?: string, sortDirection?: 'asc' | 'desc'): Promise<CharacterWithTags[]>;
   getCharacterCount(storyId?: string): Promise<number>;
   updateCharacter(characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<CharacterSelect>;
+  getById(characterId: string): Promise<CharacterSelect | undefined>;
 }
 
 export const createCharacterService = (db: AppDrizzleClient): CharacterService => {
@@ -17,7 +18,10 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       const orderByConditions: any[] = [];
 
       if (searchTerm) {
-        whereConditions.push(ilike(characters.name, `%${searchTerm}%`));
+        whereConditions.push(or(
+          ilike(characters.name, `%${searchTerm}%`),
+          ilike(characters.title, `%${searchTerm}%`)
+        ) as SQL<boolean>);
       }
 
       let baseQuery = db.select({
@@ -33,13 +37,14 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         .$dynamic();
 
       if (tagFilterIds && tagFilterIds.length > 0) {
-        baseQuery = baseQuery.where(
-          sql`${characters.id} IN (
-            SELECT ${tagRelations.entityId} FROM ${tagRelations}
-            WHERE ${tagRelations.entityType} = 'Character'
-            AND ${tagRelations.tagId} IN (${sql.join(tagFilterIds.map(id => sql`${id}`), sql`,`)})
-          )`
-        );
+        const taggedCharacters = db
+          .select({ entityId: tagRelations.entityId })
+          .from(tagRelations)
+          .where(and(
+            eq(tagRelations.entityType, 'Character'),
+            inArray(tagRelations.tagId, tagFilterIds)
+          ));
+        baseQuery = baseQuery.where(inArray(characters.id, taggedCharacters));
       }
 
       if (whereConditions.length > 0) {
@@ -108,6 +113,13 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       }
 
       return updatedCharacter;
+    },
+
+    async getById(characterId: string): Promise<CharacterSelect | undefined> {
+        const character = await db.query.characters.findFirst({
+            where: eq(characters.id, characterId),
+        });
+        return character;
     },
   };
 };

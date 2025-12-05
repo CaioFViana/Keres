@@ -9,6 +9,7 @@ import { createStoryService } from './StoryService';
 import { createKeresAxiosInstance } from './apiClient';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
+import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler'; // Import CharacterClientSyncHandler
 
 interface SyncPreview {
   storyId: string;
@@ -36,6 +37,7 @@ class SyncEngineService {
     this.entityHandlers = new Map<string, ClientSyncEntityHandler>();
     // Register handlers
     this.registerEntityHandler(new StoryClientSyncHandler());
+    this.registerEntityHandler(new CharacterClientSyncHandler()); // Register CharacterClientSyncHandler
     // TODO: Register other entity handlers here
   }
 
@@ -45,6 +47,7 @@ class SyncEngineService {
     }
     return SyncEngineService.instance;
   }
+
 
   private registerEntityHandler(handler: ClientSyncEntityHandler) {
     this.entityHandlers.set(handler.entityName, handler);
@@ -227,45 +230,38 @@ class SyncEngineService {
 
       const sinceVersion = localStory.lastServerSyncedLog || 0;
 
-      // 2. Call API for pull previews
-      const response = await this.client.get<SyncPreview[]>(`/sync/${this.storyId}/pull?lastOperationVersion=${sinceVersion}`);
-      const previews = response.data;
+      // 2. Call API for pull updates (expecting StoryUpdate[] directly)
+      const response = await this.client.get<{ updates: StoryUpdate[]; serverMaxOperationVersion: number }>(`/sync/${this.storyId}/pull?lastOperationVersion=${sinceVersion}`);
+      const { updates, serverMaxOperationVersion } = response.data; // Now destructuring updates and serverMaxOperationVersion
 
-      if (previews && previews.length > 0) {
-        let totalUpdates = 0;
-        let lastOriginatingUser: string | null = null; // Will need to be extracted from actual update
+      if (updates && updates.length > 0) {
+        let totalUpdates = updates.length; // Total updates is the length of the array
         let entitiesUpdated: string[] = [];
 
-        for (const preview of previews) {
-          totalUpdates += preview.entityUpdates.length;
-          // For now, previews don't contain originating user info directly,
-          // so this part of notification will be generic until actual operations are pulled.
+        // Process each update directly
+        for (const update of updates) {
+          const handler = this.entityHandlers.get(update.entity);
+          if (!handler) {
+            console.log(`No client sync handler registered for entity type: ${update.entity}`);
+            continue;
+          }
 
-          // Apply entity updates locally using handlers
-          for (const update of preview.entityUpdates) {
-            const handler = this.entityHandlers.get(update.entity); // Use update.entity for entityType
-            if (!handler) {
-              console.log(`No client sync handler registered for entity type: ${update.entity}`);
-              continue;
+          try {
+            if (update.type === 'create') {
+              await handler.applyCreate(update);
+            } else if (update.type === 'update') {
+              await handler.applyUpdate(update);
+            } else if (update.type === 'delete') {
+              await handler.applyDelete(update);
             }
+            // Reorder updates will be handled by specific handlers if needed
+            // For now, only basic CRUD operations are considered for entity handlers
 
-            try {
-              // The update object from API is a simplified version (preview)
-              // For actual application, we'd need full StoryUpdate objects from the server
-              // This is a placeholder for how full updates would be applied.
-              if (update.type === 'create') {
-                await handler.applyCreate(update);
-              } else if (update.type === 'update') {
-                await handler.applyUpdate(update);
-              } else if (update.type === 'delete') {
-                await handler.applyDelete(update);
-              }
-              if (!entitiesUpdated.includes(update.entity)) {
-                entitiesUpdated.push(update.entity);
-              }
-            } catch (handlerError) {
-              console.log(`Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`, handlerError);
+            if (!entitiesUpdated.includes(update.entity)) {
+              entitiesUpdated.push(update.entity);
             }
+          } catch (handlerError) {
+            console.log(`Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`, handlerError);
           }
         }
 
@@ -273,14 +269,22 @@ class SyncEngineService {
         
         showNotification(message, 'info');
 
-        // Update lastServerSyncedLog with the latest server version received
-        const latestServerVersion = parseInt(previews[previews.length - 1].serverVersion.toString(), 10);
+        // Update lastServerSyncedLog with the latest server's overall operation version
         await this._db.update(schema.stories)
-          .set({ lastServerSyncedLog: latestServerVersion })
+          .set({ lastServerSyncedLog: serverMaxOperationVersion })
           .where(eq(schema.stories.id, this.storyId));
 
       } else {
-        console.log(`No new sync previews for story ${this.storyId} since version ${sinceVersion}`);
+        // If no updates were received, still update lastServerSyncedLog to the latest known server version
+        // This handles cases where client is behind, but no specific updates for it.
+        if (serverMaxOperationVersion > sinceVersion) {
+            console.log(`No new specific updates for story ${this.storyId}, but server is at version ${serverMaxOperationVersion}. Updating local sync log.`);
+             await this._db.update(schema.stories)
+                .set({ lastServerSyncedLog: serverMaxOperationVersion })
+                .where(eq(schema.stories.id, this.storyId));
+        } else {
+            console.log(`No new sync previews for story ${this.storyId} since version ${sinceVersion}`);
+        }
       }
 
     } catch (error) {

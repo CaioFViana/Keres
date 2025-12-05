@@ -5,6 +5,7 @@ export const CharacterSchema = z.object({
   id: UlidSchema,
   storyId: UlidSchema,
   name: z.string().min(1, 'Name cannot be empty'),
+  title: z.string().nullable().optional(),
   gender: z.string().nullable().optional(),
   race: z.string().nullable().optional(),
   subrace: z.string().nullable().optional(),
@@ -26,6 +27,7 @@ export const CharacterSchema = z.object({
 
 export const CreateCharacterDataSchema = z.object({
   name: z.string().min(1, 'Name cannot be empty'),
+  title: z.string().nullable().optional(),
   gender: z.string().nullable().optional(),
   race: z.string().nullable().optional(),
   subrace: z.string().nullable().optional(),

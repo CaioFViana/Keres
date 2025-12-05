@@ -1,8 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../theme';
 import { useNotificationStore } from '../state/notificationStore';
+import { useTheme } from '../theme';
 
 const { width } = Dimensions.get('window');
 
@@ -10,16 +10,28 @@ const NotificationPopup = () => {
   const { colors } = useTheme();
   const { message, type, isVisible, hideNotification } = useNotificationStore();
   const slideAnim = useRef(new Animated.Value(width)).current; // Initial position off-screen right
+  const progressBarAnim = useRef(new Animated.Value(0)).current; // Initial progress bar width (0 to 1 for percentage)
 
   useEffect(() => {
     if (isVisible) {
-      // Slide in
-      Animated.timing(slideAnim, {
-        toValue: 0, // Slide to on-screen
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => {
-        // Auto-hide after 5 seconds
+      // Reset progress bar animation
+      progressBarAnim.setValue(0);
+
+      // Slide in and start progress bar animation in parallel
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0, // Slide to on-screen
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(progressBarAnim, {
+          toValue: 1, // Animate to 100% width
+          duration: 5000, // 5 seconds
+          useNativeDriver: false, // width animation cannot use native driver
+        }),
+      ]).start(() => {
+        // Auto-hide after 5 seconds (this will be handled by progressBarAnim completion if we make the timeout depend on it)
+        // For now, keep the setTimeout, but we can refine this later if needed.
         setTimeout(() => {
           Animated.timing(slideAnim, {
             toValue: width, // Slide out to off-screen right
@@ -28,13 +40,14 @@ const NotificationPopup = () => {
           }).start(() => {
             hideNotification();
           });
-        }, 5000); // 5 seconds
+        }, 2000); // 5 seconds
       });
     } else {
-      // Ensure it's off-screen when not visible
+      // Ensure it's off-screen when not visible and reset progress bar
       slideAnim.setValue(width);
+      progressBarAnim.setValue(0);
     }
-  }, [isVisible, slideAnim, hideNotification, width]);
+  }, [isVisible, slideAnim, hideNotification, width, progressBarAnim]);
 
   if (!isVisible) {
     return null;
@@ -65,6 +78,18 @@ const NotificationPopup = () => {
           <Ionicons name="close-circle-outline" size={20} color={textColor} />
         </TouchableOpacity>
       </View>
+      <Animated.View
+        style={[
+          styles.progressBar,
+          {
+            backgroundColor: textColor, // Use textColor for the progress bar color
+            width: progressBarAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['0%', '100%'],
+            }),
+          },
+        ]}
+      />
     </Animated.View>
   );
 };
@@ -101,6 +126,11 @@ const styles = StyleSheet.create({
   closeButton: {
     marginLeft: 10,
     padding: 5,
+  },
+  progressBar: {
+    height: 4,
+    borderRadius: 2,
+    marginTop: 10, // Some space between message and progress bar
   },
 });
 

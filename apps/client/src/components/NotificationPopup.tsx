@@ -1,19 +1,20 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useNotificationStore } from '../state/notificationStore';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
+import { useNotificationStore } from '../state/notificationStore'; // Import the updated store
 
 const { width } = Dimensions.get('window');
 
 const NotificationPopup = () => {
   const { colors } = useTheme();
-  const { message, type, isVisible, hideNotification } = useNotificationStore();
+  // Destructure currentNotification and dequeueNotification from the store
+  const { currentNotification, dequeueNotification } = useNotificationStore();
   const slideAnim = useRef(new Animated.Value(width)).current; // Initial position off-screen right
   const progressBarAnim = useRef(new Animated.Value(0)).current; // Initial progress bar width (0 to 1 for percentage)
 
   useEffect(() => {
-    if (isVisible) {
+    if (currentNotification) { // Check if there's a currentNotification
       // Reset progress bar animation
       progressBarAnim.setValue(0);
 
@@ -29,33 +30,36 @@ const NotificationPopup = () => {
           duration: 5000, // 5 seconds
           useNativeDriver: false, // width animation cannot use native driver
         }),
-      ]).start(() => {
-        // Auto-hide after 5 seconds (this will be handled by progressBarAnim completion if we make the timeout depend on it)
-        // For now, keep the setTimeout, but we can refine this later if needed.
-        setTimeout(() => {
-          Animated.timing(slideAnim, {
-            toValue: width, // Slide out to off-screen right
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => {
-            hideNotification();
-          });
-        }, 2000); // 5 seconds
-      });
+      ]).start();
+      // Auto-hide after 5 seconds
+      // Using setTimeout directly after parallel animation start,
+      // it ensures the hide animation starts 5 seconds AFTER the notification is fully displayed.
+      // And the progressBar animation already shows the entire 5 seconds.
+      const timer = setTimeout(() => {
+        Animated.timing(slideAnim, {
+          toValue: width, // Slide out to off-screen right
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          dequeueNotification(); // Call dequeueNotification after slide-out
+        });
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timer); // Clear timeout if component unmounts or currentNotification changes
     } else {
-      // Ensure it's off-screen when not visible and reset progress bar
+      // Ensure it's off-screen when no current notification and reset progress bar
       slideAnim.setValue(width);
       progressBarAnim.setValue(0);
     }
-  }, [isVisible, slideAnim, hideNotification, width, progressBarAnim]);
+  }, [currentNotification, slideAnim, dequeueNotification, width, progressBarAnim]); // Depend on currentNotification
 
-  if (!isVisible) {
+  if (!currentNotification) { // Only render if there's a current notification
     return null;
   }
 
   // Determine background color based on notification type
-  const backgroundColor = type === 'error' ? colors.error : colors.primary;
-  const textColor = colors.onPrimary; // Assuming text on primary/error background is always onPrimary
+  const backgroundColor = currentNotification.type === 'error' ? colors.error : (currentNotification.type === 'success' ? colors.primary : colors.card);
+  const textColor = colors.onPrimary;
 
   return (
     <Animated.View
@@ -66,15 +70,15 @@ const NotificationPopup = () => {
     >
       <View style={styles.content}>
         <Ionicons
-          name={type === 'error' ? 'alert-circle-outline' : 'information-circle-outline'}
+          name={currentNotification.type === 'error' ? 'alert-circle-outline' : 'information-circle-outline'}
           size={24}
           color={textColor}
           style={styles.icon}
         />
         <Text style={[styles.message, { color: textColor }]}>
-          {message}
+          {currentNotification.message}
         </Text>
-        <TouchableOpacity onPress={hideNotification} style={styles.closeButton}>
+        <TouchableOpacity onPress={dequeueNotification} style={styles.closeButton}>
           <Ionicons name="close-circle-outline" size={20} color={textColor} />
         </TouchableOpacity>
       </View>
@@ -97,10 +101,10 @@ const NotificationPopup = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 0, // Adjust as needed, e.g., for SafeAreaView insets
+    top: 0,
     right: 0,
-    width: width * 0.9, // 90% of screen width
-    maxWidth: 400, // Max width for larger screens
+    width: width * 0.9,
+    maxWidth: 400,
     padding: 15,
     borderRadius: 8,
     elevation: 5,
@@ -108,8 +112,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    zIndex: 1000, // Ensure it's above other content
-    marginTop: 50, // Give some space from the top edge
+    zIndex: 1000,
+    marginTop: 50,
   },
   content: {
     flexDirection: 'row',
@@ -130,7 +134,7 @@ const styles = StyleSheet.create({
   progressBar: {
     height: 4,
     borderRadius: 2,
-    marginTop: 10, // Some space between message and progress bar
+    marginTop: 10,
   },
 });
 

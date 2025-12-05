@@ -6,6 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
 
+import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/CharacterDetailScreen'; // Import CharacterDetailScreen
 import CharactersScreen from '../screens/CharactersScreen'; // Import CharactersScreen
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
@@ -20,9 +21,9 @@ import StorySettingsScreen from '../screens/StorySettingsScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 
-type MainSystemDrawerParamList = {
+export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
-  Characters: undefined; // Updated type
+  CharactersStack: undefined; // Updated type to point to the character stack
   Locations: { entityType: string };
   Chapters: { entityType: string };
   Scenes: { entityType: string };
@@ -38,8 +39,30 @@ type MainSystemDrawerParamList = {
   StorySelection: undefined;
 };
 
+export type ListingDetailStackParamList = {
+  Listing: { entityType: string };
+  Detail: { entityType: string; itemId: string };
+};
+
+export type CharacterStackParamList = {
+  Characters: undefined;
+  CharacterDetail: CharacterDetailScreenParamList['CharacterDetail'];
+};
+
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<ListingDetailStackParamList>(); // Use ListingDetailStackParamList here
+const CharacterStack = createNativeStackNavigator<CharacterStackParamList>(); // Create a stack for characters
+
+// Helper component for the Character stack
+const CharacterStackNavigator = () => {
+  return (
+    <CharacterStack.Navigator screenOptions={{ headerShown: false }}>
+      <CharacterStack.Screen name="Characters" component={CharactersScreen} />
+      <CharacterStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
+    </CharacterStack.Navigator>
+  );
+};
+
 
 // A helper component to wrap screens that should be part of the drawer but also have their own stack navigation
 const ListingDetailStack = ({ route }: any) => {
@@ -87,7 +110,8 @@ const MainSystemNavigator = () => {
         component={MainDashboardScreen}
         options={{ title: selectedStory?.title || t('dashboard_title') }}
       />
-      <Drawer.Screen name="Characters" component={CharactersScreen} options={{ title: t('characters_title') }} />
+      {/* Use the new character stack navigator */}
+      <Drawer.Screen name="CharactersStack" component={CharacterStackNavigator} options={{ title: t('characters_title') }} />
       <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: t('locations_title') }} />
       <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />
       <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: t('scenes_title') }} />

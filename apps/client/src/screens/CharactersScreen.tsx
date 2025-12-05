@@ -1,3 +1,6 @@
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import NativeStackNavigationProp from native-stack
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -5,10 +8,17 @@ import CharacterListItem from '../components/character/CharacterListItem';
 import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schema';
+import { CharacterStackParamList, MainSystemDrawerParamList } from '../navigation/MainSystemStack'; // Import MainSystemDrawerParamList and CharacterStackParamList
 import { CharacterWithTags, createCharacterService } from '../services/CharacterService';
 import { createTagService } from '../services/TagService';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
+
+type CharactersScreenNavigationProp = CompositeNavigationProp<
+  DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>, // 'CharactersStack' is the drawer screen name
+  NativeStackNavigationProp<CharacterStackParamList, 'CharacterDetail'> // 'CharacterDetail' is a screen within CharacterStack
+>;
+
 
 
 const CharactersScreen = () => {
@@ -16,6 +26,7 @@ const CharactersScreen = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const drizzleDb = useDrizzle();
+  const navigation = useNavigation<CharactersScreenNavigationProp>(); // Get the navigation object with specific type
 
   const [characters, setCharacters] = useState<CharacterWithTags[]>([]); // Use CharacterWithTags
   const [filteredCharacters, setFilteredCharacters] = useState<CharacterWithTags[]>([]); // Use CharacterWithTags
@@ -77,6 +88,13 @@ const CharactersScreen = () => {
     }
   }, [characterService, fetchCharacters]);
 
+  const handleViewDetails = useCallback((characterId: string) => {
+    // Navigate to the Detail screen, passing the entityType and itemId
+    // This assumes that 'Detail' screen is accessible from the navigation stack.
+    // Given the previous error, we are typing the navigation prop to include 'Detail'.
+    navigation.navigate('CharacterDetail', { characterId });
+  }, [navigation]);
+
   const tagFilterOptions = allTags.map(tag => ({ label: tag.name, value: tag.id }));
   const sortOptions = [
     { label: t('sort_by_name'), value: 'name' },
@@ -103,7 +121,13 @@ const CharactersScreen = () => {
     <View style={styles.container}>
       <GenericFilterSortList
         data={filteredCharacters}
-        renderItem={({ item }) => <CharacterListItem character={item} onToggleFavorite={handleToggleFavorite} />}
+        renderItem={({ item }) => (
+          <CharacterListItem
+            character={item}
+            onToggleFavorite={handleToggleFavorite}
+            onViewDetails={handleViewDetails}
+          />
+        )}
         keyExtractor={(item) => item.id}
         onSearch={setActiveSearch}
         searchPlaceholder={t('search_characters')}

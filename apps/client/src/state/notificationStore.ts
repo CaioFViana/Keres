@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createULID } from '../utils/ulid'; // Assuming ulid is available in utils
+import { createULID } from '../utils/ulid'; // Assuming createULID is available in utils
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
@@ -10,14 +10,14 @@ export interface Notification {
 }
 
 interface NotificationState {
-  currentNotification: Notification | null;
+  currentNotifications: (Notification | null)[]; // Array to hold up to 3 active notifications
   queue: Notification[];
   showNotification: (message: string, type?: NotificationType) => void;
-  dequeueNotification: () => void;
+  clearNotificationLane: (laneIndex: number) => void; // New action to clear a specific lane
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
-  currentNotification: null,
+  currentNotifications: [null, null, null], // Initialize with 3 empty lanes
   queue: [],
 
   showNotification: (message: string, type: NotificationType = 'info') => {
@@ -28,9 +28,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     };
 
     set((state) => {
-      if (state.currentNotification === null) {
-        // If no notification is currently visible, show this one
-        return { currentNotification: newNotification };
+      const currentNotifications = [...state.currentNotifications];
+      const emptyLaneIndex = currentNotifications.findIndex(n => n === null);
+
+      if (emptyLaneIndex !== -1) {
+        // If an empty lane is found, place the new notification there
+        currentNotifications[emptyLaneIndex] = newNotification;
+        return { currentNotifications };
       } else {
         // Otherwise, add to the queue
         return { queue: [...state.queue, newNotification] };
@@ -38,16 +42,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     });
   },
 
-  dequeueNotification: () => {
+  clearNotificationLane: (laneIndex: number) => {
     set((state) => {
-      if (state.queue.length > 0) {
-        // If there are items in the queue, show the next one
-        const [nextNotification, ...remainingQueue] = state.queue;
-        return { currentNotification: nextNotification, queue: remainingQueue };
+      const currentNotifications = [...state.currentNotifications];
+      const queue = [...state.queue];
+
+      if (queue.length > 0) {
+        // If there are items in the queue, fill the cleared lane with the next one
+        const nextNotification = queue.shift(); // Remove from the front of the queue
+        currentNotifications[laneIndex] = nextNotification || null; // Use || null for type safety
       } else {
-        // No more notifications in the queue
-        return { currentNotification: null };
+        // No more notifications in the queue, just clear the lane
+        currentNotifications[laneIndex] = null;
       }
+      return { currentNotifications, queue };
     });
   },
 }));

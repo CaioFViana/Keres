@@ -1,20 +1,20 @@
-import { and, asc, count, desc, eq, ilike, sql } from 'drizzle-orm'; // Import sql
+import { and, asc, count, desc, eq, ilike, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { characters, CharacterSelect, tagRelations, TagSelect, tags } from '../db/schema';
-// Removed SQLiteTableWithColumns as it's not directly used here and might cause type issues
+import { characters, CharacterSelect, tagRelations, tags, TagSelect } from '../db/schema';
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
 export interface CharacterService {
   getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], sortBy?: string, sortDirection?: 'asc' | 'desc'): Promise<CharacterWithTags[]>;
   getCharacterCount(storyId?: string): Promise<number>;
+  updateCharacter(characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<CharacterSelect>;
 }
 
 export const createCharacterService = (db: AppDrizzleClient): CharacterService => {
   return {
     async getCharactersByStoryId(storyId, searchTerm, tagFilterIds, sortBy, sortDirection): Promise<CharacterWithTags[]> {
       const whereConditions = [eq(characters.storyId, storyId)];
-      const orderByConditions: any[] = []; // Explicitly type as any[] for now due to Drizzle's orderBy types
+      const orderByConditions: any[] = [];
 
       if (searchTerm) {
         whereConditions.push(ilike(characters.name, `%${searchTerm}%`));
@@ -29,10 +29,9 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
           eq(characters.id, tagRelations.entityId),
           eq(tagRelations.entityType, 'Character')
         ))
-        .leftJoin(tags, eq(tagRelations.tagId, tags.id)) // Add this missing join
-        .$dynamic(); // Add .$dynamic() here
+        .leftJoin(tags, eq(tagRelations.tagId, tags.id))
+        .$dynamic();
 
-      // Apply tag filter using a subquery if tagFilterIds are provided
       if (tagFilterIds && tagFilterIds.length > 0) {
         baseQuery = baseQuery.where(
           sql`${characters.id} IN (
@@ -43,16 +42,10 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         );
       }
 
-      // Apply general where conditions
       if (whereConditions.length > 0) {
-        // Need to be careful here: `baseQuery.where` should accept an array of conditions
-        // Drizzle's `where` method typically accepts a single condition or an `and`/`or` of conditions.
-        // Let's use `and()` to combine them.
         baseQuery = baseQuery.where(and(...whereConditions));
       }
 
-
-      // Sort conditions
       switch (sortBy) {
         case 'name':
           orderByConditions.push(sortDirection === 'desc' ? desc(characters.name) : asc(characters.name));
@@ -69,12 +62,8 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       }
 
       if (orderByConditions.length > 0) {
-        // Drizzle's orderBy expects a list of expressions, not an array spread if the type isn't compatible.
-        // It's safer to explicitly chain if there's only one, or use a helper if multiple.
-        // For now, let's keep it simple and assume a single primary order.
         baseQuery = baseQuery.orderBy(...orderByConditions);
       }
-
 
       const result = await baseQuery.all();
 
@@ -85,8 +74,8 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
           if (!characterMap.has(row.character.id)) {
             characterMap.set(row.character.id, { ...row.character, tags: [] });
           }
-          if (row.tag) { // Check if tag exists
-            if (!(row.tag as TagSelect).isDeleted) { // Explicitly cast to TagSelect to access isDeleted
+          if (row.tag) {
+            if (!(row.tag as TagSelect).isDeleted) {
               characterMap.get(row.character.id)?.tags.push(row.tag as TagSelect);
             }
           }
@@ -101,6 +90,24 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         .where(storyId ? eq(characters.storyId, storyId) : undefined)
         .get();
       return result?.count || 0;
+    },
+
+    async updateCharacter(characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<CharacterSelect> {
+      const [updatedCharacter] = await db
+        .update(characters)
+        .set({
+          ...updatedFields,
+          updatedAt: new Date(),
+          version: sql`${characters.version} + 1`,
+        })
+        .where(eq(characters.id, characterId))
+        .returning();
+
+      if (!updatedCharacter) {
+        throw new Error(`Character with ID ${characterId} not found.`);
+      }
+
+      return updatedCharacter;
     },
   };
 };

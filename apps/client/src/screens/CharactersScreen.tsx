@@ -5,7 +5,7 @@ import CharacterListItem from '../components/character/CharacterListItem';
 import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schema';
-import { CharacterService, createCharacterService, CharacterWithTags } from '../services/CharacterService'; // Updated import
+import { CharacterWithTags, createCharacterService } from '../services/CharacterService';
 import { createTagService } from '../services/TagService';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
@@ -67,7 +67,15 @@ const CharactersScreen = () => {
     fetchTags();
   }, [fetchCharacters, fetchTags]);
 
-  // Removed the client-side filtering useEffect as filtering is now done by the service
+  const handleToggleFavorite = useCallback(async (characterId: string, isFavorite: boolean) => {
+    try {
+      await characterService.updateCharacter(characterId, { isFavorite });
+      // After updating, re-fetch the characters to update the list
+      fetchCharacters();
+    } catch (error) {
+      console.error('Failed to toggle favorite status:', error);
+    }
+  }, [characterService, fetchCharacters]);
 
   const tagFilterOptions = allTags.map(tag => ({ label: tag.name, value: tag.id }));
   const sortOptions = [
@@ -95,7 +103,7 @@ const CharactersScreen = () => {
     <View style={styles.container}>
       <GenericFilterSortList
         data={filteredCharacters}
-        renderItem={({ item }) => <CharacterListItem character={item} />}
+        renderItem={({ item }) => <CharacterListItem character={item} onToggleFavorite={handleToggleFavorite} />}
         keyExtractor={(item) => item.id}
         onSearch={setActiveSearch}
         searchPlaceholder={t('search_characters')}

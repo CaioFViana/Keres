@@ -15,7 +15,8 @@ interface GenericFilterSortListProps<T> {
   searchPlaceholder?: string;
   // Filter Props
   filterOptions?: { label: string; value: string }[];
-  onFilterChange: (filterValue: string | null) => void;
+  onFilterChange: (filterValues: string[]) => void; // Changed to array
+  selectedFilterValues: string[]; // New prop for selected filter values
   // Sort Props
   sortOptions?: { label: string; value: string }[];
   onSortChange: (sortValue: string | null) => void;
@@ -32,6 +33,7 @@ const GenericFilterSortList = <T,>({
   searchPlaceholder,
   filterOptions,
   onFilterChange,
+  selectedFilterValues, // Destructure new prop
   sortOptions,
   onSortChange,
   onSortDirectionChange,
@@ -42,18 +44,26 @@ const GenericFilterSortList = <T,>({
   const { t } = useTranslation();
 
   const [searchText, setSearchText] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [selectedSort, setSelectedSort] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(currentSortDirection);
+
+  // Initialize selectedFilter with the prop, ensuring it's an array
+  const [selectedFilter, setSelectedFilter] = useState<string[]>(selectedFilterValues || []);
+
+  React.useEffect(() => {
+    setSelectedFilter(selectedFilterValues || []);
+  }, [selectedFilterValues]);
+
 
   const handleSearchTextChange = (text: string) => {
     setSearchText(text);
     onSearch(text);
   };
 
-  const handleFilterSelection = (value: string | null) => {
-    setSelectedFilter(value);
-    onFilterChange(value);
+  const handleFilterSelection = (values: string | string[] | null) => { // Updated to handle array
+    const newValues = Array.isArray(values) ? values : (values ? [values] : []);
+    setSelectedFilter(newValues);
+    onFilterChange(newValues);
   };
 
   const handleSortSelection = (value: string | null) => {
@@ -95,6 +105,7 @@ const GenericFilterSortList = <T,>({
     selectContainer: {
       flex: 1,
       marginRight: 10,
+      marginBottom: 10
     },
     sortDirectionButton: {
       padding: 8,
@@ -131,9 +142,10 @@ const GenericFilterSortList = <T,>({
               <View style={styles.selectContainer}>
                 <Select
                   options={filterOptions}
-                  value={selectedFilter}
-                  onValueChange={handleFilterSelection}
-                  placeholder={t('filter')}
+                  value={selectedFilter} // Pass array
+                  onValueChange={handleFilterSelection} // Expects array
+                  placeholder={t('filter_by_tags')}
+                  multiple={true} // Enable multi-select
                 />
               </View>
             </View>

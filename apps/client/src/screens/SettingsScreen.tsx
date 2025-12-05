@@ -33,9 +33,11 @@ const SettingsScreen = () => {
     setUsername(drizzleClient, newUsername);
   };
 
-  const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(drizzleClient, newLanguage);
-    i18n.changeLanguage(newLanguage);
+  const handleLanguageChange = (newLanguage: string | null) => {
+    // If newLanguage is null, default to 'en' or keep current language
+    const languageToSet = newLanguage || 'en'; // Assuming 'en' as a sensible default
+    setLanguage(drizzleClient, languageToSet);
+    i18n.changeLanguage(languageToSet);
   };
 
   const handleDarkModeToggle = (value: boolean) => {
@@ -112,7 +114,7 @@ const SettingsScreen = () => {
               <Select
                 options={languageOptions}
                 value={language || 'en'}
-                onValueChange={handleLanguageChange}
+                onValueChange={handleLanguageChange as (value: string | null) => void}
                 placeholder={t('select_language')}
               />
             </View>

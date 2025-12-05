@@ -1,57 +1,99 @@
-import { and, asc, count, desc, eq, ilike } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, sql } from 'drizzle-orm'; // Import sql
 import { AppDrizzleClient } from '../db';
-import { characters, CharacterSelect, tagRelations } from '../db/schema';
-import { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core';
+import { characters, CharacterSelect, tagRelations, TagSelect, tags } from '../db/schema';
+// Removed SQLiteTableWithColumns as it's not directly used here and might cause type issues
+
+export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
 export interface CharacterService {
-  getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterId?: string, sortBy?: string): Promise<CharacterSelect[]>;
+  getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], sortBy?: string, sortDirection?: 'asc' | 'desc'): Promise<CharacterWithTags[]>;
   getCharacterCount(storyId?: string): Promise<number>;
 }
 
 export const createCharacterService = (db: AppDrizzleClient): CharacterService => {
   return {
-    async getCharactersByStoryId(storyId, searchTerm, tagFilterId, sortBy): Promise<CharacterSelect[]> {
-      let baseQuery = db.select({ character: characters }).from(characters); // Always select the character object
-
-      let joinedQuery;
-      if (tagFilterId) {
-        // If a join is needed, create a new query chain for it
-        joinedQuery = baseQuery
-          .innerJoin(tagRelations, and(
-            eq(characters.id, tagRelations.entityId),
-            eq(tagRelations.entityType, 'Character'),
-            eq(tagRelations.tagId, tagFilterId)
-          ));
-      } else {
-        joinedQuery = baseQuery; // If no join, use the base query
-      }
-
-      let finalQuery = joinedQuery.where(eq(characters.storyId, storyId)).$dynamic();
+    async getCharactersByStoryId(storyId, searchTerm, tagFilterIds, sortBy, sortDirection): Promise<CharacterWithTags[]> {
+      const whereConditions = [eq(characters.storyId, storyId)];
+      const orderByConditions: any[] = []; // Explicitly type as any[] for now due to Drizzle's orderBy types
 
       if (searchTerm) {
-        finalQuery = finalQuery.where(ilike(characters.name, `%${searchTerm}%`));
+        whereConditions.push(ilike(characters.name, `%${searchTerm}%`));
       }
 
+      let baseQuery = db.select({
+        character: characters,
+        tag: tags,
+      })
+        .from(characters)
+        .leftJoin(tagRelations, and(
+          eq(characters.id, tagRelations.entityId),
+          eq(tagRelations.entityType, 'Character')
+        ))
+        .leftJoin(tags, eq(tagRelations.tagId, tags.id)) // Add this missing join
+        .$dynamic(); // Add .$dynamic() here
+
+      // Apply tag filter using a subquery if tagFilterIds are provided
+      if (tagFilterIds && tagFilterIds.length > 0) {
+        baseQuery = baseQuery.where(
+          sql`${characters.id} IN (
+            SELECT ${tagRelations.entityId} FROM ${tagRelations}
+            WHERE ${tagRelations.entityType} = 'Character'
+            AND ${tagRelations.tagId} IN (${sql.join(tagFilterIds.map(id => sql`${id}`), sql`,`)})
+          )`
+        );
+      }
+
+      // Apply general where conditions
+      if (whereConditions.length > 0) {
+        // Need to be careful here: `baseQuery.where` should accept an array of conditions
+        // Drizzle's `where` method typically accepts a single condition or an `and`/`or` of conditions.
+        // Let's use `and()` to combine them.
+        baseQuery = baseQuery.where(and(...whereConditions));
+      }
+
+
+      // Sort conditions
       switch (sortBy) {
         case 'name':
-          finalQuery = finalQuery.orderBy(asc(characters.name));
+          orderByConditions.push(sortDirection === 'desc' ? desc(characters.name) : asc(characters.name));
           break;
         case 'createdAt':
-          finalQuery = finalQuery.orderBy(asc(characters.createdAt));
+          orderByConditions.push(sortDirection === 'desc' ? desc(characters.createdAt) : asc(characters.createdAt));
           break;
         case 'updatedAt':
-          finalQuery = finalQuery.orderBy(desc(characters.updatedAt));
+          orderByConditions.push(sortDirection === 'desc' ? desc(characters.updatedAt) : asc(characters.updatedAt));
           break;
         default:
-          finalQuery = finalQuery.orderBy(asc(characters.name));
+          orderByConditions.push(asc(characters.name));
           break;
       }
 
-      const result = await finalQuery.all();
+      if (orderByConditions.length > 0) {
+        // Drizzle's orderBy expects a list of expressions, not an array spread if the type isn't compatible.
+        // It's safer to explicitly chain if there's only one, or use a helper if multiple.
+        // For now, let's keep it simple and assume a single primary order.
+        baseQuery = baseQuery.orderBy(...orderByConditions);
+      }
 
-      // Normalize the result to always return CharacterSelect[]
-      // The initial select({ character: characters }) ensures 'row.character' is always CharacterSelect
-      return result.map((row: any) => row.character as CharacterSelect);
+
+      const result = await baseQuery.all();
+
+      const characterMap = new Map<string, CharacterWithTags>();
+
+      for (const row of result) {
+        if (row.character) {
+          if (!characterMap.has(row.character.id)) {
+            characterMap.set(row.character.id, { ...row.character, tags: [] });
+          }
+          if (row.tag) { // Check if tag exists
+            if (!(row.tag as TagSelect).isDeleted) { // Explicitly cast to TagSelect to access isDeleted
+              characterMap.get(row.character.id)?.tags.push(row.tag as TagSelect);
+            }
+          }
+        }
+      }
+
+      return Array.from(characterMap.values());
     },
 
     async getCharacterCount(storyId?: string): Promise<number> {

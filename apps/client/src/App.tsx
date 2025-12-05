@@ -5,7 +5,7 @@ import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NotificationPopup from './components/NotificationPopup'; // Import NotificationPopup
-import { AppDrizzleClient, DrizzleContext, initializeDrizzle } from './db';
+import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db'; // Import useDrizzle
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
@@ -30,6 +30,19 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       {children}
       <NotificationPopup />
     </View>
+  );
+};
+
+// New ThemeInitializer component to provide drizzleClient to ThemeProvider
+const ThemeInitializer = ({ children }: { children: React.ReactNode }) => {
+  const drizzleClient = useDrizzle(); // Get drizzleClient from context
+
+  return (
+    <ThemeProvider drizzleClient={drizzleClient}> 
+      <SafeAreaWrapper>
+        {children}
+      </SafeAreaWrapper>
+    </ThemeProvider>
   );
 };
 
@@ -72,7 +85,8 @@ const DatabaseInitializer = () => {
 
     if (db) {
       initialize();
-    } else {
+    }
+    else {
       console.log('DatabaseInitializer: db context is null, waiting...');
     }
   }, [db, initializeUserSettings]);
@@ -88,7 +102,9 @@ const DatabaseInitializer = () => {
 
   return (
     <DrizzleContext.Provider value={drizzleClient}>
-      <AppNavigator dbInitialized={dbInitialized} />
+      <ThemeInitializer>
+        <AppNavigator dbInitialized={dbInitialized} />
+      </ThemeInitializer>
     </DrizzleContext.Provider>
   );
 };
@@ -97,11 +113,7 @@ export default function App() {
   return (
     <SQLiteProvider databaseName={'keres.db'}>
       <I18nextProvider i18n={i18n}>
-        <ThemeProvider>
-          <SafeAreaWrapper>
-            <DatabaseInitializer />
-          </SafeAreaWrapper>
-        </ThemeProvider>
+        <DatabaseInitializer />
       </I18nextProvider>
     </SQLiteProvider>
   );

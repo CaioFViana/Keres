@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
 import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
 import { themes } from './palettes';
 import { ThemeColors } from './types';
@@ -16,15 +17,20 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 interface ThemeProviderProps {
   children: React.ReactNode;
   defaultThemeName?: string; // Make defaultThemeName optional
+  drizzleClient: AppDrizzleClient | null; // New prop for drizzleClient
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, defaultThemeName = 'default' }) => {
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, defaultThemeName = 'default', drizzleClient }) => {
   const { darkMode, toggleDarkMode } = useThemeStore(); // Use darkMode from themeStore
   const [currentThemeName, setCurrentThemeName] = useState(defaultThemeName);
 
   const toggleTheme = useCallback(() => {
-    toggleDarkMode(); // Toggle darkMode in the store
-  }, [toggleDarkMode]);
+    if (drizzleClient) {
+      toggleDarkMode(drizzleClient); // Pass drizzleClient to toggleDarkMode
+    } else {
+      console.warn('Drizzle client not available for theme toggling.');
+    }
+  }, [toggleDarkMode, drizzleClient]);
 
   const setTheme = useCallback((themeName: string) => {
     if (themes[themeName]) {

@@ -1,5 +1,5 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const characters = sqliteTable('characters', {
   id: text('id').primaryKey(),
@@ -16,7 +16,7 @@ export const characters = sqliteTable('characters', {
   weaknesses: text('weaknesses'),
   biography: text('biography'),
   plannedTimeline: text('planned_timeline'),
-  isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull(),
+  isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   extraNotes: text('extra_notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),

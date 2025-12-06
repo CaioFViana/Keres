@@ -88,7 +88,7 @@ const CharactersScreen = () => {
 
   // Debounce the fetchCharacters call
   const debouncedFetchCharacters = useMemo(
-    () => debounce(() => fetchCharacters(), 1000),
+    () => debounce(() => fetchCharacters()),
     [fetchCharacters]
   );
 

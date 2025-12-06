@@ -14,6 +14,7 @@ export const SuggestionSchema = z.object({
 
 export const CreateSuggestionDataSchema = SuggestionSchema.omit({
   id: true,
+  storyId: true,
   createdAt: true,
   updatedAt: true,
   version: true,

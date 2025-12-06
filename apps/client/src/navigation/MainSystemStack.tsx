@@ -18,6 +18,7 @@ import ChoicesScreen from '../screens/ChoicesScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import ImportExportScreen from '../screens/ImportExportScreen';
 import StorySettingsScreen from '../screens/StorySettingsScreen';
+import TagsScreen from '../screens/TagsScreen'; // Import TagsScreen
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 
@@ -27,7 +28,7 @@ export type MainSystemDrawerParamList = {
   Locations: { entityType: string };
   Chapters: { entityType: string };
   Scenes: { entityType: string };
-  Tags: { entityType: string };
+  Tags: undefined; // <--- Changed to undefined
   WorldRules: { entityType: string };
   Notes: { entityType: string };
   Gallery: undefined;
@@ -115,7 +116,7 @@ const MainSystemNavigator = () => {
       <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: t('locations_title') }} />
       <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />
       <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: t('scenes_title') }} />
-      <Drawer.Screen name="Tags" component={ListingDetailStack} initialParams={{ entityType: 'Tags' }} options={{ title: t('tags_title') }} />
+      <Drawer.Screen name="Tags" component={TagsScreen} options={{ title: t('tags_title') }} />
       <Drawer.Screen name="WorldRules" component={ListingDetailStack} initialParams={{ entityType: 'WorldRules' }} options={{ title: t('world_rules_title') }} />
       <Drawer.Screen name="Notes" component={ListingDetailStack} initialParams={{ entityType: 'Notes' }} options={{ title: t('notes_title') }} />
       <Drawer.Screen name="Gallery" component={GalleryScreen} options={{ title: t('gallery_title') }} />

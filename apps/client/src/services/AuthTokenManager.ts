@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { servers } from '../db/schema';
+import { servers, ServerSelect } from '../db/schema'; // Import ServerSelect
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { createKeresAxiosInstance, TokenProvider } from './apiClient';
-import { createServerService } from './ServerService';
+// import { createServerService } from './ServerService'; // Removed import
 
 let drizzleDb: AppDrizzleClient | null = null;
 
@@ -13,6 +13,11 @@ export const setAuthDb = (db: AppDrizzleClient) => {
 };
 
 class AuthTokenManager implements TokenProvider {
+    private _getServerById: ((serverId: string) => Promise<ServerSelect | undefined>) | null = null;
+
+    public setGetServerById(func: (serverId: string) => Promise<ServerSelect | undefined>): void {
+        this._getServerById = func;
+    }
 
     public getAccessToken(): string | null {
         const activeServer = useUserSettingsStore.getState().activeServer;
@@ -64,8 +69,12 @@ class AuthTokenManager implements TokenProvider {
             return null;
         }
 
-        const serverService = createServerService(drizzleDb);
-        const server = await serverService.getServerById(serverId);
+        if (!this._getServerById) {
+            console.log('AuthTokenManager: getServerById dependency not set.');
+            return null;
+        }
+
+        const server = await this._getServerById(serverId); // Use injected function
 
         if (!server || !server.url) {
             console.log(`AuthTokenManager: Server with ID ${serverId} not found or no URL available.`);

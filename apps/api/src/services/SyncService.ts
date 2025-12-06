@@ -189,61 +189,101 @@ export class SyncService {
       orderBy: [operationLog.operationVersion],
     });
 
-    // Map operationLog entries back to StoryUpdate objects
-    const updates: StoryUpdate[] = fetchedOperations.map(op => {
-      let version: number | undefined;
-      let data: Record<string, any> | undefined;
-      let changes: Record<string, any> | undefined;
+    const updates: StoryUpdate[] = await Promise.all(fetchedOperations.map(async op => {
+      const payloadAsRecord = op.payload as Record<string, any>; // Client's original payload
 
-      // Explicitly cast op.payload to Record<string, any>
-      const payloadAsRecord = op.payload as Record<string, any>;
+      let finalData: Record<string, any> | undefined;
+      let finalChanges: Record<string, any> | undefined;
+      let finalVersion: number | undefined;
+      let operationTime: Date | undefined;
 
-      // Extract version and payload types correctly based on operationType
+      // Determine the operation time based on the type
       if (op.operationType === 'create') {
-        data = payloadAsRecord;
-        version = payloadAsRecord.version; // Client should send version for create
+        operationTime = op.createdAt; // The created_at of the operation log entry
       } else if (op.operationType === 'update') {
-        changes = payloadAsRecord;
-        version = payloadAsRecord.version; // Version is expected in changes
+        operationTime = payloadAsRecord.updatedAt ? new Date(payloadAsRecord.updatedAt) : op.createdAt;
       } else if (op.operationType === 'delete') {
-        // For delete, payload might only contain id, version might be part of the initial update object
-        // If the client sends version with delete, it would be in update.version, not payload.
-        // For now, we assume it might be in payload if client chose to send it.
-        version = payloadAsRecord.version; // Placeholder, review client's DeleteStoryUpdate structure
+        operationTime = payloadAsRecord.deletedAt ? new Date(payloadAsRecord.deletedAt) : op.createdAt;
+      } else {
+        operationTime = op.createdAt;
       }
 
-      // Reconstruct the StoryUpdate object
+
+      // --- Enrich data based on operation type ---
+      if (op.operationType === 'create') {
+        // For 'create', the client original payload contains the base data.
+        // We need to add the generated fields from the operationLog.
+        finalData = {
+          ...payloadAsRecord, // Original client data
+          createdAt: op.createdAt,
+          updatedAt: op.createdAt, // For create, updatedAt is same as createdAt
+          version: op.operationVersion, // Initial version of the entity is operationVersion
+          isDeleted: false,
+          deletedAt: null,
+        };
+        // Explicitly remove storyId if it was somehow in payloadAsRecord
+        delete finalData.storyId;
+        finalVersion = op.operationVersion;
+      } else if (op.operationType === 'update') {
+        // For 'update', the changes are directly from the payload.
+        // We need to add the generated fields from the operationLog.
+        finalChanges = {
+          ...payloadAsRecord, // Original client changes
+          updatedAt: op.createdAt, // The time of the update operation
+          version: op.operationVersion, // The version of the entity after this update
+        };
+        // Explicitly remove storyId if it was somehow in payloadAsRecord
+        delete finalChanges.storyId;
+        finalVersion = op.operationVersion;
+      } else if (op.operationType === 'delete') {
+        // For 'delete', payload contains id.
+        // We need to reconstruct the deleted state from the operationLog.
+        finalData = {
+          id: op.entityId,
+          isDeleted: true,
+          updatedAt: op.createdAt, // The time of the delete operation
+          deletedAt: op.createdAt,
+          version: op.operationVersion, // The version of the entity after this delete
+        };
+        finalVersion = op.operationVersion;
+      }
+
+      // Reconstruct the StoryUpdate object with added metadata
       if (op.operationType === 'create') {
         return {
           type: 'create',
           entity: op.entityType,
           id: op.entityId,
-          data: data!,
-          version: version,
-          operationVersion: op.operationVersion, // Include operationVersion
+          data: finalData!,
+          version: finalVersion,
+          operationVersion: op.operationVersion,
+          operationTime: operationTime, // Add operation_time
+          originatingUser: op.userId, // Add userId
         } as CreateStoryUpdate;
       } else if (op.operationType === 'update') {
         return {
           type: 'update',
           entity: op.entityType,
           id: op.entityId,
-          changes: changes!,
-          version: version,
-          operationVersion: op.operationVersion, // Include operationVersion
+          changes: finalChanges!,
+          version: finalVersion,
+          operationVersion: op.operationVersion,
+          operationTime: operationTime, // Add operation_time
+          originatingUser: op.userId, // Add userId
         } as UpdateStoryUpdate;
       } else if (op.operationType === 'delete') {
         return {
           type: 'delete',
           entity: op.entityType,
           id: op.entityId,
-          version: version,
-          operationVersion: op.operationVersion, // Include operationVersion
+          version: finalVersion,
+          operationVersion: op.operationVersion,
+          operationTime: operationTime, // Add operation_time
+          originatingUser: op.userId, // Add userId
         } as DeleteStoryUpdate;
       }
-      // Fallback or throw error for unknown operation types
       throw new Error(`Unknown operation type: ${op.operationType}`);
-    });
-
+    }));
     // Fetch the current maximum operation version for the story
     const serverMaxOperationVersion = (await db
       .select({ maxVersion: max(operationLog.operationVersion) })

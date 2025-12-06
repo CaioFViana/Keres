@@ -18,6 +18,9 @@ export const BaseStoryUpdateSchema = z.object({
   version: z.number().int().min(0).optional(),
   // A versão da *operação* no log de operações do servidor
   operationVersion: z.number().int().min(0).optional(),
+}).extend({
+  operationTime: z.date().optional(), // Add operationTime
+  originatingUser: z.string().optional(), // Add originatingUser
 });
 
 // 3. Schema para operações de criação

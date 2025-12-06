@@ -17,6 +17,7 @@ export const ItemJourneySchema = z.object({
 
 export const CreateItemJourneyDataSchema = ItemJourneySchema.omit({
   id: true,
+  storyId: true,
   createdAt: true,
   updatedAt: true,
   version: true,

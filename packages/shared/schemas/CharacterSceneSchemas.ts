@@ -14,6 +14,7 @@ export const CharacterSceneSchema = z.object({
 
 export const CreateCharacterSceneDataSchema = CharacterSceneSchema.omit({
   id: true,
+  storyId: true,
   createdAt: true,
   updatedAt: true,
   version: true,

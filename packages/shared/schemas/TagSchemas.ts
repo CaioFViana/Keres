@@ -16,6 +16,7 @@ export const TagSchema = z.object({
 
 export const CreateTagDataSchema = TagSchema.omit({
   id: true,
+  storyId: true,
   createdAt: true,
   updatedAt: true,
   version: true,

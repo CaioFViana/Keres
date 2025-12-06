@@ -10,6 +10,8 @@ import { createKeresAxiosInstance } from './apiClient';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler'; // Import CharacterClientSyncHandler
+import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler'; // Import TagClientSyncHandler
+import { authTokenManager } from './AuthTokenManager'; // Import authTokenManager
 
 interface SyncPreview {
   storyId: string;
@@ -38,6 +40,7 @@ class SyncEngineService {
     // Register handlers
     this.registerEntityHandler(new StoryClientSyncHandler());
     this.registerEntityHandler(new CharacterClientSyncHandler()); // Register CharacterClientSyncHandler
+    this.registerEntityHandler(new TagClientSyncHandler()); // Register TagClientSyncHandler
     // TODO: Register other entity handlers here
   }
 
@@ -57,6 +60,10 @@ class SyncEngineService {
     this._db = dbInstance;
     // Propagate the db instance to all registered handlers
     this.entityHandlers.forEach(handler => handler.setDb(dbInstance));
+
+    // Inject getServerById into authTokenManager to break circular dependency
+    const serverService = createServerService(dbInstance);
+    authTokenManager.setGetServerById(serverService.getServerById);
   }
 
   public async configure(storyId: string | undefined, serverUrl: string | null) {

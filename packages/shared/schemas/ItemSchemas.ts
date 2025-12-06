@@ -19,6 +19,7 @@ export const ItemSchema = z.object({
 
 export const CreateItemDataSchema = ItemSchema.omit({
   id: true,
+  storyId: true,
   createdAt: true,
   updatedAt: true,
   version: true,

@@ -13,6 +13,7 @@ interface GenericFilterSortListProps<T> {
   // Search Props
   onSearch: (searchText: string) => void;
   searchPlaceholder?: string;
+  currentSearchTerm?: string; // Add currentSearchTerm prop
   // Filter Props
   filterOptions?: { label: string; value: string }[];
   onFilterChange: (filterValues: string[]) => void; // Changed to array
@@ -31,6 +32,7 @@ const GenericFilterSortList = <T,>({
   keyExtractor,
   onSearch,
   searchPlaceholder,
+  currentSearchTerm, // Destructure new prop
   filterOptions,
   onFilterChange,
   selectedFilterValues, // Destructure new prop
@@ -43,7 +45,7 @@ const GenericFilterSortList = <T,>({
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const [searchText, setSearchText] = useState('');
+  // const [searchText, setSearchText] = useState(''); // Removed internal state
   const [selectedSort, setSelectedSort] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(currentSortDirection);
 
@@ -56,7 +58,7 @@ const GenericFilterSortList = <T,>({
 
 
   const handleSearchTextChange = (text: string) => {
-    setSearchText(text);
+    // setSearchText(text); // No longer setting internal state
     onSearch(text);
   };
 
@@ -130,7 +132,7 @@ const GenericFilterSortList = <T,>({
       <View style={styles.searchContainer}>
         <TextInput
           placeholder={searchPlaceholder || t('search')}
-          value={searchText}
+          value={currentSearchTerm || ''} // Use prop for value
           onChangeText={handleSearchTextChange}
           style={styles.searchBar}
         />

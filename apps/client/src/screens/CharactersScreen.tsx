@@ -1,18 +1,20 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View, ActivityIndicator, Button, Text } from 'react-native'; // Reverted aliasing
+import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native'; // Reverted aliasing
 import CharacterListItem from '../components/character/CharacterListItem';
 import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schema';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../navigation/MainSystemStack';
+import { CharacterWithTags } from '../services/CharacterService'; // Import CharacterWithTags
 import { createTagService } from '../services/TagService';
 import { useCharacterStore } from '../state/characterStore';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
+import { debounce } from '../utils/debounce'; // Import debounce
 
 type CharactersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,
@@ -84,14 +86,27 @@ const CharactersScreen = () => {
     }
   }, [selectedStory?.id, tagService]); // Add tagService to dependencies
 
+  // Debounce the fetchCharacters call
+  const debouncedFetchCharacters = useMemo(
+    () => debounce(() => fetchCharacters(), 1000),
+    [fetchCharacters]
+  );
+
   useEffect(() => {
     if (drizzleDb && selectedStory?.id) {
       setDbAndStoryId(drizzleDb, selectedStory.id);
       initializeService();
-      fetchCharacters();
+      // fetchCharacters(); // Removed: now handled by debounced effect
       fetchTags();
     }
-  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService, fetchCharacters, fetchTags]);
+  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService, fetchTags]);
+
+  useEffect(() => {
+    debouncedFetchCharacters();
+    return () => {
+      debouncedFetchCharacters.cancel && debouncedFetchCharacters.cancel();
+    };
+  }, [searchTerm, activeFilterTags, activeSort, sortDirection, debouncedFetchCharacters]);
 
   const handleToggleFavorite = useCallback(async (characterId: string, isFavorite: boolean) => {
     await toggleFavorite(characterId, isFavorite);
@@ -101,12 +116,25 @@ const CharactersScreen = () => {
     navigation.navigate('CharacterDetail', { characterId });
   }, [navigation]);
 
-  const tagFilterOptions = allTags.map(tag => ({ label: tag.name, value: tag.id }));
-  const sortOptions = [
-    { label: t('sort_by_name'), value: 'name' },
-    { label: t('sort_by_created_at'), value: 'createdAt' },
-    { label: t('sort_by_updated_at'), value: 'updatedAt' },
-  ];
+  const memoizedRenderItem = useCallback(({ item }: { item: CharacterWithTags }) => (
+    <CharacterListItem
+      character={item}
+      onToggleFavorite={handleToggleFavorite}
+      onViewDetails={handleViewDetails}
+    />
+  ), [handleToggleFavorite, handleViewDetails]);
+
+  const memoizedTagFilterOptions = useMemo(() => {
+    return allTags.map(tag => ({ label: tag.name, value: tag.id }));
+  }, [allTags]);
+
+  const memoizedSortOptions = useMemo(() => {
+    return [
+      { label: t('sort_by_name'), value: 'name' },
+      { label: t('sort_by_created_at'), value: 'createdAt' },
+      { label: t('sort_by_updated_at'), value: 'updatedAt' },
+    ];
+  }, [t]);
 
   const handleSortChange = useCallback((sortBy: string | null) => {
     setSort(sortBy, sortDirection);
@@ -148,20 +176,15 @@ const CharactersScreen = () => {
     <View style={styles.container}>
       <GenericFilterSortList
         data={characters} // Use characters from store
-        renderItem={({ item }) => (
-          <CharacterListItem
-            character={item}
-            onToggleFavorite={handleToggleFavorite} // Now correct
-            onViewDetails={handleViewDetails}
-          />
-        )}
+        renderItem={memoizedRenderItem} // Use memoized renderItem
         keyExtractor={(item) => item.id}
         onSearch={handleSearch} // Use store action
         searchPlaceholder={t('search_characters')}
-        filterOptions={tagFilterOptions}
+        currentSearchTerm={searchTerm} // Pass searchTerm from store
+        filterOptions={memoizedTagFilterOptions} // Use memoized filterOptions
         onFilterChange={handleFilterChange} // Use store action
         selectedFilterValues={activeFilterTags} // Use store state
-        sortOptions={sortOptions}
+        sortOptions={memoizedSortOptions} // Use memoized sortOptions
         onSortChange={handleSortChange} // Use store action
         onSortDirectionChange={handleSortDirectionChange} // Use store action
         currentSortDirection={sortDirection} // Use store state

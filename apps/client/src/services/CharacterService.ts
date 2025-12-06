@@ -19,10 +19,23 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
       if (searchTerm) {
         whereConditions.push(or(
-          ilike(characters.name, `%${searchTerm}%`),
-          ilike(characters.title, `%${searchTerm}%`)
+          sql`${characters.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE`,
+          sql`${characters.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE`
         ) as SQL<boolean>);
       }
+
+      if (tagFilterIds && tagFilterIds.length > 0) {
+        const taggedCharacters = db
+          .select({ entityId: tagRelations.entityId })
+          .from(tagRelations)
+          .where(and(
+            eq(tagRelations.entityType, 'Character'),
+            inArray(tagRelations.tagId, tagFilterIds)
+          ));
+        whereConditions.push(inArray(characters.id, taggedCharacters));
+      }
+
+      const finalWhereConditions = and(...whereConditions);
 
       let baseQuery = db.select({
         character: characters,
@@ -34,22 +47,8 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
           eq(tagRelations.entityType, 'Character')
         ))
         .leftJoin(tags, eq(tagRelations.tagId, tags.id))
+        .where(finalWhereConditions) // Apply all conditions here
         .$dynamic();
-
-      if (tagFilterIds && tagFilterIds.length > 0) {
-        const taggedCharacters = db
-          .select({ entityId: tagRelations.entityId })
-          .from(tagRelations)
-          .where(and(
-            eq(tagRelations.entityType, 'Character'),
-            inArray(tagRelations.tagId, tagFilterIds)
-          ));
-        baseQuery = baseQuery.where(inArray(characters.id, taggedCharacters));
-      }
-
-      if (whereConditions.length > 0) {
-        baseQuery = baseQuery.where(and(...whereConditions));
-      }
 
       switch (sortBy) {
         case 'name':

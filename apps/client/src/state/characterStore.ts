@@ -70,17 +70,14 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
   setSearchTerm: (term) => {
     set({ searchTerm: term });
-    get().fetchCharacters(); // Re-fetch characters with new search term
   },
 
   setFilterTags: (tags) => {
     set({ activeFilterTags: tags });
-    get().fetchCharacters(); // Re-fetch characters with new filter tags
   },
 
   setSort: (sortBy, direction) => {
     set({ activeSort: sortBy, sortDirection: direction });
-    get().fetchCharacters(); // Re-fetch characters with new sort
   },
 
   toggleFavorite: async (characterId, isFavorite) => {

@@ -1,20 +1,20 @@
-import { useNavigation, StackActions } from '@react-navigation/native'; // Import useNavigation and StackActions
+import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import NativeStackNavigationProp
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Import Alert
-import Button from '../components/common/Button/Button';
-import Select from '../components/common/Select/Select';
-import TextInput from '../components/common/TextInput/TextInput';
-import { resetDatabase, useDrizzle } from '../db'; // Import resetDatabase
-import { StorySelectionStackParamList } from '../navigation/StorySelectionStack';
-import { useThemeStore } from '../state/themeStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
-import i18n from '../utils/i18n';
-import { getLanguageOptions } from '../utils/languageOptions';
+import Button from '../../components/common/Button/Button';
+import Select from '../../components/common/Select/Select';
+import TextInput from '../../components/common/TextInput/TextInput';
+import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
+import { StorySelectionStackParamList } from '../../navigation/StorySelectionStack';
+import { useThemeStore } from '../../state/themeStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useTheme } from '../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import i18n from '../../utils/i18n';
+import { getLanguageOptions } from '../../utils/languageOptions';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<StorySelectionStackParamList, 'Settings'>;
 

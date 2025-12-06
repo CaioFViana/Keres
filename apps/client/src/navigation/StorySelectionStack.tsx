@@ -1,11 +1,11 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
-import ServerManagementScreen from '../screens/ServerManagementScreen';
-import ServerRegistrationScreen from '../screens/ServerRegistrationScreen'; // Import the new screen
-import SettingsScreen from '../screens/SettingsScreen';
-import StoryFormScreen from '../screens/StoryFormScreen';
-import StorySelectionScreen from '../screens/StorySelectionScreen';
+import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
+import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen'; // Import the new screen
+import SettingsScreen from '../screens/enterstack/SettingsScreen';
+import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
+import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import { useTheme } from '../theme'; // Import useTheme
 
 export type StorySelectionStackParamList = {

@@ -1,16 +1,16 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
-import apiClient from '../services/apiClient'; 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../components/common/Button/Button';
-import TextInput from '../components/common/TextInput/TextInput';
-import { useDrizzle } from '../db';
-import { createServerService } from '../services/ServerService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
+import Button from '../../components/common/Button/Button';
+import TextInput from '../../components/common/TextInput/TextInput';
+import { useDrizzle } from '../../db';
+import apiClient from '../../services/apiClient';
+import { createServerService } from '../../services/ServerService';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useTheme } from '../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };

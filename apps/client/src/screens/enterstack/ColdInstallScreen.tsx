@@ -4,20 +4,20 @@ import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../components/common/Button/Button';
-import FormContainer from '../components/common/FormContainer/FormContainer'; // Import FormContainer
-import Select from '../components/common/Select/Select'; // Import our new Select component
-import TextInput from '../components/common/TextInput/TextInput';
-import { useDrizzle } from '../db'; // Import useDrizzle
-import { migrate } from '../db/migrate'; // Import migrate
-import { createClientSettings } from '../services/ClientSettingsService'; // Import createClientSettings
-import { useNotificationStore } from '../state/notificationStore'; // Import useNotificationStore
-import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles'; // Import common styles
-import i18n from '../utils/i18n';
-import { getLanguageOptions } from '../utils/languageOptions';
+import Button from '../../components/common/Button/Button';
+import FormContainer from '../../components/common/FormContainer/FormContainer'; // Import FormContainer
+import Select from '../../components/common/Select/Select'; // Import our new Select component
+import TextInput from '../../components/common/TextInput/TextInput';
+import { useDrizzle } from '../../db'; // Import useDrizzle
+import { migrate } from '../../db/migrate'; // Import migrate
+import { createClientSettings } from '../../services/ClientSettingsService'; // Import createClientSettings
+import { useNotificationStore } from '../../state/notificationStore'; // Import useNotificationStore
+import { useThemeStore } from '../../state/themeStore'; // Import useThemeStore
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useTheme } from '../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles'; // Import common styles
+import i18n from '../../utils/i18n';
+import { getLanguageOptions } from '../../utils/languageOptions';
 
 type RootStackParamList = {
   ColdInstall: undefined;

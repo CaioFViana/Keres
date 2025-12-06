@@ -4,15 +4,15 @@ import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-naviga
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../components/common/Button/Button';
-import Select from '../components/common/Select/Select';
-import TextInput from '../components/common/TextInput/TextInput';
-import { useDrizzle } from '../db';
-import { createStoryService } from '../services/StoryService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
-import { getLanguageOptions } from '../utils/languageOptions';
+import Button from '../../components/common/Button/Button';
+import Select from '../../components/common/Select/Select';
+import TextInput from '../../components/common/TextInput/TextInput';
+import { useDrizzle } from '../../db';
+import { createStoryService } from '../../services/StoryService';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useTheme } from '../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { getLanguageOptions } from '../../utils/languageOptions';
 
 type RootStackParamList = {
   StoryForm: { storyId?: string };

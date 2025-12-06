@@ -15,8 +15,8 @@ import MainDashboardScreen from '../screens/MainDashboardScreen';
 
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
+import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import ImportExportScreen from '../screens/ImportExportScreen';
-import StorySelectionScreen from '../screens/StorySelectionScreen';
 import StorySettingsScreen from '../screens/StorySettingsScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';

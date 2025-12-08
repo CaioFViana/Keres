@@ -2,38 +2,53 @@ import { FullStoryExportType } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import {
-  ChapterInsert, ChapterSelect,
-  CharacterInsert, CharacterSelect,
-  ChoiceInsert, ChoiceSelect,
-  LocationInsert, LocationSelect,
-  NoteInsert, NoteSelect,
-  SceneInsert, SceneSelect,
-  StoryInsert, StorySelect,
-  WorldRuleInsert, WorldRuleSelect,
+  ChapterInsert,
   chapters,
-  characterRelations, // Added
-  characterScenes,
+  ChapterSelect,
+  CharacterInsert,
+  CharacterRelationInsert,
+  characterRelations,
   characters,
-  choices, // Added
+  CharacterSceneInsert,
+  characterScenes,
+  CharacterSelect,
+  ChoiceInsert,
+  choices,
+  ChoiceSelect,
   galleries,
+  GalleryInsert,
+  ItemInsert,
+  ItemJourneyInsert,
   itemJourneys,
   items,
+  LocationInsert,
   locations,
+  LocationSelect,
+  NoteInsert,
   notes,
+  NoteSelect,
+  SceneInsert,
   scenes,
-  stories, // Added
-  suggestions, // Added
-  tagRelations, // Added
+  SceneSelect,
+  stories,
+  StoryInsert, StorySelect,
+  SuggestionInsert,
+  suggestions,
+  TagInsert,
+  TagRelationInsert,
+  tagRelations,
   tags,
-  worldRules
+  WorldRuleInsert,
+  worldRules,
+  WorldRuleSelect
 } from '../db/schema';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 
 export interface StoryService {
   getAllStories(): Promise<StorySelect[]>;
   getStoryById(storyId: string): Promise<StorySelect | undefined>;
-  createStory(storyData: Create<StoryInsert>): Promise<StorySelect>;
-  updateStory(storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'>>): Promise<void>;
+  createStory(currentUserId: string, storyData: Create<StoryInsert>): Promise<StorySelect>;
+  updateStory(currentUserId: string, storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'>>): Promise<void>;
   getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }>;
   getCharacterCount(storyId?: string): Promise<number>;
   getChoiceCount(storyId?: string): Promise<number>;
@@ -44,41 +59,53 @@ export interface StoryService {
   getWorldRuleCount(storyId?: string): Promise<number>;
 
   // New creation methods using Create<T>
-  createCharacter(characterData: Create<CharacterInsert>): Promise<CharacterSelect>;
-  createChapter(chapterData: Create<ChapterInsert>): Promise<ChapterSelect>;
-  createLocation(locationData: Create<LocationInsert>): Promise<LocationSelect>;
-  createScene(sceneData: Create<SceneInsert>): Promise<SceneSelect>;
-  createNote(noteData: Create<NoteInsert>): Promise<NoteSelect>;
-  createWorldRule(worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect>;
-  createChoice(choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect>;
+  createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect>;
+  createChapter(currentUserId: string, chapterData: Create<ChapterInsert>): Promise<ChapterSelect>;
+  createLocation(currentUserId: string, locationData: Create<LocationInsert>): Promise<LocationSelect>;
+  createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect>;
+  createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect>;
+  createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect>;
+  createChoice(currentUserId: string, choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect>;
 
-  updateStoryFavoriteStatus(storyId: string, isFavorite: boolean): Promise<void>;
-  deleteStory(storyId: string): Promise<void>;
+  updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void>;
+  deleteStory(currentUserId: string, storyId: string): Promise<void>;
   getBranchingStoryForkCount(): Promise<number>;
   importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null): Promise<string>;
 }
 
+
+import { createOperationLogService } from './OperationLogService';
+
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
+  const operationLogService = createOperationLogService();
   return {
     async getAllStories(): Promise<StorySelect[]> {
-      return db.select().from(stories).all();
+      return db.select().from(stories).where(eq(stories.isDeleted, false)).all();
     },
 
     async getStoryById(storyId: string): Promise<StorySelect | undefined> {
       return db.select().from(stories).where(eq(stories.id, storyId)).get();
     },
 
-    async createStory(storyData): Promise<StorySelect> {
-      const newStory = prepareNewEntityData<StoryInsert>(storyData);
+    async createStory(currentUserId: string, storyData: Create<StoryInsert>): Promise<StorySelect> {
+      const newStory = prepareNewEntityData<StoryInsert>({ ...storyData, userId: currentUserId });
       const result = await db.insert(stories).values(newStory).returning().get();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, newStory.id, currentUserId);
+      await operationLogService.recordLocalOperation(db, newStory.id, userIdToLog, 'create', 'Story', newStory.id, newStory);
+
       return result;
     },
 
-    async updateStory(storyId: string, storyData): Promise<void> {
+    async updateStory(currentUserId: string, storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'>>): Promise<void> {
+      const updatedFields = { ...storyData, updatedAt: new Date(), version: sql`${stories.version} + 1` };
       await db.update(stories)
-        .set({ ...storyData, updatedAt: new Date() })
+        .set(updatedFields)
         .where(eq(stories.id, storyId))
         .run();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, updatedFields);
     },
 
     async getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }> {
@@ -147,61 +174,103 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       return result?.count || 0;
     },
 
-    async createCharacter(characterData): Promise<CharacterSelect> {
+    async createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect> {
       const newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
       const result = await db.insert(characters).values(newCharacter).returning().get();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, newCharacter.storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, newCharacter.storyId, userIdToLog, 'create', 'Character', newCharacter.id, newCharacter);
+
       return result;
     },
 
-    async createChapter(chapterData): Promise<ChapterSelect> {
+    async createChapter(currentUserId: string, chapterData: Create<ChapterInsert>): Promise<ChapterSelect> {
       const newChapter = prepareNewEntityData<ChapterInsert>(chapterData);
       const result = await db.insert(chapters).values(newChapter).returning().get();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, newChapter.storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, newChapter.storyId, userIdToLog, 'create', 'Chapter', newChapter.id, newChapter);
+
       return result;
     },
 
-    async createLocation(locationData): Promise<LocationSelect> {
+    async createLocation(currentUserId: string, locationData: Create<LocationInsert>): Promise<LocationSelect> {
       const newLocation = prepareNewEntityData<LocationInsert>(locationData);
       const result = await db.insert(locations).values(newLocation).returning().get();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, newLocation.storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, newLocation.storyId, userIdToLog, 'create', 'Location', newLocation.id, newLocation);
+
       return result;
     },
 
-    async createScene(sceneData): Promise<SceneSelect> {
+    async createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect> {
       const newScene = prepareNewEntityData<SceneInsert>(sceneData);
       const result = await db.insert(scenes).values(newScene).returning().get();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, newScene.storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, newScene.storyId, userIdToLog, 'create', 'Scene', newScene.id, newScene);
+
       return result;
     },
 
-    async createNote(noteData): Promise<NoteSelect> {
+    async createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect> {
       const newNote = prepareNewEntityData<NoteInsert>(noteData);
       const result = await db.insert(notes).values(newNote).returning().get();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, newNote.storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, newNote);
+
       return result;
     },
 
-    async createWorldRule(worldRuleData): Promise<WorldRuleSelect> {
+    async createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect> {
       const newWorldRule = prepareNewEntityData<WorldRuleInsert>(worldRuleData);
       const result = await db.insert(worldRules).values(newWorldRule).returning().get();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, newWorldRule.storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, newWorldRule.storyId, userIdToLog, 'create', 'WorldRule', newWorldRule.id, newWorldRule);
+
       return result;
     },
 
-    async createChoice(choiceData): Promise<ChoiceSelect> {
+    async createChoice(currentUserId: string, choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect> {
       const newChoice = prepareNewEntityData<ChoiceInsert>(choiceData);
       const result = await db.insert(choices).values(newChoice).returning().get();
+
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, newChoice.storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, newChoice.storyId, userIdToLog, 'create', 'Choice', newChoice.id, newChoice);
+
       return result;
     },
 
-    async updateStoryFavoriteStatus(storyId: string, isFavorite: boolean): Promise<void> {
+    async updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void> {
       await db.update(stories)
         .set({ isFavorite, updatedAt: new Date() })
         .where(eq(stories.id, storyId))
         .run();
+      
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, { isFavorite, updatedAt: new Date() });
     },
 
-    async deleteStory(storyId: string): Promise<void> {
-      // While story components delete only via marking for deletion, deleting a story should delete it all!
-      // Rest of delete (its components) will come in due time. for now this is enough.
-      await db.delete(stories)
+    async deleteStory(currentUserId: string, storyId: string): Promise<void> {
+      const storyToDelete = await db.query.stories.findFirst({
+        where: eq(stories.id, storyId),
+      });
+
+      if (!storyToDelete) {
+        console.warn(`Attempted to delete non-existent story ${storyId}.`);
+        return;
+      }
+
+      await db.update(stories)
+        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${stories.version} + 1` })
         .where(eq(stories.id, storyId))
         .run();
+      
+      const userIdToLog = await operationLogService.getUserIdForOperation(db, storyId, currentUserId);
+      await operationLogService.recordLocalOperation(db, storyId, userIdToLog, 'delete', 'Story', storyId, { id: storyId, isDeleted: true });
     },
 
     async getBranchingStoryForkCount(): Promise<number> {
@@ -341,7 +410,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
         // 9. Process Tags
         for (const tag of fullStoryData.tags) {
-          const tagToInsert: any = { // Use 'any' temporarily if TagInsert is not fully defined
+          const tagToInsert: TagInsert = {
             ...tag,
             storyId: tag.storyId,
             createdAt: new Date(tag.createdAt),
@@ -355,13 +424,14 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
         // 10. Process Suggestions
         for (const suggestion of fullStoryData.suggestions) {
-          const suggestionToInsert: any = { // Use 'any' temporarily if SuggestionInsert is not fully defined
+          const suggestionToInsert: SuggestionInsert = {
             ...suggestion,
             storyId: suggestion.storyId,
             createdAt: new Date(suggestion.createdAt),
             updatedAt: new Date(),
             version: suggestion.version,
             isDeleted: false,
+            isDefault: suggestion.isDefault,
             deletedAt: null,
           };
           await tx.insert(suggestions).values(suggestionToInsert).run();
@@ -369,11 +439,11 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
         // 11. Process CharacterRelations
         for (const charRelation of fullStoryData.characterRelations) {
-          const charRelationToInsert: any = { // Use 'any' temporarily if CharacterRelationInsert is not fully defined
+          const charRelationToInsert: CharacterRelationInsert = {
             ...charRelation,
             storyId: charRelation.storyId,
-            character1Id: charRelation.character1Id,
-            character2Id: charRelation.character2Id,
+            charId1: charRelation.character1Id,
+            charId2: charRelation.character2Id,
             createdAt: new Date(charRelation.createdAt),
             updatedAt: new Date(),
             version: charRelation.version,
@@ -385,7 +455,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
         // 12. Process CharacterScenes
         for (const charScene of fullStoryData.characterScenes) {
-          const charSceneToInsert: any = { // Use 'any' temporarily if CharacterSceneInsert is not fully defined
+          const charSceneToInsert: CharacterSceneInsert = {
             ...charScene,
             storyId: charScene.storyId,
             characterId: charScene.characterId,
@@ -402,12 +472,12 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // 13. Process TagRelations
         if (fullStoryData.tagRelations) {
           for (const tagRelation of fullStoryData.tagRelations) {
-            const tagRelationToInsert: any = { // Use 'any' temporarily if TagRelationInsert is not fully defined
+            const tagRelationToInsert: TagRelationInsert = {
               ...tagRelation,
               storyId: tagRelation.storyId,
               tagId: tagRelation.tagId,
-              relationId: tagRelation.relationId,
-              relationType: tagRelation.relationType,
+              entityId: tagRelation.relationId,
+              entityType: tagRelation.relationType,
               createdAt: new Date(tagRelation.createdAt),
               updatedAt: new Date(),
               version: tagRelation.version,
@@ -421,7 +491,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // 14. Process GalleryItems
         if (fullStoryData.galleryItems) {
           for (const galleryItem of fullStoryData.galleryItems) {
-            const galleryItemToInsert: any = { // Use 'any' temporarily if GalleryInsert is not fully defined
+            const galleryItemToInsert: GalleryInsert = {
               ...galleryItem,
               storyId: galleryItem.storyId,
               ownerId: galleryItem.ownerId,
@@ -438,7 +508,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // 15. Process Items (if optional) - Assuming there's an 'items' table
         if (fullStoryData.items) {
           for (const item of fullStoryData.items) {
-            const itemToInsert: any = { // Use 'any' temporarily if ItemInsert is not fully defined
+            const itemToInsert: ItemInsert = {
               ...item,
               storyId: item.storyId,
               characterOwnerId: item.characterOwnerId,
@@ -455,12 +525,12 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // 16. Process ItemJourneys - Assuming there's an 'itemJourneys' table
         if (fullStoryData.itemJourneys) {
           for (const itemJourney of fullStoryData.itemJourneys) {
-            const itemJourneyToInsert: any = { // Use 'any' temporarily if ItemJourneyInsert is not fully defined
+            const itemJourneyToInsert: ItemJourneyInsert = {
               ...itemJourney,
               storyId: itemJourney.storyId,
               itemId: itemJourney.itemId,
               sceneId: itemJourney.sceneId,
-              newCharacterOwnerid: itemJourney.newCharacterOwnerid,
+              newCharacterOwnerId: itemJourney.newCharacterOwnerid,
               createdAt: new Date(itemJourney.createdAt),
               updatedAt: new Date(),
               version: itemJourney.version,

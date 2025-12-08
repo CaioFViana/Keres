@@ -71,6 +71,13 @@
       "when": 1764954067419,
       "tag": "0009_nappy_nextwave",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1765226043524,
+      "tag": "0010_daffy_wolverine",
+      "breakpoints": true
     }
   ]
 }

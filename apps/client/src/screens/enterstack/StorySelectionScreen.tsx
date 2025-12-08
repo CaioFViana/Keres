@@ -264,8 +264,12 @@ const StorySelectionScreen = () => {
   };
 
   const toggleFavorite = async (storyId: string, currentFavoriteStatus: boolean) => {
+    if (!userId) {
+      console.error('User not logged in. Cannot toggle favorite status.');
+      return;
+    }
     try {
-      await storyService.updateStoryFavoriteStatus(storyId, !currentFavoriteStatus);
+      await storyService.updateStoryFavoriteStatus(userId, storyId, !currentFavoriteStatus);
       setStories((prevStories) =>
         prevStories.map((story) =>
           story.id === storyId ? { ...story, isFavorite: !currentFavoriteStatus } : story

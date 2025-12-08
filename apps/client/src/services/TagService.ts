@@ -1,13 +1,19 @@
-import { eq, and, sql, SQL } from 'drizzle-orm'; // Changed to and, removed or
+import { eq, and, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { tags, TagSelect } from '../db/schema';
+import { tags, TagSelect, TagInsert, stories } from '../db/schema'; // Import TagInsert and stories
+import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
+import { recordLocalOperation, getUserIdForOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
+import { createServerService, ServerService } from './ServerService'; // Import ServerService and createServerService
 
 export interface TagService {
-  getTagsByStoryId(storyId: string, searchTerm?: string): Promise<TagSelect[]>; // Added searchTerm
-  // TODO: Add methods for creating, updating, deleting tags
+  getTagsByStoryId(storyId: string, searchTerm?: string): Promise<TagSelect[]>;
+  createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect>;
+  updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
+  deleteTag(currentUserId: string, tagId: string): Promise<void>;
 }
 
 export const createTagService = (db: AppDrizzleClient): TagService => {
+  const serverService = createServerService(db); // Create serverService once
   return {
     async getTagsByStoryId(storyId, searchTerm): Promise<TagSelect[]> { // Added searchTerm
       console.log('TagService: getTagsByStoryId called with storyId:', storyId, 'searchTerm:', searchTerm); // Added log
@@ -25,6 +31,46 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       const result = await db.select().from(tags).where(and(...finalConditions)).all();
       console.log('TagService: Query result:', result); // Added log
       return result;
+    },
+
+    async createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect> {
+      const newTag = prepareNewEntityData<TagInsert>(tagData);
+      const result = await db.insert(tags).values(newTag).returning().get();
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, newTag.storyId, currentUserId);
+      await recordLocalOperation(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, newTag);
+
+      return result;
+    },
+
+    async updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+      const updatedFields = { ...tagData, updatedAt: new Date(), version: sql`${tags.version} + 1` };
+      await db.update(tags)
+        .set(updatedFields)
+        .where(eq(tags.id, tagId))
+        .run();
+
+      const tagToLog = await db.query.tags.findFirst({ where: eq(tags.id, tagId) }); // Fetch updated entity
+      if (tagToLog) {
+        const userIdToLog = await getUserIdForOperation(db, serverService, tagToLog.storyId, currentUserId);
+        await recordLocalOperation(db, tagToLog.storyId, userIdToLog, 'update', 'Tag', tagId, updatedFields);
+      }
+    },
+
+    async deleteTag(currentUserId: string, tagId: string): Promise<void> {
+      const tagToDelete = await db.query.tags.findFirst({ where: eq(tags.id, tagId) });
+      if (!tagToDelete) {
+        console.warn(`Attempted to delete non-existent tag ${tagId}.`);
+        return;
+      }
+
+      await db.update(tags)
+        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${tags.version} + 1` })
+        .where(eq(tags.id, tagId))
+        .run();
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, tagToDelete.storyId, currentUserId);
+      await recordLocalOperation(db, tagToDelete.storyId, userIdToLog, 'delete', 'Tag', tagId, { id: tagId, isDeleted: true });
     },
   };
 };

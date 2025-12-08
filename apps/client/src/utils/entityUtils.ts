@@ -6,11 +6,11 @@ export type Create<T> = Omit<T, BaseEntityFieldNames>;
 
 interface BaseEntityFields {
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date; // Made optional
+  updatedAt?: Date; // Made optional
   version: number;
-  isDeleted: boolean;
-  deletedAt?: Date | null; // Made optional to match Drizzle's Insert types
+  isDeleted?: boolean; // Made optional
+  deletedAt?: Date | null;
 }
 
 export function prepareNewEntityData<T extends BaseEntityFields>(

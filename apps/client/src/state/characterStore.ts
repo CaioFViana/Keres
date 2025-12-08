@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { CharacterWithTags, CharacterService, createCharacterService } from '../services/CharacterService'; // Import CharacterWithTags
 import { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
+import { CharacterService, CharacterWithTags, createCharacterService } from '../services/CharacterService'; // Import CharacterWithTags
+import { useUserSettingsStore } from './userSettingsStore';
 
 interface CharacterState {
   characters: CharacterWithTags[];
@@ -94,15 +95,19 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
       ),
     }));
 
+    const userId = useUserSettingsStore.getState().userId; // Get userId from the store
+    if (!userId) {
+      console.error('User ID not available. Cannot toggle character favorite status.');
+      return;
+    }
+
     try {
-      await characterService.updateCharacter(characterId, { isFavorite });
+      await characterService.updateCharacter(userId, characterId, { isFavorite });
       // Re-fetch to ensure consistency with backend/database
       get().fetchCharacters();
     } catch (err) {
       console.error('Failed to toggle favorite status:', err);
       set({ error: 'Failed to update favorite status.' });
-      // Revert optimistic update if necessary, or just re-fetch
-      get().fetchCharacters();
     }
   },
 }));

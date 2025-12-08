@@ -1,17 +1,23 @@
 import { and, asc, count, desc, eq, ilike, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { characters, CharacterSelect, tagRelations, tags, TagSelect } from '../db/schema';
+import { characters, CharacterSelect, tagRelations, tags, TagSelect, CharacterInsert, stories } from '../db/schema'; // Import CharacterInsert and stories
+import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
+import { recordLocalOperation, getUserIdForOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
+import { createServerService, ServerService } from './ServerService'; // Import ServerService and createServerService
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
 export interface CharacterService {
   getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], sortBy?: string, sortDirection?: 'asc' | 'desc'): Promise<CharacterWithTags[]>;
   getCharacterCount(storyId?: string): Promise<number>;
-  updateCharacter(characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<CharacterSelect>;
+  createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect>; // Add createCharacter
+  updateCharacter(currentUserId: string, characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<void>;
+  deleteCharacter(currentUserId: string, characterId: string): Promise<void>; // Add deleteCharacter
   getById(characterId: string): Promise<CharacterSelect | undefined>;
 }
 
 export const createCharacterService = (db: AppDrizzleClient): CharacterService => {
+  const serverService = createServerService(db); // Create serverService once
   return {
     async getCharactersByStoryId(storyId, searchTerm, tagFilterIds, sortBy, sortDirection): Promise<CharacterWithTags[]> {
       const whereConditions = [eq(characters.storyId, storyId)];
@@ -96,22 +102,44 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       return result?.count || 0;
     },
 
-    async updateCharacter(characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<CharacterSelect> {
-      const [updatedCharacter] = await db
-        .update(characters)
-        .set({
-          ...updatedFields,
-          updatedAt: new Date(),
-          version: sql`${characters.version} + 1`,
-        })
-        .where(eq(characters.id, characterId))
-        .returning();
+    async createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect> {
+      const newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
+      const result = await db.insert(characters).values(newCharacter).returning().get();
 
-      if (!updatedCharacter) {
-        throw new Error(`Character with ID ${characterId} not found.`);
+      const userIdToLog = await getUserIdForOperation(db, serverService, newCharacter.storyId, currentUserId);
+      await recordLocalOperation(db, newCharacter.storyId, userIdToLog, 'create', 'Character', newCharacter.id, newCharacter);
+
+      return result;
+    },
+
+    async updateCharacter(currentUserId: string, characterId: string, characterData: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<void> {
+      const updatedFields = { ...characterData, updatedAt: new Date(), version: sql`${characters.version} + 1` };
+      await db.update(characters)
+        .set(updatedFields)
+        .where(eq(characters.id, characterId))
+        .run();
+
+      const characterToLog = await db.query.characters.findFirst({ where: eq(characters.id, characterId) }); // Fetch updated entity
+      if (characterToLog) {
+        const userIdToLog = await getUserIdForOperation(db, serverService, characterToLog.storyId, currentUserId);
+        await recordLocalOperation(db, characterToLog.storyId, userIdToLog, 'update', 'Character', characterId, updatedFields);
+      }
+    },
+
+    async deleteCharacter(currentUserId: string, characterId: string): Promise<void> {
+      const characterToDelete = await db.query.characters.findFirst({ where: eq(characters.id, characterId) });
+      if (!characterToDelete) {
+        console.warn(`Attempted to delete non-existent character ${characterId}.`);
+        return;
       }
 
-      return updatedCharacter;
+      await db.update(characters)
+        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${characters.version} + 1` })
+        .where(eq(characters.id, characterId))
+        .run();
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, characterToDelete.storyId, currentUserId);
+      await recordLocalOperation(db, characterToDelete.storyId, userIdToLog, 'delete', 'Character', characterId, { id: characterId, isDeleted: true });
     },
 
     async getById(characterId: string): Promise<CharacterSelect | undefined> {
@@ -122,4 +150,5 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
     },
   };
 };
+
 

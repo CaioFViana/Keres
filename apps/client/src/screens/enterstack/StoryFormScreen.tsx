@@ -118,10 +118,10 @@ const StoryFormScreen = () => {
       };
 
       if (storyId) {
-        await storyService().updateStory(storyId, storyData);
+        await storyService().updateStory(userId, storyId, storyData);
         Alert.alert(t('success'), t('story_updated_successfully'));
       } else {
-        await storyService().createStory(storyData);
+        await storyService().createStory(userId, storyData);
         Alert.alert(t('success'), t('story_created_successfully'));
       }
       navigation.goBack(); // Go back to the previous screen (StorySelection)
@@ -135,6 +135,11 @@ const StoryFormScreen = () => {
   };
 
   const handleDelete = () => {
+    if (!userId) {
+      Alert.alert(t('error'), t('user_not_identified'));
+      return;
+    }
+
     Alert.alert(
       t('delete_story_title'),
       t('delete_story_message'),
@@ -149,7 +154,7 @@ const StoryFormScreen = () => {
             if (storyId) {
               try {
                 setLoading(true);
-                await storyService().deleteStory(storyId);
+                await storyService().deleteStory(userId, storyId);
                 Alert.alert(t('success'), t('story_deleted_successfully'));
                 navigation.goBack();
               } catch (err) {

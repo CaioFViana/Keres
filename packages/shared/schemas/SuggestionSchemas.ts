@@ -5,6 +5,7 @@ export const SuggestionSchema = z.object({
   storyId: z.string(),
   type: z.string().min(1, "Suggestion type cannot be empty"),
   value: z.string().min(1, "Suggestion value cannot be empty"),
+  isDefault: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
   version: z.number(),

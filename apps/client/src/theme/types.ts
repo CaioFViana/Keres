@@ -16,5 +16,6 @@ export interface ThemeColors {
   card: string;
   border: string;
   notification: string;
+  accent: string; // Added accent color
   star: string;
 }

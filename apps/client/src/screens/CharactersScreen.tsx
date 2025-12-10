@@ -9,7 +9,7 @@ import GenericFilterSortList from '../components/common/GenericFilterSortList/Ge
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schema';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../navigation/MainSystemStack';
-import { CharacterWithTags } from '../services/CharacterService'; // Import CharacterWithTags
+import { CharacterWithTags, FavoriteFilterState } from '../services/CharacterService'; // Import CharacterWithTags and FavoriteFilterState
 import { createTagService } from '../services/TagService';
 import { useCharacterStore } from '../state/characterStore';
 import { useStoryStore } from '../state/storyStore';
@@ -33,6 +33,7 @@ const CharactersScreen = () => {
     characters,
     searchTerm,
     activeFilterTags,
+    favoriteFilterState, // Destructure favoriteFilterState
     activeSort,
     sortDirection,
     loading,
@@ -42,6 +43,7 @@ const CharactersScreen = () => {
     fetchCharacters,
     setSearchTerm,
     setFilterTags,
+    setFavoriteFilter, // Destructure setFavoriteFilter
     setSort,
     toggleFavorite,
   } = useCharacterStore();
@@ -106,7 +108,7 @@ const CharactersScreen = () => {
     return () => {
       debouncedFetchCharacters.cancel && debouncedFetchCharacters.cancel();
     };
-  }, [searchTerm, activeFilterTags, activeSort, sortDirection, debouncedFetchCharacters]);
+  }, [searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, debouncedFetchCharacters]); // Add favoriteFilterState
 
   const handleToggleFavorite = useCallback(async (characterId: string, isFavorite: boolean) => {
     await toggleFavorite(characterId, isFavorite);
@@ -152,6 +154,10 @@ const CharactersScreen = () => {
     setFilterTags(selectedValues);
   }, [setFilterTags]);
 
+  const handleFavoriteFilterChange = useCallback((state: FavoriteFilterState) => {
+    setFavoriteFilter(state);
+  }, [setFavoriteFilter]);
+
   if (loading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -188,6 +194,9 @@ const CharactersScreen = () => {
         onSortChange={handleSortChange} // Use store action
         onSortDirectionChange={handleSortDirectionChange} // Use store action
         currentSortDirection={sortDirection} // Use store state
+        currentSortValue={activeSort} // Pass activeSort from store
+        onFavoriteFilterChange={handleFavoriteFilterChange} // Pass handler for favorite filter
+        currentFavoriteFilterState={favoriteFilterState} // Pass current favorite filter state
       />
     </View>
   );

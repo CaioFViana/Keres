@@ -3,10 +3,13 @@ import { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
 import { CharacterService, CharacterWithTags, createCharacterService } from '../services/CharacterService'; // Import CharacterWithTags
 import { useUserSettingsStore } from './userSettingsStore';
 
+type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+
 interface CharacterState {
   characters: CharacterWithTags[];
   searchTerm: string;
   activeFilterTags: string[];
+  favoriteFilterState: FavoriteFilterState;
   activeSort: string | null;
   sortDirection: 'asc' | 'desc';
   loading: boolean;
@@ -20,6 +23,7 @@ interface CharacterState {
   fetchCharacters: () => Promise<void>;
   setSearchTerm: (term: string) => void;
   setFilterTags: (tags: string[]) => void;
+  setFavoriteFilter: (state: FavoriteFilterState) => void;
   setSort: (sortBy: string | null, direction: 'asc' | 'desc') => void;
   toggleFavorite: (characterId: string, isFavorite: boolean) => Promise<void>;
 }
@@ -28,6 +32,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
   characters: [],
   searchTerm: '',
   activeFilterTags: [],
+  favoriteFilterState: 'all',
   activeSort: null,
   sortDirection: 'asc',
   loading: false,
@@ -47,7 +52,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
   fetchCharacters: async () => {
     set({ loading: true, error: null });
-    const { characterService, storyId, searchTerm, activeFilterTags, activeSort, sortDirection } = get();
+    const { characterService, storyId, searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection } = get();
 
     if (!characterService || !storyId) {
       set({ loading: false, error: 'Character service or story ID not set.' });
@@ -59,6 +64,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         storyId,
         searchTerm,
         activeFilterTags.length > 0 ? activeFilterTags : undefined,
+        favoriteFilterState, // Pass favoriteFilterState
         activeSort || undefined,
         sortDirection
       );
@@ -75,6 +81,10 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
   setFilterTags: (tags) => {
     set({ activeFilterTags: tags });
+  },
+
+  setFavoriteFilter: (state) => {
+    set({ favoriteFilterState: state });
   },
 
   setSort: (sortBy, direction) => {

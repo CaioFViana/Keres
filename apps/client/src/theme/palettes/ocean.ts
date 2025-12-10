@@ -18,6 +18,7 @@ const lightColors: ThemeColors = {
   card: '#B0E0E6', // PowderBlue - Pastel blue
   border: '#ADD8E6', // Light Blue
   notification: '#FFC107',
+  accent: '#00BCD4', // Cyan for a vibrant accent
   star: '#FFD700',
 };
 
@@ -39,6 +40,7 @@ const darkColors: ThemeColors = {
   card: '#2C405A', // Darker blue with subtle tint
   border: '#3A506B', // Medium dark blue
   notification: '#FFC107',
+  accent: '#4DD0E1', // A lighter cyan for accent in dark mode
   star: '#FFD700',
 };
 

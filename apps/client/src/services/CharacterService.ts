@@ -7,8 +7,10 @@ import { createServerService } from './ServerService'; // Import ServerService a
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
+export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+
 export interface CharacterService {
-  getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], sortBy?: string, sortDirection?: 'asc' | 'desc'): Promise<CharacterWithTags[]>;
+  getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], favoriteFilterState?: FavoriteFilterState, sortBy?: string, sortDirection?: 'asc' | 'desc'): Promise<CharacterWithTags[]>;
   getCharacterCount(storyId?: string): Promise<number>;
   createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect>; // Add createCharacter
   updateCharacter(currentUserId: string, characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<void>;
@@ -19,7 +21,7 @@ export interface CharacterService {
 export const createCharacterService = (db: AppDrizzleClient): CharacterService => {
   const serverService = createServerService(db); // Create serverService once
   return {
-    async getCharactersByStoryId(storyId, searchTerm, tagFilterIds, sortBy, sortDirection): Promise<CharacterWithTags[]> {
+    async getCharactersByStoryId(storyId, searchTerm, tagFilterIds, favoriteFilterState, sortBy, sortDirection): Promise<CharacterWithTags[]> {
       const whereConditions = [eq(characters.storyId, storyId)];
       const orderByConditions: any[] = [];
 
@@ -39,6 +41,12 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
             inArray(tagRelations.tagId, tagFilterIds)
           ));
         whereConditions.push(inArray(characters.id, taggedCharacters));
+      }
+
+      if (favoriteFilterState === 'favorite') {
+        whereConditions.push(eq(characters.isFavorite, true));
+      } else if (favoriteFilterState === 'not-favorite') {
+        whereConditions.push(eq(characters.isFavorite, false));
       }
 
       const finalWhereConditions = and(...whereConditions);

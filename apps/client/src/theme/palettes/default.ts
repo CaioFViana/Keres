@@ -18,6 +18,7 @@ const lightColors: ThemeColors = {
   card: '#F5F5F5',
   border: '#E0E0E0',
   notification: '#FFC107',
+  accent: '#00C853', // A shade of green for accent
   star: '#FFD700',
 };
 
@@ -39,6 +40,7 @@ const darkColors: ThemeColors = {
   card: '#1E1E1E',
   border: '#333333',
   notification: '#FFC107',
+  accent: '#69F0AE', // A lighter shade of green for accent in dark mode
   star: '#FFD700',
 };
 

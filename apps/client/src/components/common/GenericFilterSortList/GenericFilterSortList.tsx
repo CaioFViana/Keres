@@ -6,6 +6,8 @@ import { useTheme } from '../../../theme';
 import Select from '../Select/Select'; // Assuming Select is here
 import TextInput from '../TextInput/TextInput'; // Assuming TextInput is here
 
+type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+
 interface GenericFilterSortListProps<T> {
   data: T[];
   renderItem: ({ item }: { item: T }) => React.ReactElement;
@@ -23,7 +25,11 @@ interface GenericFilterSortListProps<T> {
   onSortChange: (sortValue: string | null) => void;
   onSortDirectionChange: (direction: 'asc' | 'desc') => void;
   currentSortDirection: 'asc' | 'desc';
+  currentSortValue?: string | null; // Added prop for current sort value
   emptyListComponent?: React.ReactElement;
+  // Favorite Filter Props
+  onFavoriteFilterChange?: (state: FavoriteFilterState) => void;
+  currentFavoriteFilterState?: FavoriteFilterState;
 }
 
 const GenericFilterSortList = <T,>({
@@ -32,30 +38,41 @@ const GenericFilterSortList = <T,>({
   keyExtractor,
   onSearch,
   searchPlaceholder,
-  currentSearchTerm, // Destructure new prop
+  currentSearchTerm,
   filterOptions,
   onFilterChange,
-  selectedFilterValues, // Destructure new prop
+  selectedFilterValues,
   sortOptions,
   onSortChange,
   onSortDirectionChange,
   currentSortDirection,
+  currentSortValue, // Destructure new prop
   emptyListComponent,
+  onFavoriteFilterChange,
+  currentFavoriteFilterState,
 }: GenericFilterSortListProps<T>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   // const [searchText, setSearchText] = useState(''); // Removed internal state
-  const [selectedSort, setSelectedSort] = useState<string | null>(null);
+  const [selectedSort, setSelectedSort] = useState<string | null>(currentSortValue || null); // Initialize with prop
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(currentSortDirection);
 
   // Initialize selectedFilter with the prop, ensuring it's an array
   const [selectedFilter, setSelectedFilter] = useState<string[]>(selectedFilterValues || []);
+  const [internalFavoriteFilterState, setInternalFavoriteFilterState] = useState<FavoriteFilterState>(currentFavoriteFilterState || 'all');
 
   React.useEffect(() => {
     setSelectedFilter(selectedFilterValues || []);
   }, [selectedFilterValues]);
 
+  React.useEffect(() => {
+    setInternalFavoriteFilterState(currentFavoriteFilterState || 'all');
+  }, [currentFavoriteFilterState]);
+
+  React.useEffect(() => {
+    setSelectedSort(currentSortValue || null); // Sync with prop
+  }, [currentSortValue]);
 
   const handleSearchTextChange = (text: string) => {
     // setSearchText(text); // No longer setting internal state
@@ -69,7 +86,8 @@ const GenericFilterSortList = <T,>({
   };
 
   const handleSortSelection = (value: string | null) => {
-    setSelectedSort(value);
+    // setSelectedSort is updated internally, but the source of truth is the prop for external control
+    // setSelectedSort(value); // This line is not needed here anymore as state is synced with props
     onSortChange(value);
   };
 
@@ -79,6 +97,40 @@ const GenericFilterSortList = <T,>({
     onSortDirectionChange(newDirection);
   };
 
+  const handleFavoriteFilterToggle = () => {
+    let newState: FavoriteFilterState;
+    if (internalFavoriteFilterState === 'all') {
+      newState = 'favorite';
+    } else if (internalFavoriteFilterState === 'favorite') {
+      newState = 'not-favorite';
+    } else {
+      newState = 'all';
+    }
+    setInternalFavoriteFilterState(newState);
+    onFavoriteFilterChange && onFavoriteFilterChange(newState);
+  };
+
+  const getFavoriteButtonIcon = (): keyof typeof Ionicons.glyphMap => {
+    if (internalFavoriteFilterState === 'favorite') {
+      return 'star';
+    } else if (internalFavoriteFilterState === 'not-favorite') {
+      return 'ban-outline'; // Using 'ban-outline' to signify 'not favorite' (exclude)
+    }
+    return 'star-outline'; // Default for 'all'
+  };
+
+  const getFavoriteButtonColor = () => {
+    if (internalFavoriteFilterState === 'favorite') {
+      return colors.accent; // A distinct color when filtering for favorites
+    } else if (internalFavoriteFilterState === 'not-favorite') {
+      return colors.notification; // A distinct color when filtering for non-favorites
+    }
+    return colors.primary; // Default color
+  };
+
+  const showFilter = filterOptions && filterOptions.length > 0;
+  const showSort = sortOptions && sortOptions.length > 0;
+  const showFavoriteFilter = onFavoriteFilterChange; // Removed favoriteFilterOptionLabel from condition
 
   const styles = StyleSheet.create({
     container: {
@@ -89,10 +141,11 @@ const GenericFilterSortList = <T,>({
     searchContainer: {
       marginBottom: 0,
       paddingTop: 5,
-      paddingBottom: 0,
+      paddingBottom: 0
     },
     searchBar: {
       width: '100%',
+      marginBottom: 10
     },
     filterSortControlsWrapper: {
       flexDirection: 'column',
@@ -102,17 +155,26 @@ const GenericFilterSortList = <T,>({
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 5,
+      marginBottom: 10, // Changed from 5 to 10
     },
     selectContainer: {
       flex: 1,
-      marginRight: 10,
-      marginBottom: 10
+    },
+    selectContainerSort: {
+      flex: 1,
+      paddingRight: 10
     },
     sortDirectionButton: {
-      padding: 8,
+      padding: 12,
       borderRadius: 5,
       backgroundColor: colors.primary,
+    },
+    favoriteFilterButton: {
+      padding: 12,
+      borderRadius: 5,
+      alignItems: 'center',
+      justifyContent: 'center',
+      // No marginBottom here, marginRight applied conditionally in JSX
     },
     list: {
       flex: 1,
@@ -124,9 +186,6 @@ const GenericFilterSortList = <T,>({
     },
   });
 
-  const showFilter = filterOptions && filterOptions.length > 0;
-  const showSort = sortOptions && sortOptions.length > 0;
-
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
@@ -137,13 +196,13 @@ const GenericFilterSortList = <T,>({
           style={styles.searchBar}
         />
       </View>
-      { (showFilter || showSort) && (
+      { (showFilter || showSort || showFavoriteFilter) && (
         <View style={styles.filterSortControlsWrapper}>
           {showFilter && (
             <View style={styles.filterSortRow}>
-              <View style={styles.selectContainer}>
+              <View style={[styles.selectContainer, (showFavoriteFilter || showSort) && { flex: 1 }]}>
                 <Select
-                  options={filterOptions}
+                  options={filterOptions || []} // Provide empty array as fallback
                   value={selectedFilter} // Pass array
                   onValueChange={handleFilterSelection} // Expects array
                   placeholder={t('filter_by_tags')}
@@ -152,25 +211,37 @@ const GenericFilterSortList = <T,>({
               </View>
             </View>
           )}
-          {showSort && (
-            <View style={styles.filterSortRow}>
-              <View style={styles.selectContainer}>
-                <Select
-                  options={sortOptions}
-                  value={selectedSort}
-                  onValueChange={handleSortSelection}
-                  placeholder={t('sort_by')}
-                />
-              </View>
-              <TouchableOpacity onPress={handleSortDirectionToggle} style={styles.sortDirectionButton}>
-                <Ionicons
-                  name={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-                  size={24}
-                  color={colors.text}
-                />
-              </TouchableOpacity>
+          <View style={styles.filterSortRow}>
+            <View style={styles.selectContainerSort}>
+              <Select
+                options={sortOptions || []} // Provide empty array as fallback
+                value={selectedSort}
+                onValueChange={handleSortSelection}
+                placeholder={t('sort_by')}
+              />
             </View>
-          )}
+            <TouchableOpacity
+              onPress={handleFavoriteFilterToggle}
+              style={[
+                styles.favoriteFilterButton,
+                { backgroundColor: getFavoriteButtonColor() },
+                { marginRight: 10 }, // Always add marginRight if sort is next to it
+              ]}
+            >
+              <Ionicons
+                name={getFavoriteButtonIcon()}
+                size={24}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSortDirectionToggle} style={styles.sortDirectionButton}>
+              <Ionicons
+                name={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
+                size={24}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       )}
       <FlatList

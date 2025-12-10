@@ -261,7 +261,7 @@ const StoryFormScreen = () => {
           />
 
           <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
+            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('set_favorite')}</Text>
             <Switch
               value={isFavorite}
               onValueChange={setIsFavorite}

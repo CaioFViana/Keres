@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { DrawerActions, RouteProp } from '@react-navigation/native';
+import { DrawerActions, RouteProp, useNavigation, CommonActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useRef } from 'react'; // Added useRef
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Text, View } from 'react-native'; // Added Text, View
 
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/CharacterDetailScreen'; // Import CharacterDetailScreen
 import CharactersScreen from '../screens/CharactersScreen'; // Import CharactersScreen
@@ -21,6 +21,8 @@ import StorySettingsScreen from '../screens/StorySettingsScreen';
 import TagsScreen from '../screens/TagsScreen'; // Import TagsScreen
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
+import { useNotificationStore } from '../state/notificationStore'; // Added useNotificationStore
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Added useBackButtonHandler
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -56,6 +58,8 @@ const CharacterStack = createNativeStackNavigator<CharacterStackParamList>(); //
 
 // Helper component for the Character stack
 const CharacterStackNavigator = () => {
+  useBackButtonHandler();
+
   return (
     <CharacterStack.Navigator screenOptions={{ headerShown: false }}>
       <CharacterStack.Screen name="Characters" component={CharactersScreen} />
@@ -68,6 +72,7 @@ const CharacterStackNavigator = () => {
 // A helper component to wrap screens that should be part of the drawer but also have their own stack navigation
 const ListingDetailStack = ({ route }: any) => {
   const { entityType } = route.params;
+  useBackButtonHandler(); // Use the custom hook for back button handling
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Listing" component={ListingScreen} initialParams={{ entityType }} />
@@ -76,7 +81,7 @@ const ListingDetailStack = ({ route }: any) => {
   );
 };
 
-type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
+type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>; // Simplified type
 type MainDashboardScreenRouteProp = RouteProp<MainSystemDrawerParamList, 'MainDashboard'>;
 
 const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => {
@@ -92,6 +97,32 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
+  const navigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>(); // Get the navigation object for the current navigator
+  const { showNotification } = useNotificationStore(); // Get showNotification
+
+  const backPressTimer = useRef<number | null>(null);
+
+  const handleStorySelectionPress = (drawerNavigation: DrawerNavigationProp<MainSystemDrawerParamList>) => {
+    // Dispatch the reset action to the RootStack's navigation object
+    const rootStackNavigation = drawerNavigation.getParent();
+    if (rootStackNavigation) {
+      rootStackNavigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'StorySelection' }],
+        })
+      );
+    } else {
+      console.error("Could not find root stack navigation to dispatch reset action. This is unexpected.");
+      drawerNavigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'StorySelection' }],
+        })
+      );
+    }
+  };
+
 
   return (
     <Drawer.Navigator
@@ -124,7 +155,35 @@ const MainSystemNavigator = () => {
       <Drawer.Screen name="Choices" component={ChoicesScreen} options={{ title: t('choices_title') }} />
       <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
       <Drawer.Screen name="ImportExport" component={ImportExportScreen} options={{ title: t('import_export_title') }} />
-      <Drawer.Screen name="StorySelection" component={StorySelectionScreen} options={{ title: t('story_selection_title') }} />
+      <Drawer.Screen
+        name="StorySelection"
+        component={() => <View />} // A dummy component, as it won't be displayed
+        options={{
+          title: t('story_selection_title'),
+        }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault(); // Prevent the default navigation to the component
+            const rootStackNavigation = navigation.getParent();
+            if (rootStackNavigation) {
+              rootStackNavigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'StorySelection' }],
+                })
+              );
+            } else {
+              console.error("Could not find root stack navigation to dispatch reset action. This is unexpected.");
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'StorySelection' }],
+                })
+              );
+            }
+          },
+        })}
+      />
     </Drawer.Navigator>
   );
 };

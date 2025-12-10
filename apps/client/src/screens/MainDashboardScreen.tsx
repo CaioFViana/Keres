@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { eq } from 'drizzle-orm';
 import React, { useEffect, useRef, useState } from 'react';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -44,9 +44,30 @@ const MainDashboardScreen = () => {
 
   useEffect(() => {
     const backAction = () => {
+      // Get the navigation object for the RootStack (which contains the Drawer Navigator)
+      // `navigation.getParent()` when called from a screen inside a drawer navigator,
+      // returns the navigation object of the stack navigator that contains the drawer.
+      const rootStackNavigation = navigation.getParent(); // This is the navigation object for the 'MainSystem' screen in RootStack
+
       if (backPressTimer.current && Date.now() - backPressTimer.current < 2000) {
-        // If pressed again within 2 seconds, navigate to StorySelection
-        navigation.navigate('StorySelection');
+        // Double press, reset to StorySelection
+        if (rootStackNavigation) {
+          rootStackNavigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'StorySelection' }],
+            })
+          );
+        } else {
+          console.error("Could not find root stack navigation to dispatch reset action. This is unexpected.");
+          // Fallback to current navigation context if parent not found
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'StorySelection' }],
+            })
+          );
+        }
         return true; // Event handled
       } else {
         backPressTimer.current = Date.now();

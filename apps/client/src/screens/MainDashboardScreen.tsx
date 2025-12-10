@@ -1,27 +1,24 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { eq } from 'drizzle-orm';
 import React, { useEffect, useRef, useState } from 'react';
-import { BackHandler, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../components/common/SummaryCard/SummaryCard';
 import { useDrizzle } from '../db'; // Import useDrizzle
 import * as schema from '../db/schema';
 import { createServerService } from '../services/ServerService'; // Import createServerService
-import { syncEngineService } from '../services/SyncEngineService';
+import { SyncEngineService } from '../services/SyncEngineService';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { getCommonCardStyles } from '../theme/commonStyles';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNotificationStore } from '../state/notificationStore';
+
+import { DrawerNavigationProp } from '@react-navigation/drawer'; // Import DrawerNavigationProp
 import { useTranslation } from 'react-i18next';
+import { MainSystemDrawerParamList } from '../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
+import { useNotificationStore } from '../state/notificationStore';
 
 
-type RootStackParamList = {
-  ColdInstall: undefined;
-  StorySelection: undefined;
-  MainSystem: { storyId: string };
-};
 
-type MainDashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainSystem'>;
 
 
 const MainDashboardScreen = () => {
@@ -30,7 +27,7 @@ const MainDashboardScreen = () => {
   const { selectedStory } = useStoryStore();
   const [syncedServerUrl, setSyncedServerUrl] = useState<string | null>(null);
   const db = useDrizzle(); // Get the Drizzle client
-  const navigation = useNavigation<MainDashboardScreenNavigationProp>();
+  const navigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
   const { showNotification } = useNotificationStore();
   const { t } = useTranslation();
 
@@ -49,7 +46,7 @@ const MainDashboardScreen = () => {
     const backAction = () => {
       if (backPressTimer.current && Date.now() - backPressTimer.current < 2000) {
         // If pressed again within 2 seconds, navigate to StorySelection
-        navigation.replace('StorySelection');
+        navigation.navigate('StorySelection');
         return true; // Event handled
       } else {
         backPressTimer.current = Date.now();
@@ -66,7 +63,7 @@ const MainDashboardScreen = () => {
 
   useEffect(() => {
     // Inject the db instance into the syncEngineService
-    syncEngineService.setDbInstance(db);
+    SyncEngineService.getInstance().setDbInstance(db); // CHANGED
 
     async function configureAndStartSync() {
       if (selectedStory?.id) {
@@ -92,15 +89,15 @@ const MainDashboardScreen = () => {
           setSyncedServerUrl(null);
         }
 
-        syncEngineService.configure(selectedStory.id, serverUrl);
+        SyncEngineService.getInstance().configure(selectedStory.id, serverUrl); // CHANGED
         if (serverUrl) {
-          syncEngineService.startSync();
+          SyncEngineService.getInstance().startSync(); // CHANGED
         } else {
-          syncEngineService.stopSync();
+          SyncEngineService.getInstance().stopSync(); // CHANGED
         }
       } else {
         console.log('MainDashboard: No story selected or story deselected. Stopping sync engine.');
-        syncEngineService.stopSync();
+        SyncEngineService.getInstance().stopSync(); // CHANGED
         setSyncedServerUrl(null);
       }
     }
@@ -148,9 +145,28 @@ const MainDashboardScreen = () => {
 
     return () => {
       console.log('MainDashboard: Unmounting or story changed. Stopping sync engine.');
-      syncEngineService.stopSync();
+      SyncEngineService.getInstance().stopSync(); // CHANGED
     };
   }, [selectedStory, db]); // Re-run effect if selectedStory or db changes
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => {
+            if (selectedStory?.id) {
+              navigation.navigate('StorySettings', { storyId: selectedStory.id });
+            } else {
+              showNotification(t('no_story_selected_for_settings'), 'warning'); // New translation key
+            }
+          }}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="settings-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, selectedStory?.id, showNotification, t, colors.text]); // Dependencies
 
   const styles = StyleSheet.create({
     container: {
@@ -235,5 +251,3 @@ const MainDashboardScreen = () => {
 };
 
 export default MainDashboardScreen;
-
-

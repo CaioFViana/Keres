@@ -232,6 +232,7 @@ const StoryFormScreen = () => {
             value={type}
             onValueChange={(value) => setType(value as 'linear' | 'branching')}
             placeholder={t('select_story_type')}
+            disabled={!!storyId}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>

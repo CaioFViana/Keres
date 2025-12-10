@@ -5,7 +5,7 @@ import { useTheme } from '../../../theme';
 
 interface SelectOption {
   label: string;
-  value: string; // Value should always be a string for consistent handling
+  value: string;
 }
 
 // Props for single select
@@ -15,6 +15,7 @@ interface SelectPropsSingle {
   onValueChange: (value: string | null) => void;
   placeholder?: string;
   multiple?: false; // Explicitly false for single select
+  disabled?: boolean; // Added disabled prop
 }
 
 // Props for multi select
@@ -24,11 +25,12 @@ interface SelectPropsMulti {
   onValueChange: (value: string[]) => void;
   placeholder?: string;
   multiple: true; // Explicitly true for multi select
+  disabled?: boolean; // Added disabled prop
 }
 
 type SelectProps = SelectPropsSingle | SelectPropsMulti;
 
-const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placeholder, multiple = false }) => {
+const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placeholder, multiple = false, disabled = false }) => {
   const { colors } = useTheme();
 
   const [open, setOpen] = useState(false);
@@ -113,10 +115,11 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
           scrollViewProps={{
             nestedScrollEnabled: true,
           }}
-          zIndex={10000}
+          zIndex={open ? 3000 : 1000} // Dynamic zIndex
           zIndexInverse={1000}
           multiple={true} // Explicitly true
           mode="BADGE"
+          disabled={disabled} // Pass disabled prop
         />
       </View>
     );
@@ -151,9 +154,10 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
           scrollViewProps={{
             nestedScrollEnabled: true,
           }}
-          zIndex={10000}
+          zIndex={open ? 3000 : 1000} // Dynamic zIndex
           zIndexInverse={1000}
           multiple={false} // Explicitly false
+          disabled={disabled} // Pass disabled prop
         />
       </View>
     );

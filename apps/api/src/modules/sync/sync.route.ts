@@ -12,6 +12,7 @@ export const syncRoute = new Elysia()
     }
 
     const { storyId } = params;
+    console.log('Incoming sync body:', JSON.stringify(body, null, 2)); // ADDED for debugging
     const parsedUpdates = StoryUpdatesArraySchema.parse(body);
 
     const { lastOperationVersion } = await syncService.processAndRecordUpdates(user.userId, storyId, parsedUpdates);
@@ -21,7 +22,7 @@ export const syncRoute = new Elysia()
     return {
       message: `Sync updates received and processed for story ${storyId}`,
       processedUpdates: parsedUpdates.length,
-      lastOperationVersion: lastOperationVersion,
+      serverMaxOperationVersion: lastOperationVersion,
     };
   }, {
     params: t.Object({

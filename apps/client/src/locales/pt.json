@@ -184,5 +184,14 @@
   "yes": "Sim",
   "your_stories": "Suas Histórias",
   "change_password_warning": "Deixar o campo de senha vazio manterá a senha atual. Digite uma nova senha para alterá-la.",
-  "story_selection_title": "Seleção de Histórias"
+  "story_selection_title": "Seleção de Histórias",
+  "story_settings_screen_title": "Configurações da História",
+  "story_settings_screen_description": "Configure as definições da sua história, incluindo opções de sincronização.",
+  "select_server": "Selecionar Servidor",
+  "no_server": "Nenhum Servidor",
+  "warning": "Aviso",
+  "server_not_found_for_story": "O servidor ligado a esta história não foi encontrado. Ele foi desvinculado.",
+  "failed_to_load_story_settings": "Falha ao carregar as configurações da história.",
+  "failed_to_save_story_settings": "Falha ao salvar as configurações da história.",
+  "no_story_selected_for_settings": "Nenhuma história selecionada. Por favor, selecione uma história primeiro."
 }

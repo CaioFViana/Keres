@@ -20,7 +20,7 @@ export class CharacterClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
@@ -33,14 +33,15 @@ export class CharacterClientSyncHandler implements ClientSyncEntityHandler {
     await this.db.insert(schema.characters).values({
       ...characterData,
       id: update.id,
+      storyId: storyId,
       createdAt: new Date(characterData.createdAt),
       updatedAt: new Date(characterData.updatedAt),
       deletedAt: characterData.deletedAt ? new Date(characterData.deletedAt) : null,
     });
-    console.log(`Applied create for Character ${update.id}`);
+    console.log(`Applied create for Character ${update.id} in story ${storyId}`);
   }
 
-  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
@@ -53,6 +54,7 @@ export class CharacterClientSyncHandler implements ClientSyncEntityHandler {
     await this.db.update(schema.characters)
       .set({
         ...characterChanges,
+        storyId: storyId,
         updatedAt: new Date(), // Always update updatedAt on change
         // Ensure date fields are correctly converted if they come as strings
         createdAt: characterChanges.createdAt ? new Date(characterChanges.createdAt) : undefined,
@@ -62,22 +64,23 @@ export class CharacterClientSyncHandler implements ClientSyncEntityHandler {
     console.log(`Applied update for Character ${update.id}`);
   }
 
-  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
-      console.error(`Missing ID for delete operation on ${this.entityName}`);
+      console.error(`Missing ID for delete operation on ${this.entityName} in story ${storyId}`);
       return;
     }
 
     await this.db.update(schema.characters)
       .set({
+        storyId: storyId,
         isDeleted: true,
         deletedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(schema.characters.id, update.id));
-    console.log(`Applied delete for Character ${update.id}`);
+    console.log(`Applied delete for Character ${update.id} in story ${storyId}`);
   }
 
   async getById(id: string): Promise<Character | undefined> {

@@ -1,8 +1,7 @@
-import { AppDrizzleClient } from '../db';
-import { operationLogs, OperationLogInsert } from '../db/schema';
-import { createULID } from '../utils/ulid'; // Import createULID
-import { stories, StorySelect } from '../db/schema'; // Import stories table and StorySelect type
 import { eq } from 'drizzle-orm';
+import { AppDrizzleClient } from '../db';
+import { OperationLogInsert, operationLogs, stories } from '../db/schema';
+import { createULID } from '../utils/ulid'; // Import createULID
 
 export type OperationType = 'create' | 'update' | 'delete' | 'reorder';
 export type EntityType = string; // e.g., 'Story', 'Character', etc.
@@ -41,6 +40,7 @@ export const createOperationLogService = (): OperationLogService => {
       entityId: string,
       payload: T
     ): Promise<void> {
+      console.log(payload)
       const newOperationLog: OperationLogInsert = {
         id: createULID(),
         storyId,
@@ -54,7 +54,6 @@ export const createOperationLogService = (): OperationLogService => {
         isSynced: false,
         serverOperationVersion: 0,
       };
-
       await db.insert(operationLogs).values(newOperationLog).run();
     },
   };

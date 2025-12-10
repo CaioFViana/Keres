@@ -184,5 +184,14 @@
   "yes": "Yes",
   "your_stories": "Your Stories",
   "change_password_warning": "Leaving the password field empty will keep the current password. Enter a new password to change it.",
-  "story_selection_title": "Story Selection"
+  "story_selection_title": "Story Selection",
+  "story_settings_screen_title": "Story Settings",
+  "story_settings_screen_description": "Configure the settings for your story, including synchronization options.",
+  "select_server": "Select Server",
+  "no_server": "No Server",
+  "warning": "Warning",
+  "server_not_found_for_story": "The server linked to this story was not found. It has been unlinked.",
+  "failed_to_load_story_settings": "Failed to load story settings.",
+  "failed_to_save_story_settings": "Failed to save story settings.",
+  "no_story_selected_for_settings": "No story selected. Please select a story first."
 }

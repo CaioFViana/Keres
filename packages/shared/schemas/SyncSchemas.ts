@@ -5,7 +5,7 @@ import { z } from 'zod';
 export const UlidSchema = z.string().regex(/^[0-9A-Z]{26}$/, 'Invalid ULID format');
 
 // 1. Define o tipo de operação de sincronização
-export const StoryUpdateTypeSchema = z.enum(['create', 'update', 'delete']);
+export const StoryUpdateTypeSchema = z.enum(['create', 'update', 'delete', 'reorder']); // Added 'reorder'
 export type StoryUpdateType = z.infer<typeof StoryUpdateTypeSchema>;
 
 // 2. Schema base para qualquer StoryUpdate
@@ -19,8 +19,8 @@ export const BaseStoryUpdateSchema = z.object({
   // A versão da *operação* no log de operações do servidor
   operationVersion: z.number().int().min(0).optional(),
 }).extend({
-  operationTime: z.date().optional(), // Add operationTime
-  originatingUser: z.string().optional(), // Add originatingUser
+  operationTime: z.string().datetime().optional(), // CHANGED: Expect ISO string, as per user's instruction
+  originatingUser: z.string().optional(),
 });
 
 // 3. Schema para operações de criação

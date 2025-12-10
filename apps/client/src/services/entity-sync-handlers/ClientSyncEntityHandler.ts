@@ -8,9 +8,9 @@ export interface ClientSyncEntityHandler {
   setDb(dbInstance: AppDrizzleClient): void;
 
   // Methods to apply updates locally
-  applyCreate(update: CreateStoryUpdate): Promise<void>;
-  applyUpdate(update: UpdateStoryUpdate): Promise<void>;
-  applyDelete(update: DeleteStoryUpdate): Promise<void>;
+  applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void>;
+  applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void>;
+  applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void>;
 
   // Optional: Method to get an entity by ID locally
   getById?(id: string): Promise<any | undefined>;

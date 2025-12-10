@@ -33,9 +33,25 @@ export class StorySyncHandler extends BaseSyncEntityHandler<typeof CreateStoryDa
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
-    // Prevent creation of new Story entities via the sync engine.
-    // Story creation should happen through a dedicated API route.
-    throw new Error('Story creation is not allowed via the sync engine. Please use the dedicated story creation API.');
+    // Validate incoming data against the create schema
+    const validatedData: z.infer<typeof CreateStoryDataSchema> = this.createSchema.parse(update.data);
+
+    // Validate operationTime is not in the future
+    const clientOperationTime = new Date(update.operationTime!);
+    if (clientOperationTime.getTime() > new Date().getTime() + 1000) { // Allow 1 second clock skew
+      throw new Error(`Operation time ${update.operationTime} cannot be in the future.`);
+    }
+
+    await db.insert(stories).values({
+      id: update.id!,
+      userId: userId, // Set by server
+      createdAt: clientOperationTime, // Set from operationTime
+      updatedAt: clientOperationTime, // Set from operationTime
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+      ...validatedData, // Spread validated data
+    });
   }
 
   // Override the update method to handle StoryReorderingStoryUpdate

@@ -139,7 +139,7 @@ export class SyncService {
         entityType: update.entity,
         entityId: update.id || ulid(),
         payload: originalPayload, // Store the original payload
-        createdAt: new Date(),
+        createdAt: update.operationTime ? new Date(update.operationTime) : new Date(),
       });
     }
 
@@ -198,15 +198,16 @@ export class SyncService {
       let operationTime: Date | undefined;
 
       // Determine the operation time based on the type
-      if (op.operationType === 'create') {
-        operationTime = op.createdAt; // The created_at of the operation log entry
-      } else if (op.operationType === 'update') {
-        operationTime = payloadAsRecord.updatedAt ? new Date(payloadAsRecord.updatedAt) : op.createdAt;
-      } else if (op.operationType === 'delete') {
-        operationTime = payloadAsRecord.deletedAt ? new Date(payloadAsRecord.deletedAt) : op.createdAt;
-      } else {
-        operationTime = op.createdAt;
-      }
+      // op.createdAt is a Date object from the DB.
+      // update.operationTime is a string (if available from incoming client update).
+      // For returned StoryUpdate, operationTime should be a string as per user's instruction.
+
+      operationTime = op.createdAt; // Start with Date object from DB
+
+      // If the original payload contains updatedAt/deletedAt (which are dates from the original client payload)
+      // ensure they are converted to Date objects for consistency before making a decision.
+      const payloadUpdatedAt = payloadAsRecord.updatedAt ? new Date(payloadAsRecord.updatedAt) : undefined;
+      const payloadDeletedAt = payloadAsRecord.deletedAt ? new Date(payloadAsRecord.deletedAt) : undefined;
 
 
       // --- Enrich data based on operation type ---
@@ -215,8 +216,8 @@ export class SyncService {
         // We need to add the generated fields from the operationLog.
         finalData = {
           ...payloadAsRecord, // Original client data
-          createdAt: op.createdAt,
-          updatedAt: op.createdAt, // For create, updatedAt is same as createdAt
+          createdAt: op.createdAt.toISOString(), // Convert to string for client
+          updatedAt: op.createdAt.toISOString(), // For create, updatedAt is same as createdAt, convert to string
           version: op.operationVersion, // Initial version of the entity is operationVersion
           isDeleted: false,
           deletedAt: null,
@@ -229,7 +230,7 @@ export class SyncService {
         // We need to add the generated fields from the operationLog.
         finalChanges = {
           ...payloadAsRecord, // Original client changes
-          updatedAt: op.createdAt, // The time of the update operation
+          updatedAt: op.createdAt.toISOString(), // The time of the update operation, convert to string
           version: op.operationVersion, // The version of the entity after this update
         };
         // Explicitly remove storyId if it was somehow in payloadAsRecord
@@ -241,8 +242,8 @@ export class SyncService {
         finalData = {
           id: op.entityId,
           isDeleted: true,
-          updatedAt: op.createdAt, // The time of the delete operation
-          deletedAt: op.createdAt,
+          updatedAt: op.createdAt.toISOString(), // The time of the delete operation, convert to string
+          deletedAt: op.createdAt.toISOString(), // Convert to string
           version: op.operationVersion, // The version of the entity after this delete
         };
         finalVersion = op.operationVersion;
@@ -257,7 +258,7 @@ export class SyncService {
           data: finalData!,
           version: finalVersion,
           operationVersion: op.operationVersion,
-          operationTime: operationTime, // Add operation_time
+          operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
           originatingUser: op.userId, // Add userId
         } as CreateStoryUpdate;
       } else if (op.operationType === 'update') {
@@ -268,7 +269,7 @@ export class SyncService {
           changes: finalChanges!,
           version: finalVersion,
           operationVersion: op.operationVersion,
-          operationTime: operationTime, // Add operation_time
+          operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
           originatingUser: op.userId, // Add userId
         } as UpdateStoryUpdate;
       } else if (op.operationType === 'delete') {
@@ -278,7 +279,7 @@ export class SyncService {
           id: op.entityId,
           version: finalVersion,
           operationVersion: op.operationVersion,
-          operationTime: operationTime, // Add operation_time
+          operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
           originatingUser: op.userId, // Add userId
         } as DeleteStoryUpdate;
       }
@@ -307,7 +308,7 @@ export class SyncService {
       where: and(
         eq(storyPermissions.userId, userId),
         eq(storyPermissions.isDeleted, false),
-        or(eq(storyPermissions.permissionType, 'reader'), eq(storyPermissions.permissionType, 'writer'))
+        or(eq(storyPermissions.permissionType, 'reader'), eq(storyPermissions.permissionType,'writer'))
       ),
       with: {
         story: {

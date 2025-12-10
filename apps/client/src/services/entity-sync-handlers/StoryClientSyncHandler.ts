@@ -19,7 +19,7 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     // Ensure the ID is available for a create operation
@@ -43,7 +43,7 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     console.log(`Applied create for Story ${update.id}`);
   }
 
-  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     // Ensure ID and changes are available
@@ -67,7 +67,7 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     console.log(`Applied update for Story ${update.id}`);
   }
 
-  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     // Ensure ID is available

@@ -72,12 +72,18 @@ export abstract class BaseSyncEntityHandler<CreateType extends z.ZodType<Record<
   async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
     this.checkVersionConflict(update.changes.version, currentEntity[this.versionColumnName], update.id!);
 
-    // Validate incoming changes against the update schema
+    // Validate incoming changes against the update schema.
     const validatedChanges: z.infer<UpdateType> = this.updateSchema.parse(update.changes);
+
+    // Validate operationTime is not in the future
+    const clientOperationTime = new Date(update.operationTime!); // operationTime is string in StoryUpdate
+    if (clientOperationTime.getTime() > new Date().getTime() + 1000) { // Allow 1 second clock skew
+      throw new Error(`Operation time ${update.operationTime} cannot be in the future.`);
+    }
 
     const changes = {
       ...validatedChanges, // Use validated changes
-      updatedAt: new Date(),
+      updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
       [this.versionColumnName]: sql`${(this.table as any)[this.versionColumnName]} + 1` as SQL<number>,
     };
 
@@ -93,12 +99,18 @@ export abstract class BaseSyncEntityHandler<CreateType extends z.ZodType<Record<
       throw new Error(`Delete not supported for entity ${this.entityName}: missing isDeletedColumnName or deletedAtColumnName.`);
     }
 
+    // Validate operationTime is not in the future
+    const clientOperationTime = new Date(update.operationTime!);
+    if (clientOperationTime.getTime() > new Date().getTime() + 1000) { // Allow 1 second clock skew
+      throw new Error(`Operation time ${update.operationTime} cannot be in the future.`);
+    }
+
     await db.update(this.table)
       .set({
         [this.isDeletedColumnName]: true,
-        [this.deletedAtColumnName]: new Date(),
+        [this.deletedAtColumnName]: clientOperationTime, // Use client's operationTime for deletedAt
         [this.versionColumnName]: sql`${(this.table as any)[this.versionColumnName]} + 1` as SQL<number>,
-        updatedAt: new Date(),
+        updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
       })
       .where(eq((this.table as any)[this.idColumnName], update.id!));
   }

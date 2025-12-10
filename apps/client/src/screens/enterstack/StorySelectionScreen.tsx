@@ -8,7 +8,7 @@ import { Alert, BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View 
 import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../../db';
 import { createServerService } from '../../services/ServerService';
-import { syncEngineService } from '../../services/SyncEngineService';
+import { SyncEngineService, ServerStoryPreview } from '../../services/SyncEngineService'; // CHANGED: Added ServerStoryPreview
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useSummaryStore } from '../../state/summaryStore';
@@ -135,7 +135,7 @@ const StorySelectionScreen = () => {
     }
 
     // Set DB instance for sync engine
-    syncEngineService.setDbInstance(drizzleClient);
+    SyncEngineService.getInstance().setDbInstance(drizzleClient);
 
     const serverService = createServerService(drizzleClient);
     const localStories = await storyService.getAllStories();
@@ -152,11 +152,11 @@ const StorySelectionScreen = () => {
         // Attempt to refresh JWT token if expired
         server = await serverService.refreshServerToken(server);
 
-        const serverStoryPreviews = await syncEngineService.fetchServerStoryPreviews(server.url);
+        const serverStoryPreviews = await SyncEngineService.getInstance().fetchServerStoryPreviews(server.url);
 
         const localStoryIds = new Set(localStories.map(s => s.id));
         const newStoriesOnServer = serverStoryPreviews.filter(
-          preview => !localStoryIds.has(preview.storyId)
+          (preview: ServerStoryPreview) => !localStoryIds.has(preview.storyId) // CHANGED: Added type
         );
 
         if (newStoriesOnServer.length > 0) {
@@ -164,10 +164,10 @@ const StorySelectionScreen = () => {
           for (const storyPreview of newStoriesOnServer) {
             console.log(`  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`);
             try {
-              await syncEngineService.downloadAndImportStory(server.id, storyPreview.storyId, server.idUser);
+              await SyncEngineService.getInstance().downloadAndImportStory(server.id, storyPreview.storyId, server.idUser);
               console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
               // After successful import, re-fetch stories to update the list
-              fetchStories(); 
+              fetchStories();
             } catch (downloadError) {
               console.error(`Failed to download and import story ${storyPreview.storyId}:`, downloadError);
             }
@@ -216,7 +216,7 @@ const StorySelectionScreen = () => {
 
       updateSummary({
         totalStories: storyCounts.totalStories,
-        branchingStories: storyCounts.branchingStories, // Keep this for now, will remove later
+        branchingStories: storyCounts.branchingStories,
         characterCount,
         choiceCount: storyCounts.branchingStories > 0 ? choiceCount : 0,
         locationCount,
@@ -233,17 +233,16 @@ const StorySelectionScreen = () => {
   }, [storyService, updateSummary, t]);
 
   useEffect(() => {
-    if (isFocused) { // Only fetch if the screen is focused
+    if (isFocused) {
       fetchStories();
       fetchSummary();
-      setTheme('default'); // Reset theme to default when screen is focused
+      setTheme('default');
       
-      // Initial sync and then set up interval for periodic sync
       syncStoriesWithServers();
-      const syncInterval = setInterval(syncStoriesWithServers, 1800000); // Every 30 minutes
+      const syncInterval = setInterval(syncStoriesWithServers, 1800000);
 
       return () => {
-        clearInterval(syncInterval); // Clear interval on unmount or blur
+        clearInterval(syncInterval);
       };
     }
   }, [isFocused, setTheme, fetchStories, fetchSummary]);
@@ -256,11 +255,11 @@ const StorySelectionScreen = () => {
   };
 
   const handleCreateNewStory = () => {
-    navigation.navigate('StoryForm', {}); // Navigate to StoryForm without storyId for creation
+    navigation.navigate('StoryForm', {});
   };
 
   const handleEditStory = (storyId: string) => {
-    navigation.navigate('StoryForm', { storyId }); // Navigate to StoryForm with storyId for editing
+    navigation.navigate('StoryForm', { storyId });
   };
 
   const toggleFavorite = async (storyId: string, currentFavoriteStatus: boolean) => {
@@ -304,7 +303,7 @@ const StorySelectionScreen = () => {
     },
     actionButton: {
       padding: 5,
-      marginLeft: 10, // Space between buttons
+      marginLeft: 10,
     },
     storyTitle: {
       fontSize: 18,
@@ -394,7 +393,7 @@ const StorySelectionScreen = () => {
             story={item}
             onSelectStory={handleSelectStory}
             onToggleFavorite={toggleFavorite}
-            onEditStory={handleEditStory} // Pass the new handler
+            onEditStory={handleEditStory}
             commonCardStyles={commonCardStyles}
             styles={styles}
             t={t}

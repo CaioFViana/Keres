@@ -34,9 +34,9 @@ const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails }) => {
       flex: 1,
     },
     tagColorIndicator: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
       marginRight: 10,
       borderWidth: 1,
       borderColor: colors.border,

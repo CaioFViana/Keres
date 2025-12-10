@@ -1,9 +1,9 @@
-import { eq, and, sql, SQL } from 'drizzle-orm';
+import { and, eq, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { tags, TagSelect, TagInsert, stories } from '../db/schema'; // Import TagInsert and stories
+import { TagInsert, tags, TagSelect } from '../db/schema'; // Import TagInsert and stories
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
-import { recordLocalOperation, getUserIdForOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
-import { createServerService, ServerService } from './ServerService'; // Import ServerService and createServerService
+import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
+import { createServerService } from './ServerService'; // Import ServerService and createServerService
 
 export interface TagService {
   getTagsByStoryId(storyId: string, searchTerm?: string): Promise<TagSelect[]>;
@@ -29,7 +29,6 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
       const result = await db.select().from(tags).where(and(...finalConditions)).all();
-      console.log('TagService: Query result:', result); // Added log
       return result;
     },
 
@@ -38,23 +37,26 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       const result = await db.insert(tags).values(newTag).returning().get();
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newTag.storyId, currentUserId);
-      await recordLocalOperation(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, newTag);
+      await recordLocalOperation(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, { ...result });
 
       return result;
     },
 
     async updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
-      const updatedFields = { ...tagData, updatedAt: new Date(), version: sql`${tags.version} + 1` };
-      await db.update(tags)
-        .set(updatedFields)
+      const [updatedTag] = await db.update(tags)
+        .set({ ...tagData, updatedAt: new Date(), version: sql`${tags.version} + 1` })
         .where(eq(tags.id, tagId))
-        .run();
+        .returning({ id: tags.id, storyId: tags.storyId, version: tags.version }); // Return relevant fields
 
-      const tagToLog = await db.query.tags.findFirst({ where: eq(tags.id, tagId) }); // Fetch updated entity
-      if (tagToLog) {
-        const userIdToLog = await getUserIdForOperation(db, serverService, tagToLog.storyId, currentUserId);
-        await recordLocalOperation(db, tagToLog.storyId, userIdToLog, 'update', 'Tag', tagId, updatedFields);
+      if (!updatedTag) {
+        throw new Error(`Failed to update tag ${tagId} or tag not found.`);
       }
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, updatedTag.storyId, currentUserId);
+      await recordLocalOperation(db, updatedTag.storyId, userIdToLog, 'update', 'Tag', tagId, {
+        ...tagData,
+        version: updatedTag.version,
+      });
     },
 
     async deleteTag(currentUserId: string, tagId: string): Promise<void> {
@@ -64,13 +66,21 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         return;
       }
 
-      await db.update(tags)
+      const [updatedTag] = await db.update(tags)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${tags.version} + 1` })
         .where(eq(tags.id, tagId))
-        .run();
+        .returning({ id: tags.id, storyId: tags.storyId, isDeleted: tags.isDeleted, version: tags.version });
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, tagToDelete.storyId, currentUserId);
-      await recordLocalOperation(db, tagToDelete.storyId, userIdToLog, 'delete', 'Tag', tagId, { id: tagId, isDeleted: true });
+      if (!updatedTag) {
+        throw new Error(`Failed to delete tag ${tagId} or tag not found.`);
+      }
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, updatedTag.storyId, currentUserId);
+      await recordLocalOperation(db, updatedTag.storyId, userIdToLog, 'delete', 'Tag', tagId, {
+        id: updatedTag.id,
+        isDeleted: updatedTag.isDeleted,
+        version: updatedTag.version,
+      });
     },
   };
 };

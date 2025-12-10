@@ -20,7 +20,7 @@ export class TagClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> { // ADDED storyId parameter
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
@@ -33,14 +33,15 @@ export class TagClientSyncHandler implements ClientSyncEntityHandler {
     await this.db.insert(schema.tags).values({
       ...tagData,
       id: update.id,
+      storyId: storyId,
       createdAt: new Date(tagData.createdAt),
       updatedAt: new Date(tagData.updatedAt),
       deletedAt: tagData.deletedAt ? new Date(tagData.deletedAt) : null,
     });
-    console.log(`Applied create for Tag ${update.id}`);
+    console.log(`Applied create for Tag ${update.id} in story ${storyId}`);
   }
 
-  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> { // ADDED storyId parameter
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
@@ -59,10 +60,10 @@ export class TagClientSyncHandler implements ClientSyncEntityHandler {
         deletedAt: tagChanges.deletedAt ? new Date(tagChanges.deletedAt) : undefined,
       })
       .where(eq(schema.tags.id, update.id));
-    console.log(`Applied update for Tag ${update.id}`);
+    console.log(`Applied update for Tag ${update.id} in story ${storyId}`); // ADDED storyId to log
   }
 
-  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> { // ADDED storyId parameter
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
@@ -77,7 +78,7 @@ export class TagClientSyncHandler implements ClientSyncEntityHandler {
         updatedAt: new Date(),
       })
       .where(eq(schema.tags.id, update.id));
-    console.log(`Applied delete for Tag ${update.id}`);
+    console.log(`Applied delete for Tag ${update.id} in story ${storyId}`); // ADDED storyId to log
   }
 
   async getById(id: string): Promise<Tag | undefined> {

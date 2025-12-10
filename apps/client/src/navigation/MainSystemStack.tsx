@@ -35,7 +35,7 @@ export type MainSystemDrawerParamList = {
   CharacterRelations: undefined;
   Choices: undefined;
   Settings: undefined;
-  StorySettings: undefined;
+  StorySettings: { storyId: string };
   ImportExport: undefined;
   StorySelection: undefined;
 };

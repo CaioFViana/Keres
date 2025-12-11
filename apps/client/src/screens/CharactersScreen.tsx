@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -113,18 +113,21 @@ const CharactersScreen = () => {
     };
   }, [searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, debouncedFetchCharacters]); // Add favoriteFilterState
 
-  useEffect(() => {
-    navigation.getParent()?.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })} // Navigate to CharacterForm for creation
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="add" size={30} color={colors.text} />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, colors.text]);
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('characters_title'),
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })} // Navigate to CharacterForm for creation
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="add" size={30} color={colors.text} />
+          </TouchableOpacity>
+        ),
+      });
+    }, [navigation, colors.text, t])
+  );
 
   const handleToggleFavorite = useCallback(async (characterId: string, isFavorite: boolean) => {
     await toggleFavorite(characterId, isFavorite);

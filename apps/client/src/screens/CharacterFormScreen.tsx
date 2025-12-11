@@ -1,9 +1,12 @@
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import { RouteProp, useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
-import { CharacterStackParamList } from '../navigation/MainSystemStack';
+import { CharacterStackParamList, MainSystemDrawerParamList } from '../navigation/MainSystemStack';
 import { useTheme } from '../theme';
+import { useTranslation } from 'react-i18next';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;
 
@@ -11,26 +14,32 @@ const CharacterFormScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const drawerNavigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>();
   const route = useRoute<CharacterFormScreenRouteProp>();
   const { characterId } = route.params || {};
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
   const isEditing = !!characterId;
 
-  useEffect(() => {
-    navigation.setOptions({
-      title: isEditing ? 'Edit Character' : 'Create Character',
-    });
+  useFocusEffect(
+    useCallback(() => {
+      drawerNavigation.getParent()?.setOptions({
+        title: isEditing ? t('edit_character') : t('create_character'),
+      });
+    }, [drawerNavigation, isEditing, t])
+  );
 
+  useEffect(() => {
     if (isEditing) {
       // In a real app, you would fetch character data here
       // For now, let's simulate fetching
       setName(`Character Name ${characterId}`);
       setDescription(`Description for Character ${characterId}`);
     }
-  }, [navigation, isEditing, characterId]);
+  }, [isEditing, characterId]);
 
   const handleSave = () => {
     if (isEditing) {

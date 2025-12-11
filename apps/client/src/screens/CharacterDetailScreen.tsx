@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../db';
 import { CharacterSelect } from '../db/schemas/characters'; // Correct import for CharacterSelect
@@ -85,20 +85,23 @@ const CharacterDetailScreen = () => {
     };
 
     fetchCharacter();
-  }, [characterId]);
+  }, [characterId, drizzleDb]); // Added drizzleDb to dependencies
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
-          style={{ marginRight: 15 }}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, characterId, colors.text]);
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: character?.name || 'Loading...',
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="pencil-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        ),
+      });
+    }, [navigation, characterId, colors.text, character?.name])
+  );
 
   if (loading) {
     return (

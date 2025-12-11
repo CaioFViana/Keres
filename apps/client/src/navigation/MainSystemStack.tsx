@@ -14,6 +14,7 @@ import GalleryScreen from '../screens/GalleryScreen';
 import MainDashboardScreen from '../screens/MainDashboardScreen';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Added useBackButtonHandler
+import CharacterFormScreen from '../screens/CharacterFormScreen'; // Import CharacterFormScreen
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
 import ImportExportScreen from '../screens/ImportExportScreen';
@@ -49,6 +50,7 @@ export type ListingDetailStackParamList = {
 export type CharacterStackParamList = {
   Characters: undefined;
   CharacterDetail: CharacterDetailScreenParamList['CharacterDetail'];
+  CharacterForm: { characterId?: string };
 };
 
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
@@ -63,6 +65,7 @@ const CharacterStackNavigator = () => {
     <CharacterStack.Navigator screenOptions={{ headerShown: false }}>
       <CharacterStack.Screen name="Characters" component={CharactersScreen} />
       <CharacterStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
+      <CharacterStack.Screen name="CharacterForm" component={CharacterFormScreen} />
     </CharacterStack.Navigator>
   );
 };

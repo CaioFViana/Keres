@@ -1,9 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native'; // Reverted aliasing
+import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CharacterListItem from '../components/character/CharacterListItem';
 import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
 import { useDrizzle } from '../db';
@@ -17,7 +18,7 @@ import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { debounce } from '../utils/debounce'; // Import debounce
 
-type CharactersScreenNavigationProp = CompositeNavigationProp<
+export type CharactersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,
   NativeStackNavigationProp<CharacterStackParamList, 'CharacterDetail'>
 >;
@@ -111,6 +112,19 @@ const CharactersScreen = () => {
       debouncedFetchCharacters.cancel && debouncedFetchCharacters.cancel();
     };
   }, [searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, debouncedFetchCharacters]); // Add favoriteFilterState
+
+  useEffect(() => {
+    navigation.getParent()?.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })} // Navigate to CharacterForm for creation
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="add" size={30} color={colors.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, colors.text]);
 
   const handleToggleFavorite = useCallback(async (characterId: string, isFavorite: boolean) => {
     await toggleFavorite(characterId, isFavorite);

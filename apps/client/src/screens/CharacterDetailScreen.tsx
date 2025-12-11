@@ -1,11 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../db';
 import { CharacterSelect } from '../db/schemas/characters'; // Correct import for CharacterSelect
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { createCharacterService } from '../services/CharacterService';
 import { useTheme } from '../theme';
+import { type CharactersScreenNavigationProp } from './CharactersScreen';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
@@ -17,7 +19,7 @@ type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 
 const CharacterDetailScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<CharactersScreenNavigationProp>();
   const route = useRoute<CharacterDetailScreenRouteProp>();
   const { characterId } = route.params;
 
@@ -84,6 +86,19 @@ const CharacterDetailScreen = () => {
 
     fetchCharacter();
   }, [characterId]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="pencil-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, characterId, colors.text]);
 
   if (loading) {
     return (

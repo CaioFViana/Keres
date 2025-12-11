@@ -5,28 +5,30 @@ import { useNavigation } from '@react-navigation/native';
 /**
  * Custom hook to handle hardware back button presses for nested navigators.
  * It prioritizes going back within the current navigator. If at the root of the nested navigator,
- * it attempts to go back in the parent navigator (DrawerNavigator).
+ * it attempts to go back in the parent navigator (DrawerNavigator). If the parent cannot go back,
+ * it returns false to allow other BackHandlers (like the app exit handler) to process the event.
  */
 export const useBackButtonHandler = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
     const backAction = () => {
+      // 1. Try to go back within the current navigator (nested stack)
       if (navigation.canGoBack()) {
-        navigation.goBack(); // Go back within the current nested stack
+        navigation.goBack();
         return true; // Event handled
       } else {
-        // If the current nested stack cannot go back, delegate to the parent navigator (DrawerNavigator).
-        // The DrawerNavigator will then decide if it can go back (e.g., to MainDashboard).
-        const parentNavigation = navigation.getParent();
-        if (parentNavigation) {
+        // 2. If the current nested stack cannot go back, delegate to the parent navigator (DrawerNavigator).
+        const parentNavigation = navigation.getParent(); // This is the DrawerNavigator's navigation object
+
+        if (parentNavigation && parentNavigation.canGoBack()) { // Check if parent can go back
           parentNavigation.goBack(); // Attempt to go back in the parent (DrawerNavigator)
           return true; // Event handled
         }
-        // If no parent navigation, then this is an unexpected state or the absolute root.
-        // For example, if MainDashboardScreen (which is at the root of the Drawer) somehow
-        // uses this hook, and has no parent. But MainDashboardScreen should have its own handler.
-        return false; // Event not handled, allow default behavior or be handled by another BackHandler
+        // If no parent navigation, or if the parent cannot go back,
+        // return false to allow the event to propagate to other BackHandlers.
+        // This is crucial for the MainDashboardScreen's "double press to exit" logic.
+        return false; // Event not handled by this hook
       }
     };
 

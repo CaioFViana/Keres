@@ -127,6 +127,7 @@ const MainSystemNavigator = () => {
   return (
     <Drawer.Navigator
       defaultStatus="closed"
+      backBehavior="history" // Added backBehavior here
       screenOptions={({ navigation }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,

@@ -10,8 +10,9 @@ export const suggestions = sqliteTable('suggestions', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),
-  isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
+  isDeleted: integer('is_deleted', { mode: 'boolean' }).default(false).notNull(),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 });
-export type SuggestionInsert = InferInsertModel<typeof suggestions>;
-export type SuggestionSelect = InferSelectModel<typeof suggestions>;
+
+export type SuggestionSelect = typeof suggestions.$inferSelect;
+export type SuggestionInsert = typeof suggestions.$inferInsert;

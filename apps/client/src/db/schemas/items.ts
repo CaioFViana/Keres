@@ -9,7 +9,7 @@ export const items = sqliteTable('items', {
   category: text('category'), // Nullable
   description: text('description'), // Nullable
   initialState: text('initial_state'), // Nullable
-  isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
+  isFavorite: integer('is_favorite', { mode: 'boolean' }).default(false).notNull(),
   extraNotes: text('extra_notes'), // Nullable
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),

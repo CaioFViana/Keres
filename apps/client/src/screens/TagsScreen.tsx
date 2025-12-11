@@ -11,10 +11,12 @@ import { useTagStore } from '../state/tagStore';
 import { useTheme } from '../theme';
 import { debounce } from '../utils/debounce';
 import { TagSelect } from '../db/schemas/tags'; // Import TagSelect
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 
 type TagsScreenProps = DrawerScreenProps<MainSystemDrawerParamList, 'Tags'>; // Correct type
 
 const TagsScreen: React.FC<TagsScreenProps> = ({ navigation }) => {
+  useBackButtonHandler(); // Call the hook here
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();

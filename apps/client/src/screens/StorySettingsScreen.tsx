@@ -4,7 +4,7 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
 import Button from '../components/common/Button/Button';
 import Select from '../components/common/Select/Select';
 import TextInput from '../components/common/TextInput/TextInput';
@@ -17,10 +17,12 @@ import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
 import { getLanguageOptions } from '../utils/languageOptions';
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
 
 const StorySettingsScreen = () => {
+  useBackButtonHandler(); // Call the hook here
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StorySettingsScreenNavigationProp>();
@@ -58,15 +60,6 @@ const StorySettingsScreen = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const backAction = () => {
-      navigation.goBack();
-      return true;
-    };
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-    return () => backHandler.remove();
-  }, [navigation]);
 
   useEffect(() => {
     const loadStoryAndServers = async () => {

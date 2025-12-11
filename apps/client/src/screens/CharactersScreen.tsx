@@ -8,6 +8,7 @@ import CharacterListItem from '../components/character/CharacterListItem';
 import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schema';
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../navigation/MainSystemStack';
 import { CharacterWithTags, FavoriteFilterState } from '../services/CharacterService'; // Import CharacterWithTags and FavoriteFilterState
 import { createTagService } from '../services/TagService';
@@ -22,6 +23,7 @@ type CharactersScreenNavigationProp = CompositeNavigationProp<
 >;
 
 const CharactersScreen = () => {
+  useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();

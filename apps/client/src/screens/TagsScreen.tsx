@@ -1,22 +1,22 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DrawerScreenProps } from '@react-navigation/drawer'; // Correct import
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native';
-import TagListItem from '../components/tag/TagListItem';
 import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
+import TagListItem from '../components/tag/TagListItem';
 import { useDrizzle } from '../db';
+import { TagSelect } from '../db/schemas/tags'; // Import TagSelect
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 import { MainSystemDrawerParamList } from '../navigation/MainSystemStack'; // Correct import
 import { useStoryStore } from '../state/storyStore';
 import { useTagStore } from '../state/tagStore';
 import { useTheme } from '../theme';
 import { debounce } from '../utils/debounce';
-import { TagSelect } from '../db/schemas/tags'; // Import TagSelect
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 
 type TagsScreenProps = DrawerScreenProps<MainSystemDrawerParamList, 'Tags'>; // Correct type
 
 const TagsScreen: React.FC<TagsScreenProps> = ({ navigation }) => {
-  useBackButtonHandler(); // Call the hook here
+  useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();

@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { DrawerActions, RouteProp, useNavigation, CommonActions } from '@react-navigation/native';
+import { CommonActions, DrawerActions, RouteProp, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useRef } from 'react'; // Added useRef
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, Text, View } from 'react-native'; // Added Text, View
+import { TouchableOpacity, View } from 'react-native'; // Added Text, View
 
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/CharacterDetailScreen'; // Import CharacterDetailScreen
 import CharactersScreen from '../screens/CharactersScreen'; // Import CharactersScreen
@@ -13,16 +13,15 @@ import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
 import MainDashboardScreen from '../screens/MainDashboardScreen';
 
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Added useBackButtonHandler
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
-import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import ImportExportScreen from '../screens/ImportExportScreen';
 import StorySettingsScreen from '../screens/StorySettingsScreen';
 import TagsScreen from '../screens/TagsScreen'; // Import TagsScreen
+import { useNotificationStore } from '../state/notificationStore'; // Added useNotificationStore
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
-import { useNotificationStore } from '../state/notificationStore'; // Added useNotificationStore
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Added useBackButtonHandler
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -143,7 +142,6 @@ const MainSystemNavigator = () => {
         component={MainDashboardScreen}
         options={{ title: selectedStory?.title || t('dashboard_title') }}
       />
-      {/* Use the new character stack navigator */}
       <Drawer.Screen name="CharactersStack" component={CharacterStackNavigator} options={{ title: t('characters_title') }} />
       <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: t('locations_title') }} />
       <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />

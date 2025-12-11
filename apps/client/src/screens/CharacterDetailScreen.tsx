@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { useTheme } from '../theme';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../db';
-import { createCharacterService } from '../services/CharacterService';
 import { CharacterSelect } from '../db/schemas/characters'; // Correct import for CharacterSelect
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
+import { createCharacterService } from '../services/CharacterService';
+import { useTheme } from '../theme';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
@@ -14,6 +15,7 @@ export type CharacterDetailScreenParamList = {
 type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 'CharacterDetail'>;
 
 const CharacterDetailScreen = () => {
+  useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<CharacterDetailScreenRouteProp>();

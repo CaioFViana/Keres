@@ -113,8 +113,6 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     try {
       await characterService.updateCharacter(userId, characterId, { isFavorite });
-      // Re-fetch to ensure consistency with backend/database
-      get().fetchCharacters();
     } catch (err) {
       console.error('Failed to toggle favorite status:', err);
       set({ error: 'Failed to update favorite status.' });

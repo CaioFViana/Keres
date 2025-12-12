@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useDrizzle } from '../db';
-import { CharacterSelect } from '../db/schemas/characters'; // Correct import for CharacterSelect
+import { CharacterSelect } from '../db/schemas/characters';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { createCharacterService } from '../services/CharacterService';
 import { useTheme } from '../theme';
+import { characterEventEmitter } from '../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharactersScreen';
 
 // Define the parameter list for this screen
@@ -24,11 +25,19 @@ const CharacterDetailScreen = () => {
   const { characterId } = route.params;
 
   const drizzleDb = useDrizzle();
-  const characterService = createCharacterService(drizzleDb);
+  const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
+
+  // Initialize characterService only once when drizzleDb is available
+  useEffect(() => {
+    if (drizzleDb && !characterServiceRef.current) {
+      characterServiceRef.current = createCharacterService(drizzleDb);
+    }
+  }, [drizzleDb]);
 
   const [character, setCharacter] = useState<CharacterSelect | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [headerTitle, setHeaderTitle] = useState('Loading...');
 
   // Move styles declaration to the top
   const styles = StyleSheet.create({
@@ -66,41 +75,65 @@ const CharacterDetailScreen = () => {
     }
   });
 
-  useEffect(() => {
-    const fetchCharacter = async () => {
-      try {
-        setLoading(true);
-        const fetchedCharacter = await characterService.getById(characterId);
-        if (fetchedCharacter) {
-          setCharacter(fetchedCharacter);
-        } else {
-          setError('Character not found.');
-        }
-      } catch (err) {
-        console.error('Failed to fetch character details:', err);
-        setError('Failed to load character details.');
-      } finally {
-        setLoading(false);
+  const fetchCharacter = useCallback(async () => {
+    if (!characterServiceRef.current) {
+      console.warn('Character service not initialized.');
+      return;
+    }
+    try {
+      setLoading(true);
+      const fetchedCharacter = await characterServiceRef.current.getById(characterId);
+      if (fetchedCharacter) {
+        setCharacter(fetchedCharacter);
+        setHeaderTitle(fetchedCharacter.name || 'Character Details');
+      } else {
+        setError('Character not found.');
+        setHeaderTitle('Character Not Found');
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch character details:', err);
+      setError('Failed to load character details.');
+      setHeaderTitle('Error Loading Character');
+    } finally {
+      setLoading(false);
+    }
+  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, characterServiceRef.current]);
 
-    fetchCharacter();
-  }, [characterId, drizzleDb]); // Added drizzleDb to dependencies
+  const handleCharacterChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
+    if (changedCharacterId === characterId) {
+      fetchCharacter(); // Refetch if the current character has changed
+    }
+  }, [characterId, fetchCharacter]);
+
+  useEffect(() => {
+    // Only subscribe and fetch if characterServiceRef.current is initialized
+    if (characterServiceRef.current) {
+      fetchCharacter();
+
+      characterEventEmitter.on('character_changed', handleCharacterChange);
+
+      return () => {
+        characterEventEmitter.off('character_changed', handleCharacterChange);
+      };
+    }
+  }, [characterId, fetchCharacter, handleCharacterChange, characterServiceRef.current]);
+
+  const renderHeaderRight = useCallback(() => (
+    <TouchableOpacity
+      onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
+      style={{ marginRight: 15 }}
+    >
+      <Ionicons name="pencil-outline" size={24} color={colors.text} />
+    </TouchableOpacity>
+  ), [navigation, characterId, colors.text]);
 
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({
-        title: character?.name || 'Loading...',
-        headerRight: () => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="pencil-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        ),
+        title: headerTitle,
+        headerRight: renderHeaderRight, // Pass the memoized component
       });
-    }, [navigation, characterId, colors.text, character?.name])
+    }, [navigation, headerTitle, renderHeaderRight])
   );
 
   if (loading) {

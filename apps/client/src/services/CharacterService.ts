@@ -1,6 +1,8 @@
 import { and, asc, count, desc, eq, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { CharacterInsert, characters, CharacterSelect, tagRelations, tags, TagSelect } from '../db/schema'; // Import CharacterInsert and stories
+import { characterEventEmitter } from '../utils/EventEmitter'; // Import characterEventEmitter
+import { getChangedFields } from '../utils/diffUtils'; // Import getChangedFields
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from './ServerService'; // Import ServerService and createServerService
@@ -116,13 +118,19 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newCharacter.storyId, currentUserId);
       await recordLocalOperation(db, newCharacter.storyId, userIdToLog, 'create', 'Character', newCharacter.id, { ...result });
+      characterEventEmitter.emit('character_changed', newCharacter.storyId, newCharacter.id);
 
       return result;
     },
 
-    async updateCharacter(currentUserId: string, characterId: string, characterData: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<void> {
+    async updateCharacter(currentUserId: string, characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<void> {
+      const oldCharacter = await db.query.characters.findFirst({ where: eq(characters.id, characterId) });
+      if (!oldCharacter) {
+        throw new Error(`Character with ID ${characterId} not found for update.`);
+      }
+
       const [updatedCharacter] = await db.update(characters)
-        .set({ ...characterData, updatedAt: new Date(), version: sql`${characters.version} + 1` })
+        .set({ ...updatedFields, updatedAt: new Date(), version: sql`${characters.version} + 1` })
         .where(eq(characters.id, characterId))
         .returning({ id: characters.id, storyId: characters.storyId, version: characters.version }); // Return relevant fields
 
@@ -130,11 +138,11 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         throw new Error(`Failed to update character ${characterId} or character not found.`);
       }
 
+      const changedFields = getChangedFields(oldCharacter, { ...oldCharacter, ...updatedFields, version: updatedCharacter.version });
+
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedCharacter.storyId, currentUserId);
-      await recordLocalOperation(db, updatedCharacter.storyId, userIdToLog, 'update', 'Character', characterId, {
-        ...characterData,
-        version: updatedCharacter.version,
-      });
+      await recordLocalOperation(db, updatedCharacter.storyId, userIdToLog, 'update', 'Character', characterId, changedFields);
+      characterEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after update
     },
 
     async deleteCharacter(currentUserId: string, characterId: string): Promise<void> {
@@ -153,12 +161,15 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         throw new Error(`Failed to delete character ${characterId} or character not found.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedCharacter.storyId, currentUserId);
-      await recordLocalOperation(db, updatedCharacter.storyId, userIdToLog, 'delete', 'Character', characterId, {
+      const changedFields = {
         id: updatedCharacter.id,
         isDeleted: updatedCharacter.isDeleted,
         version: updatedCharacter.version,
-      });
+      };
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, updatedCharacter.storyId, currentUserId);
+      await recordLocalOperation(db, updatedCharacter.storyId, userIdToLog, 'delete', 'Character', characterId, changedFields);
+      characterEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after delete
     },
 
     async getById(characterId: string): Promise<CharacterSelect | undefined> {

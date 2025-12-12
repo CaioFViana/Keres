@@ -17,6 +17,7 @@ import { useCharacterStore } from '../state/characterStore';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { debounce } from '../utils/debounce'; // Import debounce
+import { characterEventEmitter } from '../utils/EventEmitter';
 
 export type CharactersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,
@@ -112,6 +113,21 @@ const CharactersScreen = () => {
       debouncedFetchCharacters.cancel && debouncedFetchCharacters.cancel();
     };
   }, [searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, debouncedFetchCharacters]); // Add favoriteFilterState
+
+  useEffect(() => {
+    const handleCharacterChange = (storyId: string) => {
+      // Only refetch if the change is for the currently selected story
+      if (selectedStory?.id === storyId) {
+        debouncedFetchCharacters();
+      }
+    };
+
+    characterEventEmitter.on('character_changed', handleCharacterChange);
+
+    return () => {
+      characterEventEmitter.off('character_changed', handleCharacterChange);
+    };
+  }, [selectedStory?.id, debouncedFetchCharacters]); // Dependencies for event listener
 
   useFocusEffect(
     useCallback(() => {

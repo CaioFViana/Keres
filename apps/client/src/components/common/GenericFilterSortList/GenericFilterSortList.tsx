@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react'; // Added useCallback
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
-import AdvancedSearchModal from '../AdvancedSearchModal'; // Corrected import path
+import AdvancedSearchModal from '../AdvancedSearchModal/AdvancedSearchModal'; // Corrected import path
 import Select from '../Select/Select'; // Assuming Select is here
 import TextInput from '../TextInput/TextInput'; // Assuming TextInput is here
 

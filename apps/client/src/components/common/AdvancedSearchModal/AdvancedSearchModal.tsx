@@ -3,13 +3,13 @@ import { entityFieldMetadata, EntityFieldMetadata } from '@keres/shared/metadata
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SuggestionType } from '../../services/SuggestionService';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
-import Button from './Button/Button';
-import SuggestionTextInput from './SuggestionTextInput/SuggestionTextInput';
-import TextInput from './TextInput/TextInput';
-import TriStateToggleButton from './TriStateToggleButton/TriStateToggleButton';
+import { SuggestionType } from '../../../services/SuggestionService';
+import { useTheme } from '../../../theme';
+import { getCommonInputStyles } from '../../../theme/commonStyles';
+import Button from '../Button/Button';
+import SuggestionTextInput from '../SuggestionTextInput/SuggestionTextInput';
+import TextInput from '../TextInput/TextInput';
+import TriStateToggleButton from '../TriStateToggleButton/TriStateToggleButton';
 
 interface AdvancedSearchModalProps {
   entityName: string;

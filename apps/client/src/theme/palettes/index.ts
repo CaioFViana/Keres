@@ -1,7 +1,7 @@
+import { ThemeColors } from '../ThemeColors';
 import { defaultTheme } from './default';
-import { oceanTheme } from './ocean';
 import { forestTheme } from './forest';
-import { ThemeColors } from '../types';
+import { oceanTheme } from './ocean';
 
 export type Theme = {
   lightColors: ThemeColors;

@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 import { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
 import { useThemeStore } from '../state/themeStore'; // Import useThemeStore
 import { themes } from './palettes';
-import { ThemeColors } from './types';
+import { ThemeColors } from './ThemeColors';
 
 interface ThemeContextType {
   colors: ThemeColors;

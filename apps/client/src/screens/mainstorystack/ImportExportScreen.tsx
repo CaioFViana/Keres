@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../theme';
+import { useTheme } from '../../theme';
 
 const ImportExportScreen = () => {
   const { colors } = useTheme();

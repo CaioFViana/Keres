@@ -4,16 +4,16 @@ import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import NotificationPopup from './components/NotificationPopup'; // Import NotificationPopup
-import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db'; // Import useDrizzle
+import NotificationPopup from './components/common/NotificationPopup/NotificationPopup';
+import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
 import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
 import { useUserSettingsStore } from './state/userSettingsStore';
 import { useTheme } from './theme';
+import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
-import { isColorLight } from './theme/utils'; // Import isColorLight
 import './utils/i18n';
 import i18n from './utils/i18n';
 

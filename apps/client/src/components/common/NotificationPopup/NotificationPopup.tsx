@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useNotificationStore } from '../state/notificationStore';
-import NotificationItem from './NotificationItem';
+import { StyleSheet, View } from 'react-native';
+import { useNotificationStore } from '../../../state/notificationStore';
+import NotificationItem from '../NotificationItem/NotificationItem';
 
 const NotificationPopup = () => {
   const { currentNotifications } = useNotificationStore();

@@ -1,23 +1,23 @@
 import { Story } from '@keres/shared/entities/Story';
-import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
-import Button from '../components/common/Button/Button';
-import Select from '../components/common/Select/Select';
-import TextInput from '../components/common/TextInput/TextInput';
-import { useDrizzle } from '../db';
-import { ServerSelect } from '../db/schema';
-import { createServerService } from '../services/ServerService';
-import { createStoryService } from '../services/StoryService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useStoryStore } from '../state/storyStore';
-import { useTheme } from '../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
-import { getLanguageOptions } from '../utils/languageOptions';
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Import useBackButtonHandler
+import Button from '../../components/common/Button/Button';
+import Select from '../../components/common/Select/Select';
+import TextInput from '../../components/common/TextInput/TextInput';
+import { useDrizzle } from '../../db';
+import { ServerSelect } from '../../db/schema';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
+import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { createServerService } from '../../services/ServerService';
+import { createStoryService } from '../../services/StoryService';
+import { useStoryStore } from '../../state/storyStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useTheme } from '../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { getLanguageOptions } from '../../utils/languageOptions';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
 

@@ -1,4 +1,4 @@
-import { ThemeColors } from '../types';
+import { ThemeColors } from '../ThemeColors';
 
 const lightColors: ThemeColors = {
   primary: '#4682B4', // SteelBlue

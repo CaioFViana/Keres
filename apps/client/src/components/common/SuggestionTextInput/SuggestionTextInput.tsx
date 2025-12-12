@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Dimensions, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
 import { createSuggestionService, SuggestionServiceInterface, SuggestionType } from '../../../services/SuggestionService';
-import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
 import Button from '../Button/Button'; // Reusing existing Button
@@ -17,7 +16,7 @@ interface SuggestionTextInputProps {
   placeholder?: string;
   label?: string;
   style?: any;
-  // Add other TextInput props as needed
+  storyId: string;
 }
 
 const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
@@ -27,12 +26,12 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
   placeholder,
   label,
   style,
+  storyId, // Added storyId
   ...rest
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const drizzleDb = useDrizzle();
-  const { selectedStory } = useStoryStore();
   const commonInputStyles = getCommonInputStyles(colors);
 
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -48,14 +47,14 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
   }, [drizzleDb]);
 
   const fetchSuggestions = useCallback(async () => {
-    if (!suggestionService || !selectedStory?.id || !type) {
+    if (!suggestionService || !type || !storyId) {
       setSuggestions([]);
       return;
     }
 
     setLoadingSuggestions(true);
     try {
-      const fetched = await suggestionService.getSuggestions(type, selectedStory.id);
+      const fetched = await suggestionService.getSuggestions(type, storyId); // Use storyId prop
       setSuggestions(fetched);
     } catch (error) {
       console.error('Failed to fetch suggestions:', error);
@@ -63,11 +62,11 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     } finally {
       setLoadingSuggestions(false);
     }
-  }, [suggestionService, selectedStory?.id, type]);
+  }, [suggestionService, type, storyId]);
 
   useEffect(() => {
     fetchSuggestions();
-  }, [fetchSuggestions]);
+  }, [fetchSuggestions, storyId]);
 
   const handleToggleSuggestions = () => {
     setShowSuggestions(prev => !prev);

@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react'; // Added useCallback
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
+import AdvancedSearchModal from '../AdvancedSearchModal'; // Corrected import path
 import Select from '../Select/Select'; // Assuming Select is here
 import TextInput from '../TextInput/TextInput'; // Assuming TextInput is here
 
@@ -30,6 +31,11 @@ interface GenericFilterSortListProps<T> {
   // Favorite Filter Props
   onFavoriteFilterChange?: (state: FavoriteFilterState) => void;
   currentFavoriteFilterState?: FavoriteFilterState;
+  // Advanced Search Props
+  entityName?: string; // Made optional
+  storyId?: string; // Made optional
+  onAdvancedSearch?: (criteria: { [key: string]: any }) => void; // Made optional
+  currentAdvancedSearchCriteria?: { [key: string]: any }; // Made optional
 }
 
 const GenericFilterSortList = <T,>({
@@ -50,17 +56,19 @@ const GenericFilterSortList = <T,>({
   emptyListComponent,
   onFavoriteFilterChange,
   currentFavoriteFilterState,
+  entityName, // Destructure
+  storyId, // Destructure
+  onAdvancedSearch, // Destructure
+  currentAdvancedSearchCriteria, // Destructure
 }: GenericFilterSortListProps<T>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  // const [searchText, setSearchText] = useState(''); // Removed internal state
-  const [selectedSort, setSelectedSort] = useState<string | null>(currentSortValue || null); // Initialize with prop
+  const [selectedSort, setSelectedSort] = useState<string | null>(currentSortValue || null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(currentSortDirection);
-
-  // Initialize selectedFilter with the prop, ensuring it's an array
   const [selectedFilter, setSelectedFilter] = useState<string[]>(selectedFilterValues || []);
   const [internalFavoriteFilterState, setInternalFavoriteFilterState] = useState<FavoriteFilterState>(currentFavoriteFilterState || 'all');
+  const [isAdvancedSearchModalVisible, setIsAdvancedSearchModalVisible] = useState(false); // State for modal visibility
 
   React.useEffect(() => {
     setSelectedFilter(selectedFilterValues || []);
@@ -71,23 +79,20 @@ const GenericFilterSortList = <T,>({
   }, [currentFavoriteFilterState]);
 
   React.useEffect(() => {
-    setSelectedSort(currentSortValue || null); // Sync with prop
+    setSelectedSort(currentSortValue || null);
   }, [currentSortValue]);
 
   const handleSearchTextChange = (text: string) => {
-    // setSearchText(text); // No longer setting internal state
     onSearch(text);
   };
 
-  const handleFilterSelection = (values: string | string[] | null) => { // Updated to handle array
+  const handleFilterSelection = (values: string | string[] | null) => {
     const newValues = Array.isArray(values) ? values : (values ? [values] : []);
     setSelectedFilter(newValues);
     onFilterChange(newValues);
   };
 
   const handleSortSelection = (value: string | null) => {
-    // setSelectedSort is updated internally, but the source of truth is the prop for external control
-    // setSelectedSort(value); // This line is not needed here anymore as state is synced with props
     onSortChange(value);
   };
 
@@ -114,23 +119,30 @@ const GenericFilterSortList = <T,>({
     if (internalFavoriteFilterState === 'favorite') {
       return 'star';
     } else if (internalFavoriteFilterState === 'not-favorite') {
-      return 'ban-outline'; // Using 'ban-outline' to signify 'not favorite' (exclude)
+      return 'ban-outline';
     }
-    return 'star-outline'; // Default for 'all'
+    return 'star-outline';
   };
 
   const getFavoriteButtonColor = () => {
     if (internalFavoriteFilterState === 'favorite') {
-      return colors.accent; // A distinct color when filtering for favorites
+      return colors.accent;
     } else if (internalFavoriteFilterState === 'not-favorite') {
-      return colors.notification; // A distinct color when filtering for non-favorites
+      return colors.notification;
     }
-    return colors.primary; // Default color
+    return colors.primary;
   };
+
+  const handleOpenAdvancedSearchModal = useCallback(() => setIsAdvancedSearchModalVisible(true), []);
+  const handleCloseAdvancedSearchModal = useCallback(() => setIsAdvancedSearchModalVisible(false), []);
+  const handleAdvancedSearchSubmit = useCallback((criteria: { [key: string]: any }) => {
+    onAdvancedSearch && onAdvancedSearch(criteria); // Make sure onAdvancedSearch is defined
+    setIsAdvancedSearchModalVisible(false);
+  }, [onAdvancedSearch]);
 
   const showFilter = filterOptions && filterOptions.length > 0;
   const showSort = sortOptions && sortOptions.length > 0;
-  const showFavoriteFilter = onFavoriteFilterChange; // Removed favoriteFilterOptionLabel from condition
+  const showFavoriteFilter = onFavoriteFilterChange;
 
   const styles = StyleSheet.create({
     container: {
@@ -153,9 +165,8 @@ const GenericFilterSortList = <T,>({
     },
     filterSortRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      marginBottom: 10,
       alignItems: 'center',
-      marginBottom: 10, // Changed from 5 to 10
     },
     selectContainer: {
       flex: 1,
@@ -174,7 +185,6 @@ const GenericFilterSortList = <T,>({
       borderRadius: 5,
       alignItems: 'center',
       justifyContent: 'center',
-      // No marginBottom here, marginRight applied conditionally in JSX
     },
     list: {
       flex: 1,
@@ -184,6 +194,14 @@ const GenericFilterSortList = <T,>({
       textAlign: 'center',
       marginTop: 20,
     },
+    advancedSearchButton: { // Added style for the advanced search button
+      padding: 8,
+      borderRadius: 5,
+      backgroundColor: colors.primary,
+      marginLeft: 10, // Adjust as needed
+      justifyContent: 'center',
+      alignItems: 'center',
+    }
   });
 
   return (
@@ -191,7 +209,7 @@ const GenericFilterSortList = <T,>({
       <View style={styles.searchContainer}>
         <TextInput
           placeholder={searchPlaceholder || t('search')}
-          value={currentSearchTerm || ''} // Use prop for value
+          value={currentSearchTerm || ''}
           onChangeText={handleSearchTextChange}
           style={styles.searchBar}
         />
@@ -202,19 +220,22 @@ const GenericFilterSortList = <T,>({
             <View style={styles.filterSortRow}>
               <View style={[styles.selectContainer, (showFavoriteFilter || showSort) && { flex: 1 }]}>
                 <Select
-                  options={filterOptions || []} // Provide empty array as fallback
-                  value={selectedFilter} // Pass array
-                  onValueChange={handleFilterSelection} // Expects array
+                  options={filterOptions || []}
+                  value={selectedFilter}
+                  onValueChange={handleFilterSelection}
                   placeholder={t('filter_by_tags')}
-                  multiple={true} // Enable multi-select
+                  multiple={true}
                 />
               </View>
+              <TouchableOpacity onPress={handleOpenAdvancedSearchModal} style={styles.advancedSearchButton}>
+                <Ionicons name="options-outline" size={24} color={colors.text} />
+              </TouchableOpacity>
             </View>
           )}
           <View style={styles.filterSortRow}>
             <View style={styles.selectContainerSort}>
               <Select
-                options={sortOptions || []} // Provide empty array as fallback
+                options={sortOptions || []}
                 value={selectedSort}
                 onValueChange={handleSortSelection}
                 placeholder={t('sort_by')}
@@ -225,7 +246,7 @@ const GenericFilterSortList = <T,>({
               style={[
                 styles.favoriteFilterButton,
                 { backgroundColor: getFavoriteButtonColor() },
-                { marginRight: 10 }, // Always add marginRight if sort is next to it
+                { marginRight: 10 },
               ]}
             >
               <Ionicons
@@ -251,6 +272,16 @@ const GenericFilterSortList = <T,>({
         ListEmptyComponent={emptyListComponent || <Text style={styles.emptyText}>{t('no_items_found')}</Text>}
         style={styles.list}
       />
+      {storyId && entityName && onAdvancedSearch && ( // Only render if required props are provided
+        <AdvancedSearchModal
+          entityName={entityName}
+          storyId={storyId}
+          isVisible={isAdvancedSearchModalVisible}
+          onClose={handleCloseAdvancedSearchModal}
+          onSearch={handleAdvancedSearchSubmit}
+          initialCriteria={currentAdvancedSearchCriteria}
+        />
+      )}
     </View>
   );
 };

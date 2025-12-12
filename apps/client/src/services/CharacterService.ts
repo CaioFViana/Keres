@@ -6,13 +6,14 @@ import { getChangedFields } from '../utils/diffUtils'; // Import getChangedField
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from './ServerService'; // Import ServerService and createServerService
+import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Added
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
 export interface CharacterService {
-  getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], favoriteFilterState?: FavoriteFilterState, sortBy?: string, sortDirection?: 'asc' | 'desc'): Promise<CharacterWithTags[]>;
+  getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], favoriteFilterState?: FavoriteFilterState, sortBy?: string, sortDirection?: 'asc' | 'desc', advancedSearchCriteria?: { [key: string]: any }): Promise<CharacterWithTags[]>;
   getCharacterCount(storyId?: string): Promise<number>;
   createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect>; // Add createCharacter
   updateCharacter(currentUserId: string, characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<void>;
@@ -23,7 +24,15 @@ export interface CharacterService {
 export const createCharacterService = (db: AppDrizzleClient): CharacterService => {
   const serverService = createServerService(db); // Create serverService once
   return {
-    async getCharactersByStoryId(storyId, searchTerm, tagFilterIds, favoriteFilterState, sortBy, sortDirection): Promise<CharacterWithTags[]> {
+    async getCharactersByStoryId(
+      storyId,
+      searchTerm,
+      tagFilterIds,
+      favoriteFilterState,
+      sortBy,
+      sortDirection,
+      advancedSearchCriteria // Added
+    ): Promise<CharacterWithTags[]> {
       const whereConditions = [eq(characters.storyId, storyId)];
       const orderByConditions: any[] = [];
 
@@ -50,6 +59,46 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       } else if (favoriteFilterState === 'not-favorite') {
         whereConditions.push(eq(characters.isFavorite, false));
       }
+
+      if (advancedSearchCriteria) {
+        const characterMetadata = entityFieldMetadata.Character.filter(m => m.isSearchable); // Get metadata for Character entity
+
+        for (const key in advancedSearchCriteria) {
+          if (advancedSearchCriteria.hasOwnProperty(key)) {
+            const value = advancedSearchCriteria[key];
+            if (value === undefined || value === null || value === '') continue; // Skip empty values
+
+            const fieldMetadata = characterMetadata.find(meta => meta.name === key);
+
+            if (!fieldMetadata) {
+              console.warn(`No metadata found for advanced search field: ${key}`);
+              continue;
+            }
+
+            switch (fieldMetadata.type) {
+              case 'string':
+              case 'id':
+                whereConditions.push(sql`${(characters as any)[key]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>); // Explicitly cast characters to any
+                break;
+              case 'boolean':
+                whereConditions.push(eq((characters as any)[key], value)); // Explicitly cast characters to any
+                break;
+              case 'number':
+                // Assuming exact match for numbers for now
+                whereConditions.push(eq((characters as any)[key], Number(value))); // Explicitly cast characters to any
+                break;
+              case 'date':
+                // Assuming exact date string match for now, or could parse to range
+                whereConditions.push(sql`${(characters as any)[key]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>); // Explicitly cast characters to any
+                break;
+              default:
+                console.warn(`Unsupported field type for advanced search: ${fieldMetadata.type}`);
+                break;
+            }
+          }
+        }
+      }
+
 
       const finalWhereConditions = and(...whereConditions);
 

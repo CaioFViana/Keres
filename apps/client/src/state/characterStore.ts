@@ -17,7 +17,8 @@ interface CharacterState {
   db: AppDrizzleClient | null;
   storyId: string | null;
   characterService: CharacterService | null;
-
+  advancedSearchCriteria: { [key: string]: any }; // Added
+  
   setDbAndStoryId: (db: AppDrizzleClient, storyId: string) => void;
   initializeService: () => void;
   fetchCharacters: () => Promise<void>;
@@ -26,6 +27,7 @@ interface CharacterState {
   setFavoriteFilter: (state: FavoriteFilterState) => void;
   setSort: (sortBy: string | null, direction: 'asc' | 'desc') => void;
   toggleFavorite: (characterId: string, isFavorite: boolean) => Promise<void>;
+  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => void; // Added
 }
 
 export const useCharacterStore = create<CharacterState>((set, get) => ({
@@ -40,6 +42,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
   db: null,
   storyId: null,
   characterService: null,
+  advancedSearchCriteria: {}, // Added
 
   setDbAndStoryId: (dbInstance, storyIdInstance) => set({ db: dbInstance, storyId: storyIdInstance }),
 
@@ -52,7 +55,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
   fetchCharacters: async () => {
     set({ loading: true, error: null });
-    const { characterService, storyId, searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection } = get();
+    const { characterService, storyId, searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, advancedSearchCriteria } = get(); // Added advancedSearchCriteria
 
     if (!characterService || !storyId) {
       set({ loading: false, error: 'Character service or story ID not set.' });
@@ -64,9 +67,10 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         storyId,
         searchTerm,
         activeFilterTags.length > 0 ? activeFilterTags : undefined,
-        favoriteFilterState, // Pass favoriteFilterState
+        favoriteFilterState,
         activeSort || undefined,
-        sortDirection
+        sortDirection,
+        advancedSearchCriteria // Pass advancedSearchCriteria
       );
       set({ characters: fetchedCharacters, loading: false });
     } catch (err) {
@@ -117,5 +121,9 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
       console.error('Failed to toggle favorite status:', err);
       set({ error: 'Failed to update favorite status.' });
     }
+  },
+
+  setAdvancedSearchCriteria: (criteria) => { // Added
+    set({ advancedSearchCriteria: criteria });
   },
 }));

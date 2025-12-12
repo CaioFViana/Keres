@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useState
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CharacterListItem from '../components/character/CharacterListItem';
@@ -32,6 +32,8 @@ const CharactersScreen = () => {
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
 
+  const [advancedSearchCriteria, setAdvancedSearchCriteria] = useState<{ [key: string]: any }>({}); // State to hold advanced search criteria
+
   // Use the character store
   const {
     characters,
@@ -50,6 +52,8 @@ const CharactersScreen = () => {
     setFavoriteFilter, // Destructure setFavoriteFilter
     setSort,
     toggleFavorite,
+    advancedSearchCriteria: storeAdvancedSearchCriteria, // Renamed to avoid collision with local state
+    setAdvancedSearchCriteria: setStoreAdvancedSearchCriteria, // Renamed to avoid collision with local state
   } = useCharacterStore();
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
@@ -112,7 +116,7 @@ const CharactersScreen = () => {
     return () => {
       debouncedFetchCharacters.cancel && debouncedFetchCharacters.cancel();
     };
-  }, [searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, debouncedFetchCharacters]); // Add favoriteFilterState
+  }, [searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, debouncedFetchCharacters, storeAdvancedSearchCriteria]); // Added storeAdvancedSearchCriteria
 
   useEffect(() => {
     const handleCharacterChange = (storyId: string) => {
@@ -178,7 +182,7 @@ const CharactersScreen = () => {
   ), [handleToggleFavorite, handleViewDetails]);
 
   const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map(tag => ({ label: tag.name, value: tag.id }));
+    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id })); // Fixed implicit any
   }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {
@@ -248,6 +252,11 @@ const CharactersScreen = () => {
         currentSortValue={activeSort} // Pass activeSort from store
         onFavoriteFilterChange={handleFavoriteFilterChange} // Pass handler for favorite filter
         currentFavoriteFilterState={favoriteFilterState} // Pass current favorite filter state
+        // Advanced Search Props
+        entityName="Character"
+        storyId={selectedStory?.id || ''}
+        onAdvancedSearch={setStoreAdvancedSearchCriteria} // Use the store's setter
+        currentAdvancedSearchCriteria={storeAdvancedSearchCriteria} // Use the store's criteria
       />
     </View>
   );

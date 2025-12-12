@@ -225,6 +225,7 @@ const CharacterFormScreen = () => {
             onChangeText={setGender}
             type="character_gender"
             style={commonInputStyles.input}
+            storyId={selectedStory?.id || ''}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('race')}</Text>
@@ -234,6 +235,7 @@ const CharacterFormScreen = () => {
             onChangeText={setRace}
             type="character_race"
             style={commonInputStyles.input}
+            storyId={selectedStory?.id || ''}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('subrace')}</Text>
@@ -243,6 +245,7 @@ const CharacterFormScreen = () => {
             onChangeText={setSubrace}
             type="character_subrace"
             style={commonInputStyles.input}
+            storyId={selectedStory?.id || ''}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('personality')}</Text>

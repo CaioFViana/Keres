@@ -25,6 +25,10 @@
   "character_title_label": "Título do Personagem",
   "character_title_placeholder": "Digite o título do personagem",
   "character_updated_successfully": "Personagem atualizado com sucesso!",
+  "delete_character_title": "Excluir Personagem",
+  "delete_character_message": "Tem certeza de que deseja excluir este personagem? Esta ação é irreversível e não poderá ser desfeita.",
+  "character_deleted_successfully": "Personagem excluído com sucesso!",
+  "failed_to_delete_character": "Falha ao excluir personagem.",
   "characters": "Personagens",
   "characters_title": "Personagens",
   "choice": "Escolha",
@@ -268,3 +272,4 @@
   "yes": "Sim",
   "your_stories": "Suas Histórias"
 }
+

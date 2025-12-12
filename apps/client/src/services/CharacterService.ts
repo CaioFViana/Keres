@@ -33,7 +33,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       sortDirection,
       advancedSearchCriteria // Added
     ): Promise<CharacterWithTags[]> {
-      const whereConditions = [eq(characters.storyId, storyId)];
+      const whereConditions = [eq(characters.storyId, storyId), eq(characters.isDeleted, false)];
       const orderByConditions: any[] = [];
 
       if (searchTerm) {
@@ -155,8 +155,12 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
     },
 
     async getCharacterCount(storyId?: string): Promise<number> {
+      const whereConditions = [eq(characters.isDeleted, false)];
+      if (storyId) {
+        whereConditions.push(eq(characters.storyId, storyId));
+      }
       const result = await db.select({ count: count() }).from(characters)
-        .where(storyId ? eq(characters.storyId, storyId) : undefined)
+        .where(and(...whereConditions))
         .get();
       return result?.count || 0;
     },
@@ -223,7 +227,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
     async getById(characterId: string): Promise<CharacterSelect | undefined> {
         const character = await db.query.characters.findFirst({
-            where: eq(characters.id, characterId),
+            where: and(eq(characters.id, characterId), eq(characters.isDeleted, false)),
         });
         return character;
     },

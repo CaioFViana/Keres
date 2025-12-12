@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import SuggestionTextInput from '../../components/common/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '../../components/common/TextInput/TextInput'; // Custom TextInput
+import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
@@ -15,7 +15,6 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;
 
@@ -154,6 +153,45 @@ const CharacterFormScreen = () => {
     }
   };
 
+  const handleDelete = () => {
+    if (!userId) {
+      Alert.alert(t('error'), t('user_not_identified'));
+      return;
+    }
+
+    Alert.alert(
+      t('delete_character_title'),
+      t('delete_character_message'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('delete'),
+          onPress: async () => {
+            if (characterId) {
+              try {
+                setLoading(true);
+                await characterService().deleteCharacter(userId, characterId);
+                Alert.alert(t('success'), t('character_deleted_successfully'));
+                navigation.goBack();
+              } catch (err) {
+                console.error('Failed to delete character:', err);
+                setError(t('failed_to_delete_character'));
+                Alert.alert(t('error'), t('failed_to_delete_character'));
+              } finally {
+                setLoading(false);
+              }
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
@@ -178,8 +216,12 @@ const CharacterFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 30,
-      marginBottom: 20,
+      marginTop: 20,
+      marginBottom: 0,
+    },
+    deleteButton: {
+      backgroundColor: 'red',
+      marginBottom: 15
     },
     centered: {
       flex: 1,
@@ -325,6 +367,12 @@ const CharacterFormScreen = () => {
           <Button onPress={handleSave} style={styles.saveButton}>
             {t('save_character')}
           </Button>
+
+          {isEditing && (
+            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+              {t('delete_character_title')}
+            </Button>
+          )}
 
           <View style={{ height: 90 }} />
         </ScrollView>

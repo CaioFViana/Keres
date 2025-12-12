@@ -3,7 +3,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { CharacterSelect } from '../../db/schemas/characters';
+import { characters, CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createCharacterService } from '../../services/CharacterService';
 import { useTheme } from '../../theme';
@@ -83,10 +83,14 @@ const CharacterDetailScreen = () => {
     try {
       setLoading(true);
       const fetchedCharacter = await characterServiceRef.current.getById(characterId);
-      if (fetchedCharacter) {
+      if (fetchedCharacter && !fetchedCharacter.isDeleted) {
         setCharacter(fetchedCharacter);
         setHeaderTitle(fetchedCharacter.name || 'Character Details');
-      } else {
+      } else if (fetchedCharacter && fetchedCharacter.isDeleted) {
+        // If character is deleted, go back
+        navigation.goBack();
+      }
+      else {
         setError('Character not found.');
         setHeaderTitle('Character Not Found');
       }
@@ -97,13 +101,22 @@ const CharacterDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, characterServiceRef.current]);
+  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, characterServiceRef.current]);
 
-  const handleCharacterChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
+  const handleCharacterChange = useCallback(async (changedStoryId: string, changedCharacterId: string) => {
     if (changedCharacterId === characterId) {
-      fetchCharacter(); // Refetch if the current character has changed
+      // Re-fetch the character to get the latest status, including isDeleted
+      if (characterServiceRef.current) {
+        const updatedCharacter = await characterServiceRef.current.getById(characterId);
+        if (!updatedCharacter || updatedCharacter.isDeleted) {
+          navigation.goBack(); // Character was deleted or no longer found
+        } else {
+          setCharacter(updatedCharacter); // Update state with latest character data
+          setHeaderTitle(updatedCharacter.name || 'Character Details');
+        }
+      }
     }
-  }, [characterId, fetchCharacter]);
+  }, [characterId, navigation, setCharacter, setHeaderTitle, characterServiceRef.current]);
 
   useEffect(() => {
     // Only subscribe and fetch if characterServiceRef.current is initialized

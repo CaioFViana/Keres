@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,7 @@ import { useCharacterStore } from '../state/characterStore';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { debounce } from '../utils/debounce'; // Import debounce
-import { characterEventEmitter } from '../utils/EventEmitter';
+import { entityEventEmitter } from '../utils/EventEmitter';
 
 export type CharactersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,
@@ -122,12 +122,28 @@ const CharactersScreen = () => {
       }
     };
 
-    characterEventEmitter.on('character_changed', handleCharacterChange);
+    entityEventEmitter.on('character_changed', handleCharacterChange);
 
     return () => {
-      characterEventEmitter.off('character_changed', handleCharacterChange);
+      entityEventEmitter.off('character_changed', handleCharacterChange);
     };
   }, [selectedStory?.id, debouncedFetchCharacters]); // Dependencies for event listener
+
+  // Listen for reset event
+  useEffect(() => {
+    const handleReset = () => {
+      // Only pop to top if there's more than one screen in the stack
+      if (navigation.getState().routes.length > 1) {
+        navigation.dispatch(StackActions.popToTop());
+      }
+    };
+
+    entityEventEmitter.on('character_navigation_reset', handleReset);
+
+    return () => {
+      entityEventEmitter.off('character_navigation_reset', handleReset);
+    };
+  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {

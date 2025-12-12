@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { CharacterInsert, characters, CharacterSelect, tagRelations, tags, TagSelect } from '../db/schema'; // Import CharacterInsert and stories
-import { characterEventEmitter } from '../utils/EventEmitter'; // Import characterEventEmitter
+import { entityEventEmitter } from '../utils/EventEmitter'; // Import characterEventEmitter
 import { getChangedFields } from '../utils/diffUtils'; // Import getChangedFields
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
@@ -118,7 +118,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newCharacter.storyId, currentUserId);
       await recordLocalOperation(db, newCharacter.storyId, userIdToLog, 'create', 'Character', newCharacter.id, { ...result });
-      characterEventEmitter.emit('character_changed', newCharacter.storyId, newCharacter.id);
+      entityEventEmitter.emit('character_changed', newCharacter.storyId, newCharacter.id);
 
       return result;
     },
@@ -142,7 +142,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedCharacter.storyId, currentUserId);
       await recordLocalOperation(db, updatedCharacter.storyId, userIdToLog, 'update', 'Character', characterId, changedFields);
-      characterEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after update
+      entityEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after update
     },
 
     async deleteCharacter(currentUserId: string, characterId: string): Promise<void> {
@@ -169,7 +169,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedCharacter.storyId, currentUserId);
       await recordLocalOperation(db, updatedCharacter.storyId, userIdToLog, 'delete', 'Character', characterId, changedFields);
-      characterEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after delete
+      entityEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after delete
     },
 
     async getById(characterId: string): Promise<CharacterSelect | undefined> {

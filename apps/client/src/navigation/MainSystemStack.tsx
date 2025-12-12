@@ -1,36 +1,35 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { CommonActions, DrawerActions, RouteProp, useNavigation } from '@react-navigation/native';
+import { CommonActions, DrawerActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useRef } from 'react'; // Added useRef
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native'; // Added Text, View
+import { TouchableOpacity, View } from 'react-native';
 
-import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/CharacterDetailScreen'; // Import CharacterDetailScreen
-import CharactersScreen from '../screens/CharactersScreen'; // Import CharactersScreen
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
+import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/CharacterDetailScreen';
+import CharacterFormScreen from '../screens/CharacterFormScreen';
+import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
+import CharactersScreen from '../screens/CharactersScreen';
+import ChoicesScreen from '../screens/ChoicesScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
-import MainDashboardScreen from '../screens/MainDashboardScreen';
-
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Added useBackButtonHandler
-import CharacterFormScreen from '../screens/CharacterFormScreen'; // Import CharacterFormScreen
-import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
-import ChoicesScreen from '../screens/ChoicesScreen';
 import ImportExportScreen from '../screens/ImportExportScreen';
+import MainDashboardScreen from '../screens/MainDashboardScreen';
 import StorySettingsScreen from '../screens/StorySettingsScreen';
-import TagsScreen from '../screens/TagsScreen'; // Import TagsScreen
-import { useNotificationStore } from '../state/notificationStore'; // Added useNotificationStore
+import TagsScreen from '../screens/TagsScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
+import { entityEventEmitter } from '../utils/EventEmitter';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
-  CharactersStack: undefined; // Updated type to point to the character stack
+  CharactersStack: undefined;
   Locations: { entityType: string };
   Chapters: { entityType: string };
   Scenes: { entityType: string };
-  Tags: undefined; // <--- Changed to undefined
+  Tags: undefined;
   WorldRules: { entityType: string };
   Notes: { entityType: string };
   Gallery: undefined;
@@ -47,20 +46,19 @@ export type ListingDetailStackParamList = {
   Detail: { entityType: string; itemId: string };
 };
 
+/// Character ----------------
+const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
+const Stack = createNativeStackNavigator<ListingDetailStackParamList>();
+const CharacterStack = createNativeStackNavigator<CharacterStackParamList>();
+
 export type CharacterStackParamList = {
   Characters: undefined;
   CharacterDetail: CharacterDetailScreenParamList['CharacterDetail'];
   CharacterForm: { characterId?: string };
 };
 
-const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
-const Stack = createNativeStackNavigator<ListingDetailStackParamList>(); // Use ListingDetailStackParamList here
-const CharacterStack = createNativeStackNavigator<CharacterStackParamList>(); // Create a stack for characters
-
-// Helper component for the Character stack
 const CharacterStackNavigator = () => {
   useBackButtonHandler();
-
   return (
     <CharacterStack.Navigator screenOptions={{ headerShown: false }}>
       <CharacterStack.Screen name="Characters" component={CharactersScreen} />
@@ -74,7 +72,7 @@ const CharacterStackNavigator = () => {
 // A helper component to wrap screens that should be part of the drawer but also have their own stack navigation
 const ListingDetailStack = ({ route }: any) => {
   const { entityType } = route.params;
-  useBackButtonHandler(); // Use the custom hook for back button handling
+  useBackButtonHandler();
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Listing" component={ListingScreen} initialParams={{ entityType }} />
@@ -82,9 +80,8 @@ const ListingDetailStack = ({ route }: any) => {
     </Stack.Navigator>
   );
 };
-
-type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>; // Simplified type
-type MainDashboardScreenRouteProp = RouteProp<MainSystemDrawerParamList, 'MainDashboard'>;
+/// Main Drawer
+type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>;
 
 const DrawerToggleButton = ({ navigation }: { navigation: MainDashboardScreenNavigationProp }) => {
   const { colors } = useTheme();
@@ -99,37 +96,11 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
-  const navigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>(); // Get the navigation object for the current navigator
-  const { showNotification } = useNotificationStore(); // Get showNotification
-
-  const backPressTimer = useRef<number | null>(null);
-
-  const handleStorySelectionPress = (drawerNavigation: DrawerNavigationProp<MainSystemDrawerParamList>) => {
-    // Dispatch the reset action to the RootStack's navigation object
-    const rootStackNavigation = drawerNavigation.getParent();
-    if (rootStackNavigation) {
-      rootStackNavigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'StorySelection' }],
-        })
-      );
-    } else {
-      console.error("Could not find root stack navigation to dispatch reset action. This is unexpected.");
-      drawerNavigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'StorySelection' }],
-        })
-      );
-    }
-  };
-
 
   return (
     <Drawer.Navigator
       defaultStatus="closed"
-      backBehavior="history" // Added backBehavior here
+      backBehavior="history"
       screenOptions={({ navigation }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,
@@ -152,6 +123,11 @@ const MainSystemNavigator = () => {
           title: t('characters_title'),
           drawerLabel: t('characters_title'),
         }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('character_navigation_reset');
+          },
+        })}
       />
       <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: t('locations_title') }} />
       <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />
@@ -172,7 +148,7 @@ const MainSystemNavigator = () => {
         }}
         listeners={({ navigation }) => ({
           drawerItemPress: (e) => {
-            e.preventDefault(); // Prevent the default navigation to the component
+            e.preventDefault();
             const rootStackNavigation = navigation.getParent();
             if (rootStackNavigation) {
               rootStackNavigation.dispatch(

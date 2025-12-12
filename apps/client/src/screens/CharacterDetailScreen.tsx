@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useDrizzle } from '../db';
 import { CharacterSelect } from '../db/schemas/characters';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { createCharacterService } from '../services/CharacterService';
 import { useTheme } from '../theme';
-import { characterEventEmitter } from '../utils/EventEmitter';
+import { entityEventEmitter } from '../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharactersScreen';
 
 // Define the parameter list for this screen
@@ -110,10 +110,10 @@ const CharacterDetailScreen = () => {
     if (characterServiceRef.current) {
       fetchCharacter();
 
-      characterEventEmitter.on('character_changed', handleCharacterChange);
+      entityEventEmitter.on('character_changed', handleCharacterChange);
 
       return () => {
-        characterEventEmitter.off('character_changed', handleCharacterChange);
+        entityEventEmitter.off('character_changed', handleCharacterChange);
       };
     }
   }, [characterId, fetchCharacter, handleCharacterChange, characterServiceRef.current]);

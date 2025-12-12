@@ -2,13 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { entityFieldMetadata, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SuggestionType } from '../../services/SuggestionService';
 import { useTheme } from '../../theme';
 import { getCommonInputStyles } from '../../theme/commonStyles';
+import Button from './Button/Button';
 import SuggestionTextInput from './SuggestionTextInput/SuggestionTextInput';
 import TextInput from './TextInput/TextInput';
-import TriStateToggleButton from './TriStateToggleButton/TriStateToggleButton'; // Added import
+import TriStateToggleButton from './TriStateToggleButton/TriStateToggleButton';
 
 interface AdvancedSearchModalProps {
   entityName: string;
@@ -159,8 +160,12 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             {fieldsMetadata.map(renderFieldInput)}
           </ScrollView>
           <View style={styles.modalFooter}>
-            <Button title={t('common_clear')} onPress={handleClear} color={colors.textSecondary} />
-            <Button title={t('common_search')} onPress={handleSubmit} color={colors.primary} />
+            <View style={styles.buttonWrapper}>
+              <Button onPress={handleClear} style={{ backgroundColor: colors.textSecondary }}>{t('common_clear')}</Button>
+            </View>
+            <View style={styles.buttonWrapper}>
+              <Button onPress={handleSubmit} style={{ backgroundColor: colors.primary }}>{t('common_search')}</Button>
+            </View>
           </View>
         </View>
       </View>
@@ -213,8 +218,12 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     marginTop: 10,
+    paddingHorizontal: '3%',
+  },
+  buttonWrapper: {
+    width: '47%',
   },
 });
 

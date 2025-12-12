@@ -145,7 +145,14 @@ const MainSystemNavigator = () => {
         component={MainDashboardScreen}
         options={{ title: selectedStory?.title || t('dashboard_title') }}
       />
-      <Drawer.Screen name="CharactersStack" component={CharacterStackNavigator} options={{ title: t('characters_title') }} />
+      <Drawer.Screen
+        name="CharactersStack"
+        component={CharacterStackNavigator}
+        options={{
+          title: t('characters_title'),
+          drawerLabel: t('characters_title'),
+        }}
+      />
       <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: t('locations_title') }} />
       <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />
       <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: t('scenes_title') }} />

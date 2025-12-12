@@ -4,17 +4,17 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../components/common/Button/Button';
-import SuggestionTextInput from '../components/common/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '../components/common/TextInput/TextInput'; // Custom TextInput
-import { useDrizzle } from '../db';
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
-import { CharacterStackParamList, MainSystemDrawerParamList } from '../navigation/MainSystemStack';
-import { createCharacterService } from '../services/CharacterService';
-import { useStoryStore } from '../state/storyStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../theme/commonStyles';
+import Button from '../../components/common/Button/Button';
+import SuggestionTextInput from '../../components/common/SuggestionTextInput/SuggestionTextInput';
+import TextInput from '../../components/common/TextInput/TextInput'; // Custom TextInput
+import { useDrizzle } from '../../db';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { createCharacterService } from '../../services/CharacterService';
+import { useStoryStore } from '../../state/storyStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useTheme } from '../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;

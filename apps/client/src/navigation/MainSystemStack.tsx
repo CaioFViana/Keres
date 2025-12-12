@@ -7,10 +7,10 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
-import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/CharacterDetailScreen';
-import CharacterFormScreen from '../screens/CharacterFormScreen';
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
-import CharactersScreen from '../screens/CharactersScreen';
+import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
+import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
+import CharactersScreen from '../screens/characters/CharacterListScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';

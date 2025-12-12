@@ -5,19 +5,19 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useState
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CharacterListItem from '../components/character/CharacterListItem';
-import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
-import { useDrizzle } from '../db';
-import { TagSelect } from '../db/schema';
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
-import { CharacterStackParamList, MainSystemDrawerParamList } from '../navigation/MainSystemStack';
-import { CharacterWithTags, FavoriteFilterState } from '../services/CharacterService'; // Import CharacterWithTags and FavoriteFilterState
-import { createTagService } from '../services/TagService';
-import { useCharacterStore } from '../state/characterStore';
-import { useStoryStore } from '../state/storyStore';
-import { useTheme } from '../theme';
-import { debounce } from '../utils/debounce'; // Import debounce
-import { entityEventEmitter } from '../utils/EventEmitter';
+import CharacterListItem from '../../components/character/CharacterListItem';
+import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
+import { useDrizzle } from '../../db';
+import { TagSelect } from '../../db/schema';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { CharacterWithTags, FavoriteFilterState } from '../../services/CharacterService'; // Import CharacterWithTags and FavoriteFilterState
+import { createTagService } from '../../services/TagService';
+import { useCharacterStore } from '../../state/characterStore';
+import { useStoryStore } from '../../state/storyStore';
+import { useTheme } from '../../theme';
+import { debounce } from '../../utils/debounce'; // Import debounce
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type CharactersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,

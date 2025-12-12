@@ -2,13 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../db';
-import { CharacterSelect } from '../db/schemas/characters';
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
-import { createCharacterService } from '../services/CharacterService';
-import { useTheme } from '../theme';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { type CharactersScreenNavigationProp } from './CharactersScreen';
+import { useDrizzle } from '../../db';
+import { CharacterSelect } from '../../db/schemas/characters';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { createCharacterService } from '../../services/CharacterService';
+import { useTheme } from '../../theme';
+import { entityEventEmitter } from '../../utils/EventEmitter';
+import { type CharactersScreenNavigationProp } from './CharacterListScreen';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {

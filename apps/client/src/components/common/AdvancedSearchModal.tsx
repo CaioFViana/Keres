@@ -1,14 +1,14 @@
-// apps/client/src/components/common/AdvancedSearchModal.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { entityFieldMetadata, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Removed TextInput from RN
-import { SuggestionType } from '../../services/SuggestionService'; // Added for casting
+import { Button, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SuggestionType } from '../../services/SuggestionService';
 import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles'; // Added import
-import SuggestionTextInput from './SuggestionTextInput/SuggestionTextInput'; // Added
-import TextInput from './TextInput/TextInput'; // Added custom TextInput
+import { getCommonInputStyles } from '../../theme/commonStyles';
+import SuggestionTextInput from './SuggestionTextInput/SuggestionTextInput';
+import TextInput from './TextInput/TextInput';
+import TriStateToggleButton from './TriStateToggleButton/TriStateToggleButton'; // Added import
 
 interface AdvancedSearchModalProps {
   entityName: string;
@@ -31,7 +31,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   const { colors } = useTheme();
   const [searchCriteria, setSearchCriteria] = useState<{ [key: string]: any }>(initialCriteria);
 
-  const commonInputStyles = getCommonInputStyles(colors); // Added commonInputStyles
+  const commonInputStyles = getCommonInputStyles(colors);
 
   // Get metadata for the specified entity
   const fieldsMetadata = useMemo(() => {
@@ -66,7 +66,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
 
     if (field.isSuggestion) {
       return (
-        <View key={field.name} style={[styles.inputContainer]}>
+        <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
           <SuggestionTextInput
             placeholder={t(field.label)}
             value={value || ''}
@@ -84,39 +84,27 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
       case 'id': // Treat ID fields as string for search input
         return (
           <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-            <TextInput
+            <TextInput // Custom TextInput
               value={value || ''}
               onChangeText={(text) => handleInputChange(field.name, text)}
               placeholder={t(field.label)}
               placeholderTextColor={colors.textSecondary}
-              style={{ width: '100%' }}
+              style={{ width: '100%' }} // Explicitly override internal 80% width
             />
           </View>
         );
       case 'boolean':
-        // For boolean, offer a selection: 'true', 'false', or 'any'
+        // For boolean, use the TriStateToggleButton
         return (
           <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-            <Text style={[styles.label, { color: colors.text }]}>{t(field.label)}:</Text>
-            <View style={styles.booleanOptionsContainer}>
-              <TouchableOpacity
-                style={[styles.booleanOption, value === true && { backgroundColor: colors.primary }]}
-                onPress={() => handleInputChange(field.name, true)}
-              >
-                <Text style={[styles.booleanOptionText, value === true && { color: colors.onPrimary }]}>{t('common_yes')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.booleanOption, value === false && { backgroundColor: colors.primary }]}
-                onPress={() => handleInputChange(field.name, false)}
-              >
-                <Text style={[styles.booleanOptionText, value === false && { color: colors.onPrimary }]}>{t('common_no')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.booleanOption, value === undefined && { backgroundColor: colors.primary }]}
-                onPress={() => handleInputChange(field.name, undefined)}
-              >
-                <Text style={[styles.booleanOptionText, value === undefined && { color: colors.onPrimary }]}>{t('common_any')}</Text>
-              </TouchableOpacity>
+            <View style={styles.booleanRow}>
+              <Text style={[styles.label, { color: colors.text, flex: 1, marginBottom: 0 }]}>{t(field.label)}:</Text>
+              <TriStateToggleButton
+                label={t(field.label)}
+                value={value}
+                onChange={(newValue) => handleInputChange(field.name, newValue)}
+                // style is not needed as size is fixed internally now
+              />
             </View>
           </View>
         );
@@ -124,13 +112,13 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         // For numbers, could offer range or exact match. For simplicity, single text input for now.
         return (
           <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-            <TextInput
+            <TextInput // Custom TextInput
               value={value !== undefined && value !== null ? String(value) : ''}
               onChangeText={(text) => handleInputChange(field.name, text ? Number(text) : undefined)}
               keyboardType="numeric"
               placeholder={t(field.label)}
               placeholderTextColor={colors.textSecondary}
-              style={{ width: '100%' }} // Override custom TextInput's internal 80% width
+              style={{ width: '100%' }} // Explicitly override internal 80% width
             />
           </View>
         );
@@ -138,19 +126,19 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         // For dates, typically date pickers or range inputs. For simplicity, text input for now.
         return (
           <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-            <TextInput
+            <TextInput // Custom TextInput
               value={value ? String(value) : ''} // Needs date formatting
               onChangeText={(text) => handleInputChange(field.name, text)} // Needs date parsing
               placeholder={t(field.label)}
               placeholderTextColor={colors.textSecondary}
-              style={{ width: '100%' }}
+              style={{ width: '100%' }} // Explicitly override internal 80% width
             />
           </View>
         );
       default:
         return null;
     }
-  }, [searchCriteria, handleInputChange, colors, t, storyId, commonInputStyles.input]);
+  }, [searchCriteria, handleInputChange, colors, t, storyId]);
 
   return (
     <Modal
@@ -213,23 +201,15 @@ const styles = StyleSheet.create({
   suggestionInputContainer: {
     marginBottom: 20,
   },
+  booleanRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
   label: { // This style is now only for boolean fields
     fontSize: 14,
     marginBottom: 2,
-  },
-  booleanOptionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  booleanOption: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'transparent', // Will be set by theme colors
-  },
-  booleanOptionText: {
-    fontSize: 14,
   },
   modalFooter: {
     flexDirection: 'row',

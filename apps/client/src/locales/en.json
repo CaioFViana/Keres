@@ -252,6 +252,7 @@
   "title": "Title",
   "title_placeholder": "Enter story title",
   "title_required": "Title is required.",
+  "total_results_found": "{{count}} results found",
   "to": "To",
   "total_stories_summary": "{{totalStories}} Stories",
   "type": "Type",

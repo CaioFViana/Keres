@@ -201,7 +201,14 @@ const GenericFilterSortList = <T,>({
       marginLeft: 10, // Adjust as needed
       justifyContent: 'center',
       alignItems: 'center',
-    }
+    },
+    resultsCountText: {
+      color: colors.textSecondary,
+      textAlign: 'left',
+      marginBottom: 10,
+      paddingLeft: 10,
+      fontSize: 16,
+    },
   });
 
   return (
@@ -265,6 +272,9 @@ const GenericFilterSortList = <T,>({
           </View>
         </View>
       )}
+      <Text style={styles.resultsCountText}>
+        {t('total_results_found', { count: data.length })}
+      </Text>
       <FlatList
         data={data}
         renderItem={renderItem}

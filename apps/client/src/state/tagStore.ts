@@ -14,6 +14,7 @@ interface TagState {
   activeSort: string | null;
   sortDirection: 'asc' | 'desc';
   favoriteFilterState: FavoriteFilterState;
+  advancedSearchCriteria: { [key: string]: any };
 
   setDbAndStoryId: (db: AppDrizzleClient, storyId: string) => void;
   initializeService: () => void;
@@ -21,6 +22,7 @@ interface TagState {
   setSearchTerm: (term: string) => void;
   setSort: (sortBy: string | null, sortDirection: 'asc' | 'desc') => void;
   setFavoriteFilter: (state: FavoriteFilterState) => void;
+  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => void;
 }
 
 export const useTagStore = create<TagState>((set, get) => ({
@@ -34,6 +36,7 @@ export const useTagStore = create<TagState>((set, get) => ({
   activeSort: null,
   sortDirection: 'asc', // Default direction
   favoriteFilterState: 'all',
+  advancedSearchCriteria: {},
 
   setDbAndStoryId: (dbInstance, storyIdInstance) => set({ db: dbInstance, storyId: storyIdInstance }),
 
@@ -46,7 +49,7 @@ export const useTagStore = create<TagState>((set, get) => ({
 
   fetchTags: async () => {
     set({ loading: true, error: null });
-    const { tagService, storyId, searchTerm, activeSort, sortDirection, favoriteFilterState } = get();
+    const { tagService, storyId, searchTerm, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria } = get();
 
     if (!tagService || !storyId) {
       set({ loading: false, error: 'Tag service or story ID not set.' });
@@ -54,8 +57,8 @@ export const useTagStore = create<TagState>((set, get) => ({
     }
 
     try {
-      const fetchedTags = await tagService.getTagsByStoryId(storyId, searchTerm, activeSort, sortDirection, favoriteFilterState);
-      console.log('Fetched tags:', fetchedTags);
+      const fetchedTags = await tagService.getTagsByStoryId(storyId, searchTerm, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria);
+      console.log('Fetching tags:', fetchedTags);
       set({ tags: fetchedTags, loading: false });
     } catch (err) {
       console.error('Failed to fetch tags:', err);
@@ -73,5 +76,9 @@ export const useTagStore = create<TagState>((set, get) => ({
 
   setFavoriteFilter: (state) => {
     set({ favoriteFilterState: state });
+  },
+
+  setAdvancedSearchCriteria: (criteria) => {
+    set({ advancedSearchCriteria: criteria });
   },
 }));

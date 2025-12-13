@@ -37,6 +37,7 @@ const TagsScreen: React.FC = () => {
     activeSort,
     sortDirection,
     favoriteFilterState,
+    advancedSearchCriteria, // Destructure advancedSearchCriteria
     loading,
     error,
     fetchTags,
@@ -45,6 +46,7 @@ const TagsScreen: React.FC = () => {
     initializeService,
     setSort,
     setFavoriteFilter,
+    setAdvancedSearchCriteria, // Destructure setAdvancedSearchCriteria
   } = useTagStore();
 
   // Debounce the fetchTags call
@@ -65,7 +67,7 @@ const TagsScreen: React.FC = () => {
     return () => {
       debouncedFetchTags.cancel && debouncedFetchTags.cancel();
     };
-  }, [searchTerm, activeSort, sortDirection, favoriteFilterState, debouncedFetchTags]);
+  }, [searchTerm, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, debouncedFetchTags]);
 
   useEffect(() => {
     const handleTagChange = (storyId: string) => {
@@ -193,9 +195,8 @@ const TagsScreen: React.FC = () => {
         disableTagFilter={true} // Disable the tag filter select since there are no filter options
         entityName="Tag"
         storyId={selectedStory?.id || ''}
-        // Advanced search props will be added if a TagService.advancedSearch is implemented
-        // onAdvancedSearch={setStoreAdvancedSearchCriteria}
-        // currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
+        onAdvancedSearch={setAdvancedSearchCriteria} // Pass the setter
+        currentAdvancedSearchCriteria={advancedSearchCriteria} // Pass the criteria
       />
     </View>
   );

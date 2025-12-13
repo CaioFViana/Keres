@@ -1,3 +1,4 @@
+import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm'; // Import asc and desc
 import { AppDrizzleClient } from '../db';
 import { TagInsert, tags, TagSelect } from '../db/schema'; // Import TagInsert and stories
@@ -14,6 +15,7 @@ export interface TagService {
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
+    advancedSearchCriteria?: { [key: string]: any },
   ): Promise<TagSelect[]>;
   createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect>;
   updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
@@ -23,7 +25,7 @@ export interface TagService {
 export const createTagService = (db: AppDrizzleClient): TagService => {
   const serverService = createServerService(db); // Create serverService once
   return {
-    async getTagsByStoryId(storyId, searchTerm, sortBy, sortDirection, favoriteFilterState): Promise<TagSelect[]> { // Added sortBy, sortDirection, favoriteFilterState
+    async getTagsByStoryId(storyId, searchTerm, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<TagSelect[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(tags.storyId, storyId) as SQL<boolean> // Explicit cast to SQL<boolean>
       ];
@@ -36,6 +38,26 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         conditions.push(eq(tags.isFavorite, true) as SQL<boolean>); // Explicit cast
       } else if (favoriteFilterState === 'not-favorite') {
         conditions.push(eq(tags.isFavorite, false) as SQL<boolean>); // Explicit cast
+      }
+
+      // Apply advanced search criteria
+      if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
+        const tagMetadata = entityFieldMetadata['Tag'];
+        for (const key in advancedSearchCriteria) {
+          if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
+            const value = advancedSearchCriteria[key];
+            const fieldMeta = tagMetadata.find(meta => meta.name === key);
+
+            if (value !== undefined && value !== '' && fieldMeta) {
+              if (fieldMeta.type === 'string') {
+                conditions.push(sql`${tags[key as keyof TagSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
+              } else if (fieldMeta.type === 'boolean') {
+                conditions.push(eq(tags[key as keyof TagSelect], value) as SQL<boolean>);
+              }
+              // Add other types (number, date, etc.) as needed
+            }
+          }
+        }
       }
 
       // Filter out undefined conditions and use 'and' to combine them

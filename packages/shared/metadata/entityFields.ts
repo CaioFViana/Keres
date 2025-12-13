@@ -35,5 +35,13 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     // { name: 'isDeleted', label: 'Is Deleted', type: 'boolean', isSearchable: false },
     // { name: 'deletedAt', label: 'Deleted At', type: 'date', isSearchable: false },
   ],
+  Tag: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'color', label: 'field_color', type: 'string', isSearchable: true },
+    { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+    { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
+    // { name: 'createdAt', label: 'field_createdAt', type: 'date', isSearchable: false },
+    // { name: 'updatedAt', label: 'field_updatedAt', type: 'date', isSearchable: false },
+  ],
   // Add metadata for other entities as needed
 };

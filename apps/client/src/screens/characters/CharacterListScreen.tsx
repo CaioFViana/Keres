@@ -5,8 +5,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useState
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CharacterListItem from '../../components/character/CharacterListItem';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
+import CharacterListItem from '../../components/listitem/CharacterListItem';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

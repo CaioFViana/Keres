@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native';
 import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
-import TagListItem from '../components/tag/TagListItem';
+import TagListItem from '../components/listitem/TagListItem';
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schemas/tags'; // Import TagSelect
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Import useBackButtonHandler

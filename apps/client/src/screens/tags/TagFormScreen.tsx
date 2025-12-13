@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPickerInput';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -24,7 +25,7 @@ const TagFormScreen = () => {
 
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
-  const userId = useUserSettingsStore.getState().userId; // Get userId from the store
+  const userId = useUserSettingsStore.getState().userId;
 
   const [tagName, setTagName] = useState('');
   const [tagColor, setTagColor] = useState('');
@@ -166,6 +167,11 @@ const TagFormScreen = () => {
         value={tagName}
         onChangeText={setTagName}
         style={styles.input}
+      />
+      <ColorPickerInput
+        placeholder={t('select_tag_color')}
+        currentColor={tagColor}
+        onSelectColor={setTagColor}
       />
       <View style={styles.buttonContainer}>
         <Button onPress={handleSave}>

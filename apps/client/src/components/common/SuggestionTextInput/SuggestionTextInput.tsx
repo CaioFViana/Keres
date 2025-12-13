@@ -14,7 +14,6 @@ interface SuggestionTextInputProps {
   onChangeText: (text: string) => void;
   type: SuggestionType; // Type for suggestions
   placeholder?: string;
-  label?: string;
   style?: any;
   storyId: string;
 }
@@ -24,9 +23,8 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
   onChangeText,
   type,
   placeholder,
-  label,
   style,
-  storyId, // Added storyId
+  storyId,
   ...rest
 }) => {
   const { colors } = useTheme();
@@ -91,7 +89,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       borderColor: colors.border,
       borderRadius: 5,
       backgroundColor: colors.surface,
-      minHeight: 40
+      minHeight: 50
     },
     inputField: {
       flex: 1,
@@ -146,18 +144,11 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     closeButton: {
       marginTop: 20,
       alignSelf: 'flex-end',
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginBottom: 5,
-      color: colors.text,
-    },
+    }
   });
 
   return (
-    <View style={[styles.container, style, {paddingHorizontal: 0, minHeight: 0}]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+    <View style={[styles.container, style, commonInputStyles.input, commonInputStyles.customComponentInput]}>
       <View style={styles.inputWrapper}>
         <TextInput
           value={value}

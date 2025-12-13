@@ -67,14 +67,13 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
 
     if (field.isSuggestion) {
       return (
-        <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+        <View key={field.name} style={[styles.inputContainer, styles.inputContainerSuggestion, styleOverrides]}>
           <SuggestionTextInput
             placeholder={t(field.label)}
             value={value || ''}
             onChangeText={(text) => handleInputChange(field.name, text)}
             type={field.suggestionsSource as SuggestionType}
             storyId={storyId}
-            style={[commonInputStyles.input, styles.suggestionInputContainer]}
           />
         </View>
       );
@@ -203,8 +202,8 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 0,
   },
-  suggestionInputContainer: {
-    marginBottom: 20,
+  inputContainerSuggestion: {
+    marginBottom: 20
   },
   booleanRow: {
     flexDirection: 'row',

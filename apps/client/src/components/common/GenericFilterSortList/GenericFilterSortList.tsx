@@ -195,7 +195,7 @@ const GenericFilterSortList = <T,>({
       marginTop: 20,
     },
     advancedSearchButton: { // Added style for the advanced search button
-      padding: 8,
+      padding: 12,
       borderRadius: 5,
       backgroundColor: colors.primary,
       marginLeft: 10, // Adjust as needed
@@ -228,7 +228,7 @@ const GenericFilterSortList = <T,>({
                 />
               </View>
               <TouchableOpacity onPress={handleOpenAdvancedSearchModal} style={styles.advancedSearchButton}>
-                <Ionicons name="options-outline" size={24} color={colors.text} />
+                <Ionicons name="search-outline" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
           )}

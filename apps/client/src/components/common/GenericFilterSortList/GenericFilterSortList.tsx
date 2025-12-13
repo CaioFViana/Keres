@@ -140,107 +140,34 @@ const GenericFilterSortList = <T,>({
     setIsAdvancedSearchModalVisible(false);
   }, [onAdvancedSearch]);
 
-  const showFilter = filterOptions && filterOptions.length > 0;
-  const showSort = sortOptions && sortOptions.length > 0;
-  const showFavoriteFilter = onFavoriteFilterChange;
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      padding: 10,
-      backgroundColor: colors.background,
-    },
-    searchContainer: {
-      marginBottom: 0,
-      paddingTop: 5,
-      paddingBottom: 0
-    },
-    searchBar: {
-      width: '100%',
-      marginBottom: 10
-    },
-    filterSortControlsWrapper: {
-      flexDirection: 'column',
-      marginBottom: 5,
-    },
-    filterSortRow: {
-      flexDirection: 'row',
-      marginBottom: 10,
-      alignItems: 'center',
-    },
-    selectContainer: {
-      flex: 1,
-    },
-    selectContainerSort: {
-      flex: 1,
-      paddingRight: 10
-    },
-    sortDirectionButton: {
-      padding: 12,
-      borderRadius: 5,
-      backgroundColor: colors.primary,
-    },
-    favoriteFilterButton: {
-      padding: 12,
-      borderRadius: 5,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    list: {
-      flex: 1,
-    },
-    emptyText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 20,
-    },
-    advancedSearchButton: { // Added style for the advanced search button
-      padding: 12,
-      borderRadius: 5,
-      backgroundColor: colors.primary,
-      marginLeft: 10, // Adjust as needed
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    resultsCountText: {
-      color: colors.textSecondary,
-      textAlign: 'left',
-      marginBottom: 10,
-      paddingLeft: 10,
-      fontSize: 16,
-    },
-  });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchContainer}>
+    <View style={styles(colors).container}>
+      <View style={styles(colors).searchContainer}>
         <TextInput
           placeholder={searchPlaceholder || t('search')}
           value={currentSearchTerm || ''}
           onChangeText={handleSearchTextChange}
-          style={styles.searchBar}
+          style={styles(colors).searchBar}
         />
       </View>
-      { (showFilter || showSort || showFavoriteFilter) && (
-        <View style={styles.filterSortControlsWrapper}>
-          {showFilter && (
-            <View style={styles.filterSortRow}>
-              <View style={[styles.selectContainer, (showFavoriteFilter || showSort) && { flex: 1 }]}>
-                <Select
-                  options={filterOptions || []}
-                  value={selectedFilter}
-                  onValueChange={handleFilterSelection}
-                  placeholder={t('filter_by_tags')}
-                  multiple={true}
-                />
-              </View>
-              <TouchableOpacity onPress={handleOpenAdvancedSearchModal} style={styles.advancedSearchButton}>
-                <Ionicons name="search-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
+      <View style={styles(colors).filterSortControlsWrapper}>
+          <View style={styles(colors).filterSortRow}>
+            <View style={[styles(colors).selectContainer, { flex: 1 }]}>
+              <Select
+                options={filterOptions || []}
+                value={selectedFilter}
+                onValueChange={handleFilterSelection}
+                placeholder={t('filter_by_tags')}
+                multiple={true}
+              />
             </View>
-          )}
-          <View style={styles.filterSortRow}>
-            <View style={styles.selectContainerSort}>
+            <TouchableOpacity onPress={handleOpenAdvancedSearchModal} style={styles(colors).advancedSearchButton}>
+              <Ionicons name="search-outline" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles(colors).filterSortRow}>
+            <View style={styles(colors).selectContainerSort}>
               <Select
                 options={sortOptions || []}
                 value={selectedSort}
@@ -251,7 +178,7 @@ const GenericFilterSortList = <T,>({
             <TouchableOpacity
               onPress={handleFavoriteFilterToggle}
               style={[
-                styles.favoriteFilterButton,
+                styles(colors).favoriteFilterButton,
                 { backgroundColor: getFavoriteButtonColor() },
                 { marginRight: 10 },
               ]}
@@ -262,7 +189,7 @@ const GenericFilterSortList = <T,>({
                 color={colors.text}
               />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleSortDirectionToggle} style={styles.sortDirectionButton}>
+            <TouchableOpacity onPress={handleSortDirectionToggle} style={styles(colors).sortDirectionButton}>
               <Ionicons
                 name={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
                 size={24}
@@ -271,16 +198,15 @@ const GenericFilterSortList = <T,>({
             </TouchableOpacity>
           </View>
         </View>
-      )}
-      <Text style={styles.resultsCountText}>
+      <Text style={styles(colors).resultsCountText}>
         {t('total_results_found', { count: data.length })}
       </Text>
       <FlatList
         data={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        ListEmptyComponent={emptyListComponent || <Text style={styles.emptyText}>{t('no_items_found')}</Text>}
-        style={styles.list}
+        ListEmptyComponent={emptyListComponent || <Text style={styles(colors).emptyText}>{t('no_items_found')}</Text>}
+        style={styles(colors).list}
       />
       {storyId && entityName && onAdvancedSearch && ( // Only render if required props are provided
         <AdvancedSearchModal
@@ -295,5 +221,72 @@ const GenericFilterSortList = <T,>({
     </View>
   );
 };
+
+const styles = (colors: any) => StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: colors.background,
+  },
+  searchContainer: {
+    marginBottom: 0,
+    paddingTop: 5,
+    paddingBottom: 0
+  },
+  searchBar: {
+    width: '100%',
+    marginBottom: 10
+  },
+  filterSortControlsWrapper: {
+    flexDirection: 'column',
+    marginBottom: 5,
+  },
+  filterSortRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  selectContainer: {
+    flex: 1,
+  },
+  selectContainerSort: {
+    flex: 1,
+    paddingRight: 10
+  },
+  sortDirectionButton: {
+    padding: 12,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+  },
+  favoriteFilterButton: {
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  list: {
+    flex: 1,
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  advancedSearchButton: { // Added style for the advanced search button
+    padding: 12,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
+    marginLeft: 10, // Adjust as needed
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  resultsCountText: {
+    color: colors.textSecondary,
+    textAlign: 'left',
+    marginBottom: 10,
+    paddingLeft: 10,
+    fontSize: 16,
+  },
+});
 
 export default GenericFilterSortList;

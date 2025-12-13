@@ -4,7 +4,7 @@ import { CommonActions, DrawerActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
@@ -18,6 +18,7 @@ import GalleryScreen from '../screens/GalleryScreen';
 import ImportExportScreen from '../screens/mainstorystack/ImportExportScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
+import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/TagsScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
@@ -48,7 +49,7 @@ export type ListingDetailStackParamList = {
 
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
 const Stack = createNativeStackNavigator<ListingDetailStackParamList>();
-/// Character ----------------
+//#region Character
 
 const CharacterStack = createNativeStackNavigator<CharacterStackParamList>();
 
@@ -68,7 +69,8 @@ const CharacterStackNavigator = () => {
     </CharacterStack.Navigator>
   );
 };
-/// ----- Tags -----
+//#endregion
+//#region Tags
 
 const TagsStack = createNativeStackNavigator<TagsStackParamList>();
 
@@ -87,15 +89,6 @@ const TagDetailScreen = ({ route }: any) => {
   );
 };
 
-const TagFormScreen = ({ route }: any) => {
-  const { tagId } = route.params;
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Tag Form Screen {tagId ? `for Tag ID: ${tagId}` : ' (New Tag)'}</Text>
-    </View>
-  );
-};
-
 const TagStackNavigator = () => {
   useBackButtonHandler();
   return (
@@ -106,7 +99,7 @@ const TagStackNavigator = () => {
     </TagsStack.Navigator>
   );
 };
-
+//#endregion
 
 // A helper component to wrap screens that should be part of the drawer but also have their own stack navigation
 const ListingDetailStack = ({ route }: any) => {

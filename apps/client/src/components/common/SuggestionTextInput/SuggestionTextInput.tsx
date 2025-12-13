@@ -82,7 +82,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      marginBottom: 10,
+      marginBottom: 10
     },
     inputWrapper: {
       flexDirection: 'row',
@@ -91,7 +91,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       borderColor: colors.border,
       borderRadius: 5,
       backgroundColor: colors.surface,
-      minHeight: 40,
+      minHeight: 40
     },
     inputField: {
       flex: 1,
@@ -137,7 +137,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       paddingVertical: 20,
     },
     closeButton: {
-      marginTop: 10,
+      marginTop: 20,
       alignSelf: 'flex-end',
     },
     label: {
@@ -149,7 +149,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
   });
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style, {paddingHorizontal: 0, minHeight: 0}]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <View style={styles.inputWrapper}>
         <TextInput

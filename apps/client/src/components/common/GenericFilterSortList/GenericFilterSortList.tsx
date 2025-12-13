@@ -36,6 +36,7 @@ interface GenericFilterSortListProps<T> {
   storyId?: string; // Made optional
   onAdvancedSearch?: (criteria: { [key: string]: any }) => void; // Made optional
   currentAdvancedSearchCriteria?: { [key: string]: any }; // Made optional
+  disableTagFilter?: boolean;
 }
 
 const GenericFilterSortList = <T,>({
@@ -60,6 +61,7 @@ const GenericFilterSortList = <T,>({
   storyId, // Destructure
   onAdvancedSearch, // Destructure
   currentAdvancedSearchCriteria, // Destructure
+  disableTagFilter = false,
 }: GenericFilterSortListProps<T>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -160,6 +162,7 @@ const GenericFilterSortList = <T,>({
                 onValueChange={handleFilterSelection}
                 placeholder={t('filter_by_tags')}
                 multiple={true}
+                disabled={disableTagFilter}
               />
             </View>
             <TouchableOpacity onPress={handleOpenAdvancedSearchModal} style={styles(colors).advancedSearchButton}>

@@ -1,33 +1,23 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { TagSelect } from '../../db/schemas/tags'; // Corrected import path
+import { StyleSheet, Text, View } from 'react-native';
+import { TagSelect } from '../../db/schemas/tags';
 import { useTheme } from '../../theme';
+import { truncate } from '../../utils/stringUtils';
+
+import GenericExpandedListItemWithActions from '../common/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 
 interface TagListItemProps {
   tag: TagSelect;
   onViewDetails: (tagId: string) => void;
-  // onToggleFavorite?: (tagId: string, isFavorite: boolean) => void; // If tags can be favorited
+  onToggleFavorite?: (tagId: string, isFavorite: boolean) => void;
 }
 
-const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails }) => {
+const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails, onToggleFavorite }) => {
   const { colors } = useTheme();
 
+  const extraNotesSummary = truncate(tag.extraNotes || '', 150);
+
   const styles = StyleSheet.create({
-    container: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 15,
-      marginVertical: 5,
-      borderRadius: 8,
-      backgroundColor: colors.surface,
-      shadowColor: colors.textSecondary,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 1.41,
-      elevation: 2,
-    },
     tagInfo: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -47,29 +37,36 @@ const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails }) => {
       color: colors.text,
       flexShrink: 1,
     },
-    // favoriteButton: {
-    //   padding: 5,
-    // },
+    descriptionText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 5,
+    },
   });
 
+  const renderHeaderContent = (t: TagSelect) => (
+    <View style={styles.tagInfo}>
+      {t.color && <View style={[styles.tagColorIndicator, { backgroundColor: t.color }]} />}
+      <Text style={styles.tagName} numberOfLines={1} ellipsizeMode="tail">
+        {t.name}
+      </Text>
+    </View>
+  );
+
+  const renderExpandedContent = (t: TagSelect) => (
+    <View>
+      {extraNotesSummary && <Text style={styles.descriptionText}>{extraNotesSummary}</Text>}
+    </View>
+  );
+
   return (
-    <TouchableOpacity onPress={() => onViewDetails(tag.id)} style={styles.container}>
-      <View style={styles.tagInfo}>
-        {tag.color && <View style={[styles.tagColorIndicator, { backgroundColor: tag.color }]} />}
-        <Text style={styles.tagName} numberOfLines={1}>
-          {tag.name}
-        </Text>
-      </View>
-      {/* {onToggleFavorite && (
-        <TouchableOpacity onPress={() => onToggleFavorite(tag.id, !tag.isFavorite)} style={styles.favoriteButton}>
-          <Ionicons
-            name={tag.isFavorite ? 'heart' : 'heart-outline'}
-            size={24}
-            color={tag.isFavorite ? colors.accent : colors.textSecondary}
-          />
-        </TouchableOpacity>
-      )} */}
-    </TouchableOpacity>
+    <GenericExpandedListItemWithActions
+      item={tag}
+      onToggleFavorite={onToggleFavorite}
+      onViewDetails={onViewDetails}
+      renderHeaderContent={renderHeaderContent}
+      renderExpandedContent={renderExpandedContent}
+    />
   );
 };
 

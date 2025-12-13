@@ -1,3 +1,4 @@
+import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Added
 import { and, asc, count, desc, eq, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { CharacterInsert, characters, CharacterSelect, tagRelations, tags, TagSelect } from '../db/schema'; // Import CharacterInsert and stories
@@ -6,7 +7,6 @@ import { getChangedFields } from '../utils/diffUtils'; // Import getChangedField
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from './ServerService'; // Import ServerService and createServerService
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Added
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
@@ -31,7 +31,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       favoriteFilterState,
       sortBy,
       sortDirection,
-      advancedSearchCriteria // Added
+      advancedSearchCriteria
     ): Promise<CharacterWithTags[]> {
       const whereConditions = [eq(characters.storyId, storyId), eq(characters.isDeleted, false)];
       const orderByConditions: any[] = [];

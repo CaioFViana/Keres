@@ -1,5 +1,5 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm'; // Import asc and desc
+import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm'; // Import asc and desc
 import { AppDrizzleClient } from '../db';
 import { TagInsert, tags, TagSelect } from '../db/schema'; // Import TagInsert and stories
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
@@ -12,6 +12,7 @@ export interface TagService {
   getTagsByStoryId(
     storyId: string,
     searchTerm?: string,
+    activeFilterTags?: string[],
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
@@ -25,13 +26,17 @@ export interface TagService {
 export const createTagService = (db: AppDrizzleClient): TagService => {
   const serverService = createServerService(db); // Create serverService once
   return {
-    async getTagsByStoryId(storyId, searchTerm, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<TagSelect[]> {
+    async getTagsByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<TagSelect[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(tags.storyId, storyId) as SQL<boolean> // Explicit cast to SQL<boolean>
       ];
 
       if (searchTerm) {
         conditions.push(sql`${tags.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
+      }
+
+      if (activeFilterTags && activeFilterTags.length > 0) {
+        conditions.push(inArray(tags.id, activeFilterTags) as SQL<boolean>);
       }
 
       if (favoriteFilterState === 'favorite') {

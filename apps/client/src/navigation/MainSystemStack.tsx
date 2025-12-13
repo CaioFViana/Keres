@@ -178,7 +178,11 @@ const MainSystemNavigator = () => {
           title: t('tags_title'),
           drawerLabel: t('tags_title'),
         }}
-        // Add listeners similar to CharactersStack if needed for tags
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('tag_navigation_reset');
+          },
+        })}
       />
       <Drawer.Screen name="WorldRules" component={ListingDetailStack} initialParams={{ entityType: 'WorldRules' }} options={{ title: t('world_rules_title') }} />
       <Drawer.Screen name="Notes" component={ListingDetailStack} initialParams={{ entityType: 'Notes' }} options={{ title: t('notes_title') }} />

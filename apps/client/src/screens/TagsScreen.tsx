@@ -47,6 +47,7 @@ const TagsScreen: React.FC = () => {
     setSort,
     setFavoriteFilter,
     setAdvancedSearchCriteria, // Destructure setAdvancedSearchCriteria
+    toggleFavorite,
   } = useTagStore();
 
   // Debounce the fetchTags call
@@ -99,13 +100,17 @@ const TagsScreen: React.FC = () => {
     }, [navigation, colors.text, t])
   );
 
+  const handleToggleFavorite = useCallback(async (tagId: string, isFavorite: boolean) => {
+    await toggleFavorite(tagId, isFavorite);
+  }, [toggleFavorite]);
+
   const handleViewDetails = useCallback((tagId: string) => {
     navigation.navigate('TagDetail', { tagId });
   }, [navigation]);
 
   const memoizedTagListItem = useCallback(({ item }: { item: TagSelect }) => (
-    <TagListItem tag={item} onViewDetails={handleViewDetails} />
-  ), [handleViewDetails]);
+    <TagListItem tag={item} onViewDetails={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
+  ), [handleViewDetails, handleToggleFavorite]);
 
   const memoizedSortOptions = useMemo(() => {
     return [

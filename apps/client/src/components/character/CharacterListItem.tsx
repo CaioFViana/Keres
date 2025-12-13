@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { CharacterWithTags } from '../../services/CharacterService';
 import { useTheme } from '../../theme';
 import { truncate } from '../../utils/stringUtils';
 
-// Import new generic components
-import FavoriteButton from '../../components/common/Buttons/FavoriteButton';
-import ViewDetailsButton from '../../components/common/Buttons/ViewDetailsButton';
-import GenericListItem from '../common/GenericListItem/GenericListItem';
+// Import the new consolidated component
+import GenericExpandedListItemWithActions from '../common/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '../common/TagList/TagList';
 
 interface CharacterListItemProps {
@@ -18,9 +16,6 @@ interface CharacterListItemProps {
 
 const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onToggleFavorite, onViewDetails }) => {
   const { colors } = useTheme();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleOpen = () => setIsOpen(!isOpen);
 
   const descriptionSummary = truncate(character.description, 150);
 
@@ -54,47 +49,39 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onTogg
     },
   });
 
-  const headerContent = (
+  const renderHeaderContent = (char: CharacterWithTags) => (
     <View style={styles.headerLeft}>
       <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {character.name}
+        {char.name}
       </Text>
-      <FavoriteButton
-        isFavorite={character.isFavorite}
-        onPress={() => onToggleFavorite(character.id, !character.isFavorite)}
-      />
     </View>
   );
 
-  const rightActions = (
-    <ViewDetailsButton onPress={() => onViewDetails(character.id)} />
-  );
-
-  const expandedContent = (
+  const renderExpandedContent = (char: CharacterWithTags) => (
     <View>
-      {character.title && <Text style={styles.itemTitle}>{character.title}</Text>}
-      {(character.gender || character.race) && (
+      {char.title && <Text style={styles.itemTitle}>{char.title}</Text>}
+      {(char.gender || char.race) && (
         <Text style={styles.summaryText}>
-          {character.gender ? `${character.gender}` : ''}
-          {character.gender && (character.race || character.subrace) ? ' - ' : ''}
-          {character.race ? `${character.race}` : ''}
-          {character.subrace ? ` (${character.subrace})` : ''}
+          {char.gender ? `${char.gender}` : ''}
+          {char.gender && (char.race || char.subrace) ? ' - ' : ''}
+          {char.race ? `${char.race}` : ''}
+          {char.subrace ? ` (${char.subrace})` : ''}
         </Text>
       )}
       {descriptionSummary && <Text style={styles.descriptionText}>{descriptionSummary}</Text>}
-      {character.tags && character.tags.length > 0 && (
-        <TagList tags={character.tags} />
+      {char.tags && char.tags.length > 0 && (
+        <TagList tags={char.tags} />
       )}
     </View>
   );
 
   return (
-    <GenericListItem
-      headerContent={headerContent}
-      expandedContent={expandedContent}
-      isOpen={isOpen}
-      onPress={toggleOpen}
-      rightActions={rightActions}
+    <GenericExpandedListItemWithActions
+      item={character}
+      onToggleFavorite={onToggleFavorite}
+      onViewDetails={onViewDetails}
+      renderHeaderContent={renderHeaderContent}
+      renderExpandedContent={renderExpandedContent}
     />
   );
 };

@@ -1,36 +1,50 @@
-import { DrawerScreenProps } from '@react-navigation/drawer'; // Correct import
+import { Ionicons } from '@expo/vector-icons';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../components/common/GenericFilterSortList/GenericFilterSortList';
 import TagListItem from '../components/listitem/TagListItem';
 import { useDrizzle } from '../db';
-import { TagSelect } from '../db/schemas/tags'; // Import TagSelect
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler'; // Import useBackButtonHandler
-import { MainSystemDrawerParamList } from '../navigation/MainSystemStack'; // Correct import
+import { TagSelect } from '../db/schemas/tags';
+import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
+import { MainSystemDrawerParamList, TagsStackParamList } from '../navigation/MainSystemStack'; // Import TagsStackParamList
+import { FavoriteFilterState } from '../services/TagService';
 import { useStoryStore } from '../state/storyStore';
 import { useTagStore } from '../state/tagStore';
 import { useTheme } from '../theme';
 import { debounce } from '../utils/debounce';
+import { entityEventEmitter } from '../utils/EventEmitter'; // Import EventEmitter
 
-type TagsScreenProps = DrawerScreenProps<MainSystemDrawerParamList, 'Tags'>; // Correct type
+export type TagsScreenNavigationProp = CompositeNavigationProp<
+  DrawerNavigationProp<MainSystemDrawerParamList, 'TagsStack'>, // Corrected to TagsStack
+  NativeStackNavigationProp<TagsStackParamList, 'TagDetail'> // Assuming TagDetail exists in TagsStackParamList
+>;
 
-const TagsScreen: React.FC<TagsScreenProps> = ({ navigation }) => {
+const TagsScreen: React.FC = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const drizzleDb = useDrizzle();
+  const navigation = useNavigation<TagsScreenNavigationProp>();
 
   const {
     tags,
     searchTerm,
+    activeSort,
+    sortDirection,
+    favoriteFilterState,
     loading,
     error,
     fetchTags,
     setSearchTerm,
     setDbAndStoryId,
     initializeService,
+    setSort,
+    setFavoriteFilter,
   } = useTagStore();
 
   // Debounce the fetchTags call
@@ -43,32 +57,77 @@ const TagsScreen: React.FC<TagsScreenProps> = ({ navigation }) => {
     if (drizzleDb && selectedStory?.id) {
       setDbAndStoryId(drizzleDb, selectedStory.id);
       initializeService();
-      // Initial fetch is now handled by the debounced effect below, no need to call here
     }
   }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService]);
 
   useEffect(() => {
-    // This effect runs whenever searchTerm changes, but fetchTags is debounced
     debouncedFetchTags();
     return () => {
-      // Cleanup for debounce
       debouncedFetchTags.cancel && debouncedFetchTags.cancel();
     };
-  }, [searchTerm, debouncedFetchTags]);
+  }, [searchTerm, activeSort, sortDirection, favoriteFilterState, debouncedFetchTags]);
+
+  useEffect(() => {
+    const handleTagChange = (storyId: string) => {
+      if (selectedStory?.id === storyId) {
+        debouncedFetchTags();
+      }
+    };
+
+    entityEventEmitter.on('tag_changed', handleTagChange);
+
+    return () => {
+      entityEventEmitter.off('tag_changed', handleTagChange);
+    };
+  }, [selectedStory?.id, debouncedFetchTags]);
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({
+        title: t('tags_title'),
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('TagForm', { tagId: undefined })}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="add" size={30} color={colors.text} />
+          </TouchableOpacity>
+        ),
+      });
+    }, [navigation, colors.text, t])
+  );
 
   const handleViewDetails = useCallback((tagId: string) => {
-    // Implement navigation to TagDetailScreen if needed
-    // navigation.navigate('TagDetail', { tagId });
-    console.log('View Tag Details:', tagId);
-  }, []);
+    navigation.navigate('TagDetail', { tagId });
+  }, [navigation]);
 
   const memoizedTagListItem = useCallback(({ item }: { item: TagSelect }) => (
     <TagListItem tag={item} onViewDetails={handleViewDetails} />
   ), [handleViewDetails]);
 
+  const memoizedSortOptions = useMemo(() => {
+    return [
+      { label: t('sort_by_name'), value: 'name' },
+      { label: t('sort_by_created_at'), value: 'createdAt' },
+      { label: t('sort_by_updated_at'), value: 'updatedAt' }
+    ];
+  }, [t]);
+
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
   }, [setSearchTerm]);
+
+  const handleSortChange = useCallback((sortBy: string | null) => {
+    setSort(sortBy, sortDirection);
+  }, [setSort, sortDirection]);
+
+  const handleSortDirectionChange = useCallback((direction: 'asc' | 'desc') => {
+    setSort(activeSort, direction);
+  }, [setSort, activeSort]);
+
+  const handleFavoriteFilterChange = useCallback((state: FavoriteFilterState) => {
+    setFavoriteFilter(state);
+  }, [setFavoriteFilter]);
 
   const styles = StyleSheet.create({
     container: {
@@ -121,11 +180,22 @@ const TagsScreen: React.FC<TagsScreenProps> = ({ navigation }) => {
         onSearch={handleSearch}
         searchPlaceholder={t('search_tags')}
         currentSearchTerm={searchTerm}
-        onFilterChange={() => {}} // Dummy function as per requirement to disable filtering
-        selectedFilterValues={[]} // Empty array as per requirement to disable filtering
-        onSortChange={() => {}} // Dummy function as per requirement to disable sorting
-        onSortDirectionChange={() => {}} // Dummy function as per requirement to disable sorting
-        currentSortDirection={'asc'} // Default value as per requirement to disable sorting
+        filterOptions={[]} // No tag filtering by other tags for TagsScreen
+        onFilterChange={() => {}} // No tag filtering by other tags for TagsScreen
+        selectedFilterValues={[]} // No tag filtering by other tags for TagsScreen
+        sortOptions={memoizedSortOptions}
+        onSortChange={handleSortChange}
+        onSortDirectionChange={handleSortDirectionChange}
+        currentSortDirection={sortDirection}
+        currentSortValue={activeSort}
+        onFavoriteFilterChange={handleFavoriteFilterChange}
+        currentFavoriteFilterState={favoriteFilterState}
+        disableTagFilter={true} // Disable the tag filter select since there are no filter options
+        entityName="Tag"
+        storyId={selectedStory?.id || ''}
+        // Advanced search props will be added if a TagService.advancedSearch is implemented
+        // onAdvancedSearch={setStoreAdvancedSearchCriteria}
+        // currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
       />
     </View>
   );

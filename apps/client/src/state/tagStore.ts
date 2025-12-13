@@ -1,31 +1,39 @@
 import { create } from 'zustand';
 import { TagSelect } from '../db/schemas/tags';
-import { TagService, createTagService } from '../services/TagService';
+import { FavoriteFilterState, TagService, createTagService } from '../services/TagService';
 import { AppDrizzleClient } from '../db';
 
 interface TagState {
   tags: TagSelect[];
-  searchTerm: string; // Add searchTerm
+  searchTerm: string;
   loading: boolean;
   error: string | null;
   db: AppDrizzleClient | null;
   storyId: string | null;
   tagService: TagService | null;
+  activeSort: string | null;
+  sortDirection: 'asc' | 'desc';
+  favoriteFilterState: FavoriteFilterState;
 
   setDbAndStoryId: (db: AppDrizzleClient, storyId: string) => void;
   initializeService: () => void;
   fetchTags: () => Promise<void>;
-  setSearchTerm: (term: string) => void; // Add setSearchTerm
+  setSearchTerm: (term: string) => void;
+  setSort: (sortBy: string | null, sortDirection: 'asc' | 'desc') => void;
+  setFavoriteFilter: (state: FavoriteFilterState) => void;
 }
 
 export const useTagStore = create<TagState>((set, get) => ({
   tags: [],
-  searchTerm: '', // Initialize searchTerm
+  searchTerm: '',
   loading: false,
   error: null,
   db: null,
   storyId: null,
   tagService: null,
+  activeSort: null,
+  sortDirection: 'asc', // Default direction
+  favoriteFilterState: 'all',
 
   setDbAndStoryId: (dbInstance, storyIdInstance) => set({ db: dbInstance, storyId: storyIdInstance }),
 
@@ -38,9 +46,7 @@ export const useTagStore = create<TagState>((set, get) => ({
 
   fetchTags: async () => {
     set({ loading: true, error: null });
-    const { tagService, storyId, searchTerm } = get(); // Get searchTerm
-
-    console.log('Fetching tags for story:', storyId, 'with search term:', searchTerm); // Added log
+    const { tagService, storyId, searchTerm, activeSort, sortDirection, favoriteFilterState } = get();
 
     if (!tagService || !storyId) {
       set({ loading: false, error: 'Tag service or story ID not set.' });
@@ -48,8 +54,8 @@ export const useTagStore = create<TagState>((set, get) => ({
     }
 
     try {
-      const fetchedTags = await tagService.getTagsByStoryId(storyId, searchTerm); // Pass searchTerm
-      console.log('Fetched tags:', fetchedTags); // Added log
+      const fetchedTags = await tagService.getTagsByStoryId(storyId, searchTerm, activeSort, sortDirection, favoriteFilterState);
+      console.log('Fetched tags:', fetchedTags);
       set({ tags: fetchedTags, loading: false });
     } catch (err) {
       console.error('Failed to fetch tags:', err);
@@ -58,6 +64,14 @@ export const useTagStore = create<TagState>((set, get) => ({
   },
 
   setSearchTerm: (term) => {
-    set({ searchTerm: term }); // Set searchTerm, fetchTags will be triggered by debounce in component
+    set({ searchTerm: term });
+  },
+
+  setSort: (sortBy, direction) => {
+    set({ activeSort: sortBy, sortDirection: direction });
+  },
+
+  setFavoriteFilter: (state) => {
+    set({ favoriteFilterState: state });
   },
 }));

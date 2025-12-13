@@ -4,7 +4,7 @@ import { CommonActions, DrawerActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
@@ -29,7 +29,7 @@ export type MainSystemDrawerParamList = {
   Locations: { entityType: string };
   Chapters: { entityType: string };
   Scenes: { entityType: string };
-  Tags: undefined;
+  TagsStack: undefined;
   WorldRules: { entityType: string };
   Notes: { entityType: string };
   Gallery: undefined;
@@ -46,9 +46,10 @@ export type ListingDetailStackParamList = {
   Detail: { entityType: string; itemId: string };
 };
 
-/// Character ----------------
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
 const Stack = createNativeStackNavigator<ListingDetailStackParamList>();
+/// Character ----------------
+
 const CharacterStack = createNativeStackNavigator<CharacterStackParamList>();
 
 export type CharacterStackParamList = {
@@ -65,6 +66,44 @@ const CharacterStackNavigator = () => {
       <CharacterStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
       <CharacterStack.Screen name="CharacterForm" component={CharacterFormScreen} />
     </CharacterStack.Navigator>
+  );
+};
+/// ----- Tags -----
+
+const TagsStack = createNativeStackNavigator<TagsStackParamList>();
+
+export type TagsStackParamList = {
+  Tags: undefined;
+  TagDetail: { tagId: string };
+  TagForm: { tagId?: string };
+};
+
+const TagDetailScreen = ({ route }: any) => {
+  const { tagId } = route.params;
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Tag Detail Screen for Tag ID: {tagId}</Text>
+    </View>
+  );
+};
+
+const TagFormScreen = ({ route }: any) => {
+  const { tagId } = route.params;
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Tag Form Screen {tagId ? `for Tag ID: ${tagId}` : ' (New Tag)'}</Text>
+    </View>
+  );
+};
+
+const TagStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <TagsStack.Navigator screenOptions={{ headerShown: false }}>
+      <TagsStack.Screen name="Tags" component={TagsScreen} />
+      <TagsStack.Screen name="TagDetail" component={TagDetailScreen} />
+      <TagsStack.Screen name="TagForm" component={TagFormScreen} />
+    </TagsStack.Navigator>
   );
 };
 
@@ -132,7 +171,15 @@ const MainSystemNavigator = () => {
       <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: t('locations_title') }} />
       <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />
       <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: t('scenes_title') }} />
-      <Drawer.Screen name="Tags" component={TagsScreen} options={{ title: t('tags_title') }} />
+      <Drawer.Screen
+        name="TagsStack"
+        component={TagStackNavigator}
+        options={{
+          title: t('tags_title'),
+          drawerLabel: t('tags_title'),
+        }}
+        // Add listeners similar to CharactersStack if needed for tags
+      />
       <Drawer.Screen name="WorldRules" component={ListingDetailStack} initialParams={{ entityType: 'WorldRules' }} options={{ title: t('world_rules_title') }} />
       <Drawer.Screen name="Notes" component={ListingDetailStack} initialParams={{ entityType: 'Notes' }} options={{ title: t('notes_title') }} />
       <Drawer.Screen name="Gallery" component={GalleryScreen} options={{ title: t('gallery_title') }} />

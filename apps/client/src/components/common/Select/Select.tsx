@@ -81,6 +81,10 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
       height: 1,
       backgroundColor: colors.border,
     },
+    disabledStyle: {
+      backgroundColor: colors.surface, // Adjust as needed
+      opacity: 0.4,
+    },
   });
 
   // Conditional rendering or casting for DropDownPicker props
@@ -120,6 +124,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
           multiple={true} // Explicitly true
           mode="BADGE"
           disabled={disabled} // Pass disabled prop
+          disabledStyle={dropdownStyles.disabledStyle} // Apply disabled style
         />
       </View>
     );
@@ -158,6 +163,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
           zIndexInverse={1000}
           multiple={false} // Explicitly false
           disabled={disabled} // Pass disabled prop
+          disabledStyle={dropdownStyles.disabledStyle} // Apply disabled style
         />
       </View>
     );

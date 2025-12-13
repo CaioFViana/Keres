@@ -1,12 +1,20 @@
-import { and, eq, sql, SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm'; // Import asc and desc
 import { AppDrizzleClient } from '../db';
 import { TagInsert, tags, TagSelect } from '../db/schema'; // Import TagInsert and stories
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from './ServerService'; // Import ServerService and createServerService
 
+export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+
 export interface TagService {
-  getTagsByStoryId(storyId: string, searchTerm?: string): Promise<TagSelect[]>;
+  getTagsByStoryId(
+    storyId: string,
+    searchTerm?: string,
+    sortBy?: string | null,
+    sortDirection?: 'asc' | 'desc',
+    favoriteFilterState?: FavoriteFilterState,
+  ): Promise<TagSelect[]>;
   createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect>;
   updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
   deleteTag(currentUserId: string, tagId: string): Promise<void>;
@@ -15,8 +23,7 @@ export interface TagService {
 export const createTagService = (db: AppDrizzleClient): TagService => {
   const serverService = createServerService(db); // Create serverService once
   return {
-    async getTagsByStoryId(storyId, searchTerm): Promise<TagSelect[]> { // Added searchTerm
-      console.log('TagService: getTagsByStoryId called with storyId:', storyId, 'searchTerm:', searchTerm); // Added log
+    async getTagsByStoryId(storyId, searchTerm, sortBy, sortDirection, favoriteFilterState): Promise<TagSelect[]> { // Added sortBy, sortDirection, favoriteFilterState
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(tags.storyId, storyId) as SQL<boolean> // Explicit cast to SQL<boolean>
       ];
@@ -25,10 +32,40 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         conditions.push(sql`${tags.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
       }
 
+      if (favoriteFilterState === 'favorite') {
+        conditions.push(eq(tags.isFavorite, true) as SQL<boolean>); // Explicit cast
+      } else if (favoriteFilterState === 'not-favorite') {
+        conditions.push(eq(tags.isFavorite, false) as SQL<boolean>); // Explicit cast
+      }
+
       // Filter out undefined conditions and use 'and' to combine them
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
-      const result = await db.select().from(tags).where(and(...finalConditions)).all();
+      let query = db.select().from(tags).where(and(...finalConditions)).$dynamic();
+
+      if (sortBy) {
+        const orderBy = sortDirection === 'desc' ? desc : asc;
+        switch (sortBy) {
+          case 'name':
+            query = query.orderBy(orderBy(tags.name));
+            break;
+          case 'createdAt':
+            query = query.orderBy(orderBy(tags.createdAt));
+            break;
+          case 'updatedAt':
+            query = query.orderBy(orderBy(tags.updatedAt));
+            break;
+          default:
+            // Fallback or error if sortBy is unknown
+            console.warn(`Unknown sortBy field: ${sortBy}`);
+            break;
+        }
+      } else {
+        // Default sort if no sortBy is provided
+        query = query.orderBy(asc(tags.name));
+      }
+
+      const result = await query.all();
       return result;
     },
 

@@ -1,12 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { CharacterWithTags } from '../../services/CharacterService';
 import { useTheme } from '../../theme';
 import { truncate } from '../../utils/stringUtils';
 
-// Import the new consolidated component
 import GenericExpandedListItemWithActions from '../common/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '../common/TagList/TagList';
+import { createCharacterStyles } from './styles/characterListItemStyles';
 
 interface CharacterListItemProps {
   character: CharacterWithTags;
@@ -19,35 +19,7 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onTogg
 
   const descriptionSummary = truncate(character.description, 150);
 
-  const styles = StyleSheet.create({
-    headerLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 1,
-    },
-    name: {
-      color: colors.text,
-      fontSize: 18,
-      fontWeight: 'bold',
-      marginRight: 10,
-    },
-    itemTitle: {
-      color: colors.text,
-      fontSize: 16,
-      fontWeight: '600',
-      marginBottom: 5,
-    },
-    summaryText: {
-      color: colors.textSecondary,
-      fontSize: 14,
-      marginBottom: 5,
-    },
-    descriptionText: {
-      color: colors.text,
-      fontSize: 14,
-      marginTop: 5,
-    },
-  });
+  const styles = createCharacterStyles(colors); // Use externalized styles
 
   const renderHeaderContent = (char: CharacterWithTags) => (
     <View style={styles.headerLeft}>

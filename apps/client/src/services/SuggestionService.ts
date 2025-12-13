@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient, characterRelations, characters, items, suggestions } from '../db';
 import { createULID } from '../utils/ulid'; // Changed ulid import
 // Import other schemas as needed
@@ -33,7 +33,7 @@ const suggestionConfig = {
 export type SuggestionType = keyof typeof suggestionConfig;
 
 export interface SuggestionServiceInterface {
-  getSuggestions(type: SuggestionType, storyId: string): Promise<string[]>;
+  getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]>;
   addSuggestion(type: SuggestionType, value: string, storyId: string): Promise<string | null>;
   removeSuggestion(id: string): Promise<boolean>;
 }
@@ -41,13 +41,13 @@ export interface SuggestionServiceInterface {
 export const createSuggestionService = (db: AppDrizzleClient): SuggestionServiceInterface => {
   return {
     /**
-     * Retrieves a unique list of suggestions for a given type and story.
+     * Retrieves a unique list of suggestions for a given type and story, along with their counts.
      * Suggestions are sourced from the 'suggestions' table and dynamic data from entity tables.
      * @param type The type of suggestion to retrieve (e.g., 'character_gender').
      * @param storyId The ID of the story to fetch suggestions for.
-     * @returns A promise that resolves to an array of unique suggestion strings.
+     * @returns A promise that resolves to an array of [suggestion string, count] tuples.
      */
-    async getSuggestions(type: SuggestionType, storyId: string): Promise<string[]> {
+    async getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]> {
       if (!storyId) {
         console.error('getSuggestions: storyId is required.');
         return [];
@@ -60,31 +60,41 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         return [];
       }
 
-      const allSuggestions = new Set<string>();
+      const suggestionCounts = new Map<string, number>();
 
       try {
         // 1. Fetch suggestions from the 'suggestions' table
         const predefinedSuggestions = await db.select({ value: suggestions.value })
           .from(suggestions)
-          .where(eq(suggestions.type, type))
+          .where(and(eq(suggestions.type, type), eq(suggestions.storyId, storyId)))
           .all();
 
         predefinedSuggestions.forEach(s => {
           if (s.value) {
-            allSuggestions.add(s.value);
+            // Predefined suggestions don't have a direct count from entities,
+            // but we add them to ensure they are always included.
+            // Their count will be updated if they also appear in dynamic data.
+            if (!suggestionCounts.has(s.value)) {
+              suggestionCounts.set(s.value, 0); // Initialize count for user-added suggestions
+            }
           }
         });
 
-        // 2. Dynamically query unique values from the entity table
-        const dynamicQuery = await db.selectDistinct({ value: config.column })
+        // 2. Dynamically query unique values and their counts from the entity table
+        const dynamicCounts = await db.select({
+            value: config.column,
+            count: sql<number>`count(*)`,
+          })
           .from(config.schema)
-          .where(eq(config.schema.storyId, storyId)) // Assuming all relevant schemas have a storyId column
-          .all(); // .all() for expo-sqlite
+          .where(and(eq(config.schema.storyId, storyId), eq(config.schema.isDeleted, false))) // Assuming isDeleted column exists and should be filtered
+          .groupBy(config.column)
+          .all();
 
-        dynamicQuery.forEach(row => {
-          const value = row.value; // Access the dynamically selected column value
-          if (value && typeof value === 'string') { // Ensure value is a non-empty string
-            allSuggestions.add(value);
+        dynamicCounts.forEach(row => {
+          const value = row.value;
+          const count = row.count;
+          if (value && typeof value === 'string') {
+            suggestionCounts.set(value, (suggestionCounts.get(value) || 0) + count);
           }
         });
 
@@ -93,7 +103,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         return [];
       }
 
-      return Array.from(allSuggestions).sort();
+      return Array.from(suggestionCounts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
     },
 
     /**

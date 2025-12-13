@@ -35,7 +35,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
   const commonInputStyles = getCommonInputStyles(colors);
 
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<[string, number][]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   // Initialize SuggestionService
@@ -75,8 +75,8 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     }
   };
 
-  const handleSelectSuggestion = (suggestion: string) => {
-    onChangeText(suggestion);
+  const handleSelectSuggestion = (suggestion: [string, number]) => {
+    onChangeText(suggestion[0]); // Extract the string value
     setShowSuggestions(false);
   };
 
@@ -122,6 +122,9 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       padding: 10,
     },
     suggestionItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       paddingVertical: 10,
       paddingHorizontal: 15,
       borderBottomWidth: 1,
@@ -129,6 +132,10 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     },
     suggestionText: {
       color: colors.text,
+      fontSize: 16,
+    },
+    suggestionCount: {
+      color: colors.textSecondary,
       fontSize: 16,
     },
     noSuggestionsText: {
@@ -178,10 +185,11 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
           <View style={styles.modalContent}>
             <FlatList
               data={suggestions}
-              keyExtractor={(item) => item}
+              keyExtractor={(item) => item[0]}
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSelectSuggestion(item)}>
-                  <Text style={styles.suggestionText}>{item}</Text>
+                  <Text style={styles.suggestionText}>{item[0]}</Text>
+                  {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
                 </TouchableOpacity>
               )}
               ListEmptyComponent={<Text style={styles.noSuggestionsText}>{t('no_suggestions_available')}</Text>}

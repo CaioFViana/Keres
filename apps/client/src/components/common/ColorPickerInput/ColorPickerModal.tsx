@@ -1,7 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Dimensions, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Dimensions, PanResponder, StyleSheet, Text, View } from 'react-native';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, useTheme } from '../../../theme';
+import Button from '../Button/Button';
 
 const { width } = Dimensions.get('window');
 const COLOR_PICKER_SIZE = width * 0.7; // 70% of screen width
@@ -24,6 +26,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   const [saturation, setSaturation] = useState(100);
   const [value, setValue] = useState(100); // Also known as brightness
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const saturationValueRef = useRef<View>(null);
   const hueRef = useRef<View>(null);
@@ -203,14 +206,19 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       alignItems: 'center',
     },
     cancelButton: {
-      backgroundColor: colors.notification, // Use notification for cancel
+      backgroundColor: colors.textSecondary,
+      width: '40%'
     },
     selectButton: {
-      backgroundColor: colors.primary, // Use primary for select
+      backgroundColor: colors.primary,
+      width: '40%'
     },
     buttonText: {
-      color: '#fff', // Use buttonText color
+      color: colors.onPrimary,
       fontWeight: 'bold',
+    },
+    buttonWrapper: {
+      width: '47%',
     },
   });
 
@@ -262,12 +270,12 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
 
       {/* Action Buttons */}
       <View style={styles.buttonContainer}>
-        <Pressable style={[styles.button, styles.cancelButton]} onPress={onClose}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </Pressable>
-        <Pressable style={[styles.button, styles.selectButton]} onPress={() => onSelectColor(currentPickedColorHex())}>
-          <Text style={styles.buttonText}>Select</Text>
-        </Pressable>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>{t('cancel')}</Button>
+        </View>
+        <View style={styles.buttonWrapper}>
+          <Button onPress={() => onSelectColor(currentPickedColorHex())} style={{ backgroundColor: colors.primary }}>{t('select')}</Button>
+        </View>
       </View>
     </View>
   );

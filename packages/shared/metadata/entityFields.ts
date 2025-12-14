@@ -37,7 +37,7 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
   ],
   Tag: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
-    { name: 'color', label: 'field_color', type: 'string', isSearchable: true },
+    { name: 'color', label: 'field_color', type: 'string', isSearchable: false },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     // { name: 'createdAt', label: 'field_createdAt', type: 'date', isSearchable: false },

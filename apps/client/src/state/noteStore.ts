@@ -11,6 +11,7 @@ export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 interface NoteStore {
   notes: NoteSelect[];
   searchTerm: string;
+  activeFilterTags: string[];
   favoriteFilterState: FavoriteFilterState;
   activeSort: string | null;
   sortDirection: 'asc' | 'desc';
@@ -25,6 +26,7 @@ interface NoteStore {
   initializeService: () => void;
   fetchNotes: () => Promise<void>;
   setSearchTerm: (term: string) => void;
+  setFilterTags: (tagIds: string[]) => void;
   setFavoriteFilter: (state: FavoriteFilterState) => void;
   setSort: (sortBy: string | null, direction: 'asc' | 'desc') => void;
   toggleFavorite: (noteId: string, isFavorite: boolean) => Promise<void>;
@@ -35,9 +37,10 @@ interface NoteStore {
 const defaultState = {
   notes: [],
   searchTerm: '',
+  activeFilterTags: [],
   favoriteFilterState: 'all' as FavoriteFilterState,
   activeSort: null,
-  sortDirection: null,
+  sortDirection: 'asc' as 'asc' | 'desc',
   loading: false,
   error: null,
   db: null,
@@ -58,7 +61,7 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
   },
 
   fetchNotes: debounce(async () => {
-    const { noteService, storyId, searchTerm, favoriteFilterState, activeSort, sortDirection, advancedSearchCriteria } = get();
+    const { noteService, storyId, searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, advancedSearchCriteria } = get();
     if (!noteService || !storyId) {
       set({ notes: [], loading: false });
       return;
@@ -69,6 +72,7 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
       const fetchedNotes = await noteService.getNotesByStoryId(
         storyId,
         searchTerm,
+        activeFilterTags,
         activeSort,
         sortDirection,
         favoriteFilterState,
@@ -82,6 +86,7 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
   }, 300),
 
   setSearchTerm: (term: string) => set({ searchTerm: term }),
+  setFilterTags: (tagIds: string[]) => set({ activeFilterTags: tagIds }),
   setFavoriteFilter: (state: FavoriteFilterState) => set({ favoriteFilterState: state }),
   setSort: (sortBy: string | null, direction: 'asc' | 'desc') => set({ activeSort: sortBy, sortDirection: direction }),
 

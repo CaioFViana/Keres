@@ -2,18 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
 import NoteListItem from '../../components/listitem/NoteListItem';
 import { useDrizzle } from '../../db';
 import { NoteSelect } from '../../db/schemas/notes';
+import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, NotesStackParamList } from '../../navigation/MainSystemStack';
-import { FavoriteFilterState } from '../../services/NoteService'; // Will create this later
+import { FavoriteFilterState } from '../../services/NoteService';
+import { createTagService } from '../../services/TagService';
 import { useStoryStore } from '../../state/storyStore';
-import { useNoteStore } from '../../state/noteStore'; // Will create this later
+import { useNoteStore } from '../../state/noteStore';
 import { useTheme } from '../../theme';
 import { debounce } from '../../utils/debounce';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -31,9 +33,13 @@ const NotesScreen = () => {
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<NotesScreenNavigationProp>();
 
+  const [allTags, setAllTags] = useState<TagSelect[]>([]);
+  const tagService = useRef(createTagService(drizzleDb)).current;
+
   const {
     notes,
     searchTerm,
+    activeFilterTags,
     activeSort,
     sortDirection,
     favoriteFilterState,
@@ -45,6 +51,7 @@ const NotesScreen = () => {
     setDbAndStoryId,
     initializeService,
     setSort,
+    setFilterTags,
     setFavoriteFilter,
     setAdvancedSearchCriteria,
     toggleFavorite,
@@ -56,19 +63,33 @@ const NotesScreen = () => {
     [fetchNotes]
   );
 
+  const fetchTags = useCallback(async () => {
+    if (!selectedStory?.id) {
+      setAllTags([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagService.getTagsByStoryId(selectedStory.id);
+      setAllTags(fetchedTags);
+    } catch (error) {
+      console.error('Failed to fetch tags:', error);
+    }
+  }, [selectedStory?.id, tagService]);
+
   useEffect(() => {
     if (drizzleDb && selectedStory?.id) {
       setDbAndStoryId(drizzleDb, selectedStory.id);
       initializeService();
+      fetchTags();
     }
-  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService]);
+  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService, fetchTags]);
 
   useEffect(() => {
     debouncedFetchNotes();
     return () => {
       debouncedFetchNotes.cancel && debouncedFetchNotes.cancel();
     };
-  }, [searchTerm, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, debouncedFetchNotes]);
+  }, [searchTerm, activeFilterTags, sortDirection, favoriteFilterState, advancedSearchCriteria, debouncedFetchNotes]);
 
   useEffect(() => {
     const handleNoteChange = (storyId: string) => {
@@ -128,9 +149,13 @@ const NotesScreen = () => {
     <NoteListItem note={item} onViewDetails={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
   ), [handleViewDetails, handleToggleFavorite]);
 
+  const memoizedTagFilterOptions = useMemo(() => {
+    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id }));
+  }, [allTags]);
+
   const memoizedSortOptions = useMemo(() => {
     return [
-      { label: t('sort_by_title'), value: 'title' }, // Changed from name to title for notes
+      { label: t('sort_by_title'), value: 'title' },
       { label: t('sort_by_created_at'), value: 'createdAt' },
       { label: t('sort_by_updated_at'), value: 'updatedAt' }
     ];
@@ -147,6 +172,10 @@ const NotesScreen = () => {
   const handleSortDirectionChange = useCallback((direction: 'asc' | 'desc') => {
     setSort(activeSort, direction);
   }, [setSort, activeSort]);
+
+  const handleFilterChange = useCallback((selectedValues: string[]) => {
+    setFilterTags(selectedValues);
+  }, [setFilterTags]);
 
   const handleFavoriteFilterChange = useCallback((state: FavoriteFilterState) => {
     setFavoriteFilter(state);
@@ -203,9 +232,9 @@ const NotesScreen = () => {
         onSearch={handleSearch}
         searchPlaceholder={t('search_notes')}
         currentSearchTerm={searchTerm}
-        filterOptions={[]}
-        onFilterChange={() => {}}
-        selectedFilterValues={[]}
+        filterOptions={memoizedTagFilterOptions}
+        onFilterChange={handleFilterChange}
+        selectedFilterValues={activeFilterTags}
         sortOptions={memoizedSortOptions}
         onSortChange={handleSortChange}
         onSortDirectionChange={handleSortDirectionChange}
@@ -213,7 +242,7 @@ const NotesScreen = () => {
         currentSortValue={activeSort}
         onFavoriteFilterChange={handleFavoriteFilterChange}
         currentFavoriteFilterState={favoriteFilterState}
-        disableTagFilter={true}
+        disableTagFilter={false}
         entityName="Note"
         storyId={selectedStory?.id || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}

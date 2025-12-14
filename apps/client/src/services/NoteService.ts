@@ -2,6 +2,7 @@ import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { NoteInsert, notes, NoteSelect } from '../db/schemas/notes';
+import { tagRelations } from '../db/schemas/tagRelations';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
@@ -13,6 +14,7 @@ export interface NoteService {
   getNotesByStoryId(
     storyId: string,
     searchTerm?: string,
+    activeFilterTags?: string[],
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
@@ -27,7 +29,7 @@ export interface NoteService {
 export const createNoteService = (db: AppDrizzleClient): NoteService => {
   const serverService = createServerService(db);
   return {
-    async getNotesByStoryId(storyId, searchTerm, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<NoteSelect[]> {
+    async getNotesByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<NoteSelect[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(notes.storyId, storyId) as SQL<boolean>,
         eq(notes.isDeleted, false) as SQL<boolean>,
@@ -37,7 +39,26 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         conditions.push(sql`${notes.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
       }
 
-      // No activeFilterTags for Notes
+      if (activeFilterTags && activeFilterTags.length > 0) {
+        // Join with tagRelations to filter by tags
+        const noteIdsWithActiveTags = await db.select({ noteId: tagRelations.entityId })
+          .from(tagRelations)
+          .where(and(
+            eq(tagRelations.storyId, storyId),
+            eq(tagRelations.entityType, 'Note'), // Assuming 'Note' as the relationType
+            inArray(tagRelations.tagId, activeFilterTags)
+          ))
+          .execute();
+        
+        const filteredNoteIds = noteIdsWithActiveTags.map(row => row.noteId);
+        
+        if (filteredNoteIds.length > 0) {
+          conditions.push(inArray(notes.id, filteredNoteIds) as SQL<boolean>);
+        } else {
+          // If no notes match the selected tags, return an empty array early
+          return [];
+        }
+      }
 
       if (favoriteFilterState === 'favorite') {
         conditions.push(eq(notes.isFavorite, true) as SQL<boolean>);

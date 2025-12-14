@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm'; // Import a
 import { AppDrizzleClient } from '../db';
 import { TagInsert, tags, TagSelect } from '../db/schema'; // Import TagInsert and stories
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
+import { entityEventEmitter } from '../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from './ServerService'; // Import ServerService and createServerService
 
@@ -18,6 +19,7 @@ export interface TagService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<TagSelect[]>;
+  getById(tagId: string): Promise<TagSelect | undefined>;
   createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect>;
   updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
   deleteTag(currentUserId: string, tagId: string): Promise<void>;
@@ -28,7 +30,8 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
   return {
     async getTagsByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<TagSelect[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
-        eq(tags.storyId, storyId) as SQL<boolean> // Explicit cast to SQL<boolean>
+        eq(tags.storyId, storyId) as SQL<boolean>, // Explicit cast to SQL<boolean>
+        eq(tags.isDeleted, false) as SQL<boolean>,
       ];
 
       if (searchTerm) {
@@ -96,12 +99,19 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       return result;
     },
 
+    async getById(tagId: string): Promise<TagSelect | undefined> {
+      return db.query.tags.findFirst({
+        where: and(eq(tags.id, tagId), eq(tags.isDeleted, false)),
+      });
+    },
+
     async createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect> {
       const newTag = prepareNewEntityData<TagInsert>(tagData);
       const result = await db.insert(tags).values(newTag).returning().get();
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newTag.storyId, currentUserId);
       await recordLocalOperation(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, { ...result });
+      entityEventEmitter.emit('tag_changed', newTag.storyId, newTag.id); // Emit event after create
 
       return result;
     },
@@ -121,6 +131,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         ...tagData,
         version: updatedTag.version,
       });
+      entityEventEmitter.emit('tag_changed', updatedTag.storyId, updatedTag.id); // Emit event after update
     },
 
     async deleteTag(currentUserId: string, tagId: string): Promise<void> {
@@ -145,6 +156,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         isDeleted: updatedTag.isDeleted,
         version: updatedTag.version,
       });
+      entityEventEmitter.emit('tag_changed', updatedTag.storyId, updatedTag.id); // Emit event after delete
     },
   };
 };

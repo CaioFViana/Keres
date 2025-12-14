@@ -150,7 +150,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
 
   return (
     <Modal
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       visible={isVisible}
       onRequestClose={onClose}

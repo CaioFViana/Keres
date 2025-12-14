@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { CharacterSelect } from '../../db/schemas/characters';
@@ -23,6 +24,7 @@ const CharacterDetailScreen = () => {
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const route = useRoute<CharacterDetailScreenRouteProp>();
   const { characterId } = route.params;
+  const { t } = useTranslation();
 
   const drizzleDb = useDrizzle();
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
@@ -37,7 +39,7 @@ const CharacterDetailScreen = () => {
   const [character, setCharacter] = useState<CharacterSelect | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [headerTitle, setHeaderTitle] = useState('Loading...');
+  const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
   const styles = StyleSheet.create({
@@ -85,23 +87,23 @@ const CharacterDetailScreen = () => {
       const fetchedCharacter = await characterServiceRef.current.getById(characterId);
       if (fetchedCharacter && !fetchedCharacter.isDeleted) {
         setCharacter(fetchedCharacter);
-        setHeaderTitle(fetchedCharacter.name || 'Character Details');
+        setHeaderTitle(fetchedCharacter.name || t('character_details_title'));
       } else if (fetchedCharacter && fetchedCharacter.isDeleted) {
         // If character is deleted, go back
         navigation.goBack();
       }
       else {
-        setError('Character not found.');
-        setHeaderTitle('Character Not Found');
+        setError(t('character_not_found'));
+        setHeaderTitle(t('character_not_found'));
       }
     } catch (err) {
       console.error('Failed to fetch character details:', err);
-      setError('Failed to load character details.');
-      setHeaderTitle('Error Loading Character');
+      setError(t('failed_to_load_character'));
+      setHeaderTitle(t('error'));
     } finally {
       setLoading(false);
     }
-  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, characterServiceRef.current]);
+  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, characterServiceRef.current, t]); // Added t dependency
 
   const handleCharacterChange = useCallback(async (changedStoryId: string, changedCharacterId: string) => {
     if (changedCharacterId === characterId) {
@@ -112,11 +114,11 @@ const CharacterDetailScreen = () => {
           navigation.goBack(); // Character was deleted or no longer found
         } else {
           setCharacter(updatedCharacter); // Update state with latest character data
-          setHeaderTitle(updatedCharacter.name || 'Character Details');
+          setHeaderTitle(updatedCharacter.name || t('character_details_title'));
         }
       }
     }
-  }, [characterId, navigation, setCharacter, setHeaderTitle, characterServiceRef.current]);
+  }, [characterId, navigation, setCharacter, setHeaderTitle, characterServiceRef.current, t]);
 
   useEffect(() => {
     // Only subscribe and fetch if characterServiceRef.current is initialized
@@ -153,7 +155,7 @@ const CharacterDetailScreen = () => {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>Loading character details...</Text>
+        <Text style={styles.detailText}>{t('loading_character_details')}</Text>
       </View>
     );
   }
@@ -163,7 +165,7 @@ const CharacterDetailScreen = () => {
       <View style={[styles.container, styles.centerContent]}>
         <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
         <View style={styles.buttonContainer}>
-          <Button title="Go Back" onPress={() => navigation.goBack()} color={colors.primary} />
+          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
         </View>
       </View>
     );
@@ -172,9 +174,9 @@ const CharacterDetailScreen = () => {
   if (!character) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>Character data is missing.</Text>
+        <Text style={[styles.detailText, styles.errorText]}>{t('character_data_missing')}</Text>
         <View style={styles.buttonContainer}>
-          <Button title="Go Back" onPress={() => navigation.goBack()} color={colors.primary} />
+          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
         </View>
       </View>
     );
@@ -185,21 +187,21 @@ const CharacterDetailScreen = () => {
       <Text style={styles.mainTitle}>{character.name}</Text>
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
       
-      <Text style={styles.detailText}>Gender: {character.gender || 'N/A'}</Text>
-      <Text style={styles.detailText}>Race: {character.race || 'N/A'}</Text>
-      {character.subrace && <Text style={styles.detailText}>Subrace: {character.subrace}</Text>}
-      <Text style={styles.detailText}>Description: {character.description || 'N/A'}</Text>
-      <Text style={styles.detailText}>Personality: {character.personality || 'N/A'}</Text>
-      <Text style={styles.detailText}>Motivation: {character.motivation || 'N/A'}</Text>
-      <Text style={styles.detailText}>Qualities: {character.qualities || 'N/A'}</Text>
-      <Text style={styles.detailText}>Weaknesses: {character.weaknesses || 'N/A'}</Text>
-      <Text style={styles.detailText}>Biography: {character.biography || 'N/A'}</Text>
-      <Text style={styles.detailText}>Planned Timeline: {character.plannedTimeline || 'N/A'}</Text>
-      <Text style={styles.detailText}>Favorite: {character.isFavorite ? 'Yes' : 'No'}</Text>
-      <Text style={styles.detailText}>Extra Notes: {character.extraNotes || 'N/A'}</Text>
+      <Text style={styles.detailText}>{t('gender')}: {character.gender || t('common_na')}</Text>
+      <Text style={styles.detailText}>{t('race')}: {character.race || t('common_na')}</Text>
+      {character.subrace && <Text style={styles.detailText}>{t('subrace')}: {character.subrace}</Text>}
+      <Text style={styles.detailText}>{t('description')}: {character.description || t('common_na')}</Text>
+      <Text style={styles.detailText}>{t('personality')}: {character.personality || t('common_na')}</Text>
+      <Text style={styles.detailText}>{t('motivation')}: {character.motivation || t('common_na')}</Text>
+      <Text style={styles.detailText}>{t('qualities')}: {character.qualities || t('common_na')}</Text>
+      <Text style={styles.detailText}>{t('weaknesses')}: {character.weaknesses || t('common_na')}</Text>
+      <Text style={styles.detailText}>{t('biography')}: {character.biography || t('common_na')}</Text>
+      <Text style={styles.detailText}>{t('planned_timeline')}: {character.plannedTimeline || t('common_na')}</Text>
+      <Text style={styles.detailText}>{t('is_favorite')}: {character.isFavorite ? t('common_yes') : t('common_no')}</Text>
+      <Text style={styles.detailText}>{t('extra_notes')}: {character.extraNotes || t('common_na')}</Text>
       
       <View style={styles.buttonContainer}>
-        <Button title="Go Back" onPress={() => navigation.goBack()} color={colors.primary} />
+        <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
       </View>
     </View>
   );

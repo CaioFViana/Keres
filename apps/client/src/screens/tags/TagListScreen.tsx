@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -83,6 +83,23 @@ const TagsScreen = () => {
       entityEventEmitter.off('tag_changed', handleTagChange);
     };
   }, [selectedStory?.id, debouncedFetchTags]);
+
+
+  // Listen for reset event
+  useEffect(() => {
+    const handleReset = () => {
+      // Only pop to top if there's more than one screen in the stack
+      if (navigation.getState().routes.length > 1) {
+        navigation.dispatch(StackActions.popToTop());
+      }
+    };
+
+    entityEventEmitter.on('tag_navigation_reset', handleReset);
+
+    return () => {
+      entityEventEmitter.off('tag_navigation_reset', handleReset);
+    };
+  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {

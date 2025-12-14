@@ -52,7 +52,6 @@ const CharacterFormScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
   const isEditing = !!characterId;
 
   useFocusEffect(

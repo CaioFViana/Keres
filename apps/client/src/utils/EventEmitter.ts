@@ -29,4 +29,6 @@ export const entityEventEmitter = new EventEmitter();
 // ----- Character -----
 //  character_changed - Update character when crud happens or sync engine gets new info. Makes the characterdetail/list reloads it, if on that screen
 //  character_navigation_reset - Part of the navigation. Resets character stack to starter position if drawer tab changes. avoid some bugs + cleaner nav.
+// ----- Tag -----
+//  tag_SAMEASCHARACTERS
 // TODO - Add all others. with time...

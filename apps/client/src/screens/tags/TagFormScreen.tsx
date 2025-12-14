@@ -1,184 +1,275 @@
-import { Ionicons } from '@expo/vector-icons';
-import { StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { Tag } from '@keres/shared/entities/Tag';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPickerInput';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
+import { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
 import { createTagService } from '../../services/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+
+type TagFormScreenRouteProp = RouteProp<TagsStackParamList, 'TagForm'>;
 
 const TagFormScreen = () => {
   useBackButtonHandler();
-  const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const route = useRoute();
-  const { tagId } = (route.params as TagsStackParamList['TagForm']) || {};
-
-  const drizzleDb = useDrizzle();
+  const drawerNavigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>();
+  const route = useRoute<TagFormScreenRouteProp>();
+  const { t } = useTranslation();
+  const { userId } = useUserSettingsStore()
+  const { tagId } = route.params || {};
   const { selectedStory } = useStoryStore();
-  const userId = useUserSettingsStore.getState().userId;
 
-  const [tagName, setTagName] = useState('');
-  const [tagColor, setTagColor] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
+  const commonContainerStyles = getCommonContainerStyles(colors);
+  const commonInputStyles = getCommonInputStyles(colors);
+  const drizzleDb = useDrizzle();
+  const tagService = useCallback(() => createTagService(drizzleDb), [drizzleDb]);
+
+
+  const [name, setName] = useState('');
+  const [color, setColor] = useState('');
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [extraNotes, setExtraNotes] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const tagService = createTagService(drizzleDb);
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      padding: 20,
-      backgroundColor: colors.background,
-    },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    input: {
-      marginBottom: 15,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
-  });
-
-  useEffect(() => {
-    if (tagId) {
-      setIsEditing(true);
-      const fetchTag = async () => {
-        try {
-          const tag = await drizzleDb.query.tags.findFirst({
-            where: (tags, { eq }) => eq(tags.id, tagId),
-          });
-          if (tag) {
-            setTagName(tag.name);
-            setTagColor(tag.color || '');
-          } else {
-            Alert.alert(t('error'), t('tag_not_found'));
-            navigation.goBack();
-          }
-        } catch (error) {
-          console.error('Failed to fetch tag:', error);
-          Alert.alert(t('error'), t('failed_to_load_tag'));
-          navigation.goBack();
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchTag();
-    } else {
-      setIsEditing(false);
-      setLoading(false);
-    }
-  }, [tagId, drizzleDb, navigation, t]);
+  const isEditing = !!tagId;
 
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({
-        headerTitle: isEditing ? t('edit_tag') : t('create_tag'),
-        headerRight: () => (
-          isEditing && (
-            <TouchableOpacity
-              onPress={() => {
-                Alert.alert(
-                  t('delete_tag_title'),
-                  t('delete_tag_message'),
-                  [
-                    { text: t('cancel'), style: 'cancel' },
-                    {
-                      text: t('delete'),
-                      onPress: async () => {
-                        if (!userId || !selectedStory?.id) {
-                          Alert.alert(t('error'), t('user_story_not_found'));
-                          return;
-                        }
-                        try {
-                          await tagService.deleteTag(userId, tagId!);
-                          entityEventEmitter.emit('tag_changed', selectedStory.id);
-                          navigation.dispatch(StackActions.popToTop()); // Go back to Tags list
-                        } catch (error) {
-                          console.error('Failed to delete tag:', error);
-                          Alert.alert(t('error'), t('failed_to_delete_tag'));
-                        }
-                      },
-                    },
-                  ],
-                  { cancelable: true }
-                );
-              }}
-              style={{ marginRight: 15 }}
-            >
-              <Ionicons name="trash-outline" size={24} color={colors.text} />
-            </TouchableOpacity>
-          )
-        ),
+      drawerNavigation.getParent()?.setOptions({
+        headerTitle: isEditing ? t('edit_tag_title') : t('create_tag_title'),
       });
-    }, [navigation, isEditing, tagId, userId, selectedStory?.id, tagService, colors.text, t])
+    }, [drawerNavigation, isEditing, t])
   );
 
-  const handleSave = useCallback(async () => {
-    if (!tagName.trim()) {
+  useEffect(() => {
+    const loadTag = async () => {
+      if (!isEditing) {
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const fetchedTag = await tagService().getById(tagId!);
+        if (fetchedTag) {
+          setName(fetchedTag.name);
+          setColor(fetchedTag.color || '');
+          setIsFavorite(fetchedTag.isFavorite);
+          setExtraNotes(fetchedTag.extraNotes);
+        } else {
+          setError(t('tag_not_found'));
+        }
+      } catch (err) {
+        console.error('Failed to load tag:', err);
+        setError(t('failed_to_load_tag'));
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTag();
+  }, [tagId, isEditing, tagService, t]);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
       Alert.alert(t('error'), t('tag_name_required'));
       return;
     }
-    if (!selectedStory?.id || !userId) {
-      Alert.alert(t('error'), t('story_user_not_found'));
+    if (!userId) {
+      Alert.alert(t('error'), t('user_not_identified'));
+      return;
+    }
+    if (!selectedStory?.id) {
+      Alert.alert(t('error'), t('no_story_selected'));
       return;
     }
 
+    setLoading(true);
+    setError(null);
+
     try {
-      if (isEditing && tagId) {
-        await tagService.updateTag(userId, tagId, { name: tagName, color: tagColor });
+      const tagData: Omit<Tag, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
+        name: name.trim(),
+        color: color,
+        isFavorite: isFavorite,
+        extraNotes: extraNotes,
+      };
+
+      if (isEditing) {
+        await tagService().updateTag(userId, tagId!, tagData);
         Alert.alert(t('success'), t('tag_updated_successfully'));
       } else {
-        await tagService.createTag(userId, { name: tagName, color: tagColor, storyId: selectedStory.id });
+        await tagService().createTag(userId, { ...tagData, storyId: selectedStory.id });
         Alert.alert(t('success'), t('tag_created_successfully'));
       }
-      entityEventEmitter.emit('tag_changed', selectedStory.id);
       navigation.goBack();
-    } catch (error) {
-      console.error('Failed to save tag:', error);
+    } catch (err) {
+      console.error('Failed to save tag:', err);
+      setError(t('failed_to_save_tag'));
       Alert.alert(t('error'), t('failed_to_save_tag'));
+    } finally {
+      setLoading(false);
     }
-  }, [tagName, tagColor, isEditing, tagId, selectedStory?.id, userId, tagService, navigation, t]);
+  };
+
+  const handleDelete = () => {
+    if (!userId) {
+      Alert.alert(t('error'), t('user_not_identified'));
+      return;
+    }
+
+    Alert.alert(
+      t('delete_tag_title'),
+      t('delete_tag_message'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('delete'),
+          onPress: async () => {
+            if (tagId) {
+              try {
+                setLoading(true);
+                await tagService().deleteTag(userId, tagId);
+                Alert.alert(t('success'), t('tag_deleted_successfully'));
+                navigation.goBack();
+              } catch (err) {
+                console.error('Failed to delete tag:', err);
+                setError(t('failed_to_delete_tag'));
+                Alert.alert(t('error'), t('failed_to_delete_tag'));
+              } finally {
+                setLoading(false);
+              }
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const styles = StyleSheet.create({
+    scrollViewContent: {
+      padding: 20,
+      paddingBottom: 350,
+      flexGrow: 1,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 5,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginTop: 15,
+      marginBottom: 5,
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 15,
+      marginBottom: 5,
+    },
+    saveButton: {
+      marginTop: 20,
+      marginBottom: 0,
+    },
+    deleteButton: {
+      backgroundColor: 'red',
+      marginBottom: 15
+    },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
+      <View style={[commonContainerStyles.container, styles.centered]}>
         <Text style={{ color: colors.text }}>{t('loading')}...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        placeholder={t('enter_tag_name')}
-        value={tagName}
-        onChangeText={setTagName}
-        style={styles.input}
-      />
-      <ColorPickerInput
-        placeholder={t('select_tag_color')}
-        currentColor={tagColor}
-        onSelectColor={setTagColor}
-      />
-      <View style={styles.buttonContainer}>
-        <Button onPress={handleSave}>
-          {isEditing ? t('save_changes') : t('create_tag')}
-        </Button>
-      </View>
-    </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_tag_title') : t('create_tag_title')}</Text>
+          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+            {t('tag_form_description')}
+          </Text>
+
+          <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
+          <TextInput
+            placeholder={t('name_placeholder')}
+            value={name}
+            onChangeText={setName}
+            style={commonInputStyles.input}
+          />
+
+          <Text style={[styles.label, { color: colors.text }]}>{t('color')}</Text>
+          <ColorPickerInput
+            placeholder={t('select_tag_color')}
+            currentColor={color}
+            onSelectColor={setColor}
+            style={commonInputStyles.input}
+          />
+
+          <View style={styles.switchContainer}>
+            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>{t('is_favorite')}</Text>
+            <Switch
+              value={isFavorite}
+              onValueChange={setIsFavorite}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
+              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+            />
+          </View>
+
+          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+          <TextInput
+            placeholder={t('extra_notes_placeholder')}
+            value={extraNotes || ""}
+            onChangeText={setExtraNotes}
+            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}            multiline
+          />
+
+          <Button onPress={handleSave} style={styles.saveButton}>
+            {isEditing ? t('save_changes') : t('create_tag')}
+          </Button>
+
+          {isEditing && (
+            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+              {t('delete_tag_title')}
+            </Button>
+          )}
+
+          <View style={{ height: 90 }} />
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 

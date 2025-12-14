@@ -4,7 +4,7 @@ import { CommonActions, DrawerActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
@@ -18,8 +18,9 @@ import GalleryScreen from '../screens/GalleryScreen';
 import ImportExportScreen from '../screens/mainstorystack/ImportExportScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
+import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
-import TagsScreen from '../screens/tags/TagsScreen';
+import TagsScreen from '../screens/tags/TagListScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -76,17 +77,8 @@ const TagsStack = createNativeStackNavigator<TagsStackParamList>();
 
 export type TagsStackParamList = {
   Tags: undefined;
-  TagDetail: { tagId: string };
+  TagDetail: TagDetailScreenParamList['TagDetail'];
   TagForm: { tagId?: string };
-};
-
-const TagDetailScreen = ({ route }: any) => {
-  const { tagId } = route.params;
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Tag Detail Screen for Tag ID: {tagId}</Text>
-    </View>
-  );
 };
 
 const TagStackNavigator = () => {

@@ -18,6 +18,9 @@ import GalleryScreen from '../screens/GalleryScreen';
 import ImportExportScreen from '../screens/mainstorystack/ImportExportScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
+import NoteDetailScreen, { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
+import NoteFormScreen from '../screens/notes/NoteFormScreen';
+import NotesScreen from '../screens/notes/NoteListScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
@@ -33,7 +36,7 @@ export type MainSystemDrawerParamList = {
   Scenes: { entityType: string };
   TagsStack: undefined;
   WorldRules: { entityType: string };
-  Notes: { entityType: string };
+  NotesStack: undefined;
   Gallery: undefined;
   CharacterRelations: undefined;
   Choices: undefined;
@@ -89,6 +92,27 @@ const TagStackNavigator = () => {
       <TagsStack.Screen name="TagDetail" component={TagDetailScreen} />
       <TagsStack.Screen name="TagForm" component={TagFormScreen} />
     </TagsStack.Navigator>
+  );
+};
+//#endregion
+//#region Notes
+
+const NotesStack = createNativeStackNavigator<NotesStackParamList>();
+
+export type NotesStackParamList = {
+  Notes: undefined;
+  NoteDetail: NoteDetailScreenParamList['NoteDetail'];
+  NoteForm: { noteId?: string };
+};
+
+const NoteStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <NotesStack.Navigator screenOptions={{ headerShown: false }}>
+      <NotesStack.Screen name="Notes" component={NotesScreen} />
+      <NotesStack.Screen name="NoteDetail" component={NoteDetailScreen} />
+      <NotesStack.Screen name="NoteForm" component={NoteFormScreen} />
+    </NotesStack.Navigator>
   );
 };
 //#endregion
@@ -170,7 +194,19 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen name="WorldRules" component={ListingDetailStack} initialParams={{ entityType: 'WorldRules' }} options={{ title: t('world_rules_title') }} />
-      <Drawer.Screen name="Notes" component={ListingDetailStack} initialParams={{ entityType: 'Notes' }} options={{ title: t('notes_title') }} />
+      <Drawer.Screen
+        name="NotesStack"
+        component={NoteStackNavigator}
+        options={{
+          title: t('notes_title'),
+          drawerLabel: t('notes_title'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('note_navigation_reset');
+          },
+        })}
+      />
       <Drawer.Screen name="Gallery" component={GalleryScreen} options={{ title: t('gallery_title') }} />
       <Drawer.Screen name="CharacterRelations" component={CharacterRelationsScreen} options={{ title: t('character_relations_title') }} />
       <Drawer.Screen name="Choices" component={ChoicesScreen} options={{ title: t('choices_title') }} />

@@ -43,5 +43,11 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     // { name: 'createdAt', label: 'field_createdAt', type: 'date', isSearchable: false },
     // { name: 'updatedAt', label: 'field_updatedAt', type: 'date', isSearchable: false },
   ],
+  Note: [
+    { name: 'title', label: 'field_title', type: 'string', isSearchable: true },
+    { name: 'body', label: 'field_body', type: 'string', isSearchable: true },
+    { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+    { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
+  ],
   // Add metadata for other entities as needed
 };

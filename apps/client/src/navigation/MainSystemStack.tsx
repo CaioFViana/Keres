@@ -19,7 +19,7 @@ import ImportExportScreen from '../screens/mainstorystack/ImportExportScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
-import TagsScreen from '../screens/TagsScreen';
+import TagsScreen from '../screens/tags/TagsScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { entityEventEmitter } from '../utils/EventEmitter';

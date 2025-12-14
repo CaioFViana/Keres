@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SuggestionType } from '../../../services/SuggestionService';
 import { useTheme } from '../../../theme';
-import { getCommonInputStyles } from '../../../theme/commonStyles';
 import Button from '../Button/Button';
+import ColorPickerInput from '../ColorPickerInput/ColorPickerInput';
 import SuggestionTextInput from '../SuggestionTextInput/SuggestionTextInput';
 import TextInput from '../TextInput/TextInput';
 import TriStateToggleButton from '../TriStateToggleButton/TriStateToggleButton';
@@ -31,8 +31,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [searchCriteria, setSearchCriteria] = useState<{ [key: string]: any }>(initialCriteria);
-
-  const commonInputStyles = getCommonInputStyles(colors);
 
   // Get metadata for the specified entity
   const fieldsMetadata = useMemo(() => {
@@ -132,6 +130,16 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               placeholder={t(field.label)}
               placeholderTextColor={colors.textSecondary}
               style={{ width: '100%' }} // Explicitly override internal 80% width
+            />
+          </View>
+        );
+      case 'color':
+        return (
+          <View key={field.name} style={[styles.inputContainer, styleOverrides, {marginBottom: 20}]}>
+            <ColorPickerInput
+              currentColor={value || ''}
+              onSelectColor={(newColor: string) => handleInputChange(field.name, newColor)}
+              placeholder={t(field.label)}
             />
           </View>
         );

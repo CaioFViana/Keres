@@ -1,4 +1,4 @@
-export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id';
+export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id' | 'color';
 
 export interface EntityFieldMetadata {
   name: string;          // The field name in the entity
@@ -37,7 +37,7 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
   ],
   Tag: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
-    { name: 'color', label: 'field_color', type: 'string', isSearchable: false },
+    { name: 'color', label: 'field_color', type: 'color', isSearchable: false }, // Not convenient to do. left here as an what if for the future
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     // { name: 'createdAt', label: 'field_createdAt', type: 'date', isSearchable: false },

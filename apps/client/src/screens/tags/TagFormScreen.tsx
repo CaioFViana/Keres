@@ -47,10 +47,11 @@ const TagFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      drawerNavigation.getParent()?.setOptions({
-        headerTitle: isEditing ? t('edit_tag_title') : t('create_tag_title'),
+      navigation.getParent()?.setOptions({
+        title: isEditing ? t('edit_tag_title') : t('create_tag_title'),
+        headerRight: () => {<View/>}
       });
-    }, [drawerNavigation, isEditing, t])
+    }, [navigation, isEditing, t])
   );
 
   useEffect(() => {

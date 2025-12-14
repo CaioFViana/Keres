@@ -56,10 +56,11 @@ const CharacterFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      drawerNavigation.getParent()?.setOptions({
+      navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_character_title') : t('create_character_title'),
+        headerRight: () => {<View/>}
       });
-    }, [drawerNavigation, isEditing, t])
+    }, [navigation, isEditing, t])
   );
 
   useEffect(() => {

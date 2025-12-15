@@ -22,6 +22,7 @@ const lightColors: ThemeColors = {
   notification: '#FFC107',
   accent: '#7CFC00', // Lawn Green for a vibrant accent
   star: '#FFD700',
+  shadow: '#000000', // Added shadow for light theme
 };
 
 const darkColors: ThemeColors = {
@@ -46,6 +47,7 @@ const darkColors: ThemeColors = {
   notification: '#FFC107',
   accent: '#A2FF2C', // A bright green for accent in dark mode
   star: '#FFD700',
+  shadow: 'rgba(255, 255, 255, 0.2)', // Added shadow for dark theme
 };
 
 export const forestTheme = { lightColors, darkColors };

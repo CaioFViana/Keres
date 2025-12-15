@@ -22,6 +22,7 @@ const lightColors: ThemeColors = {
   notification: '#FFC107',
   accent: '#00C853', // A shade of green for accent
   star: '#FFD700',
+  shadow: '#000000', // Added shadow for light theme
 };
 
 const darkColors: ThemeColors = {
@@ -46,6 +47,7 @@ const darkColors: ThemeColors = {
   notification: '#FFC107',
   accent: '#69F0AE', // A lighter shade of green for accent in dark mode
   star: '#FFD700',
+  shadow: 'rgba(255, 255, 255, 0.2)', // Added shadow for dark theme (slightly transparent white)
 };
 
 export const defaultTheme = { lightColors, darkColors };

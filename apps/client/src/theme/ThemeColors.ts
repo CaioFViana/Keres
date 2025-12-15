@@ -20,4 +20,5 @@ export interface ThemeColors {
   notification: string;
   accent: string;
   star: string;
+  shadow: string; // Added shadow property
 }

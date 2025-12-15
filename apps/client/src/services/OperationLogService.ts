@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { eq, desc, asc, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { OperationLogInsert, operationLogs, stories } from '../db/schema';
+import { OperationLogInsert, operationLogs, stories, OperationLogSelect } from '../db/schema'; // Import OperationLogSelect
 import { createULID } from '../utils/ulid'; // Import createULID
 
 export type OperationType = 'create' | 'update' | 'delete' | 'reorder';
@@ -17,9 +17,12 @@ export interface OperationLogService {
     entityId: string,
     payload: T
   ): Promise<void>;
+  getRecentOperationLogs(storyId: string, limit: number): Promise<OperationLogSelect[]>;
+  getPaginatedOperationLogs(storyId: string, page: number, pageSize: number): Promise<{ logs: OperationLogSelect[]; total: number }>;
+  getOperationLogById(logId: string): Promise<OperationLogSelect | undefined>;
 }
 
-export const createOperationLogService = (): OperationLogService => {
+export const createOperationLogService = (db: AppDrizzleClient): OperationLogService => {
   return {
     async getUserIdForOperation(db: AppDrizzleClient, storyId: string, currentUserId: string): Promise<string> {
       const story = await db.select().from(stories).where(eq(stories.id, storyId)).get();
@@ -55,6 +58,53 @@ export const createOperationLogService = (): OperationLogService => {
         serverOperationVersion: 0,
       };
       await db.insert(operationLogs).values(newOperationLog).run();
+    },
+
+    async getRecentOperationLogs(storyId: string, limit: number): Promise<OperationLogSelect[]> {
+      if (!storyId) {
+        console.warn('getRecentOperationLogs: storyId is required.');
+        return [];
+      }
+      return db.query.operationLogs.findMany({
+        where: eq(operationLogs.storyId, storyId),
+        orderBy: desc(operationLogs.createdAt),
+        limit: limit,
+      });
+    },
+
+    async getPaginatedOperationLogs(storyId: string, page: number, pageSize: number): Promise<{ logs: OperationLogSelect[]; total: number }> {
+      if (!storyId) {
+        console.warn('getPaginatedOperationLogs: storyId is required.');
+        return { logs: [], total: 0 };
+      }
+
+      const offset = (page - 1) * pageSize;
+
+      const logs = await db.query.operationLogs.findMany({
+        where: eq(operationLogs.storyId, storyId),
+        orderBy: desc(operationLogs.createdAt),
+        limit: pageSize,
+        offset: offset,
+      });
+
+      const totalResult = await db.select({ count: sql<number>`count(*)` })
+        .from(operationLogs)
+        .where(eq(operationLogs.storyId, storyId))
+        .get();
+
+      const total = totalResult?.count || 0;
+
+      return { logs, total };
+    },
+
+    async getOperationLogById(logId: string): Promise<OperationLogSelect | undefined> {
+      if (!logId) {
+        console.warn('getOperationLogById: logId is required.');
+        return undefined;
+      }
+      return db.query.operationLogs.findFirst({
+        where: eq(operationLogs.id, logId),
+      });
     },
   };
 };

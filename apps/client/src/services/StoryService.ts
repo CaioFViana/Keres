@@ -77,7 +77,7 @@ export interface StoryService {
 import { createOperationLogService } from './OperationLogService';
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
-  const operationLogService = createOperationLogService();
+  const operationLogService = createOperationLogService(db);
   return {
     async getAllStories(): Promise<StorySelect[]> {
       return db.select().from(stories).where(eq(stories.isDeleted, false)).all();

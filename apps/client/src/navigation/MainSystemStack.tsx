@@ -17,6 +17,7 @@ import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
 import ImportExportScreen from '../screens/mainstorystack/ImportExportScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
+import OperationLogScreen from '../screens/mainstorystack/OperationLogScreen'; // Import OperationLogScreen
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import NoteDetailScreen, { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
 import NoteFormScreen from '../screens/notes/NoteFormScreen';
@@ -46,6 +47,7 @@ export type MainSystemDrawerParamList = {
   Settings: undefined;
   StorySettings: { storyId: string };
   ImportExport: undefined;
+  OperationLogs: undefined;
   StorySelection: undefined;
 };
 
@@ -248,6 +250,14 @@ const MainSystemNavigator = () => {
       <Drawer.Screen name="Choices" component={ChoicesScreen} options={{ title: t('choices_title') }} />
       <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
       <Drawer.Screen name="ImportExport" component={ImportExportScreen} options={{ title: t('import_export_title') }} />
+      <Drawer.Screen
+        name="OperationLogs"
+        component={OperationLogScreen}
+        options={{
+          title: t('operation_logs_title'),
+          drawerLabel: t('operation_logs_title'),
+        }}
+      />
       <Drawer.Screen
         name="StorySelection"
         component={() => <View />} // A dummy component, as it won't be displayed

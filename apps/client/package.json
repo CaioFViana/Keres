@@ -12,7 +12,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
-    "locales:sort": "bun run scripts/sort-and-validate-locales.js"
+    "locales:audit": "tsx scripts/verify-translations.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -61,7 +61,8 @@
     "drizzle-kit": "^0.31.6",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "tsx": "^4.16.2"
   },
   "private": true
 }

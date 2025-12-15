@@ -31,4 +31,5 @@ export * from "./schemas/SuggestionSchemas";
 export * from "./schemas/TagRelationSchemas";
 export * from "./schemas/TagSchemas";
 export * from "./schemas/WorldRuleSchemas";
+export * from "./metadata/OperationLogEntityType";
 

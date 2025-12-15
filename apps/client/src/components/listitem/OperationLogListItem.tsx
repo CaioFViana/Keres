@@ -3,6 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { OperationLogSelect } from '../../db/schema';
 import { useTheme } from '../../theme';
 import { useTranslation } from 'react-i18next';
+import { useEntityName } from '../../hooks/useEntityName';
+import { OperationLogEntityType } from '@keres/shared';
 
 interface OperationLogListItemProps {
   log: OperationLogSelect;
@@ -11,6 +13,17 @@ interface OperationLogListItemProps {
 const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+
+  const { entityName: mainEntityName, loading: mainEntityLoading } = useEntityName(
+    log.entityType as OperationLogEntityType,
+    log.entityId
+  );
+
+  // Assuming userId in OperationLog is also a reference to a User entity
+  const { entityName: userName, loading: userLoading } = useEntityName(
+    OperationLogEntityType.User,
+    log.userId || ''
+  );
 
   const styles = StyleSheet.create({
     cardContainer: {
@@ -56,11 +69,11 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
         {t(`operation_type_${log.operationType}`)} - {log.entityType}
       </Text>
       <Text style={styles.entityInfo}>
-        {t('entity_id')}: {log.entityId}
+        {t('entity_id')}: {mainEntityLoading ? 'Loading...' : mainEntityName || log.entityId}
       </Text>
       {log.userId && (
         <Text style={styles.entityInfo}>
-          {t('user_id')}: {log.userId}
+          {t('user_id')}: {userLoading ? 'Loading...' : userName || log.userId}
         </Text>
       )}
       <Text style={styles.timestamp}>{formattedDate}</Text>

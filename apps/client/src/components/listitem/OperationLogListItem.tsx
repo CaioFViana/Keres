@@ -1,14 +1,36 @@
+import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
+import { OperationLogEntityType } from '@keres/shared';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { OperationLogSelect } from '../../db/schema';
-import { useTheme } from '../../theme';
-import { useTranslation } from 'react-i18next';
 import { useEntityName } from '../../hooks/useEntityName';
-import { OperationLogEntityType } from '@keres/shared';
+import { useTheme } from '../../theme';
 
 interface OperationLogListItemProps {
   log: OperationLogSelect;
 }
+
+const getOperationIcon = (operationType: string, color: string, size: number): React.ReactNode => {
+  let iconName: keyof typeof Ionicons.glyphMap;
+  switch (operationType) {
+    case 'create':
+      iconName = 'add-circle-outline';
+      break;
+    case 'update':
+      iconName = 'create-outline';
+      break;
+    case 'delete':
+      iconName = 'trash-outline';
+      break;
+    case 'reorder':
+      iconName = 'repeat-outline';
+      break;
+    default:
+      iconName = 'help-circle-outline';
+  }
+  return <Ionicons name={iconName} size={size} color={color} />;
+};
 
 const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
   const { colors } = useTheme();
@@ -19,7 +41,6 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
     log.entityId
   );
 
-  // Assuming userId in OperationLog is also a reference to a User entity
   const { entityName: userName, loading: userLoading } = useEntityName(
     OperationLogEntityType.User,
     log.userId || ''
@@ -37,11 +58,17 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
       shadowRadius: 4,
       elevation: 3,
     },
-    operationType: {
+    operationTypeContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 5,
+    },
+    operationTypeText: {
       fontSize: 16,
       fontWeight: 'bold',
       color: colors.primary,
       textTransform: 'capitalize',
+      marginLeft: 5, // Space between icon and text
     },
     entityInfo: {
       fontSize: 14,
@@ -65,12 +92,12 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
 
   return (
     <View style={styles.cardContainer}>
-      <Text style={styles.operationType}>
-        {t(`operation_type_${log.operationType}`)} - {log.entityType}
-      </Text>
-      <Text style={styles.entityInfo}>
-        {t('entity_id')}: {mainEntityLoading ? 'Loading...' : mainEntityName || log.entityId}
-      </Text>
+      <View style={styles.operationTypeContainer}>
+        {getOperationIcon(log.operationType, colors.primary, 18)}
+        <Text style={styles.operationTypeText}>
+          {mainEntityLoading ? 'Loading...' : mainEntityName || t('unknown_entity')}
+        </Text>
+      </View>
       {log.userId && (
         <Text style={styles.entityInfo}>
           {t('user_id')}: {userLoading ? 'Loading...' : userName || log.userId}

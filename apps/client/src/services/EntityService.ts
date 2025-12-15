@@ -1,101 +1,138 @@
+import { OperationLogEntityType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
+import { TFunction } from 'i18next';
+import { AppDrizzleClient } from '../db';
 import {
-  stories,
+  chapters,
   characters,
-  notes,
+  items,
   locations,
-  worldRules,
+  notes,
+  operationLogs,
+  scenes,
+  stories,
   tags,
   users,
-  operationLogs,
-  chapters,
-  scenes,
-  choices,
-  galleries,
-  items,
+  worldRules
 } from '../db/schemas';
-import { OperationLogEntityType } from '@keres/shared';
-import { AppDrizzleClient } from '../db';
 
 export class EntityService {
   static async getEntityName(
     db: AppDrizzleClient,
     entityType: OperationLogEntityType,
-    entityId: string
+    entityId: string,
+    t: TFunction
   ): Promise<string | undefined> {
+    let translatedEntityType: string | undefined;
+    let entitySpecificName: string | undefined;
+
     switch (entityType) {
       case OperationLogEntityType.Story:
         const story = await db.query.stories.findFirst({
           where: eq(stories.id, entityId),
           columns: { title: true },
         });
-        return story?.title;
+        entitySpecificName = story?.title;
+        translatedEntityType = t('story')
+        break;
       case OperationLogEntityType.Character:
         const character = await db.query.characters.findFirst({
           where: eq(characters.id, entityId),
           columns: { name: true },
         });
-        return character?.name;
+        entitySpecificName = character?.name;
+        translatedEntityType = t('character')
+        break;
       case OperationLogEntityType.Note:
         const note = await db.query.notes.findFirst({
           where: eq(notes.id, entityId),
           columns: { title: true },
         });
-        return note?.title;
+        entitySpecificName = note?.title;
+        translatedEntityType = t('note')
+        break;
       case OperationLogEntityType.Location:
         const location = await db.query.locations.findFirst({
           where: eq(locations.id, entityId),
           columns: { name: true },
         });
-        return location?.name;
+        entitySpecificName = location?.name;
+        translatedEntityType = t('location')
+        break;
       case OperationLogEntityType.WorldRule:
         const worldRule = await db.query.worldRules.findFirst({
           where: eq(worldRules.id, entityId),
           columns: { title: true },
         });
-        return worldRule?.title;
+        entitySpecificName = worldRule?.title;
+        translatedEntityType = t('world_rule')
+        break;
       case OperationLogEntityType.Tag:
         const tag = await db.query.tags.findFirst({
           where: eq(tags.id, entityId),
           columns: { name: true },
         });
-        return tag?.name;
+        entitySpecificName = tag?.name;
+        translatedEntityType = t('tag')
+        break;
       case OperationLogEntityType.User:
         const user = await db.query.users.findFirst({
           where: eq(users.idUser, entityId),
           columns: { displayName: true },
         });
-        return user?.displayName ?? undefined;
+        entitySpecificName = user?.displayName ?? undefined;
+        translatedEntityType = t('user')
+        break;
       case OperationLogEntityType.Chapter:
         const chapter = await db.query.chapters.findFirst({
           where: eq(chapters.id, entityId),
           columns: { name: true },
         });
-        return chapter?.name;
+        entitySpecificName = chapter?.name;
+        translatedEntityType = t('chapter')
+        break;
       case OperationLogEntityType.Scene:
         const scene = await db.query.scenes.findFirst({
           where: eq(scenes.id, entityId),
           columns: { name: true },
         });
-        return scene?.name;
+        entitySpecificName = scene?.name;
+        translatedEntityType = t('scene')
+        break;
       case OperationLogEntityType.Choice:
-        return `Choice ID: ${entityId}`;
+        // For entities without a natural 'name' field, we construct a descriptive string
+        entitySpecificName = `${t('choice')} ${t('id')}: ${entityId}`; // Use t() for 'ID'
+        translatedEntityType = t('choice')
+        break;
       case OperationLogEntityType.Gallery:
-        return `Gallery ID: ${entityId}`;
+        entitySpecificName = `${t('gallery')} ${t('id')}: ${entityId}`; // Use t() for 'ID'
+        translatedEntityType = t('gallery')
+        break;
       case OperationLogEntityType.Item:
         const item = await db.query.items.findFirst({
           where: eq(items.id, entityId),
           columns: { name: true },
         });
-        return item?.name;
+        entitySpecificName = item?.name;
+        translatedEntityType = t('item')
+        break;
       case OperationLogEntityType.OperationLog:
         const opLog = await db.query.operationLogs.findFirst({
           where: eq(operationLogs.id, entityId),
           columns: { id: true },
         });
-        return `Operation Log ID: ${opLog?.id}`;
+        entitySpecificName = `${t('operation_logs_title')} ${t('id')}: ${opLog?.id || entityId}`; // Use t() for title and ID
+        translatedEntityType = t('operation_log')
+        break;
       default:
-        return undefined;
+        return undefined; // If entityType is unknown, we can't provide a name
+    }
+
+    if (entitySpecificName) {
+      return `${translatedEntityType} - ${entitySpecificName}`;
+    } else {
+      // If no specific name found, but entityType is known, return just the translated type
+      return translatedEntityType;
     }
   }
 }

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { EntityService } from '../services/EntityService';
 import { OperationLogEntityType } from '@keres/shared';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
+import { EntityService } from '../services/EntityService';
 
 interface UseEntityNameResult {
   entityName: string | undefined;
@@ -12,6 +13,7 @@ export function useEntityName(entityType: OperationLogEntityType, entityId: stri
   const [entityName, setEntityName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
   const db = useDrizzle();
+  const { t } = useTranslation();
 
   useEffect(() => {
     let isMounted = true;
@@ -24,7 +26,8 @@ export function useEntityName(entityType: OperationLogEntityType, entityId: stri
       }
       setLoading(true);
       try {
-        const name = await EntityService.getEntityName(db, entityType, entityId); // Pass db as the first argument
+        // Pass t as an argument to EntityService.getEntityName
+        const name = await EntityService.getEntityName(db, entityType, entityId, t);
         if (isMounted) {
           setEntityName(name);
         }
@@ -45,7 +48,7 @@ export function useEntityName(entityType: OperationLogEntityType, entityId: stri
     return () => {
       isMounted = false;
     };
-  }, [db, entityType, entityId]);
+  }, [db, entityType, entityId]); // Removed t from dependency array
 
   return { entityName, loading };
 }

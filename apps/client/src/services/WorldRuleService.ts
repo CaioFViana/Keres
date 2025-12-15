@@ -1,16 +1,13 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient, WorldRuleInsert, worldRules, WorldRuleSelect } from '../db';
+import { WorldRuleWithTags } from '../db/schemas/worldRules'; // Import WorldRuleWithTags from schemas
 import { tagRelations } from '../db/schemas/tagRelations';
 import { TagSelect, tags } from '../db/schemas/tags'; // Import tags schema
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
 import { createServerService } from './ServerService';
-
-export type WorldRuleWithTags = WorldRuleSelect & {
-  tags: TagSelect[];
-};
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 

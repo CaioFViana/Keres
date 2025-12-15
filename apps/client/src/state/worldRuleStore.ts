@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { AppDrizzleClient, WorldRuleSelect } from '../db';
-import { createWorldRuleService, WorldRuleService, WorldRuleWithTags } from '../services/WorldRuleService';
+import { createWorldRuleService, WorldRuleService } from '../services/WorldRuleService';
+import { WorldRuleWithTags } from '../db/schemas/worldRules';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { debounce } from '../utils/debounce';
 import { useUserSettingsStore } from './userSettingsStore';
-
-export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+import { FavoriteFilterState } from '../services/WorldRuleService';
 
 interface WorldRuleStore {
   worldRules: WorldRuleWithTags[];

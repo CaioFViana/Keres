@@ -152,7 +152,7 @@ const WorldRuleFormScreen = () => {
         isFavorite: isFavorite,
         extraNotes: extraNotes,
       };
-      let currentWorldRuleId
+      let currentWorldRuleId = worldRuleId; // Initialize currentWorldRuleId with worldRuleId for editing case
       if (isEditing) {
         await worldRuleService().updateWorldRule(userId, worldRuleId!, worldRuleData);
         Alert.alert(t('success'), t('world_rule_updated_successfully'));

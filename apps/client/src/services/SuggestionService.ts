@@ -66,7 +66,7 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         // 1. Fetch suggestions from the 'suggestions' table
         const predefinedSuggestions = await db.select({ value: suggestions.value })
           .from(suggestions)
-          .where(and(eq(suggestions.type, type), eq(suggestions.storyId, storyId)))
+          .where(and(eq(suggestions.type, type), eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false)))
           .all();
 
         predefinedSuggestions.forEach(s => {
@@ -126,7 +126,8 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
           .where(and(
             eq(suggestions.type, type),
             eq(suggestions.value, value),
-            eq(suggestions.storyId, storyId)
+            eq(suggestions.storyId, storyId),
+            eq(suggestions.isDeleted, false)
           ))
           .limit(1)
           .get(); // .get() for expo-sqlite
@@ -186,7 +187,11 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
           return false;
         }
 
-        await db.delete(suggestions).where(eq(suggestions.id, id)).run();
+        await db.update(suggestions)
+          .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${suggestions.version} + 1` })
+          .where(eq(suggestions.id, id))
+          .run();
+        
         return true;
       } catch (error) {
         console.error(`Error removing suggestion with ID '${id}':`, error);

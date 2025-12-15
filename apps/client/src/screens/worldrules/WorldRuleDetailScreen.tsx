@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
-import { useDrizzle, WorldRuleSelect } from '../../db';
-import { TagSelect } from '../../db/schema';
+import { useDrizzle } from '../../db';
+import { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
@@ -49,8 +49,7 @@ const WorldRuleDetailScreen = () => {
     }
   }, [drizzleDb]);
 
-  const [worldRule, setWorldRule] = useState<WorldRuleSelect | null>(null);
-  const [worldRuleTags, setWorldRuleTags] = useState<TagSelect[]>([]);
+  const [worldRule, setWorldRule] = useState<WorldRuleWithTags | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -119,23 +118,11 @@ const WorldRuleDetailScreen = () => {
       console.error('Failed to fetch world rule details:', err);
       setError(t('failed_to_load_world_rule'));
       setHeaderTitle(t('error'));
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, worldRuleServiceRef.current, t]);
-
-  const fetchTagsForWorldRule = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !worldRule?.storyId || !worldRuleId) {
-      setWorldRuleTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(worldRule.storyId, worldRuleId, 'WorldRule');
-      setWorldRuleTags(fetchedTags);
-    } catch (err) {
-      console.error('Failed to fetch tags for world rule:', err);
-    }
-  }, [worldRule?.storyId, worldRuleId, tagRelationServiceRef.current]);
 
   const handleWorldRuleChange = useCallback(async (changedStoryId: string, changedWorldRuleId: string) => {
     if (changedWorldRuleId === worldRuleId) {
@@ -151,12 +138,14 @@ const WorldRuleDetailScreen = () => {
     }
   }, [worldRuleId, navigation, setWorldRule, setHeaderTitle, worldRuleServiceRef.current, t]);
 
-  const handleTagRelationChange = useCallback((changedStoryId: string, changedEntityId: string) => {
-    if (changedEntityId === worldRuleId) {
-      fetchTagsForWorldRule();
+  const handleTagRelationChange = useCallback(async (changedStoryId: string, changedEntityId: string) => {
+    if (changedEntityId === worldRuleId && worldRuleServiceRef.current) {
+      const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
+      if (updatedWorldRule && !updatedWorldRule.isDeleted) {
+        setWorldRule(updatedWorldRule);
+      }
     }
-  }, [worldRuleId, fetchTagsForWorldRule]);
-
+  }, [worldRuleId, setWorldRule, worldRuleServiceRef.current]);
 
   useEffect(() => {
     if (worldRuleServiceRef.current) {
@@ -170,12 +159,6 @@ const WorldRuleDetailScreen = () => {
       };
     }
   }, [worldRuleId, fetchWorldRule, handleWorldRuleChange, handleTagRelationChange, worldRuleServiceRef.current]);
-
-  useEffect(() => {
-    if (worldRule) {
-      fetchTagsForWorldRule();
-    }
-  }, [worldRule, fetchTagsForWorldRule]);
 
   const renderHeaderRight = useCallback(() => (
     <TouchableOpacity
@@ -239,7 +222,7 @@ const WorldRuleDetailScreen = () => {
       )}
 
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={worldRuleTags} />
+      <TagChipList tags={worldRule.tags} />
       
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

@@ -1,5 +1,6 @@
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { TagSelect } from './tags'; // Import TagSelect
 
 export const worldRules = sqliteTable('world_rules', {
   id: text('id').primaryKey(),
@@ -16,3 +17,7 @@ export const worldRules = sqliteTable('world_rules', {
 });
 export type WorldRuleInsert = InferInsertModel<typeof worldRules>;
 export type WorldRuleSelect = InferSelectModel<typeof worldRules>;
+
+export type WorldRuleWithTags = WorldRuleSelect & {
+  tags: TagSelect[];
+};

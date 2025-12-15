@@ -2,10 +2,15 @@ import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient, WorldRuleInsert, worldRules, WorldRuleSelect } from '../db';
 import { tagRelations } from '../db/schemas/tagRelations';
+import { TagSelect, tags } from '../db/schemas/tags'; // Import tags schema
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
 import { createServerService } from './ServerService';
+
+export type WorldRuleWithTags = WorldRuleSelect & {
+  tags: TagSelect[];
+};
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
@@ -18,8 +23,8 @@ export interface WorldRuleService {
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
-  ): Promise<WorldRuleSelect[]>;
-  getById(worldRuleId: string): Promise<WorldRuleSelect | undefined>;
+  ): Promise<WorldRuleWithTags[]>;
+  getById(worldRuleId: string): Promise<WorldRuleWithTags | undefined>;
   createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect>;
   updateWorldRule(currentUserId: string, worldRuleId: string, worldRuleData: Partial<Omit<WorldRuleInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
   deleteWorldRule(currentUserId: string, worldRuleId: string): Promise<void>;
@@ -28,7 +33,7 @@ export interface WorldRuleService {
 export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService => {
   const serverService = createServerService(db);
   return {
-    async getWorldRulesByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<WorldRuleSelect[]> {
+    async getWorldRulesByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<WorldRuleWithTags[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(worldRules.storyId, storyId) as SQL<boolean>,
         eq(worldRules.isDeleted, false) as SQL<boolean>,
@@ -39,12 +44,12 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
       }
 
       if (activeFilterTags && activeFilterTags.length > 0) {
-        // Join with tagRelations to filter by tags
-        const worldRuleIdsWithActiveTags = await db.select({ worldRuleId: tagRelations.entityId })
+        // Filter world rules by tags
+        const worldRuleIdsWithActiveTags = await db.select({ worldRuleId: tagRelations.relationId })
           .from(tagRelations)
           .where(and(
             eq(tagRelations.storyId, storyId),
-            eq(tagRelations.entityType, 'WorldRule'), // Assuming 'WorldRule' as the relationType
+            eq(tagRelations.relationType, 'WorldRule'),
             inArray(tagRelations.tagId, activeFilterTags)
           ))
           .execute();
@@ -54,7 +59,6 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         if (filteredWorldRuleIds.length > 0) {
           conditions.push(inArray(worldRules.id, filteredWorldRuleIds) as SQL<boolean>);
         } else {
-          // If no world rules match the selected tags, return an empty array early
           return [];
         }
       }
@@ -67,7 +71,6 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
 
       // Apply advanced search criteria
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        // Assuming entityFieldMetadata for 'WorldRule' exists
         const worldRuleMetadata = entityFieldMetadata['WorldRule'];
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
@@ -80,7 +83,6 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(worldRules[key as keyof WorldRuleSelect], value) as SQL<boolean>);
               }
-              // Add other types (number, date, etc.) as needed
             }
           }
         }
@@ -88,36 +90,105 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
 
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
-      let query = db.select().from(worldRules).where(and(...finalConditions)).$dynamic();
+      const query = db.select({
+        worldRule: worldRules,
+        tag: tags,
+      })
+      .from(worldRules)
+      .leftJoin(tagRelations, and(
+        eq(tagRelations.relationId, worldRules.id),
+        eq(tagRelations.relationType, 'WorldRule'),
+        eq(tagRelations.isDeleted, false)
+      ))
+      .leftJoin(tags, and(
+        eq(tags.id, tagRelations.tagId),
+        eq(tags.isDeleted, false)
+      ))
+      .where(and(...finalConditions))
+      .$dynamic();
+
+      let resultQuery = query;
 
       if (sortBy) {
         const orderBy = sortDirection === 'desc' ? desc : asc;
         switch (sortBy) {
           case 'title':
-            query = query.orderBy(orderBy(worldRules.title));
+            resultQuery = resultQuery.orderBy(orderBy(worldRules.title));
             break;
           case 'createdAt':
-            query = query.orderBy(orderBy(worldRules.createdAt));
+            resultQuery = resultQuery.orderBy(orderBy(worldRules.createdAt));
             break;
           case 'updatedAt':
-            query = query.orderBy(orderBy(worldRules.updatedAt));
+            resultQuery = resultQuery.orderBy(orderBy(worldRules.updatedAt));
             break;
           default:
             console.warn(`Unknown sortBy field: ${sortBy}`);
             break;
         }
       } else {
-        query = query.orderBy(asc(worldRules.title));
+        resultQuery = resultQuery.orderBy(asc(worldRules.title));
       }
 
-      const result = await query.all();
-      return result;
+      const rawResults = await resultQuery.all();
+
+      const worldRulesMap = new Map<string, WorldRuleWithTags>();
+
+      for (const row of rawResults) {
+        if (!row.worldRule) continue;
+
+        let worldRule = worldRulesMap.get(row.worldRule.id);
+        if (!worldRule) {
+          worldRule = { ...row.worldRule, tags: [] };
+          worldRulesMap.set(row.worldRule.id, worldRule);
+        }
+
+        if (row.tag && row.tag.id) {
+          worldRule.tags.push(row.tag);
+        }
+      }
+
+      return Array.from(worldRulesMap.values());
     },
 
-    async getById(worldRuleId: string): Promise<WorldRuleSelect | undefined> {
-      return db.query.worldRules.findFirst({
-        where: and(eq(worldRules.id, worldRuleId), eq(worldRules.isDeleted, false)),
-      });
+    async getById(worldRuleId: string): Promise<WorldRuleWithTags | undefined> {
+      const rawResults = await db.select({
+        worldRule: worldRules,
+        tag: tags,
+      })
+      .from(worldRules)
+      .leftJoin(tagRelations, and(
+        eq(tagRelations.relationId, worldRules.id),
+        eq(tagRelations.relationType, 'WorldRule'),
+        eq(tagRelations.isDeleted, false)
+      ))
+      .leftJoin(tags, and(
+        eq(tags.id, tagRelations.tagId),
+        eq(tags.isDeleted, false)
+      ))
+      .where(and(eq(worldRules.id, worldRuleId), eq(worldRules.isDeleted, false)))
+      .all();
+
+      if (rawResults.length === 0) {
+        return undefined;
+      }
+
+      const worldRuleMap = new Map<string, WorldRuleWithTags>();
+
+      for (const row of rawResults) {
+        if (!row.worldRule) continue;
+
+        let worldRule = worldRuleMap.get(row.worldRule.id);
+        if (!worldRule) {
+          worldRule = { ...row.worldRule, tags: [] };
+          worldRuleMap.set(row.worldRule.id, worldRule);
+        }
+
+        if (row.tag && row.tag.id) {
+          worldRule.tags.push(row.tag);
+        }
+      }
+
+      return worldRuleMap.get(worldRuleId);
     },
 
     async createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect> {

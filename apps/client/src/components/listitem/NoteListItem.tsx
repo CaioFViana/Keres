@@ -1,14 +1,15 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { NoteSelect } from '../../db/schemas/notes';
+import { NoteWithTags } from '../../services/NoteService';
 import { useTheme } from '../../theme';
 import { truncate } from '../../utils/stringUtils';
 import { useTranslation } from 'react-i18next';
 
 import GenericExpandedListItemWithActions from '../common/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
+import TagList from '../common/TagList/TagList';
 
 interface NoteListItemProps {
-  note: NoteSelect;
+  note: NoteWithTags;
   onViewDetails: (noteId: string) => void;
   onToggleFavorite?: (noteId: string, isFavorite: boolean) => void;
 }
@@ -38,7 +39,7 @@ const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onTogg
     },
   });
 
-  const renderHeaderContent = (n: NoteSelect) => (
+  const renderHeaderContent = (n: NoteWithTags) => (
     <View style={styles.noteInfo}>
       <Text style={styles.noteTitle} numberOfLines={1} ellipsizeMode="tail">
         {n.title}
@@ -46,9 +47,12 @@ const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onTogg
     </View>
   );
 
-  const renderExpandedContent = (n: NoteSelect) => (
+  const renderExpandedContent = (n: NoteWithTags) => (
     <View>
       {bodySummary && <Text style={styles.bodyText}>{bodySummary}</Text>}
+      {n.tags && n.tags.length > 0 && ( // Conditionally render TagList
+        <TagList tags={n.tags} />
+      )}
     </View>
   );
 

@@ -1,0 +1,232 @@
+import { Ionicons } from '@expo/vector-icons';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Animated, Dimensions, Easing, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../../../theme';
+import { getContrastTextColor } from '../../../utils/colorUtils';
+
+interface MultiSelectPillProps {
+  options: { label: string; value: string; color?: string }[];
+  selectedValues: string[];
+  onSelectionChange: (selected: string[]) => void;
+  placeholder?: string;
+  label?: string;
+  noOptionsText?: string;
+}
+
+const { height: screenHeight } = Dimensions.get('window');
+
+const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
+  options,
+  selectedValues,
+  onSelectionChange,
+  placeholder,
+  label,
+  noOptionsText,
+}) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [dropdownHeight, setDropdownHeight] = useState(0);
+  const dropdownAnim = useRef(new Animated.Value(0)).current;
+
+  const getOptionByValue = useCallback((value: string) => {
+    return options.find(opt => opt.value === value);
+  }, [options]);
+
+  const selectedOptionDetails = useMemo(() => {
+    return selectedValues
+      .map(value => getOptionByValue(value))
+      .filter(Boolean) as { label: string; value: string; color?: string }[]; // Explicit cast
+  }, [selectedValues, getOptionByValue]);
+
+  const toggleOption = useCallback((value: string) => {
+    const newSelection = selectedValues.includes(value)
+      ? selectedValues.filter(v => v !== value)
+      : [...selectedValues, value];
+    onSelectionChange(newSelection);
+  }, [selectedValues, onSelectionChange]);
+
+  const openModal = useCallback(() => {
+    setModalVisible(true);
+    Animated.timing(dropdownAnim, {
+      toValue: 1,
+      duration: 200,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }).start();
+  }, [dropdownAnim]);
+
+  const closeModal = useCallback(() => {
+    Animated.timing(dropdownAnim, {
+      toValue: 0,
+      duration: 200,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }).start(() => setModalVisible(false));
+  }, [dropdownAnim]);
+
+  const styles = StyleSheet.create({
+    container: {
+      marginBottom: 10,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 5,
+    },
+    pillContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: 10,
+      minHeight: 50,
+      alignItems: 'center',
+      borderColor: colors.border,
+      borderWidth: 1,
+    },
+    pill: {
+      flexDirection: 'row',
+      borderRadius: 15,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+      marginRight: 8,
+      marginBottom: 8,
+      alignItems: 'center',
+    },
+    pillText: {
+      fontSize: 14,
+    },
+    placeholderText: {
+      color: colors.textSecondary,
+    },
+    addButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 15,
+      padding: 5,
+      marginLeft: 'auto',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContent: {
+      backgroundColor: colors.background,
+      borderRadius: 10,
+      width: '90%',
+      maxHeight: screenHeight * 0.7,
+      overflow: 'hidden',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    closeButton: {
+      padding: 5,
+    },
+    optionContainer: {
+      padding: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    optionText: {
+      fontSize: 16,
+      color: colors.text,
+    },
+    noOptionsText: {
+      padding: 15,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+  });
+
+  return (
+    <View style={styles.container}>
+      {label && <Text style={styles.label}>{label}</Text>}
+      <TouchableOpacity onPress={openModal} style={styles.pillContainer}>
+        {selectedOptionDetails.length > 0 ? (
+          selectedOptionDetails.map((option, index) => {
+            const pillBackgroundColor = option.color || colors.primaryContainer;
+            const pillTextColor = getContrastTextColor(pillBackgroundColor);
+            return (
+              <View key={option.value} style={[styles.pill, { backgroundColor: pillBackgroundColor }]}>
+                <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
+              </View>
+            );
+          })
+        ) : (
+          <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
+        )}
+        <Ionicons name="add-circle" size={24} color={colors.primary} style={{ marginLeft: 'auto' }} />
+      </TouchableOpacity>
+
+      <Modal
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+        animationType="fade"
+      >
+        <TouchableOpacity style={styles.modalOverlay} onPress={closeModal} activeOpacity={1}>
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [
+                  {
+                    translateY: dropdownAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [screenHeight, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{label || t('select_tags')}</Text>
+              <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {options.length > 0 ? (
+                options.map(option => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={styles.optionContainer}
+                    onPress={() => toggleOption(option.value)}
+                  >
+                    <Text style={styles.optionText}>{option.label}</Text>
+                    {selectedValues.includes(option.value) && (
+                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
+              )}
+            </ScrollView>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
+
+export default MultiSelectPill;

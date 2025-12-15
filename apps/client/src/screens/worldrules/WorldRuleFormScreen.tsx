@@ -1,14 +1,18 @@
+import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
 import { WorldRule } from '@keres/shared/entities/WorldRule';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
+import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack';
+import { createTagRelationService } from '../../services/TagRelationService';
+import { createTagService } from '../../services/TagService';
 import { createWorldRuleService } from '../../services/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -32,11 +36,27 @@ const WorldRuleFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const worldRuleService = useCallback(() => createWorldRuleService(drizzleDb), [drizzleDb]);
+  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
+  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
+
+  useEffect(() => {
+    if (drizzleDb) {
+      if (!tagServiceRef.current) {
+        tagServiceRef.current = createTagService(drizzleDb);
+      }
+      if (!tagRelationServiceRef.current) {
+        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+      }
+    }
+  }, [drizzleDb]);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
+
+  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,10 +72,37 @@ const WorldRuleFormScreen = () => {
     }, [navigation, isEditing, t])
   );
 
+  const fetchAvailableTags = useCallback(async () => {
+    if (!tagServiceRef.current || !selectedStory?.id) {
+      setAvailableTags([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagServiceRef.current.getTagsByStoryId(selectedStory.id);
+      setAvailableTags(fetchedTags);
+    } catch (err) {
+      console.error('Failed to fetch available tags:', err);
+    }
+  }, [selectedStory?.id, tagServiceRef.current]);
+
+  const fetchWorldRuleTags = useCallback(async () => {
+    if (!tagRelationServiceRef.current || !selectedStory?.id || !worldRuleId) {
+      setSelectedTagIds([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, worldRuleId, 'WorldRule');
+      setSelectedTagIds(fetchedTags.map(tag => tag.id));
+    } catch (err) {
+      console.error('Failed to fetch world rule tags:', err);
+    }
+  }, [selectedStory?.id, worldRuleId, tagRelationServiceRef.current]);
+
   useEffect(() => {
     const loadWorldRule = async () => {
       if (!isEditing) {
         setLoading(false);
+        fetchAvailableTags();
         return;
       }
       try {
@@ -74,10 +121,12 @@ const WorldRuleFormScreen = () => {
         setError(t('failed_to_load_world_rule'));
       } finally {
         setLoading(false);
+        fetchAvailableTags();
+        fetchWorldRuleTags();
       }
     };
     loadWorldRule();
-  }, [worldRuleId, isEditing, worldRuleService, t]);
+  }, [worldRuleId, isEditing, worldRuleService, t, fetchAvailableTags, fetchWorldRuleTags]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -103,14 +152,21 @@ const WorldRuleFormScreen = () => {
         isFavorite: isFavorite,
         extraNotes: extraNotes,
       };
-
+      let currentWorldRuleId
       if (isEditing) {
         await worldRuleService().updateWorldRule(userId, worldRuleId!, worldRuleData);
         Alert.alert(t('success'), t('world_rule_updated_successfully'));
       } else {
-        await worldRuleService().createWorldRule(userId, { ...worldRuleData, storyId: selectedStory.id });
+        const newWorldRule = await worldRuleService().createWorldRule(userId, { ...worldRuleData, storyId: selectedStory.id });
         Alert.alert(t('success'), t('world_rule_created_successfully'));
+        currentWorldRuleId = newWorldRule.id;
       }
+
+      // Update tag relations
+      if (currentWorldRuleId && tagRelationServiceRef.current && selectedStory?.id) {
+        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, currentWorldRuleId, 'WorldRule', selectedTagIds);
+      }
+
       navigation.goBack();
     } catch (err) {
       console.error('Failed to save world rule:', err);
@@ -160,6 +216,10 @@ const WorldRuleFormScreen = () => {
     );
   };
 
+  const handleTagSelectionChange = useCallback((newSelection: string[]) => {
+    setSelectedTagIds(newSelection);
+  }, []);
+
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
@@ -197,6 +257,16 @@ const WorldRuleFormScreen = () => {
       justifyContent: 'center',
       alignItems: 'center',
     },
+    tagSection: {
+      marginTop: 20,
+      marginBottom: 10,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 10,
+    },
   });
 
   if (loading) {
@@ -222,7 +292,7 @@ const WorldRuleFormScreen = () => {
 
           <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
           <TextInput
-            placeholder={t('title_placeholder')}
+            placeholder={t('world_rule_title_placeholder')}
             value={title}
             onChangeText={setTitle}
             style={commonInputStyles.input}
@@ -241,19 +311,30 @@ const WorldRuleFormScreen = () => {
 
           <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
           <TextInput
-            placeholder={t('description_placeholder')}
+            placeholder={t('world_rule_description_placeholder')}
             value={description || ""}
             onChangeText={setDescription}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}            multiline
+            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
           />
           
           <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
           <TextInput
-            placeholder={t('extra_notes_placeholder')}
+            placeholder={t('world_rule_extra_notes_placeholder')}
             value={extraNotes || ""}
             onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}            multiline
+            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
           />
+
+          <View style={styles.tagSection}>
+            <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+            <MultiSelectPill
+              options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
+              selectedValues={selectedTagIds}
+              onSelectionChange={handleTagSelectionChange}
+              placeholder={t('select_tags_for_world_rule')}
+              label={t('world_rule_tags')}
+            />
+          </View>
 
           <Button onPress={handleSave} style={styles.saveButton}>
             {isEditing ? t('save_changes') : t('create_world_rule')}

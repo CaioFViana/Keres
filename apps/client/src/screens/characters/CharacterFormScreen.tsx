@@ -1,16 +1,20 @@
+import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Character } from '@keres/shared/entities/Character';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '../../components/common/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
+import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createCharacterService } from '../../services/CharacterService';
+import { createTagRelationService } from '../../services/TagRelationService';
+import { createTagService } from '../../services/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -33,9 +37,22 @@ const CharacterFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const characterService = useCallback(() => createCharacterService(drizzleDb), [drizzleDb]);
+  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
+  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
+
+  useEffect(() => {
+    if (drizzleDb) {
+      if (!tagServiceRef.current) {
+        tagServiceRef.current = createTagService(drizzleDb);
+      }
+      if (!tagRelationServiceRef.current) {
+        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+      }
+    }
+  }, [drizzleDb]);
 
   const [name, setName] = useState('');
-  const [title, setTitle] = useState<string | null>(null); // Added title state
+  const [title, setTitle] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
   const [gender, setGender] = useState<string | null>(null);
   const [race, setRace] = useState<string | null>(null);
@@ -48,6 +65,9 @@ const CharacterFormScreen = () => {
   const [plannedTimeline, setPlannedTimeline] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
+
+  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,10 +83,37 @@ const CharacterFormScreen = () => {
     }, [navigation, isEditing, t])
   );
 
+  const fetchAvailableTags = useCallback(async () => {
+    if (!tagServiceRef.current || !selectedStory?.id) {
+      setAvailableTags([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagServiceRef.current.getTagsByStoryId(selectedStory.id);
+      setAvailableTags(fetchedTags);
+    } catch (err) {
+      console.error('Failed to fetch available tags:', err);
+    }
+  }, [selectedStory?.id, tagServiceRef.current]);
+
+  const fetchCharacterTags = useCallback(async () => {
+    if (!tagRelationServiceRef.current || !selectedStory?.id || !characterId) {
+      setSelectedTagIds([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, characterId, 'Character');
+      setSelectedTagIds(fetchedTags.map(tag => tag.id));
+    } catch (err) {
+      console.error('Failed to fetch character tags:', err);
+    }
+  }, [selectedStory?.id, characterId, tagRelationServiceRef.current]);
+
   useEffect(() => {
-    const loadCharacter = async () => {
+    const loadCharacterAndTags = async () => {
       if (!isEditing) {
         setLoading(false);
+        fetchAvailableTags();
         return;
       }
       try {
@@ -95,10 +142,12 @@ const CharacterFormScreen = () => {
         setError(t('failed_to_load_character'));
       } finally {
         setLoading(false);
+        fetchAvailableTags();
+        fetchCharacterTags();
       }
     };
-    loadCharacter();
-  }, [characterId, isEditing, characterService, t]);
+    loadCharacterAndTags();
+  }, [characterId, isEditing, characterService, t, fetchAvailableTags, fetchCharacterTags]);
 
 
   const handleSave = async () => {
@@ -136,13 +185,22 @@ const CharacterFormScreen = () => {
         extraNotes,
       };
 
+      let currentCharacterId = characterId;
+
       if (isEditing) {
         await characterService().updateCharacter(userId, characterId!, characterData);
         Alert.alert(t('success'), t('character_updated_successfully'));
       } else {
-        await characterService().createCharacter(userId, { ...characterData, storyId: selectedStory.id });
+        const newCharacter = await characterService().createCharacter(userId, { ...characterData, storyId: selectedStory.id });
         Alert.alert(t('success'), t('character_created_successfully'));
+        currentCharacterId = newCharacter.id; // Get the ID of the newly created character
       }
+
+      // Update tag relations
+      if (currentCharacterId && tagRelationServiceRef.current && selectedStory?.id) {
+        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, currentCharacterId, 'Character', selectedTagIds);
+      }
+
       navigation.goBack();
     } catch (err) {
       console.error('Failed to save character:', err);
@@ -192,6 +250,10 @@ const CharacterFormScreen = () => {
     );
   };
 
+  const handleTagSelectionChange = useCallback((newSelection: string[]) => {
+    setSelectedTagIds(newSelection);
+  }, []);
+
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
@@ -227,6 +289,16 @@ const CharacterFormScreen = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    tagSection: {
+      marginTop: 20,
+      marginBottom: 10,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 10,
     },
   });
 
@@ -363,6 +435,17 @@ const CharacterFormScreen = () => {
             style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
             multiline
           />
+
+          <View style={styles.tagSection}>
+            <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+            <MultiSelectPill
+              options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
+              selectedValues={selectedTagIds}
+              onSelectionChange={handleTagSelectionChange}
+              placeholder={t('select_tags_for_character')}
+              label={t('character_tags')}
+            />
+          </View>
 
           <Button onPress={handleSave} style={styles.saveButton}>
             {t('save_character')}

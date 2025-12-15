@@ -1,15 +1,19 @@
 import { Note } from '@keres/shared/entities/Note';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
+import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, NotesStackParamList } from '../../navigation/MainSystemStack';
 import { createNoteService } from '../../services/NoteService';
+import { createTagRelationService } from '../../services/TagRelationService';
+import { createTagService } from '../../services/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -32,11 +36,27 @@ const NoteFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const noteService = useCallback(() => createNoteService(drizzleDb), [drizzleDb]);
+  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
+  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
+
+  useEffect(() => {
+    if (drizzleDb) {
+      if (!tagServiceRef.current) {
+        tagServiceRef.current = createTagService(drizzleDb);
+      }
+      if (!tagRelationServiceRef.current) {
+        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+      }
+    }
+  }, [drizzleDb]);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
+
+  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,10 +72,37 @@ const NoteFormScreen = () => {
     }, [navigation, isEditing, t])
   );
 
+  const fetchAvailableTags = useCallback(async () => {
+    if (!tagServiceRef.current || !selectedStory?.id) {
+      setAvailableTags([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagServiceRef.current.getTagsByStoryId(selectedStory.id);
+      setAvailableTags(fetchedTags);
+    } catch (err) {
+      console.error('Failed to fetch available tags:', err);
+    }
+  }, [selectedStory?.id, tagServiceRef.current]);
+
+  const fetchNoteTags = useCallback(async () => {
+    if (!tagRelationServiceRef.current || !selectedStory?.id || !noteId) {
+      setSelectedTagIds([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, noteId, 'Note');
+      setSelectedTagIds(fetchedTags.map(tag => tag.id));
+    } catch (err) {
+      console.error('Failed to fetch note tags:', err);
+    }
+  }, [selectedStory?.id, noteId, tagRelationServiceRef.current]);
+
   useEffect(() => {
-    const loadNote = async () => {
+    const loadNoteAndTags = async () => {
       if (!isEditing) {
         setLoading(false);
+        fetchAvailableTags();
         return;
       }
       try {
@@ -74,10 +121,12 @@ const NoteFormScreen = () => {
         setError(t('failed_to_load_note'));
       } finally {
         setLoading(false);
+        fetchAvailableTags();
+        fetchNoteTags();
       }
     };
-    loadNote();
-  }, [noteId, isEditing, noteService, t]);
+    loadNoteAndTags();
+  }, [noteId, isEditing, noteService, t, fetchAvailableTags, fetchNoteTags]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -104,13 +153,22 @@ const NoteFormScreen = () => {
         extraNotes: extraNotes,
       };
 
+      let currentNoteId = noteId;
+
       if (isEditing) {
         await noteService().updateNote(userId, noteId!, noteData);
         Alert.alert(t('success'), t('note_updated_successfully'));
       } else {
-        await noteService().createNote(userId, { ...noteData, storyId: selectedStory.id });
+        const newNote = await noteService().createNote(userId, { ...noteData, storyId: selectedStory.id });
         Alert.alert(t('success'), t('note_created_successfully'));
+        currentNoteId = newNote.id; // Get the ID of the newly created note
       }
+
+      // Update tag relations
+      if (currentNoteId && tagRelationServiceRef.current && selectedStory?.id) {
+        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, currentNoteId, 'Note', selectedTagIds);
+      }
+
       navigation.goBack();
     } catch (err) {
       console.error('Failed to save note:', err);
@@ -160,6 +218,10 @@ const NoteFormScreen = () => {
     );
   };
 
+  const handleTagSelectionChange = useCallback((newSelection: string[]) => {
+    setSelectedTagIds(newSelection);
+  }, []);
+
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
@@ -196,6 +258,16 @@ const NoteFormScreen = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    tagSection: {
+      marginTop: 20,
+      marginBottom: 10,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 10,
     },
   });
 
@@ -244,7 +316,7 @@ const NoteFormScreen = () => {
             placeholder={t('body_placeholder')}
             value={body || ""}
             onChangeText={setBody}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}            multiline
+            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
           />
           
           <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
@@ -252,8 +324,19 @@ const NoteFormScreen = () => {
             placeholder={t('extra_notes_placeholder')}
             value={extraNotes || ""}
             onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}            multiline
+            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
           />
+
+          <View style={styles.tagSection}>
+            <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+            <MultiSelectPill
+              options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
+              selectedValues={selectedTagIds}
+              onSelectionChange={handleTagSelectionChange}
+              placeholder={t('select_tags_for_note')}
+              label={t('note_tags')}
+            />
+          </View>
 
           <Button onPress={handleSave} style={styles.saveButton}>
             {isEditing ? t('save_changes') : t('create_note')}

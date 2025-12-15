@@ -3,10 +3,15 @@ import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { NoteInsert, notes, NoteSelect } from '../db/schemas/notes';
 import { tagRelations } from '../db/schemas/tagRelations';
+import { TagSelect, tags } from '../db/schemas/tags'; // Import tags schema
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
 import { createServerService } from './ServerService';
+
+export type NoteWithTags = NoteSelect & {
+  tags: TagSelect[];
+};
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
@@ -19,8 +24,8 @@ export interface NoteService {
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
-  ): Promise<NoteSelect[]>;
-  getById(noteId: string): Promise<NoteSelect | undefined>;
+  ): Promise<NoteWithTags[]>;
+  getById(noteId: string): Promise<NoteWithTags | undefined>;
   createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect>;
   updateNote(currentUserId: string, noteId: string, noteData: Partial<Omit<NoteInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
   deleteNote(currentUserId: string, noteId: string): Promise<void>;
@@ -29,7 +34,7 @@ export interface NoteService {
 export const createNoteService = (db: AppDrizzleClient): NoteService => {
   const serverService = createServerService(db);
   return {
-    async getNotesByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<NoteSelect[]> {
+    async getNotesByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<NoteWithTags[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(notes.storyId, storyId) as SQL<boolean>,
         eq(notes.isDeleted, false) as SQL<boolean>,
@@ -40,12 +45,12 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       }
 
       if (activeFilterTags && activeFilterTags.length > 0) {
-        // Join with tagRelations to filter by tags
-        const noteIdsWithActiveTags = await db.select({ noteId: tagRelations.entityId })
+        // Filter notes by tags
+        const noteIdsWithActiveTags = await db.select({ noteId: tagRelations.relationId })
           .from(tagRelations)
           .where(and(
             eq(tagRelations.storyId, storyId),
-            eq(tagRelations.entityType, 'Note'), // Assuming 'Note' as the relationType
+            eq(tagRelations.relationType, 'Note'),
             inArray(tagRelations.tagId, activeFilterTags)
           ))
           .execute();
@@ -55,7 +60,6 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         if (filteredNoteIds.length > 0) {
           conditions.push(inArray(notes.id, filteredNoteIds) as SQL<boolean>);
         } else {
-          // If no notes match the selected tags, return an empty array early
           return [];
         }
       }
@@ -68,7 +72,6 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
 
       // Apply advanced search criteria
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        // Assuming entityFieldMetadata for 'Note' exists
         const noteMetadata = entityFieldMetadata['Note'];
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
@@ -81,7 +84,6 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(notes[key as keyof NoteSelect], value) as SQL<boolean>);
               }
-              // Add other types (number, date, etc.) as needed
             }
           }
         }
@@ -89,36 +91,105 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
 
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
-      let query = db.select().from(notes).where(and(...finalConditions)).$dynamic();
+      const query = db.select({
+        note: notes,
+        tag: tags,
+      })
+      .from(notes)
+      .leftJoin(tagRelations, and(
+        eq(tagRelations.relationId, notes.id),
+        eq(tagRelations.relationType, 'Note'),
+        eq(tagRelations.isDeleted, false)
+      ))
+      .leftJoin(tags, and(
+        eq(tags.id, tagRelations.tagId),
+        eq(tags.isDeleted, false)
+      ))
+      .where(and(...finalConditions))
+      .$dynamic();
+
+      let resultQuery = query;
 
       if (sortBy) {
         const orderBy = sortDirection === 'desc' ? desc : asc;
         switch (sortBy) {
           case 'title':
-            query = query.orderBy(orderBy(notes.title));
+            resultQuery = resultQuery.orderBy(orderBy(notes.title));
             break;
           case 'createdAt':
-            query = query.orderBy(orderBy(notes.createdAt));
+            resultQuery = resultQuery.orderBy(orderBy(notes.createdAt));
             break;
           case 'updatedAt':
-            query = query.orderBy(orderBy(notes.updatedAt));
+            resultQuery = resultQuery.orderBy(orderBy(notes.updatedAt));
             break;
           default:
             console.warn(`Unknown sortBy field: ${sortBy}`);
             break;
         }
       } else {
-        query = query.orderBy(asc(notes.title));
+        resultQuery = resultQuery.orderBy(asc(notes.title));
       }
 
-      const result = await query.all();
-      return result;
+      const rawResults = await resultQuery.all();
+
+      const notesMap = new Map<string, NoteWithTags>();
+
+      for (const row of rawResults) {
+        if (!row.note) continue;
+
+        let note = notesMap.get(row.note.id);
+        if (!note) {
+          note = { ...row.note, tags: [] };
+          notesMap.set(row.note.id, note);
+        }
+
+        if (row.tag && row.tag.id) {
+          note.tags.push(row.tag);
+        }
+      }
+
+      return Array.from(notesMap.values());
     },
 
-    async getById(noteId: string): Promise<NoteSelect | undefined> {
-      return db.query.notes.findFirst({
-        where: and(eq(notes.id, noteId), eq(notes.isDeleted, false)),
-      });
+    async getById(noteId: string): Promise<NoteWithTags | undefined> {
+      const rawResults = await db.select({
+        note: notes,
+        tag: tags,
+      })
+      .from(notes)
+      .leftJoin(tagRelations, and(
+        eq(tagRelations.relationId, notes.id),
+        eq(tagRelations.relationType, 'Note'),
+        eq(tagRelations.isDeleted, false)
+      ))
+      .leftJoin(tags, and(
+        eq(tags.id, tagRelations.tagId),
+        eq(tags.isDeleted, false)
+      ))
+      .where(and(eq(notes.id, noteId), eq(notes.isDeleted, false)))
+      .all();
+
+      if (rawResults.length === 0) {
+        return undefined;
+      }
+
+      const noteMap = new Map<string, NoteWithTags>();
+
+      for (const row of rawResults) {
+        if (!row.note) continue;
+
+        let note = noteMap.get(row.note.id);
+        if (!note) {
+          note = { ...row.note, tags: [] };
+          noteMap.set(row.note.id, note);
+        }
+
+        if (row.tag && row.tag.id) {
+          note.tags.push(row.tag);
+        }
+      }
+
+      return noteMap.get(noteId);
     },
 
     async createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect> {

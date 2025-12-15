@@ -13,7 +13,7 @@ import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack'; // Will create/update this later
 import { createTagService } from '../../services/TagService'; // Import createTagService
-import { FavoriteFilterState } from '../../services/WorldRuleService';
+import { FavoriteFilterState, WorldRuleWithTags } from '../../services/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { debounce } from '../../utils/debounce';
@@ -144,7 +144,7 @@ const WorldRulesScreen = () => {
     navigation.navigate('WorldRuleDetail', { worldRuleId });
   }, [navigation]);
 
-  const memoizedWorldRuleListItem = useCallback(({ item }: { item: WorldRuleSelect }) => (
+  const memoizedWorldRuleListItem = useCallback(({ item }: { item: WorldRuleWithTags }) => (
     <WorldRuleListItem worldRule={item} onViewDetails={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
   ), [handleViewDetails, handleToggleFavorite]);
 

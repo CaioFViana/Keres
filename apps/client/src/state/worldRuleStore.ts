@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppDrizzleClient, WorldRuleSelect } from '../db';
-import { createWorldRuleService, WorldRuleService } from '../services/WorldRuleService';
+import { createWorldRuleService, WorldRuleService, WorldRuleWithTags } from '../services/WorldRuleService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { debounce } from '../utils/debounce';
 import { useUserSettingsStore } from './userSettingsStore';
@@ -8,7 +8,7 @@ import { useUserSettingsStore } from './userSettingsStore';
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
 interface WorldRuleStore {
-  worldRules: WorldRuleSelect[];
+  worldRules: WorldRuleWithTags[];
   searchTerm: string;
   activeFilterTags: string[];
   favoriteFilterState: FavoriteFilterState;
@@ -34,7 +34,7 @@ interface WorldRuleStore {
 }
 
 const defaultState = {
-  worldRules: [],
+  worldRules: [] as WorldRuleWithTags[],
   searchTerm: '',
   activeFilterTags: [],
   favoriteFilterState: 'all' as FavoriteFilterState,

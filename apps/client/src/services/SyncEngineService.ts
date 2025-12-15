@@ -10,8 +10,10 @@ import { createStoryService } from './StoryService';
 import { createKeresAxiosInstance } from './apiClient';
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
+import { NoteClientSyncHandler } from './entity-sync-handlers/NoteClientSyncHandler'; // Added
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
+import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler'; // Added
 
 interface SyncPreview {
   storyId: string;
@@ -41,6 +43,8 @@ export class SyncEngineService { // Added export
     this.registerEntityHandler(new StoryClientSyncHandler());
     this.registerEntityHandler(new CharacterClientSyncHandler());
     this.registerEntityHandler(new TagClientSyncHandler());
+    this.registerEntityHandler(new NoteClientSyncHandler()); // Added
+    this.registerEntityHandler(new WorldRuleClientSyncHandler()); // Added
     // TODO: Register other entity handlers here
   }
 

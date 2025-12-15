@@ -3,6 +3,8 @@ import { ThemeColors } from '../ThemeColors';
 const lightColors: ThemeColors = {
   primary: '#6B8E23', // OliveDrab
   primaryVariant: '#8FBC8F', // DarkSeaGreen
+  primaryContainer: '#C8E6C9', // Added light green
+  onPrimaryContainer: '#2E7D32', // Added dark green
   secondary: '#556B2F', // DarkOliveGreen
   secondaryVariant: '#6B8E23', // OliveDrab
   background: '#E6F2E6', // Pastel green
@@ -25,6 +27,8 @@ const lightColors: ThemeColors = {
 const darkColors: ThemeColors = {
   primary: '#8FBC8F', // DarkSeaGreen
   primaryVariant: '#6B8E23', // OliveDrab
+  primaryContainer: '#388E3C', // Added darker green
+  onPrimaryContainer: '#C8E6C9', // Added light green
   secondary: '#556B2F', // DarkOliveGreen
   secondaryVariant: '#6B8E23', // OliveDrab
   background: '#2F3E2F', // Dark green with subtle tint

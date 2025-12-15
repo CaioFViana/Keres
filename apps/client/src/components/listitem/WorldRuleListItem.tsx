@@ -1,14 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { WorldRuleSelect } from '../../db';
+import { WorldRuleWithTags } from '../../services/WorldRuleService';
 import { useTheme } from '../../theme';
 import { truncate } from '../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '../common/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
+import TagList from '../common/TagList/TagList';
 
 interface WorldRuleListItemProps {
-  worldRule: WorldRuleSelect;
+  worldRule: WorldRuleWithTags;
   onViewDetails: (worldRuleId: string) => void;
   onToggleFavorite?: (worldRuleId: string, isFavorite: boolean) => void;
 }
@@ -43,7 +44,7 @@ const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({ worldRule, onView
     },
   });
 
-  const renderHeaderContent = (wr: WorldRuleSelect) => (
+  const renderHeaderContent = (wr: WorldRuleWithTags) => (
     <View style={styles.worldRuleInfo}>
       <Text style={styles.worldRuleTitle} numberOfLines={1} ellipsizeMode="tail">
         {wr.title}
@@ -51,9 +52,12 @@ const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({ worldRule, onView
     </View>
   );
 
-  const renderExpandedContent = (wr: WorldRuleSelect) => (
+  const renderExpandedContent = (wr: WorldRuleWithTags) => (
     <View>
       {descriptionSummary && <Text style={styles.descriptionText}>{descriptionSummary}</Text>}
+      {wr.tags && wr.tags.length > 0 && (
+        <TagList tags={wr.tags} />
+      )}
     </View>
   );
 

@@ -1,6 +1,8 @@
 export interface ThemeColors {
   primary: string;
   primaryVariant: string;
+  primaryContainer: string; // Added
+  onPrimaryContainer: string; // Added
   secondary: string;
   secondaryVariant: string;
   background: string;

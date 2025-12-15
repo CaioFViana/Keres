@@ -3,10 +3,14 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
+import { TagSelect } from '../../db/schema';
 import { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createNoteService } from '../../services/NoteService';
+import { createTagService } from '../../services/TagService';
+import { createTagRelationService } from '../../services/TagRelationService';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { NotesScreenNavigationProp } from './NoteListScreen';
@@ -27,16 +31,27 @@ const NoteDetailScreen = () => {
 
   const drizzleDb = useDrizzle();
   const noteServiceRef = useRef<ReturnType<typeof createNoteService> | null>(null);
+  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
+  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const { t } = useTranslation();
 
-  // Initialize noteService only once when drizzleDb is available
+  // Initialize services only once when drizzleDb is available
   useEffect(() => {
-    if (drizzleDb && !noteServiceRef.current) {
-      noteServiceRef.current = createNoteService(drizzleDb);
+    if (drizzleDb) {
+      if (!noteServiceRef.current) {
+        noteServiceRef.current = createNoteService(drizzleDb);
+      }
+      if (!tagServiceRef.current) {
+        tagServiceRef.current = createTagService(drizzleDb);
+      }
+      if (!tagRelationServiceRef.current) {
+        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
   const [note, setNote] = useState<NoteSelect | null>(null);
+  const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -73,7 +88,14 @@ const NoteDetailScreen = () => {
     },
     buttonContainer: {
       marginTop: 20,
-    }
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 15,
+      marginBottom: 5,
+    },
   });
 
   const fetchNote = useCallback(async () => {
@@ -103,6 +125,19 @@ const NoteDetailScreen = () => {
     }
   }, [noteId, setNote, setLoading, setError, setHeaderTitle, navigation, noteServiceRef.current, t]);
 
+  const fetchTagsForNote = useCallback(async () => {
+    if (!tagRelationServiceRef.current || !note?.storyId || !noteId) {
+      setNoteTags([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(note.storyId, noteId, 'Note');
+      setNoteTags(fetchedTags);
+    } catch (err) {
+      console.error('Failed to fetch tags for note:', err);
+    }
+  }, [note?.storyId, noteId, tagRelationServiceRef.current]);
+
   const handleNoteChange = useCallback(async (changedStoryId: string, changedNoteId: string) => {
     if (changedNoteId === noteId) {
       if (noteServiceRef.current) {
@@ -117,17 +152,31 @@ const NoteDetailScreen = () => {
     }
   }, [noteId, navigation, setNote, setHeaderTitle, noteServiceRef.current, t]);
 
+  const handleTagRelationChange = useCallback((changedStoryId: string, changedEntityId: string) => {
+    if (changedEntityId === noteId) {
+      fetchTagsForNote();
+    }
+  }, [noteId, fetchTagsForNote]);
+
   useEffect(() => {
     if (noteServiceRef.current) {
       fetchNote();
-
       entityEventEmitter.on('note_changed', handleNoteChange);
+      entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
 
       return () => {
         entityEventEmitter.off('note_changed', handleNoteChange);
+        entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [noteId, fetchNote, handleNoteChange, noteServiceRef.current]);
+  }, [noteId, fetchNote, handleNoteChange, handleTagRelationChange, noteServiceRef.current]);
+
+  useEffect(() => {
+    if (note) {
+      fetchTagsForNote();
+    }
+  }, [note, fetchTagsForNote]);
+
 
   const renderHeaderRight = useCallback(() => (
     <TouchableOpacity
@@ -189,6 +238,9 @@ const NoteDetailScreen = () => {
       {note.extraNotes && (
         <Text style={styles.detailText}>{t('extra_notes')}: {note.extraNotes}</Text>
       )}
+
+      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+      <TagChipList tags={noteTags} />
       
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

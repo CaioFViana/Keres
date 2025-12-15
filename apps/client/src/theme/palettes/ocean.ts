@@ -3,6 +3,8 @@ import { ThemeColors } from '../ThemeColors';
 const lightColors: ThemeColors = {
   primary: '#4682B4', // SteelBlue
   primaryVariant: '#5F9EA0', // CadetBlue
+  primaryContainer: '#BBDEFB', // Added light blue
+  onPrimaryContainer: '#1976D2', // Added dark blue
   secondary: '#6A5ACD', // SlateBlue
   secondaryVariant: '#7B68EE', // MediumSlateBlue
   background: '#E0F2F7', // Light Cyan - Pastel blue
@@ -25,6 +27,8 @@ const lightColors: ThemeColors = {
 const darkColors: ThemeColors = {
   primary: '#6A5ACD', // SlateBlue
   primaryVariant: '#7B68EE', // MediumSlateBlue
+  primaryContainer: '#3F51B5', // Added darker blue
+  onPrimaryContainer: '#BBDEFB', // Added light blue
   secondary: '#4682B4', // SteelBlue
   secondaryVariant: '#5F9EA0', // CadetBlue
   background: '#1A2B3C', // Dark blue with subtle tint

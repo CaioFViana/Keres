@@ -45,10 +45,10 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
       if (tagFilterIds && tagFilterIds.length > 0) {
         const taggedCharacters = db
-          .select({ entityId: tagRelations.entityId })
+          .select({ entityId: tagRelations.relationId })
           .from(tagRelations)
           .where(and(
-            eq(tagRelations.entityType, 'Character'),
+            eq(tagRelations.relationType, 'Character'),
             inArray(tagRelations.tagId, tagFilterIds)
           ));
         whereConditions.push(inArray(characters.id, taggedCharacters));
@@ -108,8 +108,8 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       })
         .from(characters)
         .leftJoin(tagRelations, and(
-          eq(characters.id, tagRelations.entityId),
-          eq(tagRelations.entityType, 'Character')
+          eq(characters.id, tagRelations.relationId),
+          eq(tagRelations.relationType, 'Character')
         ))
         .leftJoin(tags, eq(tagRelations.tagId, tags.id))
         .where(finalWhereConditions) // Apply all conditions here

@@ -3,6 +3,8 @@ import { ThemeColors } from '../ThemeColors';
 const lightColors: ThemeColors = {
   primary: '#6200EE',
   primaryVariant: '#3700B3',
+  primaryContainer: '#EADDFF', // Added
+  onPrimaryContainer: '#21005D', // Added
   secondary: '#03DAC6',
   secondaryVariant: '#018786',
   background: '#FFFFFF',
@@ -25,6 +27,8 @@ const lightColors: ThemeColors = {
 const darkColors: ThemeColors = {
   primary: '#BB86FC',
   primaryVariant: '#3700B3',
+  primaryContainer: '#4F378B', // Added
+  onPrimaryContainer: '#EADDFF', // Added
   secondary: '#03DAC6',
   secondaryVariant: '#03DAC6',
   background: '#121212',

@@ -8,14 +8,13 @@ import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } f
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
 import NoteListItem from '../../components/listitem/NoteListItem';
 import { useDrizzle } from '../../db';
-import { NoteSelect } from '../../db/schemas/notes';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, NotesStackParamList } from '../../navigation/MainSystemStack';
-import { FavoriteFilterState } from '../../services/NoteService';
+import { FavoriteFilterState, NoteWithTags } from '../../services/NoteService';
 import { createTagService } from '../../services/TagService';
-import { useStoryStore } from '../../state/storyStore';
 import { useNoteStore } from '../../state/noteStore';
+import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { debounce } from '../../utils/debounce';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -145,7 +144,7 @@ const NotesScreen = () => {
     navigation.navigate('NoteDetail', { noteId });
   }, [navigation]);
 
-  const memoizedNoteListItem = useCallback(({ item }: { item: NoteSelect }) => (
+  const memoizedNoteListItem = useCallback(({ item }: { item: NoteWithTags }) => (
     <NoteListItem note={item} onViewDetails={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
   ), [handleViewDetails, handleToggleFavorite]);
 

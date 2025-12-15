@@ -25,3 +25,5 @@ export interface TagRelation {
   isDeleted: boolean // Added for conflict resolution (tombstones)
   deletedAt: Date | null // Added for conflict resolution (tombstones)
 }
+
+export type TagRelationEntities = 'Character' | 'Note' | 'WorldRule';

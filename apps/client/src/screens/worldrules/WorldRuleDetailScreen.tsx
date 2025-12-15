@@ -3,8 +3,12 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle, WorldRuleSelect } from '../../db';
+import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { createTagRelationService } from '../../services/TagRelationService';
+import { createTagService } from '../../services/TagService';
 import { createWorldRuleService } from '../../services/WorldRuleService';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -26,16 +30,27 @@ const WorldRuleDetailScreen = () => {
 
   const drizzleDb = useDrizzle();
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
+  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
+  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const { t } = useTranslation();
 
-  // Initialize worldRuleService only once when drizzleDb is available
+  // Initialize services only once when drizzleDb is available
   useEffect(() => {
-    if (drizzleDb && !worldRuleServiceRef.current) {
-      worldRuleServiceRef.current = createWorldRuleService(drizzleDb);
+    if (drizzleDb) {
+      if (!worldRuleServiceRef.current) {
+        worldRuleServiceRef.current = createWorldRuleService(drizzleDb);
+      }
+      if (!tagServiceRef.current) {
+        tagServiceRef.current = createTagService(drizzleDb);
+      }
+      if (!tagRelationServiceRef.current) {
+        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
   const [worldRule, setWorldRule] = useState<WorldRuleSelect | null>(null);
+  const [worldRuleTags, setWorldRuleTags] = useState<TagSelect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -72,7 +87,14 @@ const WorldRuleDetailScreen = () => {
     },
     buttonContainer: {
       marginTop: 20,
-    }
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 15,
+      marginBottom: 5,
+    },
   });
 
   const fetchWorldRule = useCallback(async () => {
@@ -102,6 +124,19 @@ const WorldRuleDetailScreen = () => {
     }
   }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, worldRuleServiceRef.current, t]);
 
+  const fetchTagsForWorldRule = useCallback(async () => {
+    if (!tagRelationServiceRef.current || !worldRule?.storyId || !worldRuleId) {
+      setWorldRuleTags([]);
+      return;
+    }
+    try {
+      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(worldRule.storyId, worldRuleId, 'WorldRule');
+      setWorldRuleTags(fetchedTags);
+    } catch (err) {
+      console.error('Failed to fetch tags for world rule:', err);
+    }
+  }, [worldRule?.storyId, worldRuleId, tagRelationServiceRef.current]);
+
   const handleWorldRuleChange = useCallback(async (changedStoryId: string, changedWorldRuleId: string) => {
     if (changedWorldRuleId === worldRuleId) {
       if (worldRuleServiceRef.current) {
@@ -116,17 +151,31 @@ const WorldRuleDetailScreen = () => {
     }
   }, [worldRuleId, navigation, setWorldRule, setHeaderTitle, worldRuleServiceRef.current, t]);
 
+  const handleTagRelationChange = useCallback((changedStoryId: string, changedEntityId: string) => {
+    if (changedEntityId === worldRuleId) {
+      fetchTagsForWorldRule();
+    }
+  }, [worldRuleId, fetchTagsForWorldRule]);
+
+
   useEffect(() => {
     if (worldRuleServiceRef.current) {
       fetchWorldRule();
-
       entityEventEmitter.on('worldrule_changed', handleWorldRuleChange);
+      entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
 
       return () => {
         entityEventEmitter.off('worldrule_changed', handleWorldRuleChange);
+        entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [worldRuleId, fetchWorldRule, handleWorldRuleChange, worldRuleServiceRef.current]);
+  }, [worldRuleId, fetchWorldRule, handleWorldRuleChange, handleTagRelationChange, worldRuleServiceRef.current]);
+
+  useEffect(() => {
+    if (worldRule) {
+      fetchTagsForWorldRule();
+    }
+  }, [worldRule, fetchTagsForWorldRule]);
 
   const renderHeaderRight = useCallback(() => (
     <TouchableOpacity
@@ -188,6 +237,9 @@ const WorldRuleDetailScreen = () => {
       {worldRule.extraNotes && (
         <Text style={styles.detailText}>{t('extra_notes')}: {worldRule.extraNotes}</Text>
       )}
+
+      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+      <TagChipList tags={worldRuleTags} />
       
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

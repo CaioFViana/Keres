@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { AppDrizzleClient } from '../db';
 import { NoteSelect } from '../db/schemas/notes';
-import { createNoteService, NoteService } from '../services/NoteService';
+import { createNoteService, NoteService, NoteWithTags } from '../services/NoteService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { debounce } from '../utils/debounce';
 import { useUserSettingsStore } from './userSettingsStore';
@@ -9,7 +9,7 @@ import { useUserSettingsStore } from './userSettingsStore';
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
 interface NoteStore {
-  notes: NoteSelect[];
+  notes: NoteWithTags[];
   searchTerm: string;
   activeFilterTags: string[];
   favoriteFilterState: FavoriteFilterState;
@@ -35,7 +35,7 @@ interface NoteStore {
 }
 
 const defaultState = {
-  notes: [],
+  notes: [] as NoteWithTags[],
   searchTerm: '',
   activeFilterTags: [],
   favoriteFilterState: 'all' as FavoriteFilterState,

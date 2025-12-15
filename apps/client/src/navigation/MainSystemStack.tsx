@@ -24,6 +24,9 @@ import NotesScreen from '../screens/notes/NoteListScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
+import WorldRuleDetailScreen, { WorldRuleDetailScreenParamList } from '../screens/worldrules/WorldRuleDetailScreen';
+import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
+import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -35,7 +38,7 @@ export type MainSystemDrawerParamList = {
   Chapters: { entityType: string };
   Scenes: { entityType: string };
   TagsStack: undefined;
-  WorldRules: { entityType: string };
+  WorldRulesStack: undefined;
   NotesStack: undefined;
   Gallery: undefined;
   CharacterRelations: undefined;
@@ -116,6 +119,27 @@ const NoteStackNavigator = () => {
   );
 };
 //#endregion
+//#region WorldRules
+
+const WorldRulesStack = createNativeStackNavigator<WorldRulesStackParamList>();
+
+export type WorldRulesStackParamList = {
+  WorldRules: undefined;
+  WorldRuleDetail: WorldRuleDetailScreenParamList['WorldRuleDetail'];
+  WorldRuleForm: { worldRuleId?: string };
+};
+
+const WorldRuleStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <WorldRulesStack.Navigator screenOptions={{ headerShown: false }}>
+      <WorldRulesStack.Screen name="WorldRules" component={WorldRulesScreen} />
+      <WorldRulesStack.Screen name="WorldRuleDetail" component={WorldRuleDetailScreen} />
+      <WorldRulesStack.Screen name="WorldRuleForm" component={WorldRuleFormScreen} />
+    </WorldRulesStack.Navigator>
+  );
+};
+//#endregion
 
 // A helper component to wrap screens that should be part of the drawer but also have their own stack navigation
 const ListingDetailStack = ({ route }: any) => {
@@ -193,7 +217,19 @@ const MainSystemNavigator = () => {
           },
         })}
       />
-      <Drawer.Screen name="WorldRules" component={ListingDetailStack} initialParams={{ entityType: 'WorldRules' }} options={{ title: t('world_rules_title') }} />
+      <Drawer.Screen
+        name="WorldRulesStack"
+        component={WorldRuleStackNavigator}
+        options={{
+          title: t('world_rules_title'),
+          drawerLabel: t('world_rules_title'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('worldrule_navigation_reset');
+          },
+        })}
+      />
       <Drawer.Screen
         name="NotesStack"
         component={NoteStackNavigator}

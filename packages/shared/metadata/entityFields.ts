@@ -49,5 +49,11 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
   ],
+  WorldRule: [
+    { name: 'title', label: 'field_title', type: 'string', isSearchable: true },
+    { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
+    { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
+    { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+  ],
   // Add metadata for other entities as needed
 };

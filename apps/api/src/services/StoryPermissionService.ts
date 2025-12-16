@@ -1,9 +1,48 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { stories, storyPermissions, users } from '../db/schema';
+import { Friendship, FriendStatus } from '@keres/shared';
+import { friendships } from '../db/schema/tables/friendships';
 
 export class StoryPermissionService {
+  // Helper to sort user IDs consistently
+  private sortUserIds(id1: string, id2: string): { user1: string; user2: string } {
+    return id1 < id2 ? { user1: id1, user2: id2 } : { user1: id2, user2: id1 };
+  }
+
+  // Helper method to check if two users are friends
+  private async _areFriends(userId1: string, userId2: string): Promise<boolean> {
+    const { user1: sortedUser1Id, user2: sortedUser2Id } = this.sortUserIds(userId1, userId2);
+
+    const friendship = await db.query.friendships.findFirst({
+      where: and(
+        eq(friendships.user1Id, sortedUser1Id),
+        eq(friendships.user2Id, sortedUser2Id),
+        eq(friendships.status, FriendStatus.FRIEND)
+      ),
+    });
+    return !!friendship;
+  }
+
+  async deletePermissionsBetweenUsers(userA: string, userB: string): Promise<void> {
+    // Delete permissions where userA is owner and userB is target
+    await db.delete(storyPermissions).where(
+      and(
+        eq(storyPermissions.userId, userB), // targetUser
+        eq(stories.userId, userA) // owner of the story
+      )
+    );
+
+    // Delete permissions where userB is owner and userA is target
+    await db.delete(storyPermissions).where(
+      and(
+        eq(storyPermissions.userId, userA), // targetUser
+        eq(stories.userId, userB) // owner of the story
+      )
+    );
+  }
+
   async upsertStoryPermission(
     ownerUserId: string,
     storyId: string,
@@ -12,6 +51,12 @@ export class StoryPermissionService {
   ) {
     if (ownerUserId === targetUserId) {
       throw new Error('The story owner already has full permissions and cannot be assigned additional permissions.');
+    }
+
+    // New: Check if ownerUserId and targetUserId are friends
+    const areFriends = await this._areFriends(ownerUserId, targetUserId);
+    if (!areFriends) {
+      throw new Error('Permission can only be granted to friends.');
     }
 
     // 1. Verify ownerUserId owns the story
@@ -69,6 +114,12 @@ export class StoryPermissionService {
   }
 
   async deleteStoryPermission(ownerUserId: string, storyId: string, targetUserId: string) {
+    // New: Check if ownerUserId and targetUserId are friends
+    const areFriends = await this._areFriends(ownerUserId, targetUserId);
+    if (!areFriends) {
+      throw new Error('Permission can only be revoked from friends.');
+    }
+
     // 1. Verify ownerUserId owns the story
     const story = await db.query.stories.findFirst({
       where: and(eq(stories.id, storyId), eq(stories.userId, ownerUserId)),

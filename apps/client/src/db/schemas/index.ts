@@ -19,3 +19,4 @@ export * from './operationLogs';
 export * from './tagRelations';
 export * from './items';
 export * from './itemJourneys';
+export * from './friendships';

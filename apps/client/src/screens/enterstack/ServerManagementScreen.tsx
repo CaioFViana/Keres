@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
-import { StorySelectionStackParamList } from '../../navigation/StorySelectionStack';
+import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
 import apiClient from '../../services/apiClient'; // Import axios and AxiosError
 import { createServerService } from '../../services/ServerService';
 import { useTheme } from '../../theme';
@@ -17,7 +17,7 @@ interface ServerWithStatus extends ServerSelect {
   apiVersion: string | null;
 }
 
-type ServerManagementScreenNavigationProp = NativeStackNavigationProp<StorySelectionStackParamList, 'ServerManagement'>;
+type ServerManagementScreenNavigationProp = NativeStackNavigationProp<ServerManagementStackParamList, 'ServerManagement'>;
 
 const ServerManagementScreen = () => {
   const { t } = useTranslation();
@@ -200,7 +200,6 @@ const ServerManagementScreen = () => {
 
   return (
     <View style={commonContainerStyles.container}>
-      <Text style={[styles.title, { color: colors.text }]}>{t('manage_servers')}</Text>
       <FlatList
         data={servers}
         renderItem={renderServerItem}

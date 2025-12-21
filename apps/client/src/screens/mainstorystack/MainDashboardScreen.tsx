@@ -4,7 +4,7 @@ import { CommonActions, useNavigation } from '@react-navigation/native';
 import { eq } from 'drizzle-orm';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 import OperationLogList from '../../components/OperationLogList/OperationLogList'; // Import OperationLogList
 import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
@@ -17,10 +17,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles } from '../../theme/commonStyles';
-
-
-
-
 
 const MainDashboardScreen = () => {
   const { colors } = useTheme();
@@ -237,18 +233,6 @@ const MainDashboardScreen = () => {
       marginTop: 10,
     },
   });
-
-  const testData = [
-    { id: '1', text: 'Test Item 1' },
-    { id: '2', text: 'Test Item 2' },
-    { id: '3', text: 'Test Item 3' },
-  ];
-
-  const renderTestItem = ({ item }: { item: { id: string; text: string } }) => (
-    <View style={commonCardStyles.cardContainer}>
-      <Text style={commonCardStyles.cardText}>{item.text}</Text>
-    </View>
-  );
 
   return (
     <ScrollView style={styles.container}>

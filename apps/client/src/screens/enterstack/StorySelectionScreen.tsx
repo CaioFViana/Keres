@@ -338,50 +338,10 @@ const StorySelectionScreen = () => {
       shadowOpacity: 0.3,
       shadowRadius: 4,
     },
-    floatingButtonText: {
-      color: colors.primary,
-      fontSize: 30,
-      lineHeight: 30,
-    },
-    headerContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 20,
-    },
-    floatingSettingsButton: {
-      position: 'absolute',
-      bottom: 90,
-      right: 30,
-      backgroundColor: colors.primary,
-      width: 40,
-      height: 40,
-      borderRadius: 30,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 8,
-      shadowColor: "#000000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4,
-      zIndex: 1,
-    },
   });
-
-
-  const handleSettingsPress = () => {
-    navigation.navigate('Settings');
-  };
 
   return (
     <View style={commonContainerStyles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>{t('welcome_to_story_selection')}</Text>
-      </View>
-      <TouchableOpacity onPress={handleSettingsPress} style={styles.floatingSettingsButton}>
-        <Ionicons name="settings-outline" size={24} color={colors.onPrimary} />
-      </TouchableOpacity>
-
       {summary && <SummaryCard {...summary} title={t('global_summary')} />}
 
       <Text style={styles.title}>{t('your_stories')}</Text>

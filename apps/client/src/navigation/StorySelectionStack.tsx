@@ -1,50 +1,137 @@
+import { Ionicons } from '@expo/vector-icons';
+import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
+import { DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
+import { TouchableOpacity } from 'react-native'; // Added View
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
-import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen'; // Import the new screen
+import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
-import { useTheme } from '../theme'; // Import useTheme
+import { useTheme } from '../theme';
 
-export type StorySelectionStackParamList = {
-  StorySelectionScreen: undefined; // Renamed for consistency
-  StoryForm: { storyId?: string }; // Keep as is, already handled
-  Settings: undefined;
-  ServerManagement: undefined;
-  ServerRegistration: { serverId?: string }; // Added for editing
+export type StorySelectionMainStackParamList = {
+  StorySelectionScreen: undefined;
+  StoryForm: { storyId?: string };
 };
 
-const StorySelectionStack = createNativeStackNavigator<StorySelectionStackParamList>();
+export type ServerManagementStackParamList = {
+  ServerManagement: undefined;
+  ServerRegistration: { serverId?: string };
+};
 
-const StorySelectionNavigator = () => {
-  const { t } = useTranslation(); // Use useTranslation
-  const { colors } = useTheme(); // Use useTheme
+export type StorySelectionDrawerParamList = {
+  StorySelectionMain: NavigatorScreenParams<StorySelectionMainStackParamList>;
+  ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
+  Settings: undefined;
+};
+
+const Drawer = createDrawerNavigator<StorySelectionDrawerParamList>();
+const StorySelectionMainStack = createNativeStackNavigator<StorySelectionMainStackParamList>();
+const ServerManagementStack = createNativeStackNavigator<ServerManagementStackParamList>();
+
+type StorySelectionMainDrawerNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList>;
+
+const DrawerToggleButton = ({ navigation }: { navigation: StorySelectionMainDrawerNavigationProp }) => {
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={{ marginLeft: 15 }}>
+      <Ionicons name="menu" size={30} color={colors.text} />
+    </TouchableOpacity>
+  );
+};
+
+const StorySelectionMainStackNavigator = () => {
+  const { t } = useTranslation();
 
   return (
-    <StorySelectionStack.Navigator screenOptions={{ 
-      headerShown: false,
-      headerStyle: { backgroundColor: colors.background }, // Apply theme colors
-      headerTintColor: colors.text, // Apply theme colors
+    <StorySelectionMainStack.Navigator screenOptions={{
+      headerShown: false, // Header is managed by the Drawer Navigator
     }}>
-      <StorySelectionStack.Screen name="StorySelectionScreen" component={StorySelectionScreen} />
-      <StorySelectionStack.Screen name="StoryForm" component={StoryFormScreen} />
-      <StorySelectionStack.Screen name="Settings" component={SettingsScreen} />
-      <StorySelectionStack.Screen 
-        name="ServerManagement" 
-        component={ServerManagementScreen} 
-        options={{ headerShown: false, headerTitle: t('manage_servers') }} // Show header, set title
+      <StorySelectionMainStack.Screen
+        name="StorySelectionScreen"
+        component={StorySelectionScreen}
+        options={{
+          title: t('welcome_to_story_selection'),
+        }}
       />
-      <StorySelectionStack.Screen 
-        name="ServerRegistration" 
-        component={ServerRegistrationScreen} 
-        options={({ route }) => ({ 
-          headerShown: false, 
-          headerTitle: route.params?.serverId ? t('edit_server') : t('register_new_server') 
-        })} 
+      <StorySelectionMainStack.Screen name="StoryForm" component={StoryFormScreen} />
+    </StorySelectionMainStack.Navigator>
+  );
+};
+
+const ServerManagementStackNavigator = () => {
+  const { t } = useTranslation();
+
+  return (
+    <ServerManagementStack.Navigator screenOptions={{
+      headerShown: false, // Header is managed by the Drawer Navigator
+    }}>
+      <ServerManagementStack.Screen
+        name="ServerManagement"
+        component={ServerManagementScreen}
+        options={{ headerTitle: t('manage_servers') }}
       />
-    </StorySelectionStack.Navigator>
+      <ServerManagementStack.Screen
+        name="ServerRegistration"
+        component={ServerRegistrationScreen}
+        options={({ route }) => ({
+          headerTitle: route.params?.serverId ? t('edit_server') : t('register_new_server')
+        })}
+      />
+    </ServerManagementStack.Navigator>
+  );
+};
+
+const StorySelectionNavigator = () => {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+
+  return (
+    <Drawer.Navigator
+      defaultStatus="closed"
+      screenOptions={({ navigation }) => ({
+        headerShown: true,
+        headerStatusBarHeight: 0,
+        headerStyle: {
+          backgroundColor: colors.surface,
+        },
+        headerTintColor: colors.text,
+        headerLeft: () => <DrawerToggleButton navigation={navigation} />,
+        drawerActiveTintColor: colors.primary,
+        drawerInactiveTintColor: colors.text,
+        drawerStyle: {
+          backgroundColor: colors.surface,
+        },
+      })}
+    >
+      <Drawer.Screen
+        name="StorySelectionMain"
+        component={StorySelectionMainStackNavigator}
+        options={{
+          title: t('story_selection_title'),
+          drawerLabel: t('story_selection_title'),
+        }}
+      />
+      <Drawer.Screen
+        name="ServerManagementDrawer"
+        component={ServerManagementStackNavigator}
+        options={{
+          title: t('manage_servers'),
+          drawerLabel: t('manage_servers'),
+        }}
+      />
+      <Drawer.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: t('settings_title'),
+          drawerLabel: t('settings_title'),
+        }}
+      />
+    </Drawer.Navigator>
   );
 };
 

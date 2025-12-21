@@ -1,5 +1,6 @@
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import NativeStackNavigationProp
+import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,7 @@ import Button from '../../components/common/Button/Button';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
-import { StorySelectionStackParamList } from '../../navigation/StorySelectionStack';
+import { StorySelectionDrawerParamList, StorySelectionMainStackParamList } from '../../navigation/StorySelectionStack';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -16,7 +17,7 @@ import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/comm
 import i18n from '../../utils/i18n';
 import { getLanguageOptions } from '../../utils/languageOptions';
 
-type SettingsScreenNavigationProp = NativeStackNavigationProp<StorySelectionStackParamList, 'Settings'>;
+type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
@@ -45,7 +46,8 @@ const SettingsScreen = () => {
   };
 
   const handleManageServers = () => {
-    navigation.navigate('ServerManagement');
+    // Correctly navigate to 'ServerManagement' within the 'StorySelectionMain' stack
+    navigation.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
   };
 
   const handleResetApplication = () => {
@@ -94,8 +96,6 @@ const SettingsScreen = () => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={commonContainerStyles.container}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('settings')}</Text>
-
           <View style={styles.settingItem}>
             <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
             <View style={styles.inputWrapper}>

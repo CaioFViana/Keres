@@ -9,8 +9,9 @@ import { Alert, BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View 
 import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../../db';
 import { createServerService } from '../../services/ServerService';
-import { ServerStoryPreview, SyncEngineService } from '../../services/SyncEngineService'; // CHANGED: Added ServerStoryPreview
+import { ServerStoryPreview, SyncEngineService } from '../../services/SyncEngineService';
 import { useNotificationStore } from '../../state/notificationStore';
+import { useStoryListStore } from '../../state/storyListStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useSummaryStore } from '../../state/summaryStore';
 import { useThemeStore } from '../../state/themeStore';
@@ -22,7 +23,7 @@ type RootStackParamList = {
   ColdInstall: undefined;
   StorySelection: undefined;
   MainSystem: { storyId: string };
-  StoryForm: { storyId?: string }; // Updated to accept optional storyId
+  StoryForm: { storyId?: string };
   Settings: undefined;
 };
 
@@ -98,12 +99,12 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
 
 const StorySelectionScreen = () => {
   useBackButtonHandler()
-  const [stories, setStories] = useState<Story[]>([]);
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors, setTheme } = useTheme();
   const drizzleClient = useDrizzle();
   const storyService = useRef(createStoryService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
+  const { stories, fetchStories, updateStoryFavoriteStatus } = useStoryListStore();
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
 
@@ -119,15 +120,10 @@ const StorySelectionScreen = () => {
   const backPressTimer = useRef<number | null>(null);
   const isFocused = useIsFocused();
 
-  const fetchStories = useCallback(async () => {
-    try {
-      const result = await storyService.getAllStories();
-      setStories(result as Story[]);
-    } catch (error) {
-      console.error(t('error_fetching_stories'), error);
-      Alert.alert(t('error'), t('failed_to_load_stories'));
-    }
-  }, [storyService, t]);
+  const fetchStoriesData = useCallback(async () => {
+    await fetchStories(storyService);
+  }, [fetchStories, storyService]);
+
 
   const syncStoriesWithServers = useCallback(async () => {
     if (!drizzleClient || !userId) {
@@ -142,7 +138,7 @@ const StorySelectionScreen = () => {
     const localStories = await storyService.getAllStories();
     const servers = await serverService.getAllServers();
 
-    for (let server of servers) { // Use 'let' for server to allow re-assignment
+    for (let server of servers) {
       if (!server.url) {
         console.warn(`Server ${server.name} has no URL configured. Skipping.`);
         continue;
@@ -157,7 +153,7 @@ const StorySelectionScreen = () => {
 
         const localStoryIds = new Set(localStories.map(s => s.id));
         const newStoriesOnServer = serverStoryPreviews.filter(
-          (preview: ServerStoryPreview) => !localStoryIds.has(preview.storyId) // CHANGED: Added type
+          (preview: ServerStoryPreview) => !localStoryIds.has(preview.storyId)
         );
 
         if (newStoriesOnServer.length > 0) {
@@ -168,7 +164,7 @@ const StorySelectionScreen = () => {
               await SyncEngineService.getInstance().downloadAndImportStory(server.id, storyPreview.storyId, server.idUser);
               console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
               // After successful import, re-fetch stories to update the list
-              fetchStories();
+              fetchStoriesData();
             } catch (downloadError) {
               console.error(`Failed to download and import story ${storyPreview.storyId}:`, downloadError);
             }
@@ -180,7 +176,7 @@ const StorySelectionScreen = () => {
         console.error(`Error during sync with server ${server.name} at ${server.url}:`, error);
       }
     }
-  }, [drizzleClient, userId, storyService, fetchStories]);
+  }, [drizzleClient, userId, storyService, fetchStoriesData]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -235,7 +231,7 @@ const StorySelectionScreen = () => {
 
   useEffect(() => {
     if (isFocused) {
-      fetchStories();
+      fetchStoriesData();
       fetchSummary();
       setTheme('default');
       
@@ -246,7 +242,7 @@ const StorySelectionScreen = () => {
         clearInterval(syncInterval);
       };
     }
-  }, [isFocused, setTheme, fetchStories, fetchSummary]);
+  }, [isFocused, setTheme, fetchStoriesData, fetchSummary, syncStoriesWithServers]);
 
 
   const handleSelectStory = (story: Story) => {
@@ -270,11 +266,7 @@ const StorySelectionScreen = () => {
     }
     try {
       await storyService.updateStoryFavoriteStatus(userId, storyId, !currentFavoriteStatus);
-      setStories((prevStories) =>
-        prevStories.map((story) =>
-          story.id === storyId ? { ...story, isFavorite: !currentFavoriteStatus } : story
-        )
-      );
+      updateStoryFavoriteStatus(storyId, !currentFavoriteStatus);
     } catch (error) {
       console.error('Error toggling favorite status:', error);
       Alert.alert(t('error'), t('failed_to_update_favorite_status'));

@@ -183,6 +183,11 @@ const MainSystemNavigator = () => {
         },
         headerTintColor: colors.text,
         headerLeft: () => <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />,
+        drawerActiveTintColor: colors.primary,
+        drawerInactiveTintColor: colors.text,
+        drawerStyle: {
+          backgroundColor: colors.surface,
+        },
       })}
     >
       <Drawer.Screen

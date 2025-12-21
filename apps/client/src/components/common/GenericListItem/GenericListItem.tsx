@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedReaction, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useTheme } from '../../../theme';
 
 interface GenericListItemProps {
@@ -24,16 +24,25 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
   const contentHeight = useSharedValue(0); // This should be a shared value
   const opacity = useSharedValue(isOpen ? 1 : 0);
 
-  // This effect will run when isOpen or contentHeight changes
   React.useEffect(() => {
     if (isOpen) {
-      animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
       opacity.value = withTiming(1, { duration: 300 });
     } else {
-      animatedHeight.value = withTiming(0, { duration: 300 });
       opacity.value = withTiming(0, { duration: 300 });
     }
-  }, [isOpen, contentHeight.value]);
+  }, [isOpen]);
+
+  useAnimatedReaction(
+    () => ({ isOpen, contentHeight: contentHeight.value }),
+    (snapshot) => {
+      if (snapshot.isOpen) {
+        animatedHeight.value = withTiming(snapshot.contentHeight, { duration: 300 });
+      } else {
+        animatedHeight.value = withTiming(0, { duration: 300 });
+      }
+    },
+    [isOpen] 
+  );
 
   const animatedContainerStyle = useAnimatedStyle(() => {
     return {

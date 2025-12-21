@@ -1,3 +1,4 @@
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { Story } from '@keres/shared/entities/Story';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -96,6 +97,7 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
 
 
 const StorySelectionScreen = () => {
+  useBackButtonHandler()
   const [stories, setStories] = useState<Story[]>([]);
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors, setTheme } = useTheme();

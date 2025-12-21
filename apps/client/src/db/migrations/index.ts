@@ -13,6 +13,7 @@ import migration_9 from './0008_steep_spencer_smythe';
 import migration_10 from './0009_nappy_nextwave';
 import migration_11 from './0010_daffy_wolverine';
 import migration_12 from './0011_smooth_goliath';
+import migration_13 from './0012_moaning_thunderball';
 
 
 const migrations = [
@@ -28,6 +29,7 @@ const migrations = [
   { id: 10, name: '0009_nappy_nextwave', run: migration_10 },
   { id: 11, name: '0010_daffy_wolverine', run: migration_11 },
   { id: 12, name: '0011_smooth_goliath', run: migration_12 },
+  { id: 13, name: '0012_moaning_thunderball', run: migration_13 },
 ];
 
 export default migrations;

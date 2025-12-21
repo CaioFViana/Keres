@@ -1,3 +1,4 @@
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -23,6 +24,7 @@ type StoryFormScreenRouteProp = NativeStackScreenProps<RootStackParamList, 'Stor
 type StoryFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StoryForm'>;
 
 const StoryFormScreen = () => {
+  useBackButtonHandler()
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StoryFormScreenNavigationProp>();

@@ -1,3 +1,4 @@
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -20,6 +21,7 @@ type RootStackParamList = {
 type ServerRegistrationScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ServerRegistration'>;
 
 const ServerRegistrationScreen = () => {
+    useBackButtonHandler()
     const { t } = useTranslation();
     const { colors } = useTheme();
     const navigation = useNavigation<ServerRegistrationScreenNavigationProp>();
@@ -85,6 +87,16 @@ const ServerRegistrationScreen = () => {
       setLoading(true);
       setError(null);
   
+      let existingServer = null; // Declare existingServer here
+      if (serverId) {
+        existingServer = await serverService.getServerById(serverId);
+        if (!existingServer) {
+          setError(t('server_not_found'));
+          setLoading(false); // Ensure loading is reset if server not found
+          return;
+        }
+      }
+
       try {
         // 1. Server Check (/kerescheck) - always check if server is reachable
         const keresCheckUrl = `${serverAddress}/kerescheck`;
@@ -95,14 +107,27 @@ const ServerRegistrationScreen = () => {
   
         if (checkResponse.status !== 200 || !checkResponse.data || typeof checkResponse.data.version !== 'string') {
           Alert.alert(t('error'), t('invalid_keres_server'));
+          setLoading(false); // Ensure loading is reset on error
           return;
         }
         const serverVersion = checkResponse.data.version;
   
         // 2. Login (/auth/login) - only for new registration or if password is provided for update
-        let accessToken = '';
-        let refreshToken = '';
-        if (!serverId || password.trim()) { // If new server or password provided for update
+        let newAccessToken = existingServer ? existingServer.jwtToken : '';
+        let newRefreshToken = existingServer ? existingServer.refreshToken : '';
+
+        // Determine if re-authentication is needed
+        const isNewServer = !serverId;
+        const isPasswordProvided = password.trim().length > 0;
+        const isUrlChanged = existingServer && existingServer.url !== serverAddress;
+
+        if (isNewServer || isPasswordProvided || isUrlChanged) {
+          if (isUrlChanged && !isPasswordProvided) {
+            Alert.alert(t('error'), t('password_required_for_url_change'));
+            setLoading(false);
+            return;
+          }
+
           const loginUrl = `${serverAddress}/auth/login`;
           const loginResponse = await apiClient.post(loginUrl, { username, password }, {
             timeout: 5000,
@@ -112,17 +137,20 @@ const ServerRegistrationScreen = () => {
           if (loginResponse.status !== 200 || !loginResponse.data || !loginResponse.data.accessToken || !loginResponse.data.refreshToken) {
             if (loginResponse.status === 401) {
               Alert.alert(t('error'), t('invalid_credentials'));
+              setLoading(false); // Make sure loading is set to false here as well
               return;
             } else if (loginResponse.status === 409) {
               Alert.alert(t('error'), t('user_already_exists'));
+              setLoading(false); // Make sure loading is set to false here as well
               return;
             } else {
               Alert.alert(t('error'), `${t('server_error')}: ${loginResponse.status}`);
+              setLoading(false); // Make sure loading is set to false here as well
               return;
             }
           }
-          accessToken = loginResponse.data.accessToken;
-          refreshToken = loginResponse.data.refreshToken;
+          newAccessToken = loginResponse.data.accessToken;
+          newRefreshToken = loginResponse.data.refreshToken;
         }
   
         const serverData = {
@@ -130,8 +158,8 @@ const ServerRegistrationScreen = () => {
           userName: username,
           name: serverName || serverAddress,
           url: serverAddress,
-          jwtToken: accessToken,
-          refreshToken: refreshToken,
+          jwtToken: newAccessToken,
+          refreshToken: newRefreshToken,
         };
   
         let savedServer;

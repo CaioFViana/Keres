@@ -1,6 +1,6 @@
-import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import NativeStackNavigationProp
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import Button from '../../components/common/Button/Button';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
-import { StorySelectionDrawerParamList, StorySelectionMainStackParamList } from '../../navigation/StorySelectionStack';
+import { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -20,6 +20,7 @@ import { getLanguageOptions } from '../../utils/languageOptions';
 type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
 
 const SettingsScreen = () => {
+  useBackButtonHandler()
   const { t } = useTranslation();
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -43,11 +44,6 @@ const SettingsScreen = () => {
 
   const handleDarkModeToggle = (value: boolean) => {
     setDarkMode(drizzleClient, value);
-  };
-
-  const handleManageServers = () => {
-    // Correctly navigate to 'ServerManagement' within the 'StorySelectionMain' stack
-    navigation.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
   };
 
   const handleResetApplication = () => {
@@ -129,10 +125,6 @@ const SettingsScreen = () => {
               thumbColor={darkMode ? colors.onPrimary : colors.textSecondary}
             />
           </View>
-
-          <Button onPress={handleManageServers} style={{ marginTop: 20 }}>
-            {t('manage_servers')}
-          </Button>
 
           <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
             {t('reset_application')}

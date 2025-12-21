@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction } from 'react-native-reanimated';
 import { useTheme } from '../../../theme';
 
 interface CollapsibleCardProps {
@@ -24,13 +24,23 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
 
   React.useEffect(() => {
     if (expanded) {
-      animatedHeight.value = withTiming(contentHeight.value, { duration: 300 }); // ContentHeight already includes padding + buffer
       opacity.value = withTiming(1, { duration: 300 });
     } else {
-      animatedHeight.value = withTiming(0, { duration: 300 });
       opacity.value = withTiming(0, { duration: 300 });
     }
-  }, [expanded, contentHeight.value]);
+  }, [expanded]);
+
+  useAnimatedReaction(
+    () => ({ expanded, contentHeight: contentHeight.value }),
+    (snapshot) => {
+      if (snapshot.expanded) {
+        animatedHeight.value = withTiming(snapshot.contentHeight, { duration: 300 });
+      } else {
+        animatedHeight.value = withTiming(0, { duration: 300 });
+      }
+    },
+    [expanded] // expanded is a state variable, not a shared value
+  );
 
   const animatedContainerStyle = useAnimatedStyle(() => {
     return {

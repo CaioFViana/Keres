@@ -1,3 +1,4 @@
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -20,6 +21,7 @@ interface ServerWithStatus extends ServerSelect {
 type ServerManagementScreenNavigationProp = NativeStackNavigationProp<ServerManagementStackParamList, 'ServerManagement'>;
 
 const ServerManagementScreen = () => {
+  useBackButtonHandler()
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ServerManagementScreenNavigationProp>();

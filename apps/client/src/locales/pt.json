@@ -234,6 +234,7 @@
   "password": "Senha",
   "password_placeholder": "Digite sua senha",
   "password_required_for_registration": "A senha é obrigatória para o registro de um novo servidor.",
+  "password_required_for_url_change": "Uma senha deve ser fornecida ao alterar a URL do servidor.",
   "pending": "Pendente",
   "personality": "Personalidade",
   "personality_placeholder": "Digite os traços de personalidade do personagem",
@@ -312,6 +313,7 @@
   "server_updated_successfully": "Servidor atualizado com sucesso!",
   "set_favorite": "Favoritado",
   "settings": "Configurações",
+  "settings_title": "Configurações do Aplicativo",
   "sort_by": "Ordenar por",
   "sort_by_created_at": "Ordenar por Data de Criação",
   "sort_by_name": "Ordenar por Nome",
@@ -385,6 +387,5 @@
   "world_rule_updated_successfully": "Regra do mundo atualizada com sucesso!",
   "world_rules": "Regras do Mundo",
   "world_rules_title": "Regras do Mundo",
-  "your_stories": "Suas Histórias",
-  "settings_title": "Configurações do Aplicativo"
+  "your_stories": "Suas Histórias"
 }

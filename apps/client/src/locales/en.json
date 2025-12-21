@@ -234,6 +234,7 @@
   "password": "Password",
   "password_placeholder": "Enter your password",
   "password_required_for_registration": "Password is required for new server registration.",
+  "password_required_for_url_change": "A password must be provided when changing the server URL.",
   "pending": "Pending",
   "personality": "Personality",
   "personality_placeholder": "Enter character's personality traits",
@@ -312,6 +313,7 @@
   "server_updated_successfully": "Server updated successfully!",
   "set_favorite": "Is Favorite",
   "settings": "Settings",
+  "settings_title": "App Settings",
   "sort_by": "Sort By",
   "sort_by_created_at": "Sort by Created At",
   "sort_by_name": "Sort by Name",
@@ -385,6 +387,5 @@
   "world_rule_updated_successfully": "World Rule updated successfully!",
   "world_rules": "World Rules",
   "world_rules_title": "World Rules",
-  "your_stories": "Your Stories",
-  "settings_title": "App Settings"
+  "your_stories": "Your Stories"
 }

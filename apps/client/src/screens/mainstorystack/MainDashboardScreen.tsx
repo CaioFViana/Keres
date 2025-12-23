@@ -11,7 +11,6 @@ import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import * as schema from '../../db/schema';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
-import { createServerService } from '../../services/ServerService'; // Import createServerService
 import { SyncEngineService } from '../../services/SyncEngineService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -22,7 +21,6 @@ const MainDashboardScreen = () => {
   const { colors } = useTheme();
   const commonCardStyles = getCommonCardStyles(colors);
   const { selectedStory } = useStoryStore();
-  const [syncedServerUrl, setSyncedServerUrl] = useState<string | null>(null);
   const db = useDrizzle(); // Get the Drizzle client
   const navigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
   const { showNotification } = useNotificationStore();
@@ -78,94 +76,47 @@ const MainDashboardScreen = () => {
     return () => backHandler.remove();
   }, [navigation, showNotification, t]); // Add t to dependencies
 
+  async function fetchCounts() {
+    if (selectedStory?.id && db) {
+      try {
+        const characters = await db.select().from(schema.characters).where(eq(schema.characters.storyId, selectedStory.id)).execute();
+        setCharacterCount(characters.length);
+
+        const locations = await db.select().from(schema.locations).where(eq(schema.locations.storyId, selectedStory.id)).execute();
+        setLocationCount(locations.length);
+
+        const chapters = await db.select().from(schema.chapters).where(eq(schema.chapters.storyId, selectedStory.id)).execute();
+        setChapterCount(chapters.length);
+
+        const scenes = await db.select().from(schema.scenes).where(eq(schema.scenes.storyId, selectedStory.id)).execute();
+        setSceneCount(scenes.length);
+
+        const choices = await db.select().from(schema.choices).where(eq(schema.choices.storyId, selectedStory.id)).execute();
+        setChoiceCount(choices.length);
+
+        const notes = await db.select().from(schema.notes).where(eq(schema.notes.storyId, selectedStory.id)).execute();
+        setNoteCount(notes.length);
+
+        const worldRules = await db.select().from(schema.worldRules).where(eq(schema.worldRules.storyId, selectedStory.id)).execute();
+        setWorldRuleCount(worldRules.length);
+
+      } catch (error) {
+        console.error('Error fetching entity counts:', error);
+      }
+    } else {
+      setCharacterCount(undefined);
+      setLocationCount(undefined);
+      setChapterCount(undefined);
+      setSceneCount(undefined);
+      setChoiceCount(undefined);
+      setNoteCount(undefined);
+      setWorldRuleCount(undefined);
+    }
+  }
 
   useEffect(() => {
-    // Inject the db instance into the syncEngineService
-    SyncEngineService.getInstance().setDbInstance(db); // CHANGED
-
-    async function configureAndStartSync() {
-      if (selectedStory?.id) {
-        console.log(`MainDashboard: Selected story changed to ${selectedStory.id}.`);
-        let serverUrl: string | null = null;
-
-        if (selectedStory.serverId) {
-          try {
-            const serverService = createServerService(db);
-            const server = await serverService.getServerById(selectedStory.serverId);
-            if (server?.url) {
-              serverUrl = server.url;
-              setSyncedServerUrl(server.url);
-            } else {
-              console.warn(`Server with ID ${selectedStory.serverId} not found or no URL configured.`);
-              setSyncedServerUrl(null);
-            }
-          } catch (error) {
-            console.error('Error fetching server details:', error);
-            setSyncedServerUrl(null);
-          }
-        } else {
-          setSyncedServerUrl(null);
-        }
-
-        SyncEngineService.getInstance().configure(selectedStory.id, serverUrl); // CHANGED
-        if (serverUrl) {
-          SyncEngineService.getInstance().startSync(); // CHANGED
-        } else {
-          SyncEngineService.getInstance().stopSync(); // CHANGED
-        }
-      } else {
-        console.log('MainDashboard: No story selected or story deselected. Stopping sync engine.');
-        SyncEngineService.getInstance().stopSync(); // CHANGED
-        setSyncedServerUrl(null);
-      }
-    }
-
-    async function fetchCounts() {
-      if (selectedStory?.id && db) {
-        try {
-          const characters = await db.select().from(schema.characters).where(eq(schema.characters.storyId, selectedStory.id)).execute();
-          setCharacterCount(characters.length);
-
-          const locations = await db.select().from(schema.locations).where(eq(schema.locations.storyId, selectedStory.id)).execute();
-          setLocationCount(locations.length);
-
-          const chapters = await db.select().from(schema.chapters).where(eq(schema.chapters.storyId, selectedStory.id)).execute();
-          setChapterCount(chapters.length);
-
-          const scenes = await db.select().from(schema.scenes).where(eq(schema.scenes.storyId, selectedStory.id)).execute();
-          setSceneCount(scenes.length);
-
-          const choices = await db.select().from(schema.choices).where(eq(schema.choices.storyId, selectedStory.id)).execute();
-          setChoiceCount(choices.length);
-
-          const notes = await db.select().from(schema.notes).where(eq(schema.notes.storyId, selectedStory.id)).execute();
-          setNoteCount(notes.length);
-
-          const worldRules = await db.select().from(schema.worldRules).where(eq(schema.worldRules.storyId, selectedStory.id)).execute();
-          setWorldRuleCount(worldRules.length);
-
-        } catch (error) {
-          console.error('Error fetching entity counts:', error);
-        }
-      } else {
-        setCharacterCount(undefined);
-        setLocationCount(undefined);
-        setChapterCount(undefined);
-        setSceneCount(undefined);
-        setChoiceCount(undefined);
-        setNoteCount(undefined);
-        setWorldRuleCount(undefined);
-      }
-    }
-
-    configureAndStartSync();
     fetchCounts();
-
-    return () => {
-      console.log('MainDashboard: Unmounting or story changed. Stopping sync engine.');
-      SyncEngineService.getInstance().stopSync(); // CHANGED
-    };
-  }, [selectedStory, db]); // Re-run effect if selectedStory or db changes
+  }, [selectedStory, db]); // Re-run fetchCounts if selectedStory or db changes
 
   useEffect(() => {
     navigation.setOptions({
@@ -238,7 +189,7 @@ const MainDashboardScreen = () => {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>{selectedStory?.title || 'No Story Selected'}</Text>
       <Text style={styles.text}>
-        Synchronized with: {syncedServerUrl || 'Not configured'} (Last server synced log: {selectedStory?.lastServerSyncedLog || 0})
+        (Last server synced log: {selectedStory?.lastServerSyncedLog || 0})
       </Text>
 
       <SummaryCard

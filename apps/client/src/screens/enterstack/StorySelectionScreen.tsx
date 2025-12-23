@@ -126,58 +126,7 @@ const StorySelectionScreen = () => {
   }, [fetchStories, storyService]);
 
 
-  const syncStoriesWithServers = useCallback(async () => {
-    if (!drizzleClient || !userId) {
-      console.warn('Drizzle client or userId not available for sync. Skipping.');
-      return;
-    }
 
-    // Set DB instance for sync engine
-    SyncEngineService.getInstance().setDbInstance(drizzleClient);
-
-    const serverService = createServerService(drizzleClient);
-    const localStories = await storyService.getAllStories();
-    const servers = await serverService.getAllServers();
-
-    for (let server of servers) {
-      if (!server.url) {
-        console.warn(`Server ${server.name} has no URL configured. Skipping.`);
-        continue;
-      }
-
-      console.log(`Checking server ${server.name} at ${server.url} for new stories...`);
-      try {
-        // Attempt to refresh JWT token if expired
-        server = await serverService.refreshServerToken(server);
-
-        const serverStoryPreviews = await SyncEngineService.getInstance().fetchServerStoryPreviews(server.url);
-
-        const localStoryIds = new Set(localStories.map(s => s.id));
-        const newStoriesOnServer = serverStoryPreviews.filter(
-          (preview: ServerStoryPreview) => !localStoryIds.has(preview.storyId)
-        );
-
-        if (newStoriesOnServer.length > 0) {
-          console.log(`Found ${newStoriesOnServer.length} new stories on server ${server.name}:`);
-          for (const storyPreview of newStoriesOnServer) {
-            console.log(`  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`);
-            try {
-              await SyncEngineService.getInstance().downloadAndImportStory(server.id, storyPreview.storyId, server.idUser);
-              console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
-              // After successful import, re-fetch stories to update the list
-              fetchStoriesData();
-            } catch (downloadError) {
-              console.error(`Failed to download and import story ${storyPreview.storyId}:`, downloadError);
-            }
-          }
-        } else {
-          console.log(`No new stories found on server ${server.name}.`);
-        }
-      } catch (error) {
-        console.error(`Error during sync with server ${server.name} at ${server.url}:`, error);
-      }
-    }
-  }, [drizzleClient, userId, storyService, fetchStoriesData]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -248,15 +197,8 @@ const StorySelectionScreen = () => {
       fetchStoriesData();
       fetchSummary();
       setTheme('default');
-      
-      syncStoriesWithServers();
-      const syncInterval = setInterval(syncStoriesWithServers, 1800000);
-
-      return () => {
-        clearInterval(syncInterval);
-      };
     }
-  }, [isFocused, setTheme, fetchStoriesData, fetchSummary, syncStoriesWithServers]);
+  }, [isFocused, setTheme, fetchStoriesData, fetchSummary]);
 
   const handleSelectStory = (story: Story) => {
     setSelectedStory(story);

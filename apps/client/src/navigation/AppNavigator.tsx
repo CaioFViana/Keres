@@ -9,6 +9,7 @@ import { getClientSettings } from '../services/ClientSettingsService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useThemeStore } from '../state/themeStore';
 import { useDrizzle } from '../db';
+import SyncInitializer from '../components/SyncInitializer'; // Import SyncInitializer
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -68,11 +69,13 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const initialRouteName: keyof RootStackParamList = isColdInstallNeeded ? 'ColdInstall' : 'StorySelection';
 
   return (
-    <RootStack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRouteName}>
-      <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
-      <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
-      <RootStack.Screen name="MainSystem" component={MainSystemStack} />
-    </RootStack.Navigator>
+    <SyncInitializer>
+      <RootStack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRouteName}>
+        <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
+        <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
+        <RootStack.Screen name="MainSystem" component={MainSystemStack} />
+      </RootStack.Navigator>
+    </SyncInitializer>
   );
 };
 

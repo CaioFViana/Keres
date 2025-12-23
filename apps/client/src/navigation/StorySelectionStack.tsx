@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
+import { DrawerActions, NavigatorScreenParams, StackActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, TouchableOpacity } from 'react-native';
 import { createStoryService, useDrizzle } from '../db';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
+import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
+import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
@@ -17,6 +19,7 @@ import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
+import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -28,15 +31,22 @@ export type ServerManagementStackParamList = {
   ServerRegistration: { serverId?: string };
 };
 
+export type FriendshipStackParamList = {
+  FriendshipList: undefined;
+  FriendshipForm: { friendshipId?: string };
+};
+
 export type StorySelectionDrawerParamList = {
   StorySelectionMain: NavigatorScreenParams<StorySelectionMainStackParamList>;
   ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
+  FriendshipDrawer: NavigatorScreenParams<FriendshipStackParamList>;
   Settings: undefined;
 };
 
 const Drawer = createDrawerNavigator<StorySelectionDrawerParamList>();
 const StorySelectionMainStack = createNativeStackNavigator<StorySelectionMainStackParamList>();
 const ServerManagementStack = createNativeStackNavigator<ServerManagementStackParamList>();
+const FriendshipStack = createNativeStackNavigator<FriendshipStackParamList>();
 
 type StorySelectionMainDrawerNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList>;
 
@@ -88,6 +98,29 @@ const ServerManagementStackNavigator = () => {
         })}
       />
     </ServerManagementStack.Navigator>
+  );
+};
+
+const FriendshipStackNavigator = () => {
+  const { t } = useTranslation();
+
+  return (
+    <FriendshipStack.Navigator screenOptions={{
+      headerShown: false, // Header is managed by the Drawer Navigator
+    }}>
+      <FriendshipStack.Screen
+        name="FriendshipList"
+        component={FriendshipListScreen}
+        options={{ headerTitle: t('manage_friendships') }}
+      />
+      <FriendshipStack.Screen
+        name="FriendshipForm"
+        component={FriendshipFormScreen}
+        options={({ route }) => ({
+          headerTitle: route.params?.friendshipId ? t('edit_friendship') : t('add_new_friendship')
+        })}
+      />
+    </FriendshipStack.Navigator>
   );
 };
 
@@ -186,6 +219,11 @@ const StorySelectionNavigator = () => {
           title: t('story_selection_title'),
           drawerLabel: t('story_selection_title'),
         }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('story_selection_main_navigation_reset');
+          },
+        })}
       />
       <Drawer.Screen
         name="ServerManagementDrawer"
@@ -194,6 +232,24 @@ const StorySelectionNavigator = () => {
           title: t('manage_servers'),
           drawerLabel: t('manage_servers'),
         }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('server_management_navigation_reset');
+          },
+        })}
+      />
+      <Drawer.Screen
+        name="FriendshipDrawer"
+        component={FriendshipStackNavigator}
+        options={{
+          title: t('manage_friendships'),
+          drawerLabel: t('manage_friendships'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('friendship_navigation_reset');
+          },
+        })}
       />
       <Drawer.Screen
         name="Settings"

@@ -1,9 +1,9 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { Story } from '@keres/shared/entities/Story';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { StackActions, useIsFocused, useNavigation } from '@react-navigation/native'; // Add StackActions
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
@@ -18,6 +18,7 @@ import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles, getThemeColors } from '../../theme/commonStyles';
+import { entityEventEmitter } from '../../utils/EventEmitter'; // Add entityEventEmitter
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -199,6 +200,19 @@ const StorySelectionScreen = () => {
     return () => backHandler.remove();
   }, [isFocused, t]);
 
+  // Add this useEffect block
+  useEffect(() => {
+    const handleReset = () => {
+      if (navigation.getState().routes.length > 1) {
+        navigation.dispatch(StackActions.popToTop());
+      }
+    };
+    entityEventEmitter.on('story_selection_main_navigation_reset', handleReset);
+    return () => {
+      entityEventEmitter.off('story_selection_main_navigation_reset', handleReset);
+    };
+  }, [navigation]);
+
   const fetchSummary = useCallback(async () => {
     try {
       const storyCounts = await storyService.getStoryCounts();
@@ -243,7 +257,6 @@ const StorySelectionScreen = () => {
       };
     }
   }, [isFocused, setTheme, fetchStoriesData, fetchSummary, syncStoriesWithServers]);
-
 
   const handleSelectStory = (story: Story) => {
     setSelectedStory(story);

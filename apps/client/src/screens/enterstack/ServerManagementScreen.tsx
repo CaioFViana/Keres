@@ -1,6 +1,6 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation, StackActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import apiClient from '../../services/apiClient'; // Import axios and AxiosError
 import { createServerService } from '../../services/ServerService';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
+import { entityEventEmitter } from '../../utils/EventEmitter'; // Add entityEventEmitter
 
 interface ServerWithStatus extends ServerSelect {
   pingStatus: 'idle' | 'pending' | 'online' | 'offline';
@@ -104,6 +105,19 @@ const ServerManagementScreen = () => {
     }
   }, [isFocused, loadServers, pingAllServers]);
 
+  // Add this useEffect block for navigation reset
+  useEffect(() => {
+    const handleReset = () => {
+      if (navigation.getState().routes.length > 1) {
+        navigation.dispatch(StackActions.popToTop());
+      }
+    };
+    entityEventEmitter.on('server_management_navigation_reset', handleReset);
+    return () => {
+      entityEventEmitter.off('server_management_navigation_reset', handleReset);
+    };
+  }, [navigation]);
+
   const handleDeleteServer = (serverId: string) => {
     Alert.alert(
       t('delete_server_title'),
@@ -158,13 +172,8 @@ const ServerManagementScreen = () => {
           </Text>
         )}
         <Text style={[styles.serverDetail, { color: colors.textSecondary }]}>
-          {t('created_at')}: {new Date(item.createdAt).toLocaleString()}
-        </Text>
-        {item.version && (
-          <Text style={[styles.serverDetail, { color: colors.textSecondary }]}>
             Version: {item.version}
-          </Text>
-        )}
+        </Text>
       </View>
       <View style={styles.serverActions}>
         <Ionicons

@@ -162,4 +162,9 @@ export function createKeresAxiosInstance(config?: AxiosRequestConfig): AxiosInst
   return instance;
 }
 
+// Function to create a new Axios instance WITHOUT interceptors
+export function createPlainAxiosInstance(config?: AxiosRequestConfig): AxiosInstance {
+  return axios.create(config);
+}
+
 export default apiClient;

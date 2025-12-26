@@ -71,6 +71,13 @@
       "when": 1765892806403,
       "tag": "0009_black_black_bird",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1766711412595,
+      "tag": "0010_kind_tombstone",
+      "breakpoints": true
     }
   ]
 }

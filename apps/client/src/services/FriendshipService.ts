@@ -1,8 +1,10 @@
 import { FriendshipInsert, friendships, FriendshipSelect } from '@/src/db/schemas/friendships';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import { eq, or } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { createULID } from '../utils/ulid';
-import { eq, or } from 'drizzle-orm';
+import { friendshipApiService } from './FriendshipApiService'; // Import the API service
+
 
 export const createFriendshipService = (db: AppDrizzleClient) => {
   return new FriendshipService(db);
@@ -36,6 +38,12 @@ export class FriendshipService {
     return newFriendship as FriendshipSelect;
   }
 
+  async bulkAddFriendships(friendshipData: FriendshipInsert[]): Promise<void> {
+    if (friendshipData.length > 0) {
+      await this.db.insert(friendships).values(friendshipData).run();
+    }
+  }
+
   async updateFriendship(id: string, data: Partial<FriendshipInsert>): Promise<void> {
     await this.db.update(friendships).set({ ...data, updatedAt: new Date() }).where(eq(friendships.id, id)).run();
   }
@@ -44,10 +52,38 @@ export class FriendshipService {
     await this.db.delete(friendships).where(eq(friendships.id, id)).run();
   }
 
-  // Placeholder for future friendship synchronization logic
-  async syncFriendshipsWithServer(serverId: string, serverUrl: string): Promise<void> {
-    console.log(`FriendshipService: Simulating friendship verification for server ${serverId} at ${serverUrl}`);
-    // In a real scenario, this would involve API calls to fetch remote friendships
-    // and compare them with local ones, applying updates as necessary.
+  async clearAllFriendshipsForUser(currentUserId: string): Promise<void> {
+    await this.db.delete(friendships)
+      .where(or(
+        eq(friendships.user1Id, currentUserId),
+        eq(friendships.user2Id, currentUserId)
+      ))
+      .run();
+  }
+
+  async syncFriendshipsWithServer(currentUserId: string, serverId: string): Promise<void> {
+    try {
+      console.log(`FriendshipService: Syncing friendships with server ${serverId} for user ${currentUserId}`);
+      const serverFriendships = await friendshipApiService.getFriendships();
+
+      // Prepare friendships for bulk insertion
+      const friendshipsToInsert: FriendshipInsert[] = serverFriendships.map(sf => ({
+        id: sf.id,
+        user1Id: sf.user1Id,
+        user2Id: sf.user2Id,
+        status: sf.status,
+        createdAt: sf.createdAt,
+        updatedAt: sf.updatedAt,
+        serverId: serverId,
+      }));
+
+      // Insert fetched friendships into the local database
+      await this.bulkAddFriendships(friendshipsToInsert);
+
+      console.log(`FriendshipService: Successfully synced ${friendshipsToInsert.length} friendships.`);
+    } catch (error) {
+      console.error('FriendshipService: Error syncing friendships with server:', error);
+      throw error;
+    }
   }
 }

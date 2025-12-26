@@ -1,9 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { servers, ServerSelect } from '../db/schema'; // Import ServerSelect
+import { servers, ServerSelect } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
-import { createKeresAxiosInstance, TokenProvider } from './apiClient';
-// import { createServerService } from './ServerService'; // Removed import
+import apiClient, { createKeresAxiosInstance, TokenProvider } from './apiClient';
 
 let drizzleDb: AppDrizzleClient | null = null;
 
@@ -19,6 +18,9 @@ class AuthTokenManager implements TokenProvider {
         this._getServerById = func;
     }
 
+    // These methods are no longer directly used by apiClient as it now manages its own active server context.
+    // They are kept for TokenProvider interface compatibility, but will return values from useUserSettingsStore
+    // which might not always reflect the apiClient's *current* internal server context during complex operations.
     public getAccessToken(): string | null {
         const activeServer = useUserSettingsStore.getState().activeServer;
         return activeServer?.jwtToken || null;
@@ -51,12 +53,18 @@ class AuthTokenManager implements TokenProvider {
                 })
                 .where(eq(servers.id, activeServer.id));
 
-            // Update in Zustand store
-            useUserSettingsStore.getState().setActiveServer({
+            const updatedActiveServer = {
                 ...activeServer,
                 jwtToken: accessToken,
                 refreshToken: refreshToken,
-            });
+            };
+
+            // Update in Zustand store
+            useUserSettingsStore.getState().setActiveServer(updatedActiveServer);
+
+            // Also update the apiClient's internal active server
+            apiClient.setActiveServer(updatedActiveServer);
+
             // console.log(`Tokens updated for server: ${activeServer.name}`);
         } catch (error) {
             console.log('Failed to update tokens in DB/store:', error);
@@ -97,6 +105,10 @@ class AuthTokenManager implements TokenProvider {
                 baseURL: server.url,
             });
 
+            // Set the active server for the refresh instance to ensure its interceptor uses the correct token
+            refreshInstance.setActiveServer(server);
+
+
             const refreshEndpoint = '/auth/refresh';
 
             const response = await refreshInstance.post<{ accessToken: string; refreshToken: string }>(
@@ -106,7 +118,7 @@ class AuthTokenManager implements TokenProvider {
 
             const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
 
-            await this.updateTokens(newAccessToken, newRefreshToken);
+            await this.updateTokens(newAccessToken, newRefreshToken); // This will update useUserSettingsStore and apiClient.activeServer
             console.log('AuthTokenManager: Tokens refreshed successfully for server:', server.name);
 
             return { accessToken: newAccessToken, refreshToken: newRefreshToken };
@@ -125,6 +137,8 @@ class AuthTokenManager implements TokenProvider {
             if (activeServer) {
                 useUserSettingsStore.getState().clearActiveServer();
             }
+            // Also clear apiClient's active server context
+            apiClient.setActiveServer(null);
             return;
         }
 
@@ -134,6 +148,7 @@ class AuthTokenManager implements TokenProvider {
             .where(eq(servers.id, activeServer.id))
             .then(() => {
                 useUserSettingsStore.getState().clearActiveServer();
+                apiClient.setActiveServer(null); // Clear apiClient's active server context
                 // console.log(`Auth cleared for server: ${activeServer.name}`);
             })
             .catch(error => console.log('Failed to clear auth in DB:', error));
@@ -141,3 +156,4 @@ class AuthTokenManager implements TokenProvider {
 }
 
 export const authTokenManager = new AuthTokenManager();
+

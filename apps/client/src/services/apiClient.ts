@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
 import { useUserSettingsStore } from '../state/userSettingsStore'; // Import useUserSettingsStore
+import { ServerSelect } from '../db/schema'; // Import ServerSelect
 
 // Flag to prevent multiple refresh token requests at once
 let isRefreshing = false;
@@ -19,9 +20,11 @@ export interface TokenProvider {
 interface KeresAxiosInstance extends AxiosInstance {
   setBaseUrl(url: string): void;
   setTokenProvider(provider: TokenProvider | null): void;
+  setActiveServer(server: ServerSelect | null): void; // New method
 }
 
 let tokenProvider: TokenProvider | null = null;
+let currentActiveServer: ServerSelect | null = null; // New state variable
 
 const processQueue = (error: AxiosError | null, token: string | null = null) => {
   failedQueue.forEach(prom => {
@@ -39,17 +42,12 @@ function applyInterceptors(instance: AxiosInstance): void {
   // Request interceptor to add any necessary headers (e.g., auth tokens)
   instance.interceptors.request.use(
     (config) => {
-      if (tokenProvider) {
-        const accessToken = tokenProvider.getAccessToken();
-        // Only add Authorization header if accessToken exists and it's not a login/refresh request
-        // The check for `config.url?.includes('/auth/login')` etc. is to prevent sending a stale or new token
-        // to endpoints that handle token issuance or refresh, which should typically be unauthenticated or
-        // use a refresh token in the body, not Authorization header.
-        if (accessToken && !config.headers.Authorization && 
-            !config.url?.includes('/auth/login') && 
-            !config.url?.includes('/auth/refresh')) {
-          config.headers.Authorization = `Bearer ${accessToken}`;
-        }
+      // Use currentActiveServer's token if available
+      const accessToken = currentActiveServer?.jwtToken || null;
+      if (accessToken && !config.headers.Authorization &&
+          !config.url?.includes('/auth/login') &&
+          !config.url?.includes('/auth/refresh')) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
       }
       return config;
     },
@@ -80,35 +78,44 @@ function applyInterceptors(instance: AxiosInstance): void {
 
           isRefreshing = true;
 
-          const refreshToken = tokenProvider.getRefreshToken();
-          const activeServer = useUserSettingsStore.getState().activeServer;
+          const refreshToken = currentActiveServer?.refreshToken || null; // Use refreshToken from currentActiveServer
+          const serverId = currentActiveServer?.id || null;
 
-          if (!refreshToken || !activeServer?.id) {
-            console.log('No refresh token or active server ID available for token refresh. Clearing auth.');
-            tokenProvider.clearAuth();
+          if (!refreshToken || !serverId || !tokenProvider) { // Check tokenProvider exists
+            console.log('No refresh token, active server ID, or token provider available for token refresh. Clearing auth.');
+            if (tokenProvider) tokenProvider.clearAuth(); // Clear auth only if provider exists
             processQueue(new AxiosError('Token refresh failed: No refresh token or server ID available.', 'TOKEN_REFRESH_FAILED', originalRequest));
             return Promise.reject(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
           }
 
           try {
-            const refreshResult = await tokenProvider.refreshAccessToken(activeServer.id, refreshToken);
+            const refreshResult = await tokenProvider.refreshAccessToken(serverId, refreshToken);
 
             if (refreshResult) {
                 const newAccessToken = refreshResult.accessToken;
                 // Update the original request with the new access token
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
+                // Update currentActiveServer's token
+                if (currentActiveServer) {
+                    currentActiveServer = {
+                        ...currentActiveServer,
+                        jwtToken: newAccessToken,
+                        refreshToken: refreshResult.refreshToken,
+                    };
+                }
+
                 processQueue(null, newAccessToken); // Resolve all queued requests
                 return instance(originalRequest); // Retry the original request
             } else {
                 console.log('Token refresh failed: refreshAccessToken returned null.');
-                tokenProvider.clearAuth();
+                if (tokenProvider) tokenProvider.clearAuth();
                 processQueue(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
                 return Promise.reject(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
             }
           } catch (refreshError: any) {
             console.log('Error refreshing token:', refreshError);
-            tokenProvider.clearAuth();
+            if (tokenProvider) tokenProvider.clearAuth();
             processQueue(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest, refreshError.response));
             return Promise.reject(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest, refreshError.response));
           } finally {
@@ -155,10 +162,19 @@ apiClient.setTokenProvider = (provider: TokenProvider | null) => {
   tokenProvider = provider;
 };
 
+// New method to set the currently active server context for the API client
+apiClient.setActiveServer = (server: ServerSelect | null) => {
+    currentActiveServer = server;
+};
+
 // Function to create a new Axios instance with interceptors
-export function createKeresAxiosInstance(config?: AxiosRequestConfig): AxiosInstance {
-  const instance = axios.create(config);
+export function createKeresAxiosInstance(config?: AxiosRequestConfig): KeresAxiosInstance {
+  const instance = axios.create(config) as KeresAxiosInstance;
   applyInterceptors(instance);
+  // Also add the custom methods to this new instance
+  instance.setBaseUrl = (url: string) => { instance.defaults.baseURL = url; };
+  instance.setTokenProvider = (provider: TokenProvider | null) => { tokenProvider = provider; };
+  instance.setActiveServer = (server: ServerSelect | null) => { currentActiveServer = server; };
   return instance;
 }
 

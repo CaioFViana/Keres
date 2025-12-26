@@ -9,6 +9,7 @@ export const friendStatusEnum = pgEnum('friend_status', [
   FriendStatus.PENDING,
   FriendStatus.FRIEND,
   FriendStatus.BLACKLISTED,
+  FriendStatus.COMMON_FRIEND,
 ]);
 
 export const friendships = pgTable(
@@ -17,10 +18,11 @@ export const friendships = pgTable(
     id: text('id')
       .primaryKey()
       .$defaultFn(() => ulid()),
-    user1Id: text('user1_id')
+    // New explicit sender and receiver IDs
+    senderId: text('sender_id')
       .notNull()
       .references(() => users.id),
-    user2Id: text('user2_id')
+    receiverId: text('receiver_id')
       .notNull()
       .references(() => users.id),
     status: friendStatusEnum('status').notNull().default(FriendStatus.PENDING),
@@ -30,6 +32,7 @@ export const friendships = pgTable(
       .notNull(),
   },
   (table) => ({
-    unq: unique('user1_user2_unq').on(table.user1Id, table.user2Id),
+    // Unique constraint on senderId and receiverId to ensure only one pending request per direction
+    unq: unique('sender_receiver_unq').on(table.senderId, table.receiverId),
   })
 );

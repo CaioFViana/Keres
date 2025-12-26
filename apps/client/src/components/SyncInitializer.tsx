@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createStoryService, useDrizzle } from '../db';
+import apiClient from '../services/apiClient';
+import { authTokenManager, setAuthDb } from '../services/AuthTokenManager';
 import { createFriendshipService } from '../services/FriendshipService';
 import { createServerService } from '../services/ServerService';
-import { setAuthDb } from '../services/AuthTokenManager';
 import { ServerStoryPreview, SyncEngineService } from '../services/SyncEngineService';
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';
@@ -22,14 +23,22 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const { fetchStories: fetchStoryList } = useStoryListStore();
   const { t } = useTranslation();
 
-  const syncStoriesWithServers = useCallback(async () => {
+  useEffect(() => {
+    // Set token provider for apiClient once on mount
+    apiClient.setTokenProvider(authTokenManager);
+
+    // Cleanup function to unsubscribe when the component unmounts
+    return () => {};
+  }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
+
+  const syncDataWithServers = useCallback(async () => {
     if (!drizzleClient || !userId) {
       console.warn('Drizzle client or userId not available for sync. Skipping.');
       return;
     }
 
     SyncEngineService.getInstance().setDbInstance(drizzleClient);
-    setAuthDb(drizzleClient);
+    setAuthDb(drizzleClient); // Ensure authDb is set, especially if drizzleClient changes
 
     const serverService = createServerService(drizzleClient);
     const localStories = await storyService.getAllStories();
@@ -41,10 +50,14 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         continue;
       }
 
+      // Explicitly set the active server for apiClient for the current server
+      apiClient.setActiveServer(server);
+      apiClient.setBaseUrl(server.url); // Set base URL explicitly
+
       console.log(`Checking server ${server.name} at ${server.url} for new stories...`);
       try {
         server = await serverService.refreshServerToken(server);
-        await friendshipService.syncFriendshipsWithServer(server.id, server.url); // Call friendship sync
+        await friendshipService.syncFriendshipsWithServer(userId, server.id); // Call friendship sync
 
         const serverStoryPreviews = await SyncEngineService.getInstance().fetchServerStoryPreviews(server.url);
 
@@ -78,13 +91,13 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
 
   // Use a separate useEffect with an empty dependency array to call syncStoriesWithServers once and set up the interval
   useEffect(() => {
-    syncStoriesWithServers();
-    const syncInterval = setInterval(syncStoriesWithServers, 1800000); // 30 minutes
+    syncDataWithServers();
+    const syncInterval = setInterval(syncDataWithServers, 30000); // 30 seconds
 
     return () => {
       clearInterval(syncInterval);
     };
-  }, [syncStoriesWithServers]); // Dependency on syncStoriesWithServers ensures the latest version is used
+  }, [syncDataWithServers]); // Dependency on syncStoriesWithServers ensures the latest version is used
 
   return <>{children}</>;
 };

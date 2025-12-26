@@ -11,14 +11,15 @@ export const friendships = sqliteTable(
     serverId: text('server_id')
       .notNull()
       .references(() => servers.id),
-    user1Id: text('user1_id')
+    senderId: text('sender_id')
       .notNull()
       .references(() => users.idUser),
-    user2Id: text('user2_id')
+    receiverId: text('receiver_id')
       .notNull()
       .references(() => users.idUser),
+    friendUsername: text('friend_username').notNull(), // New column for friend's username
     status: text('status', {
-      enum: [FriendStatus.PENDING, FriendStatus.FRIEND, FriendStatus.BLACKLISTED],
+      enum: [FriendStatus.PENDING, FriendStatus.FRIEND, FriendStatus.BLACKLISTED, FriendStatus.COMMON_FRIEND],
     })
       .notNull()
       .default(FriendStatus.PENDING),
@@ -33,7 +34,7 @@ export const friendships = sqliteTable(
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
   (table) => [
-    unique('user1_user2_unq').on(table.user1Id, table.user2Id),
+    unique('sender_receiver_unq').on(table.senderId, table.receiverId),
   ]
 );
 

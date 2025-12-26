@@ -6,19 +6,14 @@ import { Friendship, FriendStatus } from '@keres/shared';
 import { friendships } from '../db/schema/tables/friendships';
 
 export class StoryPermissionService {
-  // Helper to sort user IDs consistently
-  private sortUserIds(id1: string, id2: string): { user1: string; user2: string } {
-    return id1 < id2 ? { user1: id1, user2: id2 } : { user1: id2, user2: id1 };
-  }
-
   // Helper method to check if two users are friends
   private async _areFriends(userId1: string, userId2: string): Promise<boolean> {
-    const { user1: sortedUser1Id, user2: sortedUser2Id } = this.sortUserIds(userId1, userId2);
-
     const friendship = await db.query.friendships.findFirst({
       where: and(
-        eq(friendships.user1Id, sortedUser1Id),
-        eq(friendships.user2Id, sortedUser2Id),
+        or(
+          and(eq(friendships.senderId, userId1), eq(friendships.receiverId, userId2)),
+          and(eq(friendships.senderId, userId2), eq(friendships.receiverId, userId1))
+        ),
         eq(friendships.status, FriendStatus.FRIEND)
       ),
     });

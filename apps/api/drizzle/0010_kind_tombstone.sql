@@ -1,0 +1,1 @@
+ALTER TYPE "public"."friend_status" ADD VALUE 'common_friend';

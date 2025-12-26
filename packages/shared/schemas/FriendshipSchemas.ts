@@ -15,3 +15,4 @@ export const FriendshipSchema = z.object({
 
 export type Friendship = z.infer<typeof FriendshipSchema>;
 
+

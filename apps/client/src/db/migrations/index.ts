@@ -14,6 +14,7 @@ import migration_10 from './0009_nappy_nextwave';
 import migration_11 from './0010_daffy_wolverine';
 import migration_12 from './0011_smooth_goliath';
 import migration_13 from './0012_moaning_thunderball';
+import migration_14 from './0013_quiet_master_mold';
 
 
 const migrations = [
@@ -30,6 +31,7 @@ const migrations = [
   { id: 11, name: '0010_daffy_wolverine', run: migration_11 },
   { id: 12, name: '0011_smooth_goliath', run: migration_12 },
   { id: 13, name: '0012_moaning_thunderball', run: migration_13 },
+  { id: 14, name: '0013_quiet_master_mold', run: migration_14 },
 ];
 
 export default migrations;

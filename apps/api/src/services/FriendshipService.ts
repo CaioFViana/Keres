@@ -1,10 +1,10 @@
-import { Friendship, FriendStatus } from '@keres/shared';
+import { EnrichedFriendship, Friendship, FriendStatus } from '@keres/shared';
+import { and, eq, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { friendships } from '../db/schema/tables/friendships';
-import { users } from '../db/schema/tables/users';
-import { eq, or, and, sql } from 'drizzle-orm';
 import { storyPermissions } from '../db/schema/tables/storyPermissions';
+import { users, users as usersReceiver, users as usersSender } from '../db/schema/tables/users';
 import { storyPermissionService } from './StoryPermissionService';
 
 export class FriendshipService {
@@ -35,7 +35,7 @@ export class FriendshipService {
       ),
     });
     if (existingDirectPending) {
-      throw new Error('Friend request already pending from you to this user.');
+      throw new Error('Friend request already pending from you to you. Please approve the pending request.');
     }
 
     // Check for an existing reverse pending request (receiver -> sender)
@@ -78,9 +78,9 @@ export class FriendshipService {
     };
 
     const newFriendship = await db.insert(friendships).values(newFriendshipData).returning();
+    
     return newFriendship[0];
   }
-
   async acceptFriendRequest(userId: string, targetUserId: string): Promise<Friendship> {
     await this.checkUserExistence(userId);       // userId is the one trying to accept
     await this.checkUserExistence(targetUserId);  // targetUserId is the one who sent the request
@@ -112,7 +112,7 @@ export class FriendshipService {
       .set({ status: FriendStatus.FRIEND, updatedAt: new Date() })
       .where(eq(friendships.id, existingFriendship.id))
       .returning();
-
+    
     return updatedFriendship[0];
   }
 
@@ -190,7 +190,6 @@ export class FriendshipService {
 
     if (existingFriendship) {
       if (existingFriendship.status === FriendStatus.BLACKLISTED) {
-        // Already blacklisted, return the existing one
         return existingFriendship;
       }
 
@@ -248,26 +247,56 @@ export class FriendshipService {
   }
 
 
-  async getFriendships(userId: string): Promise<Friendship[]> {
+  async getFriendships(userId: string): Promise<EnrichedFriendship[]> {
     await this.checkUserExistence(userId);
 
-    // 1. Get existing friendships
-    const existingFriendships = await db.query.friendships.findMany({
-      where: or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)),
+    const friendshipsWithUsernames = await db
+      .select({
+        id: friendships.id,
+        senderId: friendships.senderId,
+        receiverId: friendships.receiverId,
+        status: friendships.status,
+        createdAt: friendships.createdAt,
+        updatedAt: friendships.updatedAt,
+        senderUsername: usersSender.username,
+        receiverUsername: usersReceiver.username,
+      })
+      .from(friendships)
+      .leftJoin(usersSender, eq(friendships.senderId, usersSender.id))
+      .leftJoin(usersReceiver, eq(friendships.receiverId, usersReceiver.id))
+      .where(or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)));
+
+    const enrichedFriendships: EnrichedFriendship[] = friendshipsWithUsernames.map(f => {
+      let friendUsername = '';
+      if (f.senderId === userId) {
+        // Current user is sender, friend is receiver
+        friendUsername = f.receiverUsername || '';
+      } else {
+        // Current user is receiver, friend is sender
+        friendUsername = f.senderUsername || '';
+      }
+
+      return {
+        id: f.id,
+        senderId: f.senderId,
+        receiverId: f.receiverId,
+        status: f.status,
+        createdAt: f.createdAt,
+        updatedAt: f.updatedAt,
+        friendUsername: friendUsername,
+      };
     });
 
+    // 2. Find users who share story permissions and are not existing friends
     const existingFriendIds = new Set<string>();
-    existingFriendships.forEach(f => {
-      // Determine the "other" friend ID based on whether userId is the sender or receiver
+    enrichedFriendships.forEach(f => {
       if (f.senderId === userId) {
         existingFriendIds.add(f.receiverId);
-      } else if (f.receiverId === userId) {
+      } else {
         existingFriendIds.add(f.senderId);
       }
     });
 
-    // 2. Find users who share story permissions and are not existing friends
-    // Get story IDs the current user has access to
     const userStoryPermissions = await db.query.storyPermissions.findMany({
       where: eq(storyPermissions.userId, userId),
       columns: {
@@ -277,40 +306,39 @@ export class FriendshipService {
 
     const storyIds = userStoryPermissions.map(sp => sp.storyId);
 
-    if (storyIds.length === 0) {
-      return existingFriendships; // No shared stories, no common friends
-    }
+    const commonFriends: EnrichedFriendship[] = [];
 
-    // Find all users (excluding current user) who have permissions to any of these stories
-    const commonFriendCandidates = await db
-      .select({
-        id: users.id,
-        username: users.username,
-      })
-      .from(storyPermissions)
-      .leftJoin(users, eq(storyPermissions.userId, users.id))
-      .where(and(
-        sql`${storyPermissions.storyId} IN (${storyIds.map(id => `'${id}'`).join(',')})`,
-        sql`${storyPermissions.userId} != '${userId}'`
-      ))
-      .groupBy(users.id, users.username) // Group by user ID and username to get distinct users
-      .having(sql`count(${users.id}) > 0`); // Ensure they have at least one shared story permission
+    if (storyIds.length > 0) {
+      const commonFriendCandidates = await db
+        .select({
+          id: users.id,
+          username: users.username,
+        })
+        .from(storyPermissions)
+        .leftJoin(users, eq(storyPermissions.userId, users.id))
+        .where(and(
+          sql`${storyPermissions.storyId} IN (${storyIds.map(id => `'${id}'`).join(',')})`,
+          sql`${storyPermissions.userId} != '${userId}'`
+        ))
+        .groupBy(users.id, users.username)
+        .having(sql`count(${users.id}) > 0`);
 
-    const commonFriends: Friendship[] = [];
-    for (const candidate of commonFriendCandidates) {
-      if (candidate.id && !existingFriendIds.has(candidate.id)) {
-        commonFriends.push({
-          id: ulid(), // Generate a new ULID for this virtual friendship
-          senderId: userId, // Assuming current user is "sender" for this virtual friend
-          receiverId: candidate.id, // The common friend is the "receiver"
-          status: FriendStatus.COMMON_FRIEND,
-          createdAt: new Date(), // Placeholder
-          updatedAt: new Date(), // Placeholder
-        });
+      for (const candidate of commonFriendCandidates) {
+        if (candidate.id && !existingFriendIds.has(candidate.id)) {
+          commonFriends.push({
+            id: ulid(),
+            senderId: userId,
+            receiverId: candidate.id,
+            status: FriendStatus.COMMON_FRIEND,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            friendUsername: candidate.username || '', // Use candidate's username
+          });
+        }
       }
     }
 
-    return [...existingFriendships, ...commonFriends];
+    return [...enrichedFriendships, ...commonFriends];
   }
 
   async getFriendshipById(friendshipId: string): Promise<Friendship | undefined> {

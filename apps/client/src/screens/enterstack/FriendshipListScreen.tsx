@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { FriendshipSelect } from '../../db/schemas/friendships';
+import { FriendshipSelect } from '../../db/schemas/friendships'; // Import FriendshipSelect
 import { createFriendshipService } from '../../services/FriendshipService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -29,7 +29,7 @@ const FriendshipListScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
 
-  const [friendships, setFriendships] = useState<FriendshipSelect[]>([]);
+  const [friendships, setFriendships] = useState<FriendshipSelect[]>([]); // Use FriendshipSelect[]
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonCardStyles = getCommonCardStyles(colors);
@@ -88,11 +88,11 @@ const FriendshipListScreen = () => {
     }
   };
 
-  const renderFriendshipItem = ({ item }: { item: FriendshipSelect }) => (
+  const renderFriendshipItem = ({ item }: { item: FriendshipSelect }) => ( // Use FriendshipSelect
     <View style={[commonCardStyles.cardContainer, styles.friendshipItem]}>
       <View style={styles.friendshipInfo}>
         <Text style={[styles.friendshipText, { color: colors.text }]}>
-          {t('friend_id')}: {item.user2Id}
+          {t('friend_id')}: {item.friendUsername}
         </Text>
         <Text style={[styles.friendshipText, { color: colors.textSecondary }]}>
           {t('server')}: {item.serverId}

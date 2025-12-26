@@ -17,7 +17,7 @@ export const friendships = sqliteTable(
     receiverId: text('receiver_id')
       .notNull()
       .references(() => users.idUser),
-    friendUsername: text('friend_username').notNull(), // New column for friend's username
+    friendUsername: text('friend_username').notNull(),
     status: text('status', {
       enum: [FriendStatus.PENDING, FriendStatus.FRIEND, FriendStatus.BLACKLISTED, FriendStatus.COMMON_FRIEND],
     })

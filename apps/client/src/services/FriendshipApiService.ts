@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { Friendship } from '@keres/shared/schemas/FriendshipSchemas'; // Assuming Friendship is the type returned by the API
+import { Friendship, EnrichedFriendship } from '@keres/shared'; // Assuming Friendship is the type returned by the API
 
 export class FriendshipApiService {
   async sendFriendRequest(targetUserId: string): Promise<Friendship> {
@@ -32,7 +32,7 @@ export class FriendshipApiService {
     return response.data;
   }
 
-  async getFriendships(): Promise<Friendship[]> {
+  async getFriendships(): Promise<EnrichedFriendship[]> {
     const response = await apiClient.get('/friend/');
     return response.data;
   }

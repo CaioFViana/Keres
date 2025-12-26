@@ -51,7 +51,7 @@ const FriendshipFormScreen = () => {
           setIsEditingExisting(true);
           const friendship = await friendshipService.getFriendshipById(friendshipId);
           if (friendship) {
-            setFriendId(friendship.user2Id); // Assuming user2Id is the friend's ID
+            setFriendId(friendship.receiverId); // Assuming receiverId is the friend's ID
             setSelectedServerId(friendship.serverId);
             setStatus(friendship.status);
           } else {
@@ -87,10 +87,11 @@ const FriendshipFormScreen = () => {
       } else {
         // Add new friendship
         await friendshipService.addFriendship({
-          user1Id: currentUserId,
-          user2Id: friendId,
+          senderId: currentUserId,
+          receiverId: friendId,
           serverId: selectedServerId,
           status: FriendStatus.PENDING, // New friendships always start as PENDING
+          friendUsername: friendId, // Re-adding this field
         });
         Alert.alert(t('success'), t('friendship_added_successfully'));
       }
@@ -141,9 +142,10 @@ const FriendshipFormScreen = () => {
               onValueChange={(itemValue: FriendStatus) => setStatus(itemValue)}
               style={{ color: colors.text }}
             >
-              {Object.values(FriendStatus).map((s) => (
-                <Picker.Item key={s} label={t(s.toLowerCase())} value={s} />
-              ))}
+              {Object.values(FriendStatus)
+                .map((s) => ( // Removed .filter(s => s !== FriendStatus.COMMON_FRIEND)
+                  <Picker.Item key={s} label={t(s.toLowerCase())} value={s} />
+                ))}
             </Picker>
           </View>
         </>

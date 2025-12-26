@@ -12,6 +12,7 @@ export * from "./entities/Story";
 export * from "./entities/Suggestion";
 export * from "./entities/Tag";
 export * from "./entities/WorldRule";
+export * from "./entities/EnrichedFriendship"; // Export EnrichedFriendship
 export * from "./schemas/SyncSchemas"; // Export SyncSchemas from the schemas subdirectory
 export * from "./schemas/FullStorySchemas"; // Export FullStorySchemas from the schemas subdirectory
 export * from "./schemas/ChapterSchemas";

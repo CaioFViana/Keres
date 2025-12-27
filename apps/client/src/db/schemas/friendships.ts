@@ -29,9 +29,6 @@ export const friendships = sqliteTable(
     updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
       .$defaultFn(() => new Date()),
-    version: integer('version').notNull().default(0),
-    isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
-    deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
   (table) => [
     unique('sender_receiver_unq').on(table.senderId, table.receiverId),

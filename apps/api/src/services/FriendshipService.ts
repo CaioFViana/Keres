@@ -1,10 +1,11 @@
 import { EnrichedFriendship, Friendship, FriendStatus } from '@keres/shared';
-import { and, eq, or, sql } from 'drizzle-orm';
+import { and, eq, or, sql, inArray, ne } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { friendships } from '../db/schema/tables/friendships';
 import { storyPermissions } from '../db/schema/tables/storyPermissions';
-import { users, users as usersReceiver, users as usersSender } from '../db/schema/tables/users';
+import { users } from '../db/schema/tables/users';
 import { storyPermissionService } from './StoryPermissionService';
 
 export class FriendshipService {
@@ -250,7 +251,9 @@ export class FriendshipService {
   async getFriendships(userId: string): Promise<EnrichedFriendship[]> {
     await this.checkUserExistence(userId);
 
-    const friendshipsWithUsernames = await db
+    const friendUserAlias = alias(users, 'friendUser');
+
+    const friendshipsData = await db
       .select({
         id: friendships.id,
         senderId: friendships.senderId,
@@ -258,24 +261,25 @@ export class FriendshipService {
         status: friendships.status,
         createdAt: friendships.createdAt,
         updatedAt: friendships.updatedAt,
-        senderUsername: usersSender.username,
-        receiverUsername: usersReceiver.username,
+        // Corrected: friendUserAlias.username correctly identifies the other user's username due to the join condition.
+        friendUsername: friendUserAlias.username, 
+        // otherUserId is dynamically determined based on which user in the friendship is not the current userId.
+        otherUserId: sql<string>`
+          CASE
+            WHEN ${friendships.senderId} = ${userId} THEN ${friendships.receiverId}
+            ELSE ${friendships.senderId}
+          END
+        `.as('otherUserId'),
       })
       .from(friendships)
-      .leftJoin(usersSender, eq(friendships.senderId, usersSender.id))
-      .leftJoin(usersReceiver, eq(friendships.receiverId, usersReceiver.id))
+      .leftJoin(friendUserAlias, or(
+        and(eq(friendships.senderId, userId), eq(friendships.receiverId, friendUserAlias.id)),
+        and(eq(friendships.receiverId, userId), eq(friendships.senderId, friendUserAlias.id))
+      ))
       .where(or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)));
 
-    const enrichedFriendships: EnrichedFriendship[] = friendshipsWithUsernames.map(f => {
-      let friendUsername = '';
-      if (f.senderId === userId) {
-        // Current user is sender, friend is receiver
-        friendUsername = f.receiverUsername || '';
-      } else {
-        // Current user is receiver, friend is sender
-        friendUsername = f.senderUsername || '';
-      }
 
+    const enrichedFriendships: EnrichedFriendship[] = friendshipsData.map(f => {
       return {
         id: f.id,
         senderId: f.senderId,
@@ -283,19 +287,18 @@ export class FriendshipService {
         status: f.status,
         createdAt: f.createdAt,
         updatedAt: f.updatedAt,
-        friendUsername: friendUsername,
+        friendUsername: f.friendUsername || '',
+        otherUserId: f.otherUserId || '', // Ensure otherUserId is included now that EnrichedFriendship type includes it
       };
     });
 
     // 2. Find users who share story permissions and are not existing friends
     const existingFriendIds = new Set<string>();
     enrichedFriendships.forEach(f => {
-      if (f.senderId === userId) {
-        existingFriendIds.add(f.receiverId);
-      } else {
-        existingFriendIds.add(f.senderId);
-      }
+      existingFriendIds.add(f.otherUserId);
     });
+
+    const usersStoryPermissionAlias = alias(users, 'storyPermissionUser');
 
     const userStoryPermissions = await db.query.storyPermissions.findMany({
       where: eq(storyPermissions.userId, userId),
@@ -311,17 +314,17 @@ export class FriendshipService {
     if (storyIds.length > 0) {
       const commonFriendCandidates = await db
         .select({
-          id: users.id,
-          username: users.username,
+          id: usersStoryPermissionAlias.id,
+          username: usersStoryPermissionAlias.username,
         })
         .from(storyPermissions)
-        .leftJoin(users, eq(storyPermissions.userId, users.id))
+        .leftJoin(usersStoryPermissionAlias, eq(storyPermissions.userId, usersStoryPermissionAlias.id))
         .where(and(
-          sql`${storyPermissions.storyId} IN (${storyIds.map(id => `'${id}'`).join(',')})`,
-          sql`${storyPermissions.userId} != '${userId}'`
+          inArray(storyPermissions.storyId, storyIds), // Use inArray for cleaner and safer query
+          ne(storyPermissions.userId, userId)          // Use ne (not equal) for clearer intent
         ))
-        .groupBy(users.id, users.username)
-        .having(sql`count(${users.id}) > 0`);
+        .groupBy(usersStoryPermissionAlias.id, usersStoryPermissionAlias.username)
+        .having(sql`count(${usersStoryPermissionAlias.id}) > 0`);
 
       for (const candidate of commonFriendCandidates) {
         if (candidate.id && !existingFriendIds.has(candidate.id)) {
@@ -332,7 +335,8 @@ export class FriendshipService {
             status: FriendStatus.COMMON_FRIEND,
             createdAt: new Date(),
             updatedAt: new Date(),
-            friendUsername: candidate.username || '', // Use candidate's username
+            friendUsername: candidate.username || '',
+            otherUserId: candidate.id,
           });
         }
       }

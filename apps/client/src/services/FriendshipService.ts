@@ -1,10 +1,9 @@
 import { FriendshipInsert, friendships, FriendshipSelect } from '@/src/db/schemas/friendships'; // Import friendships here
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { eq, or } from 'drizzle-orm';
+import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
+import { eq, or, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { createULID } from '../utils/ulid';
 import { friendshipApiService } from './FriendshipApiService'; // Import the API service
-import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
 
 export const createFriendshipService = (db: AppDrizzleClient) => {
   return new FriendshipService(db);
@@ -28,14 +27,11 @@ export class FriendshipService {
     return friendship; // No cast needed
   }
 
-  async addFriendship(data: Omit<FriendshipInsert, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>): Promise<FriendshipSelect> { // Changed data param
+  async addFriendship(data: Omit<FriendshipInsert, 'id' | 'createdAt' | 'updatedAt'>): Promise<FriendshipSelect> { // Removed version, isDeleted, deletedAt from Omit
     const newFriendship: FriendshipInsert = {
       id: createULID(),
       createdAt: new Date(),
       updatedAt: new Date(),
-      version: 0,
-      isDeleted: false,
-      deletedAt: null,
       ...data,
     };
     await this.db.insert(friendships).values(newFriendship).run();
@@ -44,7 +40,21 @@ export class FriendshipService {
 
   async bulkAddFriendships(friendshipData: FriendshipInsert[]): Promise<void> {
     if (friendshipData.length > 0) {
-      await this.db.insert(friendships).values(friendshipData).run();
+      await this.db.insert(friendships)
+        .values(friendshipData)
+        .onConflictDoUpdate({
+          target: friendships.id, // Conflict on the primary key 'id'
+          set: {
+            senderId: sql`excluded.sender_id`,
+            receiverId: sql`excluded.receiver_id`,
+            friendUsername: sql`excluded.friend_username`,
+            status: sql`excluded.status`,
+            createdAt: sql`excluded.created_at`,
+            updatedAt: sql`excluded.updated_at`,
+            serverId: sql`excluded.server_id`,
+          },
+        })
+        .run();
     }
   }
 
@@ -71,23 +81,17 @@ export class FriendshipService {
       const serverFriendships: EnrichedFriendship[] = await friendshipApiService.getFriendships();
 
       const friendshipsToInsert: FriendshipInsert[] = serverFriendships.map(sf => {
-        // sf (EnrichedFriendship from API) does NOT have serverId.
-        // We add serverId from the current context when inserting to local DB.
         return {
           id: sf.id,
           senderId: sf.senderId,
           receiverId: sf.receiverId,
           friendUsername: sf.friendUsername,
           status: sf.status,
-          createdAt: sf.createdAt,
-          updatedAt: sf.updatedAt,
-          serverId: serverId, // serverId is always taken from the current server context
-          version: 0, // Default for new inserts
-          isDeleted: false, // Default for new inserts
-          deletedAt: null, // Default for new inserts
+          createdAt: new Date(sf.createdAt),
+          updatedAt: new Date(sf.updatedAt),
+          serverId: serverId,
         };
       });
-
       await this.bulkAddFriendships(friendshipsToInsert);
 
       console.log(`FriendshipService: Successfully synced ${friendshipsToInsert.length} friendships.`);

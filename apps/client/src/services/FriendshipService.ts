@@ -1,9 +1,11 @@
 import { FriendshipInsert, friendships, FriendshipSelect } from '@/src/db/schemas/friendships'; // Import friendships here
-import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { eq, or, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { createULID } from '../utils/ulid';
 import { friendshipApiService } from './FriendshipApiService'; // Import the API service
+import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
+import { NotificationType, useNotificationStore } from '../state/notificationStore'; // Import notification store and types
 
 export const createFriendshipService = (db: AppDrizzleClient) => {
   return new FriendshipService(db);
@@ -79,9 +81,32 @@ export class FriendshipService {
     try {
       console.log(`FriendshipService: Syncing friendships with server ${serverId} for user ${currentUserId}`);
       const serverFriendships: EnrichedFriendship[] = await friendshipApiService.getFriendships();
+      const showNotification = useNotificationStore.getState().showNotification;
 
-      const friendshipsToInsert: FriendshipInsert[] = serverFriendships.map(sf => {
-        return {
+      // --- Notification Preparation & Deletion Logic ---
+      const previousLocalFriendshipMap = new Map<string, FriendshipSelect>();
+      const localFriendshipsBeforeSync = await this.db.select().from(friendships).all(); 
+      localFriendshipsBeforeSync.forEach(f => previousLocalFriendshipMap.set(f.id, f));
+
+      const serverFriendshipIds = new Set(serverFriendships.map(sf => sf.id));
+
+      const friendshipsToDelete = localFriendshipsBeforeSync.filter(
+        localF => !serverFriendshipIds.has(localF.id)
+      );
+
+      if (friendshipsToDelete.length > 0) {
+        for (const friendship of friendshipsToDelete) {
+          await this.deleteFriendship(friendship.id); 
+        }
+        console.log(`FriendshipService: Deleted ${friendshipsToDelete.length} friendships.`);
+      }
+
+      // --- Insertion/Update Logic (with Notification Detection) ---
+      const friendshipsToInsertOrUpdate: FriendshipInsert[] = [];
+      for (const sf of serverFriendships) {
+        const previousStatus = previousLocalFriendshipMap.get(sf.id)?.status;
+
+        const friendshipInsert: FriendshipInsert = {
           id: sf.id,
           senderId: sf.senderId,
           receiverId: sf.receiverId,
@@ -91,10 +116,36 @@ export class FriendshipService {
           updatedAt: new Date(sf.updatedAt),
           serverId: serverId,
         };
-      });
-      await this.bulkAddFriendships(friendshipsToInsert);
+        friendshipsToInsertOrUpdate.push(friendshipInsert);
 
-      console.log(`FriendshipService: Successfully synced ${friendshipsToInsert.length} friendships.`);
+        // Notification logic
+        if (!previousStatus && sf.status === FriendStatus.PENDING) {
+          showNotification(`New friend request from ${sf.friendUsername}`, 'info');
+        } else if (previousStatus === FriendStatus.PENDING && sf.status === FriendStatus.FRIEND) {
+          showNotification(`Friend request from ${sf.friendUsername} accepted!`, 'success');
+        }
+      }
+
+      if (friendshipsToInsertOrUpdate.length > 0) {
+        await this.db.insert(friendships)
+          .values(friendshipsToInsertOrUpdate)
+          .onConflictDoUpdate({
+            target: friendships.id,
+            set: {
+              senderId: sql`excluded.sender_id`,
+              receiverId: sql`excluded.receiver_id`,
+              friendUsername: sql`excluded.friend_username`,
+              status: sql`excluded.status`,
+              createdAt: sql`excluded.created_at`,
+              updatedAt: sql`excluded.updated_at`,
+              serverId: sql`excluded.server_id`,
+            },
+          })
+          .run();
+        console.log(`FriendshipService: Added/Updated ${friendshipsToInsertOrUpdate.length} friendships.`);
+      }
+
+      console.log(`FriendshipService: Successfully synced friendships.`);
     } catch (error) {
       console.error('FriendshipService: Error syncing friendships with server:', error);
       throw error;

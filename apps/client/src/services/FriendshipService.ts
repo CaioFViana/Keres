@@ -1,14 +1,14 @@
 import { FriendshipInsert, friendships, FriendshipSelect } from '@/src/db/schemas/friendships'; // Import friendships here
-import { servers, ServerSelect } from '@/src/db/schemas/servers'; // Import servers schema and ServerSelect
-import { users, UserInsert } from '@/src/db/schemas/users'; // Import users schema and UserInsert
+import { servers } from '@/src/db/schemas/servers'; // Import servers schema and ServerSelect
+import { UserInsert, users } from '@/src/db/schemas/users'; // Import users schema and UserInsert
+import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { eq, or, sql } from 'drizzle-orm';
 import { AppDrizzleClient, AppDrizzleTransaction } from '../db';
+import { useNotificationStore } from '../state/notificationStore'; // Import notification store and types
+import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
 import { createULID } from '../utils/ulid';
 import { friendshipApiService } from './FriendshipApiService'; // Import the API service
-import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
-import { NotificationType, useNotificationStore } from '../state/notificationStore'; // Import notification store and types
-import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
 
 export type FriendshipWithServer = FriendshipSelect & {
   serverName: string | null;
@@ -275,7 +275,7 @@ export class FriendshipService {
           friendshipsToInsertOrUpdate.push(friendshipInsert);
 
           // Notification logic
-          if (!previousStatus && sf.status === FriendStatus.PENDING) {
+          if (!previousStatus && sf.status === FriendStatus.PENDING && sf.receiverId === currentUserId) { // Only notify receiver
             showNotification(`New friend request from ${sf.friendUsername}`, 'info');
           } else if (previousStatus === FriendStatus.PENDING && sf.status === FriendStatus.FRIEND) {
             showNotification(`Friend request from ${sf.friendUsername} accepted!`, 'success');

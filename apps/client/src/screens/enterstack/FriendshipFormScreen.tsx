@@ -1,16 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { createFriendshipService } from '../../services/FriendshipService';
-import { createServerService } from '../../services/ServerService'; // Import ServerService
-import { useDrizzle } from '../../db';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { Picker } from '@react-native-picker/picker'; // For dropdown selection
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useDrizzle } from '../../db';
+import { friendshipApiService } from '../../services/FriendshipApiService'; // Import friendshipApiService
+import { createFriendshipService } from '../../services/FriendshipService';
+import { createServerService } from '../../services/ServerService'; // Import ServerService
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useTheme } from '../../theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 
 type FriendshipStackParamList = {
   FriendshipList: undefined;
@@ -35,7 +36,7 @@ const FriendshipFormScreen = () => {
   const [friendId, setFriendId] = useState('');
   const [selectedServerId, setSelectedServerId] = useState('');
   const [status, setStatus] = useState<FriendStatus>(FriendStatus.PENDING);
-  const [servers, setServers] = useState<{ id: string; name: string }[]>([]);
+  const [servers, setServers] = useState<{ id: string; name: string; idUser?: string }[]>([]); // Added idUser
   const [isEditingExisting, setIsEditingExisting] = useState(false);
 
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -45,7 +46,7 @@ const FriendshipFormScreen = () => {
     const fetchServersAndFriendship = async () => {
       try {
         const fetchedServers = await serverService.getAllServers();
-        setServers(fetchedServers.map(s => ({ id: s.id, name: s.name })));
+        setServers(fetchedServers.map(s => ({ id: s.id, name: s.name, idUser: s.idUser }))); // Map idUser
 
         if (friendshipId) {
           setIsEditingExisting(true);
@@ -86,21 +87,47 @@ const FriendshipFormScreen = () => {
         Alert.alert(t('success'), t('friendship_updated_successfully'));
       } else {
         // Add new friendship
-        await friendshipService.addFriendship({
-          senderId: currentUserId,
+        const selectedServer = servers.find(s => s.id === selectedServerId);
+        if (!selectedServer || !selectedServer.idUser) {
+            Alert.alert(t('error'), t('selected_server_invalid'));
+            return;
+        }
+        const currentUserServerId = selectedServer.idUser; // The current user's ID on the selected server
+
+        // Log the data being sent to the local DB
+        console.log('FriendshipFormScreen: Attempting to add friendship locally with:', {
+          senderId: currentUserServerId,
           receiverId: friendId,
           serverId: selectedServerId,
-          status: FriendStatus.PENDING, // New friendships always start as PENDING
-          friendUsername: friendId, // Re-adding this field
+          status: FriendStatus.PENDING,
+          friendUsername: friendId,
         });
+
+        await friendshipService.addFriendship({
+          senderId: currentUserServerId, // Use the current user's ID on the selected server
+          receiverId: friendId, // The friend's ID on the selected server (from input)
+          serverId: selectedServerId,
+          status: FriendStatus.PENDING, // New friendships always start as PENDING
+          friendUsername: friendId, // Placeholder for friend's username, will be updated by sync
+        });
+        console.log('FriendshipFormScreen: Successfully added friendship locally.');
+        
+        // NEW: Send friend request to API
+        console.log('FriendshipFormScreen: Attempting to send friend request to API for targetUserId:', friendId);
+        const apiResponse = await friendshipApiService.sendFriendRequest(friendId); // friendId is the targetUserId
+        console.log('FriendshipFormScreen: API response for friend request:', apiResponse);
+
         Alert.alert(t('success'), t('friendship_added_successfully'));
       }
       navigation.goBack();
     } catch (error) {
       console.error('Error saving friendship:', error);
+      // Log the full error object for detailed debugging
+      console.error('FriendshipFormScreen: Detailed error object:', error);
       Alert.alert(t('error'), t('failed_to_save_friendship'));
     }
-  }, [currentUserId, friendId, selectedServerId, status, friendshipId, friendshipService, navigation, t]);
+  }, [currentUserId, friendId, selectedServerId, status, friendshipId, friendshipService, navigation, t, servers]); // Added 'servers' to dependencies
+
 
   return (
     <View style={commonContainerStyles.container}>

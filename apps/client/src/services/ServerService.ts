@@ -23,7 +23,6 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       const fetchedServers = await db.query.servers.findMany({ // Added await here
         where: eq(servers.isDeleted, false),
       });
-      console.log('ServerService - Fetched servers from DB:', fetchedServers); // Debug log
       return fetchedServers;
     },
 

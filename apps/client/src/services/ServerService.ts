@@ -20,9 +20,11 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
 
   return {
     async getAllServers(): Promise<ServerSelect[]> {
-      return db.query.servers.findMany({
+      const fetchedServers = await db.query.servers.findMany({ // Added await here
         where: eq(servers.isDeleted, false),
       });
+      console.log('ServerService - Fetched servers from DB:', fetchedServers); // Debug log
+      return fetchedServers;
     },
 
     async getServerById(serverId: string): Promise<ServerSelect | undefined> {

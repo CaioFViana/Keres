@@ -32,6 +32,12 @@ export class FriendshipApiService {
     return response.data;
   }
 
+  async cancelSentFriendRequest(targetUserId: string): Promise<Friendship> {
+    const response = await apiClient.delete(`/friend/request/${targetUserId}`);
+    return response.data;
+  }
+
+
   async getFriendships(): Promise<EnrichedFriendship[]> {
     const response = await apiClient.get('/friend/');
     return response.data;

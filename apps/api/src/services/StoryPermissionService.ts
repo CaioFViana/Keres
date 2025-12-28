@@ -1,4 +1,4 @@
-import { and, eq, or } from 'drizzle-orm';
+import { and, eq, or, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { stories, storyPermissions, users } from '../db/schema';
@@ -21,21 +21,41 @@ export class StoryPermissionService {
   }
 
   async deletePermissionsBetweenUsers(userA: string, userB: string): Promise<void> {
-    // Delete permissions where userA is owner and userB is target
-    await db.delete(storyPermissions).where(
-      and(
-        eq(storyPermissions.userId, userB), // targetUser
-        eq(stories.userId, userA) // owner of the story
+    // 1. Select the IDs of permissions to delete where userB is target and userA is story owner
+    const permissionsToDelete1 = await db.select({ id: storyPermissions.id })
+      .from(storyPermissions)
+      .innerJoin(stories, eq(storyPermissions.storyId, stories.id))
+      .where(
+        and(
+          eq(storyPermissions.userId, userB), // targetUser
+          eq(stories.userId, userA) // owner of the story
+        )
       )
-    );
+      .execute();
 
-    // Delete permissions where userB is owner and userA is target
-    await db.delete(storyPermissions).where(
-      and(
-        eq(storyPermissions.userId, userA), // targetUser
-        eq(stories.userId, userB) // owner of the story
+    const idsToDelete1 = permissionsToDelete1.map(p => p.id);
+
+    if (idsToDelete1.length > 0) {
+      await db.delete(storyPermissions).where(inArray(storyPermissions.id, idsToDelete1)).execute();
+    }
+
+    // 2. Select the IDs of permissions to delete where userA is target and userB is story owner
+    const permissionsToDelete2 = await db.select({ id: storyPermissions.id })
+      .from(storyPermissions)
+      .innerJoin(stories, eq(storyPermissions.storyId, stories.id))
+      .where(
+        and(
+          eq(storyPermissions.userId, userA), // targetUser
+          eq(stories.userId, userB) // owner of the story
+        )
       )
-    );
+      .execute();
+
+    const idsToDelete2 = permissionsToDelete2.map(p => p.id);
+
+    if (idsToDelete2.length > 0) {
+      await db.delete(storyPermissions).where(inArray(storyPermissions.id, idsToDelete2)).execute();
+    }
   }
 
   async upsertStoryPermission(

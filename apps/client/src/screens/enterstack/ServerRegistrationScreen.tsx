@@ -79,10 +79,8 @@ const ServerRegistrationScreen = () => {
         return;
       }
   
-      if (!userId) {
-        Alert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
+      // The userId from useUserSettingsStore is the local client ID, not the server-specific ID.
+      // We will get the server-specific userId from the login/registration response.
   
       setLoading(true);
       setError(null);
@@ -97,6 +95,10 @@ const ServerRegistrationScreen = () => {
         }
       }
 
+      let serverUserId: string | null = null; // Variable to hold the server-provided userId
+      let newAccessToken = existingServer ? existingServer.jwtToken : '';
+      let newRefreshToken = existingServer ? existingServer.refreshToken : '';
+      
       try {
         // 1. Server Check (/kerescheck) - always check if server is reachable
         const keresCheckUrl = `${serverAddress}/kerescheck`;
@@ -113,10 +115,6 @@ const ServerRegistrationScreen = () => {
         const serverVersion = checkResponse.data.version;
   
         // 2. Login (/auth/login) - only for new registration or if password is provided for update
-        let newAccessToken = existingServer ? existingServer.jwtToken : '';
-        let newRefreshToken = existingServer ? existingServer.refreshToken : '';
-
-        // Determine if re-authentication is needed
         const isNewServer = !serverId;
         const isPasswordProvided = password.trim().length > 0;
         const isUrlChanged = existingServer && existingServer.url !== serverAddress;
@@ -134,7 +132,7 @@ const ServerRegistrationScreen = () => {
             validateStatus: () => true,
           });
   
-          if (loginResponse.status !== 200 || !loginResponse.data || !loginResponse.data.accessToken || !loginResponse.data.refreshToken) {
+          if (loginResponse.status !== 200 || !loginResponse.data || !loginResponse.data.accessToken || !loginResponse.data.refreshToken || !loginResponse.data.userId) { // Added check for userId
             if (loginResponse.status === 401) {
               Alert.alert(t('error'), t('invalid_credentials'));
               setLoading(false); // Make sure loading is set to false here as well
@@ -151,10 +149,20 @@ const ServerRegistrationScreen = () => {
           }
           newAccessToken = loginResponse.data.accessToken;
           newRefreshToken = loginResponse.data.refreshToken;
+          serverUserId = loginResponse.data.userId; // Extract the server-provided userId
+        } else {
+          // If not re-authenticating, use the existing server's idUser
+          serverUserId = existingServer?.idUser || null;
+        }
+
+        if (!serverUserId) { // Ensure serverUserId is available
+          Alert.alert(t('error'), t('user_not_identified_on_server')); // New translation key
+          setLoading(false);
+          return;
         }
   
         const serverData = {
-          idUser: userId!, // Assert userId as non-null
+          idUser: serverUserId, // Use the server-provided userId
           userName: username,
           name: serverName || serverAddress,
           url: serverAddress,
@@ -189,7 +197,7 @@ const ServerRegistrationScreen = () => {
       } finally {
         setLoading(false);
       }
-    }, [serverAddress, username, password, serverName, userId, serverService, navigation, t, serverId]);
+    }, [serverAddress, username, password, serverName, serverService, navigation, t, serverId]);
   
     const handleDeleteServer = useCallback(() => {
       Alert.alert(

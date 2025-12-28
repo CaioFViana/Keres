@@ -247,6 +247,26 @@ export class FriendshipService {
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
   }
 
+  async cancelSentFriendRequest(senderId: string, targetUserId: string): Promise<void> {
+    await this.checkUserExistence(senderId);
+    await this.checkUserExistence(targetUserId);
+
+    // Find the pending friendship where senderId is the sender and targetUserId is the receiver
+    const existingFriendship = await db.query.friendships.findFirst({
+      where: and(
+        eq(friendships.senderId, senderId),
+        eq(friendships.receiverId, targetUserId),
+        eq(friendships.status, FriendStatus.PENDING)
+      ),
+    });
+
+    if (!existingFriendship) {
+      throw new Error('Sent friend request not found or not pending.');
+    }
+
+    await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
+  }
+
 
   async getFriendships(userId: string): Promise<EnrichedFriendship[]> {
     await this.checkUserExistence(userId);

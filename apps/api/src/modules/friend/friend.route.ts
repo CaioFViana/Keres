@@ -65,7 +65,28 @@ export const friendRoutes = new Elysia()
       params: UserTargetIdParam,
       detail: {
         summary: 'Decline a friend request',
-        description: 'Declines or cancels a pending friend request from or to another user.',
+        description: 'Declines a pending friend request received from another user.',
+        tags: ['Friendships'],
+      },
+    }
+  )
+  .delete(
+    '/request/:targetUserId',
+    async ({ params, user, set }) => {
+      if (!user || !user.userId) {
+        set.status = 401;
+        throw new Error('Unauthorized: User not authenticated.');
+      }
+      return friendshipService.cancelSentFriendRequest(
+        user.userId,
+        params.targetUserId
+      );
+    },
+    {
+      params: UserTargetIdParam,
+      detail: {
+        summary: 'Cancel a sent friend request',
+        description: 'Cancels a friend request previously sent to another user.',
         tags: ['Friendships'],
       },
     }

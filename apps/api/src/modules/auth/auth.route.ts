@@ -64,7 +64,7 @@ export const authRoutes = new Elysia()
         maxAge: 7 * 24 * 3600, // 7 days
       });
 
-      return { accessToken, refreshToken, username: user.username };
+      return { accessToken, refreshToken, userId: user.id, username: user.username };
     },
     {
       body: t.Object({
@@ -127,7 +127,7 @@ export const authRoutes = new Elysia()
         maxAge: 7 * 24 * 3600, // 7 days
       });
 
-      return { accessToken, refreshToken, username: newUser.username };
+      return { accessToken, refreshToken, userId: newUser.id, username: newUser.username };
     },
     {
       body: t.Object({

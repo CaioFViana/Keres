@@ -9,6 +9,9 @@ export let db: AppDrizzleClient | null = null; // Export the Drizzle client
 // Define the type for the Drizzle client
 export type AppDrizzleClient = ReturnType<typeof drizzle<typeof schema>>;
 
+// Type for the transaction client
+export type AppDrizzleTransaction = Parameters<Parameters<AppDrizzleClient['transaction']>[0]>[0];
+
 // Create a React Context for the Drizzle client
 export const DrizzleContext = createContext<AppDrizzleClient | null>(null);
 

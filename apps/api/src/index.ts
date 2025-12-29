@@ -10,6 +10,7 @@ import { friendRoutes } from './modules/friend/friend.route';
 import { storyRoutes } from './modules/story/story.route';
 import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route';
 import { syncRoute } from './modules/sync/sync.route';
+import { userRoutes } from './modules/user/user.route'; // Import userRoutes
 import { wsRoutes } from './modules/websocket/webSocket.route';
 
 // Define a placeholder type for the JWT payload
@@ -120,6 +121,7 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
   .group('/stories', (app) => app.use(storyRoutes))
   .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
   .group('/friend', (app) => app.use(friendRoutes))
+  .group('/user', (app) => app.use(userRoutes)) // Add userRoutes
   .group('/ws', (app) => app.use(wsRoutes))
   .listen(env.PORT, ({ hostname, port }) => { // Corrected parameters
     console.log(`🦊 Elysia is running at http://${hostname}:${port}`);

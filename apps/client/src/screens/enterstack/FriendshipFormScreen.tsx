@@ -4,7 +4,9 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native'; // Import ActivityIndicator
+import Button from '../../components/common/Button/Button'; // Custom Button
+import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { friendshipApiService } from '../../services/FriendshipApiService'; // Import friendshipApiService
 import { createFriendshipService } from '../../services/FriendshipService';
@@ -22,7 +24,7 @@ type FriendshipFormScreenRouteProp = RouteProp<FriendshipStackParamList, 'Friend
 type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
 
 const FriendshipFormScreen = () => {
-  const navigation = useNavigation<FriendshipFormScreenNavigationProp>();
+  const navigation = useNavigation<NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>>();
   const route = useRoute<FriendshipFormScreenRouteProp>();
   const { friendshipId } = route.params || {};
 
@@ -38,6 +40,9 @@ const FriendshipFormScreen = () => {
   const [status, setStatus] = useState<FriendStatus>(FriendStatus.PENDING);
   const [servers, setServers] = useState<{ id: string; name: string; idUser?: string }[]>([]); // Added idUser
   const [isEditingExisting, setIsEditingExisting] = useState(false);
+  const [friendUsername, setFriendUsername] = useState<string | null>(null); // New state for friend's username
+  const [isCheckingFriend, setIsCheckingFriend] = useState(false); // New state for loading indicator
+  const [friendFound, setFriendFound] = useState<boolean | null>(null); // New state to indicate if friend was found
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -55,6 +60,8 @@ const FriendshipFormScreen = () => {
             setFriendId(friendship.receiverId); // Assuming receiverId is the friend's ID
             setSelectedServerId(friendship.serverId);
             setStatus(friendship.status);
+            setFriendUsername(friendship.friendUsername); // Set friendUsername for editing
+            setFriendFound(true); // Assume found if editing existing
           } else {
             Alert.alert(t('error'), t('friendship_not_found'));
             navigation.goBack();
@@ -68,6 +75,36 @@ const FriendshipFormScreen = () => {
     fetchServersAndFriendship();
   }, [friendshipId, friendshipService, serverService, navigation, t]);
 
+  const handleCheckFriendId = useCallback(async () => {
+    if (!friendId || friendId.length !== 26) { // Basic ULID validation
+      Alert.alert(t('error'), t('invalid_friend_id_format'));
+      setFriendUsername(null);
+      setFriendFound(null);
+      return;
+    }
+
+    setIsCheckingFriend(true);
+    setFriendFound(null); // Reset
+    setFriendUsername(null); // Reset
+    try {
+      const userDetails = await friendshipApiService.getUserDetails(friendId);
+      if (userDetails) {
+        setFriendUsername(userDetails.username);
+        setFriendFound(true);
+        Alert.alert(t('success'), t('user_found_with_username', { username: userDetails.username }));
+      } else {
+        setFriendFound(false);
+        Alert.alert(t('error'), t('user_not_found_on_server'));
+      }
+    } catch (error) {
+      console.error('Error checking friend ID:', error);
+      Alert.alert(t('error'), t('failed_to_check_user_id'));
+      setFriendFound(false);
+    } finally {
+      setIsCheckingFriend(false);
+    }
+  }, [friendId, t]);
+
   const handleSaveFriendship = useCallback(async () => {
     if (!currentUserId) {
       Alert.alert(t('error'), t('not_logged_in'));
@@ -77,6 +114,19 @@ const FriendshipFormScreen = () => {
       Alert.alert(t('error'), t('all_fields_required'));
       return;
     }
+    if (friendFound === false) { // Prevent saving if friend ID is explicitly not found
+      Alert.alert(t('error'), t('friend_not_found_on_server'));
+      return;
+    }
+    if (friendId === currentUserId) { // Prevent friending self
+      Alert.alert(t('error'), t('cannot_friend_self'));
+      return;
+    }
+    if (!friendUsername) { // Ensure username is available after check
+      Alert.alert(t('error'), t('please_check_friend_id'));
+      return;
+    }
+
 
     try {
       if (friendshipId) {
@@ -94,29 +144,15 @@ const FriendshipFormScreen = () => {
         }
         const currentUserServerId = selectedServer.idUser; // The current user's ID on the selected server
 
-        // Log the data being sent to the local DB
-        console.log('FriendshipFormScreen: Attempting to add friendship locally with:', {
-          senderId: currentUserServerId,
-          receiverId: friendId,
-          serverId: selectedServerId,
-          status: FriendStatus.PENDING,
-          friendUsername: friendId,
-        });
-
         await friendshipService.addFriendship({
           senderId: currentUserServerId, // Use the current user's ID on the selected server
           receiverId: friendId, // The friend's ID on the selected server (from input)
           serverId: selectedServerId,
           status: FriendStatus.PENDING, // New friendships always start as PENDING
-          friendUsername: friendId, // Placeholder for friend's username, will be updated by sync
+          friendUsername: friendUsername, // Use the fetched username
         });
-        console.log('FriendshipFormScreen: Successfully added friendship locally.');
         
-        // NEW: Send friend request to API
-        console.log('FriendshipFormScreen: Attempting to send friend request to API for targetUserId:', friendId);
-        const apiResponse = await friendshipApiService.sendFriendRequest(friendId); // friendId is the targetUserId
-        console.log('FriendshipFormScreen: API response for friend request:', apiResponse);
-
+        await friendshipApiService.sendFriendRequest(friendId); // friendId is the targetUserId
         Alert.alert(t('success'), t('friendship_added_successfully'));
       }
       navigation.goBack();
@@ -126,7 +162,7 @@ const FriendshipFormScreen = () => {
       console.error('FriendshipFormScreen: Detailed error object:', error);
       Alert.alert(t('error'), t('failed_to_save_friendship'));
     }
-  }, [currentUserId, friendId, selectedServerId, status, friendshipId, friendshipService, navigation, t, servers]); // Added 'servers' to dependencies
+  }, [currentUserId, friendId, selectedServerId, status, friendshipId, friendshipService, navigation, t, servers, friendUsername, friendFound]); // Added new dependencies
 
 
   return (
@@ -136,14 +172,35 @@ const FriendshipFormScreen = () => {
       </Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('friend_id')}</Text>
-      <TextInput
-        style={commonInputStyles.input}
-        placeholder={t('enter_friend_id')}
-        placeholderTextColor={colors.textSecondary}
-        value={friendId}
-        onChangeText={setFriendId}
-        editable={!isEditingExisting} // Cannot edit friend ID when editing existing friendship
-      />
+      <View style={styles.inputWithButton}>
+        <TextInput
+          style={[commonInputStyles.input, styles.friendIdInput]}
+          placeholder={t('enter_friend_id')}
+          value={friendId}
+          onChangeText={(text) => {
+            setFriendId(text);
+            setFriendUsername(null); // Reset username and found status on change
+            setFriendFound(null);
+          }}
+          editable={!isEditingExisting} // Cannot edit friend ID when editing existing friendship
+        />
+        {!isEditingExisting && (
+          <Button
+            onPress={handleCheckFriendId}
+            disabled={isCheckingFriend || !friendId || friendId.length !== 26} // Disable button if checking, empty, or invalid length
+          >
+            {t('check_user')}
+          </Button>
+        )}
+      </View>
+
+      {isCheckingFriend && <ActivityIndicator size="small" color={colors.primary} />}
+      {friendFound === true && friendUsername && (
+        <Text style={[styles.friendInfo, { color: colors.primary }]}>{t('user_found')}: {friendUsername}</Text>
+      )}
+      {friendFound === false && friendId.length === 26 && ( // Only show "not found" if ID length is correct
+        <Text style={[styles.friendInfo, { color: colors.error }]}>{t('user_not_found')}</Text>
+      )}
 
       <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
       <View style={[commonInputStyles.input, isEditingExisting && { backgroundColor: colors.secondary }]}>
@@ -179,10 +236,11 @@ const FriendshipFormScreen = () => {
       )}
 
       <Button
-        title={friendshipId ? t('save_changes') : t('add_friendship')}
         onPress={handleSaveFriendship}
-        color={colors.primary}
-      />
+        disabled={isCheckingFriend || friendFound === false || !friendUsername} // Disable button while checking, if friend not found, or if username not verified
+      >
+        {friendshipId ? t('save_changes') : t('add_friendship')}
+      </Button>
     </View>
   );
 };
@@ -198,6 +256,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
     marginTop: 10,
+  },
+  friendInfo: {
+    fontSize: 14,
+    marginTop: -10,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  inputWithButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  friendIdInput: {
+    flex: 1,
+    marginRight: 10,
   },
 });
 

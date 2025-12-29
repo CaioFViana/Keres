@@ -37,10 +37,23 @@ export class FriendshipApiService {
     return response.data;
   }
 
-
   async getFriendships(): Promise<EnrichedFriendship[]> {
     const response = await apiClient.get('/friend/');
     return response.data;
+  }
+
+  async getUserDetails(userId: string): Promise<{ id: string; username: string } | undefined> {
+    try {
+      const response = await apiClient.get(`/user/details/${userId}`);
+      return response.data;
+    } catch (error: any) { // Use 'any' to access response property
+      // Handle 404 specifically, return undefined if user not found
+      if (error.response && error.response.status === 404) {
+        return undefined;
+      }
+      console.error('Error fetching user details:', error);
+      throw error; // Re-throw other errors
+    }
   }
 }
 

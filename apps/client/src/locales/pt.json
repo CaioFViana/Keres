@@ -41,6 +41,7 @@
   "character_extra_notes_placeholder": "Adicione quaisquer notas extras para este personagem",
   "character_form_description": "Preencha os detalhes para criar ou editar seu personagem.",
   "character_not_found": "Personagem não encontrado.",
+  "character_relation": "Relação de Personagem",
   "character_relations": "Relações de Personagens",
   "character_relations_title": "Relações de Personagens",
   "character_tags": "Tags do Personagem",
@@ -308,6 +309,7 @@
   "register_server": "Registrar Servidor",
   "related_character": "Personagem Relacionado",
   "related_character_required": "Personagem Relacionado é obrigatório.",
+  "relation": "Relação",
   "relation_deleted_successfully": "Relação excluída com sucesso!",
   "relation_saved_successfully": "Relação salva com sucesso!",
   "relation_type": "Tipo da relação",
@@ -436,6 +438,7 @@
   "unfriend_confirmation_message": "Tem certeza de que deseja remover este amigo?",
   "unfriend_confirmation_title": "Remover Amigo",
   "unfriend_successful": "Amigo removido com sucesso!",
+  "unknown_character": "Personagem Desconhecido",
   "unknown_entity": "Entidade Desconhecida",
   "update_server": "Atualizar Servidor",
   "update_story": "Atualizar História",
@@ -471,7 +474,7 @@
   "world_rule_updated_successfully": "Regra do mundo atualizada com sucesso!",
   "world_rules": "Regras do Mundo",
   "world_rules_title": "Regras do Mundo",
-  "you_suffix": " (Você)",
+  "you_suffix": "(Você)",
   "your_friendships": "Suas Amizades",
   "your_stories": "Suas Histórias"
 }

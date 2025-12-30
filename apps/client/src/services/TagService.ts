@@ -4,6 +4,7 @@ import { AppDrizzleClient } from '../db';
 import { TagInsert, tags, TagSelect } from '../db/schema'; // Import TagInsert and stories
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { getChangedFields } from '../utils/diffUtils';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from './ServerService'; // Import ServerService and createServerService
 
@@ -117,6 +118,22 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
     },
 
     async updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+      const originalTag = await db.query.tags.findFirst({ where: eq(tags.id, tagId) });
+      if (!originalTag) {
+        throw new Error(`Tag with ID ${tagId} not found for update.`);
+      }
+
+      const potentialNewState = { ...originalTag, ...tagData };
+
+      const changes = getChangedFields(originalTag, potentialNewState);
+      delete changes.version;
+      delete changes.updatedAt;
+
+      if (Object.keys(changes).length === 0) {
+        console.log(`No significant changes detected for tag ${tagId}. Skipping update and operation log.`);
+        return;
+      }
+
       const [updatedTag] = await db.update(tags)
         .set({ ...tagData, updatedAt: new Date(), version: sql`${tags.version} + 1` })
         .where(eq(tags.id, tagId))

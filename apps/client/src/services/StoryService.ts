@@ -42,6 +42,7 @@ import {
   worldRules,
   WorldRuleSelect
 } from '../db/schema';
+import { getChangedFields } from '../utils/diffUtils';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 
 export interface StoryService {
@@ -98,6 +99,25 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     },
 
     async updateStory(currentUserId: string, storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+      const originalStory = await this.getStoryById(storyId);
+
+      if (!originalStory) {
+        throw new Error(`Story with ID ${storyId} not found.`);
+      }
+
+      // Calculate changes, excluding fields that should not trigger an update or are managed separately
+      const changes = getChangedFields(originalStory, storyData);
+      
+      // If the only change is to the 'version' (or if there are no changes), skip update and logging
+      // Assuming 'version' is always incremented by the DB, not directly passed in storyData for diffing.
+      // We only care about actual data changes.
+      const significantChanges = { ...changes };
+      
+      if (Object.keys(significantChanges).length === 0) {
+        console.log(`No significant changes detected for story ${storyId}. Skipping update and operation log.`);
+        return;
+      }
+      
       const updatedFields = { ...storyData, updatedAt: new Date() };
       // Perform the update and return the new version
       const [updatedStory] = await db.update(stories)
@@ -255,6 +275,18 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     },
 
     async updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void> {
+      const originalStory = await this.getStoryById(storyId);
+
+      if (!originalStory) {
+        throw new Error(`Story with ID ${storyId} not found.`);
+      }
+
+      // If the favorite status hasn't actually changed, skip the update and logging
+      if (originalStory.isFavorite === isFavorite) {
+        console.log(`Story ${storyId} favorite status is already ${isFavorite}. Skipping update and operation log.`);
+        return;
+      }
+
       const [updatedStory] = await db.update(stories)
         .set({ isFavorite, updatedAt: new Date(), version: sql`${stories.version} + 1` })
         .where(eq(stories.id, storyId))

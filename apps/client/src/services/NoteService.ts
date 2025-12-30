@@ -6,6 +6,7 @@ import { tagRelations } from '../db/schemas/tagRelations';
 import { TagSelect, tags } from '../db/schemas/tags'; // Import tags schema
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { getChangedFields } from '../utils/diffUtils';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
 import { createServerService } from './ServerService';
 
@@ -204,6 +205,24 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
     },
 
     async updateNote(currentUserId: string, noteId: string, noteData: Partial<Omit<NoteInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+      const originalNote = await db.query.notes.findFirst({ where: eq(notes.id, noteId) });
+      if (!originalNote) {
+        throw new Error(`Note with ID ${noteId} not found for update.`);
+      }
+
+      // Create a potential new state for diffing, including only fields that might change
+      const potentialNewState = { ...originalNote, ...noteData };
+
+      // Calculate changes, ignoring the version and updatedAt fields for the purpose of deciding to update
+      const changes = getChangedFields(originalNote, potentialNewState);
+      delete changes.version;
+      delete changes.updatedAt;
+      
+      if (Object.keys(changes).length === 0) {
+        console.log(`No significant changes detected for note ${noteId}. Skipping update and operation log.`);
+        return; // Return early if no significant changes
+      }
+
       const [updatedNote] = await db.update(notes)
         .set({ ...noteData, updatedAt: new Date(), version: sql`${notes.version} + 1` })
         .where(eq(notes.id, noteId))

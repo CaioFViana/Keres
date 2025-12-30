@@ -183,6 +183,19 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         throw new Error(`Character with ID ${characterId} not found for update.`);
       }
 
+      // Create a potential new state for diffing, including only fields that might change
+      const potentialNewState = { ...oldCharacter, ...updatedFields };
+
+      // Calculate changes, ignoring the version field for the purpose of deciding to update
+      const changes = getChangedFields(oldCharacter, potentialNewState);
+      delete changes.version; // The version will always change, so ignore it for deciding if a real update happened
+      delete changes.updatedAt; // updatedAt also changes automatically, ignore it for deciding if a real update happened
+
+      if (Object.keys(changes).length === 0) {
+        console.log(`No significant changes detected for character ${characterId}. Skipping update and operation log.`);
+        return oldCharacter; // Return the original character as no update occurred
+      }
+
       await db.update(characters)
         .set({ ...updatedFields, updatedAt: new Date(), version: sql`${characters.version} + 1` })
         .where(eq(characters.id, characterId))

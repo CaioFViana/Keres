@@ -1,3 +1,4 @@
+import { getChangedFields } from '../utils/diffUtils';
 import { StoryUpdateType } from '@keres/shared';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema'; // Import all schema

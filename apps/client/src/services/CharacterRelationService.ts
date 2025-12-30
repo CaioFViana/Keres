@@ -1,10 +1,10 @@
-import { AppDrizzleClient, characterRelations } from '../db';
 import { CharacterRelation, ServerCharacterRelationPayload } from '@keres/shared/entities/CharacterRelation';
-import { createULID } from '../utils/ulid';
 import { and, eq, or, sql } from 'drizzle-orm';
+import { AppDrizzleClient, characterRelations } from '../db';
 import { entityEventEmitter } from '../utils/EventEmitter'; // Import for event emission
 import { getChangedFields } from '../utils/diffUtils'; // Import for changed fields in update
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Imports for logging operations
+import { createULID } from '../utils/ulid';
 import { createServerService } from './ServerService'; // Import ServerService to get userId
 
 export interface CharacterRelationServiceInterface {
@@ -83,6 +83,17 @@ export const createCharacterRelationService = (db: AppDrizzleClient): CharacterR
                 throw new Error(`Old relation with ID ${relation.id} not found during update preparation.`);
             }
 
+            // Use getChangedFields to determine if there are substantive changes
+            const potentialNewState = { ...oldRelation, ...relation };
+            const changes = getChangedFields(oldRelation, potentialNewState);
+            delete changes.version;
+            delete changes.updatedAt;
+
+            if (Object.keys(changes).length === 0) {
+              console.log(`CharacterRelation ${relation.id}: No significant changes detected. Skipping update and operation log.`);
+              return oldRelation; // Return the original relation as no update occurred
+            }
+
             // Record exists, proceed with update
             const [updatedRelation] = await db.update(characterRelations)
               .set({
@@ -103,8 +114,8 @@ export const createCharacterRelationService = (db: AppDrizzleClient): CharacterR
 
             // Log update operation
             const changedFields = getChangedFields(oldRelation, updatedRelation);
-            const userIdToLog = await getUserIdForOperation(db, serverService, updatedRelation.storyId, currentUserId);
 
+            const userIdToLog = await getUserIdForOperation(db, serverService, updatedRelation.storyId, currentUserId);
             // Transform changedFields to server-compatible payload
             const serverPayload = toServerCharacterRelationPayload(changedFields);
             

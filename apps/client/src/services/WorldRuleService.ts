@@ -6,6 +6,7 @@ import { tagRelations } from '../db/schemas/tagRelations';
 import { TagSelect, tags } from '../db/schemas/tags'; // Import tags schema
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { getChangedFields } from '../utils/diffUtils';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
 import { createServerService } from './ServerService';
 
@@ -200,6 +201,22 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
     },
 
     async updateWorldRule(currentUserId: string, worldRuleId: string, worldRuleData: Partial<Omit<WorldRuleInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+      const originalWorldRule = await db.query.worldRules.findFirst({ where: eq(worldRules.id, worldRuleId) });
+      if (!originalWorldRule) {
+        throw new Error(`World Rule with ID ${worldRuleId} not found for update.`);
+      }
+
+      const potentialNewState = { ...originalWorldRule, ...worldRuleData };
+
+      const changes = getChangedFields(originalWorldRule, potentialNewState);
+      delete changes.version;
+      delete changes.updatedAt;
+
+      if (Object.keys(changes).length === 0) {
+        console.log(`No significant changes detected for world rule ${worldRuleId}. Skipping update and operation log.`);
+        return;
+      }
+
       const [updatedWorldRule] = await db.update(worldRules)
         .set({ ...worldRuleData, updatedAt: new Date(), version: sql`${worldRules.version} + 1` })
         .where(eq(worldRules.id, worldRuleId))

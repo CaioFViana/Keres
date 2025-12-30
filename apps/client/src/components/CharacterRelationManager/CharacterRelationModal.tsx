@@ -182,8 +182,9 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
             <View style={styles.formGroup}>
               <Text style={styles.label}>{t('related_character')}</Text>
               <TouchableOpacity
-                style={styles.pickerContainer}
-                onPress={() => setShowCharacterPicker(true)}
+                style={[styles.pickerContainer, initialRelation && { opacity: 0.6 }]}
+                onPress={initialRelation ? undefined : () => setShowCharacterPicker(true)}
+                disabled={!!initialRelation}
               >
                 <Text style={styles.pickerText}>
                   {relatedCharId ? getCharacterName(relatedCharId) : t('select_character')}

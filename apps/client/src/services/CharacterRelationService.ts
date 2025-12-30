@@ -32,6 +32,32 @@ const toServerCharacterRelationPayload = (
   return serverPayload;
 };
 
+// Helper function to find an existing non-deleted relation for a given pair of characters
+const getExistingRelationForPair = async (
+  db: AppDrizzleClient,
+  storyId: string,
+  charIdA: string,
+  charIdB: string,
+  excludeRelationId?: string
+): Promise<CharacterRelation | undefined> => {
+  const conditions = [
+    eq(characterRelations.storyId, storyId),
+    eq(characterRelations.isDeleted, false),
+    or(
+      and(eq(characterRelations.charId1, charIdA), eq(characterRelations.charId2, charIdB)),
+      and(eq(characterRelations.charId1, charIdB), eq(characterRelations.charId2, charIdA))
+    )
+  ];
+
+  if (excludeRelationId) {
+    conditions.push(sql`${characterRelations.id} != ${excludeRelationId}`);
+  }
+
+  return db.query.characterRelations.findFirst({
+    where: and(...conditions),
+  });
+};
+
 export const createCharacterRelationService = (db: AppDrizzleClient): CharacterRelationServiceInterface => {
   const serverService = createServerService(db);
   return {
@@ -83,6 +109,18 @@ export const createCharacterRelationService = (db: AppDrizzleClient): CharacterR
                 throw new Error(`Old relation with ID ${relation.id} not found during update preparation.`);
             }
 
+            // Prevent changing charId1 or charId2 on update ---
+            if (oldRelation.charId1 !== relation.charId1 || oldRelation.charId2 !== relation.charId2) {
+                throw new Error(`Character IDs (charId1, charId2) cannot be changed on an existing CharacterRelation.
+                                 Old: ${oldRelation.charId1}, ${oldRelation.charId2} | New: ${relation.charId1}, ${relation.charId2}`);
+            }
+
+            // Check for duplicate pair BEFORE update ---
+            const duplicateExisting = await getExistingRelationForPair(db, relation.storyId, relation.charId1, relation.charId2, relation.id);
+            if (duplicateExisting) {
+                throw new Error(`A relation between character ${relation.charId1} and ${relation.charId2} already exists with ID ${duplicateExisting.id}.`);
+            }
+
             // Use getChangedFields to determine if there are substantive changes
             const potentialNewState = { ...oldRelation, ...relation };
             const changes = getChangedFields(oldRelation, potentialNewState);
@@ -125,6 +163,12 @@ export const createCharacterRelationService = (db: AppDrizzleClient): CharacterR
           }
           console.log(`Relation with ID ${relation.id} not found for update, attempting insert instead.`);
           // If exists is false, fall through to insert logic
+        }
+
+        // Check for duplicate pair BEFORE insert ---
+        const duplicateExisting = await getExistingRelationForPair(db, relation.storyId, relation.charId1, relation.charId2);
+        if (duplicateExisting) {
+            throw new Error(`A relation between character ${relation.charId1} and ${relation.charId2} already exists with ID ${duplicateExisting.id}.`);
         }
 
         // --- INSERT LOGIC (either because relation.id was empty/undefined OR because it didn't exist for update) ---

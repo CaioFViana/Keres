@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react'; // Added useState
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
@@ -32,29 +32,42 @@ const CharacterRelationsScreen = () => {
 
   const {
     characterRelations,
+    searchTerm: storeSearchTerm, // Renamed to avoid collision with local state
     loading,
     error,
-    searchTerm,
     activeSort,
     sortDirection,
     advancedSearchCriteria,
     fetchCharacterRelations,
-    setSearchTerm,
+    setSearchTerm: setStoreSearchTerm, // Renamed to avoid collision with local state
     setDbAndStoryId,
     initializeService,
     setSort,
     setAdvancedSearchCriteria,
   } = useCharacterRelationStore();
 
-  const debouncedFetchCharacterRelations = useMemo(
-    () => debounce(() => fetchCharacterRelations(), 1000), // Debounce for 300ms
-    [fetchCharacterRelations]
+  const [searchQuery, setSearchQuery] = useState(storeSearchTerm); // Local state for immediate input feedback
+
+  // Synchronize local searchQuery with storeSearchTerm if storeSearchTerm changes externally
+  useEffect(() => {
+    if (storeSearchTerm !== searchQuery) {
+      setSearchQuery(storeSearchTerm);
+    }
+  }, [storeSearchTerm]); // Only react to storeSearchTerm changes
+
+  const debouncedSetStoreSearchTerm = useMemo(
+    () => debounce((term: string) => setStoreSearchTerm(term), 1000), // Debounce for 1000ms
+    [setStoreSearchTerm]
   );
 
-  const debouncedSetSearchTerm = useMemo(
-    () => debounce((term: string) => setSearchTerm(term), 1000), // Debounce for 300ms
-    [setSearchTerm]
-  );
+  // Debounce the update to the store's searchTerm
+  useEffect(() => {
+    debouncedSetStoreSearchTerm(searchQuery);
+
+    return () => {
+      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
+    };
+  }, [searchQuery, debouncedSetStoreSearchTerm]);
 
   useEffect(() => {
     if (drizzleDb && selectedStory?.id) {
@@ -63,23 +76,16 @@ const CharacterRelationsScreen = () => {
     }
   }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService]);
 
+  // Effect to trigger fetch when storeSearchTerm changes (after debounce)
+  // or when other filter/sort criteria change (immediately via store setters)
   useEffect(() => {
-    debouncedFetchCharacterRelations();
-    return () => {
-      debouncedFetchCharacterRelations.cancel && debouncedFetchCharacterRelations.cancel();
-    };
-  }, [searchTerm, activeSort, sortDirection, advancedSearchCriteria, debouncedFetchCharacterRelations]);
-
-  useEffect(() => {
-    return () => {
-      debouncedSetSearchTerm.cancel && debouncedSetSearchTerm.cancel();
-    };
-  }, [debouncedSetSearchTerm]);
+    fetchCharacterRelations();
+  }, [storeSearchTerm, activeSort, sortDirection, advancedSearchCriteria, fetchCharacterRelations]);
 
   useEffect(() => {
     const handleCharacterRelationChange = (storyId: string) => {
       if (selectedStory?.id === storyId) {
-        debouncedFetchCharacterRelations();
+        fetchCharacterRelations(); // Call the immediate fetchCharacterRelations
       }
     };
 
@@ -88,7 +94,7 @@ const CharacterRelationsScreen = () => {
     return () => {
       entityEventEmitter.off('character_relation_changed', handleCharacterRelationChange);
     };
-  }, [selectedStory?.id, debouncedFetchCharacterRelations]);
+  }, [selectedStory?.id, fetchCharacterRelations]);
 
   useFocusEffect(
     useCallback(() => {
@@ -125,8 +131,8 @@ const CharacterRelationsScreen = () => {
   }, [t]);
 
   const handleSearch = useCallback((term: string) => {
-    debouncedSetSearchTerm(term); // Use the debounced setter
-  }, [debouncedSetSearchTerm]);
+    setSearchQuery(term); // Update local state immediately
+  }, [setSearchQuery]);
 
   const handleSortChange = useCallback((sortBy: string | null) => {
     setSort(sortBy, sortDirection);
@@ -186,7 +192,7 @@ const CharacterRelationsScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         searchPlaceholder={t('search_relations')}
-        currentSearchTerm={searchTerm}
+        currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={[]} // No tag filtering
         onFilterChange={() => {}} // No tag filtering
         selectedFilterValues={[]} // No tag filtering

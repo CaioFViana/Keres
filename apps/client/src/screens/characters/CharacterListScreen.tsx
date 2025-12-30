@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useState
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
@@ -11,12 +11,12 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { CharacterWithTags, FavoriteFilterState } from '../../services/CharacterService'; // Import CharacterWithTags and FavoriteFilterState
+import { CharacterWithTags, FavoriteFilterState } from '../../services/CharacterService';
 import { createTagService } from '../../services/TagService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { debounce } from '../../utils/debounce'; // Import debounce
+import { debounce } from '../../utils/debounce';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type CharactersScreenNavigationProp = CompositeNavigationProp<
@@ -32,14 +32,12 @@ const CharactersScreen = () => {
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
 
-  const [advancedSearchCriteria, setAdvancedSearchCriteria] = useState<{ [key: string]: any }>({}); // State to hold advanced search criteria
-
   // Use the character store
   const {
     characters,
-    searchTerm,
+    searchTerm: storeSearchTerm, // Renamed to avoid collision with local state
     activeFilterTags,
-    favoriteFilterState, // Destructure favoriteFilterState
+    favoriteFilterState,
     activeSort,
     sortDirection,
     loading,
@@ -47,17 +45,18 @@ const CharactersScreen = () => {
     setDbAndStoryId,
     initializeService,
     fetchCharacters,
-    setSearchTerm,
+    setSearchTerm: setStoreSearchTerm, // Renamed to avoid collision with local state
     setFilterTags,
-    setFavoriteFilter, // Destructure setFavoriteFilter
+    setFavoriteFilter,
     setSort,
     toggleFavorite,
-    advancedSearchCriteria: storeAdvancedSearchCriteria, // Renamed to avoid collision with local state
-    setAdvancedSearchCriteria: setStoreAdvancedSearchCriteria, // Renamed to avoid collision with local state
+    advancedSearchCriteria: storeAdvancedSearchCriteria,
+    setAdvancedSearchCriteria: setStoreAdvancedSearchCriteria,
   } = useCharacterStore();
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const tagService = useRef(createTagService(drizzleDb)).current;
+  const [searchQuery, setSearchQuery] = useState(storeSearchTerm); // Local state for immediate input feedback
 
   // Styles are always defined at the top
   const styles = StyleSheet.create({
@@ -94,35 +93,39 @@ const CharactersScreen = () => {
     } catch (error) {
       console.error('Failed to fetch tags:', error);
     }
-  }, [selectedStory?.id, tagService]); // Add tagService to dependencies
+  }, [selectedStory?.id, tagService]);
 
-  // Debounce the fetchCharacters call
-  const debouncedFetchCharacters = useMemo(
-    () => debounce(() => fetchCharacters()),
-    [fetchCharacters]
-  );
+  // Debounce the update to the store's searchTerm
+  useEffect(() => {
+    const handler = debounce(() => {
+      setStoreSearchTerm(searchQuery);
+    }, 1000); // Debounce for 1000ms
+
+    handler();
+
+    return () => {
+      handler.cancel && handler.cancel();
+    };
+  }, [searchQuery, setStoreSearchTerm]);
 
   useEffect(() => {
     if (drizzleDb && selectedStory?.id) {
       setDbAndStoryId(drizzleDb, selectedStory.id);
       initializeService();
-      // fetchCharacters(); // Removed: now handled by debounced effect
       fetchTags();
     }
   }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService, fetchTags]);
 
+  // Effect to trigger fetch when storeSearchTerm changes (after debounce)
+  // or when other filter/sort criteria change (immediately via store setters)
   useEffect(() => {
-    debouncedFetchCharacters();
-    return () => {
-      debouncedFetchCharacters.cancel && debouncedFetchCharacters.cancel();
-    };
-  }, [searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, debouncedFetchCharacters, storeAdvancedSearchCriteria]); // Added storeAdvancedSearchCriteria
+    fetchCharacters();
+  }, [storeSearchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, storeAdvancedSearchCriteria, fetchCharacters]);
 
   useEffect(() => {
     const handleCharacterChange = (storyId: string) => {
-      // Only refetch if the change is for the currently selected story
       if (selectedStory?.id === storyId) {
-        debouncedFetchCharacters();
+        fetchCharacters(); // Call the immediate fetchCharacters
       }
     };
 
@@ -131,12 +134,11 @@ const CharactersScreen = () => {
     return () => {
       entityEventEmitter.off('character_changed', handleCharacterChange);
     };
-  }, [selectedStory?.id, debouncedFetchCharacters]); // Dependencies for event listener
+  }, [selectedStory?.id, fetchCharacters]);
 
   // Listen for reset event
   useEffect(() => {
     const handleReset = () => {
-      // Only pop to top if there's more than one screen in the stack
       if (navigation.getState().routes.length > 1) {
         navigation.dispatch(StackActions.popToTop());
       }
@@ -155,7 +157,7 @@ const CharactersScreen = () => {
         title: t('characters_title'),
         headerRight: () => (
           <TouchableOpacity
-            onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })} // Navigate to CharacterForm for creation
+            onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
             style={{ marginRight: 15 }}
           >
             <Ionicons name="add" size={30} color={colors.text} />
@@ -182,7 +184,7 @@ const CharactersScreen = () => {
   ), [handleToggleFavorite, handleViewDetails]);
 
   const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id })); // Fixed implicit any
+    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id }));
   }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {
@@ -202,8 +204,8 @@ const CharactersScreen = () => {
   }, [setSort, activeSort]);
 
   const handleSearch = useCallback((term: string) => {
-    setSearchTerm(term);
-  }, [setSearchTerm]);
+    setSearchQuery(term); // Update local state immediately
+  }, [setSearchQuery]);
 
   const handleFilterChange = useCallback((selectedValues: string[]) => {
     setFilterTags(selectedValues);
@@ -217,7 +219,7 @@ const CharactersScreen = () => {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>Loading characters...</Text>
+        <Text style={styles.detailText}>{t('loading_characters')}</Text>
       </View>
     );
   }
@@ -227,7 +229,7 @@ const CharactersScreen = () => {
       <View style={[styles.container, styles.centerContent]}>
         <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
         <View style={styles.buttonContainer}>
-          <Button title="Go Back" onPress={() => navigation.goBack()} color={colors.primary} />
+          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
         </View>
       </View>
     );
@@ -236,27 +238,26 @@ const CharactersScreen = () => {
   return (
     <View style={styles.container}>
       <GenericFilterSortList
-        data={characters} // Use characters from store
-        renderItem={memoizedRenderItem} // Use memoized renderItem
+        data={characters}
+        renderItem={memoizedRenderItem}
         keyExtractor={(item) => item.id}
-        onSearch={handleSearch} // Use store action
+        onSearch={handleSearch}
         searchPlaceholder={t('search_characters')}
-        currentSearchTerm={searchTerm} // Pass searchTerm from store
-        filterOptions={memoizedTagFilterOptions} // Use memoized filterOptions
-        onFilterChange={handleFilterChange} // Use store action
-        selectedFilterValues={activeFilterTags} // Use store state
-        sortOptions={memoizedSortOptions} // Use memoized sortOptions
-        onSortChange={handleSortChange} // Use store action
-        onSortDirectionChange={handleSortDirectionChange} // Use store action
-        currentSortDirection={sortDirection} // Use store state
-        currentSortValue={activeSort} // Pass activeSort from store
-        onFavoriteFilterChange={handleFavoriteFilterChange} // Pass handler for favorite filter
-        currentFavoriteFilterState={favoriteFilterState} // Pass current favorite filter state
-        // Advanced Search Props
+        currentSearchTerm={searchQuery} // Display local state for responsive input
+        filterOptions={memoizedTagFilterOptions}
+        onFilterChange={handleFilterChange}
+        selectedFilterValues={activeFilterTags}
+        sortOptions={memoizedSortOptions}
+        onSortChange={handleSortChange}
+        onSortDirectionChange={handleSortDirectionChange}
+        currentSortDirection={sortDirection}
+        currentSortValue={activeSort}
+        onFavoriteFilterChange={handleFavoriteFilterChange}
+        currentFavoriteFilterState={favoriteFilterState}
         entityName="Character"
         storyId={selectedStory?.id || ''}
-        onAdvancedSearch={setStoreAdvancedSearchCriteria} // Use the store's setter
-        currentAdvancedSearchCriteria={storeAdvancedSearchCriteria} // Use the store's criteria
+        onAdvancedSearch={setStoreAdvancedSearchCriteria}
+        currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
       />
     </View>
   );

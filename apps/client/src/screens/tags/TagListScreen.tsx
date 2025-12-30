@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react'; // Added useState
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
@@ -33,7 +33,7 @@ const TagsScreen = () => {
 
   const {
     tags,
-    searchTerm,
+    searchTerm: storeSearchTerm, // Renamed to avoid collision with local state
     activeSort,
     sortDirection,
     favoriteFilterState,
@@ -41,7 +41,7 @@ const TagsScreen = () => {
     loading,
     error,
     fetchTags,
-    setSearchTerm,
+    setSearchTerm: setStoreSearchTerm, // Renamed to avoid collision with local state
     setDbAndStoryId,
     initializeService,
     setSort,
@@ -50,11 +50,21 @@ const TagsScreen = () => {
     toggleFavorite,
   } = useTagStore();
 
-  // Debounce the fetchTags call
-  const debouncedFetchTags = useMemo(
-    () => debounce(() => fetchTags()),
-    [fetchTags]
+  const [searchQuery, setSearchQuery] = useState(storeSearchTerm); // Local state for immediate input feedback
+
+  const debouncedSetStoreSearchTerm = useMemo(
+    () => debounce((term: string) => setStoreSearchTerm(term), 1000), // Debounce for 1000ms
+    [setStoreSearchTerm]
   );
+
+  // Debounce the update to the store's searchTerm
+  useEffect(() => {
+    debouncedSetStoreSearchTerm(searchQuery);
+
+    return () => {
+      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
+    };
+  }, [searchQuery, debouncedSetStoreSearchTerm]);
 
   useEffect(() => {
     if (drizzleDb && selectedStory?.id) {
@@ -63,17 +73,17 @@ const TagsScreen = () => {
     }
   }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService]);
 
+  // Effect to trigger fetch when storeSearchTerm changes (after debounce)
+  // or when other filter/sort criteria change (immediately via store setters)
   useEffect(() => {
-    debouncedFetchTags();
-    return () => {
-      debouncedFetchTags.cancel && debouncedFetchTags.cancel();
-    };
-  }, [searchTerm, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, debouncedFetchTags]);
+    fetchTags();
+  }, [storeSearchTerm, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, fetchTags]);
+
 
   useEffect(() => {
     const handleTagChange = (storyId: string) => {
       if (selectedStory?.id === storyId) {
-        debouncedFetchTags();
+        fetchTags(); // Call the immediate fetchTags
       }
     };
 
@@ -82,7 +92,7 @@ const TagsScreen = () => {
     return () => {
       entityEventEmitter.off('tag_changed', handleTagChange);
     };
-  }, [selectedStory?.id, debouncedFetchTags]);
+  }, [selectedStory?.id, fetchTags]);
 
 
   // Listen for reset event
@@ -138,8 +148,8 @@ const TagsScreen = () => {
   }, [t]);
 
   const handleSearch = useCallback((term: string) => {
-    setSearchTerm(term);
-  }, [setSearchTerm]);
+    setSearchQuery(term); // Update local state immediately
+  }, [setSearchQuery]);
 
   const handleSortChange = useCallback((sortBy: string | null) => {
     setSort(sortBy, sortDirection);
@@ -203,7 +213,7 @@ const TagsScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         searchPlaceholder={t('search_tags')}
-        currentSearchTerm={searchTerm}
+        currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={[]} // No tag filtering by other tags for TagsScreen
         onFilterChange={() => {}} // No tag filtering by other tags for TagsScreen
         selectedFilterValues={[]} // No tag filtering by other tags for TagsScreen

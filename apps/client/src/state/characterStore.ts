@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
 import { CharacterService, CharacterWithTags, createCharacterService } from '../services/CharacterService'; // Import CharacterWithTags
 import { useUserSettingsStore } from './userSettingsStore';
+import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
 
 type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
@@ -85,20 +86,27 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
   setFilterTags: (tags) => {
     set({ activeFilterTags: tags });
+    get().fetchCharacters();
   },
 
   setFavoriteFilter: (state) => {
     set({ favoriteFilterState: state });
+    get().fetchCharacters();
   },
 
   setSort: (sortBy, direction) => {
     set({ activeSort: sortBy, sortDirection: direction });
+    get().fetchCharacters();
   },
 
   toggleFavorite: async (characterId, isFavorite) => {
-    const { characterService, characters } = get();
+    const { characterService, storyId } = get(); // Get storyId from get()
     if (!characterService) {
       console.error('Character service not set.');
+      return;
+    }
+    if (!storyId) { // Added check for storyId
+      console.error('Story ID not available. Cannot toggle character favorite status.');
       return;
     }
 
@@ -117,13 +125,15 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     try {
       await characterService.updateCharacter(userId, characterId, { isFavorite });
+      entityEventEmitter.emit('character_changed', storyId); // Added this line for consistency
     } catch (err) {
       console.error('Failed to toggle favorite status:', err);
       set({ error: 'Failed to update favorite status.' });
     }
   },
 
-  setAdvancedSearchCriteria: (criteria) => { // Added
+  setAdvancedSearchCriteria: (criteria) => {
     set({ advancedSearchCriteria: criteria });
+    get().fetchCharacters();
   },
 }));

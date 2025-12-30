@@ -38,7 +38,7 @@ const WorldRulesScreen = () => {
 
   const {
     worldRules,
-    searchTerm,
+    searchTerm: storeSearchTerm, // Renamed to avoid collision with local state
     activeFilterTags,
     activeSort,
     sortDirection,
@@ -47,7 +47,7 @@ const WorldRulesScreen = () => {
     loading,
     error,
     fetchWorldRules,
-    setSearchTerm,
+    setSearchTerm: setStoreSearchTerm, // Renamed to avoid collision with local state
     setDbAndStoryId,
     initializeService,
     setSort,
@@ -57,11 +57,28 @@ const WorldRulesScreen = () => {
     toggleFavorite,
   } = worldRuleStore();
 
-  // Debounce the fetchWorldRules call
-  const debouncedFetchWorldRules = useMemo(
-    () => debounce(() => fetchWorldRules()),
-    [fetchWorldRules]
+  const [searchQuery, setSearchQuery] = useState(storeSearchTerm); // Local state for immediate input feedback
+
+  // Synchronize local searchQuery with storeSearchTerm if storeSearchTerm changes externally
+  useEffect(() => {
+    if (storeSearchTerm !== searchQuery) {
+      setSearchQuery(storeSearchTerm);
+    }
+  }, [storeSearchTerm]); // Only react to storeSearchTerm changes
+
+  const debouncedSetStoreSearchTerm = useMemo(
+    () => debounce((term: string) => setStoreSearchTerm(term), 1000), // Debounce for 1000ms
+    [setStoreSearchTerm]
   );
+
+  // Debounce the update to the store's searchTerm
+  useEffect(() => {
+    debouncedSetStoreSearchTerm(searchQuery);
+
+    return () => {
+      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
+    };
+  }, [searchQuery, debouncedSetStoreSearchTerm]);
 
   const fetchTags = useCallback(async () => {
     if (!selectedStory?.id) {
@@ -84,17 +101,16 @@ const WorldRulesScreen = () => {
     }
   }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService, fetchTags]);
 
+  // Effect to trigger fetch when storeSearchTerm changes (after debounce)
+  // or when other filter/sort criteria change (immediately via store setters)
   useEffect(() => {
-    debouncedFetchWorldRules();
-    return () => {
-      debouncedFetchWorldRules.cancel && debouncedFetchWorldRules.cancel();
-    };
-  }, [searchTerm, activeFilterTags, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, debouncedFetchWorldRules]);
+    fetchWorldRules();
+  }, [storeSearchTerm, activeFilterTags, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, fetchWorldRules]);
 
   useEffect(() => {
     const handleWorldRuleChange = (storyId: string) => {
       if (selectedStory?.id === storyId) {
-        debouncedFetchWorldRules();
+        fetchWorldRules();
       }
     };
 
@@ -103,12 +119,11 @@ const WorldRulesScreen = () => {
     return () => {
       entityEventEmitter.off('worldrule_changed', handleWorldRuleChange);
     };
-  }, [selectedStory?.id, debouncedFetchWorldRules]);
+  }, [selectedStory?.id, fetchWorldRules]);
 
   // Listen for reset event
   useEffect(() => {
     const handleReset = () => {
-      // Only pop to top if there's more than one screen in the stack
       if (navigation.getState().routes.length > 1) {
         navigation.dispatch(StackActions.popToTop());
       }
@@ -162,8 +177,8 @@ const WorldRulesScreen = () => {
   }, [t]);
 
   const handleSearch = useCallback((term: string) => {
-    setSearchTerm(term);
-  }, [setSearchTerm]);
+    setSearchQuery(term); // Update local state immediately
+  }, [setSearchQuery]);
 
   const handleSortChange = useCallback((sortBy: string | null) => {
     setSort(sortBy, sortDirection);
@@ -231,7 +246,7 @@ const WorldRulesScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         searchPlaceholder={t('search_world_rules')}
-        currentSearchTerm={searchTerm}
+        currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
         onFilterChange={handleFilterChange}
         selectedFilterValues={activeFilterTags}

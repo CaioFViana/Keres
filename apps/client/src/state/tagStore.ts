@@ -35,7 +35,7 @@ interface TagStore {
 }
 
 const defaultState = {
-  tags: [],
+  tags: [] as TagSelect[],
   searchTerm: '',
   activeFilterTags: [],
   favoriteFilterState: 'all' as FavoriteFilterState,
@@ -60,7 +60,7 @@ export const useTagStore = create<TagStore>((set, get) => ({
     }
   },
 
-  fetchTags: debounce(async () => {
+  fetchTags: async () => {
     const { tagService, storyId, searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, advancedSearchCriteria } = get();
     if (!tagService || !storyId) {
       set({ tags: [], loading: false });
@@ -83,12 +83,23 @@ export const useTagStore = create<TagStore>((set, get) => ({
       console.error('Failed to fetch tags:', err);
       set({ error: 'Failed to load tags.', loading: false });
     }
-  }, 300), // Debounce for 300ms
+  },
 
-  setSearchTerm: (term: string) => set({ searchTerm: term }),
-  setFilterTags: (tagIds: string[]) => set({ activeFilterTags: tagIds }),
-  setFavoriteFilter: (state: FavoriteFilterState) => set({ favoriteFilterState: state }),
-  setSort: (sortBy: string | null, direction: 'asc' | 'desc') => set({ activeSort: sortBy, sortDirection: direction }),
+  setSearchTerm: (term: string) => {
+    set({ searchTerm: term });
+  },
+  setFilterTags: (tagIds: string[]) => {
+    set({ activeFilterTags: tagIds });
+    get().fetchTags();
+  },
+  setFavoriteFilter: (state: FavoriteFilterState) => {
+    set({ favoriteFilterState: state });
+    get().fetchTags();
+  },
+  setSort: (sortBy: string | null, direction: 'asc' | 'desc') => {
+    set({ activeSort: sortBy, sortDirection: direction });
+    get().fetchTags();
+  },
 
   toggleFavorite: async (tagId: string, isFavorite: boolean) => {
     const { tagService, storyId } = get();
@@ -112,15 +123,17 @@ export const useTagStore = create<TagStore>((set, get) => ({
 
     try {
       await tagService.updateTag(userId, tagId, { isFavorite });
-      // Removed fetchTags() call here, optimistic update already handled UI
-      entityEventEmitter.emit('tag_changed', storyId); // Still emit for other listeners
+      entityEventEmitter.emit('tag_changed', storyId);
     } catch (error) {
       console.error('Failed to toggle tag favorite status:', error);
       set({ error: 'Failed to update tag favorite status.' });
     }
   },
 
-  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => set({ advancedSearchCriteria: criteria }),
+  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => {
+    set({ advancedSearchCriteria: criteria });
+    get().fetchTags();
+  },
   
   resetStore: () => set(defaultState),
 }));

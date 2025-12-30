@@ -59,7 +59,7 @@ export const worldRuleStore = create<WorldRuleStore>((set, get) => ({
     }
   },
 
-  fetchWorldRules: debounce(async () => {
+  fetchWorldRules: async () => {
     const { worldRuleService, storyId, searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, advancedSearchCriteria } = get();
     if (!worldRuleService || !storyId) {
       set({ worldRules: [], loading: false });
@@ -82,12 +82,23 @@ export const worldRuleStore = create<WorldRuleStore>((set, get) => ({
       console.error('Failed to fetch world rules:', err);
       set({ error: 'Failed to load world rules.', loading: false });
     }
-  }, 300),
+  },
 
-  setSearchTerm: (term: string) => set({ searchTerm: term }),
-  setFilterTags: (tagIds: string[]) => set({ activeFilterTags: tagIds }),
-  setFavoriteFilter: (state: FavoriteFilterState) => set({ favoriteFilterState: state }),
-  setSort: (sortBy: string | null, direction: 'asc' | 'desc') => set({ activeSort: sortBy, sortDirection: direction }),
+  setSearchTerm: (term: string) => {
+    set({ searchTerm: term });
+  },
+  setFilterTags: (tagIds: string[]) => {
+    set({ activeFilterTags: tagIds });
+    get().fetchWorldRules();
+  },
+  setFavoriteFilter: (state: FavoriteFilterState) => {
+    set({ favoriteFilterState: state });
+    get().fetchWorldRules();
+  },
+  setSort: (sortBy: string | null, direction: 'asc' | 'desc') => {
+    set({ activeSort: sortBy, sortDirection: direction });
+    get().fetchWorldRules();
+  },
 
   toggleFavorite: async (worldRuleId: string, isFavorite: boolean) => {
     const { worldRuleService, storyId } = get();
@@ -118,7 +129,10 @@ export const worldRuleStore = create<WorldRuleStore>((set, get) => ({
     }
   },
 
-  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => set({ advancedSearchCriteria: criteria }),
+  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => {
+    set({ advancedSearchCriteria: criteria });
+    get().fetchWorldRules();
+  },
   
   resetStore: () => set(defaultState),
 }));

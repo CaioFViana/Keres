@@ -37,7 +37,7 @@ const NotesScreen = () => {
 
   const {
     notes,
-    searchTerm,
+    searchTerm: storeSearchTerm, // Renamed to avoid collision with local state
     activeFilterTags,
     activeSort,
     sortDirection,
@@ -46,7 +46,7 @@ const NotesScreen = () => {
     loading,
     error,
     fetchNotes,
-    setSearchTerm,
+    setSearchTerm: setStoreSearchTerm, // Renamed to avoid collision with local state
     setDbAndStoryId,
     initializeService,
     setSort,
@@ -56,11 +56,28 @@ const NotesScreen = () => {
     toggleFavorite,
   } = useNoteStore();
 
-  // Debounce the fetchNotes call
-  const debouncedFetchNotes = useMemo(
-    () => debounce(() => fetchNotes()),
-    [fetchNotes]
+  const [searchQuery, setSearchQuery] = useState(storeSearchTerm); // Local state for immediate input feedback
+
+  // Synchronize local searchQuery with storeSearchTerm if storeSearchTerm changes externally
+  useEffect(() => {
+    if (storeSearchTerm !== searchQuery) {
+      setSearchQuery(storeSearchTerm);
+    }
+  }, [storeSearchTerm]); // Only react to storeSearchTerm changes
+
+  const debouncedSetStoreSearchTerm = useMemo(
+    () => debounce((term: string) => setStoreSearchTerm(term), 1000), // Debounce for 1000ms
+    [setStoreSearchTerm]
   );
+
+  // Debounce the update to the store's searchTerm
+  useEffect(() => {
+    debouncedSetStoreSearchTerm(searchQuery);
+
+    return () => {
+      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
+    };
+  }, [searchQuery, debouncedSetStoreSearchTerm]);
 
   const fetchTags = useCallback(async () => {
     if (!selectedStory?.id) {
@@ -83,17 +100,16 @@ const NotesScreen = () => {
     }
   }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService, fetchTags]);
 
+  // Effect to trigger fetch when storeSearchTerm changes (after debounce)
+  // or when other filter/sort criteria change (immediately via store setters)
   useEffect(() => {
-    debouncedFetchNotes();
-    return () => {
-      debouncedFetchNotes.cancel && debouncedFetchNotes.cancel();
-    };
-  }, [searchTerm, activeFilterTags, sortDirection, favoriteFilterState, advancedSearchCriteria, debouncedFetchNotes]);
+    fetchNotes();
+  }, [storeSearchTerm, activeFilterTags, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, fetchNotes]);
 
   useEffect(() => {
     const handleNoteChange = (storyId: string) => {
       if (selectedStory?.id === storyId) {
-        debouncedFetchNotes();
+        fetchNotes(); // Call the immediate fetchNotes
       }
     };
 
@@ -102,12 +118,11 @@ const NotesScreen = () => {
     return () => {
       entityEventEmitter.off('note_changed', handleNoteChange);
     };
-  }, [selectedStory?.id, debouncedFetchNotes]);
+  }, [selectedStory?.id, fetchNotes]);
 
   // Listen for reset event
   useEffect(() => {
     const handleReset = () => {
-      // Only pop to top if there's more than one screen in the stack
       if (navigation.getState().routes.length > 1) {
         navigation.dispatch(StackActions.popToTop());
       }
@@ -161,8 +176,8 @@ const NotesScreen = () => {
   }, [t]);
 
   const handleSearch = useCallback((term: string) => {
-    setSearchTerm(term);
-  }, [setSearchTerm]);
+    setSearchQuery(term); // Update local state immediately
+  }, [setSearchQuery]);
 
   const handleSortChange = useCallback((sortBy: string | null) => {
     setSort(sortBy, sortDirection);
@@ -230,7 +245,7 @@ const NotesScreen = () => {
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
         searchPlaceholder={t('search_notes')}
-        currentSearchTerm={searchTerm}
+        currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
         onFilterChange={handleFilterChange}
         selectedFilterValues={activeFilterTags}

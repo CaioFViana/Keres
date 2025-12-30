@@ -60,7 +60,7 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
     }
   },
 
-  fetchNotes: debounce(async () => {
+  fetchNotes: async () => {
     const { noteService, storyId, searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, advancedSearchCriteria } = get();
     if (!noteService || !storyId) {
       set({ notes: [], loading: false });
@@ -83,12 +83,23 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
       console.error('Failed to fetch notes:', err);
       set({ error: 'Failed to load notes.', loading: false });
     }
-  }, 300),
+  },
 
-  setSearchTerm: (term: string) => set({ searchTerm: term }),
-  setFilterTags: (tagIds: string[]) => set({ activeFilterTags: tagIds }),
-  setFavoriteFilter: (state: FavoriteFilterState) => set({ favoriteFilterState: state }),
-  setSort: (sortBy: string | null, direction: 'asc' | 'desc') => set({ activeSort: sortBy, sortDirection: direction }),
+  setSearchTerm: (term: string) => {
+    set({ searchTerm: term });
+  },
+  setFilterTags: (tagIds: string[]) => {
+    set({ activeFilterTags: tagIds });
+    get().fetchNotes();
+  },
+  setFavoriteFilter: (state: FavoriteFilterState) => {
+    set({ favoriteFilterState: state });
+    get().fetchNotes();
+  },
+  setSort: (sortBy: string | null, direction: 'asc' | 'desc') => {
+    set({ activeSort: sortBy, sortDirection: direction });
+    get().fetchNotes();
+  },
 
   toggleFavorite: async (noteId: string, isFavorite: boolean) => {
     const { noteService, storyId } = get();
@@ -119,7 +130,10 @@ export const useNoteStore = create<NoteStore>((set, get) => ({
     }
   },
 
-  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => set({ advancedSearchCriteria: criteria }),
+  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => {
+    set({ advancedSearchCriteria: criteria });
+    get().fetchNotes();
+  },
   
   resetStore: () => set(defaultState),
 }));

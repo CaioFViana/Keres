@@ -476,5 +476,10 @@
   "world_rules_title": "Regras do Mundo",
   "you_suffix": "(Você)",
   "your_friendships": "Suas Amizades",
-  "your_stories": "Suas Histórias"
+  "your_stories": "Suas Histórias",
+  "sort_by_relation_type": "Ordenar por Tipo de Relação",
+  "sort_by_character1_name": "Ordenar por Nome do Personagem 1",
+  "sort_by_character2_name": "Ordenar por Nome do Personagem 2",
+  "loading_relations": "Carregando relações...",
+  "search_relations": "Pesquisar Relações"
 }

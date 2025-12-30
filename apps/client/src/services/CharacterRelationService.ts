@@ -1,16 +1,29 @@
 import { CharacterRelation, ServerCharacterRelationPayload } from '@keres/shared/entities/CharacterRelation';
-import { and, eq, or, sql } from 'drizzle-orm';
-import { AppDrizzleClient, characterRelations } from '../db';
+import { and, eq, or, sql, asc, desc, SQL } from 'drizzle-orm'; // Import SQL
+import { AppDrizzleClient, characterRelations, characters, CharacterSelect } from '../db';
 import { entityEventEmitter } from '../utils/EventEmitter'; // Import for event emission
 import { getChangedFields } from '../utils/diffUtils'; // Import for changed fields in update
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Imports for logging operations
 import { createULID } from '../utils/ulid';
 import { createServerService } from './ServerService'; // Import ServerService to get userId
+import { alias } from 'drizzle-orm/sqlite-core'; // Import alias for table aliasing
+
+export type CharacterRelationWithNames = CharacterRelation & {
+  char1Name: string;
+  char2Name: string;
+};
 
 export interface CharacterRelationServiceInterface {
   getRelationsForCharacter(storyId: string, characterId: string): Promise<CharacterRelation[]>;
   saveCharacterRelation(currentUserId: string, relation: CharacterRelation): Promise<CharacterRelation>; // Added currentUserId
   deleteCharacterRelation(currentUserId: string, relationId: string): Promise<boolean>; // Added currentUserId
+  getCharacterRelationsByStoryId(
+    storyId: string,
+    searchTerm?: string,
+    sortBy?: string | null,
+    sortDirection?: 'asc' | 'desc',
+    advancedSearchCriteria?: { [key: string]: any }
+  ): Promise<CharacterRelationWithNames[]>;
 }
 
 // Helper function to map client-side CharacterRelation to server-side payload structure
@@ -240,6 +253,85 @@ export const createCharacterRelationService = (db: AppDrizzleClient): CharacterR
         console.error(`Error deleting character relation ${relationId}:`, error);
         return false;
       }
+    },
+
+    async getCharacterRelationsByStoryId(
+      storyId: string,
+      searchTerm?: string,
+      sortBy?: string | null,
+      sortDirection?: 'asc' | 'desc',
+      advancedSearchCriteria?: { [key: string]: any }
+    ): Promise<CharacterRelationWithNames[]> {
+      const char1 = alias(characters, 'char1');
+      const char2 = alias(characters, 'char2');
+
+      const conditions = [
+        eq(characterRelations.storyId, storyId),
+        eq(characterRelations.isDeleted, false),
+      ];
+
+      // Apply search term to character names and relation type
+      if (searchTerm) {
+        conditions.push(
+          or(
+            sql`${char1.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+            sql`${char2.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+            sql`${characterRelations.relationType} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>
+          ) as SQL<boolean> // Explicit cast for the entire OR expression
+        );
+      }
+
+      // Apply advanced search criteria for relationType
+      if (advancedSearchCriteria?.relationType) {
+        conditions.push(sql`${characterRelations.relationType} LIKE ${`%${advancedSearchCriteria.relationType}%`} COLLATE NOCASE` as SQL<boolean>);
+      }
+
+      // Main query with joins to get character names
+      let query = db.select({
+        relation: characterRelations,
+        char1Name: char1.name,
+        char2Name: char2.name,
+      })
+      .from(characterRelations)
+      .innerJoin(char1, eq(characterRelations.charId1, char1.id))
+      .innerJoin(char2, eq(characterRelations.charId2, char2.id))
+      .where(and(...conditions))
+      .$dynamic();
+
+      // Apply sorting
+      if (sortBy) {
+        const order = sortDirection === 'desc' ? desc : asc;
+        switch (sortBy) {
+          case 'relationType':
+            query = query.orderBy(order(characterRelations.relationType));
+            break;
+          case 'char1Name':
+            query = query.orderBy(order(char1.name));
+            break;
+          case 'char2Name':
+            query = query.orderBy(order(char2.name));
+            break;
+          case 'createdAt':
+            query = query.orderBy(order(characterRelations.createdAt));
+            break;
+          case 'updatedAt':
+            query = query.orderBy(order(characterRelations.updatedAt));
+            break;
+          default:
+            console.warn(`Unknown sortBy field for CharacterRelation: ${sortBy}`);
+            break;
+        }
+      } else {
+        query = query.orderBy(asc(characterRelations.relationType)); // Default sort
+      }
+
+      const results = await query.all();
+
+      return results.map(row => ({
+        ...row.relation,
+        char1Name: row.char1Name,
+        char2Name: row.char2Name,
+      }));
     },
   };
 };

@@ -7,7 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
-import CharacterRelationsScreen from '../screens/CharacterRelationsScreen';
+import CharacterRelationDetailScreen from '../screens/characterrelations/CharacterRelationDetailScreen'; // Import Detail Screen
+import CharacterRelationFormScreen from '../screens/characterrelations/CharacterRelationFormScreen'; // Import Form Screen
+import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationsScreen';
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
@@ -42,7 +44,7 @@ export type MainSystemDrawerParamList = {
   WorldRulesStack: undefined;
   NotesStack: undefined;
   Gallery: undefined;
-  CharacterRelations: undefined;
+  CharacterRelationsStack: undefined;
   Choices: undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
@@ -76,6 +78,35 @@ const CharacterStackNavigator = () => {
       <CharacterStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
       <CharacterStack.Screen name="CharacterForm" component={CharacterFormScreen} />
     </CharacterStack.Navigator>
+  );
+};
+//#endregion
+//#region Character Relations
+
+const CharacterRelationsStack = createNativeStackNavigator<CharacterRelationsStackParamList>();
+
+export type CharacterRelationDetailScreenParamList = {
+  CharacterRelationDetail: { relationId: string };
+};
+
+export type CharacterRelationFormScreenParamList = {
+  CharacterRelationForm: { relationId?: string };
+};
+
+export type CharacterRelationsStackParamList = {
+  CharacterRelations: undefined;
+  CharacterRelationDetail: CharacterRelationDetailScreenParamList['CharacterRelationDetail'];
+  CharacterRelationForm: { characterRelationId?: string };
+};
+
+const CharacterRelationsStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <CharacterRelationsStack.Navigator screenOptions={{ headerShown: false }}>
+      <CharacterRelationsStack.Screen name="CharacterRelations" component={CharacterRelationsScreen} />
+      <CharacterRelationsStack.Screen name="CharacterRelationDetail" component={CharacterRelationDetailScreen} />
+      <CharacterRelationsStack.Screen name="CharacterRelationForm" component={CharacterRelationFormScreen} />
+    </CharacterRelationsStack.Navigator>
   );
 };
 //#endregion
@@ -251,7 +282,19 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen name="Gallery" component={GalleryScreen} options={{ title: t('gallery_title') }} />
-      <Drawer.Screen name="CharacterRelations" component={CharacterRelationsScreen} options={{ title: t('character_relations_title') }} />
+      <Drawer.Screen
+        name="CharacterRelationsStack"
+        component={CharacterRelationsStackNavigator}
+        options={{
+          title: t('character_relations_title'),
+          drawerLabel: t('character_relations_title'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('character_relation_navigation_reset');
+          },
+        })}
+      />
       <Drawer.Screen name="Choices" component={ChoicesScreen} options={{ title: t('choices_title') }} />
       <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
       <Drawer.Screen name="ImportExport" component={ImportExportScreen} options={{ title: t('import_export_title') }} />

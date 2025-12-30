@@ -31,6 +31,7 @@ interface GenericFilterSortListProps<T> {
   // Favorite Filter Props
   onFavoriteFilterChange?: (state: FavoriteFilterState) => void;
   currentFavoriteFilterState?: FavoriteFilterState;
+  disableFavoriteFilter?: boolean; // New prop
   // Advanced Search Props
   entityName?: string; // Made optional
   storyId?: string; // Made optional
@@ -61,6 +62,7 @@ const GenericFilterSortList = <T,>({
   storyId, // Destructure
   onAdvancedSearch, // Destructure
   currentAdvancedSearchCriteria, // Destructure
+  disableFavoriteFilter = false,
   disableTagFilter = false,
 }: GenericFilterSortListProps<T>) => {
   const { colors } = useTheme();
@@ -105,6 +107,7 @@ const GenericFilterSortList = <T,>({
   };
 
   const handleFavoriteFilterToggle = () => {
+    if (disableFavoriteFilter) return; // Prevent toggle if disabled
     let newState: FavoriteFilterState;
     if (internalFavoriteFilterState === 'all') {
       newState = 'favorite';
@@ -178,20 +181,22 @@ const GenericFilterSortList = <T,>({
                 placeholder={t('sort_by')}
               />
             </View>
-            <TouchableOpacity
-              onPress={handleFavoriteFilterToggle}
-              style={[
-                styles(colors).favoriteFilterButton,
-                { backgroundColor: getFavoriteButtonColor() },
-                { marginRight: 10 },
-              ]}
-            >
-              <Ionicons
-                name={getFavoriteButtonIcon()}
-                size={24}
-                color={colors.text}
-              />
-            </TouchableOpacity>
+            {!disableFavoriteFilter && (
+              <TouchableOpacity
+                onPress={handleFavoriteFilterToggle}
+                style={[
+                  styles(colors).favoriteFilterButton,
+                  { backgroundColor: getFavoriteButtonColor() },
+                  { marginRight: 10 },
+                ]}
+              >
+                <Ionicons
+                  name={getFavoriteButtonIcon()}
+                  size={24}
+                  color={colors.text}
+                />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={handleSortDirectionToggle} style={styles(colors).sortDirectionButton}>
               <Ionicons
                 name={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}

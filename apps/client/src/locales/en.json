@@ -476,5 +476,10 @@
   "world_rules_title": "World Rules",
   "you_suffix": "(You)",
   "your_friendships": "Your Friendships",
-  "your_stories": "Your Stories"
+  "your_stories": "Your Stories",
+  "sort_by_relation_type": "Sort by Relation Type",
+  "sort_by_character1_name": "Sort by Character 1 Name",
+  "sort_by_character2_name": "Sort by Character 2 Name",
+  "loading_relations": "Loading relations...",
+  "search_relations": "Search Relations"
 }

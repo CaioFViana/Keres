@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { OperationLogSelect } from '../../db/schema';
 import { useEntityName } from '../../hooks/useEntityName';
+import { useUserDisplayName } from '../../hooks/useUserDisplayName'; // Import the new hook
 import { useTheme } from '../../theme';
 
 interface OperationLogListItemProps {
@@ -41,10 +42,7 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
     log.entityId
   );
 
-  const { entityName: userName, loading: userLoading } = useEntityName(
-    OperationLogEntityType.User,
-    log.userId || ''
-  );
+  const userDisplayName = useUserDisplayName(log.userId, log.storyId); // Use the new hook
 
   const styles = StyleSheet.create({
     cardContainer: {
@@ -73,7 +71,6 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
     entityInfo: {
       fontSize: 14,
       color: colors.text,
-      marginTop: 5,
     },
     timestamp: {
       fontSize: 12,
@@ -99,9 +96,12 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
         </Text>
       </View>
       {log.userId && (
-        <Text style={styles.entityInfo}>
-          {t('user_id')}: {userLoading ? 'Loading...' : userName || log.userId}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+          <Ionicons name="person-circle-outline" size={16} color={colors.textSecondary} style={{ marginRight: 5 }} />
+          <Text style={styles.entityInfo}>
+            {userDisplayName}
+          </Text>
+        </View>
       )}
       <Text style={styles.timestamp}>{formattedDate}</Text>
       <Text style={styles.syncStatus}>

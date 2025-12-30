@@ -112,6 +112,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       if (!drizzleClient || !serverService || !selectedStory?.id) {
         console.log('SyncInitializer: No active story or DB/ServerService, stopping sync for selected story.');
         SyncEngineService.getInstance().stopSync();
+        useUserSettingsStore.getState().clearActiveServer(); // Clear active server
         return;
       }
 
@@ -123,18 +124,22 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
             console.log(`SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`);
             SyncEngineService.getInstance().configure(selectedStory.id, server.url);
             SyncEngineService.getInstance().startSync();
+            useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store
           } else {
             console.warn(`SyncInitializer: Selected story ${selectedStory.id} has serverId ${selectedStory.serverId}, but server URL not found. Stopping sync.`);
             SyncEngineService.getInstance().stopSync();
+            useUserSettingsStore.getState().clearActiveServer(); // Clear active server
           }
         } catch (error) {
           console.error(`SyncInitializer: Error fetching server details for story ${selectedStory.id}:`, error);
           showNotification(t('failed_to_sync_with_server') + `: ${selectedStory.id}`, 'error');
           SyncEngineService.getInstance().stopSync();
+          useUserSettingsStore.getState().clearActiveServer(); // Clear active server
         }
       } else {
         console.log(`SyncInitializer: Selected story ${selectedStory.id} is not linked to a server. Stopping sync.`);
         SyncEngineService.getInstance().stopSync();
+        useUserSettingsStore.getState().clearActiveServer(); // Clear active server
       }
     };
 
@@ -144,6 +149,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     return () => {
       console.log('SyncInitializer: Cleaning up story sync. Stopping sync engine.');
       SyncEngineService.getInstance().stopSync();
+      useUserSettingsStore.getState().clearActiveServer(); // Clear active server on unmount/dependency change
     };
   }, [selectedStory?.id, drizzleClient, showNotification, t]); // Dependencies for this effect
 

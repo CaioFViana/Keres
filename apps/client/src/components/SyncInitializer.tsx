@@ -8,6 +8,7 @@ import { createServerService } from '../services/ServerService';
 import { ServerStoryPreview, SyncEngineService } from '../services/SyncEngineService';
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';
+import { useStoryStore } from '../state/storyStore'; // Import useStoryStore
 import { useUserSettingsStore } from '../state/userSettingsStore';
 
 interface SyncInitializerProps {
@@ -21,6 +22,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
   const { fetchStories: fetchStoryList } = useStoryListStore();
+  const { selectedStory } = useStoryStore(); // Get selectedStory from useStoryStore
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -98,6 +100,52 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       clearInterval(syncInterval);
     };
   }, [syncDataWithServers]); // Dependency on syncStoriesWithServers ensures the latest version is used
+
+  // NEW: useEffect to handle push synchronization for the selected story
+  useEffect(() => {
+    let serverService: ReturnType<typeof createServerService> | undefined;
+    if (drizzleClient) {
+      serverService = createServerService(drizzleClient);
+    }
+
+    const manageStorySync = async () => {
+      if (!drizzleClient || !serverService || !selectedStory?.id) {
+        console.log('SyncInitializer: No active story or DB/ServerService, stopping sync for selected story.');
+        SyncEngineService.getInstance().stopSync();
+        return;
+      }
+
+      // Check if the selected story is linked to a server
+      if (selectedStory.serverId) {
+        try {
+          const server = await serverService.getServerById(selectedStory.serverId);
+          if (server?.url) {
+            console.log(`SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`);
+            SyncEngineService.getInstance().configure(selectedStory.id, server.url);
+            SyncEngineService.getInstance().startSync();
+          } else {
+            console.warn(`SyncInitializer: Selected story ${selectedStory.id} has serverId ${selectedStory.serverId}, but server URL not found. Stopping sync.`);
+            SyncEngineService.getInstance().stopSync();
+          }
+        } catch (error) {
+          console.error(`SyncInitializer: Error fetching server details for story ${selectedStory.id}:`, error);
+          showNotification(t('failed_to_sync_with_server') + `: ${selectedStory.id}`, 'error');
+          SyncEngineService.getInstance().stopSync();
+        }
+      } else {
+        console.log(`SyncInitializer: Selected story ${selectedStory.id} is not linked to a server. Stopping sync.`);
+        SyncEngineService.getInstance().stopSync();
+      }
+    };
+
+    manageStorySync();
+
+    // Cleanup function: stop sync when component unmounts or dependencies change
+    return () => {
+      console.log('SyncInitializer: Cleaning up story sync. Stopping sync engine.');
+      SyncEngineService.getInstance().stopSync();
+    };
+  }, [selectedStory?.id, drizzleClient, showNotification, t]); // Dependencies for this effect
 
   return <>{children}</>;
 };

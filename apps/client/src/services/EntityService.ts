@@ -13,7 +13,8 @@ import {
   stories,
   tags,
   users,
-  worldRules
+  worldRules,
+  characterRelations
 } from '../db/schemas';
 
 export class EntityService {
@@ -115,6 +116,25 @@ export class EntityService {
         });
         entitySpecificName = item?.name;
         translatedEntityType = t('item')
+        break;
+      case OperationLogEntityType.CharacterRelation:
+        const charRelation = await db.query.characterRelations.findFirst({
+          where: eq(characterRelations.id, entityId),
+          columns: { charId1: true, charId2: true },
+        });
+
+        if (charRelation) {
+          const char1 = await db.query.characters.findFirst({
+            where: eq(characters.id, charRelation.charId1),
+            columns: { name: true },
+          });
+          const char2 = await db.query.characters.findFirst({
+            where: eq(characters.id, charRelation.charId2),
+            columns: { name: true },
+          });
+          entitySpecificName = `${char1?.name || t('unknown_character')} - ${char2?.name || t('unknown_character')} ${t('relation')}`;
+        }
+        translatedEntityType = t('character_relation')
         break;
       case OperationLogEntityType.OperationLog:
         const opLog = await db.query.operationLogs.findFirst({

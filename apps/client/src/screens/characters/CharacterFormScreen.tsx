@@ -1,34 +1,42 @@
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Character } from '@keres/shared/entities/Character';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useFocusEffect, useNavigation, useRoute, StackActions } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '../../components/common/SuggestionTextInput/SuggestionTextInput';
+import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
+import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
+import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createCharacterService } from '../../services/CharacterService';
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
+import { createCharacterRelationService, CharacterRelationServiceInterface } from '../../services/CharacterRelationService'; // Import CharacterRelationService
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;
+type CharacterFormScreenNavigationProp = NativeStackNavigationProp<CharacterStackParamList, 'CharacterForm'>; // Corrected type alias
 
 const CharacterFormScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<CharacterFormScreenNavigationProp>(); // Use the specific navigation type
   const drawerNavigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>();
   const route = useRoute<CharacterFormScreenRouteProp>();
-  const { characterId } = route.params || {};
+  const { characterId: initialCharacterId } = route.params || {}; // Renamed to initialCharacterId
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
@@ -36,21 +44,31 @@ const CharacterFormScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
-  const characterService = useCallback(() => createCharacterService(drizzleDb), [drizzleDb]);
+
+  const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
+  const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
 
+  // Initialize services once when drizzleDb is available
   useEffect(() => {
     if (drizzleDb) {
+      if (!characterServiceRef.current) {
+        characterServiceRef.current = createCharacterService(drizzleDb);
+      }
       if (!tagServiceRef.current) {
         tagServiceRef.current = createTagService(drizzleDb);
       }
       if (!tagRelationServiceRef.current) {
         tagRelationServiceRef.current = createTagRelationService(drizzleDb);
       }
+      if (!characterRelationServiceRef.current) {
+        characterRelationServiceRef.current = createCharacterRelationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
+  const [currentCharacterId, setCurrentCharacterId] = useState<string | undefined>(initialCharacterId); // State to manage characterId
   const [name, setName] = useState('');
   const [title, setTitle] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
@@ -68,11 +86,13 @@ const CharacterFormScreen = () => {
 
   const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // To pass to CharacterRelationManager
+  const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isEditing = !!characterId;
+  const isEditing = !!currentCharacterId;
 
   useFocusEffect(
     useCallback(() => {
@@ -97,28 +117,60 @@ const CharacterFormScreen = () => {
   }, [selectedStory?.id, tagServiceRef.current]);
 
   const fetchCharacterTags = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id || !characterId) {
+    if (!tagRelationServiceRef.current || !selectedStory?.id || !currentCharacterId) {
       setSelectedTagIds([]);
       return;
     }
     try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, characterId, 'Character');
+      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, currentCharacterId, 'Character');
       setSelectedTagIds(fetchedTags.map(tag => tag.id));
     } catch (err) {
       console.error('Failed to fetch character tags:', err);
     }
-  }, [selectedStory?.id, characterId, tagRelationServiceRef.current]);
+  }, [selectedStory?.id, currentCharacterId, tagRelationServiceRef.current]);
+
+  const fetchAllCharactersInStory = useCallback(async () => {
+    if (!characterServiceRef.current || !selectedStory?.id) {
+      setAllCharacters([]);
+      return;
+    }
+    try {
+      const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(selectedStory.id);
+      setAllCharacters(fetchedCharacters.filter(c => !c.isDeleted)); // Filter out deleted characters
+    } catch (err) {
+      console.error('Failed to fetch all characters:', err);
+    }
+  }, [selectedStory?.id, characterServiceRef.current]);
+
+  const fetchRelationsForCharacter = useCallback(async () => {
+    if (!characterRelationServiceRef.current || !selectedStory?.id || !currentCharacterId) {
+      setCharacterRelations([]);
+      return;
+    }
+    try {
+      const fetchedRelations = await characterRelationServiceRef.current.getRelationsForCharacter(selectedStory.id, currentCharacterId);
+      setCharacterRelations(fetchedRelations);
+    } catch (err) {
+      console.error('Failed to fetch character relations:', err);
+    }
+  }, [selectedStory?.id, currentCharacterId, characterRelationServiceRef.current]);
 
   useEffect(() => {
     const loadCharacterAndTags = async () => {
+      if (!characterServiceRef.current) {
+        console.warn('Character service not initialized.');
+        return;
+      }
+
       if (!isEditing) {
         setLoading(false);
         fetchAvailableTags();
+        fetchAllCharactersInStory(); // Fetch all characters for relation manager
         return;
       }
       try {
         setLoading(true);
-        const fetchedCharacter = await characterService().getById(characterId!);
+        const fetchedCharacter = await characterServiceRef.current.getById(currentCharacterId!);
         if (fetchedCharacter) {
           setName(fetchedCharacter.name);
           setTitle(fetchedCharacter.title);
@@ -144,11 +196,12 @@ const CharacterFormScreen = () => {
         setLoading(false);
         fetchAvailableTags();
         fetchCharacterTags();
+        fetchAllCharactersInStory(); // Fetch all characters for relation manager
+        fetchRelationsForCharacter(); // Fetch relations for this character
       }
     };
     loadCharacterAndTags();
-  }, [characterId, isEditing, characterService, t, fetchAvailableTags, fetchCharacterTags]);
-
+  }, [currentCharacterId, isEditing, characterServiceRef.current, t, fetchAvailableTags, fetchCharacterTags, fetchAllCharactersInStory, fetchRelationsForCharacter]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -185,23 +238,34 @@ const CharacterFormScreen = () => {
         extraNotes,
       };
 
-      let currentCharacterId = characterId;
+      let savedCharacter: Character;
 
       if (isEditing) {
-        await characterService().updateCharacter(userId, characterId!, characterData);
+        savedCharacter = await characterServiceRef.current!.updateCharacter(userId, currentCharacterId!, characterData);
         Alert.alert(t('success'), t('character_updated_successfully'));
       } else {
-        const newCharacter = await characterService().createCharacter(userId, { ...characterData, storyId: selectedStory.id });
+        savedCharacter = await characterServiceRef.current!.createCharacter(userId, { ...characterData, storyId: selectedStory.id });
         Alert.alert(t('success'), t('character_created_successfully'));
-        currentCharacterId = newCharacter.id; // Get the ID of the newly created character
+        setCurrentCharacterId(savedCharacter.id); // Set the ID for the newly created character
       }
 
       // Update tag relations
-      if (currentCharacterId && tagRelationServiceRef.current && selectedStory?.id) {
-        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, currentCharacterId, 'Character', selectedTagIds);
+      if (savedCharacter.id && tagRelationServiceRef.current && selectedStory?.id) {
+        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, savedCharacter.id, 'Character', selectedTagIds);
+      }
+      
+      entityEventEmitter.emit('character_changed', selectedStory.id, savedCharacter.id); // Emit change event
+
+      // After saving character, if it's a new character, relations can now be added
+      // Or if it was an edit, relations data might need a refresh.
+      if (!isEditing && savedCharacter.id) {
+          // If it was a new character, relations section will become editable now
+          // A full reload or navigate might be better here to ensure all states are correct
+          navigation.dispatch(StackActions.replace('CharacterForm', { characterId: savedCharacter.id })); // Fixed navigation.replace
+      } else {
+          navigation.goBack();
       }
 
-      navigation.goBack();
     } catch (err) {
       console.error('Failed to save character:', err);
       setError(t('failed_to_save_character'));
@@ -228,10 +292,11 @@ const CharacterFormScreen = () => {
         {
           text: t('delete'),
           onPress: async () => {
-            if (characterId) {
+            if (currentCharacterId && characterServiceRef.current) {
               try {
                 setLoading(true);
-                await characterService().deleteCharacter(userId, characterId);
+                await characterServiceRef.current.deleteCharacter(userId, currentCharacterId);
+                entityEventEmitter.emit('character_changed', selectedStory?.id, currentCharacterId); // Emit change event
                 Alert.alert(t('success'), t('character_deleted_successfully'));
                 navigation.goBack();
               } catch (err) {
@@ -253,6 +318,49 @@ const CharacterFormScreen = () => {
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
   }, []);
+
+  const handleSaveRelation = async (relation: CharacterRelation) => {
+    if (!characterRelationServiceRef.current || !selectedStory?.id || !currentCharacterId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const savedRelation = await characterRelationServiceRef.current.saveCharacterRelation(userId, relation);
+      setCharacterRelations(prev => {
+        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
+        if (existingIndex > -1) {
+          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
+        } else {
+          return [...prev, savedRelation];
+        }
+      });
+      entityEventEmitter.emit('character_relation_changed', selectedStory.id, currentCharacterId);
+      Alert.alert(t('success'), t('relation_saved_successfully'));
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_save_relation'));
+      console.error('Failed to save character relation:', error);
+    }
+  };
+
+  const handleDeleteRelation = async (relationId: string) => {
+    if (!characterRelationServiceRef.current || !selectedStory?.id || !currentCharacterId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const success = await characterRelationServiceRef.current.deleteCharacterRelation(userId, relationId);
+      if (success) {
+        setCharacterRelations(prev => prev.filter(r => r.id !== relationId));
+        entityEventEmitter.emit('character_relation_changed', selectedStory.id, currentCharacterId);
+        Alert.alert(t('success'), t('relation_deleted_successfully'));
+      } else {
+        Alert.alert(t('error'), t('failed_to_delete_relation'));
+      }
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_delete_relation'));
+      console.error('Failed to delete character relation:', error);
+    }
+  };
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -446,6 +554,22 @@ const CharacterFormScreen = () => {
               label={t('character_tags')}
             />
           </View>
+
+          {/* Character Relations Manager */}
+          {currentCharacterId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <Text style={styles.sectionTitle}>{t('character_relations_title')}</Text>
+              <CharacterRelationManager
+                characterRelations={characterRelations}
+                characters={allCharacters}
+                onSave={handleSaveRelation}
+                onDelete={handleDeleteRelation}
+                editable={true} // Editable in form screen
+                currentStoryId={selectedStory.id}
+                currentCharacterId={currentCharacterId}
+              />
+            </View>
+          )}
 
           <Button onPress={handleSave} style={styles.saveButton}>
             {t('save_character')}

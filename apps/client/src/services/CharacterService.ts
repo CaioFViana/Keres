@@ -16,9 +16,10 @@ export interface CharacterService {
   getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], favoriteFilterState?: FavoriteFilterState, sortBy?: string, sortDirection?: 'asc' | 'desc', advancedSearchCriteria?: { [key: string]: any }): Promise<CharacterWithTags[]>;
   getCharacterCount(storyId?: string): Promise<number>;
   createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect>; // Add createCharacter
-  updateCharacter(currentUserId: string, characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<void>;
+  updateCharacter(currentUserId: string, characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<CharacterSelect>; // Changed return type
   deleteCharacter(currentUserId: string, characterId: string): Promise<void>; // Add deleteCharacter
   getById(characterId: string): Promise<CharacterSelect | undefined>;
+  getAllByStoryId(storyId: string): Promise<CharacterSelect[]>; // Added getAllByStoryId
 }
 
 export const createCharacterService = (db: AppDrizzleClient): CharacterService => {
@@ -176,26 +177,29 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       return result;
     },
 
-    async updateCharacter(currentUserId: string, characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<void> {
+    async updateCharacter(currentUserId: string, characterId: string, updatedFields: Partial<Omit<CharacterSelect, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<CharacterSelect> { // Changed return type
       const oldCharacter = await db.query.characters.findFirst({ where: eq(characters.id, characterId) });
       if (!oldCharacter) {
         throw new Error(`Character with ID ${characterId} not found for update.`);
       }
 
-      const [updatedCharacter] = await db.update(characters)
+      await db.update(characters)
         .set({ ...updatedFields, updatedAt: new Date(), version: sql`${characters.version} + 1` })
         .where(eq(characters.id, characterId))
-        .returning({ id: characters.id, storyId: characters.storyId, version: characters.version }); // Return relevant fields
+        .run();
 
+      const updatedCharacter = await db.query.characters.findFirst({ where: eq(characters.id, characterId) });
       if (!updatedCharacter) {
-        throw new Error(`Failed to update character ${characterId} or character not found.`);
+        throw new Error(`Failed to retrieve updated character ${characterId}.`);
       }
 
-      const changedFields = getChangedFields(oldCharacter, { ...oldCharacter, ...updatedFields, version: updatedCharacter.version });
+      const changedFields = getChangedFields(oldCharacter, updatedCharacter);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedCharacter.storyId, currentUserId);
       await recordLocalOperation(db, updatedCharacter.storyId, userIdToLog, 'update', 'Character', characterId, changedFields);
       entityEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after update
+
+      return updatedCharacter; // Return the updated character
     },
 
     async deleteCharacter(currentUserId: string, characterId: string): Promise<void> {
@@ -230,6 +234,23 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
             where: and(eq(characters.id, characterId), eq(characters.isDeleted, false)),
         });
         return character;
+    },
+
+    async getAllByStoryId(storyId: string): Promise<CharacterSelect[]> {
+        if (!storyId) {
+            console.error('getAllByStoryId: storyId is required.');
+            return [];
+        }
+        try {
+            const allCharacters = await db.select()
+                .from(characters)
+                .where(and(eq(characters.storyId, storyId), eq(characters.isDeleted, false)))
+                .all();
+            return allCharacters;
+        } catch (error) {
+            console.error(`Error fetching all characters for story ${storyId}:`, error);
+            return [];
+        }
     },
   };
 };

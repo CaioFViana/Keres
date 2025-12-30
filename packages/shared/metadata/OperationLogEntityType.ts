@@ -11,6 +11,7 @@ export enum OperationLogEntityType {
   Choice = 'Choice',
   Gallery = 'Gallery',
   Item = 'Item',
+  CharacterRelation = 'CharacterRelation',
   OperationLog = 'OperationLog',
   // Add other relevant entities as they are introduced to the system
 }

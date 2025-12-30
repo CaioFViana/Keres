@@ -6,6 +6,7 @@ import { OperationLogSelect } from '../../db/schema';
 import { createOperationLogService } from '../../services/OperationLogService';
 import { useTheme } from '../../theme';
 import OperationLogListItem from '../listitem/OperationLogListItem';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 interface OperationLogListProps {
   storyId: string;
@@ -62,6 +63,19 @@ const OperationLogList: React.FC<OperationLogListProps> = ({ storyId, limit, pag
   useEffect(() => {
     setPage(1); // Reset page when storyId or mode changes
     fetchLogs(1);
+
+    const handleOperationLogUpdated = (updatedStoryId: string) => {
+      if (updatedStoryId === storyId) {
+        setPage(1); // Reset page to 1
+        fetchLogs(1); // Refetch the first page of logs
+      }
+    };
+
+    entityEventEmitter.on('operation_log_updated', handleOperationLogUpdated);
+
+    return () => {
+      entityEventEmitter.off('operation_log_updated', handleOperationLogUpdated);
+    };
   }, [storyId, limit, paginated, fetchLogs]);
 
   const handleLoadMore = useCallback(() => {

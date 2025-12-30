@@ -1,19 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
+import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Added Alert
+import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/CharacterService';
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharacterListScreen';
+import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
@@ -29,11 +33,13 @@ const CharacterDetailScreen = () => {
   const route = useRoute<CharacterDetailScreenRouteProp>();
   const { characterId } = route.params;
   const { t } = useTranslation();
+  const { userId } = useUserSettingsStore(); // Get userId from store
 
   const drizzleDb = useDrizzle();
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
+  const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
 
   // Initialize services once when drizzleDb is available
   useEffect(() => {
@@ -47,11 +53,16 @@ const CharacterDetailScreen = () => {
       if (!tagRelationServiceRef.current) {
         tagRelationServiceRef.current = createTagRelationService(drizzleDb);
       }
+      if (!characterRelationServiceRef.current) {
+        characterRelationServiceRef.current = createCharacterRelationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
   const [character, setCharacter] = useState<CharacterSelect | null>(null);
   const [characterTags, setCharacterTags] = useState<TagSelect[]>([]);
+  const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
+  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -139,6 +150,31 @@ const CharacterDetailScreen = () => {
     }
   }, [character?.storyId, characterId, tagRelationServiceRef.current]);
 
+  const fetchRelationsForCharacter = useCallback(async () => {
+    if (!characterRelationServiceRef.current || !character?.storyId || !characterId) {
+      setCharacterRelations([]);
+      return;
+    }
+    try {
+      const fetchedRelations = await characterRelationServiceRef.current.getRelationsForCharacter(character.storyId, characterId);
+      setCharacterRelations(fetchedRelations);
+    } catch (err) {
+      console.error('Failed to fetch character relations:', err);
+    }
+  }, [character?.storyId, characterId, characterRelationServiceRef.current]);
+
+  const fetchAllCharactersInStory = useCallback(async () => {
+    if (!characterServiceRef.current || !character?.storyId) {
+      setAllCharacters([]);
+      return;
+    }
+    try {
+      const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(character.storyId);
+      setAllCharacters(fetchedCharacters.filter(c => !c.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all characters:', err);
+    }
+  }, [character?.storyId, characterServiceRef.current]);
 
   const handleCharacterChange = useCallback(async (changedStoryId: string, changedCharacterId: string) => {
     if (changedCharacterId === characterId) {
@@ -160,25 +196,79 @@ const CharacterDetailScreen = () => {
     }
   }, [characterId, fetchTagsForCharacter]);
 
+  const handleCharacterRelationChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
+    if (changedCharacterId === characterId) {
+      fetchRelationsForCharacter();
+    }
+  }, [characterId, fetchRelationsForCharacter]);
+
   useEffect(() => {
     if (characterServiceRef.current) {
       fetchCharacter();
       entityEventEmitter.on('character_changed', handleCharacterChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
+      entityEventEmitter.on('character_relation_changed', handleCharacterRelationChange); // Listen for relation changes
 
       return () => {
         entityEventEmitter.off('character_changed', handleCharacterChange);
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
+        entityEventEmitter.off('character_relation_changed', handleCharacterRelationChange);
       };
     }
-  }, [characterId, fetchCharacter, handleCharacterChange, handleTagRelationChange, characterServiceRef.current]);
+  }, [characterId, fetchCharacter, handleCharacterChange, handleTagRelationChange, handleCharacterRelationChange, characterServiceRef.current]);
 
   useEffect(() => {
-    // Fetch tags when character is loaded or changes
+    // Fetch tags, relations, and all characters when character is loaded or changes
     if (character) {
       fetchTagsForCharacter();
+      fetchRelationsForCharacter();
+      fetchAllCharactersInStory(); // Fetch all characters here
     }
-  }, [character, fetchTagsForCharacter]);
+  }, [character, fetchTagsForCharacter, fetchRelationsForCharacter, fetchAllCharactersInStory]);
+
+  const handleSaveRelation = async (relation: CharacterRelation) => {
+    if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const savedRelation = await characterRelationServiceRef.current.saveCharacterRelation(userId, relation);
+      // Update local state and emit event
+      setCharacterRelations(prev => {
+        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
+        if (existingIndex > -1) {
+          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
+        } else {
+          return [...prev, savedRelation];
+        }
+      });
+      entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
+      Alert.alert(t('success'), t('relation_saved_successfully'));
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_save_relation'));
+      console.error('Failed to save character relation:', error);
+    }
+  };
+
+  const handleDeleteRelation = async (relationId: string) => {
+    if (!characterRelationServiceRef.current || !character?.storyId || !userId) { // Added !userId check
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const success = await characterRelationServiceRef.current.deleteCharacterRelation(userId, relationId); // Pass userId
+      if (success) {
+        setCharacterRelations(prev => prev.filter(r => r.id !== relationId));
+        entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
+        Alert.alert(t('success'), t('relation_deleted_successfully'));
+      } else {
+        Alert.alert(t('error'), t('failed_to_delete_relation'));
+      }
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_delete_relation'));
+      console.error('Failed to delete character relation:', error);
+    }
+  };
 
 
   const renderHeaderRight = useCallback(() => (
@@ -231,7 +321,7 @@ const CharacterDetailScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.mainTitle}>{character.name}</Text>
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
       
@@ -248,13 +338,23 @@ const CharacterDetailScreen = () => {
       <Text style={styles.detailText}>{t('is_favorite')}: {character.isFavorite ? t('common_yes') : t('common_no')}</Text>
       <Text style={styles.detailText}>{t('extra_notes')}: {character.extraNotes || t('common_na')}</Text>
 
+      <Text style={styles.sectionTitle}>{t('character_relations_title')}</Text>
+      <CharacterRelationManager
+        characterRelations={characterRelations}
+        characters={allCharacters}
+        onSave={handleSaveRelation}
+        onDelete={handleDeleteRelation}
+        editable={false}
+        currentStoryId={character.storyId}
+        currentCharacterId={characterId}
+      />
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
       <TagChipList tags={characterTags} />
-      
+
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

@@ -27,21 +27,13 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
     // System fields are generally not searchable directly by users
-    // { name: 'id', label: 'ID', type: 'id', isSearchable: false },
-    // { name: 'storyId', label: 'Story ID', type: 'id', isSearchable: false },
-    // { name: 'createdAt', label: 'Created At', type: 'date', isSearchable: false },
-    // { name: 'updatedAt', label: 'Updated At', type: 'date', isSearchable: false },
-    // { name: 'version', label: 'Version', type: 'number', isSearchable: false },
-    // { name: 'isDeleted', label: 'Is Deleted', type: 'boolean', isSearchable: false },
-    // { name: 'deletedAt', label: 'Deleted At', type: 'date', isSearchable: false },
+    // Like id, storyId, createdAt, updatedAt, version, isDeleted, deletedAt
   ],
   Tag: [
     { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
     { name: 'color', label: 'field_color', type: 'color', isSearchable: false }, // Not convenient to do. left here as an what if for the future
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
-    // { name: 'createdAt', label: 'field_createdAt', type: 'date', isSearchable: false },
-    // { name: 'updatedAt', label: 'field_updatedAt', type: 'date', isSearchable: false },
   ],
   Note: [
     { name: 'title', label: 'field_title', type: 'string', isSearchable: true },
@@ -55,5 +47,8 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ],
+  CharacterRelation: [
+    { name: 'relationType', label: 'field_relationType', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'characterRelation_type' },
+  ]
   // Add metadata for other entities as needed
 };

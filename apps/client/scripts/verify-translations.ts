@@ -50,7 +50,7 @@ function writeJsonFile(filePath: string, data: Record<string, any>) {
 }
 
 async function auditLocales() {
-  const clientSrcPath = path.resolve(process.cwd(), 'src');
+  const clientSrcPath = path.join(__dirname, '..', 'src');
   const localesPath = path.join(clientSrcPath, 'locales');
 
   let hasErrors = false;
@@ -82,7 +82,7 @@ async function auditLocales() {
     allLocaleKeysFlattened[file] = flattenObject(data);
   }
 
-  // --- Step 2: Extract translation keys from TS/TSX files ---
+  // --- Step 2: Extract translation keys from TS/TSX files and entityFields.ts ---
   const tsFiles: string[] = [];
   const walkDir = (dir: string) => {
     fs.readdirSync(dir).forEach(file => {
@@ -107,12 +107,27 @@ async function auditLocales() {
     }
   }
 
+  // Extract keys from entityFields.ts
+  const entityFieldsPath = path.join(__dirname, '..', '..', '..', 'packages', 'shared', 'metadata', 'entityFields.ts');
+  try {
+    const entityFieldsContent = fs.readFileSync(entityFieldsPath, 'utf8');
+    const labelKeyRegex = /label: ['"]([a-zA-Z0-9._-]+)['"](,|)/g;
+    let match;
+    while ((match = labelKeyRegex.exec(entityFieldsContent)) !== null) {
+      extractedKeys.add(match[1]);
+    }
+  } catch (error: any) {
+    console.warn(`⚠️ Could not extract label keys from ${entityFieldsPath}:`, error.message);
+    // Do not exit, just warn, as this file might not always exist or parse perfectly in all contexts.
+  }
+
+
   // --- Step 3: Validate Extracted Keys against all Locale Files ---
   console.log('\n🔄 Validating extracted keys against locale files...');
   for (const key of extractedKeys) {
     for (const localeFile in allLocaleKeysFlattened) {
       if (!allLocaleKeysFlattened[localeFile].has(key)) {
-        console.error(`❌ Missing key '${key}' in locale file '${localeFile}' (found in TS/TSX files)`);
+        console.error(`❌ Missing key '${key}' in locale file '${localeFile}' (found in TS/TSX files or entityFields.ts)`);
         hasErrors = true;
       }
     }

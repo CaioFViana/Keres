@@ -9,7 +9,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import CharacterRelationDetailScreen from '../screens/characterrelations/CharacterRelationDetailScreen'; // Import Detail Screen
 import CharacterRelationFormScreen from '../screens/characterrelations/CharacterRelationFormScreen'; // Import Form Screen
-import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationsScreen';
+import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationListScreen';
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';

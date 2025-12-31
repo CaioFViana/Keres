@@ -17,51 +17,50 @@ export class StoryExportImportService {
 
         // Fetch all related entities
         const chapters = await db.query.chapters.findMany({
-            where: (chapters, { eq }) => eq(chapters.storyId, storyId),
+            where: (chapters, { eq, and }) => and(eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)),
         });
         const scenes = await db.query.scenes.findMany({
-            where: (scenes, { eq }) => eq(scenes.storyId, storyId),
+            where: (scenes, { eq, and }) => and(eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
         });
         const choices = await db.query.choices.findMany({
-            where: (choices, { eq }) => eq(choices.storyId, storyId),
+            where: (choices, { eq, and }) => and(eq(choices.storyId, storyId), eq(choices.isDeleted, false)),
         });
         const characters = await db.query.characters.findMany({
-            where: (characters, { eq }) => eq(characters.storyId, storyId),
+            where: (characters, { eq, and }) => and(eq(characters.storyId, storyId), eq(characters.isDeleted, false)),
         });
         const locations = await db.query.locations.findMany({
-            where: (locations, { eq }) => eq(locations.storyId, storyId),
+            where: (locations, { eq, and }) => and(eq(locations.storyId, storyId), eq(locations.isDeleted, false)),
         });
         const worldRules = await db.query.worldRules.findMany({
-            where: (worldRules, { eq }) => eq(worldRules.storyId, storyId),
+            where: (worldRules, { eq, and }) => and(eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)),
         });
         const notes = await db.query.notes.findMany({
-            where: (notes, { eq }) => eq(notes.storyId, storyId),
+            where: (notes, { eq, and }) => and(eq(notes.storyId, storyId), eq(notes.isDeleted, false)),
         });
         const tags = await db.query.tags.findMany({
-            where: (tags, { eq }) => eq(tags.storyId, storyId),
+            where: (tags, { eq, and }) => and(eq(tags.storyId, storyId), eq(tags.isDeleted, false)),
         });
         const suggestions = await db.query.suggestions.findMany({
-            where: (suggestions, { eq }) => eq(suggestions.storyId, storyId),
+            where: (suggestions, { eq, and }) => and(eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false)),
         });
         const characterRelations = await db.query.characterRelations.findMany({
-            where: (characterRelations, { eq }) => eq(characterRelations.storyId, storyId),
+            where: (characterRelations, { eq, and }) => and(eq(characterRelations.storyId, storyId), eq(characterRelations.isDeleted, false)),
         });
         const characterScenes = await db.query.characterScenes.findMany({
-            where: (characterScenes, { eq }) => eq(characterScenes.storyId, storyId),
+            where: (characterScenes, { eq, and }) => and(eq(characterScenes.storyId, storyId), eq(characterScenes.isDeleted, false)),
         });
         const galleryItems = await db.query.galleries.findMany({
-            where: (galleries, { eq }) => eq(galleries.storyId, storyId),
+            where: (galleries, { eq, and }) => and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)),
         });
         const items = await db.query.items.findMany({
-            where: (items, { eq }) => eq(items.storyId, storyId),
+            where: (items, { eq, and }) => and(eq(items.storyId, storyId), eq(items.isDeleted, false)),
         });
         const itemJourneys = await db.query.itemJourneys.findMany({
-            where: (itemJourneys, { eq }) => eq(itemJourneys.storyId, storyId),
+            where: (itemJourneys, { eq, and }) => and(eq(itemJourneys.storyId, storyId), eq(itemJourneys.isDeleted, false)),
         });
         const tagRelations = await db.query.tagRelations.findMany({
-            where: (tagRelations, { eq }) => eq(tagRelations.storyId, storyId),
+            where: (tagRelations, { eq, and }) => and(eq(tagRelations.storyId, storyId), eq(tagRelations.isDeleted, false)),
         });
-
 
         // Query for the maximum operationVersion for this story
         const latestOperation = await db.select({

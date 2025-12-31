@@ -12,6 +12,7 @@ import { createKeresAxiosInstance } from './apiClient';
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
 import { CharacterRelationClientSyncHandler } from './entity-sync-handlers/CharacterRelationClientSyncHandler';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
+import { LocationClientSyncHandler } from './entity-sync-handlers/LocationClientSyncHandler';
 import { NoteClientSyncHandler } from './entity-sync-handlers/NoteClientSyncHandler';
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
@@ -40,7 +41,8 @@ export class SyncEngineService {
     this.registerEntityHandler(new TagClientSyncHandler());
     this.registerEntityHandler(new NoteClientSyncHandler());
     this.registerEntityHandler(new WorldRuleClientSyncHandler());
-    this.registerEntityHandler(new CharacterRelationClientSyncHandler())
+    this.registerEntityHandler(new CharacterRelationClientSyncHandler());
+    this.registerEntityHandler(new LocationClientSyncHandler());
     // TODO: Register other entity handlers here
   }
 

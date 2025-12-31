@@ -14,7 +14,8 @@ import {
   tags,
   users,
   worldRules,
-  characterRelations
+  characterRelations,
+  tagRelations
 } from '../db/schemas';
 
 export class EntityService {
@@ -135,6 +136,21 @@ export class EntityService {
           entitySpecificName = `${char1?.name || t('unknown_character')} - ${char2?.name || t('unknown_character')} ${t('relation')}`;
         }
         translatedEntityType = t('character_relation')
+        break;
+      case OperationLogEntityType.TagRelation:
+        const tagRel = await db.query.tagRelations.findFirst({
+          where: eq(tagRelations.id, entityId),
+          columns: { tagId: true, relationId: true, relationType: true },
+        });
+
+        if (tagRel) {
+          const tag = await db.query.tags.findFirst({
+            where: eq(tags.id, tagRel.tagId),
+            columns: { name: true },
+          });
+          entitySpecificName = `${tag?.name || t('unknown_entity')} (${tagRel.relationType} ${t('id')}: ${tagRel.relationId})`;
+        }
+        translatedEntityType = t('tag_relation'); // Assuming 'tag_relation' is a translation key
         break;
       case OperationLogEntityType.OperationLog:
         const opLog = await db.query.operationLogs.findFirst({

@@ -26,4 +26,4 @@ export interface TagRelation {
   deletedAt: Date | null // Added for conflict resolution (tombstones)
 }
 
-export type TagRelationEntities = 'Character' | 'Note' | 'WorldRule';
+export type TagRelationEntities = 'Character' | 'Note' | 'WorldRule' | 'Location';

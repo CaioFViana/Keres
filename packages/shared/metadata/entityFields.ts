@@ -49,6 +49,15 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
   ],
   CharacterRelation: [
     { name: 'relationType', label: 'field_relationType', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'characterRelation_type' },
+  ],
+  Location: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
+    { name: 'climate', label: 'field_climate', type: 'string', isSearchable: true },
+    { name: 'culture', label: 'field_culture', type: 'string', isSearchable: true },
+    { name: 'politics', label: 'field_politics', type: 'string', isSearchable: true },
+    { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
+    { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ]
-  // Add metadata for other entities as needed
+  // Add other relevant entities as needed
 };

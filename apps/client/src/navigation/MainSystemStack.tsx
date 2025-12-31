@@ -13,6 +13,9 @@ import CharacterRelationsScreen from '../screens/characterrelations/CharacterRel
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
+import LocationDetailsScreen, { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
+import LocationFormScreen from '../screens/locations/LocationFormScreen';
+import LocationListScreen from '../screens/locations/LocationListScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
@@ -37,7 +40,7 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
   CharactersStack: undefined;
-  Locations: { entityType: string };
+  LocationsStack: undefined;
   Chapters: { entityType: string };
   Scenes: { entityType: string };
   TagsStack: undefined;
@@ -78,6 +81,27 @@ const CharacterStackNavigator = () => {
       <CharacterStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
       <CharacterStack.Screen name="CharacterForm" component={CharacterFormScreen} />
     </CharacterStack.Navigator>
+  );
+};
+//#endregion
+//#region Location
+
+const LocationStack = createNativeStackNavigator<LocationStackParamList>();
+
+export type LocationStackParamList = {
+  Locations: undefined;
+  LocationDetail: LocationDetailScreenParamList['LocationDetail'];
+  LocationForm: { locationId?: string };
+};
+
+const LocationStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <LocationStack.Navigator screenOptions={{ headerShown: false }}>
+      <LocationStack.Screen name="Locations" component={LocationListScreen} />
+      <LocationStack.Screen name="LocationDetail" component={LocationDetailsScreen} />
+      <LocationStack.Screen name="LocationForm" component={LocationFormScreen} />
+    </LocationStack.Navigator>
   );
 };
 //#endregion
@@ -239,7 +263,19 @@ const MainSystemNavigator = () => {
           },
         })}
       />
-      <Drawer.Screen name="Locations" component={ListingDetailStack} initialParams={{ entityType: 'Locations' }} options={{ title: t('locations_title') }} />
+      <Drawer.Screen
+        name="LocationsStack"
+        component={LocationStackNavigator}
+        options={{
+          title: t('locations_title'),
+          drawerLabel: t('locations_title'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('location_navigation_reset');
+          },
+        })}
+      />
       <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />
       <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: t('scenes_title') }} />
       <Drawer.Screen

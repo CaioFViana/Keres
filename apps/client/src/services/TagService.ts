@@ -2,9 +2,9 @@ import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm'; // Import asc and desc
 import { AppDrizzleClient } from '../db';
 import { TagInsert, tags, TagSelect } from '../db/schema'; // Import TagInsert and stories
+import { getChangedFields } from '../utils/diffUtils';
 import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { entityEventEmitter } from '../utils/EventEmitter';
-import { getChangedFields } from '../utils/diffUtils';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from './ServerService'; // Import ServerService and createServerService
 
@@ -97,6 +97,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       }
 
       const result = await query.all();
+      console.log('Diagnostic: getTagsByStoryId fetched results:', result.map(tag => ({ id: tag.id, name: tag.name, isDeleted: tag.isDeleted, deletedAt: tag.deletedAt }))); // Diagnostic Log
       return result;
     },
 
@@ -166,6 +167,10 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       if (!updatedTag) {
         throw new Error(`Failed to delete tag ${tagId} or tag not found.`);
       }
+
+      // Diagnostic: Re-fetch and log the tag's isDeleted status
+      const reFetchedTag = await db.query.tags.findFirst({ where: eq(tags.id, tagId) });
+      console.log(`Diagnostic: Tag ${tagId} isDeleted status after soft-delete: ${reFetchedTag?.isDeleted}`);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedTag.storyId, currentUserId);
       await recordLocalOperation(db, updatedTag.storyId, userIdToLog, 'delete', 'Tag', tagId, {

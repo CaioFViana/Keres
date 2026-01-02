@@ -43,6 +43,7 @@ export async function resetDatabase(dbInstance: SQLiteDatabase) { // Renamed par
     await dbInstance.execAsync(`DROP TABLE IF EXISTS ${tableName};`);
   }
   console.log('All tables dropped.');
+  db = null; // Set the global db variable to null after reset
 }
 
 export * from './schema';

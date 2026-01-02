@@ -10,6 +10,7 @@ import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
+import { SyncEngineService } from '../../services/SyncEngineService'; // Import SyncEngineService
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -65,7 +66,8 @@ const SettingsScreen = () => {
               // Reset Zustand stores
               resetSettings();
               resetTheme();
-              console.log('Zustand stores reset.');
+              SyncEngineService.getInstance().reset(); // Reset the SyncEngineService
+              console.log('Zustand stores and SyncEngineService reset.');
 
               // Navigate to ColdInstallScreen and reset navigation stack
               navigation.dispatch(StackActions.replace('ColdInstall'));

@@ -121,6 +121,12 @@ export class SyncEngineService {
     this.client.defaults.baseURL = undefined;
   }
 
+  public reset() {
+    this.stopSync();
+    this._db = null;
+    console.log('Sync engine has been reset, database instance cleared.');
+  }
+
   public async fetchServerStoryPreviews(serverUrl: string): Promise<ServerStoryPreview[]> {
     if (!serverUrl) {
       console.log('Server URL is required to fetch story previews.');

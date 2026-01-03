@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { CommonActions, DrawerActions } from '@react-navigation/native';
+import { CommonActions, DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,20 +13,21 @@ import CharacterRelationsScreen from '../screens/characterrelations/CharacterRel
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
-import LocationDetailsScreen, { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
-import LocationFormScreen from '../screens/locations/LocationFormScreen';
-import LocationListScreen from '../screens/locations/LocationListScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
+import LocationDetailsScreen, { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
+import LocationFormScreen from '../screens/locations/LocationFormScreen';
+import LocationListScreen from '../screens/locations/LocationListScreen';
 import ImportExportScreen from '../screens/mainstorystack/ImportExportScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
-import OperationLogScreen from '../screens/mainstorystack/OperationLogScreen'; // Import OperationLogScreen
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import NoteDetailScreen, { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
 import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
+import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetailScreen';
+import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
@@ -52,7 +53,7 @@ export type MainSystemDrawerParamList = {
   Settings: undefined;
   StorySettings: { storyId: string };
   ImportExport: undefined;
-  OperationLogs: undefined;
+  OperationLogStack: NavigatorScreenParams<OperationLogStackParamList>; // Changed
   StorySelection: undefined;
 };
 
@@ -197,6 +198,24 @@ const WorldRuleStackNavigator = () => {
   );
 };
 //#endregion
+//#region Operationlog
+const OperationLogStack = createNativeStackNavigator<OperationLogStackParamList>();
+
+export type OperationLogStackParamList = {
+  OperationLog: undefined;
+  OperationLogDetail: { logId: string };
+};
+
+const OperationLogStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <OperationLogStack.Navigator screenOptions={{ headerShown: false }}>
+      <OperationLogStack.Screen name="OperationLog" component={OperationLogScreen} />
+      <OperationLogStack.Screen name="OperationLogDetail" component={OperationLogDetailScreen} />
+    </OperationLogStack.Navigator>
+  );
+};
+//#endregion
 
 // A helper component to wrap screens that should be part of the drawer but also have their own stack navigation
 const ListingDetailStack = ({ route }: any) => {
@@ -332,16 +351,21 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen name="Choices" component={ChoicesScreen} options={{ title: t('choices_title') }} />
-      <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
-      <Drawer.Screen name="ImportExport" component={ImportExportScreen} options={{ title: t('import_export_title') }} />
       <Drawer.Screen
-        name="OperationLogs"
-        component={OperationLogScreen}
+        name="OperationLogStack"
+        component={OperationLogStackNavigator}
         options={{
           title: t('operation_logs_title'),
           drawerLabel: t('operation_logs_title'),
         }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('operation_logs_navigation_reset');
+          },
+        })}
       />
+      <Drawer.Screen name="ImportExport" component={ImportExportScreen} options={{ title: t('import_export_title') }} />
+      <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
       <Drawer.Screen
         name="StorySelection"
         component={() => <View />} // A dummy component, as it won't be displayed

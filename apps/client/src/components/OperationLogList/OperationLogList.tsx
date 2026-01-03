@@ -13,9 +13,11 @@ interface OperationLogListProps {
   limit?: number; // For dashboard view, e.g., last 20
   paginated?: boolean; // For full screen view
   pageSize?: number; // For paginated view
+  onPressItem?: (logId: string) => void; // Add this prop
+  shouldRefetch?: boolean; // Add this prop
 }
 
-const OperationLogList: React.FC<OperationLogListProps> = ({ storyId, limit, paginated, pageSize = 20 }) => {
+const OperationLogList: React.FC<OperationLogListProps> = ({ storyId, limit, paginated, pageSize = 20, onPressItem, shouldRefetch }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const drizzleDb = useDrizzle();
@@ -77,6 +79,14 @@ const OperationLogList: React.FC<OperationLogListProps> = ({ storyId, limit, pag
       entityEventEmitter.off('operation_log_updated', handleOperationLogUpdated);
     };
   }, [storyId, limit, paginated, fetchLogs]);
+
+  // New useEffect to watch for shouldRefetch prop changes
+  useEffect(() => {
+    if (shouldRefetch) {
+      setPage(1); // Reset page to 1 on external refetch trigger
+      fetchLogs(1);
+    }
+  }, [shouldRefetch, fetchLogs]);
 
   const handleLoadMore = useCallback(() => {
     if (paginated && !loading && logs.length < totalLogs) {
@@ -143,7 +153,7 @@ const OperationLogList: React.FC<OperationLogListProps> = ({ storyId, limit, pag
     return (
       <View style={styles.container}>
         {logs.map((log) => (
-          <OperationLogListItem key={log.id} log={log} />
+          <OperationLogListItem key={log.id} log={log} onPress={onPressItem} />
         ))}
       </View>
     );
@@ -154,7 +164,7 @@ const OperationLogList: React.FC<OperationLogListProps> = ({ storyId, limit, pag
       <FlatList
         data={logs}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <OperationLogListItem log={item} />}
+        renderItem={({ item }) => <OperationLogListItem log={item} onPress={onPressItem} />}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={() =>

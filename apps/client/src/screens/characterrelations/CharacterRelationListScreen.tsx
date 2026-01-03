@@ -96,6 +96,22 @@ const CharacterRelationsScreen = () => {
     };
   }, [selectedStory?.id, fetchCharacterRelations]);
 
+  // Listen for reset event
+  useEffect(() => {
+    const handleReset = () => {
+      // Only pop to top if there's more than one screen in the stack
+      if (navigation.getState().routes.length > 1) {
+        navigation.dispatch(StackActions.popToTop());
+      }
+    };
+
+    entityEventEmitter.on('character_relation_navigation_reset', handleReset);
+
+    return () => {
+      entityEventEmitter.off('character_relation_navigation_reset', handleReset);
+    };
+  }, [navigation]);
+
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({

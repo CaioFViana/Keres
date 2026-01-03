@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import { OperationLogEntityType } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { OperationLogSelect } from '../../db/schema';
 import { useEntityName } from '../../hooks/useEntityName';
 import { useUserDisplayName } from '../../hooks/useUserDisplayName'; // Import the new hook
@@ -10,6 +10,7 @@ import { useTheme } from '../../theme';
 
 interface OperationLogListItemProps {
   log: OperationLogSelect;
+  onPress?: (logId: string) => void; // Add this prop
 }
 
 const getOperationIcon = (operationType: string, color: string, size: number): React.ReactNode => {
@@ -33,7 +34,7 @@ const getOperationIcon = (operationType: string, color: string, size: number): R
   return <Ionicons name={iconName} size={size} color={color} />;
 };
 
-const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
+const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPress }) => { // Destructure onPress
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -108,7 +109,11 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
   const formattedDate = log.createdAt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
   return (
-    <View style={styles.cardContainer}>
+    <TouchableOpacity
+      style={styles.cardContainer}
+      onPress={onPress ? () => onPress(log.id) : undefined}
+      disabled={!onPress} // Disable touch feedback if no onPress handler is provided
+    >
       <View style={styles.operationTypeContainer}>
         {getOperationIcon(log.operationType, colors.primary, 18)}
         <Text style={styles.operationTypeText}>
@@ -127,7 +132,7 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
       <Text style={styles.syncStatus}>
         {t('sync_status')}: {log.isSynced ? t('synced') : t('pending')} (v{log.serverOperationVersion})
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -39,10 +39,30 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
 
   const { entityName: mainEntityName, loading: mainEntityLoading } = useEntityName(
     log.entityType as OperationLogEntityType,
-    log.entityId
+    log.entityId,
+    log.storyId
   );
 
   const userDisplayName = useUserDisplayName(log.userId, log.storyId); // Use the new hook
+
+  // Determine the display text for the operation
+  let operationDisplayText = '';
+  if (mainEntityLoading) {
+    operationDisplayText = 'Loading...';
+  } else if (log.entityType === OperationLogEntityType.TagRelation) {
+    // For TagRelation, mainEntityName is now the descriptive string like "TagName related to EntityName (EntityType)"
+    if (log.operationType === 'create') {
+      operationDisplayText = t('operation_tag_relation_added', { tagRelationDescription: mainEntityName });
+    } else if (log.operationType === 'delete') {
+      operationDisplayText = t('operation_tag_relation_removed', { tagRelationDescription: mainEntityName });
+    } else {
+      // Fallback for unexpected operation types on TagRelation
+      operationDisplayText = t('tag_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+    }
+  } else {
+    // For other entity types, just combine operation and entity name
+    operationDisplayText = `${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+  }
 
   const styles = StyleSheet.create({
     cardContainer: {
@@ -92,7 +112,7 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log }) => {
       <View style={styles.operationTypeContainer}>
         {getOperationIcon(log.operationType, colors.primary, 18)}
         <Text style={styles.operationTypeText}>
-          {mainEntityLoading ? 'Loading...' : mainEntityName || t('unknown_entity')}
+          {operationDisplayText}
         </Text>
       </View>
       {log.userId && (

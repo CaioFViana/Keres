@@ -9,7 +9,7 @@ interface UseEntityNameResult {
   loading: boolean;
 }
 
-export function useEntityName(entityType: OperationLogEntityType, entityId: string): UseEntityNameResult {
+export function useEntityName(entityType: OperationLogEntityType, entityId: string, storyId: string): UseEntityNameResult {
   const [entityName, setEntityName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
   const db = useDrizzle();
@@ -19,7 +19,7 @@ export function useEntityName(entityType: OperationLogEntityType, entityId: stri
     let isMounted = true;
 
     async function fetchEntityName() {
-      if (!entityId) {
+      if (!entityId || !storyId) {
         setEntityName(undefined);
         setLoading(false);
         return;
@@ -27,7 +27,7 @@ export function useEntityName(entityType: OperationLogEntityType, entityId: stri
       setLoading(true);
       try {
         // Pass t as an argument to EntityService.getEntityName
-        const name = await EntityService.getEntityName(db, entityType, entityId, t);
+        const name = await EntityService.getEntityName(db, entityType, entityId, storyId, t);
         if (isMounted) {
           setEntityName(name);
         }
@@ -48,7 +48,7 @@ export function useEntityName(entityType: OperationLogEntityType, entityId: stri
     return () => {
       isMounted = false;
     };
-  }, [db, entityType, entityId]); // Removed t from dependency array
+  }, [db, entityType, entityId, storyId]);
 
   return { entityName, loading };
 }

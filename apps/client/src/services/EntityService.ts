@@ -1,9 +1,10 @@
 import { OperationLogEntityType } from '@keres/shared';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { TFunction } from 'i18next';
 import { AppDrizzleClient } from '../db';
 import {
   chapters,
+  characterRelations,
   characters,
   items,
   locations,
@@ -11,11 +12,10 @@ import {
   operationLogs,
   scenes,
   stories,
+  tagRelations,
   tags,
   users,
-  worldRules,
-  characterRelations,
-  tagRelations
+  worldRules
 } from '../db/schemas';
 
 export class EntityService {
@@ -23,6 +23,7 @@ export class EntityService {
     db: AppDrizzleClient,
     entityType: OperationLogEntityType,
     entityId: string,
+    storyId: string,
     t: TFunction
   ): Promise<string | undefined> {
     let translatedEntityType: string | undefined;
@@ -139,16 +140,28 @@ export class EntityService {
         break;
       case OperationLogEntityType.TagRelation:
         const tagRel = await db.query.tagRelations.findFirst({
-          where: eq(tagRelations.id, entityId),
+          where: and(eq(tagRelations.id, entityId), eq(tagRelations.storyId, storyId)),
           columns: { tagId: true, relationId: true, relationType: true },
         });
 
         if (tagRel) {
           const tag = await db.query.tags.findFirst({
-            where: eq(tags.id, tagRel.tagId),
+            where: and(eq(tags.id, tagRel.tagId), eq(tags.storyId, storyId)),
             columns: { name: true },
           });
-          entitySpecificName = `${tag?.name || t('unknown_entity')} (${tagRel.relationType} ${t('id')}: ${tagRel.relationId})`;
+          const related = await EntityService._resolveRelationEntityName(
+            db,
+            tagRel.relationType as OperationLogEntityType,
+            tagRel.relationId,
+            storyId,
+            t
+          );
+          // Correctly pass string values for entityname and entitytype to the translation function
+          entitySpecificName = t('tag_attributed_to_entity', {
+            tagname: tag?.name || t('unknown_tag'),
+            entityname: related.name || t('unknown_entity'),
+            entitytype: related.type || t('unknown_entity_type')
+          });
         }
         translatedEntityType = t('tag_relation'); // Assuming 'tag_relation' is a translation key
         break;
@@ -170,5 +183,64 @@ export class EntityService {
       // If no specific name found, but entityType is known, return just the translated type
       return translatedEntityType;
     }
+  }
+
+  // Private helper to resolve the name and type of a related entity (e.g., from TagRelation)
+  private static async _resolveRelationEntityName(
+    db: AppDrizzleClient,
+    relationType: OperationLogEntityType,
+    relationId: string,
+    storyId: string,
+    t: TFunction
+  ): Promise<{ name: string | undefined; type: string | undefined }> {
+    let name: string | undefined;
+    let type: string | undefined;
+
+    switch (relationType) {
+      case OperationLogEntityType.Story:
+        const story = await db.query.stories.findFirst({ where: and(eq(stories.id, relationId), eq(stories.id, storyId)), columns: { title: true } });
+        name = story?.title;
+        type = t('story');
+        break;
+      case OperationLogEntityType.Character:
+        const character = await db.query.characters.findFirst({ where: and(eq(characters.id, relationId), eq(characters.storyId, storyId)), columns: { name: true } });
+        name = character?.name;
+        type = t('character');
+        break;
+      case OperationLogEntityType.Note:
+        const note = await db.query.notes.findFirst({ where: and(eq(notes.id, relationId), eq(notes.storyId, storyId)), columns: { title: true } });
+        name = note?.title;
+        type = t('note');
+        break;
+      case OperationLogEntityType.Location:
+        const location = await db.query.locations.findFirst({ where: and(eq(locations.id, relationId), eq(locations.storyId, storyId)), columns: { name: true } });
+        name = location?.name;
+        type = t('location');
+        break;
+      case OperationLogEntityType.WorldRule:
+        const worldRule = await db.query.worldRules.findFirst({ where: and(eq(worldRules.id, relationId), eq(worldRules.storyId, storyId)), columns: { title: true } });
+        name = worldRule?.title;
+        type = t('world_rule');
+        break;
+      case OperationLogEntityType.Chapter:
+        const chapter = await db.query.chapters.findFirst({ where: and(eq(chapters.id, relationId), eq(chapters.storyId, storyId)), columns: { name: true } });
+        name = chapter?.name;
+        type = t('chapter');
+        break;
+      case OperationLogEntityType.Scene:
+        const scene = await db.query.scenes.findFirst({ where: and(eq(scenes.id, relationId), eq(scenes.storyId, storyId)), columns: { name: true } });
+        name = scene?.name;
+        type = t('scene');
+        break;
+      case OperationLogEntityType.Item:
+        const item = await db.query.items.findFirst({ where: and(eq(items.id, relationId), eq(items.storyId, storyId)), columns: { name: true } });
+        name = item?.name;
+        type = t('item');
+        break;
+      default:
+        name = undefined;
+        type = t('unknown_entity_type');
+    }
+    return { name, type };
   }
 }

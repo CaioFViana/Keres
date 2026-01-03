@@ -17,6 +17,36 @@ function flattenObject(obj: Record<string, any>, prefix = ''): Set<string> {
   return keys;
 }
 
+// Helper to remove a nested key from an object given its dot-separated path
+function removeKeyFromObject(obj: Record<string, any>, keyPath: string): boolean {
+  const parts = keyPath.split('.');
+  let current: Record<string, any> | undefined = obj;
+  let parent: Record<string, any> | undefined;
+  let lastPart: string = '';
+
+  for (let i = 0; i < parts.length; i++) {
+    lastPart = parts[i];
+    if (current === undefined || typeof current !== 'object' || Array.isArray(current)) {
+      return false; // Path does not exist or is not an object
+    }
+    if (i < parts.length - 1) {
+      parent = current;
+      current = current[lastPart];
+    }
+  }
+
+  if (current && Object.prototype.hasOwnProperty.call(current, lastPart)) {
+    delete current[lastPart];
+    // Clean up empty parent objects if necessary (optional, but good practice)
+    if (parent && Object.keys(current).length === 0) {
+      delete parent[lastPart]; // This is problematic if 'lastPart' is not the key in parent
+      // A more robust cleanup would involve recursively checking and deleting empty parents
+    }
+    return true;
+  }
+  return false;
+}
+
 // Helper to sort a JSON object by its top-level keys
 function sortObjectKeys(obj: Record<string, any>): Record<string, any> {
   const sortedKeys = Object.keys(obj).sort();
@@ -52,6 +82,10 @@ function writeJsonFile(filePath: string, data: Record<string, any>) {
 async function auditLocales() {
   const clientSrcPath = path.join(__dirname, '..', 'src');
   const localesPath = path.join(clientSrcPath, 'locales');
+
+  // Parse command-line arguments
+  const args = process.argv.slice(2);
+  const forceRemoveUnused = args.includes('--force');
 
   let hasErrors = false;
 
@@ -153,6 +187,44 @@ async function auditLocales() {
   }
   if (!hasErrors) {
     console.log('✅ All locale files have consistent keys.');
+  }
+
+  // --- Step 5: Detect and Optionally Remove Unused Translations ---
+  console.log('\n🔄 Detecting unused translations...');
+  const unusedKeys = new Set<string>();
+  let unusedTranslationsFound = false;
+  for (const uniqueKey of allUniqueLocaleKeys) {
+    if (!extractedKeys.has(uniqueKey)) {
+      unusedKeys.add(uniqueKey);
+    }
+  }
+
+  if (unusedKeys.size > 0) {
+    unusedTranslationsFound = true;
+    if (forceRemoveUnused) {
+      console.log('🗑️ --force flag detected. Removing unused translation keys...');
+      for (const localeFile in allLocalesContent) {
+        let fileModified = false;
+        for (const unusedKey of unusedKeys) {
+          if (removeKeyFromObject(allLocalesContent[localeFile], unusedKey)) {
+            console.log(`   - Removed '${unusedKey}' from '${localeFile}'`);
+            fileModified = true;
+          }
+        }
+        if (fileModified) {
+          writeJsonFile(path.join(localesPath, localeFile), allLocalesContent[localeFile]);
+          console.log(`✅ Updated '${localeFile}' with unused keys removed.`);
+        }
+      }
+      // Since unused keys were removed, they don't count as an error for process.exit(1)
+    } else {
+      for (const unusedKey of unusedKeys) {
+        console.warn(`⚠️ Unused translation key: '${unusedKey}' (present in locale files but not used in code)`);
+      }
+      hasErrors = true; // Only set hasErrors if not forced removal
+    }
+  } else {
+    console.log('✅ No unused translations found.');
   }
 
 

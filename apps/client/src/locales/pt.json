@@ -17,7 +17,7 @@
   "body": "Corpo",
   "body_placeholder": "Digite o corpo da nota",
   "branching": "Ramificações",
-  "branching_summary": "{{totalStories}} Histórias Ramificadas",
+  "branching_summary": "{{count}} Histórias Ramificadas",
   "cancel": "Cancelar",
   "cancel_request_confirmation_message": "Tem certeza de que deseja cancelar este pedido de amizade?",
   "cancel_request_confirmation_title": "Cancelar Pedido de Amizade",
@@ -460,5 +460,6 @@
   "yes": "Sim",
   "you_suffix": "(Você)",
   "your_friendships": "Suas Amizades",
-  "your_stories": "Suas Histórias"
+  "your_stories": "Suas Histórias",
+  "total_results_found": "{{count}} resultados encontrados"
 }

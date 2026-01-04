@@ -108,7 +108,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     <CollapsibleCard
       title={
         totalStories !== undefined
-          ? `${t('total_stories_summary', { totalStories })}${t('branching_summary', { count: branchingStories || 0 })}`
+          ? `${t('total_stories_summary', { totalStories })} - ${t('branching_summary', { count: branchingStories || 0 })}`
           : title || t('summary')
       }
       initialExpanded={false}

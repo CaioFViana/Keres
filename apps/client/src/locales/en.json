@@ -17,7 +17,7 @@
   "body": "Body",
   "body_placeholder": "Enter note body",
   "branching": "Branching",
-  "branching_summary": "{{totalStories}} Branching Stories",
+  "branching_summary": "{{count}} Branching Stories",
   "cancel": "Cancel",
   "cancel_request_confirmation_message": "Are you sure you want to cancel this friend request?",
   "cancel_request_confirmation_title": "Cancel Friend Request",
@@ -463,5 +463,6 @@
   "yes": "Yes",
   "you_suffix": "(You)",
   "your_friendships": "Your Friendships",
-  "your_stories": "Your Stories"
+  "your_stories": "Your Stories",
+  "total_results_found": "{{count}} results found"
 }

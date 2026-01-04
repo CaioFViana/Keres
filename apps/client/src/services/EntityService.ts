@@ -15,7 +15,8 @@ import {
   tagRelations,
   tags,
   users,
-  worldRules
+  worldRules,
+  noteRelations
 } from '../db/schemas';
 
 export class EntityService {
@@ -165,6 +166,32 @@ export class EntityService {
         }
         translatedEntityType = t('tag_relation'); // Assuming 'tag_relation' is a translation key
         break;
+      case OperationLogEntityType.NoteRelation:
+        const noteRel = await db.query.noteRelations.findFirst({
+          where: and(eq(noteRelations.id, entityId), eq(noteRelations.storyId, storyId)),
+          columns: { noteId: true, relationId: true, relationType: true },
+        });
+
+        if (noteRel) {
+          const note = await db.query.notes.findFirst({
+            where: and(eq(notes.id, noteRel.noteId), eq(notes.storyId, storyId)),
+            columns: { title: true },
+          });
+          const related = await EntityService._resolveRelationEntityName(
+            db,
+            noteRel.relationType as OperationLogEntityType,
+            noteRel.relationId,
+            storyId,
+            t
+          );
+          entitySpecificName = t('note_attributed_to_entity', {
+            notename: note?.title || t('unknown_note'),
+            entityname: related.name || t('unknown_entity'),
+            entitytype: related.type || t('unknown_entity_type')
+          });
+        }
+        translatedEntityType = t('note_relation');
+        break;
       case OperationLogEntityType.OperationLog:
         const opLog = await db.query.operationLogs.findFirst({
           where: eq(operationLogs.id, entityId),
@@ -236,6 +263,25 @@ export class EntityService {
         const item = await db.query.items.findFirst({ where: and(eq(items.id, relationId), eq(items.storyId, storyId)), columns: { name: true } });
         name = item?.name;
         type = t('item');
+        break;
+      case OperationLogEntityType.NoteRelation:
+        const noteRelation = await db.query.noteRelations.findFirst({ where: and(eq(noteRelations.id, relationId), eq(noteRelations.storyId, storyId)), columns: { noteId: true, relationId: true, relationType: true } });
+        if (noteRelation) {
+          const note = await db.query.notes.findFirst({ where: and(eq(notes.id, noteRelation.noteId), eq(notes.storyId, storyId)), columns: { title: true } });
+          const relatedEntity = await EntityService._resolveRelationEntityName(
+            db,
+            noteRelation.relationType as OperationLogEntityType,
+            noteRelation.relationId,
+            storyId,
+            t
+          );
+          name = t('note_attributed_to_entity_short', {
+            notename: note?.title || t('unknown_note'),
+            entityname: relatedEntity.name || t('unknown_entity'),
+            entitytype: relatedEntity.type || t('unknown_entity_type')
+          });
+          type = t('note_relation');
+        }
         break;
       default:
         name = undefined;

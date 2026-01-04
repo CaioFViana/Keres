@@ -13,6 +13,7 @@ export enum OperationLogEntityType {
   Item = 'Item',
   CharacterRelation = 'CharacterRelation',
   TagRelation = 'TagRelation',
+  NoteRelation = 'NoteRelation',
   OperationLog = 'OperationLog',
   // Add other relevant entities as they are introduced to the system
 }

@@ -60,6 +60,15 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
       // Fallback for unexpected operation types on TagRelation
       operationDisplayText = t('tag_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
     }
+  } else if (log.entityType === OperationLogEntityType.NoteRelation) {
+    if (log.operationType === 'create') {
+      operationDisplayText = t('operation_note_relation_added', { noteRelationDescription: mainEntityName });
+    } else if (log.operationType === 'delete') {
+      operationDisplayText = t('operation_note_relation_removed', { noteRelationDescription: mainEntityName });
+    } else {
+      // Fallback for unexpected operation types on NoteRelation
+      operationDisplayText = t('note_relation') + `: ${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;
+    }
   } else {
     // For other entity types, just combine operation and entity name
     operationDisplayText = `${t(log.operationType)} ${mainEntityName || t('unknown_entity')}`;

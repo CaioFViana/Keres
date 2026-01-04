@@ -61,6 +61,9 @@ export class StoryExportImportService {
         const tagRelations = await db.query.tagRelations.findMany({
             where: (tagRelations, { eq, and }) => and(eq(tagRelations.storyId, storyId), eq(tagRelations.isDeleted, false)),
         });
+        const noteRelations = await db.query.noteRelations.findMany({ 
+            where: (noteRelations, { eq, and }) => and(eq(noteRelations.storyId, storyId), eq(noteRelations.isDeleted, false)),
+        });
 
         // Query for the maximum operationVersion for this story
         const latestOperation = await db.select({
@@ -91,6 +94,7 @@ export class StoryExportImportService {
             items,
             itemJourneys,
             tagRelations,
+            noteRelations,
             serverLastOperationVersion: serverLastOperationVersion,
         });
 
@@ -261,6 +265,32 @@ export class StoryExportImportService {
             });
             if (newNotesData.length > 0) {
                 await tx.insert(dbSchema.notes).values(newNotesData);
+            }
+
+            // --- NoteRelations ---
+            const newNoteRelationsData = validatedFullStory.noteRelations.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                const mappedNoteId = idMap.get(original.noteId);
+                if (!mappedNoteId) {
+                    throw new Error(`Import Error: Note ID ${original.noteId} not found in ID map for note relation ${original.id}.`);
+                }
+                const mappedRelationId = idMap.get(original.relationId);
+                if (!mappedRelationId) {
+                    throw new Error(`Import Error: Relation ID ${original.relationId} not found in ID map for note relation ${original.id}. This indicates a missing entity in export or an unhandled foreign key.`);
+                }
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    noteId: mappedNoteId,
+                    relationId: mappedRelationId,
+                    relationType: original.relationType,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newNoteRelationsData.length > 0) {
+                await tx.insert(dbSchema.noteRelations).values(newNoteRelationsData);
             }
 
             // --- Tags ---

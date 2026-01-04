@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
+import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Added Alert
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import NoteManager from '../../components/NoteManager/NoteManager'; // Import NoteManager
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
@@ -12,6 +14,8 @@ import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/CharacterService';
+import { NoteRelationServiceInterface, createNoteRelationService } from '../../services/NoteRelationService'; // Import NoteRelationService
+import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
 import { useTheme } from '../../theme';
@@ -40,6 +44,8 @@ const CharacterDetailScreen = () => {
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
+  const noteServiceRef = useRef<NoteService | null>(null); // Ref for NoteService
+  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null); // Ref for NoteRelationService
 
   // Initialize services once when drizzleDb is available
   useEffect(() => {
@@ -56,6 +62,12 @@ const CharacterDetailScreen = () => {
       if (!characterRelationServiceRef.current) {
         characterRelationServiceRef.current = createCharacterRelationService(drizzleDb);
       }
+      if (!noteServiceRef.current) {
+        noteServiceRef.current = createNoteService(drizzleDb);
+      }
+      if (!noteRelationServiceRef.current) {
+        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
@@ -63,6 +75,8 @@ const CharacterDetailScreen = () => {
   const [characterTags, setCharacterTags] = useState<TagSelect[]>([]);
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
+  const [allNotes, setAllNotes] = useState<Note[]>([]); // State for all notes in story
+  const [characterNoteRelations, setCharacterNoteRelations] = useState<NoteRelation[]>([]); // State for note relations
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -176,6 +190,32 @@ const CharacterDetailScreen = () => {
     }
   }, [character?.storyId, characterServiceRef.current]);
 
+  const fetchNotesForStory = useCallback(async () => {
+    if (!noteServiceRef.current || !character?.storyId) {
+      setAllNotes([]);
+      return;
+    }
+    try {
+      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(character.storyId);
+      setAllNotes(fetchedNotes);
+    } catch (err) {
+      console.error('Failed to fetch notes for story:', err);
+    }
+  }, [character?.storyId, noteServiceRef.current]);
+
+  const fetchNoteRelationsForCharacter = useCallback(async () => {
+    if (!noteRelationServiceRef.current || !character?.storyId || !characterId) {
+      setCharacterNoteRelations([]);
+      return;
+    }
+    try {
+      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(character.storyId, characterId, 'Character');
+      setCharacterNoteRelations(fetchedNoteRelations);
+    } catch (err) {
+      console.error('Failed to fetch note relations for character:', err);
+    }
+  }, [character?.storyId, characterId, noteRelationServiceRef.current]);
+
   const handleCharacterChange = useCallback(async (changedStoryId: string, changedCharacterId: string) => {
     if (changedCharacterId === characterId) {
       if (characterServiceRef.current) {
@@ -202,29 +242,48 @@ const CharacterDetailScreen = () => {
     }
   }, [characterId, fetchRelationsForCharacter]);
 
+  const handleNoteChange = useCallback((changedStoryId: string, changedNoteId: string) => {
+    if (character?.storyId === changedStoryId) {
+      fetchNotesForStory();
+    }
+  }, [character?.storyId, fetchNotesForStory]);
+
+  const handleNoteRelationChange = useCallback((changedStoryId: string, changedNoteRelationId: string) => {
+    if (character?.storyId === changedStoryId) {
+      fetchNoteRelationsForCharacter();
+    }
+  }, [character?.storyId, fetchNoteRelationsForCharacter]);
+
+
   useEffect(() => {
     if (characterServiceRef.current) {
       fetchCharacter();
       entityEventEmitter.on('character_changed', handleCharacterChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
-      entityEventEmitter.on('character_relation_changed', handleCharacterRelationChange); // Listen for relation changes
+      entityEventEmitter.on('character_relation_changed', handleCharacterRelationChange); // Listen for character relation changes
+      entityEventEmitter.on('note_changed', handleNoteChange); // Listen for note changes
+      entityEventEmitter.on('note_relation_changed', handleNoteRelationChange); // Listen for note relation changes
 
       return () => {
         entityEventEmitter.off('character_changed', handleCharacterChange);
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
         entityEventEmitter.off('character_relation_changed', handleCharacterRelationChange);
+        entityEventEmitter.off('note_changed', handleNoteChange);
+        entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
       };
     }
-  }, [characterId, fetchCharacter, handleCharacterChange, handleTagRelationChange, handleCharacterRelationChange, characterServiceRef.current]);
+  }, [characterId, fetchCharacter, handleCharacterChange, handleTagRelationChange, handleCharacterRelationChange, handleNoteChange, handleNoteRelationChange, characterServiceRef.current]);
 
   useEffect(() => {
-    // Fetch tags, relations, and all characters when character is loaded or changes
+    // Fetch tags, relations, all characters, all notes, and note relations when character is loaded or changes
     if (character) {
       fetchTagsForCharacter();
       fetchRelationsForCharacter();
       fetchAllCharactersInStory(); // Fetch all characters here
+      fetchNotesForStory(); // Fetch all notes
+      fetchNoteRelationsForCharacter(); // Fetch note relations
     }
-  }, [character, fetchTagsForCharacter, fetchRelationsForCharacter, fetchAllCharactersInStory]);
+  }, [character, fetchTagsForCharacter, fetchRelationsForCharacter, fetchAllCharactersInStory, fetchNotesForStory, fetchNoteRelationsForCharacter]);
 
   const handleSaveRelation = async (relation: CharacterRelation) => {
     if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
@@ -267,6 +326,49 @@ const CharacterDetailScreen = () => {
     } catch (error) {
       Alert.alert(t('error'), t('failed_to_delete_relation'));
       console.error('Failed to delete character relation:', error);
+    }
+  };
+
+  const handleSaveNoteRelation = async (relation: NoteRelation) => {
+    if (!noteRelationServiceRef.current || !character?.storyId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
+      setCharacterNoteRelations(prev => {
+        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
+        if (existingIndex > -1) {
+          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
+        } else {
+          return [...prev, savedRelation];
+        }
+      });
+      entityEventEmitter.emit('note_relation_changed', character?.storyId, characterId);
+      Alert.alert(t('success'), t('note_relation_saved_successfully'));
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_save_note_relation'));
+      console.error('Failed to save note relation:', error);
+    }
+  };
+
+  const handleDeleteNoteRelation = async (relationId: string) => {
+    if (!noteRelationServiceRef.current || !character?.storyId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
+      if (success) {
+        setCharacterNoteRelations(prev => prev.filter(r => r.id !== relationId));
+        entityEventEmitter.emit('note_relation_changed', character?.storyId, characterId);
+        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
+      } else {
+        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+      }
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+      console.error('Failed to delete note relation:', error);
     }
   };
 
@@ -348,6 +450,19 @@ const CharacterDetailScreen = () => {
         currentStoryId={character.storyId}
         currentCharacterId={characterId}
       />
+
+      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+      <NoteManager
+        noteRelations={characterNoteRelations}
+        availableNotes={allNotes}
+        onSave={handleSaveNoteRelation}
+        onDelete={handleDeleteNoteRelation}
+        editable={false}
+        currentStoryId={character.storyId}
+        currentEntityId={characterId}
+        currentEntityType="Character"
+      />
+
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
       <TagChipList tags={characterTags} />
 

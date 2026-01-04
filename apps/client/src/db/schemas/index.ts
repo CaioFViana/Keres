@@ -10,6 +10,7 @@ export * from './itemJourneys';
 export * from './items';
 export * from './locations';
 export * from './notes';
+export * from './noteRelations';
 export * from './operationLogs';
 export * from './scenes';
 export * from './servers';
@@ -20,4 +21,3 @@ export * from './tagRelations';
 export * from './tags';
 export * from './users';
 export * from './worldRules';
-

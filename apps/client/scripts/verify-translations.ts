@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as ts from 'typescript';
 
 // Helper to flatten a nested object into dot-separated keys
 function flattenObject(obj: Record<string, any>, prefix = ''): Set<string> {
@@ -20,31 +21,42 @@ function flattenObject(obj: Record<string, any>, prefix = ''): Set<string> {
 // Helper to remove a nested key from an object given its dot-separated path
 function removeKeyFromObject(obj: Record<string, any>, keyPath: string): boolean {
   const parts = keyPath.split('.');
-  let current: Record<string, any> | undefined = obj;
+  let current: Record<string, any> = obj; // Start with the main object
   let parent: Record<string, any> | undefined;
-  let lastPart: string = '';
 
   for (let i = 0; i < parts.length; i++) {
-    lastPart = parts[i];
-    if (current === undefined || typeof current !== 'object' || Array.isArray(current)) {
-      return false; // Path does not exist or is not an object
+    const part = parts[i];
+    if (typeof current !== 'object' || current === null || Array.isArray(current)) {
+      return false; // Current path segment is not an object or is null/array
     }
-    if (i < parts.length - 1) {
-      parent = current;
-      current = current[lastPart];
-    }
-  }
 
-  if (current && Object.prototype.hasOwnProperty.call(current, lastPart)) {
-    delete current[lastPart];
-    // Clean up empty parent objects if necessary (optional, but good practice)
-    if (parent && Object.keys(current).length === 0) {
-      delete parent[lastPart]; // This is problematic if 'lastPart' is not the key in parent
-      // A more robust cleanup would involve recursively checking and deleting empty parents
+    if (i === parts.length - 1) { // This is the last part of the path
+      if (Object.prototype.hasOwnProperty.call(current, part)) {
+        delete current[part];
+        return true;
+      }
+      return false; // Key not found at the end of the path
+    } else { // Not the last part, so traverse deeper
+      parent = current;
+      current = current[part];
+      if (current === undefined) {
+        return false; // Intermediate path segment does not exist
+      }
     }
-    return true;
   }
-  return false;
+  return false; // Should not reach here if path has parts
+}
+
+// New helper function to extract keys using regex
+function extractTranslationKeysFromRegex(fileContent: string): Set<string> {
+  const keys = new Set<string>();
+  // Regex to find t('key'), t("key"), t(`key`)
+  const regex = /\bt\(['"`]([a-zA-Z0-9._-]+)['"`]\)/g;
+  let match;
+  while ((match = regex.exec(fileContent)) !== null) {
+    keys.add(match[1]);
+  }
+  return keys;
 }
 
 // Helper to sort a JSON object by its top-level keys
@@ -77,6 +89,87 @@ function writeJsonFile(filePath: string, data: Record<string, any>) {
     console.error(`❌ Error writing to ${filePath}:`, error.message);
     process.exit(1);
   }
+}
+
+/**
+ * Extracts translation keys from a TypeScript/TSX file content using AST parsing.
+ * Supports t('key'), t("key"), t(`key`), and t('key', { ... }).
+ * @param fileContent The content of the file.
+ * @returns A Set of extracted translation keys.
+ */
+function extractTranslationKeysFromAST(fileContent: string): Set<string> {
+  const keys = new Set<string>();
+  // Use a dummy file name for ts.createSourceFile, it doesn't affect AST parsing
+  const sourceFile = ts.createSourceFile('dummy.ts', fileContent, ts.ScriptTarget.Latest, true);
+
+  function visit(node: ts.Node) {
+    if (ts.isCallExpression(node)) {
+      let expression = node.expression;
+      let isTCall = false;
+
+      // Check for 't('key')'
+      if (ts.isIdentifier(expression) && expression.text === 't') {
+        isTCall = true;
+      }
+      // Check for 'i18n.t('key')'
+      else if (ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.name) && expression.name.text === 't') {
+        isTCall = true;
+      }
+
+      if (isTCall && node.arguments.length > 0) {
+        const firstArg = node.arguments[0];
+
+        // Directly extract string literals
+        if (ts.isStringLiteral(firstArg) || ts.isNoSubstitutionTemplateLiteral(firstArg)) {
+          keys.add(firstArg.text);
+        }
+        // Extract from template expressions (like `key ${variable}`) - though i18n usually expects plain string keys
+        else if (ts.isTemplateExpression(firstArg)) {
+          // If it's a template expression without substitutions, it's basically a string literal
+          if (firstArg.templateSpans.length === 0) {
+            keys.add(firstArg.head.text);
+          }
+          // If it has substitutions, we can't reliably get a static key, so ignore or warn
+          // For simplicity here, we'll ignore dynamic template strings
+        }
+        // Handle cases where the key might be a variable or property access
+        // This is more complex and usually requires type checking, but we can try to find simple cases.
+        // For example, if it's an Identifier whose value is a string literal.
+        else if (ts.isIdentifier(firstArg)) {
+            // This case needs symbol resolution or more advanced flow analysis to get the literal string value.
+            // For now, we'll assume direct string literals or template expressions.
+            // A common pattern where this fails is `const KEY = 'some_key'; t(KEY);`
+            // If we strictly follow the 'string literal' requirement for t() args, then this is outside current scope.
+        }
+        // This is where 'PropertyAccessExpression' from the previous debug might have come from
+        // e.g., t(someObject.key) - we would ignore these for now as they are dynamic keys.
+      }
+    }
+    // Handle JSX expressions (e.g., { expression } in JSX)
+    else if (ts.isJsxExpression(node)) {
+      if (node.expression) {
+        // Recursively visit the expression inside { }
+        visit(node.expression);
+      }
+    }
+    // Handle JSX attributes (e.g., <MyComponent prop={expression} />)
+    else if (ts.isJsxAttribute(node)) {
+      if (node.initializer && ts.isJsxExpression(node.initializer) && node.initializer.expression) {
+        visit(node.initializer.expression);
+      }
+    }
+    // Explicitly handle BinaryExpression to ensure traversal into its parts, especially in JSX context
+    else if (ts.isBinaryExpression(node)) {
+        visit(node.left);
+        visit(node.right);
+    }
+
+
+    ts.forEachChild(node, visit);
+  }
+
+  ts.forEachChild(sourceFile, visit);
+  return keys;
 }
 
 async function auditLocales() {
@@ -131,21 +224,23 @@ async function auditLocales() {
   walkDir(clientSrcPath);
 
   const extractedKeys = new Set<string>();
-  const tKeyRegex = /\bt\(['"]([a-zA-Z0-9._-]+)['"]\)/g;
-
   for (const file of tsFiles) {
     const content = fs.readFileSync(file, 'utf-8');
-    let match;
-    while ((match = tKeyRegex.exec(content)) !== null) {
-      extractedKeys.add(match[1]);
-    }
+    extractTranslationKeysFromAST(content).forEach(key => {
+        extractedKeys.add(key);
+    });
+    // Add regex extraction for fallback
+    extractTranslationKeysFromRegex(content).forEach(key => {
+        extractedKeys.add(key);
+    });
   }
 
-  // Extract keys from entityFields.ts
+  // Extract keys from entityFields.ts - using a more robust regex for 'label'
   const entityFieldsPath = path.join(__dirname, '..', '..', '..', 'packages', 'shared', 'metadata', 'entityFields.ts');
   try {
     const entityFieldsContent = fs.readFileSync(entityFieldsPath, 'utf8');
-    const labelKeyRegex = /label: ['"]([a-zA-Z0-9._-]+)['"](,|)/g;
+    // This regex looks for 'label: "key"' or 'label: 'key'' in an object-like structure
+    const labelKeyRegex = /label:\s*['"]([a-zA-Z0-9._-]+)['"]/g;
     let match;
     while ((match = labelKeyRegex.exec(entityFieldsContent)) !== null) {
       extractedKeys.add(match[1]);

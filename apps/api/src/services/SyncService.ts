@@ -21,6 +21,7 @@ import { SuggestionSyncHandler } from './entity-sync-handlers/SuggestionSyncHand
 import { TagRelationSyncHandler } from './entity-sync-handlers/TagRelationSyncHandler';
 import { TagSyncHandler } from './entity-sync-handlers/TagSyncHandler';
 import { WorldRuleSyncHandler } from './entity-sync-handlers/WorldRuleSyncHandler';
+import { NoteRelationSyncHandler } from './entity-sync-handlers/NoteRelationSyncHandler'; // Import NoteRelationSyncHandler
 import { storyPermissionService } from './StoryPermissionService';
 
 export class SyncService {
@@ -43,7 +44,8 @@ export class SyncService {
     this.registerEntityHandler(new ItemJourneySyncHandler());
     this.registerEntityHandler(new SuggestionSyncHandler());
     this.registerEntityHandler(new TagSyncHandler());
-    this.registerEntityHandler(new TagRelationSyncHandler())
+    this.registerEntityHandler(new TagRelationSyncHandler());
+    this.registerEntityHandler(new NoteRelationSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {

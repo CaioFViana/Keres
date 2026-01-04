@@ -12,9 +12,9 @@ export * from "./entities/Story";
 export * from "./entities/Suggestion";
 export * from "./entities/Tag";
 export * from "./entities/WorldRule";
-export * from "./entities/EnrichedFriendship"; // Export EnrichedFriendship
-export * from "./schemas/SyncSchemas"; // Export SyncSchemas from the schemas subdirectory
-export * from "./schemas/FullStorySchemas"; // Export FullStorySchemas from the schemas subdirectory
+export * from "./entities/EnrichedFriendship";
+export * from "./schemas/SyncSchemas";
+export * from "./schemas/FullStorySchemas";
 export * from "./schemas/ChapterSchemas";
 export * from "./schemas/CharacterRelationSchemas";
 export * from "./schemas/CharacterSceneSchemas";
@@ -25,6 +25,7 @@ export * from "./schemas/ItemJourneySchemas";
 export * from "./schemas/ItemSchemas";
 export * from "./schemas/LocationSchemas";
 export * from "./schemas/NoteSchemas";
+export * from "./schemas/NoteRelationSchemas"
 export * from "./schemas/SceneSchemas";
 export * from "./schemas/StoryPermissionSchemas";
 export * from "./schemas/StorySchemas";
@@ -35,4 +36,3 @@ export * from "./schemas/WorldRuleSchemas";
 export * from "./schemas/FriendshipSchemas";
 export * from "./metadata/OperationLogEntityType";
 export * from "./metadata/FriendStatus";
-

@@ -1,5 +1,6 @@
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Character } from '@keres/shared/entities/Character';
+import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note'; // Import Note and NoteRelation
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute, StackActions } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,6 +10,7 @@ import Button from '../../components/common/Button/Button';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '../../components/common/SuggestionTextInput/SuggestionTextInput';
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import NoteManager from '../../components/NoteManager/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
@@ -19,6 +21,8 @@ import { createCharacterService } from '../../services/CharacterService';
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
 import { createCharacterRelationService, CharacterRelationServiceInterface } from '../../services/CharacterRelationService'; // Import CharacterRelationService
+import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -49,6 +53,9 @@ const CharacterFormScreen = () => {
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
+  const noteServiceRef = useRef<NoteService | null>(null); // Ref for NoteService
+  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null); // Ref for NoteRelationService
+
 
   // Initialize services once when drizzleDb is available
   useEffect(() => {
@@ -64,6 +71,12 @@ const CharacterFormScreen = () => {
       }
       if (!characterRelationServiceRef.current) {
         characterRelationServiceRef.current = createCharacterRelationService(drizzleDb);
+      }
+      if (!noteServiceRef.current) {
+        noteServiceRef.current = createNoteService(drizzleDb);
+      }
+      if (!noteRelationServiceRef.current) {
+        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
       }
     }
   }, [drizzleDb]);
@@ -88,6 +101,9 @@ const CharacterFormScreen = () => {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // To pass to CharacterRelationManager
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
+  const [allNotes, setAllNotes] = useState<Note[]>([]); // State for all notes in story
+  const [characterNoteRelations, setCharacterNoteRelations] = useState<NoteRelation[]>([]); // State for note relations
+
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,54 +171,81 @@ const CharacterFormScreen = () => {
     }
   }, [selectedStory?.id, currentCharacterId, characterRelationServiceRef.current]);
 
+  const fetchNotesForStory = useCallback(async () => {
+    if (!noteServiceRef.current || !selectedStory?.id) {
+      setAllNotes([]);
+      return;
+    }
+    try {
+      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
+      setAllNotes(fetchedNotes);
+    } catch (err) {
+      console.error('Failed to fetch notes for story:', err);
+    }
+  }, [selectedStory?.id, noteServiceRef.current]);
+
+  const fetchNoteRelationsForCharacter = useCallback(async () => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentCharacterId) {
+      setCharacterNoteRelations([]);
+      return;
+    }
+    try {
+      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, currentCharacterId, 'Character');
+      setCharacterNoteRelations(fetchedNoteRelations);
+    } catch (err) {
+      console.error('Failed to fetch note relations for character:', err);
+    }
+  }, [selectedStory?.id, currentCharacterId, noteRelationServiceRef.current]);
+
   useEffect(() => {
-    const loadCharacterAndTags = async () => {
-      if (!characterServiceRef.current) {
-        console.warn('Character service not initialized.');
+    const loadCharacterAndData = async () => {
+      if (!characterServiceRef.current || !selectedStory?.id) {
+        console.warn('Character service or selected story not available.');
+        setLoading(false);
         return;
       }
 
-      if (!isEditing) {
-        setLoading(false);
-        fetchAvailableTags();
-        fetchAllCharactersInStory(); // Fetch all characters for relation manager
-        return;
-      }
       try {
         setLoading(true);
-        const fetchedCharacter = await characterServiceRef.current.getById(currentCharacterId!);
-        if (fetchedCharacter) {
-          setName(fetchedCharacter.name);
-          setTitle(fetchedCharacter.title);
-          setDescription(fetchedCharacter.description);
-          setGender(fetchedCharacter.gender);
-          setRace(fetchedCharacter.race);
-          setSubrace(fetchedCharacter.subrace);
-          setPersonality(fetchedCharacter.personality);
-          setMotivation(fetchedCharacter.motivation);
-          setQualities(fetchedCharacter.qualities);
-          setWeaknesses(fetchedCharacter.weaknesses);
-          setBiography(fetchedCharacter.biography);
-          setPlannedTimeline(fetchedCharacter.plannedTimeline);
-          setIsFavorite(fetchedCharacter.isFavorite);
-          setExtraNotes(fetchedCharacter.extraNotes);
-        } else {
-          setError(t('character_not_found'));
+        if (isEditing) {
+          const fetchedCharacter = await characterServiceRef.current.getById(currentCharacterId!);
+          if (fetchedCharacter) {
+            setName(fetchedCharacter.name);
+            setTitle(fetchedCharacter.title);
+            setDescription(fetchedCharacter.description);
+            setGender(fetchedCharacter.gender);
+            setRace(fetchedCharacter.race);
+            setSubrace(fetchedCharacter.subrace);
+            setPersonality(fetchedCharacter.personality);
+            setMotivation(fetchedCharacter.motivation);
+            setQualities(fetchedCharacter.qualities);
+            setWeaknesses(fetchedCharacter.weaknesses);
+            setBiography(fetchedCharacter.biography);
+            setPlannedTimeline(fetchedCharacter.plannedTimeline);
+            setIsFavorite(fetchedCharacter.isFavorite);
+            setExtraNotes(fetchedCharacter.extraNotes);
+          } else {
+            setError(t('character_not_found'));
+          }
         }
       } catch (err) {
-        console.error('Failed to load character:', err);
+        console.error('Failed to load character or related data:', err);
         setError(t('failed_to_load_character'));
       } finally {
         setLoading(false);
         fetchAvailableTags();
         fetchCharacterTags();
-        fetchAllCharactersInStory(); // Fetch all characters for relation manager
-        fetchRelationsForCharacter(); // Fetch relations for this character
+        fetchAllCharactersInStory();
+        fetchRelationsForCharacter();
+        fetchNotesForStory();
+        fetchNoteRelationsForCharacter();
       }
     };
-    loadCharacterAndTags();
-  }, [currentCharacterId, isEditing, characterServiceRef.current, t, fetchAvailableTags, fetchCharacterTags, fetchAllCharactersInStory, fetchRelationsForCharacter]);
-
+    loadCharacterAndData();
+  }, [currentCharacterId, isEditing, selectedStory?.id, characterServiceRef.current, t,
+    fetchAvailableTags, fetchCharacterTags, fetchAllCharactersInStory,
+    fetchRelationsForCharacter, fetchNotesForStory, fetchNoteRelationsForCharacter
+  ]);
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert(t('error'), t('name_required'));
@@ -359,6 +402,49 @@ const CharacterFormScreen = () => {
     } catch (error) {
       Alert.alert(t('error'), t('failed_to_delete_relation'));
       console.error('Failed to delete character relation:', error);
+    }
+  };
+
+  const handleSaveNoteRelation = async (relation: NoteRelation) => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentCharacterId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
+      setCharacterNoteRelations(prev => {
+        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
+        if (existingIndex > -1) {
+          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
+        } else {
+          return [...prev, savedRelation];
+        }
+      });
+      entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentCharacterId);
+      Alert.alert(t('success'), t('note_relation_saved_successfully'));
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_save_note_relation'));
+      console.error('Failed to save note relation:', error);
+    }
+  };
+
+  const handleDeleteNoteRelation = async (relationId: string) => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentCharacterId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
+      if (success) {
+        setCharacterNoteRelations(prev => prev.filter(r => r.id !== relationId));
+        entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentCharacterId);
+        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
+      } else {
+        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+      }
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+      console.error('Failed to delete note relation:', error);
     }
   };
 
@@ -555,7 +641,6 @@ const CharacterFormScreen = () => {
             />
           </View>
 
-          {/* Character Relations Manager */}
           {currentCharacterId && selectedStory?.id && (
             <View style={styles.tagSection}>
               <Text style={styles.sectionTitle}>{t('character_relations_title')}</Text>
@@ -567,6 +652,22 @@ const CharacterFormScreen = () => {
                 editable={true} // Editable in form screen
                 currentStoryId={selectedStory.id}
                 currentCharacterId={currentCharacterId}
+              />
+            </View>
+          )}
+
+          {currentCharacterId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+              <NoteManager
+                noteRelations={characterNoteRelations}
+                availableNotes={allNotes}
+                onSave={handleSaveNoteRelation}
+                onDelete={handleDeleteNoteRelation}
+                editable={true}
+                currentStoryId={selectedStory.id}
+                currentEntityId={currentCharacterId}
+                currentEntityType="Character"
               />
             </View>
           )}

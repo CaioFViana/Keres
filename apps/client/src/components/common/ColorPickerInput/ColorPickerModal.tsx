@@ -1,13 +1,32 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, FlatList, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, useTheme } from '../../../theme';
 import Button from '../Button/Button';
 
 const { width } = Dimensions.get('window');
 const COLOR_PICKER_SIZE = width * 0.7; // 70% of screen width
 const SLIDER_HEIGHT = 20;
+const COLOR_CIRCLE_SIZE = (COLOR_PICKER_SIZE / 8) - 5; // Adjusted size for 8 columns with some margin
+
+// Define a list of 32 standard colors (8 HUES x 4 variations)
+// HUES: 0 (Red), 45 (Orange), 90 (Yellow-Green), 135 (Green), 180 (Cyan), 225 (Blue), 270 (Purple), 315 (Magenta).
+const STANDARD_COLORS = [
+  // Row 1 (V=100, S=50 - pastel tones)
+  { h: 0, s: 50, v: 100 }, { h: 45, s: 50, v: 100 }, { h: 90, s: 50, v: 100 }, { h: 135, s: 50, v: 100 },
+  { h: 180, s: 50, v: 100 }, { h: 225, s: 50, v: 100 }, { h: 270, s: 50, v: 100 }, { h: 315, s: 50, v: 100 },
+  // Row 2 (V=100, S=100 - standard vibrant)
+  { h: 0, s: 100, v: 100 }, { h: 45, s: 100, v: 100 }, { h: 90, s: 100, v: 100 }, { h: 135, s: 100, v: 100 },
+  { h: 180, s: 100, v: 100 }, { h: 225, s: 100, v: 100 }, { h: 270, s: 100, v: 100 }, { h: 315, s: 100, v: 100 },
+  // Row 3 (V=80, S=100 - slightly darker vibrant)
+  { h: 0, s: 100, v: 80 }, { h: 45, s: 100, v: 80 }, { h: 90, s: 100, v: 80 }, { h: 135, s: 100, v: 80 },
+  { h: 180, s: 100, v: 80 }, { h: 225, s: 100, v: 80 }, { h: 270, s: 100, v: 80 }, { h: 315, s: 100, v: 80 },
+  // Row 4 (V=60, S=80 - muted darker tones)
+  { h: 0, s: 80, v: 60 }, { h: 45, s: 80, v: 60 }, { h: 90, s: 80, v: 60 }, { h: 135, s: 80, v: 60 },
+  { h: 180, s: 80, v: 60 }, { h: 225, s: 80, v: 60 }, { h: 270, s: 80, v: 60 }, { h: 315, s: 80, v: 60 },
+].map(color => rgbToHex(hsvToRgb(color.h, color.s, color.v).r, hsvToRgb(color.h, color.s, color.v).g, hsvToRgb(color.h, color.s, color.v).b));
+
 
 interface ColorPickerModalProps {
   currentColor: string;
@@ -124,6 +143,14 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     return { left: x - 10 }; // Adjust for handle size
   }, [hue]);
 
+  const handleStandardColorSelect = useCallback((hexColor: string) => {
+    const { r, g, b } = hexToRgb(hexColor);
+    const { h, s, v } = rgbToHsv(r, g, b);
+    setHue(h);
+    setSaturation(s);
+    setValue(v);
+  }, []);
+
   const styles = StyleSheet.create({
     colorPickerContainer: {
       width: COLOR_PICKER_SIZE + 40, // Add some padding
@@ -220,6 +247,26 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     buttonWrapper: {
       width: '47%',
     },
+    standardColorsContainer: {
+      width: COLOR_PICKER_SIZE,
+      marginTop: 10,
+      marginBottom: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    colorGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between', // Distribute items evenly
+    },
+    colorCircle: {
+      width: COLOR_CIRCLE_SIZE,
+      height: COLOR_CIRCLE_SIZE,
+      borderRadius: COLOR_CIRCLE_SIZE / 2,
+      margin: 2.5, // Small margin between circles
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
   });
 
   return (
@@ -262,6 +309,21 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
           style={StyleSheet.absoluteFillObject}
         />
         <View style={[styles.sliderHandle, hueSliderHandlePosition(), { backgroundColor: `hsl(${hue}, 100%, 50%)` }]} />
+      </View>
+
+      {/* Standard Colors Palette */}
+      <View style={styles.standardColorsContainer}>
+        <FlatList
+          data={STANDARD_COLORS}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleStandardColorSelect(item)}>
+              <View style={[styles.colorCircle, { backgroundColor: item }]} />
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item) => item}
+          numColumns={8}
+          contentContainerStyle={styles.colorGrid}
+        />
       </View>
 
       {/* Current Color Preview */}

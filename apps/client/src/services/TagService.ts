@@ -62,6 +62,8 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
                 conditions.push(sql`${tags[key as keyof TagSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(tags[key as keyof TagSelect], value) as SQL<boolean>);
+              } else if (fieldMeta.type === 'color') {
+                conditions.push(eq(tags[key as keyof TagSelect], value) as SQL<boolean>);
               }
               // Add other types (number, date, etc.) as needed
             }

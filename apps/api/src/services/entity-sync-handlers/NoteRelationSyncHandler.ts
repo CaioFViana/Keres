@@ -1,7 +1,7 @@
 import { CreateNoteRelationDataSchema, CreateNoteRelationDataType, CreateStoryUpdate, DeleteStoryUpdate, NoteRelationEntities, PartialNoteRelationSchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { characters, noteRelations, notes } from '../../db/schema';
+import { chapters, characters, locations, noteRelations, notes, scenes, worldRules } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class NoteRelationSyncHandler extends BaseSyncEntityHandler<typeof CreateNoteRelationDataSchema, typeof PartialNoteRelationSchema> {
@@ -41,16 +41,38 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<typeof Create
           throw new Error(`Validation Error: Character with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`);
         }
         break;
-      // Add cases for other NoteRelationEntities if needed (Location, Scene, WorldRule, Chapter)
-      // For example:
-      // case 'Location':
-      //   const locationExists = await db.query.locations.findFirst({
-      //     where: and(eq(locations.id, relationId), eq(locations.storyId, storyId), eq(locations.isDeleted, false)),
-      //   });
-      //   if (!locationExists) {
-      //     throw new Error(`Validation Error: Location with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`);
-      //   }
-      //   break;
+      case 'Location':
+        const locationExists = await db.query.locations.findFirst({
+          where: and(eq(locations.id, relationId), eq(locations.storyId, storyId), eq(locations.isDeleted, false)),
+        });
+        if (!locationExists) {
+          throw new Error(`Validation Error: Location with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`);
+        }
+        break;
+      case 'WorldRule':
+        const worldRuleExists = await db.query.worldRules.findFirst({
+          where: and(eq(worldRules.id, relationId), eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)),
+        });
+        if (!worldRuleExists) {
+          throw new Error(`Validation Error: WorldRule with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`);
+        }
+        break;
+      case 'Scene':
+        const sceneExists = await db.query.scenes.findFirst({
+           where: and(eq(scenes.id, relationId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
+        });
+        if (!sceneExists) {
+          throw new Error(`Validation Error: Scene with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`);
+        }
+        break;
+      case 'Chapter':
+        const chapterExists = await db.query.chapters.findFirst({
+          where: and(eq(chapters.id, relationId), eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)),
+        });
+        if (!chapterExists) {
+          throw new Error(`Validation Error: Chapter with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`);
+        }
+        break;
       default:
         throw new Error(`Validation Error: Unsupported NoteRelationEntities type: ${relationType}.`);
     }

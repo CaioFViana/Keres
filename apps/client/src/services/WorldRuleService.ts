@@ -24,7 +24,7 @@ export interface WorldRuleService {
   ): Promise<WorldRuleWithTags[]>;
   getById(worldRuleId: string): Promise<WorldRuleWithTags | undefined>;
   createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect>;
-  updateWorldRule(currentUserId: string, worldRuleId: string, worldRuleData: Partial<Omit<WorldRuleInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
+  updateWorldRule(currentUserId: string, worldRuleId: string, worldRuleData: Partial<Omit<WorldRuleInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<WorldRuleSelect>;
   deleteWorldRule(currentUserId: string, worldRuleId: string): Promise<void>;
 }
 
@@ -200,7 +200,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
       return result;
     },
 
-    async updateWorldRule(currentUserId: string, worldRuleId: string, worldRuleData: Partial<Omit<WorldRuleInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+    async updateWorldRule(currentUserId: string, worldRuleId: string, worldRuleData: Partial<Omit<WorldRuleInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<WorldRuleSelect> {
       const originalWorldRule = await db.query.worldRules.findFirst({ where: eq(worldRules.id, worldRuleId) });
       if (!originalWorldRule) {
         throw new Error(`World Rule with ID ${worldRuleId} not found for update.`);
@@ -214,24 +214,23 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
 
       if (Object.keys(changes).length === 0) {
         console.log(`No significant changes detected for world rule ${worldRuleId}. Skipping update and operation log.`);
-        return;
+        return originalWorldRule;
       }
 
-      const [updatedWorldRule] = await db.update(worldRules)
+      await db.update(worldRules)
         .set({ ...worldRuleData, updatedAt: new Date(), version: sql`${worldRules.version} + 1` })
-        .where(eq(worldRules.id, worldRuleId))
-        .returning({ id: worldRules.id, storyId: worldRules.storyId, version: worldRules.version });
+        .where(eq(worldRules.id, worldRuleId));
 
+      const updatedWorldRule = await db.query.worldRules.findFirst({ where: eq(worldRules.id, worldRuleId) });
       if (!updatedWorldRule) {
-        throw new Error(`Failed to update world rule ${worldRuleId} or world rule not found.`);
+        throw new Error(`Failed to retrieve updated world rule ${worldRuleId}.`);
       }
 
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedWorldRule.storyId, currentUserId);
-      await recordLocalOperation(db, updatedWorldRule.storyId, userIdToLog, 'update', 'WorldRule', worldRuleId, {
-        ...worldRuleData,
-        version: updatedWorldRule.version,
-      });
+      await recordLocalOperation(db, updatedWorldRule.storyId, userIdToLog, 'update', 'WorldRule', worldRuleId, getChangedFields(originalWorldRule, updatedWorldRule));
       entityEventEmitter.emit('worldrule_changed', updatedWorldRule.storyId, updatedWorldRule.id);
+
+      return updatedWorldRule;
     },
 
     async deleteWorldRule(currentUserId: string, worldRuleId: string): Promise<void> {

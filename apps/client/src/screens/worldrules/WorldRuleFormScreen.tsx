@@ -1,16 +1,20 @@
 import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
+import { Note, NoteRelation } from '@keres/shared/entities/Note'; // Import Note and NoteRelation
 import { WorldRule } from '@keres/shared/entities/WorldRule';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useFocusEffect, useNavigation, useRoute, StackActions } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import TextInput from '../../components/common/TextInput/TextInput';
+import NoteManager from '../../components/NoteManager/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack';
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
+import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
 import { createWorldRuleService } from '../../services/WorldRuleService';
@@ -18,6 +22,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type WorldRuleFormScreenRouteProp = RouteProp<WorldRulesStackParamList, 'WorldRuleForm'>;
 
@@ -29,27 +34,39 @@ const WorldRuleFormScreen = () => {
   const route = useRoute<WorldRuleFormScreenRouteProp>();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore()
-  const { worldRuleId } = route.params || {};
+  const { worldRuleId: initialWorldRuleId } = route.params || {}; // Renamed to initialWorldRuleId
   const { selectedStory } = useStoryStore();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
-  const worldRuleService = useCallback(() => createWorldRuleService(drizzleDb), [drizzleDb]);
+  const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
+  const noteServiceRef = useRef<NoteService | null>(null); // Ref for NoteService
+  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null); // Ref for NoteRelationService
 
   useEffect(() => {
     if (drizzleDb) {
+      if (!worldRuleServiceRef.current) {
+        worldRuleServiceRef.current = createWorldRuleService(drizzleDb);
+      }
       if (!tagServiceRef.current) {
         tagServiceRef.current = createTagService(drizzleDb);
       }
       if (!tagRelationServiceRef.current) {
         tagRelationServiceRef.current = createTagRelationService(drizzleDb);
       }
+      if (!noteServiceRef.current) {
+        noteServiceRef.current = createNoteService(drizzleDb);
+      }
+      if (!noteRelationServiceRef.current) {
+        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
+  const [currentWorldRuleId, setCurrentWorldRuleId] = useState<string | undefined>(initialWorldRuleId); // State to manage worldRuleId
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -57,11 +74,13 @@ const WorldRuleFormScreen = () => {
 
   const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [allNotes, setAllNotes] = useState<Note[]>([]); // State for all notes in story
+  const [worldRuleNoteRelations, setWorldRuleNoteRelations] = useState<NoteRelation[]>([]); // State for note relations
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isEditing = !!worldRuleId;
+  const isEditing = !!currentWorldRuleId;
 
   useFocusEffect(
     useCallback(() => {
@@ -86,47 +105,80 @@ const WorldRuleFormScreen = () => {
   }, [selectedStory?.id, tagServiceRef.current]);
 
   const fetchWorldRuleTags = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id || !worldRuleId) {
+    if (!tagRelationServiceRef.current || !selectedStory?.id || !currentWorldRuleId) {
       setSelectedTagIds([]);
       return;
     }
     try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, worldRuleId, 'WorldRule');
+      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, currentWorldRuleId, 'WorldRule');
       setSelectedTagIds(fetchedTags.map(tag => tag.id));
     } catch (err) {
       console.error('Failed to fetch world rule tags:', err);
     }
-  }, [selectedStory?.id, worldRuleId, tagRelationServiceRef.current]);
+  }, [selectedStory?.id, currentWorldRuleId, tagRelationServiceRef.current]);
+
+  const fetchNotesForStory = useCallback(async () => {
+    if (!noteServiceRef.current || !selectedStory?.id) {
+      setAllNotes([]);
+      return;
+    }
+    try {
+      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
+      setAllNotes(fetchedNotes);
+    } catch (err) {
+      console.error('Failed to fetch notes for story:', err);
+    }
+  }, [selectedStory?.id, noteServiceRef.current]);
+
+  const fetchNoteRelationsForWorldRule = useCallback(async () => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentWorldRuleId) {
+      setWorldRuleNoteRelations([]);
+      return;
+    }
+    try {
+      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, currentWorldRuleId, 'WorldRule');
+      setWorldRuleNoteRelations(fetchedNoteRelations);
+    } catch (err) {
+      console.error('Failed to fetch note relations for world rule:', err);
+    }
+  }, [selectedStory?.id, currentWorldRuleId, noteRelationServiceRef.current]);
 
   useEffect(() => {
-    const loadWorldRule = async () => {
-      if (!isEditing) {
+    const loadWorldRuleAndData = async () => {
+      if (!worldRuleServiceRef.current || !selectedStory?.id) {
+        console.warn('WorldRule service or selected story not available.');
         setLoading(false);
-        fetchAvailableTags();
         return;
       }
+
       try {
         setLoading(true);
-        const fetchedWorldRule = await worldRuleService().getById(worldRuleId!);
-        if (fetchedWorldRule) {
-          setTitle(fetchedWorldRule.title);
-          setDescription(fetchedWorldRule.description);
-          setIsFavorite(fetchedWorldRule.isFavorite);
-          setExtraNotes(fetchedWorldRule.extraNotes);
-        } else {
-          setError(t('world_rule_not_found'));
+        if (isEditing) {
+          const fetchedWorldRule = await worldRuleServiceRef.current.getById(currentWorldRuleId!);
+          if (fetchedWorldRule) {
+            setTitle(fetchedWorldRule.title);
+            setDescription(fetchedWorldRule.description);
+            setIsFavorite(fetchedWorldRule.isFavorite);
+            setExtraNotes(fetchedWorldRule.extraNotes);
+          } else {
+            setError(t('world_rule_not_found'));
+          }
         }
       } catch (err) {
-        console.error('Failed to load world rule:', err);
+        console.error('Failed to load world rule or related data:', err);
         setError(t('failed_to_load_world_rule'));
       } finally {
         setLoading(false);
         fetchAvailableTags();
         fetchWorldRuleTags();
+        fetchNotesForStory();
+        fetchNoteRelationsForWorldRule();
       }
     };
-    loadWorldRule();
-  }, [worldRuleId, isEditing, worldRuleService, t, fetchAvailableTags, fetchWorldRuleTags]);
+    loadWorldRuleAndData();
+  }, [currentWorldRuleId, isEditing, selectedStory?.id, worldRuleServiceRef.current, t,
+    fetchAvailableTags, fetchWorldRuleTags, fetchNotesForStory, fetchNoteRelationsForWorldRule
+  ]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -152,22 +204,30 @@ const WorldRuleFormScreen = () => {
         isFavorite: isFavorite,
         extraNotes: extraNotes,
       };
-      let currentWorldRuleId = worldRuleId; // Initialize currentWorldRuleId with worldRuleId for editing case
+      let savedWorldRule: WorldRule;
+
       if (isEditing) {
-        await worldRuleService().updateWorldRule(userId, worldRuleId!, worldRuleData);
+        savedWorldRule = await worldRuleServiceRef.current!.updateWorldRule(userId, currentWorldRuleId!, worldRuleData);
         Alert.alert(t('success'), t('world_rule_updated_successfully'));
       } else {
-        const newWorldRule = await worldRuleService().createWorldRule(userId, { ...worldRuleData, storyId: selectedStory.id });
+        savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, { ...worldRuleData, storyId: selectedStory.id });
         Alert.alert(t('success'), t('world_rule_created_successfully'));
-        currentWorldRuleId = newWorldRule.id;
+        setCurrentWorldRuleId(savedWorldRule.id);
       }
 
       // Update tag relations
-      if (currentWorldRuleId && tagRelationServiceRef.current && selectedStory?.id) {
-        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, currentWorldRuleId, 'WorldRule', selectedTagIds);
+      if (savedWorldRule.id && tagRelationServiceRef.current && selectedStory?.id) {
+        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, savedWorldRule.id, 'WorldRule', selectedTagIds);
+      }
+      
+      entityEventEmitter.emit('worldrule_changed', selectedStory.id, savedWorldRule.id);
+
+      if (!isEditing && savedWorldRule.id) {
+        navigation.dispatch(StackActions.replace('WorldRuleForm', { worldRuleId: savedWorldRule.id }));
+      } else {
+        navigation.goBack();
       }
 
-      navigation.goBack();
     } catch (err) {
       console.error('Failed to save world rule:', err);
       setError(t('failed_to_save_world_rule'));
@@ -194,10 +254,11 @@ const WorldRuleFormScreen = () => {
         {
           text: t('delete'),
           onPress: async () => {
-            if (worldRuleId) {
+            if (currentWorldRuleId && worldRuleServiceRef.current) {
               try {
                 setLoading(true);
-                await worldRuleService().deleteWorldRule(userId, worldRuleId);
+                await worldRuleServiceRef.current.deleteWorldRule(userId, currentWorldRuleId);
+                entityEventEmitter.emit('worldrule_changed', selectedStory?.id, currentWorldRuleId);
                 Alert.alert(t('success'), t('world_rule_deleted_successfully'));
                 navigation.goBack();
               } catch (err) {
@@ -219,6 +280,49 @@ const WorldRuleFormScreen = () => {
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
   }, []);
+
+  const handleSaveNoteRelation = async (relation: NoteRelation) => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentWorldRuleId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
+      setWorldRuleNoteRelations(prev => {
+        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
+        if (existingIndex > -1) {
+          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
+        } else {
+          return [...prev, savedRelation];
+        }
+      });
+      entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentWorldRuleId);
+      Alert.alert(t('success'), t('note_relation_saved_successfully'));
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_save_note_relation'));
+      console.error('Failed to save note relation:', error);
+    }
+  };
+
+  const handleDeleteNoteRelation = async (relationId: string) => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentWorldRuleId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
+      if (success) {
+        setWorldRuleNoteRelations(prev => prev.filter(r => r.id !== relationId));
+        entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentWorldRuleId);
+        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
+      } else {
+        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+      }
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+      console.error('Failed to delete note relation:', error);
+    }
+  };
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -335,6 +439,22 @@ const WorldRuleFormScreen = () => {
               label={t('world_rule_tags')}
             />
           </View>
+
+          {currentWorldRuleId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+              <NoteManager
+                noteRelations={worldRuleNoteRelations}
+                availableNotes={allNotes}
+                onSave={handleSaveNoteRelation}
+                onDelete={handleDeleteNoteRelation}
+                editable={true}
+                currentStoryId={selectedStory.id}
+                currentEntityId={currentWorldRuleId}
+                currentEntityType="WorldRule"
+              />
+            </View>
+          )}
 
           <Button onPress={handleSave} style={styles.saveButton}>
             {isEditing ? t('save_changes') : t('create_world_rule')}

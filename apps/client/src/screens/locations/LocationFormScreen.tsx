@@ -1,16 +1,20 @@
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Location } from '@keres/shared/entities/Location';
+import { Note, NoteRelation } from '@keres/shared/entities/Note'; // Import Note and NoteRelation
 import { RouteProp, useFocusEffect, useNavigation, useRoute, StackActions } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
+import NoteManager from '../../components/NoteManager/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createLocationService } from '../../services/LocationService';
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
+import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
 import { useStoryStore } from '../../state/storyStore';
@@ -41,6 +45,8 @@ const LocationFormScreen = () => {
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
+  const noteServiceRef = useRef<NoteService | null>(null); // Ref for NoteService
+  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null); // Ref for NoteRelationService
 
   useEffect(() => {
     if (drizzleDb) {
@@ -52,6 +58,12 @@ const LocationFormScreen = () => {
       }
       if (!tagRelationServiceRef.current) {
         tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+      }
+      if (!noteServiceRef.current) {
+        noteServiceRef.current = createNoteService(drizzleDb);
+      }
+      if (!noteRelationServiceRef.current) {
+        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
       }
     }
   }, [drizzleDb]);
@@ -67,6 +79,8 @@ const LocationFormScreen = () => {
 
   const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [allNotes, setAllNotes] = useState<Note[]>([]); // State for all notes in story
+  const [locationNoteRelations, setLocationNoteRelations] = useState<NoteRelation[]>([]); // State for note relations
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,43 +122,71 @@ const LocationFormScreen = () => {
     }
   }, [selectedStory?.id, currentLocationId, tagRelationServiceRef.current]);
 
+  const fetchNotesForStory = useCallback(async () => {
+    if (!noteServiceRef.current || !selectedStory?.id) {
+      setAllNotes([]);
+      return;
+    }
+    try {
+      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
+      setAllNotes(fetchedNotes);
+    } catch (err) {
+      console.error('Failed to fetch notes for story:', err);
+    }
+  }, [selectedStory?.id, noteServiceRef.current]);
+
+  const fetchNoteRelationsForLocation = useCallback(async () => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentLocationId) {
+      setLocationNoteRelations([]);
+      return;
+    }
+    try {
+      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, currentLocationId, 'Location');
+      setLocationNoteRelations(fetchedNoteRelations);
+    } catch (err) {
+      console.error('Failed to fetch note relations for location:', err);
+    }
+  }, [selectedStory?.id, currentLocationId, noteRelationServiceRef.current]);
+
   useEffect(() => {
-    const loadLocationAndTags = async () => {
-      if (!locationServiceRef.current) {
-        console.warn('Location service not initialized.');
+    const loadLocationAndData = async () => {
+      if (!locationServiceRef.current || !selectedStory?.id) {
+        console.warn('Location service or selected story not available.');
+        setLoading(false);
         return;
       }
 
-      if (!isEditing) {
-        setLoading(false);
-        fetchAvailableTags();
-        return;
-      }
       try {
         setLoading(true);
-        const fetchedLocation = await locationServiceRef.current.getById(currentLocationId!);
-        if (fetchedLocation) {
-          setName(fetchedLocation.name);
-          setDescription(fetchedLocation.description);
-          setClimate(fetchedLocation.climate);
-          setCulture(fetchedLocation.culture);
-          setPolitics(fetchedLocation.politics);
-          setIsFavorite(fetchedLocation.isFavorite);
-          setExtraNotes(fetchedLocation.extraNotes);
-        } else {
-          setError(t('location_not_found'));
+        if (isEditing) {
+          const fetchedLocation = await locationServiceRef.current.getById(currentLocationId!);
+          if (fetchedLocation) {
+            setName(fetchedLocation.name);
+            setDescription(fetchedLocation.description);
+            setClimate(fetchedLocation.climate);
+            setCulture(fetchedLocation.culture);
+            setPolitics(fetchedLocation.politics);
+            setIsFavorite(fetchedLocation.isFavorite);
+            setExtraNotes(fetchedLocation.extraNotes);
+          } else {
+            setError(t('location_not_found'));
+          }
         }
       } catch (err) {
-        console.error('Failed to load location:', err);
+        console.error('Failed to load location or related data:', err);
         setError(t('failed_to_load_location'));
       } finally {
         setLoading(false);
         fetchAvailableTags();
         fetchLocationTags();
+        fetchNotesForStory();
+        fetchNoteRelationsForLocation();
       }
     };
-    loadLocationAndTags();
-  }, [currentLocationId, isEditing, locationServiceRef.current, t, fetchAvailableTags, fetchLocationTags]);
+    loadLocationAndData();
+  }, [currentLocationId, isEditing, selectedStory?.id, locationServiceRef.current, t,
+    fetchAvailableTags, fetchLocationTags, fetchNotesForStory, fetchNoteRelationsForLocation
+  ]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -249,6 +291,49 @@ const LocationFormScreen = () => {
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
   }, []);
+
+  const handleSaveNoteRelation = async (relation: NoteRelation) => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentLocationId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
+      setLocationNoteRelations(prev => {
+        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
+        if (existingIndex > -1) {
+          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
+        } else {
+          return [...prev, savedRelation];
+        }
+      });
+      entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentLocationId);
+      Alert.alert(t('success'), t('note_relation_saved_successfully'));
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_save_note_relation'));
+      console.error('Failed to save note relation:', error);
+    }
+  };
+
+  const handleDeleteNoteRelation = async (relationId: string) => {
+    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentLocationId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
+      if (success) {
+        setLocationNoteRelations(prev => prev.filter(r => r.id !== relationId));
+        entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentLocationId);
+        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
+      } else {
+        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+      }
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+      console.error('Failed to delete note relation:', error);
+    }
+  };
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -383,6 +468,22 @@ const LocationFormScreen = () => {
               label={t('location_tags')}
             />
           </View>
+
+          {currentLocationId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+              <NoteManager
+                noteRelations={locationNoteRelations}
+                availableNotes={allNotes}
+                onSave={handleSaveNoteRelation}
+                onDelete={handleDeleteNoteRelation}
+                editable={true}
+                currentStoryId={selectedStory.id}
+                currentEntityId={currentLocationId}
+                currentEntityType="Location"
+              />
+            </View>
+          )}
 
           <Button onPress={handleSave} style={styles.saveButton}>
             {t('save_location')}

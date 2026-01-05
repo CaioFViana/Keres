@@ -1,9 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import { NoteRelationEntities } from '@keres/shared/entities/Note';
-import { stories } from './stories';
 import { notes } from './notes';
-import { characters } from './characters';
+import { stories } from './stories';
 // Import other relevant entities (locations, scenes, etc.) if NoteRelation can link to them
 // For now, assuming only characters for relationId, but this might need expansion
 

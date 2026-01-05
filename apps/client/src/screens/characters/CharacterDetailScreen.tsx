@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
-import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
+import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,14 +14,14 @@ import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/CharacterService';
-import { NoteRelationServiceInterface, createNoteRelationService } from '../../services/NoteRelationService'; // Import NoteRelationService
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
 import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
+import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharacterListScreen';
-import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {

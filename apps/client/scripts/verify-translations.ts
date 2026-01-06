@@ -285,6 +285,7 @@ async function auditLocales() {
   }
 
   // --- Step 5: Detect and Optionally Remove Unused Translations ---
+  /* // BUGGED ATM. Do NOT trust the results of it.
   console.log('\n🔄 Detecting unused translations...');
   const unusedKeys = new Set<string>();
   let unusedTranslationsFound = false;
@@ -320,7 +321,7 @@ async function auditLocales() {
     }
   } else {
     console.log('✅ No unused translations found.');
-  }
+  }*/
 
 
   if (hasErrors) {

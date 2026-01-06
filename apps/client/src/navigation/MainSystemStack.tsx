@@ -7,12 +7,15 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
-import CharacterRelationDetailScreen from '../screens/characterrelations/CharacterRelationDetailScreen'; // Import Detail Screen
-import CharacterRelationFormScreen from '../screens/characterrelations/CharacterRelationFormScreen'; // Import Form Screen
+import CharacterRelationDetailScreen from '../screens/characterrelations/CharacterRelationDetailScreen';
+import CharacterRelationFormScreen from '../screens/characterrelations/CharacterRelationFormScreen';
 import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationListScreen';
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
+import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
+import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
+import ChapterListScreen from '../screens/chapters/ChapterListScreen';
 import ChoicesScreen from '../screens/ChoicesScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
@@ -42,7 +45,7 @@ export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
   CharactersStack: undefined;
   LocationsStack: undefined;
-  Chapters: { entityType: string };
+  ChaptersStack: undefined;
   Scenes: { entityType: string };
   TagsStack: undefined;
   WorldRulesStack: undefined;
@@ -82,6 +85,27 @@ const CharacterStackNavigator = () => {
       <CharacterStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
       <CharacterStack.Screen name="CharacterForm" component={CharacterFormScreen} />
     </CharacterStack.Navigator>
+  );
+};
+//#endregion
+//#region Chapter
+
+const ChapterStack = createNativeStackNavigator<ChapterStackParamList>();
+
+export type ChapterStackParamList = {
+  Chapters: undefined;
+  ChapterDetail: ChapterDetailScreenParamList['ChapterDetail'];
+  ChapterForm: { chapterId?: string };
+};
+
+const ChapterStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <ChapterStack.Navigator screenOptions={{ headerShown: false }}>
+      <ChapterStack.Screen name="Chapters" component={ChapterListScreen} />
+      <ChapterStack.Screen name="ChapterDetail" component={ChapterDetailScreen} />
+      <ChapterStack.Screen name="ChapterForm" component={ChapterFormScreen} />
+    </ChapterStack.Navigator>
   );
 };
 //#endregion
@@ -295,7 +319,19 @@ const MainSystemNavigator = () => {
           },
         })}
       />
-      <Drawer.Screen name="Chapters" component={ListingDetailStack} initialParams={{ entityType: 'Chapters' }} options={{ title: t('chapters_title') }} />
+      <Drawer.Screen
+        name="ChaptersStack"
+        component={ChapterStackNavigator}
+        options={{
+          title: t('chapters_title'),
+          drawerLabel: t('chapters_title'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('chapter_navigation_reset');
+          },
+        })}
+      />
       <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: t('scenes_title') }} />
       <Drawer.Screen
         name="TagsStack"

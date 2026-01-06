@@ -17,6 +17,7 @@ import { NoteClientSyncHandler } from './entity-sync-handlers/NoteClientSyncHand
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
+import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
 
 export interface ServerStoryPreview {
   storyId: string;
@@ -43,6 +44,7 @@ export class SyncEngineService {
     this.registerEntityHandler(new WorldRuleClientSyncHandler());
     this.registerEntityHandler(new CharacterRelationClientSyncHandler());
     this.registerEntityHandler(new LocationClientSyncHandler());
+    this.registerEntityHandler(new ChapterClientSyncHandler());
     // TODO: Register other entity handlers here
   }
 

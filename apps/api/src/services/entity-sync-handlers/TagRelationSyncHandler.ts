@@ -1,7 +1,7 @@
 import { CreateStoryUpdate, CreateTagRelationDataSchema, CreateTagRelationDataType, DeleteStoryUpdate, PartialTagRelationSchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { characters, choices, galleries, items, locations, notes, scenes, tagRelations, tags, worldRules } from '../../db/schema'; // Import all possible relation tables
+import { chapters, characters, choices, galleries, items, locations, notes, scenes, tagRelations, tags, worldRules } from '../../db/schema'; // Import all possible relation tables
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class TagRelationSyncHandler extends BaseSyncEntityHandler<typeof CreateTagRelationDataSchema, typeof PartialTagRelationSchema> {
@@ -81,6 +81,12 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<typeof CreateT
           where: and(eq(items.id, relationId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
         });
         relationExists = !!item;
+        break;
+      case 'Chapter':
+        const chapter = await db.query.chapters.findFirst({
+          where: and(eq(chapters.id, relationId), eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)),
+        });
+        relationExists = !!chapter;
         break;
       default:
         throw new Error(`Validation Error: Unknown relationType "${relationType}".`);

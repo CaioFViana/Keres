@@ -13,6 +13,8 @@ export const scenes = sqliteTable('scenes', {
   gapType: text('gap_type'),
   duration: integer('duration'),
   durationType: text('duration_type'),
+  isStart: integer('is_start', { mode: 'boolean' }).notNull().default(false),
+  isFinish: integer('is_finish', { mode: 'boolean' }).notNull().default(false),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   extraNotes: text('extra_notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),

@@ -182,6 +182,39 @@ export class StoryExportImportService {
                 await tx.insert(dbSchema.scenes).values(newScenesData);
             }
 
+            // Post-import cleanup for linear stories: Ensure only one isStart and isFinish
+            if (validatedFullStory.story.type === 'linear') {
+              const importedScenes = await tx.query.scenes.findMany({
+                where: eq(dbSchema.scenes.storyId, targetStoryId),
+                columns: { id: true, isStart: true, isFinish: true, version: true },
+              });
+
+              let firstIsStartFound = false;
+              for (const scene of importedScenes) {
+                if (scene.isStart && !firstIsStartFound) {
+                  firstIsStartFound = true;
+                } else if (scene.isStart && firstIsStartFound) {
+                  // This is a duplicate isStart, unset it
+                  await tx.update(dbSchema.scenes)
+                    .set({ isStart: false, updatedAt: now, version: scene.version + 1 })
+                    .where(eq(dbSchema.scenes.id, scene.id));
+                }
+              }
+
+              let firstIsFinishFound = false;
+              for (const scene of importedScenes) {
+                if (scene.isFinish && !firstIsFinishFound) {
+                  firstIsFinishFound = true;
+                } else if (scene.isFinish && firstIsFinishFound) {
+                  // This is a duplicate isFinish, unset it
+                  await tx.update(dbSchema.scenes)
+                    .set({ isFinish: false, updatedAt: now, version: scene.version + 1 })
+                    .where(eq(dbSchema.scenes.id, scene.id));
+                }
+              }
+            }
+
+
             // --- Choices ---
             const newChoicesData = validatedFullStory.choices.map(original => {
                 const newId = ulid();

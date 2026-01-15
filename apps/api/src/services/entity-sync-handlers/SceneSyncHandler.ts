@@ -85,6 +85,30 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
 
 
 
+  private async _handleIsStartFinishFlags(storyId: string, sceneId: string, isStart: boolean | undefined, isFinish: boolean | undefined): Promise<void> {
+    if (isStart === true) {
+      // Unset isStart for all other scenes in the same story
+      await db.update(scenes)
+        .set({ isStart: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+        .where(and(
+          eq(scenes.storyId, storyId),
+          eq(scenes.isStart, true),
+          not(eq(scenes.id, sceneId))
+        ));
+    }
+
+    if (isFinish === true) {
+      // Unset isFinish for all other scenes in the same story
+      await db.update(scenes)
+        .set({ isFinish: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+        .where(and(
+          eq(scenes.storyId, storyId),
+          eq(scenes.isFinish, true),
+          not(eq(scenes.id, sceneId))
+        ));
+    }
+  }
+
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
     const validatedData: CreateSceneDataType = this.createSchema.parse(update.data);
 
@@ -97,6 +121,9 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
 
     const isLinear = await this._isStoryLinear(storyId);
     if (isLinear) {
+        if (validatedData.isStart || validatedData.isFinish) {
+          await this._handleIsStartFinishFlags(storyId, update.id!, validatedData.isStart, validatedData.isFinish);
+        }
         await this._shiftSceneIndexes(storyId, validatedData.chapterId, validatedData.index, 1);
     }
 
@@ -135,6 +162,10 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<typeof CreateSceneDa
     }
 
     const isLinear = await this._isStoryLinear(storyId);
+
+    if (isLinear && (validatedChanges.isStart || validatedChanges.isFinish)) {
+      await this._handleIsStartFinishFlags(storyId, update.id!, validatedChanges.isStart, validatedChanges.isFinish);
+    }
 
     if (isLinear && (validatedChanges.chapterId !== undefined || validatedChanges.index !== undefined)) {
         newChapterId = validatedChanges.chapterId || oldChapterId; // Re-assign if chapterId changed

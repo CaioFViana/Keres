@@ -17,6 +17,7 @@ import migration_13 from './0012_moaning_thunderball';
 import migration_14 from './0013_quiet_master_mold';
 import migration_15 from './0014_little_junta';
 import migration_16 from './0015_strong_archangel';
+import migration_17 from './0016_fine_mercury';
 
 
 const migrations = [
@@ -36,6 +37,7 @@ const migrations = [
   { id: 14, name: '0013_quiet_master_mold', run: migration_14 },
   { id: 15, name: '0014_little_junta', run: migration_15 },
   { id: 16, name: '0015_strong_archangel', run: migration_16 },
+  { id: 17, name: '0016_fine_mercury', run: migration_17 },
 ];
 
 export default migrations;

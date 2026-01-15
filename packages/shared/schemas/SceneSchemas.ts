@@ -12,6 +12,9 @@ export const SceneSchema = z.object({
   gapType: z.string().nullable(),
   duration: z.number().nullable(),
   durationType: z.string().nullable(),
+  isFinish: z.boolean(),
+  isStart: z.boolean(),
+
   isFavorite: z.boolean(),
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
@@ -33,6 +36,8 @@ export const CreateSceneDataSchema = SceneSchema.omit({
   name: z.string().min(1, "Scene name cannot be empty"),
   index: z.number().int().min(0, "Index must be a non-negative integer"),
   isFavorite: z.boolean().default(false),
+  isStart: z.boolean().default(false),
+  isFinish: z.boolean().default(false),
 });
 
 export const PartialSceneSchema = SceneSchema.partial();

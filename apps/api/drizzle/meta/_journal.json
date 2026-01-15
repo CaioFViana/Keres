@@ -99,6 +99,13 @@
       "when": 1767474246371,
       "tag": "0013_superb_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1768511972941,
+      "tag": "0014_left_gunslinger",
+      "breakpoints": true
     }
   ]
 }

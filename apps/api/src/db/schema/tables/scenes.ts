@@ -19,6 +19,8 @@ export const scenes = pgTable('scenes', {
   gapType: text('gap_type'),
   duration: integer('duration'),
   durationType: text('duration_type'),
+  isStart: boolean('is_start').notNull().default(false),
+  isFinish: boolean('is_finish').notNull().default(false),
   isFavorite: boolean('is_favorite').notNull().default(false),
   extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').notNull().defaultNow(),

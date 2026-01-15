@@ -1,5 +1,5 @@
 import { FullStoryExportType } from '@keres/shared';
-import { and, count, eq, sql } from 'drizzle-orm';
+import { and, count, eq, sql, not } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import {
   ChapterInsert,
@@ -393,6 +393,41 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           };
           await tx.insert(scenes).values(sceneToInsert).run();
         }
+
+        // Post-import cleanup for linear stories: Ensure only one isStart and isFinish
+        if (storyToInsert.type === 'linear') {
+          const importedScenes = await tx.query.scenes.findMany({
+            where: eq(scenes.storyId, storyToInsert.id),
+            columns: { id: true, isStart: true, isFinish: true, version: true },
+          });
+
+          const now = new Date(); // Use a single timestamp for these cleanup updates
+
+          let firstIsStartFound = false;
+          for (const scene of importedScenes) {
+            if (scene.isStart && !firstIsStartFound) {
+              firstIsStartFound = true;
+            } else if (scene.isStart && firstIsStartFound) {
+              // This is a duplicate isStart, unset it
+              await tx.update(scenes)
+                .set({ isStart: false, updatedAt: now, version: scene.version + 1 })
+                .where(eq(scenes.id, scene.id));
+            }
+          }
+
+          let firstIsFinishFound = false;
+          for (const scene of importedScenes) {
+            if (scene.isFinish && !firstIsFinishFound) {
+              firstIsFinishFound = true;
+            } else if (scene.isFinish && firstIsFinishFound) {
+              // This is a duplicate isFinish, unset it
+              await tx.update(scenes)
+                .set({ isFinish: false, updatedAt: now, version: scene.version + 1 })
+                .where(eq(scenes.id, scene.id));
+            }
+          }
+        }
+
 
         // 4. Process Choices
         for (const choice of fullStoryData.choices) {

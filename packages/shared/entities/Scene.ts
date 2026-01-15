@@ -10,6 +10,9 @@ export interface Scene {
   gapType: string | null
   duration: number | null
   durationType: string | null
+  isStart: boolean
+  isFinish: boolean
+
   isFavorite: boolean
   extraNotes: string | null
   createdAt: Date

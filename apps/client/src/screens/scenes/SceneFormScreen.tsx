@@ -444,7 +444,7 @@ const SceneFormScreen = () => {
       justifyContent: 'center',
       alignItems: 'center',
     },
-    noteSection: { // Renamed from tagSection for clarity, though it might contain tags in other forms
+    noteSection: {
       marginTop: 20,
       marginBottom: 10,
     },
@@ -458,12 +458,13 @@ const SceneFormScreen = () => {
       color: colors.text,
       marginBottom: 10,
     },
-    halfWidthInput: {
-        width: '48%',
+    numberWidthInput: {
+        width: '30%',
     },
     row: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 10,
         marginBottom: 10,
     },
   });
@@ -545,15 +546,17 @@ const SceneFormScreen = () => {
               value={gap !== null ? String(gap) : ''}
               onChangeText={(text) => setGap(text ? Number(text) : null)}
               keyboardType="numeric"
-              style={[commonInputStyles.input, styles.halfWidthInput]}
+              style={[commonInputStyles.input, styles.numberWidthInput]}
             />
-            <Select
-              options={gapDurationTypeOptions}
-              value={gapType}
-              onValueChange={setGapType}
-              placeholder={t('gap_type_placeholder')}
-              multiple={false}
-            />
+            <View style={{ flex: 1 }}>
+              <Select
+                options={gapDurationTypeOptions}
+                value={gapType}
+                onValueChange={setGapType}
+                placeholder={t('gap_type_placeholder')}
+                multiple={false}
+              />
+            </View>
           </View>
 
           <Text style={[styles.label, { color: colors.text }]}>{t('duration')}</Text>
@@ -563,15 +566,17 @@ const SceneFormScreen = () => {
               value={duration !== null ? String(duration) : ''}
               onChangeText={(text) => setDuration(text ? Number(text) : null)}
               keyboardType="numeric"
-              style={[commonInputStyles.input, styles.halfWidthInput]}
+              style={[commonInputStyles.input, styles.numberWidthInput]}
             />
-            <Select
-              options={gapDurationTypeOptions}
-              value={durationType}
-              onValueChange={setDurationType}
-              placeholder={t('duration_type_placeholder')}
-              multiple={false}
-            />
+            <View style={{ flex: 1 }}>
+              <Select
+                options={gapDurationTypeOptions}
+                value={durationType}
+                onValueChange={setDurationType}
+                placeholder={t('duration_type_placeholder')}
+                multiple={false}
+              />
+            </View>
           </View>
 
           <View style={styles.switchContainer}>

@@ -1,0 +1,235 @@
+import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm';
+import { AppDrizzleClient } from '../db';
+import { SceneInsert, scenes, SceneSelect } from '../db/schema';
+import { getChangedFields } from '../utils/diffUtils';
+import { Create, prepareNewEntityData } from '../utils/entityUtils';
+import { entityEventEmitter } from '../utils/EventEmitter';
+import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
+import { createServerService } from './ServerService';
+
+export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+
+export interface SceneService {
+  getScenesByStoryId(
+    storyId: string,
+    searchTerm?: string,
+    sortBy?: string | null,
+    sortDirection?: 'asc' | 'desc',
+    favoriteFilterState?: FavoriteFilterState,
+    advancedSearchCriteria?: { [key: string]: any },
+  ): Promise<SceneSelect[]>;
+  getById(sceneId: string): Promise<SceneSelect | undefined>;
+  createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect>;
+  updateScene(currentUserId: string, sceneId: string, sceneData: Partial<Omit<SceneInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<SceneSelect>;
+  deleteScene(currentUserId: string, sceneId: string): Promise<void>;
+  getAllByStoryId(storyId: string): Promise<SceneSelect[]>;
+  reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, index: number }[]): Promise<void>;
+}
+
+export const createSceneService = (db: AppDrizzleClient): SceneService => {
+  const serverService = createServerService(db);
+  return {
+    async getScenesByStoryId(
+      storyId,
+      searchTerm,
+      sortBy,
+      sortDirection,
+      favoriteFilterState,
+      advancedSearchCriteria
+    ): Promise<SceneSelect[]> {
+      const conditions: (SQL<boolean> | undefined)[] = [
+        eq(scenes.storyId, storyId) as SQL<boolean>,
+        eq(scenes.isDeleted, false) as SQL<boolean>,
+      ];
+
+      if (searchTerm) {
+        conditions.push(sql`${scenes.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
+      }
+
+      if (favoriteFilterState === 'favorite') {
+        conditions.push(eq(scenes.isFavorite, true) as SQL<boolean>);
+      } else if (favoriteFilterState === 'not-favorite') {
+        conditions.push(eq(scenes.isFavorite, false) as SQL<boolean>);
+      }
+
+      if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
+        const sceneMetadata = entityFieldMetadata['Scene'];
+        for (const key in advancedSearchCriteria) {
+          if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
+            const value = advancedSearchCriteria[key];
+            const fieldMeta = sceneMetadata.find(meta => meta.name === key);
+
+            if (value !== undefined && value !== '' && fieldMeta) {
+              if (fieldMeta.type === 'string') {
+                conditions.push(sql`${scenes[key as keyof SceneSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
+              } else if (fieldMeta.type === 'boolean') {
+                conditions.push(eq(scenes[key as keyof SceneSelect], value) as SQL<boolean>);
+              } else if (fieldMeta.type === 'number') {
+                conditions.push(eq(scenes[key as keyof SceneSelect], Number(value)) as SQL<boolean>);
+              }
+            }
+          }
+        }
+      }
+
+      const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
+
+      let query = db.select().from(scenes).where(and(...finalConditions)).$dynamic();
+
+      if (sortBy) {
+        const orderBy = sortDirection === 'desc' ? desc : asc;
+        switch (sortBy) {
+          case 'name':
+            query = query.orderBy(orderBy(scenes.name));
+            break;
+          case 'index':
+            query = query.orderBy(orderBy(scenes.index));
+            break;
+          case 'createdAt':
+            query = query.orderBy(orderBy(scenes.createdAt));
+            break;
+          case 'updatedAt':
+            query = query.orderBy(orderBy(scenes.updatedAt));
+            break;
+          default:
+            console.warn(`Unknown sortBy field: ${sortBy}`);
+            break;
+        }
+      } else {
+        query = query.orderBy(asc(scenes.index)); // Default sort by index
+      }
+
+      return query.all();
+    },
+
+    async getById(sceneId: string): Promise<SceneSelect | undefined> {
+      return db.query.scenes.findFirst({
+        where: and(eq(scenes.id, sceneId), eq(scenes.isDeleted, false)),
+      });
+    },
+
+    async createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect> {
+      const newScene = prepareNewEntityData<SceneInsert>(sceneData);
+      const result = await db.insert(scenes).values(newScene).returning().get();
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, newScene.storyId, currentUserId);
+      await recordLocalOperation(db, newScene.storyId, userIdToLog, 'create', 'Scene', newScene.id, { ...result });
+      entityEventEmitter.emit('scene_changed', newScene.storyId, newScene.id);
+
+      return result;
+    },
+
+    async updateScene(currentUserId: string, sceneId: string, sceneData: Partial<Omit<SceneInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<SceneSelect> {
+      const originalScene = await db.query.scenes.findFirst({ where: eq(scenes.id, sceneId) });
+      if (!originalScene) {
+        throw new Error(`Scene with ID ${sceneId} not found for update.`);
+      }
+
+      const potentialNewState = { ...originalScene, ...sceneData };
+
+      const changes = getChangedFields(originalScene, potentialNewState);
+      delete changes.version;
+      delete changes.updatedAt;
+
+      if (Object.keys(changes).length === 0) {
+        console.log(`No significant changes detected for scene ${sceneId}. Skipping update and operation log.`);
+        return originalScene;
+      }
+
+      await db.update(scenes)
+        .set({ ...sceneData, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+        .where(eq(scenes.id, sceneId));
+
+      const updatedScene = await db.query.scenes.findFirst({ where: eq(scenes.id, sceneId) });
+      if (!updatedScene) {
+        throw new Error(`Failed to retrieve updated scene ${sceneId}.`);
+      }
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, updatedScene.storyId, currentUserId);
+      await recordLocalOperation(db, updatedScene.storyId, userIdToLog, 'update', 'Scene', sceneId, getChangedFields(originalScene, updatedScene));
+      entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
+
+      return updatedScene;
+    },
+
+    async deleteScene(currentUserId: string, sceneId: string): Promise<void> {
+      const sceneToDelete = await db.query.scenes.findFirst({ where: eq(scenes.id, sceneId) });
+      if (!sceneToDelete) {
+        console.warn(`Attempted to delete non-existent scene ${sceneId}.`);
+        return;
+      }
+
+      const [updatedScene] = await db.update(scenes)
+        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+        .where(eq(scenes.id, sceneId))
+        .returning({ id: scenes.id, storyId: scenes.storyId, isDeleted: scenes.isDeleted, version: scenes.version });
+
+      if (!updatedScene) {
+        throw new Error(`Failed to delete scene ${sceneId} or scene not found.`);
+      }
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, updatedScene.storyId, currentUserId);
+      await recordLocalOperation(db, updatedScene.storyId, userIdToLog, 'delete', 'Scene', sceneId, {
+        id: updatedScene.id,
+        isDeleted: updatedScene.isDeleted,
+        version: updatedScene.version,
+      });
+      entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
+    },
+
+    async getAllByStoryId(storyId: string): Promise<SceneSelect[]> {
+      if (!storyId) {
+        console.error('getAllByStoryId: storyId is required.');
+        return [];
+      }
+      try {
+        const allScenes = await db.select()
+          .from(scenes)
+          .where(and(eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)))
+          .orderBy(asc(scenes.index))
+          .all();
+        return allScenes;
+      } catch (error) {
+        console.error(`Error fetching all scenes for story ${storyId}:`, error);
+        return [];
+      }
+    },
+
+    async reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, index: number }[]): Promise<void> {
+      // Use a transaction for reordering to ensure atomicity
+      await db.transaction(async (tx) => {
+        for (const scene of newOrder) {
+          const originalScene = await tx.query.scenes.findFirst({
+            where: and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)),
+          });
+          if (!originalScene) {
+            console.warn(`Scene with ID ${scene.id} not found in chapter ${chapterId} during reorder.`);
+            continue;
+          }
+
+          // Only update if the index has actually changed
+          if (originalScene.index !== scene.index) {
+            const [updatedScene] = await tx.update(scenes)
+              .set({
+                index: scene.index,
+                updatedAt: new Date(),
+                version: sql`${scenes.version} + 1`
+              })
+              .where(and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)))
+              .returning({ id: scenes.id, storyId: scenes.storyId, index: scenes.index, version: scenes.version });
+
+            if (updatedScene) {
+              const userIdToLog = await getUserIdForOperation(db, serverService, updatedScene.storyId, currentUserId);
+              await recordLocalOperation(db, updatedScene.storyId, userIdToLog, 'update', 'Scene', updatedScene.id, {
+                index: updatedScene.index,
+                version: updatedScene.version,
+              });
+              entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
+            }
+          }
+        }
+      });
+    },
+  };
+};

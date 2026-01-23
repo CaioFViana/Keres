@@ -61,10 +61,11 @@ export abstract class BaseSyncEntityHandler<CreateType extends z.ZodType<Record<
   }
 
   async findById(id: string): Promise<any | undefined> {
-    const relationsBuilder = (db.query as any)[this._tableName];
-    return relationsBuilder.findFirst({
-      where: eq((this.table as any)[this.idColumnName], id),
-    });
+    const results = await db.select()
+      .from(this.table)
+      .where(eq((this.table as any)[this.idColumnName], id))
+      .limit(1);
+    return results.at(0);
   }
 
   abstract create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void>;

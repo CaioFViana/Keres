@@ -3,7 +3,6 @@
     "name": "Keres-Client",
     "slug": "Keres-Client",
     "version": "1.0.0",
-    //"orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "keresclient",
     "userInterfaceStyle": "automatic",
@@ -40,7 +39,8 @@
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

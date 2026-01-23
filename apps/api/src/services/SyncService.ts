@@ -14,6 +14,7 @@ import { GallerySyncHandler } from './entity-sync-handlers/GallerySyncHandler';
 import { ItemJourneySyncHandler } from './entity-sync-handlers/ItemJourneySyncHandler';
 import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
 import { LocationSyncHandler } from './entity-sync-handlers/LocationSyncHandler';
+import { NoteRelationSyncHandler } from './entity-sync-handlers/NoteRelationSyncHandler';
 import { NoteSyncHandler } from './entity-sync-handlers/NoteSyncHandler';
 import { SceneSyncHandler } from './entity-sync-handlers/SceneSyncHandler';
 import { StorySyncHandler } from './entity-sync-handlers/StorySyncHandler';
@@ -21,7 +22,6 @@ import { SuggestionSyncHandler } from './entity-sync-handlers/SuggestionSyncHand
 import { TagRelationSyncHandler } from './entity-sync-handlers/TagRelationSyncHandler';
 import { TagSyncHandler } from './entity-sync-handlers/TagSyncHandler';
 import { WorldRuleSyncHandler } from './entity-sync-handlers/WorldRuleSyncHandler';
-import { NoteRelationSyncHandler } from './entity-sync-handlers/NoteRelationSyncHandler'; // Import NoteRelationSyncHandler
 import { storyPermissionService } from './StoryPermissionService';
 
 export class SyncService {

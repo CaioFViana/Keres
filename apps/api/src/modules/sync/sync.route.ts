@@ -12,7 +12,6 @@ export const syncRoute = new Elysia()
     }
 
     const { storyId } = params;
-    console.log('Incoming sync body:', JSON.stringify(body, null, 2)); // ADDED for debugging
     const parsedUpdates = StoryUpdatesArraySchema.parse(body);
 
     const { lastOperationVersion } = await syncService.processAndRecordUpdates(user.userId, storyId, parsedUpdates);

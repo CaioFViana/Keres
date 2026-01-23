@@ -37,6 +37,9 @@ import TagsScreen from '../screens/tags/TagListScreen';
 import WorldRuleDetailScreen, { WorldRuleDetailScreenParamList } from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
+import SceneListScreen from '../screens/scenes/SceneListScreen';
+import SceneDetailScreen from '../screens/scenes/SceneDetailScreen';
+import SceneFormScreen from '../screens/scenes/SceneFormScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -46,7 +49,7 @@ export type MainSystemDrawerParamList = {
   CharactersStack: undefined;
   LocationsStack: undefined;
   ChaptersStack: undefined;
-  Scenes: { entityType: string };
+  ScenesStack: undefined;
   TagsStack: undefined;
   WorldRulesStack: undefined;
   NotesStack: undefined;
@@ -56,7 +59,7 @@ export type MainSystemDrawerParamList = {
   Settings: undefined;
   StorySettings: { storyId: string };
   ImportExport: undefined;
-  OperationLogStack: NavigatorScreenParams<OperationLogStackParamList>; // Changed
+  OperationLogStack: NavigatorScreenParams<OperationLogStackParamList>;
   StorySelection: undefined;
 };
 
@@ -106,6 +109,31 @@ const ChapterStackNavigator = () => {
       <ChapterStack.Screen name="ChapterDetail" component={ChapterDetailScreen} />
       <ChapterStack.Screen name="ChapterForm" component={ChapterFormScreen} />
     </ChapterStack.Navigator>
+  );
+};
+//#endregion
+//#region Scene
+
+const SceneStack = createNativeStackNavigator<SceneStackParamList>();
+
+export type SceneDetailScreenParamList = {
+  SceneDetail: { sceneId: string };
+};
+
+export type SceneStackParamList = {
+  Scenes: undefined;
+  SceneDetail: SceneDetailScreenParamList['SceneDetail'];
+  SceneForm: { sceneId?: string };
+};
+
+const SceneStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <SceneStack.Navigator screenOptions={{ headerShown: false }}>
+      <SceneStack.Screen name="Scenes" component={SceneListScreen} />
+      <SceneStack.Screen name="SceneDetail" component={SceneDetailScreen} />
+      <SceneStack.Screen name="SceneForm" component={SceneFormScreen} />
+    </SceneStack.Navigator>
   );
 };
 //#endregion
@@ -332,7 +360,19 @@ const MainSystemNavigator = () => {
           },
         })}
       />
-      <Drawer.Screen name="Scenes" component={ListingDetailStack} initialParams={{ entityType: 'Scenes' }} options={{ title: t('scenes_title') }} />
+      <Drawer.Screen
+        name="ScenesStack"
+        component={SceneStackNavigator}
+        options={{
+          title: t('scenes_title'),
+          drawerLabel: t('scenes_title'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('scene_navigation_reset');
+          },
+        })}
+      />
       <Drawer.Screen
         name="TagsStack"
         component={TagStackNavigator}

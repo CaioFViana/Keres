@@ -3,7 +3,6 @@ import { CreateChapterDataSchema, CreateChapterDataType, PartialChapterSchema } 
 import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
 import { db } from '../../db';
 import { chapters, scenes } from '../../db/schema'; // Import scenes table
-import { recreateImplicitChoicesForChapter } from '../reorderingUtils'; // Import the utility
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class ChapterSyncHandler extends BaseSyncEntityHandler<typeof CreateChapterDataSchema, typeof PartialChapterSchema> {
@@ -106,9 +105,6 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<typeof CreateChapt
         });
 
         await Promise.all(updatePromises);
-
-        // 3. Regenerate Implicit Choices for the Chapter
-        await recreateImplicitChoicesForChapter(storyId, validatedReorderUpdate.id!);
 
         // 4. Increment Chapter Version
         await tx.update(chapters)

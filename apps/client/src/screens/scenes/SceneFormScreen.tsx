@@ -447,6 +447,8 @@ const SceneFormScreen = () => {
     { label: t('weeks'), value: 'weeks' },
     { label: t('months'), value: 'months' },
     { label: t('years'), value: 'years' },
+    { label: t('millennia'), value: 'millennia' },
+    { label: t('eons'), value: 'eons' },
   ];
 
   const styles = StyleSheet.create({

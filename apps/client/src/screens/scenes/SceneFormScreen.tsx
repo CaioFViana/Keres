@@ -251,9 +251,9 @@ const SceneFormScreen = () => {
     setError(null);
 
     try {
-      let sceneData: Omit<Scene, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'index'> = {
+      const sceneData: Omit<Scene, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'index'> = {
         chapterId: chapterId,
-        locationId: locationId, // Include locationId
+        locationId: locationId,
         name: name.trim(),
         summary,
         isFavorite,
@@ -266,40 +266,82 @@ const SceneFormScreen = () => {
         isFinish,
       };
 
-      let savedScene: SceneSelect;
+      let savedSceneId: string | undefined = currentSceneId;
 
-      if (isEditing) {
-        savedScene = await sceneServiceRef.current!.updateScene(userId, currentSceneId!, sceneData);
-        Alert.alert(t('success'), t('scene_updated_successfully'));
-      } else {
-        // For new scenes, determine the next index within the selected chapter
-        const allScenesInChapter = (await sceneServiceRef.current!.getAllByStoryId(selectedStory.id))
-          .filter(scn => scn.chapterId === chapterId);
-        const nextIndex = allScenesInChapter.length > 0 ? Math.max(...allScenesInChapter.map(scn => scn.index || 0)) + 1 : 1;
-        savedScene = await sceneServiceRef.current!.createScene(userId, { ...sceneData, storyId: selectedStory.id, index: nextIndex });
-        Alert.alert(t('success'), t('scene_created_successfully'));
-        setCurrentSceneId(savedScene.id);
-      }
-      
-      // Update tag relations
-      if (savedScene.id && tagRelationServiceRef.current && selectedStory?.id) {
-        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, savedScene.id, 'Scene', selectedTagIds);
-      }
-      
-      entityEventEmitter.emit('scene_changed', selectedStory.id, savedScene.id);
+      if (isEditing && currentSceneId) {
+        const originalScene = await sceneServiceRef.current!.getById(currentSceneId);
+        if (!originalScene) {
+          throw new Error(t('scene_not_found'));
+        }
 
-      if (!isEditing && savedScene.id) {
-        navigation.dispatch(StackActions.replace('SceneForm', { sceneId: savedScene.id }));
-      } else {
-        navigation.goBack();
-      }
+            if (chapterId && originalScene.chapterId !== chapterId) {
+                // --- BATCH UPDATE LOGIC ---
+                const batchUpdates: { sceneId: string; changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[] = [];
+
+                // 1. Get scenes from old chapter and prepare re-indexing
+                const scenesInOldChapter = (await sceneServiceRef.current!.getAllByStoryId(selectedStory.id))
+                    .filter(s => s.chapterId === originalScene.chapterId);
+
+                scenesInOldChapter
+                    .filter(s => s.index > originalScene.index)
+                    .forEach(s => {
+                        batchUpdates.push({
+                            sceneId: s.id,
+                            changes: { index: s.index - 1 }
+                        });
+                    });
+
+                // 2. Get scenes from new chapter to calculate new index
+                const scenesInNewChapter = (await sceneServiceRef.current!.getAllByStoryId(selectedStory.id))
+                    .filter(s => s.chapterId === chapterId);
+                const newIndex = scenesInNewChapter.length > 0 ? Math.max(...scenesInNewChapter.map(s => s.index || 0)) + 1 : 1;
+
+                // 3. Add the moved scene's update to the batch
+                batchUpdates.push({
+                    sceneId: currentSceneId,
+                    changes: { ...sceneData, index: newIndex }
+                });
+
+                // 4. Execute batch update
+                await sceneServiceRef.current!.batchUpdateScenes(userId, selectedStory.id, batchUpdates);
+                Alert.alert(t('success'), t('scene_updated_successfully'));
+
+            } else {
+                // --- SINGLE UPDATE LOGIC ---
+                const savedScene = await sceneServiceRef.current!.updateScene(userId, currentSceneId, sceneData);
+                savedSceneId = savedScene.id;
+                Alert.alert(t('success'), t('scene_updated_successfully'));
+            }
+        } else {
+            // --- CREATE NEW SCENE LOGIC ---
+            const allScenesInChapter = (await sceneServiceRef.current!.getAllByStoryId(selectedStory.id))
+                .filter(scn => scn.chapterId === chapterId);
+            const nextIndex = allScenesInChapter.length > 0 ? Math.max(...allScenesInChapter.map(scn => scn.index || 0)) + 1 : 1;
+            const savedScene = await sceneServiceRef.current!.createScene(userId, { ...sceneData, storyId: selectedStory.id, index: nextIndex });
+            savedSceneId = savedScene.id;
+            Alert.alert(t('success'), t('scene_created_successfully'));
+        }
+
+        if (savedSceneId) {
+            // Update tag relations
+            if (tagRelationServiceRef.current) {
+                await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, savedSceneId, 'Scene', selectedTagIds);
+            }
+            entityEventEmitter.emit('scene_changed', selectedStory.id, savedSceneId);
+        }
+
+        if (!isEditing && savedSceneId) {
+            navigation.dispatch(StackActions.replace('SceneForm', { sceneId: savedSceneId }));
+        } else {
+            navigation.goBack();
+        }
 
     } catch (err) {
-      console.error('Failed to save scene:', err);
-      setError(t('failed_to_save_scene'));
-      Alert.alert(t('error'), t('failed_to_save_scene'));
+        console.error('Failed to save scene:', err);
+        setError(t('failed_to_save_scene'));
+        Alert.alert(t('error'), t('failed_to_save_scene'));
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
@@ -489,7 +531,6 @@ const SceneFormScreen = () => {
             onValueChange={setChapterId}
             placeholder={t('select_chapter')}
             multiple={false}
-            disabled={isEditing} // Cannot change chapter for existing scenes to avoid complex re-indexing
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('location')}</Text>

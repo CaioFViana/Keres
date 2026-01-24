@@ -7,6 +7,7 @@ import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
 import { createServerService } from './ServerService';
+import { Scene } from '@keres/shared';
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
@@ -25,6 +26,7 @@ export interface SceneService {
   deleteScene(currentUserId: string, sceneId: string): Promise<void>;
   getAllByStoryId(storyId: string): Promise<SceneSelect[]>;
   reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, index: number }[]): Promise<void>;
+  batchUpdateScenes(currentUserId: string, storyId: string, updates: { sceneId: string, changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[]): Promise<void>;
 }
 
 export const createSceneService = (db: AppDrizzleClient): SceneService => {
@@ -229,6 +231,41 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
             }
           }
         }
+      });
+    },
+
+    async batchUpdateScenes(currentUserId: string, storyId: string, updates: { sceneId: string, changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[]): Promise<void> {
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+
+      await db.transaction(async (tx) => {
+          for (const update of updates) {
+              const { sceneId, changes } = update;
+
+              const originalScene = await tx.query.scenes.findFirst({
+                  where: eq(scenes.id, sceneId),
+              });
+
+              if (!originalScene) {
+                  console.warn(`Scene with ID ${sceneId} not found during batch update.`);
+                  continue; // or throw? continue is safer for a batch.
+              }
+              
+              const [updatedScene] = await tx.update(scenes)
+                  .set({ ...changes, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+                  .where(eq(scenes.id, sceneId))
+                  .returning();
+
+              if (updatedScene) {
+                  const actualChanges = getChangedFields(originalScene, updatedScene);
+
+                  if (Object.keys(actualChanges).length > 0) {
+                      // Pass 'tx' to recordLocalOperation if it supports transactions, otherwise use 'db'
+                      // For now, using 'db' as per existing patterns in the file.
+                      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Scene', sceneId, actualChanges);
+                      entityEventEmitter.emit('scene_changed', storyId, sceneId);
+                  }
+              }
+          }
       });
     },
   };

@@ -178,7 +178,7 @@ const StorySelectionScreen = () => {
         totalStories: storyCounts.totalStories,
         branchingStories: storyCounts.branchingStories,
         characterCount,
-        choiceCount: storyCounts.branchingStories > 0 ? choiceCount : 0,
+        choiceCount,
         locationCount,
         chapterCount,
         sceneCount,

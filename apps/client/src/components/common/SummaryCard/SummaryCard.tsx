@@ -16,6 +16,7 @@ interface SummaryTileProps {
 const SummaryTile: React.FC<SummaryTileProps> = ({
   iconName, label, count, backgroundColor, textColor,
 }) => {
+  const { t } = useTranslation(); // Add useTranslation here
   const styles = StyleSheet.create({
     tile: {
       width: '48%', // Roughly half width for two columns
@@ -44,7 +45,7 @@ const SummaryTile: React.FC<SummaryTileProps> = ({
   return (
     <View style={styles.tile}>
       <Ionicons name={iconName} size={24} color={textColor} />
-      <Text style={styles.tileCount}>{count !== undefined ? count : 'N/A'}</Text>
+      <Text style={styles.tileCount}>{count !== undefined ? count : t('common_na')}</Text>
       <Text style={styles.tileText}>{label}</Text>
     </View>
   );
@@ -61,6 +62,7 @@ interface SummaryCardProps {
   noteCount?: number;
   worldRuleCount?: number;
   branchingStoryForkCount?: number; // New prop for the count of forks in branching stories
+  isBranchingStory?: boolean; // New prop to indicate if the summary is for a single branching story
   title?: string; // Optional title for the card, e.g., "Global Summary" or "Story Summary"
 }
 
@@ -75,6 +77,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   noteCount,
   worldRuleCount,
   branchingStoryForkCount,
+  isBranchingStory, // Destructure new prop
   title,
 }) => {
   const { colors } = useTheme();
@@ -98,10 +101,11 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     { label: t('world_rules'), count: worldRuleCount, icon: 'globe', color: '#03A9F4' }, // blue
   ];
 
-  // Add "Forks" tile only if there are branching stories
-  if (branchingStories && branchingStories > 0) {
-    tilesData.unshift({ label: t('choices'), count: choiceCount, icon: 'shuffle', color: '#FF9800' }) // orange
-    tilesData.unshift({ label: t('forks'), count: branchingStoryForkCount, icon: 'git-branch', color: '#FFD700' }) // gold
+  // Add "Forks" and "Choices" tiles if it's a branching story or if there are multiple branching stories.
+  // The specific tile will only render if its count is provided and not undefined.
+  if (isBranchingStory || (branchingStories && branchingStories > 0)) {
+    tilesData.unshift({ label: t('choices'), count: choiceCount, icon: 'shuffle', color: '#FF9800' }); // orange
+    tilesData.unshift({ label: t('forks'), count: branchingStoryForkCount, icon: 'git-branch', color: '#FFD700' }); // gold
   }
 
   return (

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer'; // Import DrawerNavigationProp
 import { CommonActions, useNavigation } from '@react-navigation/native';
-import { eq } from 'drizzle-orm';
+import { eq, gt, sql } from 'drizzle-orm'; // Added sql for subquery
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
@@ -11,7 +11,6 @@ import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import * as schema from '../../db/schema';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
-import { SyncEngineService } from '../../services/SyncEngineService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -34,6 +33,7 @@ const MainDashboardScreen = () => {
   const [choiceCount, setChoiceCount] = useState<number | undefined>(undefined);
   const [noteCount, setNoteCount] = useState<number | undefined>(undefined);
   const [worldRuleCount, setWorldRuleCount] = useState<number | undefined>(undefined);
+  const [forkCount, setForkCount] = useState<number | undefined>(undefined); // New state for fork count
 
   const backPressTimer = useRef<number | null>(null);
 
@@ -100,6 +100,25 @@ const MainDashboardScreen = () => {
         const worldRules = await db.select().from(schema.worldRules).where(eq(schema.worldRules.storyId, selectedStory.id)).execute();
         setWorldRuleCount(worldRules.length);
 
+        // Calculate forkCount: scenes with more than one choice using a subquery
+        const subquery = db
+          .select({
+            sceneId: schema.choices.sceneId,
+            choiceCount: sql<number>`count(${schema.choices.id})`.as('choice_count'), // Use sql.raw for count and .as()
+          })
+          .from(schema.choices)
+          .where(eq(schema.choices.storyId, selectedStory.id))
+          .groupBy(schema.choices.sceneId)
+          .as('subquery_scene_choices'); // Give the subquery an alias
+
+        const scenesWithMultipleChoices = await db
+          .select({ sceneId: subquery.sceneId })
+          .from(subquery)
+          .where(gt(subquery.choiceCount, 1)) // Filter on the aliased count
+          .execute();
+
+        setForkCount(scenesWithMultipleChoices.length);
+
       } catch (error) {
         console.error('Error fetching entity counts:', error);
       }
@@ -111,6 +130,7 @@ const MainDashboardScreen = () => {
       setChoiceCount(undefined);
       setNoteCount(undefined);
       setWorldRuleCount(undefined);
+      setForkCount(undefined); // Reset forkCount if no story selected
     }
   }
 
@@ -187,20 +207,23 @@ const MainDashboardScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>{selectedStory?.title || 'No Story Selected'}</Text>
+      <Text style={styles.title}>{selectedStory?.title || t('no_story_selected')}</Text>
       <Text style={styles.text}>
-        (Last server synced log: {selectedStory?.lastServerSyncedLog || 0})
+        ({t('last_server_synced_log')} {selectedStory?.lastServerSyncedLog || 0})
       </Text>
 
       <SummaryCard
-        title="Story Overview"
+        title={t('story_overview')}
+
         characterCount={characterCount}
         locationCount={locationCount}
         chapterCount={chapterCount}
         sceneCount={sceneCount}
-        choiceCount={selectedStory?.type === 'branching' ? choiceCount : undefined}
+        choiceCount={choiceCount}
         noteCount={noteCount}
         worldRuleCount={worldRuleCount}
+        isBranchingStory={selectedStory?.type === 'branching'}
+        branchingStoryForkCount={forkCount}
       />
 
       {selectedStory?.id && (

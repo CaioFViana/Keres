@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import { stories } from './stories';
 import { scenes } from './scenes';
+import { stories } from './stories';
 
 export const choices = pgTable('choices', {
   id: text('id').primaryKey(),
@@ -25,11 +25,9 @@ export const choicesRelations = relations(choices, ({ one }) => ({
   scene: one(scenes, {
     fields: [choices.sceneId],
     references: [scenes.id],
-    relationName: 'fromScene',
   }),
   nextScene: one(scenes, {
     fields: [choices.nextSceneId],
     references: [scenes.id],
-    relationName: 'toScene',
   }),
 }));

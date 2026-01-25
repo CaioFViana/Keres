@@ -6,7 +6,7 @@ export const NoteRelationSchema = z.object({
   storyId: z.string(),
   noteId: z.string(),
   relationId: z.string(),
-  relationType: z.enum(['Character', 'WorldRule', 'Location', 'Scene', 'Chapter'] as const) satisfies z.ZodType<NoteRelationEntities>,
+  relationType: z.enum(['Character', 'WorldRule', 'Location', 'Scene', 'Chapter', 'Choice'] as const) satisfies z.ZodType<NoteRelationEntities>,
   createdAt: z.date(),
   updatedAt: z.date(),
   version: z.number(),

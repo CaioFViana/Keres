@@ -11,7 +11,7 @@ import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet
 import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager/NoteManager';
 import { useDrizzle } from '../../db';
-import { SceneSelect, TagSelect } from '../../db/schema'; // Import TagSelect
+import { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { SceneStackParamList } from '../../navigation/MainSystemStack';
 import { createLocationService } from '../../services/LocationService'; // Import LocationService

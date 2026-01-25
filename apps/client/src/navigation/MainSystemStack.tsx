@@ -7,16 +7,18 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
+import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
+import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
+import ChapterListScreen from '../screens/chapters/ChapterListScreen';
 import CharacterRelationDetailScreen from '../screens/characterrelations/CharacterRelationDetailScreen';
 import CharacterRelationFormScreen from '../screens/characterrelations/CharacterRelationFormScreen';
 import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationListScreen';
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
-import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
-import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
-import ChapterListScreen from '../screens/chapters/ChapterListScreen';
-import ChoicesScreen from '../screens/ChoicesScreen';
+import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
+import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
+import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
@@ -31,15 +33,15 @@ import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
 import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetailScreen';
 import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
+import SceneDetailScreen from '../screens/scenes/SceneDetailScreen';
+import SceneFormScreen from '../screens/scenes/SceneFormScreen';
+import SceneListScreen from '../screens/scenes/SceneListScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
 import WorldRuleDetailScreen, { WorldRuleDetailScreenParamList } from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
-import SceneListScreen from '../screens/scenes/SceneListScreen';
-import SceneDetailScreen from '../screens/scenes/SceneDetailScreen';
-import SceneFormScreen from '../screens/scenes/SceneFormScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -50,12 +52,12 @@ export type MainSystemDrawerParamList = {
   LocationsStack: undefined;
   ChaptersStack: undefined;
   ScenesStack: undefined;
+  ChoicesStack: undefined;
   TagsStack: undefined;
   WorldRulesStack: undefined;
   NotesStack: undefined;
   Gallery: undefined;
   CharacterRelationsStack: undefined;
-  Choices: undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
   ImportExport: undefined;
@@ -137,6 +139,32 @@ const SceneStackNavigator = () => {
   );
 };
 //#endregion
+//#region Choice
+
+const ChoiceStack = createNativeStackNavigator<ChoiceStackParamList>();
+
+export type ChoiceDetailScreenParamList = {
+  ChoiceDetail: { choiceId: string };
+};
+
+export type ChoiceStackParamList = {
+  Choices: undefined;
+  ChoiceDetail: ChoiceDetailScreenParamList['ChoiceDetail'];
+  ChoiceForm: { choiceId?: string };
+};
+
+const ChoiceStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <ChoiceStack.Navigator screenOptions={{ headerShown: false }}>
+      <ChoiceStack.Screen name="Choices" component={ChoiceListScreen} />
+      <ChoiceStack.Screen name="ChoiceDetail" component={ChoiceDetailScreen} />
+      <ChoiceStack.Screen name="ChoiceForm" component={ChoiceFormScreen} />
+    </ChoiceStack.Navigator>
+  );
+};
+//#endregion
+
 //#region Location
 
 const LocationStack = createNativeStackNavigator<LocationStackParamList>();
@@ -361,6 +389,23 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen
+        name="ChoicesStack"
+        component={ChoiceStackNavigator}
+        options={{
+          title: t('choices_title'),
+          drawerLabel: t('choices_title'),
+          drawerItemStyle: {
+            height: selectedStory?.type === 'linear' ? 0 : undefined, // Hide if linear
+            overflow: 'hidden', // Ensure content is hidden
+          },
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('choice_navigation_reset');
+          },
+        })}
+      />
+      <Drawer.Screen
         name="ScenesStack"
         component={SceneStackNavigator}
         options={{
@@ -426,7 +471,6 @@ const MainSystemNavigator = () => {
           },
         })}
       />
-      <Drawer.Screen name="Choices" component={ChoicesScreen} options={{ title: t('choices_title') }} />
       <Drawer.Screen
         name="OperationLogStack"
         component={OperationLogStackNavigator}

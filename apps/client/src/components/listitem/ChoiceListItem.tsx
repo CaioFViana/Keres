@@ -22,14 +22,14 @@ const ChoiceListItem: React.FC<ChoiceListItemProps> = ({ choice, onViewDetails }
   const renderHeaderContent = (cho: ChoiceSelect) => (
     <View style={styles.headerLeft}>
       <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {cho.text} {/* Display choice text */}
+        {truncate(choice.text, 150)}
       </Text>
     </View>
   );
 
   const renderExpandedContent = (cho: ChoiceSelect) => (
     <View>
-      {cho.text && <Text style={styles.summaryText}>{cho.text}</Text>} {/* Display full choice text in expanded content */}
+      {cho.text && <Text style={styles.summaryText}>{cho.text}</Text>}
     </View>
   );
 

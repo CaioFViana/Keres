@@ -9,11 +9,12 @@ import { createSceneStyles } from './styles/sceneListItemStyles';
 
 interface SceneListItemProps {
   scene: SceneSelect;
+  storyType: 'linear' | 'branching' | undefined;
   onToggleFavorite: (sceneId: string, isFavorite: boolean) => void;
   onViewDetails: (sceneId: string) => void;
 }
 
-const SceneListItem: React.FC<SceneListItemProps> = ({ scene, onToggleFavorite, onViewDetails }) => {
+const SceneListItem: React.FC<SceneListItemProps> = ({ scene, storyType, onToggleFavorite, onViewDetails }) => {
   const { colors } = useTheme();
 
   const summaryText = truncate(scene.summary, 150);
@@ -23,7 +24,7 @@ const SceneListItem: React.FC<SceneListItemProps> = ({ scene, onToggleFavorite, 
   const renderHeaderContent = (scn: SceneSelect) => (
     <View style={styles.headerLeft}>
       <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {`${scn.index}. ${scn.name}`}
+        {storyType === 'linear' ? `${scn.index}. ${scn.name}` : scn.name}
       </Text>
     </View>
   );

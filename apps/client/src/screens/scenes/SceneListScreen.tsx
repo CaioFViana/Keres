@@ -102,8 +102,13 @@ const SceneListScreen = () => {
   }, [navigation]);
 
   const memoizedSceneListItem = useCallback(({ item }: { item: SceneSelect }) => (
-    <SceneListItem scene={item} onViewDetails={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
-  ), [handleViewDetails, handleToggleFavorite]);
+    <SceneListItem
+      scene={item}
+      storyType={selectedStory?.type}
+      onViewDetails={handleViewDetails}
+      onToggleFavorite={handleToggleFavorite}
+    />
+  ), [handleViewDetails, handleToggleFavorite, selectedStory?.type]);
 
   const memoizedSortOptions = useMemo(() => {
     return [

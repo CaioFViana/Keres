@@ -27,6 +27,7 @@ export interface SceneService {
   getAllByStoryId(storyId: string): Promise<SceneSelect[]>;
   reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, index: number }[]): Promise<void>;
   batchUpdateScenes(currentUserId: string, storyId: string, updates: { sceneId: string, changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[]): Promise<void>;
+  getPreviousNextScenes(storyId: string, currentSceneId: string, chapterId: string): Promise<{ previousScene: SceneSelect | undefined; nextScene: SceneSelect | undefined }>;
 }
 
 export const createSceneService = (db: AppDrizzleClient): SceneService => {
@@ -267,6 +268,37 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
               }
           }
       });
+    },
+
+    async getPreviousNextScenes(
+      storyId: string,
+      currentSceneId: string,
+      chapterId: string,
+    ): Promise<{ previousScene: SceneSelect | undefined; nextScene: SceneSelect | undefined }> {
+      const allScenesInChapter = await db.query.scenes.findMany({
+        where: and(
+          eq(scenes.storyId, storyId),
+          eq(scenes.chapterId, chapterId),
+          eq(scenes.isDeleted, false)
+        ),
+        orderBy: asc(scenes.index),
+      });
+
+      const currentSceneIndex = allScenesInChapter.findIndex(
+        (scene) => scene.id === currentSceneId
+      );
+
+      let previousScene: SceneSelect | undefined;
+      let nextScene: SceneSelect | undefined;
+
+      if (currentSceneIndex > 0) {
+        previousScene = allScenesInChapter[currentSceneIndex - 1];
+      }
+      if (currentSceneIndex < allScenesInChapter.length - 1) {
+        nextScene = allScenesInChapter[currentSceneIndex + 1];
+      }
+
+      return { previousScene, nextScene };
     },
   };
 };

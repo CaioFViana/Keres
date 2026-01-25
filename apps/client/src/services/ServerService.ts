@@ -81,11 +81,11 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
 
         // Fetch the updated server object from the database to ensure consistency
         const updatedServer = await db.query.servers.findFirst({
-          where: eq(servers.id, server.id),
+          where: and(eq(servers.id, server.id), eq(servers.isDeleted, false)),
         });
 
         if (!updatedServer) {
-            const message = `Could not find updated server with ID ${server.id} after token refresh. Please check server status.`;
+            const message = `Could not find updated server with ID ${server.id} after token refresh or server is deleted. Please check server status.`;
             console.log(message);
             showNotification(message, 'error');
             return server;

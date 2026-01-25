@@ -22,6 +22,9 @@ import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
+import ItemListScreen from '../screens/items/ItemListScreen';
+import ItemDetailScreen from '../screens/items/ItemDetailScreen';
+import ItemFormScreen from '../screens/items/ItemFormScreen';
 import LocationDetailsScreen, { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
@@ -53,6 +56,7 @@ export type MainSystemDrawerParamList = {
   ChaptersStack: undefined;
   ScenesStack: undefined;
   ChoicesStack: undefined;
+  ItemsStack: undefined;
   TagsStack: undefined;
   WorldRulesStack: undefined;
   NotesStack: undefined;
@@ -161,6 +165,31 @@ const ChoiceStackNavigator = () => {
       <ChoiceStack.Screen name="ChoiceDetail" component={ChoiceDetailScreen} />
       <ChoiceStack.Screen name="ChoiceForm" component={ChoiceFormScreen} />
     </ChoiceStack.Navigator>
+  );
+};
+//#endregion
+//#region Item
+
+const ItemStack = createNativeStackNavigator<ItemStackParamList>();
+
+export type ItemDetailScreenParamList = {
+  ItemDetail: { itemId: string };
+};
+
+export type ItemStackParamList = {
+  Items: undefined;
+  ItemDetail: ItemDetailScreenParamList['ItemDetail'];
+  ItemForm: { itemId?: string };
+};
+
+const ItemStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <ItemStack.Navigator screenOptions={{ headerShown: false }}>
+      <ItemStack.Screen name="Items" component={ItemListScreen} />
+      <ItemStack.Screen name="ItemDetail" component={ItemDetailScreen} />
+      <ItemStack.Screen name="ItemForm" component={ItemFormScreen} />
+    </ItemStack.Navigator>
   );
 };
 //#endregion
@@ -402,6 +431,19 @@ const MainSystemNavigator = () => {
         listeners={() => ({
           blur: () => {
             entityEventEmitter.emit('choice_navigation_reset');
+          },
+        })}
+      />
+      <Drawer.Screen
+        name="ItemsStack"
+        component={ItemStackNavigator}
+        options={{
+          title: t('items_title'),
+          drawerLabel: t('items_title'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('item_navigation_reset');
           },
         })}
       />

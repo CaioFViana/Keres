@@ -1,5 +1,5 @@
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const items = sqliteTable('items', {
   id: text('id').primaryKey(),
@@ -17,5 +17,6 @@ export const items = sqliteTable('items', {
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 });
+
 export type ItemInsert = InferInsertModel<typeof items>;
 export type ItemSelect = InferSelectModel<typeof items>;

@@ -8,6 +8,7 @@ import {
   characters,
   items,
   locations,
+  noteRelations,
   notes,
   operationLogs,
   scenes,
@@ -15,8 +16,7 @@ import {
   tagRelations,
   tags,
   users,
-  worldRules,
-  noteRelations
+  worldRules
 } from '../db/schemas';
 
 export class EntityService {
@@ -33,7 +33,7 @@ export class EntityService {
     switch (entityType) {
       case OperationLogEntityType.Story:
         const story = await db.query.stories.findFirst({
-          where: eq(stories.id, entityId),
+          where: and(eq(stories.id, entityId), eq(stories.isDeleted, false)),
           columns: { title: true },
         });
         entitySpecificName = story?.title;
@@ -41,7 +41,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.Character:
         const character = await db.query.characters.findFirst({
-          where: eq(characters.id, entityId),
+          where: and(eq(characters.id, entityId), eq(characters.isDeleted, false)),
           columns: { name: true },
         });
         entitySpecificName = character?.name;
@@ -49,7 +49,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.Note:
         const note = await db.query.notes.findFirst({
-          where: eq(notes.id, entityId),
+          where: and(eq(notes.id, entityId), eq(notes.isDeleted, false)),
           columns: { title: true },
         });
         entitySpecificName = note?.title;
@@ -57,7 +57,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.Location:
         const location = await db.query.locations.findFirst({
-          where: eq(locations.id, entityId),
+          where: and(eq(locations.id, entityId), eq(locations.isDeleted, false)),
           columns: { name: true },
         });
         entitySpecificName = location?.name;
@@ -65,7 +65,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.WorldRule:
         const worldRule = await db.query.worldRules.findFirst({
-          where: eq(worldRules.id, entityId),
+          where: and(eq(worldRules.id, entityId), eq(worldRules.isDeleted, false)),
           columns: { title: true },
         });
         entitySpecificName = worldRule?.title;
@@ -73,7 +73,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.Tag:
         const tag = await db.query.tags.findFirst({
-          where: eq(tags.id, entityId),
+          where: and(eq(tags.id, entityId), eq(tags.isDeleted, false)),
           columns: { name: true },
         });
         entitySpecificName = tag?.name;
@@ -81,7 +81,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.User:
         const user = await db.query.users.findFirst({
-          where: eq(users.idUser, entityId),
+          where: and(eq(users.idUser, entityId), eq(users.isDeleted, false)),
           columns: { displayName: true },
         });
         entitySpecificName = user?.displayName ?? undefined;
@@ -89,7 +89,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.Chapter:
         const chapter = await db.query.chapters.findFirst({
-          where: eq(chapters.id, entityId),
+          where: and(eq(chapters.id, entityId), eq(chapters.isDeleted, false)),
           columns: { name: true },
         });
         entitySpecificName = chapter?.name;
@@ -97,7 +97,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.Scene:
         const scene = await db.query.scenes.findFirst({
-          where: eq(scenes.id, entityId),
+          where: and(eq(scenes.id, entityId), eq(scenes.isDeleted, false)),
           columns: { name: true },
         });
         entitySpecificName = scene?.name;
@@ -114,7 +114,7 @@ export class EntityService {
         break;
       case OperationLogEntityType.Item:
         const item = await db.query.items.findFirst({
-          where: eq(items.id, entityId),
+          where: and(eq(items.id, entityId), eq(items.isDeleted, false)),
           columns: { name: true },
         });
         entitySpecificName = item?.name;
@@ -122,17 +122,17 @@ export class EntityService {
         break;
       case OperationLogEntityType.CharacterRelation:
         const charRelation = await db.query.characterRelations.findFirst({
-          where: eq(characterRelations.id, entityId),
+          where: and(eq(characterRelations.id, entityId), eq(characterRelations.isDeleted, false)),
           columns: { charId1: true, charId2: true },
         });
 
         if (charRelation) {
           const char1 = await db.query.characters.findFirst({
-            where: eq(characters.id, charRelation.charId1),
+            where: and(eq(characters.id, charRelation.charId1), eq(characters.isDeleted, false)),
             columns: { name: true },
           });
           const char2 = await db.query.characters.findFirst({
-            where: eq(characters.id, charRelation.charId2),
+            where: and(eq(characters.id, charRelation.charId2), eq(characters.isDeleted, false)),
             columns: { name: true },
           });
           entitySpecificName = `${char1?.name || t('unknown_character')} - ${char2?.name || t('unknown_character')} ${t('relation')}`;
@@ -141,13 +141,13 @@ export class EntityService {
         break;
       case OperationLogEntityType.TagRelation:
         const tagRel = await db.query.tagRelations.findFirst({
-          where: and(eq(tagRelations.id, entityId), eq(tagRelations.storyId, storyId)),
+          where: and(eq(tagRelations.id, entityId), eq(tagRelations.storyId, storyId), eq(tagRelations.isDeleted, false)),
           columns: { tagId: true, relationId: true, relationType: true },
         });
 
         if (tagRel) {
           const tag = await db.query.tags.findFirst({
-            where: and(eq(tags.id, tagRel.tagId), eq(tags.storyId, storyId)),
+            where: and(eq(tags.id, tagRel.tagId), eq(tags.storyId, storyId), eq(tags.isDeleted, false)),
             columns: { name: true },
           });
           const related = await EntityService._resolveRelationEntityName(
@@ -168,13 +168,13 @@ export class EntityService {
         break;
       case OperationLogEntityType.NoteRelation:
         const noteRel = await db.query.noteRelations.findFirst({
-          where: and(eq(noteRelations.id, entityId), eq(noteRelations.storyId, storyId)),
+          where: and(eq(noteRelations.id, entityId), eq(noteRelations.storyId, storyId), eq(noteRelations.isDeleted, false)),
           columns: { noteId: true, relationId: true, relationType: true },
         });
 
         if (noteRel) {
           const note = await db.query.notes.findFirst({
-            where: and(eq(notes.id, noteRel.noteId), eq(notes.storyId, storyId)),
+            where: and(eq(notes.id, noteRel.noteId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)),
             columns: { title: true },
           });
           const related = await EntityService._resolveRelationEntityName(
@@ -225,49 +225,49 @@ export class EntityService {
 
     switch (relationType) {
       case OperationLogEntityType.Story:
-        const story = await db.query.stories.findFirst({ where: and(eq(stories.id, relationId), eq(stories.id, storyId)), columns: { title: true } });
+        const story = await db.query.stories.findFirst({ where: and(eq(stories.id, relationId), eq(stories.id, storyId), eq(stories.isDeleted, false)), columns: { title: true } });
         name = story?.title;
         type = t('story');
         break;
       case OperationLogEntityType.Character:
-        const character = await db.query.characters.findFirst({ where: and(eq(characters.id, relationId), eq(characters.storyId, storyId)), columns: { name: true } });
+        const character = await db.query.characters.findFirst({ where: and(eq(characters.id, relationId), eq(characters.storyId, storyId), eq(characters.isDeleted, false)), columns: { name: true } });
         name = character?.name;
         type = t('character');
         break;
       case OperationLogEntityType.Note:
-        const note = await db.query.notes.findFirst({ where: and(eq(notes.id, relationId), eq(notes.storyId, storyId)), columns: { title: true } });
+        const note = await db.query.notes.findFirst({ where: and(eq(notes.id, relationId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)), columns: { title: true } });
         name = note?.title;
         type = t('note');
         break;
       case OperationLogEntityType.Location:
-        const location = await db.query.locations.findFirst({ where: and(eq(locations.id, relationId), eq(locations.storyId, storyId)), columns: { name: true } });
+        const location = await db.query.locations.findFirst({ where: and(eq(locations.id, relationId), eq(locations.storyId, storyId), eq(locations.isDeleted, false)), columns: { name: true } });
         name = location?.name;
         type = t('location');
         break;
       case OperationLogEntityType.WorldRule:
-        const worldRule = await db.query.worldRules.findFirst({ where: and(eq(worldRules.id, relationId), eq(worldRules.storyId, storyId)), columns: { title: true } });
+        const worldRule = await db.query.worldRules.findFirst({ where: and(eq(worldRules.id, relationId), eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)), columns: { title: true } });
         name = worldRule?.title;
         type = t('world_rule');
         break;
       case OperationLogEntityType.Chapter:
-        const chapter = await db.query.chapters.findFirst({ where: and(eq(chapters.id, relationId), eq(chapters.storyId, storyId)), columns: { name: true } });
+        const chapter = await db.query.chapters.findFirst({ where: and(eq(chapters.id, relationId), eq(chapters.storyId, storyId), eq(chapters.isDeleted, false)), columns: { name: true } });
         name = chapter?.name;
         type = t('chapter');
         break;
       case OperationLogEntityType.Scene:
-        const scene = await db.query.scenes.findFirst({ where: and(eq(scenes.id, relationId), eq(scenes.storyId, storyId)), columns: { name: true } });
+        const scene = await db.query.scenes.findFirst({ where: and(eq(scenes.id, relationId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)), columns: { name: true } });
         name = scene?.name;
         type = t('scene');
         break;
       case OperationLogEntityType.Item:
-        const item = await db.query.items.findFirst({ where: and(eq(items.id, relationId), eq(items.storyId, storyId)), columns: { name: true } });
+        const item = await db.query.items.findFirst({ where: and(eq(items.id, relationId), eq(items.storyId, storyId), eq(items.isDeleted, false)), columns: { name: true } });
         name = item?.name;
         type = t('item');
         break;
       case OperationLogEntityType.NoteRelation:
-        const noteRelation = await db.query.noteRelations.findFirst({ where: and(eq(noteRelations.id, relationId), eq(noteRelations.storyId, storyId)), columns: { noteId: true, relationId: true, relationType: true } });
+        const noteRelation = await db.query.noteRelations.findFirst({ where: and(eq(noteRelations.id, relationId), eq(noteRelations.storyId, storyId), eq(noteRelations.isDeleted, false)), columns: { noteId: true, relationId: true, relationType: true } });
         if (noteRelation) {
-          const note = await db.query.notes.findFirst({ where: and(eq(notes.id, noteRelation.noteId), eq(notes.storyId, storyId)), columns: { title: true } });
+          const note = await db.query.notes.findFirst({ where: and(eq(notes.id, noteRelation.noteId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)), columns: { title: true } });
           const relatedEntity = await EntityService._resolveRelationEntityName(
             db,
             noteRelation.relationType as OperationLogEntityType,

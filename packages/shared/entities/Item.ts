@@ -3,9 +3,9 @@ export interface Item {
   storyId: string
   characterOwnerId: string | null
   name: string
-  category: string | null
+  category: string | null // Will be added on Suggestion system!
   description: string | null // Ex: a sword that belonged to a knight
-  initialState: string | null // Ex: Rusty
+  initialState: string | null // Ex: Rusty.
   isFavorite: boolean
   extraNotes: string | null
   createdAt: Date
@@ -14,6 +14,7 @@ export interface Item {
   isDeleted: boolean // Added for conflict resolution (tombstones)
   deletedAt: Date | null // Added for conflict resolution (tombstones)
 }
+
 export interface ItemJourney {
   id: string
   storyId: string

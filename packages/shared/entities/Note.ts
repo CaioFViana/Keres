@@ -26,4 +26,4 @@ export interface NoteRelation {
   deletedAt: Date | null // Added for conflict resolution (tombstones)
 }
 
-export type NoteRelationEntities = 'Character' | 'WorldRule' | 'Location' | 'Scene' | 'Chapter' | 'Choice';
+export type NoteRelationEntities = 'Character' | 'WorldRule' | 'Location' | 'Scene' | 'Chapter' | 'Choice' | 'Item';

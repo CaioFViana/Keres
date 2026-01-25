@@ -27,6 +27,10 @@ const suggestionConfig = {
     schema: items,
     column: items.category,
   },
+  item_initial_state: {
+    schema: items,
+    column: items.initialState,
+  },
   // Add more configurations as the system evolves
 };
 

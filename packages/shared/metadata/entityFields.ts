@@ -58,6 +58,14 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'politics', label: 'field_politics', type: 'string', isSearchable: true },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+  ],
+  Item: [
+    { name: 'name', label: 'item_name', type: 'string', isSearchable: true },
+    { name: 'category', label: 'category', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'item_category' },
+    { name: 'description', label: 'field_description', type: 'string', isSearchable: true },
+    { name: 'initialState', label: 'initial_state', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'item_initial_state' },
+    { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
+    { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ]
   // Add other relevant entities as needed
 };

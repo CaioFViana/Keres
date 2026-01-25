@@ -1,6 +1,7 @@
 import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
 import Select from '@/src/components/common/Select/Select';
 import TextInput from '@/src/components/common/TextInput/TextInput';
+import SuggestionTextInput from '@/src/components/common/SuggestionTextInput/SuggestionTextInput';
 import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { Item } from '@keres/shared/entities/Item'; // Import Item entity
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -350,19 +351,23 @@ const ItemFormScreen = () => {
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('category')}</Text>
-          <TextInput
+          <SuggestionTextInput
             placeholder={t('category_placeholder')}
             value={category || ''}
             onChangeText={setCategory}
+            type="item_category"
             style={commonInputStyles.input}
+            storyId={selectedStory?.id || ''}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('initial_state')}</Text>
-          <TextInput
+          <SuggestionTextInput
             placeholder={t('initial_state_placeholder')}
             value={initialState || ''}
             onChangeText={setInitialState}
+            type="item_initial_state"
             style={commonInputStyles.input}
+            storyId={selectedStory?.id || ''}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>

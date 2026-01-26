@@ -1,17 +1,11 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared'; // These types should be from shared
-import { AppDrizzleClient } from '../../db'; // Assuming '../db' exports AppDrizzleClient
+import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { AppDrizzleClient } from '../../db';
 
 export interface ClientSyncEntityHandler {
   entityName: string;
-
-  // Method to set the db instance (useful if handlers are instantiated once)
   setDb(dbInstance: AppDrizzleClient): void;
-
-  // Methods to apply updates locally
-  applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void>;
-  applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void>;
-  applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void>;
-
-  // Optional: Method to get an entity by ID locally
-  getById?(id: string): Promise<any | undefined>;
+  applyCreate(entityId: string, update: CreateStoryUpdate): Promise<void>;
+  applyUpdate(entityId: string, update: UpdateStoryUpdate): Promise<void>;
+  applyDelete(entityId: string, update: DeleteStoryUpdate): Promise<void>;
+  getById(id: string): Promise<any | undefined>; // Using 'any' for now, specific entity type would be ideal but requires generics
 }

@@ -9,15 +9,20 @@ import { authTokenManager } from './AuthTokenManager';
 import { createServerService } from './ServerService';
 import { createStoryService } from './StoryService';
 import { createKeresAxiosInstance } from './apiClient';
+import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
 import { CharacterRelationClientSyncHandler } from './entity-sync-handlers/CharacterRelationClientSyncHandler';
+import { CharacterSceneClientSyncHandler } from './entity-sync-handlers/CharacterSceneClientSyncHandler';
+import { ChoiceClientSyncHandler } from './entity-sync-handlers/ChoiceClientSyncHandler';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
+import { ItemClientSyncHandler } from './entity-sync-handlers/ItemClientSyncHandler';
+import { ItemJourneyClientSyncHandler } from './entity-sync-handlers/ItemJourneyClientSyncHandler';
 import { LocationClientSyncHandler } from './entity-sync-handlers/LocationClientSyncHandler';
 import { NoteClientSyncHandler } from './entity-sync-handlers/NoteClientSyncHandler';
+import { SceneClientSyncHandler } from './entity-sync-handlers/SceneClientSyncHandler';
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
-import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
 
 export interface ServerStoryPreview {
   storyId: string;
@@ -45,6 +50,11 @@ export class SyncEngineService {
     this.registerEntityHandler(new CharacterRelationClientSyncHandler());
     this.registerEntityHandler(new LocationClientSyncHandler());
     this.registerEntityHandler(new ChapterClientSyncHandler());
+    this.registerEntityHandler(new CharacterSceneClientSyncHandler());
+    this.registerEntityHandler(new ChoiceClientSyncHandler())
+    this.registerEntityHandler(new ItemClientSyncHandler())
+    this.registerEntityHandler(new ItemJourneyClientSyncHandler())
+    this.registerEntityHandler(new SceneClientSyncHandler())
     // TODO: Register other entity handlers here
   }
 

@@ -16,6 +16,7 @@ interface SelectPropsSingle {
   placeholder?: string;
   multiple?: false; // Explicitly false for single select
   disabled?: boolean; // Added disabled prop
+  allowDeselect?: boolean;
 }
 
 // Props for multi select
@@ -26,11 +27,12 @@ interface SelectPropsMulti {
   placeholder?: string;
   multiple: true; // Explicitly true for multi select
   disabled?: boolean; // Added disabled prop
+  allowDeselect?: boolean;
 }
 
 type SelectProps = SelectPropsSingle | SelectPropsMulti;
 
-const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placeholder, multiple = false, disabled = false }) => {
+const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placeholder, multiple = false, disabled = false, allowDeselect = false }) => {
   const { colors } = useTheme();
 
   const [open, setOpen] = useState(false);
@@ -140,9 +142,18 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
           items={dropdownItems}
           setOpen={setOpen}
           setValue={(callback) => {
-            const newValue = callback(internalValue);
-            setInternalValue(newValue);
-            handleSingleChange(newValue as string | null); // Cast to string | null
+            const currentSelectedValue = internalValue; // Store current value before callback
+            const newValue = callback(currentSelectedValue); // Get the new value from the dropdown picker
+
+            let finalValue: string | null = newValue as string | null;
+
+            // If allowDeselect is true and the newly selected item is the same as the currently selected one, deselect it
+            if (allowDeselect && currentSelectedValue !== null && newValue === currentSelectedValue) {
+              finalValue = null;
+            }
+
+            setInternalValue(finalValue);
+            handleSingleChange(finalValue); // Pass the final value to the parent's onValueChange
           }}
           onClose={() => {
             setOpen(false);

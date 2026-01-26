@@ -375,6 +375,7 @@ const ItemJourneyFormScreen = () => {
             onValueChange={setItemId}
             placeholder={t('select_item')}
             multiple={false}
+            allowDeselect={true}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('scene')}</Text>
@@ -384,6 +385,7 @@ const ItemJourneyFormScreen = () => {
             onValueChange={setSceneId}
             placeholder={t('select_scene')}
             multiple={false}
+            allowDeselect={true}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('new_character_owner')}</Text>
@@ -393,6 +395,7 @@ const ItemJourneyFormScreen = () => {
             onValueChange={setNewCharacterOwnerId}
             placeholder={t('select_new_character_owner')}
             multiple={false}
+            allowDeselect={true}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('new_state')}</Text>

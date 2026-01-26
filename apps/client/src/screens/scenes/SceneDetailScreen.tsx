@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Chapter } from '@keres/shared/entities/Chapter';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import { Choice } from '@keres/shared/entities/Choice'; // Import Choice
+import { Location } from '@keres/shared/entities/Location'; // Import Location
 import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -17,6 +18,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ChapterService, createChapterService } from '../../services/ChapterService'; // Import ChapterService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/CharacterSceneService'; // Import CharacterSceneService
 import { ChoiceService, createChoiceService } from '../../services/ChoiceService'; // Import ChoiceService
+import { createLocationService, LocationService } from '../../services/LocationService';
 import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
 import { createNoteService, NoteService } from '../../services/NoteService';
 import { createSceneService } from '../../services/SceneService';
@@ -55,6 +57,7 @@ const SceneDetailScreen = () => {
   const chapterServiceRef = useRef<ChapterService | null>(null); // Ref for ChapterService
   const choiceServiceRef = useRef<ChoiceService | null>(null); // Ref for ChoiceService
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
+  const locationServiceRef = useRef<LocationService | null>(null); // Ref for LocationService
 
   const { characters, fetchCharacters, setDbAndStoryId: setCharacterDbAndStoryId, initializeService: initializeCharacterService } = useCharacterStore(); // For character data
 
@@ -85,6 +88,9 @@ const SceneDetailScreen = () => {
       if (!characterSceneServiceRef.current) {
         characterSceneServiceRef.current = createCharacterSceneService(drizzleDb);
       }
+      if (!locationServiceRef.current) {
+        locationServiceRef.current = createLocationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
@@ -99,6 +105,7 @@ const SceneDetailScreen = () => {
 
   const [scene, setScene] = useState<SceneSelect | null>(null);
   const [chapter, setChapter] = useState<Chapter | null>(null); // State for chapter details
+  const [location, setLocation] = useState<Location | null>(null); // State for location details
   const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined); // State for previous scene
   const [nextScene, setNextScene] = useState<SceneSelect | undefined>(undefined); // State for next scene
   const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]); // State for choices
@@ -191,6 +198,20 @@ const SceneDetailScreen = () => {
       setChapter(null);
     }
   }, [chapterServiceRef.current, scene?.chapterId]);
+
+  const fetchLocation = useCallback(async () => {
+    if (!locationServiceRef.current || !scene?.locationId) {
+      setLocation(null);
+      return;
+    }
+    try {
+      const fetchedLocation = await locationServiceRef.current.getById(scene.locationId);
+      setLocation(fetchedLocation || null);
+    } catch (err) {
+      console.error('Failed to fetch location details:', err);
+      setLocation(null);
+    }
+  }, [locationServiceRef.current, scene?.locationId]);
 
   const fetchPreviousNextScenes = useCallback(async () => {
     if (!sceneServiceRef.current || !selectedStory?.id || !sceneId || !chapter?.id || selectedStory.type !== 'linear') {
@@ -341,6 +362,7 @@ const SceneDetailScreen = () => {
   useEffect(() => {
     if (scene) {
       fetchChapter();
+      fetchLocation();
       fetchNotesForStory();
       fetchNoteRelationsForScene();
       fetchTagsForScene();
@@ -463,6 +485,14 @@ const SceneDetailScreen = () => {
       <Text style={styles.detailText}>{t('summary')}: {scene.summary || t('common_na')}</Text>
       <Text style={styles.detailText}>{t('is_favorite')}: {scene.isFavorite ? t('common_yes') : t('common_no')}</Text>
       <Text style={styles.detailText}>{t('extra_notes')}: {scene.extraNotes || t('common_na')}</Text>
+
+      {location && (
+        <>
+          <Text style={styles.sectionTitle}>{t('location')}</Text>
+          <Text style={styles.detailText}>{t('name')}: {location.name}</Text>
+          <Text style={styles.detailText}>{t('description')}: {location.description || t('common_na')}</Text>
+        </>
+      )}
 
       <Text style={styles.sectionTitle}>{t('characters_title')}</Text>
       <CharacterRelationManager

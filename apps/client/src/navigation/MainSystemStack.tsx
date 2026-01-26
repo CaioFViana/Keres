@@ -22,12 +22,12 @@ import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
-import ItemListScreen from '../screens/items/ItemListScreen';
-import ItemDetailScreen from '../screens/items/ItemDetailScreen';
-import ItemFormScreen from '../screens/items/ItemFormScreen';
-import ItemJourneyListScreen from '../screens/itemJourneys/ItemJourneyListScreen';
 import ItemJourneyDetailScreen from '../screens/itemJourneys/ItemJourneyDetailScreen';
 import ItemJourneyFormScreen from '../screens/itemJourneys/ItemJourneyFormScreen';
+import ItemJourneyListScreen from '../screens/itemJourneys/ItemJourneyListScreen';
+import ItemDetailScreen from '../screens/items/ItemDetailScreen';
+import ItemFormScreen from '../screens/items/ItemFormScreen';
+import ItemListScreen from '../screens/items/ItemListScreen';
 import LocationDetailsScreen, { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
@@ -80,31 +80,6 @@ export type ListingDetailStackParamList = {
 
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
 const Stack = createNativeStackNavigator<ListingDetailStackParamList>();
-
-//#region ItemJourney
-const ItemJourneyStack = createNativeStackNavigator<ItemJourneyStackParamList>();
-
-export type ItemJourneyDetailScreenParamList = {
-  ItemJourneyDetail: { itemJourneyId: string };
-};
-
-export type ItemJourneyStackParamList = {
-  ItemJourneys: undefined;
-  ItemJourneyDetail: ItemJourneyDetailScreenParamList['ItemJourneyDetail'];
-  ItemJourneyForm: { itemJourneyId?: string };
-};
-
-const ItemJourneyStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <ItemJourneyStack.Navigator screenOptions={{ headerShown: false }}>
-      <ItemJourneyStack.Screen name="ItemJourneys" component={ItemJourneyListScreen} />
-      <ItemJourneyStack.Screen name="ItemJourneyDetail" component={ItemJourneyDetailScreen} />
-      <ItemJourneyStack.Screen name="ItemJourneyForm" component={ItemJourneyFormScreen} />
-    </ItemJourneyStack.Navigator>
-  );
-};
-//#endregion
 
 //#region Character
 
@@ -220,6 +195,31 @@ const ItemStackNavigator = () => {
       <ItemStack.Screen name="ItemDetail" component={ItemDetailScreen} />
       <ItemStack.Screen name="ItemForm" component={ItemFormScreen} />
     </ItemStack.Navigator>
+  );
+};
+//#endregion
+
+//#region ItemJourney
+const ItemJourneyStack = createNativeStackNavigator<ItemJourneyStackParamList>();
+
+export type ItemJourneyDetailScreenParamList = {
+  ItemJourneyDetail: { itemJourneyId: string };
+};
+
+export type ItemJourneyStackParamList = {
+  ItemJourneys: undefined;
+  ItemJourneyDetail: ItemJourneyDetailScreenParamList['ItemJourneyDetail'];
+  ItemJourneyForm: { itemJourneyId?: string };
+};
+
+const ItemJourneyStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <ItemJourneyStack.Navigator screenOptions={{ headerShown: false }}>
+      <ItemJourneyStack.Screen name="ItemJourneys" component={ItemJourneyListScreen} />
+      <ItemJourneyStack.Screen name="ItemJourneyDetail" component={ItemJourneyDetailScreen} />
+      <ItemJourneyStack.Screen name="ItemJourneyForm" component={ItemJourneyFormScreen} />
+    </ItemJourneyStack.Navigator>
   );
 };
 //#endregion

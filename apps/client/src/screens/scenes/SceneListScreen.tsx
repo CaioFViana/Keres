@@ -5,13 +5,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import SceneReorderModal from '../../components/SceneReorderModal/SceneReorderModal'; // Import the modal
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
 import SceneListItem from '../../components/listitem/SceneListItem';
+import SceneReorderModal from '../../components/SceneReorderModal/SceneReorderModal'; // Import the modal
 import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { SceneStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { MainSystemDrawerParamList, SceneStackParamList } from '../../navigation/MainSystemStack';
 import { FavoriteFilterState } from '../../services/SceneService';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -228,7 +228,7 @@ const SceneListScreen = () => {
         onSearch={handleSearch}
         searchPlaceholder={t('search_scenes')}
         currentSearchTerm={searchQuery}
-        filterOptions={[]} // Scenes don't have tags themselves
+        filterOptions={[]}
         onFilterChange={() => {}}
         selectedFilterValues={[]}
         sortOptions={memoizedSortOptions}

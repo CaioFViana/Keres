@@ -1,5 +1,5 @@
 import { FullStoryExportType } from '@keres/shared';
-import { and, count, eq, sql, not } from 'drizzle-orm';
+import { and, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import {
   ChapterInsert,
@@ -623,7 +623,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               storyId: itemJourney.storyId,
               itemId: itemJourney.itemId,
               sceneId: itemJourney.sceneId,
-              newCharacterOwnerId: itemJourney.newCharacterOwnerid,
+              newCharacterOwnerId: itemJourney.newCharacterOwnerId,
               createdAt: new Date(itemJourney.createdAt),
               updatedAt: new Date(),
               version: itemJourney.version,

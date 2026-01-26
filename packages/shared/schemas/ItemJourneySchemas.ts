@@ -5,7 +5,7 @@ export const ItemJourneySchema = z.object({
   storyId: z.string(),
   itemId: z.string(),
   sceneId: z.string(),
-  newCharacterOwnerid: z.string().nullable(),
+  newCharacterOwnerId: z.string().nullable(),
   newState: z.string(),
   extraNotes: z.string().nullable(),
   createdAt: z.date(),
@@ -26,7 +26,7 @@ export const CreateItemJourneyDataSchema = ItemJourneySchema.omit({
 }).extend({
   itemId: z.string().min(1, "Item ID cannot be empty"),
   sceneId: z.string().min(1, "Scene ID cannot be empty"),
-  newCharacterOwnerid: z.string().nullable().default(null),
+  newCharacterOwnerId: z.string().nullable().default(null),
   newState: z.string().min(1, "New state cannot be empty"),
   extraNotes: z.string().nullable().default(null),
 });

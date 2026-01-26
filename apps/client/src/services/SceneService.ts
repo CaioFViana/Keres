@@ -200,7 +200,9 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     },
 
     async reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, index: number }[]): Promise<void> {
-      // Use a transaction for reordering to ensure atomicity
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      const reorderPayload = { reorderItems: newOrder };
+
       await db.transaction(async (tx) => {
         for (const scene of newOrder) {
           const originalScene = await tx.query.scenes.findFirst({
@@ -211,28 +213,21 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
             continue;
           }
 
-          // Only update if the index has actually changed
           if (originalScene.index !== scene.index) {
-            const [updatedScene] = await tx.update(scenes)
+            await tx.update(scenes)
               .set({
                 index: scene.index,
                 updatedAt: new Date(),
                 version: sql`${scenes.version} + 1`
               })
-              .where(and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)))
-              .returning({ id: scenes.id, storyId: scenes.storyId, index: scenes.index, version: scenes.version });
-
-            if (updatedScene) {
-              const userIdToLog = await getUserIdForOperation(db, serverService, updatedScene.storyId, currentUserId);
-              await recordLocalOperation(db, updatedScene.storyId, userIdToLog, 'update', 'Scene', updatedScene.id, {
-                index: updatedScene.index,
-                version: updatedScene.version,
-              });
-              entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
-            }
+              .where(and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)));
           }
         }
       });
+
+      // Record a single 'reorder' operation for the entire list of scenes within a chapter
+      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Chapter', chapterId, reorderPayload);
+      entityEventEmitter.emit('scene_changed', storyId, 'reorder');
     },
 
     async batchUpdateScenes(currentUserId: string, storyId: string, updates: { sceneId: string, changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[]): Promise<void> {

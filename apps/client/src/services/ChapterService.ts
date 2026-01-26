@@ -197,7 +197,9 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
     },
 
     async reorderChapters(currentUserId: string, storyId: string, newOrder: { id: string, index: number }[]): Promise<void> {
-      // Use a transaction for reordering to ensure atomicity
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      const reorderPayload = { reorderItems: newOrder };
+
       await db.transaction(async (tx) => {
         for (const chapter of newOrder) {
           const originalChapter = await tx.query.chapters.findFirst({ where: eq(chapters.id, chapter.id) });
@@ -206,28 +208,20 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
             continue;
           }
 
-          // Only update if the index has actually changed
           if (originalChapter.index !== chapter.index) {
-            const [updatedChapter] = await tx.update(chapters)
+            await tx.update(chapters)
               .set({
                 index: chapter.index,
                 updatedAt: new Date(),
                 version: sql`${chapters.version} + 1`
               })
-              .where(eq(chapters.id, chapter.id))
-              .returning({ id: chapters.id, storyId: chapters.storyId, index: chapters.index, version: chapters.version });
-
-            if (updatedChapter) {
-              const userIdToLog = await getUserIdForOperation(db, serverService, updatedChapter.storyId, currentUserId); // Pass db instead of tx
-              await recordLocalOperation(db, updatedChapter.storyId, userIdToLog, 'update', 'Chapter', updatedChapter.id, { // Pass db instead of tx
-                index: updatedChapter.index,
-                version: updatedChapter.version,
-              });
-              entityEventEmitter.emit('chapter_changed', updatedChapter.storyId, updatedChapter.id);
-            }
+              .where(eq(chapters.id, chapter.id));
           }
         }
       });
+      // Record a single 'reorder' operation for the entire list
+      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, reorderPayload);
+      entityEventEmitter.emit('chapter_changed', storyId, 'reorder');
     },
   };
 };

@@ -59,7 +59,7 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<typeof CreateI
       storyId,
       validatedData.itemId,
       validatedData.sceneId,
-      validatedData.newCharacterOwnerid
+      validatedData.newCharacterOwnerId
     );
 
     const currentItemJourney = await this.findById(update.id!);
@@ -72,7 +72,7 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<typeof CreateI
       storyId: storyId,
       itemId: validatedData.itemId,
       sceneId: validatedData.sceneId,
-      newCharacterOwnerId: validatedData.newCharacterOwnerid,
+      newCharacterOwnerId: validatedData.newCharacterOwnerId,
       newState: validatedData.newState,
       extraNotes: validatedData.extraNotes,
       version: 1,
@@ -88,10 +88,10 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<typeof CreateI
 
     const newItemId = validatedChanges.itemId ?? currentEntity.itemId;
     const newSceneId = validatedChanges.sceneId ?? currentEntity.sceneId;
-    const newCharacterOwnerId = validatedChanges.newCharacterOwnerid ?? currentEntity.newCharacterOwnerId;
+    const newCharacterOwnerId = validatedChanges.newCharacterOwnerId ?? currentEntity.newCharacterOwnerId;
     
     // Validate related entities if any foreign key is being updated
-    if (validatedChanges.itemId !== undefined || validatedChanges.sceneId !== undefined || validatedChanges.newCharacterOwnerid !== undefined) {
+    if (validatedChanges.itemId !== undefined || validatedChanges.sceneId !== undefined || validatedChanges.newCharacterOwnerId !== undefined) {
         await this.validateRelatedEntities(storyId, newItemId, newSceneId, newCharacterOwnerId);
     }
 

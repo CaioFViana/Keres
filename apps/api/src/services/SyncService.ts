@@ -1,4 +1,4 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, StoryReorderingStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq, gt, max, or } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
@@ -284,6 +284,33 @@ export class SyncService {
           operationTime: operationTime ? operationTime.toISOString() : undefined, // CHANGED: Convert Date to ISO string
           originatingUser: op.userId, // Add userId
         } as DeleteStoryUpdate;
+      } else if (op.operationType === 'reorder') {
+        const reorderPayload = op.payload as { reorderItems: { id: string, newIndex: number }[] };
+
+        if (op.entityType === 'Chapter') { // Reordering scenes within a chapter
+          return {
+            type: 'reorder',
+            entity: 'Chapter',
+            id: op.entityId, // The chapter ID whose scenes are reordered
+            reorderItems: reorderPayload.reorderItems,
+            version: finalVersion, // Assuming finalVersion is relevant for the chapter being reordered
+            operationVersion: op.operationVersion,
+            operationTime: operationTime ? operationTime.toISOString() : undefined,
+            originatingUser: op.userId,
+          } as ChapterReorderingStoryUpdate;
+        } else if (op.entityType === 'Story') { // Reordering chapters within a story
+          return {
+            type: 'reorder',
+            entity: 'Story',
+            id: op.entityId, // The story ID whose chapters are reordered
+            reorderItems: reorderPayload.reorderItems,
+            version: finalVersion, // Assuming finalVersion is relevant for the story being reordered
+            operationVersion: op.operationVersion,
+            operationTime: operationTime ? operationTime.toISOString() : undefined,
+            originatingUser: op.userId,
+          } as StoryReorderingStoryUpdate;
+        }
+        throw new Error(`Unhandled reorder entity type: ${op.entityType}`);
       }
       throw new Error(`Unknown operation type: ${op.operationType}`);
     }));

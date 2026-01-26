@@ -1,6 +1,6 @@
 import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, StoryReorderingStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { AxiosInstance } from 'axios';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
@@ -279,6 +279,37 @@ export class SyncEngineService {
               await handler.applyUpdate(this.storyId, update);
             } else if (update.type === 'delete') {
               await handler.applyDelete(this.storyId, update);
+            } else if (update.type === 'reorder') {
+              const reorderUpdate = update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate;
+              const reorderItems = reorderUpdate.reorderItems;
+
+              if (!reorderItems || reorderItems.length === 0) {
+                console.warn(`Reorder update for entity ${update.entity} ID ${update.id} has no reorderItems.`);
+                continue;
+              }
+
+              // Apply reorder to local database within a transaction
+              await this._db.transaction(async (tx) => {
+                for (const item of reorderItems) {
+                  if (reorderUpdate.entity === 'Chapter') { // Reordering scenes within a chapter
+                    await tx.update(schema.scenes)
+                      .set({
+                        index: item.newIndex,
+                        updatedAt: new Date(update.operationTime!),
+                        version: sql`${schema.scenes.version} + 1`
+                      })
+                      .where(eq(schema.scenes.id, item.id));
+                  } else if (reorderUpdate.entity === 'Story') { // Reordering chapters within a story
+                    await tx.update(schema.chapters)
+                      .set({
+                        index: item.newIndex,
+                        updatedAt: new Date(update.operationTime!),
+                        version: sql`${schema.chapters.version} + 1`
+                      })
+                      .where(eq(schema.chapters.id, item.id));
+                  }
+                }
+              });
             }
             if (!entitiesUpdated.includes(update.entity)) {
               entitiesUpdated.push(update.entity);
@@ -287,6 +318,7 @@ export class SyncEngineService {
             // Insert the pulled operation into the local operationLogs table
             const payloadToStore = update.type === 'create' ? update.data :
                                    update.type === 'update' ? update.changes :
+                                   update.type === 'reorder' ? update.reorderItems : // Store reorderItems for reorder operations
                                    { id: update.id }; // For delete, just store the ID
 
             await this._db.insert(schema.operationLogs).values({

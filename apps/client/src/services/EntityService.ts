@@ -6,6 +6,7 @@ import {
   chapters,
   characterRelations,
   characters,
+  characterScenes,
   choices,
   itemJourneys,
   items,
@@ -231,10 +232,29 @@ export class EntityService {
         entitySpecificName = `${t('operation_logs_title')} ${t('id')}: ${opLog?.id || entityId}`; // Use t() for title and ID
         translatedEntityType = t('operation_log')
         break;
-      default:
-        return undefined; // If entityType is unknown, we can't provide a name
-    }
+      case OperationLogEntityType.CharacterScene:
+        const characterScene = await db.query.characterScenes.findFirst({
+          where: and(eq(characterScenes.id, entityId), eq(characterScenes.isDeleted, false)),
+          columns: { characterId: true, sceneId: true },
+        });
 
+        if (characterScene) {
+          const character = await db.query.characters.findFirst({
+            where: and(eq(characters.id, characterScene.characterId), eq(characters.isDeleted, false)),
+            columns: { name: true },
+          });
+          const scene = await db.query.scenes.findFirst({
+            where: and(eq(scenes.id, characterScene.sceneId), eq(scenes.isDeleted, false)),
+            columns: { name: true },
+          });
+          entitySpecificName = t('character_attributed_to_scene', {
+            characterName: character?.name || t('unknown_character'),
+            sceneName: scene?.name || t('unknown_scene'),
+          });
+        }
+        translatedEntityType = t('character_scene_relation');
+        break;
+      }
     if (entitySpecificName) {
       return `${translatedEntityType} - ${entitySpecificName}`;
     } else {

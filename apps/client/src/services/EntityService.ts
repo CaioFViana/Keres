@@ -6,8 +6,9 @@ import {
   chapters,
   characterRelations,
   characters,
-  items,
+  choices,
   itemJourneys,
+  items,
   locations,
   noteRelations,
   notes,
@@ -105,8 +106,19 @@ export class EntityService {
         translatedEntityType = t('scene')
         break;
       case OperationLogEntityType.Choice:
-        // For entities without a natural 'name' field, we construct a descriptive string
-        entitySpecificName = `${t('choice')} ${t('id')}: ${entityId}`; // Use t() for 'ID'
+        const choice = await db.query.choices.findFirst({
+          where: and(eq(choices.id, entityId), eq(choices.isDeleted, false)),
+          columns: { sceneId: true, text: true },
+        });
+        if (choice) {
+          const originScene = await db.query.scenes.findFirst({
+            where: and(eq(scenes.id, choice.sceneId), eq(scenes.isDeleted, false)),
+            columns: { name: true },
+          });
+          entitySpecificName = `${t('from_scene')}: ${originScene?.name || t('unknown_scene')} - ${choice.text}`;
+        } else {
+          entitySpecificName = `${t('unknown_choice')} ${t('id')}: ${entityId}`;
+        }
         translatedEntityType = t('choice')
         break;
       case OperationLogEntityType.Gallery:

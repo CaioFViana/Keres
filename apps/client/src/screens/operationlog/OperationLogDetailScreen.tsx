@@ -1,4 +1,5 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import { OperationLogEntityType } from '@keres/shared';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -121,6 +122,20 @@ const OperationLogDetailScreen: React.FC = () => {
       textAlign: 'center',
       marginTop: 20,
     },
+    payloadHeader: {
+      marginTop: 20,
+      marginBottom: 10,
+      textAlign: 'center',
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    checkmarkIcon: {
+      color: colors.primary, // Assuming a 'success' color exists in the theme
+    },
+    xIcon: {
+      color: colors.error, // Assuming an 'error' color exists in the theme
+    },
   });
 
   if (loading || mainEntityLoading) {
@@ -184,11 +199,24 @@ const OperationLogDetailScreen: React.FC = () => {
           <Text style={styles.detailLabel}>{t('created_at')}:</Text>
           <Text style={styles.detailValue}>{formattedDate}</Text>
         </View>
-        {/* Potentially display raw payload if available and not too large */}
+
         {operationLog.payload && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>{t('payload')}:</Text>
-            <Text style={styles.detailValue}>{JSON.stringify(JSON.parse(operationLog.payload), null, 2)}</Text>
+          <View>
+            <Text style={styles.payloadHeader}>{t('payload')}:</Text>
+            {Object.entries(JSON.parse(operationLog.payload)).map(([key, value]) => (
+              <View key={key} style={styles.detailRow}>
+                <Text style={styles.detailLabel}>{key}:</Text>
+                {typeof value === 'boolean' ? (
+                  value ? (
+                    <Ionicons name="checkmark-circle" size={24} style={styles.checkmarkIcon} />
+                  ) : (
+                    <Ionicons name="close-circle" size={24} style={styles.xIcon} />
+                  )
+                ) : (
+                  <Text style={styles.detailValue}>{String(value)}</Text>
+                )}
+              </View>
+            ))}
           </View>
         )}
       </ScrollView>

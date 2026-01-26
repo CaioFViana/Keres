@@ -28,7 +28,7 @@ interface ChapterActions {
   setFavoriteFilter: (state: FavoriteFilterState) => void;
   setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => void;
   toggleFavorite: (chapterId: string, currentIsFavorite: boolean) => Promise<void>;
-  reorderChapters: (newOrder: { id: string, index: number }[]) => Promise<void>;
+  reorderChapters: (newOrder: { id: string, newIndex: number }[]) => Promise<void>;
 }
 
 export const useChapterStore = create<ChapterState & ChapterActions>()(

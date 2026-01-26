@@ -24,7 +24,7 @@ export interface ChapterService {
   updateChapter(currentUserId: string, chapterId: string, chapterData: Partial<Omit<ChapterInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<ChapterSelect>;
   deleteChapter(currentUserId: string, chapterId: string): Promise<void>;
   getAllByStoryId(storyId: string): Promise<ChapterSelect[]>;
-  reorderChapters(currentUserId: string, storyId: string, newOrder: { id: string, index: number }[]): Promise<void>;
+  reorderChapters(currentUserId: string, storyId: string, newOrder: { id: string, newIndex: number }[]): Promise<void>;
 }
 
 export const createChapterService = (db: AppDrizzleClient): ChapterService => {
@@ -196,9 +196,9 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       }
     },
 
-    async reorderChapters(currentUserId: string, storyId: string, newOrder: { id: string, index: number }[]): Promise<void> {
+    async reorderChapters(currentUserId: string, storyId: string, newOrder: { id: string, newIndex: number }[]): Promise<void> {
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      const reorderPayload = { reorderItems: newOrder };
+      const reorderPayload = { reorderItems: newOrder.map(item => ({ id: item.id, newIndex: item.newIndex })) };
 
       await db.transaction(async (tx) => {
         for (const chapter of newOrder) {
@@ -208,10 +208,10 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
             continue;
           }
 
-          if (originalChapter.index !== chapter.index) {
+          if (originalChapter.index !== chapter.newIndex) { // Compare with chapter.newIndex
             await tx.update(chapters)
               .set({
-                index: chapter.index,
+                index: chapter.newIndex, // Use chapter.newIndex
                 updatedAt: new Date(),
                 version: sql`${chapters.version} + 1`
               })

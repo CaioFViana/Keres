@@ -1,10 +1,9 @@
-import { getChangedFields } from '../utils/diffUtils';
 import { StoryUpdateType } from '@keres/shared';
+import { eq } from 'drizzle-orm'; // Import eq
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema'; // Import all schema
 import { ServerService } from '../services/ServerService'; // Import ServerService
 import { createULID } from './ulid';
-import { eq } from 'drizzle-orm'; // Import eq
 
 export async function recordLocalOperation(
   db: AppDrizzleClient,

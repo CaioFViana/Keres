@@ -372,7 +372,6 @@ export class SyncEngineService {
             };
 
             const payloadData = JSON.parse(op.payload);
-
             // Remove client-generated timestamp fields that should be server-managed
             const filteredPayloadData: Record<string, any> = { ...payloadData };
             delete filteredPayloadData.createdAt;
@@ -429,14 +428,14 @@ export class SyncEngineService {
                         ...baseUpdate,
                         type: 'reorder',
                         entity: 'Chapter',
-                        reorderItems: filteredPayloadData.reorderItems,
+                        reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({ ...item })),
                     } as ChapterReorderingStoryUpdate;
                 } else if (op.entityType === 'Story' && Array.isArray(filteredPayloadData.reorderItems)) {
                     return {
                         ...baseUpdate,
                         type: 'reorder',
                         entity: 'Story',
-                        reorderItems: filteredPayloadData.reorderItems,
+                        reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({ ...item })),
                     } as StoryReorderingStoryUpdate;
                 }
                 console.warn(`Unhandled reorder operation type or entity: ${op.entityType}, ${op.operationType}`);

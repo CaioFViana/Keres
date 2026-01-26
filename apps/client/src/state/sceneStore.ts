@@ -28,7 +28,7 @@ interface SceneActions {
   setFavoriteFilter: (state: FavoriteFilterState) => void;
   setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => void;
   toggleFavorite: (sceneId: string, currentIsFavorite: boolean) => Promise<void>;
-  reorderScenes: (chapterId: string, newOrder: { id: string, index: number }[]) => Promise<void>;
+  reorderScenes: (chapterId: string, newOrder: { id: string, newIndex: number }[]) => Promise<void>;
 }
 
 export const useSceneStore = create<SceneState & SceneActions>()(

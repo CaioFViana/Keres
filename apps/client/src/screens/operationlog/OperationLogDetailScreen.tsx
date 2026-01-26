@@ -136,6 +136,19 @@ const OperationLogDetailScreen: React.FC = () => {
     xIcon: {
       color: colors.error, // Assuming an 'error' color exists in the theme
     },
+    reorderItemsHeader: {
+      marginTop: 10,
+      marginBottom: 5,
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.textSecondary,
+      textDecorationLine: 'underline',
+    },
+    reorderItemRow: {
+      paddingLeft: 5, // Indent reorder items
+      marginRight: 5,
+      borderBottomWidth: 0, // Remove individual border for reorder items
+    },
   });
 
   if (loading || mainEntityLoading) {
@@ -203,20 +216,34 @@ const OperationLogDetailScreen: React.FC = () => {
         {operationLog.payload && (
           <View>
             <Text style={styles.payloadHeader}>{t('payload')}:</Text>
-            {Object.entries(JSON.parse(operationLog.payload)).map(([key, value]) => (
-              <View key={key} style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{key}:</Text>
-                {typeof value === 'boolean' ? (
-                  value ? (
-                    <Ionicons name="checkmark-circle" size={24} style={styles.checkmarkIcon} />
-                  ) : (
-                    <Ionicons name="close-circle" size={24} style={styles.xIcon} />
-                  )
-                ) : (
-                  <Text style={styles.detailValue}>{String(value)}</Text>
-                )}
+            {operationLog.operationType === 'reorder' ? (
+              // Specific rendering for reorder operations
+              <View>
+                <Text style={[styles.detailLabel, styles.reorderItemsHeader]}>{t('reorder_items')}:</Text>
+                {JSON.parse(operationLog.payload).reorderItems.map((item: { id: string, newIndex: number }) => (
+                  <View key={item.id} style={[styles.detailRow, styles.reorderItemRow]}>
+                    <Text style={styles.detailLabel}>{`${item.newIndex}. ID:`}</Text>
+                    <Text style={styles.detailValue}>{item.id}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
+            ) : (
+              // Existing generic rendering for other operation types
+              Object.entries(JSON.parse(operationLog.payload)).map(([key, value]) => (
+                <View key={key} style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>{key}:</Text>
+                  {typeof value === 'boolean' ? (
+                    value ? (
+                      <Ionicons name="checkmark-circle" size={24} style={styles.checkmarkIcon} />
+                    ) : (
+                      <Ionicons name="close-circle" size={24} style={styles.xIcon} />
+                    )
+                  ) : (
+                    <Text style={styles.detailValue}>{String(value)}</Text>
+                  )}
+                </View>
+              ))
+            )}
           </View>
         )}
       </ScrollView>

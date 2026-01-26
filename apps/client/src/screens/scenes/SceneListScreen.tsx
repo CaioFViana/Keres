@@ -139,7 +139,7 @@ const SceneListScreen = () => {
     setIsReorderModalVisible(true);
   }, []);
 
-  const handleReorderConfirm = useCallback(async (chapterId: string, newOrder: { id: string, index: number }[]) => {
+  const handleReorderConfirm = useCallback(async (chapterId: string, newOrder: { id: string, newIndex: number }[]) => {
     await reorderScenes(chapterId, newOrder);
     setIsReorderModalVisible(false);
   }, [reorderScenes]);

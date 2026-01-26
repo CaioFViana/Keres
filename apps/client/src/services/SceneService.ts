@@ -1,3 +1,4 @@
+import { Scene } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
@@ -7,7 +8,6 @@ import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
 import { createServerService } from './ServerService';
-import { Scene } from '@keres/shared';
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
@@ -25,7 +25,7 @@ export interface SceneService {
   updateScene(currentUserId: string, sceneId: string, sceneData: Partial<Omit<SceneInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<SceneSelect>;
   deleteScene(currentUserId: string, sceneId: string): Promise<void>;
   getAllByStoryId(storyId: string): Promise<SceneSelect[]>;
-  reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, index: number }[]): Promise<void>;
+  reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, newIndex: number }[]): Promise<void>;
   batchUpdateScenes(currentUserId: string, storyId: string, updates: { sceneId: string, changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[]): Promise<void>;
   getPreviousNextScenes(storyId: string, currentSceneId: string, chapterId: string): Promise<{ previousScene: SceneSelect | undefined; nextScene: SceneSelect | undefined }>;
 }
@@ -199,9 +199,9 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       }
     },
 
-    async reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, index: number }[]): Promise<void> {
+    async reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, newIndex: number }[]): Promise<void> {
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      const reorderPayload = { reorderItems: newOrder };
+      const reorderPayload = { reorderItems: newOrder.map(item => ({ ...item })) };
 
       await db.transaction(async (tx) => {
         for (const scene of newOrder) {
@@ -213,10 +213,10 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
             continue;
           }
 
-          if (originalScene.index !== scene.index) {
+          if (originalScene.index !== scene.newIndex) {
             await tx.update(scenes)
               .set({
-                index: scene.index,
+                index: scene.newIndex,
                 updatedAt: new Date(),
                 version: sql`${scenes.version} + 1`
               })

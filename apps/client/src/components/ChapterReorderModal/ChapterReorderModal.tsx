@@ -10,7 +10,7 @@ interface ChapterReorderModalProps {
   isVisible: boolean;
   onClose: () => void;
   chapters: ChapterSelect[];
-  onReorderConfirm: (newOrder: { id: string, index: number }[]) => Promise<void>;
+  onReorderConfirm: (newOrder: { id: string, newIndex: number }[]) => Promise<void>;
 }
 
 const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
@@ -50,7 +50,7 @@ const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
     // Map the reordered chapters to the format expected by the service
     const newOrder = reorderedChapters.map((chapter, idx) => ({
       id: chapter.id,
-      index: idx + 1, // Assign new sequential index based on position
+      newIndex: idx + 1, // Assign new sequential index based on position
     }));
     await onReorderConfirm(newOrder);
     onClose();

@@ -134,7 +134,7 @@ const ChapterListScreen = () => {
     setIsReorderModalVisible(true);
   }, []);
 
-  const handleReorderConfirm = useCallback(async (newOrder: { id: string, index: number }[]) => {
+  const handleReorderConfirm = useCallback(async (newOrder: { id: string, newIndex: number }[]) => {
     await reorderChapters(newOrder);
     setIsReorderModalVisible(false);
   }, [reorderChapters]);

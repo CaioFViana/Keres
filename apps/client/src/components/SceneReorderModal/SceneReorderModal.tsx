@@ -2,10 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ChapterSelect, SceneSelect } from '../../db/schema';
 import { useDrizzle } from '../../db'; // Import useDrizzle
+import { SceneSelect } from '../../db/schema';
 import { useChapterStore } from '../../state/chapterStore'; // Import useChapterStore
-import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import Button from '../common/Button/Button';
 import Select from '../common/Select/Select'; // Import Select component
@@ -15,7 +14,7 @@ interface SceneReorderModalProps {
   onClose: () => void;
   storyId: string; // Add storyId prop
   scenes: SceneSelect[];
-  onReorderConfirm: (chapterId: string, newOrder: { id: string, index: number }[]) => Promise<void>; // Update signature
+  onReorderConfirm: (chapterId: string, newOrder: { id: string, newIndex: number }[]) => Promise<void>; // Update signature
 }
 
 const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
@@ -88,7 +87,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
     // Map the reordered scenes to the format expected by the service
     const newOrder = reorderedScenes.map((scene, idx) => ({
       id: scene.id,
-      index: idx + 1, // Assign new sequential index based on position
+      newIndex: idx + 1, // Assign new sequential index based on position
     }));
     await onReorderConfirm(selectedChapterId, newOrder); // Pass selectedChapterId
     onClose();

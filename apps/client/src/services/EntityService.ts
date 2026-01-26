@@ -7,6 +7,7 @@ import {
   characterRelations,
   characters,
   items,
+  itemJourneys,
   locations,
   noteRelations,
   notes,
@@ -119,6 +120,24 @@ export class EntityService {
         });
         entitySpecificName = item?.name;
         translatedEntityType = t('item')
+        break;
+      case OperationLogEntityType.ItemJourney:
+        const itemJourney = await db.query.itemJourneys.findFirst({
+          where: and(eq(itemJourneys.id, entityId), eq(itemJourneys.isDeleted, false)),
+          columns: { itemId: true, sceneId: true },
+        });
+        if (itemJourney) {
+          const relatedItem = await db.query.items.findFirst({
+            where: and(eq(items.id, itemJourney.itemId), eq(items.isDeleted, false)),
+            columns: { name: true },
+          });
+          const targetScene = await db.query.scenes.findFirst({
+            where: and(eq(scenes.id, itemJourney.sceneId), eq(scenes.isDeleted, false)),
+            columns: { name: true },
+          });
+          entitySpecificName = `${relatedItem?.name || t('unknown_item')} ${t('showed_in_scene')} ${targetScene?.name || t('unknown_scene')}`;
+        }
+        translatedEntityType = t('item_journey');
         break;
       case OperationLogEntityType.CharacterRelation:
         const charRelation = await db.query.characterRelations.findFirst({
@@ -263,6 +282,24 @@ export class EntityService {
         const item = await db.query.items.findFirst({ where: and(eq(items.id, relationId), eq(items.storyId, storyId), eq(items.isDeleted, false)), columns: { name: true } });
         name = item?.name;
         type = t('item');
+        break;
+      case OperationLogEntityType.ItemJourney:
+        const itemJourney = await db.query.itemJourneys.findFirst({
+          where: and(eq(itemJourneys.id, relationId), eq(itemJourneys.storyId, storyId), eq(itemJourneys.isDeleted, false)),
+          columns: { itemId: true, sceneId: true },
+        });
+        if (itemJourney) {
+          const relatedItem = await db.query.items.findFirst({
+            where: and(eq(items.id, itemJourney.itemId), eq(items.isDeleted, false)),
+            columns: { name: true },
+          });
+          const targetScene = await db.query.scenes.findFirst({
+            where: and(eq(scenes.id, itemJourney.sceneId), eq(scenes.isDeleted, false)),
+            columns: { name: true },
+          });
+          name = `${relatedItem?.name || t('unknown_item')} ${t('showed_in_scene')} ${targetScene?.name || t('unknown_scene')}`;
+        }
+        type = t('item_journey');
         break;
       case OperationLogEntityType.NoteRelation:
         const noteRelation = await db.query.noteRelations.findFirst({ where: and(eq(noteRelations.id, relationId), eq(noteRelations.storyId, storyId), eq(noteRelations.isDeleted, false)), columns: { noteId: true, relationId: true, relationType: true } });

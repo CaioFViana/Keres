@@ -1,5 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, characterRelations, characters, items, suggestions } from '../db';
+import { AppDrizzleClient, characterRelations, characters, items, suggestions, itemJourneys } from '../db';
 import { createULID } from '../utils/ulid'; // Changed ulid import
 // Import other schemas as needed
 
@@ -30,6 +30,10 @@ const suggestionConfig = {
   item_initial_state: {
     schema: items,
     column: items.initialState,
+  },
+  item_state: {
+    schema: itemJourneys,
+    column: itemJourneys.newState,
   },
   // Add more configurations as the system evolves
 };

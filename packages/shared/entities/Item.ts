@@ -20,7 +20,7 @@ export interface ItemJourney {
   storyId: string
   itemId: string
   sceneId: string
-  newCharacterOwnerid: string | null // A it could have changed hands
+  newCharacterOwnerId: string | null // A it could have changed hands
   newState: string // As during this event or before this event the item could have changed somehow. Ex: blacksmith polished it. Polished now.
 
   extraNotes: string | null

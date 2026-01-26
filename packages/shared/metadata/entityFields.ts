@@ -66,6 +66,13 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'initialState', label: 'initial_state', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'item_initial_state' },
     { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+  ],
+  ItemJourney: [
+    { name: 'itemId', label: 'item', type: 'id', isSearchable: true },
+    { name: 'sceneId', label: 'scene', type: 'id', isSearchable: true },
+    { name: 'newCharacterOwnerId', label: 'new_character_owner', type: 'id', isSearchable: true },
+    { name: 'newState', label: 'new_state', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'item_state' },
+    { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
   ]
   // Add other relevant entities as needed
 };

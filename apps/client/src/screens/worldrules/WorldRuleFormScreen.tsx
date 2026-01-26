@@ -2,13 +2,13 @@ import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelect
 import { Note, NoteRelation } from '@keres/shared/entities/Note'; // Import Note and NoteRelation
 import { WorldRule } from '@keres/shared/entities/WorldRule';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { RouteProp, useFocusEffect, useNavigation, useRoute, StackActions } from '@react-navigation/native'; // Import StackActions
+import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import TextInput from '../../components/common/TextInput/TextInput';
-import NoteManager from '../../components/NoteManager/NoteManager'; // Import NoteManager
+import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

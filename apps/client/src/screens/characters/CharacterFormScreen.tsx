@@ -1,34 +1,34 @@
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Character } from '@keres/shared/entities/Character';
-import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note'; // Import Note and NoteRelation
+import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
+import { Note, NoteRelation } from '@keres/shared/entities/Note'; // Import Note and NoteRelation
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { RouteProp, useFocusEffect, useNavigation, useRoute, StackActions } from '@react-navigation/native'; // Import StackActions
+import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import Button from '../../components/common/Button/Button';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '../../components/common/SuggestionTextInput/SuggestionTextInput';
-import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
-import NoteManager from '../../components/NoteManager/NoteManager'; // Import NoteManager
+import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
-import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/CharacterService';
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
+import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
-import { createCharacterRelationService, CharacterRelationServiceInterface } from '../../services/CharacterRelationService'; // Import CharacterRelationService
-import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;

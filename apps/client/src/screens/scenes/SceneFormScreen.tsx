@@ -1,6 +1,7 @@
 import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
 import Select from '@/src/components/common/Select/Select'; // Import Select component
 import TextInput from '@/src/components/common/TextInput/TextInput';
+import NoteManager from '@/src/components/NoteManager';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { Scene } from '@keres/shared/entities/Scene';
@@ -9,9 +10,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import CharacterManager from '../../components/CharacterManager/CharacterManager'; // Import CharacterManager
+import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import Button from '../../components/common/Button/Button';
-import NoteManager from '../../components/NoteManager/NoteManager';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -725,15 +725,14 @@ const SceneFormScreen = () => {
           {currentSceneId && selectedStory?.id && (
             <View style={styles.noteSection}>
               <Text style={styles.sectionTitle}>{t('characters_title')}</Text>
-              <CharacterManager
+              <CharacterRelationManager
                 characterRelations={characterSceneRelations}
                 availableCharacters={characters.filter(char => !char.isDeleted)}
                 onSave={handleSaveCharacterSceneRelation}
                 onDelete={handleDeleteCharacterSceneRelation}
                 editable={true}
                 currentStoryId={selectedStory.id}
-                currentEntityId={currentSceneId}
-                currentEntityType="Scene"
+                currentSceneId={currentSceneId}
               />
             </View>
           )}

@@ -4,12 +4,11 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import NoteManager from '../../components/NoteManager/NoteManager';
+import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
 import { useDrizzle } from '../../db';
 import { ChapterSelect, TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { ChaptersScreenNavigationProp } from './ChapterListScreen';
 import { createChapterService } from '../../services/ChapterService';
 import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
 import { createNoteService, NoteService } from '../../services/NoteService';
@@ -19,6 +18,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { ChaptersScreenNavigationProp } from './ChapterListScreen';
 
 // Define the parameter list for this screen
 export type ChapterDetailScreenParamList = {

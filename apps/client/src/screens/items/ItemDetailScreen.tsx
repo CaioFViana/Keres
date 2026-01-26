@@ -4,12 +4,11 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import NoteManager from '../../components/NoteManager/NoteManager';
+import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { ItemSelect, TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { ItemsScreenNavigationProp } from './ItemListScreen';
 import { createItemService } from '../../services/ItemService';
 import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
 import { createNoteService, NoteService } from '../../services/NoteService';
@@ -19,6 +18,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { ItemsScreenNavigationProp } from './ItemListScreen';
 
 export type ItemDetailScreenParamList = {
   ItemDetail: { itemId: string };

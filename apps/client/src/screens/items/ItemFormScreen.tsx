@@ -1,31 +1,31 @@
 import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
 import Select from '@/src/components/common/Select/Select';
-import TextInput from '@/src/components/common/TextInput/TextInput';
 import SuggestionTextInput from '@/src/components/common/SuggestionTextInput/SuggestionTextInput';
-import { Note, NoteRelation } from '@keres/shared/entities/Note';
+import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Item } from '@keres/shared/entities/Item'; // Import Item entity
+import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
-import NoteManager from '../../components/NoteManager/NoteManager';
+import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ItemStackParamList } from '../../navigation/MainSystemStack'; // Use ItemStackParamList
+import { createItemService } from '../../services/ItemService'; // Import ItemService
 import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
 import { createNoteService, NoteService } from '../../services/NoteService';
-import { createItemService } from '../../services/ItemService'; // Import ItemService
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
+import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characterOwnerId
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characterOwnerId
 
 type ItemFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemForm'>;
 type ItemFormScreenNavigationProp = NativeStackNavigationProp<ItemStackParamList, 'ItemForm'>;

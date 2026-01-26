@@ -1,1 +1,1 @@
-export { default } from './CharacterManager';
+export { default } from './CharacterRelationManager';

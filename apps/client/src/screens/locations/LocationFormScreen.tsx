@@ -1,13 +1,14 @@
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Location } from '@keres/shared/entities/Location';
 import { Note, NoteRelation } from '@keres/shared/entities/Note'; // Import Note and NoteRelation
-import { RouteProp, useFocusEffect, useNavigation, useRoute, StackActions } from '@react-navigation/native';
+import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
-import NoteManager from '../../components/NoteManager/NoteManager'; // Import NoteManager
+import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -22,7 +23,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 
 type LocationFormScreenRouteProp = RouteProp<LocationStackParamList, 'LocationForm'>;

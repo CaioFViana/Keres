@@ -7,9 +7,9 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CharacterManager from '../../components/CharacterManager/CharacterManager'; // Import CharacterManager
+import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
-import NoteManager from '../../components/NoteManager/NoteManager';
+import NoteRelationManager from '../../components/NoteManager/NoteRelationManager'; // Import NoteRelationManager
 import SceneNavigationControls from '../../components/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
 import { useDrizzle } from '../../db';
 import { SceneSelect, TagSelect } from '../../db/schema'; // Import TagSelect
@@ -465,22 +465,21 @@ const SceneDetailScreen = () => {
       <Text style={styles.detailText}>{t('extra_notes')}: {scene.extraNotes || t('common_na')}</Text>
 
       <Text style={styles.sectionTitle}>{t('characters_title')}</Text>
-      <CharacterManager
+      <CharacterRelationManager
         characterRelations={characterSceneRelations}
         availableCharacters={characters.filter(char => !char.isDeleted)}
         onSave={() => Promise.resolve()}
         onDelete={() => Promise.resolve()}
         editable={false}
         currentStoryId={selectedStory?.id || ''}
-        currentEntityId={sceneId}
-        currentEntityType="Scene"
+        currentSceneId={sceneId}
       />
 
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
       <TagChipList tags={sceneTags} />
 
       <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
-      <NoteManager
+      <NoteRelationManager
         noteRelations={sceneNoteRelations}
         availableNotes={allNotes}
         onSave={handleSaveNoteRelation}

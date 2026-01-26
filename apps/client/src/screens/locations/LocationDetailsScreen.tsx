@@ -1,4 +1,4 @@
-import NoteManager from '@/src/components/NoteManager/NoteManager';
+import NoteManager from '@/src/components/NoteManager';
 import { createNoteRelationService, NoteRelationServiceInterface } from '@/src/services/NoteRelationService';
 import { createNoteService, NoteService } from '@/src/services/NoteService';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';

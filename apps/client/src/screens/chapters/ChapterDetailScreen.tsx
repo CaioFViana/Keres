@@ -4,14 +4,18 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ChapterSceneManager from '../../components/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
 import { useDrizzle } from '../../db';
-import { ChapterSelect, TagSelect } from '../../db/schema'; // Import TagSelect
+import { ChapterSelect, SceneSelect, TagSelect } from '../../db/schema'; // Import SceneSelect
+import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createChapterService } from '../../services/ChapterService';
+import { createLocationService, LocationService } from '../../services/LocationService'; // Import LocationService
 import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
 import { createNoteService, NoteService } from '../../services/NoteService';
+import { createSceneService, SceneService } from '../../services/SceneService'; // Import SceneService
 import { createTagRelationService } from '../../services/TagRelationService'; // Import TagRelationService
 import { createTagService } from '../../services/TagService'; // Import TagService
 import { useStoryStore } from '../../state/storyStore';
@@ -43,6 +47,8 @@ const ChapterDetailScreen = () => {
   const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null);
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null); // Ref for TagService
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null); // Ref for TagRelationService
+  const sceneServiceRef = useRef<SceneService | null>(null); // Ref for SceneService
+  const locationServiceRef = useRef<LocationService | null>(null); // Ref for LocationService
 
   // Initialize services once when drizzleDb is available
   useEffect(() => {
@@ -62,6 +68,12 @@ const ChapterDetailScreen = () => {
       if (!tagRelationServiceRef.current) {
         tagRelationServiceRef.current = createTagRelationService(drizzleDb);
       }
+      if (!sceneServiceRef.current) {
+        sceneServiceRef.current = createSceneService(drizzleDb);
+      }
+      if (!locationServiceRef.current) {
+        locationServiceRef.current = createLocationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
@@ -69,6 +81,8 @@ const ChapterDetailScreen = () => {
   const [allNotes, setAllNotes] = useState<Note[]>([]);
   const [chapterNoteRelations, setChapterNoteRelations] = useState<NoteRelation[]>([]);
   const [chapterTags, setChapterTags] = useState<TagSelect[]>([]); // State for chapter-specific tags
+  const [allScenes, setAllScenes] = useState<SceneSelect[]>([]); // State for for all scenes in story
+  const [allLocations, setAllLocations] = useState<Location[]>([]); // State for all locations in story
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -180,6 +194,32 @@ const ChapterDetailScreen = () => {
     }
   }, [selectedStory?.id, chapterId, tagRelationServiceRef.current]);
 
+  const fetchAllScenesInStory = useCallback(async () => {
+    if (!sceneServiceRef.current || !selectedStory?.id) {
+      setAllScenes([]);
+      return;
+    }
+    try {
+      const fetchedScenes = await sceneServiceRef.current.getScenesByStoryId(selectedStory.id);
+      setAllScenes(fetchedScenes.filter(s => !s.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all scenes:', err);
+    }
+  }, [selectedStory?.id, sceneServiceRef.current]);
+
+  const fetchAllLocationsInStory = useCallback(async () => {
+    if (!locationServiceRef.current || !selectedStory?.id) {
+      setAllLocations([]);
+      return;
+    }
+    try {
+      const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
+      setAllLocations(fetchedLocations.filter(l => !l.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all locations:', err);
+    }
+  }, [selectedStory?.id, locationServiceRef.current]);
+
   const handleChapterChange = useCallback(async (changedStoryId: string, changedChapterId: string) => {
     if (changedChapterId === chapterId) {
       if (chapterServiceRef.current) {
@@ -212,6 +252,18 @@ const ChapterDetailScreen = () => {
     }
   }, [chapterId, fetchTagsForChapter]);
 
+  const handleSceneChange = useCallback((changedStoryId: string, changedSceneId: string) => {
+    if (selectedStory?.id === changedStoryId) {
+      fetchAllScenesInStory();
+    }
+  }, [selectedStory?.id, fetchAllScenesInStory]);
+
+  const handleLocationChange = useCallback((changedStoryId: string, changedLocationId: string) => {
+    if (selectedStory?.id === changedStoryId) {
+      fetchAllLocationsInStory();
+    }
+  }, [selectedStory?.id, fetchAllLocationsInStory]);
+
   useEffect(() => {
     if (chapterServiceRef.current) {
       fetchChapter();
@@ -219,12 +271,16 @@ const ChapterDetailScreen = () => {
       entityEventEmitter.on('note_changed', handleNoteChange);
       entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange); // Listen for tag relation changes
+      entityEventEmitter.on('scene_changed', handleSceneChange); // Listen for scene changes
+      entityEventEmitter.on('location_changed', handleLocationChange); // Listen for location changes
 
       return () => {
         entityEventEmitter.off('chapter_changed', handleChapterChange);
         entityEventEmitter.off('note_changed', handleNoteChange);
         entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange); // Cleanup listener
+        entityEventEmitter.off('scene_changed', handleSceneChange); // Cleanup listener
+        entityEventEmitter.off('location_changed', handleLocationChange); // Cleanup listener
       };
     }
   }, [chapterId, fetchChapter, handleChapterChange, handleNoteChange, handleNoteRelationChange, handleTagRelationChange, chapterServiceRef.current]);
@@ -234,8 +290,10 @@ const ChapterDetailScreen = () => {
       fetchNotesForStory();
       fetchNoteRelationsForChapter();
       fetchTagsForChapter(); // Fetch tags when chapter is loaded
+      fetchAllScenesInStory(); // Fetch all scenes
+      fetchAllLocationsInStory(); // Fetch all locations
     }
-  }, [chapter, fetchNotesForStory, fetchNoteRelationsForChapter, fetchTagsForChapter]);
+  }, [chapter, fetchNotesForStory, fetchNoteRelationsForChapter, fetchTagsForChapter, fetchAllScenesInStory, fetchAllLocationsInStory]);
 
   const handleSaveNoteRelation = async (relation: NoteRelation) => {
     if (!noteRelationServiceRef.current || !selectedStory?.id || !userId) {
@@ -346,6 +404,13 @@ const ChapterDetailScreen = () => {
         currentStoryId={selectedStory?.id || ''}
         currentEntityId={chapterId}
         currentEntityType="Chapter"
+      />
+
+      <Text style={styles.sectionTitle}>{t('scenes_in_chapter_title')}</Text>
+      <ChapterSceneManager
+        currentChapterId={chapterId}
+        availableScenes={allScenes}
+        availableLocations={allLocations}
       />
 
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>

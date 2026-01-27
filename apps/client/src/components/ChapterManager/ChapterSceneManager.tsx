@@ -1,35 +1,66 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SceneSelect } from '../../db/schema';
-import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay';
+import { StyleSheet, Text, View } from 'react-native';
+import { SceneSelect } from '../../db/schema'; // SceneSelect type
+import { Location } from '@keres/shared/entities/Location'; // Import Location entity
+import { useTheme } from '../../theme';
+import GenericRelationDisplay, { BaseItem } from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay
 
 interface ChapterSceneManagerProps {
-  allScenes: SceneSelect[]; // All scenes in the story
   currentChapterId: string;
+  availableScenes: SceneSelect[];
+  availableLocations: Location[]; // All locations in the story (to get location names)
 }
 
 const ChapterSceneManager: React.FC<ChapterSceneManagerProps> = ({
-  allScenes,
   currentChapterId,
+  availableScenes,
+  availableLocations, // Add this
 }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
-  const scenesForChapter = useMemo(() => {
-    return allScenes.filter(scene => scene.chapterId === currentChapterId && !scene.isDeleted);
-  }, [allScenes, currentChapterId]);
+  const scenesInChapter = useMemo(() => {
+    return availableScenes.filter(
+      (scene) => scene.chapterId === currentChapterId && !scene.isDeleted
+    ).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }, [currentChapterId, availableScenes]);
 
-  const getSceneById = (sceneId: string) => allScenes.find(scene => scene.id === sceneId);
-  const getSceneId = (scene: SceneSelect) => scene.id;
-  const getSceneDisplayName = (scene: SceneSelect) => scene.name;
+  const getSceneById = useCallback((sceneId: string) => {
+    return availableScenes.find(scene => scene.id === sceneId);
+  }, [availableScenes]);
+
+  const getSceneDisplayName = useCallback((scene: SceneSelect) => {
+    return scene.name;
+  }, []);
 
   return (
     <GenericRelationDisplay<SceneSelect, SceneSelect>
-      relations={scenesForChapter}
+      relations={scenesInChapter}
       getRelatedItem={getSceneById}
-      getRelationItemId={getSceneId}
+      getRelationItemId={(scene) => scene.id}
       getItemDisplayName={getSceneDisplayName}
       noItemsMessage={'no_scenes_in_chapter'}
-      title={t('scenes_title')}
+      renderItemExtraContent={(scene, relatedScene) => {
+        const locationName = availableLocations.find(loc => loc.id === relatedScene.locationId)?.name;
+        return (
+          <View style={{ flex: 1, paddingVertical: 10 }}>
+            <Text style={{ fontSize: 16, color: colors.text }}>{relatedScene.name}</Text>
+            {relatedScene.summary && (
+              <Text style={{ fontSize: 14, color: colors.textSecondary }}>
+                {t('summary')}: {relatedScene.summary}
+              </Text>
+            )}
+            {locationName && (
+              <Text style={{ fontSize: 14, color: colors.textSecondary }}>
+                {t('location')}: {locationName}
+              </Text>
+            )}
+            {/* Add other scene details if needed */}
+          </View>
+        );
+      }}
+      title={t('scenes_in_chapter_title')}
     />
   );
 };

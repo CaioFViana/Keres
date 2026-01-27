@@ -1,35 +1,56 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SceneSelect } from '../../db/schema';
-import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay';
+import { StyleSheet, Text, View } from 'react-native';
+import { SceneSelect } from '../../db/schema'; // SceneSelect type
+import { useTheme } from '../../theme';
+import GenericRelationDisplay, { BaseItem } from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay
 
 interface LocationSceneManagerProps {
-  allScenes: SceneSelect[]; // All scenes in the story
   currentLocationId: string;
+  availableScenes: SceneSelect[];
 }
 
 const LocationSceneManager: React.FC<LocationSceneManagerProps> = ({
-  allScenes,
   currentLocationId,
+  availableScenes,
 }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
-  const scenesForLocation = useMemo(() => {
-    return allScenes.filter(scene => scene.locationId === currentLocationId && !scene.isDeleted);
-  }, [allScenes, currentLocationId]);
+  const scenesInLocation = useMemo(() => {
+    return availableScenes.filter(
+      (scene) => scene.locationId === currentLocationId && !scene.isDeleted
+    ).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }, [currentLocationId, availableScenes]);
 
-  const getSceneById = (sceneId: string) => allScenes.find(scene => scene.id === sceneId);
-  const getSceneId = (scene: SceneSelect) => scene.id;
-  const getSceneDisplayName = (scene: SceneSelect) => scene.name;
+  const getSceneById = useCallback((sceneId: string) => {
+    return availableScenes.find(scene => scene.id === sceneId);
+  }, [availableScenes]);
 
+  const getSceneDisplayName = useCallback((scene: SceneSelect) => {
+    return scene.name;
+  }, []);
+
+  // For this component, the "relation" is simply the scene itself, so TItem and TRelation are both SceneSelect
   return (
     <GenericRelationDisplay<SceneSelect, SceneSelect>
-      relations={scenesForLocation}
+      relations={scenesInLocation}
       getRelatedItem={getSceneById}
-      getRelationItemId={getSceneId}
+      getRelationItemId={(scene) => scene.id}
       getItemDisplayName={getSceneDisplayName}
-      noItemsMessage={'no_scenes_assigned_to_location'}
-      title={t('scenes_title')}
+      noItemsMessage={'no_scenes_in_location'}
+      renderItemExtraContent={(scene, relatedScene) => (
+        <View style={{ flex: 1, paddingVertical: 10 }}>
+          <Text style={{ fontSize: 16, color: colors.text }}>{relatedScene.name}</Text>
+          {relatedScene.summary && (
+            <Text style={{ fontSize: 14, color: colors.textSecondary }}>
+              {t('summary')}: {relatedScene.summary}
+            </Text>
+          )}
+          {/* Add other scene details if needed */}
+        </View>
+      )}
+      title={t('scenes_in_location_title')}
     />
   );
 };

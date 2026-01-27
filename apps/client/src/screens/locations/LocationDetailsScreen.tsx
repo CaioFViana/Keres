@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
+import LocationSceneManager from '../../components/LocationManager/LocationSceneManager'; // Import LocationSceneManager
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { SceneSelect, LocationSelect, TagSelect } from '../../db/schema'; // Explicitly import SceneSelect
@@ -478,6 +479,12 @@ const LocationDetailsScreen = () => {
         availableScenes={allScenes}
         characterSceneRelations={characterSceneRelations}
         availableCharacters={allCharacters}
+      />
+
+      <Text style={styles.sectionTitle}>{t('scenes_in_location_title')}</Text>
+      <LocationSceneManager
+        currentLocationId={locationId}
+        availableScenes={allScenes}
       />
 
       <View style={{ marginTop: 20 }}>

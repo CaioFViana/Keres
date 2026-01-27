@@ -1,21 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
+import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
 import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Added Alert
+import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
+import { SceneSelect, TagSelect } from '../../db/schema'; // For available scenes
 import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/CharacterRelationService'; // Import CharacterRelationService
+import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/CharacterSceneService'; // Service for CharacterScene
 import { createCharacterService } from '../../services/CharacterService';
 import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
 import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
+import { createSceneService } from '../../services/SceneService';
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
@@ -46,6 +50,7 @@ const CharacterDetailScreen = () => {
   const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
   const noteServiceRef = useRef<NoteService | null>(null); // Ref for NoteService
   const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null); // Ref for NoteRelationService
+  const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
 
   // Initialize services once when drizzleDb is available
   useEffect(() => {
@@ -68,6 +73,9 @@ const CharacterDetailScreen = () => {
       if (!noteRelationServiceRef.current) {
         noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
       }
+      if (!characterSceneServiceRef.current) {
+        characterSceneServiceRef.current = createCharacterSceneService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
@@ -77,6 +85,8 @@ const CharacterDetailScreen = () => {
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
   const [allNotes, setAllNotes] = useState<Note[]>([]); // State for all notes in story
   const [characterNoteRelations, setCharacterNoteRelations] = useState<NoteRelation[]>([]); // State for note relations
+  const [allScenes, setAllScenes] = useState<SceneSelect[]>([]); // State for all scenes in story
+  const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character scene relations
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -216,6 +226,33 @@ const CharacterDetailScreen = () => {
     }
   }, [character?.storyId, characterId, noteRelationServiceRef.current]);
 
+  const fetchScenesForCharacter = useCallback(async () => {
+    if (!characterSceneServiceRef.current || !character?.storyId || !characterId) {
+      setCharacterSceneRelations([]);
+      return;
+    }
+    try {
+      const fetchedRelations = await characterSceneServiceRef.current.getRelationsForCharacter(character.storyId, characterId);
+      setCharacterSceneRelations(fetchedRelations);
+    } catch (err) {
+      console.error('Failed to fetch character scene relations:', err);
+    }
+  }, [character?.storyId, characterId, characterSceneServiceRef.current]);
+
+  const fetchAllScenesInStory = useCallback(async () => {
+    if (!drizzleDb || !character?.storyId) {
+      setAllScenes([]);
+      return;
+    }
+    try {
+      const sceneService = createSceneService(drizzleDb);
+      const fetchedScenes = await sceneService.getScenesByStoryId(character.storyId);
+      setAllScenes(fetchedScenes.filter(s => !s.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all scenes:', err);
+    }
+  }, [character?.storyId, drizzleDb]);
+
   const handleCharacterChange = useCallback(async (changedStoryId: string, changedCharacterId: string) => {
     if (changedCharacterId === characterId) {
       if (characterServiceRef.current) {
@@ -254,6 +291,11 @@ const CharacterDetailScreen = () => {
     }
   }, [character?.storyId, fetchNoteRelationsForCharacter]);
 
+  const handleCharacterSceneChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
+    if (changedCharacterId === characterId) {
+      fetchScenesForCharacter();
+    }
+  }, [characterId, fetchScenesForCharacter]);
 
   useEffect(() => {
     if (characterServiceRef.current) {
@@ -263,6 +305,7 @@ const CharacterDetailScreen = () => {
       entityEventEmitter.on('character_relation_changed', handleCharacterRelationChange); // Listen for character relation changes
       entityEventEmitter.on('note_changed', handleNoteChange); // Listen for note changes
       entityEventEmitter.on('note_relation_changed', handleNoteRelationChange); // Listen for note relation changes
+      entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
 
       return () => {
         entityEventEmitter.off('character_changed', handleCharacterChange);
@@ -270,9 +313,10 @@ const CharacterDetailScreen = () => {
         entityEventEmitter.off('character_relation_changed', handleCharacterRelationChange);
         entityEventEmitter.off('note_changed', handleNoteChange);
         entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
+        entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange); // Remove this listener
       };
     }
-  }, [characterId, fetchCharacter, handleCharacterChange, handleTagRelationChange, handleCharacterRelationChange, handleNoteChange, handleNoteRelationChange, characterServiceRef.current]);
+  }, [characterId, fetchCharacter, handleCharacterChange, handleTagRelationChange, handleCharacterRelationChange, handleNoteChange, handleNoteRelationChange, handleCharacterSceneChange, characterServiceRef.current]);
 
   useEffect(() => {
     // Fetch tags, relations, all characters, all notes, and note relations when character is loaded or changes
@@ -282,8 +326,10 @@ const CharacterDetailScreen = () => {
       fetchAllCharactersInStory(); // Fetch all characters here
       fetchNotesForStory(); // Fetch all notes
       fetchNoteRelationsForCharacter(); // Fetch note relations
+      fetchScenesForCharacter(); // Fetch character scene relations
+      fetchAllScenesInStory(); // Fetch all scenes
     }
-  }, [character, fetchTagsForCharacter, fetchRelationsForCharacter, fetchAllCharactersInStory, fetchNotesForStory, fetchNoteRelationsForCharacter]);
+  }, [character, fetchTagsForCharacter, fetchRelationsForCharacter, fetchAllCharactersInStory, fetchNotesForStory, fetchNoteRelationsForCharacter, fetchScenesForCharacter, fetchAllScenesInStory]);
 
   const handleSaveRelation = async (relation: CharacterRelation) => {
     if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
@@ -372,6 +418,49 @@ const CharacterDetailScreen = () => {
     }
   };
 
+  const handleSaveCharacterScene = async (characterScene: CharacterScene) => {
+    if (!characterSceneServiceRef.current || !character?.storyId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const savedCharacterScene = await characterSceneServiceRef.current.saveCharacterScene(userId, characterScene);
+      setCharacterSceneRelations(prev => {
+        const existingIndex = prev.findIndex(cs => cs.id === savedCharacterScene.id);
+        if (existingIndex > -1) {
+          return prev.map((cs, index) => (index === existingIndex ? savedCharacterScene : cs));
+        } else {
+          return [...prev, savedCharacterScene];
+        }
+      });
+      entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
+      Alert.alert(t('success'), t('character_scene_saved_successfully'));
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_save_character_scene'));
+      console.error('Failed to save character scene:', error);
+    }
+  };
+
+  const handleDeleteCharacterScene = async (characterSceneId: string) => {
+    if (!characterSceneServiceRef.current || !character?.storyId || !userId) {
+      Alert.alert(t('error'), t('service_not_initialized'));
+      return;
+    }
+    try {
+      const success = await characterSceneServiceRef.current.deleteCharacterScene(userId, characterSceneId);
+      if (success) {
+        setCharacterSceneRelations(prev => prev.filter(cs => cs.id !== characterSceneId));
+        entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
+        Alert.alert(t('success'), t('character_scene_deleted_successfully'));
+      } else {
+        Alert.alert(t('error'), t('failed_to_delete_character_scene'));
+      }
+    } catch (error) {
+      Alert.alert(t('error'), t('failed_to_delete_character_scene'));
+      console.error('Failed to delete character scene:', error);
+    }
+  };
+
 
   const renderHeaderRight = useCallback(() => (
     <TouchableOpacity
@@ -449,6 +538,17 @@ const CharacterDetailScreen = () => {
         editable={false}
         currentStoryId={character.storyId}
         currentCharacterId={characterId}
+      />
+
+      <Text style={styles.sectionTitle}>{t('character_scenes_title')}</Text>
+      <CharacterSceneManager
+        characterSceneRelations={characterSceneRelations}
+        availableScenes={allScenes}
+        onSave={handleSaveCharacterScene}
+        onDelete={handleDeleteCharacterScene}
+        currentStoryId={character.storyId}
+        currentCharacterId={characterId}
+        editable={false}
       />
 
       <Text style={styles.sectionTitle}>{t('notes_title')}</Text>

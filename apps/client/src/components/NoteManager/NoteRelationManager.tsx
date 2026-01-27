@@ -141,6 +141,7 @@ const NoteRelationManager: React.FC<NoteRelationManagerProps> = ({
             </TouchableOpacity>
           );
         }}
+        title={t('notes_title')}
       />
 
       {noteModalVisible && (

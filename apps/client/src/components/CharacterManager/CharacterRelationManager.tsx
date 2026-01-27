@@ -70,6 +70,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
       selectItemToAddMessage={t('select_character_to_add')}
       deleteConfirmationTitle={t('delete_character_from_scene_title')}
       deleteConfirmationMessage={t('delete_character_from_scene_message')}
+      title={t('characters_title')}
     />
   );
 };

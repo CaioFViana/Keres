@@ -38,6 +38,7 @@ interface RelationManagerProps<TItem extends BaseItem, TRelation extends BaseRel
   deleteConfirmationTitle: string;
   deleteConfirmationMessage: string;
   renderRelationItemExtraContent?: (relation: TRelation, availableItems: TItem[]) => React.ReactNode;
+  title: string; // Add title prop for the collapsible header
 }
 
 const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>({
@@ -60,12 +61,14 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
   deleteConfirmationTitle,
   deleteConfirmationMessage,
   renderRelationItemExtraContent,
+  title, // Destructure title prop
 }: RelationManagerProps<TItem, TRelation>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const [selectedItemIdToAdd, setSelectedItemIdToAdd] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCollapsed, setIsCollapsed] = useState(true); // Add isCollapsed state, default to true
 
   const styles = StyleSheet.create({
     container: {
@@ -130,7 +133,28 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
         alignItems: 'center',
         gap: 10,
         marginBottom: 10,
-    }
+    },
+    collapsibleHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 5,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      marginBottom: 10,
+      borderColor: colors.border,
+      borderWidth: 1,
+    },
+    collapsibleHeaderText: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    collapsibleContent: {
+      paddingHorizontal: 5,
+      marginBottom: 10,
+    },
   });
 
   const handleAddRelation = useCallback(async () => {
@@ -205,38 +229,46 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
 
   return (
     <View style={styles.container}>
-      
-      {editable && (
-        <View style={styles.addRelationContainer}>
-          <TextInput
-            placeholder={t('search')}
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            style={styles.searchInput}
-          />
-          <View style={styles.selectAddRow}>
-            <View style={styles.dropdown}>
-                <Select
-                options={availableItemOptions}
-                value={selectedItemIdToAdd}
-                onValueChange={(value: string | null) => setSelectedItemIdToAdd(value)}
-                placeholder={selectItemPlaceholder}
-                multiple={false}
-                allowDeselect={true}
-                />
-            </View>
-            <TouchableOpacity onPress={handleAddRelation} style={styles.addButton}>
-                <Text style={styles.addButtonText}>{t('add')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      <TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)} style={styles.collapsibleHeader}>
+        <Text style={styles.collapsibleHeaderText}>{title}</Text>
+        <Ionicons name={isCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'} size={24} color={colors.text} />
+      </TouchableOpacity>
 
-      {relations.length === 0 ? (
-        <Text style={{ color: colors.textSecondary }}>{noItemsAssignedMessage}</Text>
-      ) : (
-        <View>
-          {relations.map(renderRelationItem)}
+      {!isCollapsed && (
+        <View style={styles.collapsibleContent}>
+          {editable && (
+            <View style={styles.addRelationContainer}>
+              <TextInput
+                placeholder={t('search')}
+                value={searchTerm}
+                onChangeText={setSearchTerm}
+                style={styles.searchInput}
+              />
+              <View style={styles.selectAddRow}>
+                <View style={styles.dropdown}>
+                    <Select
+                    options={availableItemOptions}
+                    value={selectedItemIdToAdd}
+                    onValueChange={(value: string | null) => setSelectedItemIdToAdd(value)}
+                    placeholder={selectItemPlaceholder}
+                    multiple={false}
+                    allowDeselect={true}
+                    />
+                </View>
+                <TouchableOpacity onPress={handleAddRelation} style={styles.addButton}>
+                    <Text style={styles.addButtonText}>{t('add')}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {relations.length === 0 ? (
+            <Text style={{ color: colors.textSecondary }}>{noItemsAssignedMessage}</Text>
+          ) : (
+            <View>
+              {relations.map(renderRelationItem)}
+            </View>
+          )}
         </View>
       )}
     </View>

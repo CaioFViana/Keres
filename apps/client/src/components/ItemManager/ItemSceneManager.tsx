@@ -1,51 +1,60 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native'; // Added imports
-import { ItemJourney } from '@keres/shared/entities/Item';
+import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { SceneSelect } from '../../db/schema';
-import { Character } from '@keres/shared/entities/Character'; // Needed to display character name if newCharacterOwnerId is present
+import { ItemJourney, Item } from '@keres/shared/entities/Item';
+import { Character } from '@keres/shared/entities/Character';
 import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay';
-import { useTheme } from '../../theme'; // Added import
+import { useTheme } from '../../theme';
 
 interface ItemSceneManagerProps {
-  itemSceneRelations: ItemJourney[];
-  allScenes: SceneSelect[]; // Now allScenes, similar to LocationSceneManager
-  availableCharacters?: Character[]; // Optional: for displaying character names
+  itemJourneys: ItemJourney[];
+  allItems: Item[]; // All items in the story for display purposes
+  allCharacters: Character[]; // All characters in the story for owner names
+  currentSceneId: string;
 }
 
 const ItemSceneManager: React.FC<ItemSceneManagerProps> = ({
-  itemSceneRelations,
-  allScenes,
-  availableCharacters,
+  itemJourneys,
+  allItems,
+  allCharacters,
+  currentSceneId,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme(); // Added useTheme
+  const { colors } = useTheme();
 
-  const getSceneId = (relation: ItemJourney) => relation.sceneId;
-  const getSceneById = (sceneId: string) => allScenes.find(scene => scene.id === sceneId);
-  const getSceneDisplayName = (scene: SceneSelect) => scene.name;
+  const itemJourneysForScene = useMemo(() => {
+    return itemJourneys.filter(journey => journey.sceneId === currentSceneId && !journey.isDeleted);
+  }, [itemJourneys, currentSceneId]);
 
-  const renderItemExtraContent = (relation: ItemJourney, scene: SceneSelect) => {
-    const ownerName = availableCharacters?.find(char => char.id === relation.newCharacterOwnerId)?.name;
+  const getItemJourneyId = (relation: ItemJourney) => relation.itemId;
+
+  const getItemById = (itemId: string) => allItems.find(item => item.id === itemId);
+
+  const getItemDisplayName = (item: Item) => item.name;
+
+  const renderItemJourneyExtraContent = useCallback((relation: ItemJourney, item: Item) => {
+    const ownerName = allCharacters?.find(char => char.id === relation.newCharacterOwnerId)?.name;
     return (
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, color: colors.text }}>{scene.name}</Text>
+      <View style={{ flex: 1, paddingVertical: 10 }}>
+        <Text style={{ fontSize: 16, color: colors.text }}>{item.name}</Text>
         {relation.newState && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('item_state')}: {relation.newState}</Text>}
         {ownerName && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('new_owner')}: {ownerName}</Text>}
         {relation.extraNotes && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('extra_notes')}: {relation.extraNotes}</Text>}
       </View>
     );
-  };
+  }, [allCharacters, colors.text, colors.textSecondary, t]);
+
 
   return (
-    <GenericRelationDisplay<SceneSelect, ItemJourney>
-      relations={itemSceneRelations}
-      getRelatedItem={getSceneById}
-      getRelationItemId={getSceneId}
-      getItemDisplayName={getSceneDisplayName}
-      noItemsMessage={'no_scenes_assigned_to_item'}
-      renderItemExtraContent={renderItemExtraContent}
-      title={t('scenes_title')}
+    <GenericRelationDisplay<Item, ItemJourney>
+      relations={itemJourneysForScene}
+      getRelatedItem={getItemById}
+      getRelationItemId={getItemJourneyId}
+      getItemDisplayName={getItemDisplayName}
+      noItemsMessage={'no_items_assigned_to_scene'}
+      renderItemExtraContent={renderItemJourneyExtraContent}
+      title={t('items_title')}
     />
   );
 };

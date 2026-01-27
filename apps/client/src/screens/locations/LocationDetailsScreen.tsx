@@ -19,10 +19,10 @@ import { LocationSelect, SceneSelect, TagSelect } from '../../db/schema'; // Exp
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
-import { createCharacterSceneService, CharacterSceneServiceInterface } from '../../services/CharacterSceneService'; // Import CharacterSceneService
-import { createItemService, ItemService } from '../../services/ItemService'; // Import ItemService
+import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/CharacterSceneService'; // Import CharacterSceneService
+import { CharacterService, createCharacterService } from '../../services/CharacterService'; // Import CharacterService
 import { createItemJourneyService, ItemJourneyService } from '../../services/ItemJourneyService'; // Import ItemJourneyService
-import { createCharacterService, CharacterService } from '../../services/CharacterService'; // Import CharacterService
+import { createItemService, ItemService } from '../../services/ItemService'; // Import ItemService
 import { createLocationService } from '../../services/LocationService';
 import { createSceneService } from '../../services/SceneService'; // Import createSceneService
 import { createTagRelationService } from '../../services/TagRelationService';
@@ -542,6 +542,18 @@ const LocationDetailsScreen = () => {
         availableCharacters={allCharacters}
       />
 
+      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+      <NoteManager
+        noteRelations={locationNoteRelations}
+        availableNotes={allNotes}
+        onSave={handleSaveNoteRelation}
+        onDelete={handleDeleteNoteRelation}
+        editable={false}
+        currentStoryId={selectedStory?.id || ''}
+        currentEntityId={locationId}
+        currentEntityType="Location"
+      />
+      
       <View style={{ marginTop: 20 }}>
         <Text style={[styles.detailLabel, { marginBottom: 5 }]}>{t('tags_title')}</Text>
         <TagChipList tags={locationTags} />

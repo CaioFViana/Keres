@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,7 +10,6 @@ import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
 import { useDrizzle } from '../../db';
 import { ChapterSelect, SceneSelect, TagSelect } from '../../db/schema'; // Import SceneSelect
-import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createChapterService } from '../../services/ChapterService';
 import { createLocationService, LocationService } from '../../services/LocationService'; // Import LocationService
@@ -394,6 +394,13 @@ const ChapterDetailScreen = () => {
       <Text style={styles.detailText}>{t('is_favorite')}: {chapter.isFavorite ? t('common_yes') : t('common_no')}</Text>
       <Text style={styles.detailText}>{t('extra_notes')}: {chapter.extraNotes || t('common_na')}</Text>
 
+      <Text style={styles.sectionTitle}>{t('scenes_in_chapter_title')}</Text>
+      <ChapterSceneManager
+        currentChapterId={chapterId}
+        availableScenes={allScenes}
+        availableLocations={allLocations}
+      />
+
       <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
       <NoteManager
         noteRelations={chapterNoteRelations}
@@ -404,13 +411,6 @@ const ChapterDetailScreen = () => {
         currentStoryId={selectedStory?.id || ''}
         currentEntityId={chapterId}
         currentEntityType="Chapter"
-      />
-
-      <Text style={styles.sectionTitle}>{t('scenes_in_chapter_title')}</Text>
-      <ChapterSceneManager
-        currentChapterId={chapterId}
-        availableScenes={allScenes}
-        availableLocations={allLocations}
       />
 
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>

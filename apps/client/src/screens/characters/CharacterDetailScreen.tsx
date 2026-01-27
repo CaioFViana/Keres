@@ -639,18 +639,6 @@ const CharacterDetailScreen = () => {
         editable={false}
       />
 
-      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
-      <NoteManager
-        noteRelations={characterNoteRelations}
-        availableNotes={allNotes}
-        onSave={handleSaveNoteRelation}
-        onDelete={handleDeleteNoteRelation}
-        editable={false}
-        currentStoryId={character.storyId}
-        currentEntityId={characterId}
-        currentEntityType="Character"
-      />
-
       <Text style={styles.sectionTitle}>{t('character_items_title')}</Text>
       <ItemCharacterManager
         allItems={allItems}
@@ -665,6 +653,18 @@ const CharacterDetailScreen = () => {
         availableScenes={allScenes}
         availableLocations={allLocations}
         currentCharacterId={characterId}
+      />
+
+      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+      <NoteManager
+        noteRelations={characterNoteRelations}
+        availableNotes={allNotes}
+        onSave={handleSaveNoteRelation}
+        onDelete={handleDeleteNoteRelation}
+        editable={false}
+        currentStoryId={character.storyId}
+        currentEntityId={characterId}
+        currentEntityType="Character"
       />
 
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>

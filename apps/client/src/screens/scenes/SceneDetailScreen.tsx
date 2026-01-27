@@ -571,9 +571,6 @@ const SceneDetailScreen = () => {
         currentSceneId={sceneId}
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={sceneTags} />
-
       <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
       <NoteRelationManager
         noteRelations={sceneNoteRelations}
@@ -585,6 +582,9 @@ const SceneDetailScreen = () => {
         currentEntityId={sceneId}
         currentEntityType="Scene"
       />
+
+      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+      <TagChipList tags={sceneTags} />
 
       <SceneNavigationControls
         storyType={selectedStory?.type}

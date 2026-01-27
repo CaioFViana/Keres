@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
+import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Added Alert
+import CharacterLocationManager from '../../components/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
 import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import ItemCharacterManager from '../../components/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
@@ -19,8 +21,9 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/CharacterRelationService'; // Import CharacterRelationService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/CharacterSceneService'; // Service for CharacterScene
 import { createCharacterService } from '../../services/CharacterService';
-import { createItemService, ItemService } from '../../services/ItemService'; // Import ItemService
 import { createItemJourneyService, ItemJourneyService } from '../../services/ItemJourneyService'; // Import ItemJourneyService
+import { createItemService, ItemService } from '../../services/ItemService'; // Import ItemService
+import { createLocationService, LocationService } from '../../services/LocationService'; // Import LocationService
 import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
 import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
 import { createSceneService } from '../../services/SceneService';
@@ -57,6 +60,7 @@ const CharacterDetailScreen = () => {
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
   const itemServiceRef = useRef<ItemService | null>(null); // Ref for ItemService
   const itemJourneyServiceRef = useRef<ItemJourneyService | null>(null); // Ref for ItemJourneyService
+  const locationServiceRef = useRef<LocationService | null>(null); // Ref for LocationService
 
   // Initialize services once when drizzleDb is available
   useEffect(() => {
@@ -88,6 +92,9 @@ const CharacterDetailScreen = () => {
       if (!itemJourneyServiceRef.current) {
         itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
       }
+      if (!locationServiceRef.current) {
+        locationServiceRef.current = createLocationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
@@ -101,6 +108,7 @@ const CharacterDetailScreen = () => {
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character scene relations
   const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in story
   const [allItemJourneys, setAllItemJourneys] = useState<ItemJourney[]>([]); // State for all item journeys in story
+  const [allLocations, setAllLocations] = useState<Location[]>([]); // State for all locations in story
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -293,6 +301,19 @@ const CharacterDetailScreen = () => {
     }
   }, [character?.storyId, itemJourneyServiceRef.current]);
 
+  const fetchAllLocationsInStory = useCallback(async () => {
+    if (!locationServiceRef.current || !character?.storyId) {
+      setAllLocations([]);
+      return;
+    }
+    try {
+      const fetchedLocations = await locationServiceRef.current.getAllByStoryId(character.storyId);
+      setAllLocations(fetchedLocations.filter(l => !l.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all locations:', err);
+    }
+  }, [character?.storyId, locationServiceRef.current]);
+
   const handleCharacterChange = useCallback(async (changedStoryId: string, changedCharacterId: string) => {
     if (changedCharacterId === characterId) {
       if (characterServiceRef.current) {
@@ -349,6 +370,12 @@ const CharacterDetailScreen = () => {
     }
   }, [character?.storyId, fetchAllItemJourneysInStory]);
 
+  const handleLocationChange = useCallback((changedStoryId: string, changedLocationId: string) => {
+    if (character?.storyId === changedStoryId) {
+      fetchAllLocationsInStory();
+    }
+  }, [character?.storyId, fetchAllLocationsInStory]);
+
   useEffect(() => {
     if (characterServiceRef.current) {
       fetchCharacter();
@@ -360,6 +387,7 @@ const CharacterDetailScreen = () => {
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
       entityEventEmitter.on('item_changed', handleItemChange); // Listen for item changes
       entityEventEmitter.on('item_journey_changed', handleItemJourneyChange); // Listen for item journey changes
+      entityEventEmitter.on('location_changed', handleLocationChange); // Listen for location changes
 
       return () => {
         entityEventEmitter.off('character_changed', handleCharacterChange);
@@ -370,6 +398,7 @@ const CharacterDetailScreen = () => {
         entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange); // Remove this listener
         entityEventEmitter.off('item_changed', handleItemChange);
         entityEventEmitter.off('item_journey_changed', handleItemJourneyChange);
+        entityEventEmitter.off('location_changed', handleLocationChange);
       };
     }
   }, [characterId, fetchCharacter, handleCharacterChange, handleTagRelationChange, handleCharacterRelationChange, handleNoteChange, handleNoteRelationChange, handleCharacterSceneChange, characterServiceRef.current]);
@@ -386,8 +415,9 @@ const CharacterDetailScreen = () => {
       fetchAllScenesInStory(); // Fetch all scenes
       fetchAllItemsInStory(); // Fetch all items
       fetchAllItemJourneysInStory(); // Fetch all item journeys
+      fetchAllLocationsInStory(); // Fetch all locations
     }
-  }, [character, fetchTagsForCharacter, fetchRelationsForCharacter, fetchAllCharactersInStory, fetchNotesForStory, fetchNoteRelationsForCharacter, fetchScenesForCharacter, fetchAllScenesInStory, fetchAllItemsInStory, fetchAllItemJourneysInStory]);
+  }, [character, fetchTagsForCharacter, fetchRelationsForCharacter, fetchAllCharactersInStory, fetchNotesForStory, fetchNoteRelationsForCharacter, fetchScenesForCharacter, fetchAllScenesInStory, fetchAllItemsInStory, fetchAllItemJourneysInStory, fetchAllLocationsInStory]);
 
   const handleSaveRelation = async (relation: CharacterRelation) => {
     if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
@@ -626,6 +656,14 @@ const CharacterDetailScreen = () => {
         allItems={allItems}
         allItemJourneys={allItemJourneys}
         allScenes={allScenes}
+        currentCharacterId={characterId}
+      />
+
+      <Text style={styles.sectionTitle}>{t('character_locations_title')}</Text>
+      <CharacterLocationManager
+        characterSceneRelations={characterSceneRelations}
+        availableScenes={allScenes}
+        availableLocations={allLocations}
         currentCharacterId={characterId}
       />
 

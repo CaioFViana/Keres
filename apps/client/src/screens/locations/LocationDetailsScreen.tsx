@@ -3,19 +3,25 @@ import { createNoteRelationService, NoteRelationServiceInterface } from '@/src/s
 import { createNoteService, NoteService } from '@/src/services/NoteService';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { Ionicons } from '@expo/vector-icons';
-import { Note, NoteRelation } from '@keres/shared';
+import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
+import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
-import { LocationSelect, TagSelect } from '../../db/schema';
+import { SceneSelect, LocationSelect, TagSelect } from '../../db/schema'; // Explicitly import SceneSelect
+import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
+import { createCharacterSceneService, CharacterSceneServiceInterface } from '../../services/CharacterSceneService'; // Import CharacterSceneService
+import { createCharacterService, CharacterService } from '../../services/CharacterService'; // Import CharacterService
 import { createLocationService } from '../../services/LocationService';
 import { createTagRelationService } from '../../services/TagRelationService';
 import { createTagService } from '../../services/TagService';
+import { createSceneService } from '../../services/SceneService'; // Import createSceneService
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -44,6 +50,8 @@ const LocationDetailsScreen = () => {
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const noteServiceRef = useRef<NoteService | null>(null); // Ref for NoteService
   const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null); // Ref for NoteRelationService
+  const characterServiceRef = useRef<CharacterService | null>(null); // Ref for CharacterService
+  const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
 
   const [location, setLocation] = useState<LocationSelect | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +60,9 @@ const LocationDetailsScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
   const [allNotes, setAllNotes] = useState<Note[]>([]); // State for all notes in story
   const [locationNoteRelations, setLocationNoteRelations] = useState<NoteRelation[]>([]); // State for note relations
+  const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
+  const [allScenes, setAllScenes] = useState<SceneSelect[]>([]); // State for all scenes in story
+  const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character scene relations
   const { userId } = useUserSettingsStore(); // Get userId from store
 
 
@@ -71,6 +82,12 @@ const LocationDetailsScreen = () => {
       }
       if (!noteRelationServiceRef.current) {
         noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
+      }
+      if (!characterServiceRef.current) {
+        characterServiceRef.current = createCharacterService(drizzleDb);
+      }
+      if (!characterSceneServiceRef.current) {
+        characterSceneServiceRef.current = createCharacterSceneService(drizzleDb);
       }
     }
   }, [drizzleDb]);
@@ -159,6 +176,47 @@ const LocationDetailsScreen = () => {
     }
   }, [selectedStory?.id, locationId, noteRelationServiceRef.current]);
 
+  const fetchAllCharactersInStory = useCallback(async () => {
+    if (!characterServiceRef.current || !selectedStory?.id) {
+      setAllCharacters([]);
+      return;
+    }
+    try {
+      const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(selectedStory.id);
+      setAllCharacters(fetchedCharacters.filter(c => !c.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all characters:', err);
+    }
+  }, [selectedStory?.id, characterServiceRef.current]);
+
+  const fetchAllScenesInStory = useCallback(async () => {
+    if (!drizzleDb || !selectedStory?.id) {
+      setAllScenes([]);
+      return;
+    }
+    try {
+      // Assuming createSceneService exists and is imported
+      const sceneService = createSceneService(drizzleDb); // Need to import createSceneService
+      const fetchedScenes = await sceneService.getScenesByStoryId(selectedStory.id);
+      setAllScenes(fetchedScenes.filter(s => !s.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all scenes:', err);
+    }
+  }, [selectedStory?.id, drizzleDb]);
+
+  const fetchAllCharacterSceneRelations = useCallback(async () => {
+    if (!characterSceneServiceRef.current || !selectedStory?.id) {
+      setCharacterSceneRelations([]);
+      return;
+    }
+    try {
+      const fetchedRelations = await characterSceneServiceRef.current.getRelationsByStoryId(selectedStory.id);
+      setCharacterSceneRelations(fetchedRelations.filter((cs: CharacterScene) => !cs.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all character scene relations:', err);
+    }
+  }, [selectedStory?.id, characterSceneServiceRef.current]);
+
   const handleLocationChange = useCallback(async (changedStoryId: string, changedLocationId: string) => {
     if (changedLocationId === locationId) {
       if (locationServiceRef.current) {
@@ -190,6 +248,24 @@ const LocationDetailsScreen = () => {
     }
   }, [selectedStory?.id, fetchNoteRelationsForLocation]);
 
+  const handleCharacterChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
+    if (selectedStory?.id === changedStoryId) {
+      fetchAllCharactersInStory();
+    }
+  }, [selectedStory?.id, fetchAllCharactersInStory]);
+
+  const handleCharacterSceneChange = useCallback((changedStoryId: string, changedCharacterSceneId: string) => {
+    if (selectedStory?.id === changedStoryId) {
+      fetchAllCharacterSceneRelations();
+    }
+  }, [selectedStory?.id, fetchAllCharacterSceneRelations]);
+
+  const handleSceneChange = useCallback((changedStoryId: string, changedSceneId: string) => {
+    if (selectedStory?.id === changedStoryId) {
+      fetchAllScenesInStory();
+    }
+  }, [selectedStory?.id, fetchAllScenesInStory]);
+
   useEffect(() => {
     if (locationServiceRef.current) {
       fetchLocationDetails(); 
@@ -198,12 +274,18 @@ const LocationDetailsScreen = () => {
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
       entityEventEmitter.on('note_changed', handleNoteChange);
       entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
+      entityEventEmitter.on('character_changed', handleCharacterChange);
+      entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange);
+      entityEventEmitter.on('scene_changed', handleSceneChange);
 
       return () => {
         entityEventEmitter.off('location_changed', handleLocationChange);
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
         entityEventEmitter.off('note_changed', handleNoteChange);
         entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
+        entityEventEmitter.off('character_changed', handleCharacterChange);
+        entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange);
+        entityEventEmitter.off('scene_changed', handleSceneChange);
       };
     }
   }, [locationId, fetchLocationDetails, fetchTagsForLocation, handleLocationChange, handleTagRelationChange, handleNoteChange, handleNoteRelationChange, locationServiceRef.current]);
@@ -213,8 +295,11 @@ const LocationDetailsScreen = () => {
     if (location) {
       fetchNotesForStory(); // Fetch all notes
       fetchNoteRelationsForLocation(); // Fetch note relations
+      fetchAllCharactersInStory(); // Fetch all characters
+      fetchAllScenesInStory(); // Fetch all scenes
+      fetchAllCharacterSceneRelations(); // Fetch all character scene relations
     }
-  }, [location, fetchNotesForStory, fetchNoteRelationsForLocation]);
+  }, [location, fetchNotesForStory, fetchNoteRelationsForLocation, fetchAllCharactersInStory, fetchAllScenesInStory, fetchAllCharacterSceneRelations]);
 
   const handleSaveNoteRelation = async (relation: NoteRelation) => {
     if (!noteRelationServiceRef.current || !selectedStory?.id || !userId) {
@@ -385,6 +470,14 @@ const LocationDetailsScreen = () => {
         currentStoryId={selectedStory?.id || ''}
         currentEntityId={locationId}
         currentEntityType="Location"
+      />
+
+      <Text style={styles.sectionTitle}>{t('characters_in_location_title')}</Text>
+      <LocationCharacterManager
+        currentLocationId={locationId}
+        availableScenes={allScenes}
+        characterSceneRelations={characterSceneRelations}
+        availableCharacters={allCharacters}
       />
 
       <View style={{ marginTop: 20 }}>

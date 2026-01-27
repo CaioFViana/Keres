@@ -13,6 +13,7 @@ export type SaveCharacterScene = NewCharacterScene & { id?: string };
 export interface CharacterSceneServiceInterface {
   getRelationsForScene(storyId: string, sceneId: string): Promise<CharacterSceneInterface[]>;
   getRelationsForCharacter(storyId: string, characterId: string): Promise<CharacterSceneInterface[]>;
+  getRelationsByStoryId(storyId: string): Promise<CharacterSceneInterface[]>; // New method
   saveCharacterScene(userId: string, relation: SaveCharacterScene): Promise<CharacterSceneInterface>;
   deleteCharacterScene(userId: string, relationId: string): Promise<boolean>;
 }
@@ -72,6 +73,21 @@ export function createCharacterSceneService(drizzleDb: AppDrizzleClient): Charac
         return relations;
       } catch (error) {
         console.error('Error fetching character-scene relations for character:', error);
+        throw error;
+      }
+    },
+
+    async getRelationsByStoryId(storyId: string): Promise<CharacterSceneInterface[]> {
+      try {
+        const relations = await drizzleDb.query.characterScenes.findMany({
+          where: and(
+            eq(schema.characterScenes.storyId, storyId),
+            eq(schema.characterScenes.isDeleted, false)
+          ),
+        });
+        return relations;
+      } catch (error) {
+        console.error('Error fetching all character-scene relations for story:', error);
         throw error;
       }
     },

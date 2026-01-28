@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #121212; } /* Dark background */
+        #static-test-message {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: red;
+            font-size: 2em;
+            font-family: sans-serif;
+            z-index: 9999;
+        }
+        #loading-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffffff;
+            font-family: sans-serif;
+            font-size: 1.5em;
+            z-index: 10;
+        }
+        #cy {
+            width: 100%;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* background-color: #333; /* Add a background to the Cytoscape container */
+        }
+    </style>
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+</head>
+<body>
+    <div id="static-test-message">Static Test Message - If you see this, HTML is loading!</div>
+    <div id="loading-message">Loading Graph...</div>
+    <div id="cy"></div>
+    <script>
+        // Function to send console messages back to React Native
+        function sendConsoleMessage(message) {
+            if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'WEBVIEW_CONSOLE',
+                    message: message
+                }));
+            }
+        }
+        
+        // Override console functions to send messages back to React Native
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+
+        console.log = (...args) => {
+            sendConsoleMessage('LOG: ' + args.map(String).join(' '));
+            originalLog(...args);
+        };
+        console.warn = (...args) => {
+            sendConsoleMessage('WARN: ' + args.map(String).join(' '));
+            originalWarn(...args);
+        };
+        console.error = (...args) => {
+            sendConsoleMessage('ERROR: ' + args.map(String).join(' '));
+            originalError(...args);
+        };
+        
+        sendConsoleMessage('GraphView.html script started.');
+        sendConsoleMessage('Attempting to initialize Cytoscape.');
+
+        let cy;
+
+        try {
+            cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: [], // Start with empty elements
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': '#BB86FC',
+                            'label': 'data(label)',
+                            'text-valign': 'center',
+                            'color': '#ffffff',
+                            'font-size': '12px',
+                            'text-wrap': 'wrap',
+                            'text-max-width': '80px',
+                            'padding': '10px'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#03DAC6',
+                            'target-arrow-color': '#03DAC6',
+                            'target-arrow-shape': 'triangle',
+                            'curve-style': 'bezier',
+                            'label': 'data(label)',
+                            'text-rotation': 'autorotate',
+                            'color': '#ffffff',
+                            'font-size': '10px',
+                            'text-background-opacity': 1,
+                            'text-background-color': '#121212',
+                            'text-background-padding': '3px'
+                        }
+                    },
+                    {
+                        selector: ':selected',
+                        style: {
+                            'background-color': '#6200EE',
+                            'line-color': '#6200EE',
+                            'target-arrow-color': '#6200EE',
+                            'source-arrow-color': '#6200EE',
+                            'text-outline-color': '#6200EE'
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'preset' // Use preset layout for empty graph initially
+                }
+            });
+            sendConsoleMessage('Cytoscape initialized successfully.');
+
+            document.getElementById('loading-message').style.display = 'none';
+            document.getElementById('cy').style.display = 'block';
+
+            // Define the global function to be called by React Native
+            window.setGraphElements = (elements) => {
+                sendConsoleMessage(`setGraphElements called with ${elements.length} elements.`);
+                if (cy) {
+                    cy.elements().remove(); // Clear existing elements
+                    cy.add(elements); // Add new elements
+                    sendConsoleMessage('Elements added to Cytoscape.');
+
+                    const layout = cy.layout({
+                        name: 'cose',
+                        animate: true,
+                        padding: 10,
+                        nodeDimensionsIncludeLabels: true,
+                        randomize: false,
+                        idealEdgeLength: 100,
+                        edgeElasticity: 0.45,
+                        gravity: 0.05,
+                        springConstant: 0.32,
+                        initialTemp: 200,
+                        coolingFactor: 0.05,
+                        minTemp: 1.0
+                    });
+                    layout.run();
+                    sendConsoleMessage('Layout applied.');
+                } else {
+                    sendConsoleMessage('ERROR: Cytoscape instance (cy) not found in setGraphElements.');
+                }
+            };
+
+            cy.on('tap', 'node', function(evt){
+                const node = evt.target;
+                sendConsoleMessage(`Node tapped: ${node.id()}`);
+                if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'NODE_CLICKED',
+                        id: node.id(),
+                        data: node.data()
+                    }));
+                }
+            });
+
+            cy.on('tap', 'edge', function(evt){
+                const edge = evt.target;
+                sendConsoleMessage(`Edge tapped: ${edge.id()}`);
+                if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'EDGE_CLICKED',
+                        id: edge.id(),
+                        data: edge.data()
+                    }));
+                }
+            });
+
+        } catch (e) {
+            sendConsoleMessage(`ERROR: Error initializing Cytoscape in WebView: ${e.message}`);
+        }
+        sendConsoleMessage('GraphView.html script finished.');
+    </script>
+</body>
+</html>

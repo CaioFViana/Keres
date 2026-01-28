@@ -3,16 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background-color: #121212; } /* Dark background */
-        #static-test-message {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: red;
-            font-size: 2em;
-            font-family: sans-serif;
-            z-index: 9999;
-        }
+        body { margin: 0; padding: 0; overflow: hidden; } /* Dark background will be set by JS */
         #loading-message {
             position: absolute;
             top: 50%;
@@ -29,13 +20,12 @@
             position: absolute;
             top: 0;
             left: 0;
-            /* background-color: #333; /* Add a background to the Cytoscape container */
+            display: none; /* Hidden until graph is ready */
         }
     </style>
     <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
 </head>
 <body>
-    <div id="static-test-message">Static Test Message - If you see this, HTML is loading!</div>
     <div id="loading-message">Loading Graph...</div>
     <div id="cy"></div>
     <script>
@@ -71,65 +61,84 @@
         sendConsoleMessage('Attempting to initialize Cytoscape.');
 
         let cy;
+        let currentThemeColors = {
+            background: '#121212',
+            text: '#ffffff',
+            primary: '#BB86FC',
+            accent: '#03DAC6'
+        }; // Default colors
+
+        function applyThemeToCy(theme) {
+            sendConsoleMessage('Applying theme to Cytoscape.');
+            currentThemeColors = theme;
+            document.body.style.backgroundColor = theme.background; // Apply to body
+            document.getElementById('loading-message').style.color = theme.text;
+            
+            if (cy) {
+                cy.style()
+                    .clear() // Clear existing styles
+                    .selector('node')
+                    .css({
+                        'background-color': theme.primary,
+                        'label': 'data(label)',
+                        'text-valign': 'center',
+                        'color': theme.text,
+                        'font-size': '12px',
+                        'text-wrap': 'wrap',
+                        'text-max-width': '80px',
+                        'padding': '10px'
+                    })
+                    .selector('edge')
+                    .css({
+                        'width': 2,
+                        'line-color': theme.accent,
+                        'target-arrow-color': theme.accent,
+                        'target-arrow-shape': 'triangle',
+                        'curve-style': 'bezier',
+                        'label': 'data(label)',
+                        'text-rotation': 'autorotate',
+                        'color': theme.text,
+                        'font-size': '10px',
+                        'text-background-opacity': 1,
+                        'text-background-color': theme.background,
+                        'text-background-padding': '3px'
+                    })
+                    .selector(':selected')
+                    .css({
+                        'background-color': theme.accent,
+                        'line-color': theme.accent,
+                        'target-arrow-color': theme.accent,
+                        'source-arrow-color': theme.accent,
+                        'text-outline-color': theme.accent // For text outline on selected elements
+                    })
+                    .update(); // Apply the changes
+                sendConsoleMessage('Cytoscape styles updated with theme.');
+            }
+        }
 
         try {
             cy = cytoscape({
                 container: document.getElementById('cy'),
                 elements: [], // Start with empty elements
-                style: [
-                    {
-                        selector: 'node',
-                        style: {
-                            'background-color': '#BB86FC',
-                            'label': 'data(label)',
-                            'text-valign': 'center',
-                            'color': '#ffffff',
-                            'font-size': '12px',
-                            'text-wrap': 'wrap',
-                            'text-max-width': '80px',
-                            'padding': '10px'
-                        }
-                    },
-                    {
-                        selector: 'edge',
-                        style: {
-                            'width': 2,
-                            'line-color': '#03DAC6',
-                            'target-arrow-color': '#03DAC6',
-                            'target-arrow-shape': 'triangle',
-                            'curve-style': 'bezier',
-                            'label': 'data(label)',
-                            'text-rotation': 'autorotate',
-                            'color': '#ffffff',
-                            'font-size': '10px',
-                            'text-background-opacity': 1,
-                            'text-background-color': '#121212',
-                            'text-background-padding': '3px'
-                        }
-                    },
-                    {
-                        selector: ':selected',
-                        style: {
-                            'background-color': '#6200EE',
-                            'line-color': '#6200EE',
-                            'target-arrow-color': '#6200EE',
-                            'source-arrow-color': '#6200EE',
-                            'text-outline-color': '#6200EE'
-                        }
-                    }
-                ],
+                style: [], // Initial empty style, will be set by applyThemeToCy
                 layout: {
                     name: 'preset' // Use preset layout for empty graph initially
                 }
             });
             sendConsoleMessage('Cytoscape initialized successfully.');
 
+            // Apply default theme colors initially
+            applyThemeToCy(currentThemeColors);
+
             document.getElementById('loading-message').style.display = 'none';
             document.getElementById('cy').style.display = 'block';
 
             // Define the global function to be called by React Native
-            window.setGraphElements = (elements) => {
-                sendConsoleMessage(`setGraphElements called with ${elements.length} elements.`);
+            window.setGraphElements = (elements, themeColors) => {
+                sendConsoleMessage(`setGraphElements called with ${elements.length} elements and theme.`);
+                if (themeColors) {
+                    applyThemeToCy(themeColors); // Apply new theme if provided
+                }
                 if (cy) {
                     cy.elements().remove(); // Clear existing elements
                     cy.add(elements); // Add new elements

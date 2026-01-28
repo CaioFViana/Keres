@@ -53,6 +53,9 @@ const NoteDetailScreen = () => {
       if (!tagRelationServiceRef.current) {
         tagRelationServiceRef.current = createTagRelationService(drizzleDb);
       }
+      if (!noteRelationServiceRef.current) {
+        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
 
@@ -60,24 +63,14 @@ const NoteDetailScreen = () => {
   const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
   const [allNoteRelations, setAllNoteRelations] = useState<NoteRelation[]>([]);
   const [groupedEntities, setGroupedEntities] = useState<Record<string, string[]>>({
-    chapter: [],
     character: [],
+    worldrule: [],
+    location: [],
+    scene: [],
+    chapter: [],
     choice: [],
     item: [],
     itemjourney: [],
-    location: [],
-    note: [],
-    operationlog: [],
-    scene: [],
-    story: [],
-    suggestion: [],
-    tag: [],
-    user: [],
-    worldrule: [],
-    characterrelation: [],
-    noterelation: [],
-    tagrelation: [],
-    characterscene: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -219,7 +212,7 @@ const NoteDetailScreen = () => {
     for (const relation of allNoteRelations) {
       const entityName = await EntityService.getEntityIdentifier(drizzleDb, relation.relationType, relation.relationId, note.storyId, t);
       if (entityName) {
-        newGroupedEntities[relation.relationType].push(entityName);
+        newGroupedEntities[relation.relationType.toLowerCase()].push(entityName);
       }
     }
     setGroupedEntities(newGroupedEntities);

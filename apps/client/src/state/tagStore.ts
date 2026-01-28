@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { AppDrizzleClient } from '../db';
 import { TagSelect } from '../db/schemas/tags';
-import { createTagService, TagService } from '../services/TagService';
+import { createTagService, TagService } from '../services/storymanagement/TagService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from './userSettingsStore';
 

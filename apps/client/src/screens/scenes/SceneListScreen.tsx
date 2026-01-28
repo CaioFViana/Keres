@@ -12,7 +12,7 @@ import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, SceneStackParamList } from '../../navigation/MainSystemStack';
-import { FavoriteFilterState } from '../../services/SceneService';
+import { FavoriteFilterState } from '../../services/storymanagement/SceneService';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';

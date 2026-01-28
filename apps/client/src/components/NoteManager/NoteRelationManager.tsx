@@ -1,10 +1,10 @@
-import React, { useCallback, useState } from 'react';
 import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
-import { Alert, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import RelationManager from '../RelationManager/RelationManager';
+import { Modal, Pressable, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../theme';
-import { createULID } from '../../utils/ulid';
+import { createULID } from '../../utils/entityUtils';
+import RelationManager from '../RelationManager/RelationManager';
 
 interface NoteRelationManagerProps {
   noteRelations: NoteRelation[];

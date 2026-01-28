@@ -8,8 +8,8 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
-import { createTagRelationService } from '../../services/TagRelationService'; // Import createTagRelationService
-import { createTagService } from '../../services/TagService'; // Import createTagService
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import createTagRelationService
+import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';

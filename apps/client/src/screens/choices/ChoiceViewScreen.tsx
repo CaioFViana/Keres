@@ -7,9 +7,9 @@ import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } fr
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useDrizzle } from '../../db';
 import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
-import { createChapterService } from '../../services/ChapterService';
-import { createChoiceService } from '../../services/ChoiceService';
-import { createSceneService } from '../../services/SceneService';
+import { createChapterService } from '../../services/storymanagement/ChapterService';
+import { createChoiceService } from '../../services/storymanagement/ChoiceService';
+import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';

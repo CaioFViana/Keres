@@ -1,6 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, characterRelations, characters, itemJourneys, items, suggestions } from '../db';
-import { createULID } from '../utils/ulid'; // Changed ulid import
+import { AppDrizzleClient, characterRelations, characters, itemJourneys, items, suggestions } from '../../db';
+import { createULID } from '../../utils/entityUtils'; // Changed ulid import
 // Import other schemas as needed
 
 // Define a flexible configuration for suggestion types

@@ -13,8 +13,8 @@ import { TagSelect } from '../../db/schema';
 import { WorldRuleWithTags } from '../../db/schemas/worldRules';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack'; // Will create/update this later
-import { createTagService } from '../../services/TagService'; // Import createTagService
-import { FavoriteFilterState } from '../../services/WorldRuleService';
+import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
+import { FavoriteFilterState } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { debounce } from '../../utils/debounce';

@@ -15,11 +15,11 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ItemJourneyStackParamList } from '../../navigation/MainSystemStack';
-import { createItemJourneyService } from '../../services/ItemJourneyService';
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/NoteService';
-import { createTagRelationService } from '../../services/TagRelationService';
-import { createTagService } from '../../services/TagService';
+import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
+import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
+import { createTagService } from '../../services/storymanagement/TagService';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characters
 import { useItemStore } from '../../state/itemStore'; // Assuming ItemStore for items
 import { useSceneStore } from '../../state/sceneStore'; // Assuming SceneStore for scenes

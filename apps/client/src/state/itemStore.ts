@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppDrizzleClient } from '../db';
 import { ItemSelect } from '../db/schemas/items';
-import { createItemService } from '../services/ItemService';
+import { createItemService } from '../services/storymanagement/ItemService';
 
 interface ItemState {
   items: ItemSelect[];

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppDrizzleClient } from '../db';
 import { ChoiceSelect } from '../db/schemas/choices';
-import { createChoiceService } from '../services/ChoiceService';
+import { createChoiceService } from '../services/storymanagement/ChoiceService';
 
 interface ChoiceState {
   choices: ChoiceSelect[];

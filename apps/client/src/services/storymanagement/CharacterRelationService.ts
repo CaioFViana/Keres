@@ -1,12 +1,11 @@
 import { CharacterRelation, ServerCharacterRelationPayload } from '@keres/shared/entities/CharacterRelation';
 import { and, asc, desc, eq, or, sql, SQL } from 'drizzle-orm'; // Import SQL
 import { alias } from 'drizzle-orm/sqlite-core'; // Import alias for table aliasing
-import { AppDrizzleClient, characterRelations, characters } from '../db';
-import { entityEventEmitter } from '../utils/EventEmitter'; // Import for event emission
-import { getChangedFields } from '../utils/diffUtils'; // Import for changed fields in update
-import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Imports for logging operations
-import { createULID } from '../utils/ulid';
-import { createServerService } from './ServerService'; // Import ServerService to get userId
+import { AppDrizzleClient, characterRelations, characters } from '../../db';
+import { createULID, getChangedFields } from '../../utils/entityUtils'; // Import for changed fields in update
+import { entityEventEmitter } from '../../utils/EventEmitter'; // Import for event emission
+import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Imports for logging operations
+import { createServerService } from '../ServerService'; // Import ServerService to get userId
 
 export type CharacterRelationWithNames = CharacterRelation & {
   char1Name: string;

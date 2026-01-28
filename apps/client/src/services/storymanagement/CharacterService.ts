@@ -1,12 +1,11 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Added
 import { and, asc, count, desc, eq, inArray, or, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
-import { CharacterInsert, characters, CharacterSelect, tagRelations, tags, TagSelect } from '../db/schema'; // Import CharacterInsert and stories
-import { entityEventEmitter } from '../utils/EventEmitter'; // Import characterEventEmitter
-import { getChangedFields } from '../utils/diffUtils'; // Import getChangedFields
-import { Create, prepareNewEntityData } from '../utils/entityUtils'; // Import Create and prepareNewEntityData
-import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
-import { createServerService } from './ServerService'; // Import ServerService and createServerService
+import { AppDrizzleClient } from '../../db';
+import { CharacterInsert, characters, CharacterSelect, tagRelations, tags, TagSelect } from '../../db/schema'; // Import CharacterInsert and stories
+import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
+import { entityEventEmitter } from '../../utils/EventEmitter'; // Import characterEventEmitter
+import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
+import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 

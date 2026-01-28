@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { AppDrizzleClient } from '../db';
 import { WorldRuleWithTags } from '../db/schemas/worldRules';
-import { createWorldRuleService, FavoriteFilterState, WorldRuleService } from '../services/WorldRuleService';
+import { createWorldRuleService, FavoriteFilterState, WorldRuleService } from '../services/storymanagement/WorldRuleService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from './userSettingsStore';
 

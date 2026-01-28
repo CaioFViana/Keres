@@ -1,11 +1,10 @@
 import { ItemJourney } from '@keres/shared/entities/Item';
 import { OperationLogEntityType } from '@keres/shared/metadata/OperationLogEntityType';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, itemJourneys } from '../db';
-import { getChangedFields } from '../utils/diffUtils';
-import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
-import { createULID } from '../utils/ulid';
-import { createServerService } from './ServerService';
+import { AppDrizzleClient, itemJourneys } from '../../db';
+import { createULID, getChangedFields } from '../../utils/entityUtils';
+import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { createServerService } from '../ServerService';
 
 export interface ItemJourneyService {
   getById(id: string): Promise<ItemJourney | undefined>;

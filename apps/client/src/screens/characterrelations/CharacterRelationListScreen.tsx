@@ -10,7 +10,7 @@ import CharacterRelationListItem from '../../components/listitem/CharacterRelati
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterRelationsStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Assuming CharacterRelationsStackParamList exists
-import { CharacterRelationWithNames } from '../../services/CharacterRelationService';
+import { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterRelationStore } from '../../state/characterRelationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';

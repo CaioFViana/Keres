@@ -12,12 +12,12 @@ import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createServerService } from '../../services/ServerService';
-import { createStoryService } from '../../services/StoryService';
+import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { getLanguageOptions } from '../../utils/languageOptions';
+import { getLanguageOptions } from '../../utils/i18n';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
 

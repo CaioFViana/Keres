@@ -1,9 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { NoteWithTags } from '../../services/NoteService';
+import { NoteWithTags } from '../../services/storymanagement/NoteService';
 import { useTheme } from '../../theme';
 import { truncate } from '../../utils/stringUtils';
-import { useTranslation } from 'react-i18next';
 
 import GenericExpandedListItemWithActions from '../common/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '../common/TagList/TagList';

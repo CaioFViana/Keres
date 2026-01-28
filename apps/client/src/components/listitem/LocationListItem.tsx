@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { LocationWithTags } from '../../services/LocationService'; // Will be created soon
+import { LocationWithTags } from '../../services/storymanagement/LocationService'; // Will be created soon
 import { useTheme } from '../../theme';
 import { truncate } from '../../utils/stringUtils';
 import GenericExpandedListItemWithActions from '../common/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';

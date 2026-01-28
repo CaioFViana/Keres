@@ -3,7 +3,7 @@ import { entityFieldMetadata, EntityFieldMetadata } from '@keres/shared/metadata
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SuggestionType } from '../../../services/SuggestionService';
+import { SuggestionType } from '../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../theme';
 import Button from '../Button/Button';
 import ColorPickerInput from '../ColorPickerInput/ColorPickerInput';

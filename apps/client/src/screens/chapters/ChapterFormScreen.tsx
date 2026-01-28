@@ -13,11 +13,11 @@ import { useDrizzle } from '../../db';
 import { ChapterSelect, TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ChapterStackParamList } from '../../navigation/MainSystemStack';
-import { createChapterService } from '../../services/ChapterService';
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/NoteService';
-import { createTagRelationService } from '../../services/TagRelationService'; // Import TagRelationService
-import { createTagService } from '../../services/TagService'; // Import TagService
+import { createChapterService } from '../../services/storymanagement/ChapterService';
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
+import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import TagRelationService
+import { createTagService } from '../../services/storymanagement/TagService'; // Import TagService
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';

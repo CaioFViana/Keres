@@ -15,8 +15,7 @@ import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import i18n from '../../utils/i18n';
-import { getLanguageOptions } from '../../utils/languageOptions';
+import i18n, { getLanguageOptions } from '../../utils/i18n';
 
 type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
 

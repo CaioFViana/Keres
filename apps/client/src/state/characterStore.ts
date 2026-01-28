@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { AppDrizzleClient } from '../db'; // Import AppDrizzleClient
-import { CharacterService, CharacterWithTags, createCharacterService } from '../services/CharacterService'; // Import CharacterWithTags
-import { useUserSettingsStore } from './userSettingsStore';
+import { CharacterService, CharacterWithTags, createCharacterService } from '../services/storymanagement/CharacterService'; // Import CharacterWithTags
 import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
+import { useUserSettingsStore } from './userSettingsStore';
 
 type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 

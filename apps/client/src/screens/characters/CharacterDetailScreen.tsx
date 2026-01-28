@@ -18,17 +18,17 @@ import { useDrizzle } from '../../db';
 import { SceneSelect, TagSelect } from '../../db/schema'; // For available scenes
 import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/CharacterRelationService'; // Import CharacterRelationService
-import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/CharacterSceneService'; // Service for CharacterScene
-import { createCharacterService } from '../../services/CharacterService';
-import { createItemJourneyService, ItemJourneyService } from '../../services/ItemJourneyService'; // Import ItemJourneyService
-import { createItemService, ItemService } from '../../services/ItemService'; // Import ItemService
-import { createLocationService, LocationService } from '../../services/LocationService'; // Import LocationService
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
-import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
-import { createSceneService } from '../../services/SceneService';
-import { createTagRelationService } from '../../services/TagRelationService';
-import { createTagService } from '../../services/TagService';
+import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
+import { createCharacterService } from '../../services/storymanagement/CharacterService';
+import { createItemJourneyService, ItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
+import { createLocationService, LocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService'; // Import NoteRelationService
+import { createNoteService, NoteService } from '../../services/storymanagement/NoteService'; // Import NoteService
+import { createSceneService } from '../../services/storymanagement/SceneService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
+import { createTagService } from '../../services/storymanagement/TagService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';

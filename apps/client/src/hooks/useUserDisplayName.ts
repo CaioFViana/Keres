@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
 import { friendships, servers } from '../db/schema';
-import { createStoryService } from '../services/StoryService';
+import { createStoryService } from '../services/storymanagement/StoryService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 
 export const useUserDisplayName = (

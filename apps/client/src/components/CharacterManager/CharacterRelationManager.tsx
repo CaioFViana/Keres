@@ -1,9 +1,9 @@
-import React from 'react';
 import { Character } from '@keres/shared/entities/Character';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { createULID } from '../../utils/entityUtils';
 import RelationManager from '../RelationManager/RelationManager'; // Removed BaseItem, BaseRelation
-import { createULID } from '../../utils/ulid';
 
 interface CharacterRelationManagerProps {
   characterRelations: CharacterScene[];

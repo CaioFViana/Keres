@@ -1,10 +1,10 @@
 import { TagRelation, TagRelationEntities } from '@keres/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { AppDrizzleClient, TagRelationInsert, tagRelations, tags, TagSelect } from '../db';
-import { prepareNewEntityData } from '../utils/entityUtils';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
-import { createServerService } from './ServerService';
+import { AppDrizzleClient, TagRelationInsert, tagRelations, tags, TagSelect } from '../../db';
+import { prepareNewEntityData } from '../../utils/entityUtils';
+import { entityEventEmitter } from '../../utils/EventEmitter';
+import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { createServerService } from '../ServerService';
 
 export interface TagRelationService {
   getTagsForEntity(storyId: string, entityId: string, entityType: TagRelationEntities): Promise<TagSelect[]>;

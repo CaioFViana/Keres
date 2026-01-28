@@ -6,8 +6,8 @@ import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { eq, or, sql } from 'drizzle-orm';
 import { AppDrizzleClient, AppDrizzleTransaction } from '../db';
 import { useNotificationStore } from '../state/notificationStore'; // Import notification store and types
+import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
-import { createULID } from '../utils/ulid';
 import { friendshipApiService } from './FriendshipApiService'; // Import the API service
 
 export type FriendshipWithServer = FriendshipSelect & {

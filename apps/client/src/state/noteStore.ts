@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppDrizzleClient } from '../db';
-import { createNoteService, NoteService, NoteWithTags } from '../services/NoteService';
+import { createNoteService, NoteService, NoteWithTags } from '../services/storymanagement/NoteService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from './userSettingsStore';
 

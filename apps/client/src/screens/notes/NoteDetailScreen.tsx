@@ -1,4 +1,4 @@
-import { createNoteRelationService } from '@/src/services/NoteRelationService';
+import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
 import { Ionicons } from '@expo/vector-icons';
 import { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -11,9 +11,9 @@ import { TagSelect } from '../../db/schema';
 import { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
-import { createNoteService } from '../../services/NoteService';
-import { createTagRelationService } from '../../services/TagRelationService';
-import { createTagService } from '../../services/TagService';
+import { createNoteService } from '../../services/storymanagement/NoteService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
+import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';

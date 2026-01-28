@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppDrizzleClient } from '../db';
-import { CharacterRelationServiceInterface, CharacterRelationWithNames, createCharacterRelationService } from '../services/CharacterRelationService'; // Import CharacterRelationServiceInterface
+import { CharacterRelationServiceInterface, CharacterRelationWithNames, createCharacterRelationService } from '../services/storymanagement/CharacterRelationService'; // Import CharacterRelationServiceInterface
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 

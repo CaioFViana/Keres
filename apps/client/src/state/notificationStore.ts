@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createULID } from '../utils/ulid'; // Assuming createULID is available in utils
+import { createULID } from '../utils/entityUtils'; // Assuming createULID is available in utils
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 

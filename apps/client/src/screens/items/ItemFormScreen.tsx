@@ -15,11 +15,11 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ItemStackParamList } from '../../navigation/MainSystemStack'; // Use ItemStackParamList
-import { createItemService } from '../../services/ItemService'; // Import ItemService
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/NoteService';
-import { createTagRelationService } from '../../services/TagRelationService';
-import { createTagService } from '../../services/TagService';
+import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
+import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
+import { createTagService } from '../../services/storymanagement/TagService';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characterOwnerId
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';

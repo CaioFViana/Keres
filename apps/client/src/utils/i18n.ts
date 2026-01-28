@@ -1,4 +1,4 @@
-import i18n from 'i18next';
+import i18n, { TFunction } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 // Import translation files
@@ -23,5 +23,11 @@ i18n
       escapeValue: false, // react already safes from xss
     },
   });
+
+
+export const getLanguageOptions = (t: TFunction) => [
+  { label: t('language_english'), value: 'en' },
+  { label: t('language_portuguese'), value: 'pt' },
+];
 
 export default i18n;

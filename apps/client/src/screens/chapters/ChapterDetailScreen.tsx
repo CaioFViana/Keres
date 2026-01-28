@@ -1,3 +1,20 @@
+import ChapterSceneManager from '@/src/components/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
+import NoteManager from '@/src/components/NoteManager';
+import TagChipList from '@/src/components/common/TagChipList/TagChipList'; // Import TagChipList
+import { useDrizzle } from '@/src/db';
+import { ChapterSelect, SceneSelect, TagSelect } from '@/src/db/schema'; // Import SceneSelect
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createLocationService, LocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
+import { createNoteRelationService, NoteRelationServiceInterface } from '@/src/services/storymanagement/NoteRelationService';
+import { createNoteService, NoteService } from '@/src/services/storymanagement/NoteService';
+import { createSceneService, SceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
+import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService'; // Import TagRelationService
+import { createTagService } from '@/src/services/storymanagement/TagService'; // Import TagService
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { Ionicons } from '@expo/vector-icons';
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { Note, NoteRelation } from '@keres/shared/entities/Note';
@@ -5,23 +22,6 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import ChapterSceneManager from '../../components/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
-import NoteManager from '../../components/NoteManager';
-import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
-import { useDrizzle } from '../../db';
-import { ChapterSelect, SceneSelect, TagSelect } from '../../db/schema'; // Import SceneSelect
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { createChapterService } from '../../services/ChapterService';
-import { createLocationService, LocationService } from '../../services/LocationService'; // Import LocationService
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/NoteService';
-import { createSceneService, SceneService } from '../../services/SceneService'; // Import SceneService
-import { createTagRelationService } from '../../services/TagRelationService'; // Import TagRelationService
-import { createTagService } from '../../services/TagService'; // Import TagService
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ChaptersScreenNavigationProp } from './ChapterListScreen';
 
 // Define the parameter list for this screen

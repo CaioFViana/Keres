@@ -1,9 +1,9 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../theme';
-import { CharacterRelationWithNames } from '../../services/CharacterRelationService';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
+import { useTheme } from '../../theme';
 
 interface CharacterRelationListItemProps {
   relation: CharacterRelationWithNames;

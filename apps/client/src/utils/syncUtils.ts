@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'; // Import eq
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema'; // Import all schema
 import { ServerService } from '../services/ServerService'; // Import ServerService
-import { createULID } from './ulid';
+import { createULID } from './entityUtils';
 
 export async function recordLocalOperation(
   db: AppDrizzleClient,

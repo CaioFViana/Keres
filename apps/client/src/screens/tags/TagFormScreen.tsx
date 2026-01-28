@@ -10,7 +10,7 @@ import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
-import { createTagService } from '../../services/TagService';
+import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';

@@ -9,11 +9,11 @@ import Button from '../../components/common/Button/Button';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
-import { createStoryService } from '../../services/StoryService';
+import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { getLanguageOptions } from '../../utils/languageOptions';
+import { getLanguageOptions } from '../../utils/i18n';
 
 type RootStackParamList = {
   StoryForm: { storyId?: string };

@@ -12,7 +12,7 @@ import { useDrizzle } from '../../db';
 import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ChapterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { FavoriteFilterState } from '../../services/ChapterService';
+import { FavoriteFilterState } from '../../services/storymanagement/ChapterService';
 import { useChapterStore } from '../../state/chapterStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';

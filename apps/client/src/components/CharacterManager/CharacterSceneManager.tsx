@@ -1,9 +1,9 @@
-import React from 'react';
-import { SceneSelect } from '../../db/schema';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { SceneSelect } from '../../db/schema';
+import { createULID } from '../../utils/entityUtils';
 import RelationManager from '../RelationManager/RelationManager';
-import { createULID } from '../../utils/ulid';
 
 interface CharacterSceneManagerProps {
   characterSceneRelations: CharacterScene[];

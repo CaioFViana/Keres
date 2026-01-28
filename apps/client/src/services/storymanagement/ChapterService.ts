@@ -1,12 +1,11 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
-import { ChapterInsert, chapters, ChapterSelect } from '../db/schema';
-import { getChangedFields } from '../utils/diffUtils';
-import { Create, prepareNewEntityData } from '../utils/entityUtils';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
-import { createServerService } from './ServerService';
+import { AppDrizzleClient } from '../../db';
+import { ChapterInsert, chapters, ChapterSelect } from '../../db/schema';
+import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import { entityEventEmitter } from '../../utils/EventEmitter';
+import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { createServerService } from '../ServerService';
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 

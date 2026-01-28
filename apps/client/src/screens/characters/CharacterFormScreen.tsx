@@ -18,12 +18,12 @@ import { TagSelect } from '../../db/schema';
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/CharacterRelationService'; // Import CharacterRelationService
-import { createCharacterService } from '../../services/CharacterService';
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService'; // Import NoteRelationService
-import { createNoteService, NoteService } from '../../services/NoteService'; // Import NoteService
-import { createTagRelationService } from '../../services/TagRelationService';
-import { createTagService } from '../../services/TagService';
+import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import { createCharacterService } from '../../services/storymanagement/CharacterService';
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService'; // Import NoteRelationService
+import { createNoteService, NoteService } from '../../services/storymanagement/NoteService'; // Import NoteService
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
+import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';

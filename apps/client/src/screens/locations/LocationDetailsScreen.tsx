@@ -1,6 +1,6 @@
 import NoteManager from '@/src/components/NoteManager';
-import { createNoteRelationService, NoteRelationServiceInterface } from '@/src/services/NoteRelationService';
-import { createNoteService, NoteService } from '@/src/services/NoteService';
+import { createNoteRelationService, NoteRelationServiceInterface } from '@/src/services/storymanagement/NoteRelationService';
+import { createNoteService, NoteService } from '@/src/services/storymanagement/NoteService';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
@@ -19,14 +19,14 @@ import { LocationSelect, SceneSelect, TagSelect } from '../../db/schema'; // Exp
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
-import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/CharacterSceneService'; // Import CharacterSceneService
-import { CharacterService, createCharacterService } from '../../services/CharacterService'; // Import CharacterService
-import { createItemJourneyService, ItemJourneyService } from '../../services/ItemJourneyService'; // Import ItemJourneyService
-import { createItemService, ItemService } from '../../services/ItemService'; // Import ItemService
-import { createLocationService } from '../../services/LocationService';
-import { createSceneService } from '../../services/SceneService'; // Import createSceneService
-import { createTagRelationService } from '../../services/TagRelationService';
-import { createTagService } from '../../services/TagService';
+import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import { CharacterService, createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
+import { createItemJourneyService, ItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
+import { createLocationService } from '../../services/storymanagement/LocationService';
+import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
+import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';

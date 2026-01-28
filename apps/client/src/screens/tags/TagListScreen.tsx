@@ -11,7 +11,7 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schemas/tags';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack';
-import { FavoriteFilterState } from '../../services/TagService';
+import { FavoriteFilterState } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTagStore } from '../../state/tagStore';
 import { useTheme } from '../../theme';

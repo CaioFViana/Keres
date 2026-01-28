@@ -1,7 +1,7 @@
 import { desc, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { OperationLogInsert, operationLogs, OperationLogSelect, stories } from '../db/schema'; // Import OperationLogSelect
-import { createULID } from '../utils/ulid'; // Import createULID
+import { createULID } from '../utils/entityUtils'; // Import createULID
 
 export type OperationType = 'create' | 'update' | 'delete' | 'reorder';
 export type EntityType = string; // e.g., 'Story', 'Character', etc.

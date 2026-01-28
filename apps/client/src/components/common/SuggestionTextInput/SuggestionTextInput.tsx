@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Dimensions, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
-import { createSuggestionService, SuggestionServiceInterface, SuggestionType } from '../../../services/SuggestionService';
+import { createSuggestionService, SuggestionServiceInterface, SuggestionType } from '../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
 import Button from '../Button/Button'; // Reusing existing Button

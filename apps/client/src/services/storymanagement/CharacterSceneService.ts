@@ -1,11 +1,10 @@
 import { CharacterScene as CharacterSceneInterface } from '@keres/shared/entities/CharacterScene';
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
-import * as schema from '../db/schema';
-import { getChangedFields } from '../utils/diffUtils';
-import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
-import { createULID } from '../utils/ulid';
-import { createServerService } from './ServerService';
+import { AppDrizzleClient } from '../../db';
+import * as schema from '../../db/schema';
+import { createULID, getChangedFields } from '../../utils/entityUtils';
+import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { createServerService } from '../ServerService';
 
 export type NewCharacterScene = Omit<CharacterSceneInterface, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>;
 export type SaveCharacterScene = NewCharacterScene & { id?: string };

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppDrizzleClient } from '../db';
 import { ChapterSelect } from '../db/schema';
-import { createChapterService, FavoriteFilterState } from '../services/ChapterService';
+import { createChapterService, FavoriteFilterState } from '../services/storymanagement/ChapterService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 interface ChapterState {

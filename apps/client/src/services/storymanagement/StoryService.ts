@@ -1,6 +1,6 @@
 import { FullStoryExportType } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../db';
+import { AppDrizzleClient } from '../../db';
 import {
   ChapterInsert,
   chapters,
@@ -43,9 +43,9 @@ import {
   WorldRuleInsert,
   worldRules,
   WorldRuleSelect
-} from '../db/schema';
-import { getChangedFields } from '../utils/diffUtils';
-import { Create, prepareNewEntityData } from '../utils/entityUtils';
+} from '../../db/schema';
+import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import { createOperationLogService } from '../OperationLogService';
 
 export interface StoryService {
   getAllStories(): Promise<StorySelect[]>;
@@ -75,9 +75,6 @@ export interface StoryService {
   getBranchingStoryForkCount(): Promise<number>;
   importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null): Promise<string>;
 }
-
-
-import { createOperationLogService } from './OperationLogService';
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
   const operationLogService = createOperationLogService(db);

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppDrizzleClient } from '../db';
 import { SceneSelect } from '../db/schema';
-import { createSceneService, FavoriteFilterState } from '../services/SceneService';
+import { createSceneService, FavoriteFilterState } from '../services/storymanagement/SceneService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 interface SceneState {

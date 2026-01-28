@@ -16,13 +16,13 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { SceneStackParamList } from '../../navigation/MainSystemStack';
-import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/CharacterSceneService'; // Import CharacterSceneService
-import { createLocationService } from '../../services/LocationService'; // Import LocationService
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/NoteService';
-import { createSceneService } from '../../services/SceneService';
-import { createTagRelationService } from '../../services/TagRelationService'; // Import TagRelationService
-import { createTagService } from '../../services/TagService'; // Import TagService
+import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
+import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
+import { createSceneService } from '../../services/storymanagement/SceneService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import TagRelationService
+import { createTagService } from '../../services/storymanagement/TagService'; // Import TagService
 import { useChapterStore } from '../../state/chapterStore'; // Import useChapterStore
 import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
 import { useLocationStore } from '../../state/locationStore'; // Import useLocationStore

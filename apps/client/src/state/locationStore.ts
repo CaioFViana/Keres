@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppDrizzleClient } from '../db';
-import { LocationService, LocationWithTags, createLocationService } from '../services/LocationService';
+import { LocationService, LocationWithTags, createLocationService } from '../services/storymanagement/LocationService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from './userSettingsStore';
 

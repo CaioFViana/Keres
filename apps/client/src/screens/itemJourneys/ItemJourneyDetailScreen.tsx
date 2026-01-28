@@ -9,11 +9,11 @@ import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { ItemJourneySelect, TagSelect } from '../../db/schema'; // Assuming TagSelect is still valid
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { createItemJourneyService } from '../../services/ItemJourneyService';
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/NoteService';
-import { createTagRelationService } from '../../services/TagRelationService';
-import { createTagService } from '../../services/TagService';
+import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
+import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
+import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
+import { createTagService } from '../../services/storymanagement/TagService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useItemStore } from '../../state/itemStore';
 import { useSceneStore } from '../../state/sceneStore';

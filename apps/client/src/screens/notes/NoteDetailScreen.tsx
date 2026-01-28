@@ -1,16 +1,20 @@
+import { createNoteRelationService } from '@/src/services/NoteRelationService';
 import { Ionicons } from '@expo/vector-icons';
+import { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { EntityService } from '../../services/EntityService'; // Import EntityService
 import { createNoteService } from '../../services/NoteService';
-import { createTagService } from '../../services/TagService';
 import { createTagRelationService } from '../../services/TagRelationService';
+import { createTagService } from '../../services/TagService';
+import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { NotesScreenNavigationProp } from './NoteListScreen';
@@ -31,9 +35,11 @@ const NoteDetailScreen = () => {
 
   const drizzleDb = useDrizzle();
   const noteServiceRef = useRef<ReturnType<typeof createNoteService> | null>(null);
+  const noteRelationServiceRef = useRef<ReturnType<typeof createNoteRelationService> | null>(null); // Added this line
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const { t } = useTranslation();
+  const { selectedStory } = useStoryStore();
 
   // Initialize services only once when drizzleDb is available
   useEffect(() => {
@@ -52,6 +58,27 @@ const NoteDetailScreen = () => {
 
   const [note, setNote] = useState<NoteSelect | null>(null);
   const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
+  const [allNoteRelations, setAllNoteRelations] = useState<NoteRelation[]>([]);
+  const [groupedEntities, setGroupedEntities] = useState<Record<string, string[]>>({
+    chapter: [],
+    character: [],
+    choice: [],
+    item: [],
+    itemjourney: [],
+    location: [],
+    note: [],
+    operationlog: [],
+    scene: [],
+    story: [],
+    suggestion: [],
+    tag: [],
+    user: [],
+    worldrule: [],
+    characterrelation: [],
+    noterelation: [],
+    tagrelation: [],
+    characterscene: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -96,6 +123,20 @@ const NoteDetailScreen = () => {
       marginTop: 15,
       marginBottom: 5,
     },
+    entityGroup: {
+      marginBottom: 10,
+    },
+    entityGroupTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 5,
+    },
+    entityName: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginLeft: 10,
+    },
   });
 
   const fetchNote = useCallback(async () => {
@@ -138,6 +179,52 @@ const NoteDetailScreen = () => {
     }
   }, [note?.storyId, noteId, tagRelationServiceRef.current]);
 
+  const fetchNoteRelations = useCallback(async () => {
+    if (!noteRelationServiceRef.current || !note?.storyId || !noteId) {
+      console.warn('NoteRelationService or story not initialized for fetching relations.');
+      return;
+    }
+    try {
+      const relations = await noteRelationServiceRef.current.getRelationsForNote(note.storyId, noteId);
+      setAllNoteRelations(relations);
+    } catch (err) {
+      console.error('Failed to fetch note relations:', err);
+    }
+  }, [note?.storyId, noteId, noteRelationServiceRef.current]);
+
+  const processNoteRelations = useCallback(async () => {
+    if (!drizzleDb || !note?.storyId) return;
+
+    const newGroupedEntities: Record<string, string[]> = {
+      chapter: [],
+      character: [],
+      choice: [],
+      item: [],
+      itemjourney: [],
+      location: [],
+      note: [],
+      operationlog: [],
+      scene: [],
+      story: [],
+      suggestion: [],
+      tag: [],
+      user: [],
+      worldrule: [],
+      characterrelation: [],
+      noterelation: [],
+      tagrelation: [],
+      characterscene: [],
+    };
+
+    for (const relation of allNoteRelations) {
+      const entityName = await EntityService.getEntityIdentifier(drizzleDb, relation.relationType, relation.relationId, note.storyId, t);
+      if (entityName) {
+        newGroupedEntities[relation.relationType].push(entityName);
+      }
+    }
+    setGroupedEntities(newGroupedEntities);
+  }, [allNoteRelations, drizzleDb, note?.storyId, t]);
+
   const handleNoteChange = useCallback(async (changedStoryId: string, changedNoteId: string) => {
     if (changedNoteId === noteId) {
       if (noteServiceRef.current) {
@@ -149,8 +236,16 @@ const NoteDetailScreen = () => {
           setHeaderTitle(updatedNote.title || t('note_details_title'));
         }
       }
+      fetchNoteRelations(); // Refetch relations if the note itself changed
     }
-  }, [noteId, navigation, setNote, setHeaderTitle, noteServiceRef.current, t]);
+  }, [noteId, navigation, setNote, setHeaderTitle, noteServiceRef.current, t, fetchNoteRelations]);
+
+  const handleNoteRelationChange = useCallback((changedStoryId: string, changedRelationId: string) => {
+    // This event is emitted when any note_relation changes. We need to check if it affects *this* note.
+    // However, for simplicity and ensuring data consistency, we'll refetch all relations for this note.
+    // A more optimized approach would involve parsing changedRelationId if it contains noteId.
+    fetchNoteRelations();
+  }, [fetchNoteRelations]);
 
   const handleTagRelationChange = useCallback((changedStoryId: string, changedEntityId: string) => {
     if (changedEntityId === noteId) {
@@ -159,23 +254,28 @@ const NoteDetailScreen = () => {
   }, [noteId, fetchTagsForNote]);
 
   useEffect(() => {
-    if (noteServiceRef.current) {
+    if (noteServiceRef.current && selectedStory?.id) { // Ensure selectedStory.id is available
       fetchNote();
+      fetchNoteRelations(); // Fetch relations when the screen loads
+
       entityEventEmitter.on('note_changed', handleNoteChange);
+      entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
       entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
 
       return () => {
         entityEventEmitter.off('note_changed', handleNoteChange);
+        entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [noteId, fetchNote, handleNoteChange, handleTagRelationChange, noteServiceRef.current]);
+  }, [noteId, fetchNote, handleNoteChange, handleTagRelationChange, noteServiceRef.current, selectedStory?.id, fetchNoteRelations, handleNoteRelationChange]); // Add selectedStory?.id and fetchNoteRelations to dependencies
 
   useEffect(() => {
     if (note) {
       fetchTagsForNote();
+      processNoteRelations(); // Process relations after they are fetched
     }
-  }, [note, fetchTagsForNote]);
+  }, [note, fetchTagsForNote, processNoteRelations]);
 
 
   const renderHeaderRight = useCallback(() => (
@@ -228,7 +328,7 @@ const NoteDetailScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.mainTitle}>{note.title}</Text>
       
       {note.body && (
@@ -241,11 +341,27 @@ const NoteDetailScreen = () => {
 
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
       <TagChipList tags={noteTags} />
+
+      <Text style={styles.sectionTitle}>{t('related_entities_title')}</Text>
+      {Object.values(groupedEntities).every(arr => arr.length === 0) ? (
+        <Text style={{ color: colors.textSecondary }}>{t('no_entities_related')}</Text>
+      ) : (
+        Object.entries(groupedEntities).map(([entityType, entityNames]) => (
+          entityNames.length > 0 && (
+            <View key={entityType} style={styles.entityGroup}>
+              <Text style={styles.entityGroupTitle}>{t(`${entityType.toLowerCase()}_plural`)}</Text>
+              {entityNames.map((name, index) => (
+                <Text key={index} style={styles.entityName}>- {name}</Text>
+              ))}
+            </View>
+          )
+        ))
+      )}
       
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

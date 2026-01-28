@@ -12,6 +12,7 @@ export type SaveNoteRelation = NewNoteRelation & { id?: string };
 
 export interface NoteRelationServiceInterface {
   getRelationsForEntity(storyId: string, entityId: string, entityType: NoteRelationEntities): Promise<NoteRelationInterface[]>;
+  getRelationsForNote(storyId: string, noteId: string): Promise<NoteRelationInterface[]>;
   saveNoteRelation(userId: string, relation: SaveNoteRelation): Promise<NoteRelationInterface>;
   deleteNoteRelation(userId: string, relationId: string): Promise<boolean>;
 }
@@ -58,6 +59,22 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
         return relations;
       } catch (error) {
         console.error('Error fetching note relations for entity:', error);
+        throw error;
+      }
+    },
+
+    async getRelationsForNote(storyId: string, noteId: string): Promise<NoteRelationInterface[]> {
+      try {
+        const relations = await drizzleDb.query.noteRelations.findMany({
+          where: and(
+            eq(schema.noteRelations.storyId, storyId),
+            eq(schema.noteRelations.noteId, noteId),
+            eq(schema.noteRelations.isDeleted, false)
+          ),
+        });
+        return relations;
+      } catch (error) {
+        console.error('Error fetching note relations for note:', error);
         throw error;
       }
     },

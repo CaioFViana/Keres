@@ -25,6 +25,8 @@ import {
   locations,
   LocationSelect,
   NoteInsert,
+  NoteRelationInsert,
+  noteRelations,
   notes,
   NoteSelect,
   SceneInsert,
@@ -631,6 +633,26 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               deletedAt: null,
             };
             await tx.insert(itemJourneys).values(itemJourneyToInsert).run();
+          }
+        }
+        
+        // 17. Process NoteRelations
+        if (fullStoryData.noteRelations) {
+          for (const noteRelation of fullStoryData.noteRelations) {
+            console.log(noteRelation)
+            const noteRelationToInsert: NoteRelationInsert = {
+              ...noteRelation,
+              storyId: noteRelation.storyId,
+              noteId: noteRelation.noteId,
+              relationId: noteRelation.relationId,
+              relationType: noteRelation.relationType,
+              createdAt: new Date(noteRelation.createdAt),
+              updatedAt: new Date(),
+              version: noteRelation.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(noteRelations).values(noteRelationToInsert).run();
           }
         }
 

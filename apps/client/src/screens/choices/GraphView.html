@@ -77,7 +77,23 @@
             if (cy) {
                 cy.style()
                     .clear() // Clear existing styles
-                    .selector('node')
+                    .selector('node[entityType="Chapter"]') // Styling for Chapter compound nodes
+                    .css({
+                        'background-color': theme.background,
+                        'border-color': theme.primary, // Use theme primary for border
+                        'border-width': 2, // Slightly thicker border
+                        'border-opacity': 0.8,
+                        'padding': '20px',
+                        'label': 'data(label)',
+                        'text-valign': 'top',
+                        'text-halign': 'center',
+                        'color': theme.text,
+                        'font-size': '16px',
+                        'font-weight': 'bold',
+                        'text-wrap': 'wrap',
+                        'text-max-width': '150px'
+                    })
+                    .selector('node[entityType="Scene"]') // Styling for Scene nodes
                     .css({
                         'background-color': theme.primary,
                         'label': 'data(label)',
@@ -145,7 +161,7 @@
                     sendConsoleMessage('Elements added to Cytoscape.');
 
                     const layout = cy.layout({
-                        name: 'cose',
+                        name: 'cose', // Use cose layout again
                         animate: true,
                         padding: 10,
                         nodeDimensionsIncludeLabels: true,
@@ -156,10 +172,15 @@
                         springConstant: 0.32,
                         initialTemp: 200,
                         coolingFactor: 0.05,
-                        minTemp: 1.0
+                        minTemp: 1.0,
+                        // Compound node specific options for cose:
+                        nestingFactor: 1.2, // How much compound nodes should be bigger than their contents
+                        nodeRepulsion: 400000, // Increased repulsion for nodes
+                        // edgeElasticity: 100,
+                        // idealEdgeLength: 10,
                     });
                     layout.run();
-                    sendConsoleMessage('Layout applied.');
+                    sendConsoleMessage('Cose layout applied.');
                 } else {
                     sendConsoleMessage('ERROR: Cytoscape instance (cy) not found in setGraphElements.');
                 }

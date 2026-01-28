@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useDrizzle } from '../../db';
-import { ChoiceSelect, SceneSelect } from '../../db/schema';
+import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
+import { createChapterService } from '../../services/ChapterService';
 import { createChoiceService } from '../../services/ChoiceService';
 import { createSceneService } from '../../services/SceneService';
 import { useStoryStore } from '../../state/storyStore';
@@ -17,7 +18,8 @@ interface GraphElement {
   data: {
     id: string;
     label?: string;
-    entityType: 'Scene' | 'Choice';
+    entityType: 'Scene' | 'Choice' | 'Chapter'; // Added Chapter entityType
+    parent?: string; // Added parent property for compound nodes
     source?: string; // For edges
     target?: string; // For edges
     [key: string]: any; // Allow other properties from SceneSelect or ChoiceSelect
@@ -36,6 +38,7 @@ const ChoiceViewScreen = () => {
 
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
+  const [chapters, setChapters] = useState<ChapterSelect[]>([]); // Added chapters state
   const [loadingGraphData, setLoadingGraphData] = useState(true);
   const [graphDataError, setGraphDataError] = useState<string | null>(null);
   const [webViewLoaded, setWebViewLoaded] = useState(false);
@@ -47,6 +50,7 @@ const ChoiceViewScreen = () => {
 
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
+  const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null); // Added chapterServiceRef
 
   useEffect(() => {
     async function loadHtml() {
@@ -68,14 +72,17 @@ const ChoiceViewScreen = () => {
     if (drizzleDb && selectedStory?.id) {
       if (!sceneServiceRef.current) sceneServiceRef.current = createSceneService(drizzleDb);
       if (!choiceServiceRef.current) choiceServiceRef.current = createChoiceService(drizzleDb);
+      if (!chapterServiceRef.current) chapterServiceRef.current = createChapterService(drizzleDb); // Initialize chapterServiceRef
 
       const fetchGraphData = async () => {
         setLoadingGraphData(true);
         try {
           const fetchedScenes = await sceneServiceRef.current!.getScenesByStoryId(selectedStory.id);
           const fetchedChoices = await choiceServiceRef.current!.getChoicesByStoryId(selectedStory.id);
+          const fetchedChapters = await chapterServiceRef.current!.getChaptersByStoryId(selectedStory.id); // Fetch chapters
           setScenes(fetchedScenes);
           setChoices(fetchedChoices);
+          setChapters(fetchedChapters); // Set chapters state
           setGraphDataError(null);
         } catch (error) {
           console.error('Failed to fetch graph data:', error);
@@ -181,13 +188,24 @@ const ChoiceViewScreen = () => {
     if (htmlUri && !loadingGraphData && webViewRef.current && webViewLoaded) {
       const elements: GraphElement[] = [];
 
+      // Add chapter nodes
+      chapters.forEach(chapter => {
+        elements.push({
+          data: {
+            label: chapter.name,
+            entityType: 'Chapter',
+            ...chapter
+          }
+        });
+      });
+
       // Add scenes as nodes
       scenes.forEach(scene => {
         elements.push({
           data: {
-            // id: scene.id, // Removed redundant id, spread will provide it
             label: scene.name,
             entityType: 'Scene',
+            parent: scene.chapterId, // Set parent to chapter ID
             ...scene // Spread all scene data
           }
         });
@@ -225,7 +243,7 @@ const ChoiceViewScreen = () => {
         webViewRef.current.injectJavaScript(script);
       }
     }
-  }, [htmlUri, loadingGraphData, scenes, choices, webViewLoaded, colors]); // Added colors to dependencies
+  }, [htmlUri, loadingGraphData, scenes, choices, chapters, webViewLoaded, colors]); // Added chapters to dependencies
 
 
   if (!htmlUri) {

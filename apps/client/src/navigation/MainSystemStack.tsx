@@ -19,6 +19,7 @@ import CharactersScreen from '../screens/characters/CharacterListScreen';
 import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
 import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
+import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
 import DetailScreen from '../screens/common/DetailScreen';
 import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
@@ -160,6 +161,7 @@ export type ChoiceStackParamList = {
   Choices: undefined;
   ChoiceDetail: ChoiceDetailScreenParamList['ChoiceDetail'];
   ChoiceForm: { choiceId?: string };
+  ChoiceView: undefined
 };
 
 const ChoiceStackNavigator = () => {
@@ -169,6 +171,7 @@ const ChoiceStackNavigator = () => {
       <ChoiceStack.Screen name="Choices" component={ChoiceListScreen} />
       <ChoiceStack.Screen name="ChoiceDetail" component={ChoiceDetailScreen} />
       <ChoiceStack.Screen name="ChoiceForm" component={ChoiceFormScreen} />
+      <ChoiceStack.Screen name="ChoiceView" component={ChoiceViewScreen} />
     </ChoiceStack.Navigator>
   );
 };

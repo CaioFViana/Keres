@@ -22,7 +22,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type ChoicesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ChoicesStack'>,
-  NativeStackNavigationProp<ChoiceStackParamList, 'ChoiceDetail'>
+  NativeStackNavigationProp<ChoiceStackParamList, 'ChoiceDetail' | 'ChoiceView'>
 >;
 
 const ChoiceListScreen = () => {
@@ -144,6 +144,9 @@ const ChoiceListScreen = () => {
         title: t('choices_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
+            <TouchableOpacity onPress={() => navigation.navigate('ChoiceView')} style={styles.headerButton}>
+              <Ionicons name="search" size={30} color={colors.text} />
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', {})} style={styles.headerButton}>
               <Ionicons name="add" size={30} color={colors.text} />
             </TouchableOpacity>

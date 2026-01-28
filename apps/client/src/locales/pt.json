@@ -79,6 +79,8 @@
   "choice_updated_successfully": "Escolha atualizada com sucesso.",
   "choices": "Escolhas",
   "choices_title": "Escolhas",
+  "choice_view_title": "Visualização de Escolha",
+  "choice_view_screen_content": "Esta é a Tela de Visualização de Escolha.",
   "climate_placeholder": "Digite o clima do local",
   "close": "Fechar",
   "color": "Cor",

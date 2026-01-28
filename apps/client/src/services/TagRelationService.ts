@@ -1,4 +1,4 @@
-import { TagRelationEntities } from '@keres/shared';
+import { TagRelation, TagRelationEntities } from '@keres/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { AppDrizzleClient, TagRelationInsert, tagRelations, tags, TagSelect } from '../db';
 import { prepareNewEntityData } from '../utils/entityUtils';
@@ -8,6 +8,7 @@ import { createServerService } from './ServerService';
 
 export interface TagRelationService {
   getTagsForEntity(storyId: string, entityId: string, entityType: TagRelationEntities): Promise<TagSelect[]>;
+  getRelationsForTag(storyId: string, tagId: string): Promise<TagRelation[]>;
   addTagToEntity(currentUserId: string, storyId: string, entityId: string, entityType: TagRelationEntities, tagId: string): Promise<void>;
   removeTagFromEntity(currentUserId: string, storyId: string, entityId: string, entityType: TagRelationEntities, tagId: string): Promise<void>;
   updateTagsForEntity(currentUserId: string, storyId: string, entityId: string, entityType: TagRelationEntities, newTagIds: string[]): Promise<void>;
@@ -42,6 +43,17 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
         .execute();
       
       return fetchedTags;
+    },
+
+    async getRelationsForTag(storyId, tagId): Promise<TagRelation[]> {
+      const relations = await db.query.tagRelations.findMany({
+        where: and(
+          eq(tagRelations.storyId, storyId),
+          eq(tagRelations.tagId, tagId),
+          eq(tagRelations.isDeleted, false)
+        ),
+      });
+      return relations;
     },
 
     async addTagToEntity(currentUserId, storyId, relationId, relationType, tagId): Promise<void> {

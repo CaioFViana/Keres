@@ -22,6 +22,26 @@ import {
   worldRules
 } from '../db/schemas';
 
+const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
+  chapter: OperationLogEntityType.Chapter,
+  character: OperationLogEntityType.Character,
+  choice: OperationLogEntityType.Choice,
+  item: OperationLogEntityType.Item,
+  itemjourney: OperationLogEntityType.ItemJourney,
+  location: OperationLogEntityType.Location,
+  note: OperationLogEntityType.Note,
+  operationlog: OperationLogEntityType.OperationLog,
+  scene: OperationLogEntityType.Scene,
+  story: OperationLogEntityType.Story,
+  tag: OperationLogEntityType.Tag,
+  user: OperationLogEntityType.User,
+  worldrule: OperationLogEntityType.WorldRule,
+  characterrelation: OperationLogEntityType.CharacterRelation,
+  noterelation: OperationLogEntityType.NoteRelation,
+  tagrelation: OperationLogEntityType.TagRelation,
+  characterscene: OperationLogEntityType.CharacterScene,
+};
+
 export class EntityService {
   static async getEntityName(
     db: AppDrizzleClient,
@@ -357,5 +377,22 @@ export class EntityService {
         type = t('unknown_entity_type');
     }
     return { name, type };
+  }
+    
+  static async getEntityIdentifier(
+    db: AppDrizzleClient,
+    entityTypeString: string,
+    entityId: string,
+    storyId: string,
+    t: TFunction
+  ): Promise<string | undefined> {
+    const operationLogEntityType = ENTITY_LOOKUP_MAP[entityTypeString.toLowerCase()];
+
+    if (operationLogEntityType === undefined) {
+      throw new Error(`Invalid entityTypeString: ${entityTypeString}`);
+    }
+
+    const { name } = await EntityService._resolveRelationEntityName(db, operationLogEntityType, entityId, storyId, t);
+    return name;
   }
 }

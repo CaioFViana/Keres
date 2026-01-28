@@ -1,5 +1,5 @@
-import { create } from 'zustand';
 import { Story } from '@keres/shared/entities/Story';
+import { create } from 'zustand';
 
 interface StoryState {
   selectedStory: Story | null;

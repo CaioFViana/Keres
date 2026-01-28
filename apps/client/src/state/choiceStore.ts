@@ -1,9 +1,8 @@
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppDrizzleClient } from '../db';
 import { ChoiceSelect } from '../db/schemas/choices';
 import { createChoiceService } from '../services/ChoiceService';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface ChoiceState {
   choices: ChoiceSelect[];

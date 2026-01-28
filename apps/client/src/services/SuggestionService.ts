@@ -1,5 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, characterRelations, characters, items, suggestions, itemJourneys } from '../db';
+import { AppDrizzleClient, characterRelations, characters, itemJourneys, items, suggestions } from '../db';
 import { createULID } from '../utils/ulid'; // Changed ulid import
 // Import other schemas as needed
 

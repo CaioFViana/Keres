@@ -1,11 +1,11 @@
-import { SQL, and, eq, sql } from 'drizzle-orm';
-import { createULID } from '../utils/ulid';
 import { NoteRelationEntities, NoteRelation as NoteRelationInterface } from '@keres/shared/entities/Note';
+import { and, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
-import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
-import { createServerService } from './ServerService';
 import { getChangedFields } from '../utils/diffUtils';
+import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
+import { createULID } from '../utils/ulid';
+import { createServerService } from './ServerService';
 
 export type NewNoteRelation = Omit<NoteRelationInterface, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>;
 export type SaveNoteRelation = NewNoteRelation & { id?: string };

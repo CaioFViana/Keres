@@ -1,4 +1,4 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate, CharacterScene } from '@keres/shared';
+import { CharacterScene, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';

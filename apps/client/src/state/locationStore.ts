@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { AppDrizzleClient } from '../db';
 import { LocationService, LocationWithTags, createLocationService } from '../services/LocationService';
-import { useUserSettingsStore } from './userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useUserSettingsStore } from './userSettingsStore';
 
 type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 

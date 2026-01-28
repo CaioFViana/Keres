@@ -1,7 +1,7 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { items, ItemInsert, ItemSelect } from '../db/schemas/items';
+import { ItemInsert, items, ItemSelect } from '../db/schemas/items';
 import { getChangedFields } from '../utils/diffUtils';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';

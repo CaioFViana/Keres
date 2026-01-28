@@ -1,8 +1,7 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
-import { CompositeNavigationProp, RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { CompositeNavigationProp, RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
-import { StackActions } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';

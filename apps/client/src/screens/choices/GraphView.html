@@ -101,8 +101,21 @@
                         'color': theme.text,
                         'font-size': '12px',
                         'text-wrap': 'wrap',
-                        'text-max-width': '80px',
-                        'padding': '10px'
+                        'text-max-width': '120px', // Increased max-width for longer text
+                        'padding': '20px', // Increased padding for larger node size
+                        'border-color': theme.text, // Subtle border for normal scenes
+                        'border-width': 3,
+                        'border-opacity': 0.7
+                    })
+                    .selector('node[entityType="Scene"][isStart="true"]') // Styling for Start Scene nodes
+                    .css({
+                        'border-color': theme.accent, // Distinct color for start scenes
+                        'border-width': 5
+                    })
+                    .selector('node[entityType="Scene"][isFinish="true"]') // Styling for End Scene nodes
+                    .css({
+                        'border-color': 'red', // Distinct color for end scenes
+                        'border-width': 5
                     })
                     .selector('edge')
                     .css({
@@ -188,7 +201,11 @@
 
             cy.on('tap', 'node', function(evt){
                 const node = evt.target;
-                sendConsoleMessage(`Node tapped: ${node.id()}`);
+                sendConsoleMessage(`Node tapped: ${node.id()} (entityType: ${node.data('entityType')})`);
+                if (node.data('entityType') === 'Chapter') {
+                    sendConsoleMessage('Chapter node tapped, ignoring click.');
+                    return; // Do not send message for chapter nodes
+                }
                 if (window.ReactNativeWebView) {
                     window.ReactNativeWebView.postMessage(JSON.stringify({
                         type: 'NODE_CLICKED',

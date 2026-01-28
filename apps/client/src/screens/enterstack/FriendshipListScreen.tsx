@@ -1,19 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
+import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
 import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
-import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 
 type FriendshipStackParamList = {
   FriendshipList: undefined;

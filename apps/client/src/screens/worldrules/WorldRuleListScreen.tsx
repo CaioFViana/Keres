@@ -8,13 +8,13 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
 import WorldRuleListItem from '../../components/listitem/WorldRuleListItem'; // Will create this later
-import { useDrizzle, WorldRuleSelect } from '../../db';
+import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
+import { WorldRuleWithTags } from '../../db/schemas/worldRules';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack'; // Will create/update this later
 import { createTagService } from '../../services/TagService'; // Import createTagService
 import { FavoriteFilterState } from '../../services/WorldRuleService';
-import { WorldRuleWithTags } from '../../db/schemas/worldRules';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { debounce } from '../../utils/debounce';

@@ -1,7 +1,7 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import { and, asc, desc, eq, sql, SQL, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { choices, ChoiceInsert, ChoiceSelect } from '../db/schemas/choices';
+import { ChoiceInsert, choices, ChoiceSelect } from '../db/schemas/choices';
 import { scenes } from '../db/schemas/scenes';
 import { getChangedFields } from '../utils/diffUtils';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';

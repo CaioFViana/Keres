@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 import { AppDrizzleClient } from '../db';
+import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 
 interface ThemeState {
   darkMode: boolean;

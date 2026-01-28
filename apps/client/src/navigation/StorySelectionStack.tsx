@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { DrawerActions, NavigatorScreenParams, StackActions } from '@react-navigation/native';
+import { DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { createStoryService, useDrizzle } from '../db';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
@@ -14,9 +14,6 @@ import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationSc
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import { createFriendshipService } from '../services/FriendshipService'; // Import createFriendshipService
-import { createServerService } from '../services/ServerService';
-import { authTokenManager, setAuthDb } from '../services/AuthTokenManager';
-import { ServerStoryPreview, SyncEngineService } from '../services/SyncEngineService';
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';

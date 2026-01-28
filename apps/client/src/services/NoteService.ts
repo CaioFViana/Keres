@@ -3,10 +3,10 @@ import { and, asc, desc, eq, inArray, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { NoteInsert, notes, NoteSelect } from '../db/schemas/notes';
 import { tagRelations } from '../db/schemas/tagRelations';
-import { TagSelect, tags } from '../db/schemas/tags'; // Import tags schema
+import { tags, TagSelect } from '../db/schemas/tags'; // Import tags schema
+import { getChangedFields } from '../utils/diffUtils';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
-import { getChangedFields } from '../utils/diffUtils';
 import { getUserIdForOperation, recordLocalOperation } from '../utils/syncUtils';
 import { createServerService } from './ServerService';
 

@@ -20,8 +20,6 @@ import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
 import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
-import DetailScreen from '../screens/common/DetailScreen';
-import ListingScreen from '../screens/common/ListingScreen';
 import GalleryScreen from '../screens/GalleryScreen';
 import ItemJourneyDetailScreen from '../screens/itemJourneys/ItemJourneyDetailScreen';
 import ItemJourneyFormScreen from '../screens/itemJourneys/ItemJourneyFormScreen';
@@ -359,17 +357,6 @@ const OperationLogStackNavigator = () => {
 };
 //#endregion
 
-// A helper component to wrap screens that should be part of the drawer but also have their own stack navigation
-const ListingDetailStack = ({ route }: any) => {
-  const { entityType } = route.params;
-  useBackButtonHandler();
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Listing" component={ListingScreen} initialParams={{ entityType }} />
-      <Stack.Screen name="Detail" component={DetailScreen} />
-    </Stack.Navigator>
-  );
-};
 /// Main Drawer
 type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>;
 

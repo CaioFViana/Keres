@@ -1,5 +1,5 @@
-import { schema, ClientSettingsInsert, ClientSettingsSelect, AppDrizzleClient } from '../db';
 import { eq } from 'drizzle-orm';
+import { AppDrizzleClient, ClientSettingsInsert, ClientSettingsSelect, schema } from '../db';
 import { createULID } from '../utils/ulid';
 
 export async function getClientSettings(db: AppDrizzleClient): Promise<ClientSettingsSelect | null> {

@@ -1,5 +1,5 @@
+import { EnrichedFriendship, Friendship } from '@keres/shared'; // Assuming Friendship is the type returned by the API
 import apiClient from './apiClient';
-import { Friendship, EnrichedFriendship } from '@keres/shared'; // Assuming Friendship is the type returned by the API
 
 export class FriendshipApiService {
   async sendFriendRequest(targetUserId: string): Promise<Friendship> {

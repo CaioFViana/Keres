@@ -1,6 +1,7 @@
 import { Story } from '@keres/shared/entities/Story';
 import { create } from 'zustand';
 import { createStoryService } from '../db';
+import { entityEventEmitter } from '../utils/EventEmitter';
 
 interface StoryListState {
   stories: Story[];
@@ -30,11 +31,13 @@ export const useStoryListStore = create<StoryListState>((set, get) => ({
         story.id === storyId ? { ...story, isFavorite } : story
       ),
     }));
+    entityEventEmitter.emit('story_changed', storyId);
   },
   addStory: (newStory) => {
     set((state) => ({
       stories: [...state.stories, newStory],
     }));
+    entityEventEmitter.emit('story_changed', newStory.id);
   },
   updateStory: (updatedStory) => {
     set((state) => ({
@@ -42,10 +45,12 @@ export const useStoryListStore = create<StoryListState>((set, get) => ({
         story.id === updatedStory.id ? updatedStory : story
       ),
     }));
+    entityEventEmitter.emit('story_changed', updatedStory.id);
   },
   removeStory: (storyId) => {
     set((state) => ({
       stories: state.stories.filter((story) => story.id !== storyId),
     }));
+    entityEventEmitter.emit('story_changed', storyId);
   },
 }));

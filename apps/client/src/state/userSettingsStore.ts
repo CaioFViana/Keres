@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
-import { AppDrizzleClient } from '../db';
 import { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
+import { create } from 'zustand';
+import { AppDrizzleClient } from '../db';
 import { ServerSelect } from '../db/schema';
+import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 
 interface UserSettingsState {
   userId: string | null; // Add userId to state

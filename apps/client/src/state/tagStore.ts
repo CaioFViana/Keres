@@ -3,7 +3,6 @@ import { AppDrizzleClient } from '../db';
 import { TagSelect } from '../db/schemas/tags';
 import { createTagService, TagService } from '../services/TagService';
 import { entityEventEmitter } from '../utils/EventEmitter';
-import { debounce } from '../utils/debounce';
 import { useUserSettingsStore } from './userSettingsStore';
 
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';

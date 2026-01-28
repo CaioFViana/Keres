@@ -1,7 +1,7 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, count, desc, eq, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { locations, LocationInsert, LocationSelect, tagRelations, tags, TagSelect } from '../db/schema'; // Import LocationInsert and locations
+import { LocationInsert, locations, LocationSelect, tagRelations, tags, TagSelect } from '../db/schema'; // Import LocationInsert and locations
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { getChangedFields } from '../utils/diffUtils';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';

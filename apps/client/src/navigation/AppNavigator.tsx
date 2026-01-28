@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ActivityIndicator, View, StyleSheet } from 'react-native'; // Import ActivityIndicator and View
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native'; // Import ActivityIndicator and View
 
-import ColdInstallStack from './ColdInstallStack';
-import StorySelectionStack from './StorySelectionStack';
-import MainSystemStack from './MainSystemStack';
-import { getClientSettings } from '../services/ClientSettingsService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useThemeStore } from '../state/themeStore';
-import { useDrizzle } from '../db';
 import SyncInitializer from '../components/SyncInitializer'; // Import SyncInitializer
+import { useDrizzle } from '../db';
+import { getClientSettings } from '../services/ClientSettingsService';
+import { useThemeStore } from '../state/themeStore';
+import { useUserSettingsStore } from '../state/userSettingsStore';
+import ColdInstallStack from './ColdInstallStack';
+import MainSystemStack from './MainSystemStack';
+import StorySelectionStack from './StorySelectionStack';
 
 type RootStackParamList = {
   ColdInstall: undefined;

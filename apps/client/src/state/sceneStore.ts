@@ -1,9 +1,9 @@
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppDrizzleClient } from '../db';
 import { SceneSelect } from '../db/schema';
 import { createSceneService, FavoriteFilterState } from '../services/SceneService';
 import { entityEventEmitter } from '../utils/EventEmitter';
-import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface SceneState {
   scenes: SceneSelect[];

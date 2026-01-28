@@ -1,6 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
-import { useUserSettingsStore } from '../state/userSettingsStore'; // Import useUserSettingsStore
 import { ServerSelect } from '../db/schema'; // Import ServerSelect
 
 // Flag to prevent multiple refresh token requests at once

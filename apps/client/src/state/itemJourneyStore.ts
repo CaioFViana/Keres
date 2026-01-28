@@ -1,9 +1,8 @@
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppDrizzleClient } from '../db';
 import { ItemJourneySelect } from '../db/schemas/itemJourneys';
 import { createItemJourneyService } from '../services/ItemJourneyService';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface ItemJourneyState {
   itemJourneys: ItemJourneySelect[];

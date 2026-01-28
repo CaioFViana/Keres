@@ -2,9 +2,6 @@ import { create } from 'zustand';
 import { AppDrizzleClient } from '../db';
 import { CharacterRelationServiceInterface, CharacterRelationWithNames, createCharacterRelationService } from '../services/CharacterRelationService'; // Import CharacterRelationServiceInterface
 
-// Define EntityEvent type locally if needed, based on EventEmitter usage
-type EntityEvent = (storyId: string) => void;
-
 export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
 
 interface CharacterRelationStore {

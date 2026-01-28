@@ -286,23 +286,23 @@ const ChoiceViewScreen = () => {
             activeOpacity={1}
             onPressOut={() => setTooltipVisible(false)} // Dismiss on tap outside
           >
-            <View style={styles.modalContent}>
+            <View style={styles.modalContent} onStartShouldSetResponder={() => true} onResponderRelease={(e) => e.stopPropagation()}>
               <Text style={styles.modalTitle}>
                 {tooltipData.type === 'Node' ? t('scene_details_title') : t('choice_details_title')}
               </Text>
-              <Text style={styles.modalDetailText}>ID: {tooltipData.id}</Text>
-              <Text style={styles.modalDetailText}>Label: {tooltipData.label}</Text>
+              <Text selectable={true} style={styles.modalDetailText}>ID: {tooltipData.id}</Text>
+              <Text selectable={true} style={styles.modalDetailText}>Label: {tooltipData.label}</Text>
               {tooltipData.entityType === 'Scene' && (
                 <>
-                  <Text style={styles.modalDetailText}>Name: {tooltipData.name}</Text>
-                  <Text style={styles.modalDetailText}>Summary: {tooltipData.summary}</Text>
+                  <Text selectable={true} style={styles.modalDetailText}>Name: {tooltipData.name}</Text>
+                  <Text selectable={true} style={styles.modalDetailText}>Summary: {tooltipData.summary}</Text>
                 </>
               )}
               {tooltipData.entityType === 'Choice' && (
                 <>
-                  <Text style={styles.modalDetailText}>Text: {tooltipData.text}</Text>
-                  <Text style={styles.modalDetailText}>Source Scene: {tooltipData.sourceSceneName}</Text>
-                  <Text style={styles.modalDetailText}>Target Scene: {tooltipData.targetSceneName}</Text>
+                  <Text selectable={true} style={styles.modalDetailText}>Text: {tooltipData.text}</Text>
+                  <Text selectable={true} style={styles.modalDetailText}>Source Scene: {tooltipData.sourceSceneName}</Text>
+                  <Text selectable={true} style={styles.modalDetailText}>Target Scene: {tooltipData.targetSceneName}</Text>
                 </>
               )}
               <TouchableOpacity style={styles.modalCloseButton} onPress={() => setTooltipVisible(false)}>

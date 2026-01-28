@@ -178,6 +178,7 @@ const ChoiceListScreen = () => {
           onValueChange={(value) => setSelectedChapterId(value as string)}
           placeholder={t('select_chapter')}
           multiple={false}
+          allowDeselect={true}
         />
       </View>
       <View style={styles.selectWrapperRight}>
@@ -187,6 +188,7 @@ const ChoiceListScreen = () => {
           onValueChange={(value) => setSelectedSceneId(value as string)}
           placeholder={t('select_scene')}
           multiple={false}
+          allowDeselect={true}
           disabled={!selectedChapterId || sceneOptions.length === 0}
         />
       </View>

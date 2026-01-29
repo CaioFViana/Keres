@@ -17,6 +17,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { themeDisplayOptions } from '../../theme/palettes'; // Import themeDisplayOptions
 import { getLanguageOptions } from '../../utils/i18n';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
@@ -195,11 +196,10 @@ const StorySettingsScreen = () => {
 
   const languageOptions = getLanguageOptions(t);
 
-  const themeOptions = [
-    { label: t('default_theme'), value: 'default' },
-    { label: t('forest_theme'), value: 'forest' },
-    { label: t('ocean_theme'), value: 'ocean' },
-  ];
+  const themeOptions = themeDisplayOptions.map(theme => ({
+    label: t(theme.labelKey),
+    value: theme.value,
+  }));
 
   // Server options from available servers
   const serverOptions = availableServers.map(server => ({

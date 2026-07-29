@@ -11,6 +11,7 @@ import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
 import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { ChapterStackParamList } from '../../navigation/MainSystemStack';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
@@ -37,6 +38,7 @@ const ChapterFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
+  const confirmDelete = useConfirmDelete();
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
 
   useEffect(() => {
@@ -174,38 +176,22 @@ const ChapterFormScreen = () => {
       return;
     }
 
-    Alert.alert(
-      t('delete_chapter_title'),
-      t('delete_chapter_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (currentChapterId && chapterServiceRef.current) {
-              try {
-                setLoading(true);
-                await chapterServiceRef.current.deleteChapter(userId, currentChapterId);
-                entityEventEmitter.emit('chapter_changed', selectedStory?.id, currentChapterId);
-                Alert.alert(t('success'), t('chapter_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete chapter:', err);
-                setError(t('failed_to_delete_chapter'));
-                Alert.alert(t('error'), t('failed_to_delete_chapter'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    if (!currentChapterId || !chapterServiceRef.current) {
+      return;
+    }
+
+    confirmDelete({
+      titleKey: 'delete_chapter_title',
+      messageKey: 'delete_chapter_message',
+      successKey: 'chapter_deleted_successfully',
+      failureKey: 'failed_to_delete_chapter',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await chapterServiceRef.current!.deleteChapter(userId, currentChapterId);
+        entityEventEmitter.emit('chapter_changed', selectedStory?.id, currentChapterId);
+        navigation.goBack();
+      },
+    });
   };
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {

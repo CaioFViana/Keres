@@ -2,19 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react'; // Added useState
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import CharacterRelationListItem from '../../components/listitem/CharacterRelationListItem';
-import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { CharacterRelationsStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Assuming CharacterRelationsStackParamList exists
 import { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterRelationStore } from '../../state/characterRelationStore';
-import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { debounce } from '../../utils/debounce';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type CharacterRelationsScreenNavigationProp = CompositeNavigationProp<
@@ -26,75 +25,26 @@ const CharacterRelationsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { selectedStory } = useStoryStore();
-  const drizzleDb = useDrizzle();
   const navigation = useNavigation<CharacterRelationsScreenNavigationProp>();
 
   const {
-    characterRelations,
-    searchTerm: storeSearchTerm, // Renamed to avoid collision with local state
+    items: characterRelations,
     loading,
     error,
+    storyId,
+    searchQuery,
     activeSort,
     sortDirection,
     advancedSearchCriteria,
-    fetchCharacterRelations,
-    setSearchTerm: setStoreSearchTerm, // Renamed to avoid collision with local state
-    setDbAndStoryId,
-    initializeService,
-    setSort,
+    handleSearch,
+    handleSortChange,
+    handleSortDirectionChange,
     setAdvancedSearchCriteria,
-  } = useCharacterRelationStore();
-
-  const [searchQuery, setSearchQuery] = useState(storeSearchTerm); // Local state for immediate input feedback
-
-  // Synchronize local searchQuery with storeSearchTerm if storeSearchTerm changes externally
-  useEffect(() => {
-    if (storeSearchTerm !== searchQuery) {
-      setSearchQuery(storeSearchTerm);
-    }
-  }, [storeSearchTerm]); // Only react to storeSearchTerm changes
-
-  const debouncedSetStoreSearchTerm = useMemo(
-    () => debounce((term: string) => setStoreSearchTerm(term), 1000), // Debounce for 1000ms
-    [setStoreSearchTerm]
-  );
-
-  // Debounce the update to the store's searchTerm
-  useEffect(() => {
-    debouncedSetStoreSearchTerm(searchQuery);
-
-    return () => {
-      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
-    };
-  }, [searchQuery, debouncedSetStoreSearchTerm]);
-
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeService();
-    }
-  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService]);
-
-  // Effect to trigger fetch when storeSearchTerm changes (after debounce)
-  // or when other filter/sort criteria change (immediately via store setters)
-  useEffect(() => {
-    fetchCharacterRelations();
-  }, [storeSearchTerm, activeSort, sortDirection, advancedSearchCriteria, fetchCharacterRelations]);
-
-  useEffect(() => {
-    const handleCharacterRelationChange = (storyId: string) => {
-      if (selectedStory?.id === storyId) {
-        fetchCharacterRelations(); // Call the immediate fetchCharacterRelations
-      }
-    };
-
-    entityEventEmitter.on('character_relation_changed', handleCharacterRelationChange);
-
-    return () => {
-      entityEventEmitter.off('character_relation_changed', handleCharacterRelationChange);
-    };
-  }, [selectedStory?.id, fetchCharacterRelations]);
+  } = useEntityListScreen({
+    useStore: useCharacterRelationStore,
+    collectionKey: 'characterRelations',
+    changeEvent: 'character_relation_changed',
+  });
 
   // Listen for reset event
   useEffect(() => {
@@ -146,58 +96,19 @@ const CharacterRelationsScreen = () => {
     ];
   }, [t]);
 
-  const handleSearch = useCallback((term: string) => {
-    setSearchQuery(term); // Update local state immediately
-  }, [setSearchQuery]);
-
-  const handleSortChange = useCallback((sortBy: string | null) => {
-    setSort(sortBy, sortDirection);
-  }, [setSort, sortDirection]);
-
-  const handleSortDirectionChange = useCallback((direction: 'asc' | 'desc') => {
-    setSort(activeSort, direction);
-  }, [setSort, activeSort]);
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    errorText: {
-      color: colors.error,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
   });
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_relations')}</Text>
-      </View>
-    );
+    return <ScreenLoading message={t('loading_relations')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -222,7 +133,7 @@ const CharacterRelationsScreen = () => {
         disableTagFilter={true}
         disableFavoriteFilter={true} // Disable favorite filter
         entityName="CharacterRelation"
-        storyId={selectedStory?.id || ''}
+        storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
       />

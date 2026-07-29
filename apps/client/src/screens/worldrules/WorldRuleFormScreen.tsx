@@ -10,6 +10,7 @@ import TextInput from '../../components/common/TextInput/TextInput';
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
@@ -35,6 +36,7 @@ const WorldRuleFormScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
+  const confirmDelete = useConfirmDelete();
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
 
   useEffect(() => {
@@ -167,39 +169,22 @@ const WorldRuleFormScreen = () => {
       Alert.alert(t('error'), t('user_not_identified'));
       return;
     }
+    if (!currentWorldRuleId || !worldRuleServiceRef.current) {
+      return;
+    }
 
-    Alert.alert(
-      t('delete_world_rule_title'),
-      t('delete_world_rule_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (currentWorldRuleId && worldRuleServiceRef.current) {
-              try {
-                setLoading(true);
-                await worldRuleServiceRef.current.deleteWorldRule(userId, currentWorldRuleId);
-                entityEventEmitter.emit('worldrule_changed', selectedStory?.id, currentWorldRuleId);
-                Alert.alert(t('success'), t('world_rule_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete world rule:', err);
-                setError(t('failed_to_delete_world_rule'));
-                Alert.alert(t('error'), t('failed_to_delete_world_rule'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    confirmDelete({
+      titleKey: 'delete_world_rule_title',
+      messageKey: 'delete_world_rule_message',
+      successKey: 'world_rule_deleted_successfully',
+      failureKey: 'failed_to_delete_world_rule',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await worldRuleServiceRef.current!.deleteWorldRule(userId, currentWorldRuleId);
+        entityEventEmitter.emit('worldrule_changed', selectedStory?.id, currentWorldRuleId);
+        navigation.goBack();
+      },
+    });
   };
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {

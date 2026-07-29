@@ -4,19 +4,19 @@ import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import NoteListItem from '../../components/listitem/NoteListItem';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { MainSystemDrawerParamList, NotesStackParamList } from '../../navigation/MainSystemStack';
-import { FavoriteFilterState, NoteWithTags } from '../../services/storymanagement/NoteService';
+import { NoteWithTags } from '../../services/storymanagement/NoteService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useNoteStore } from '../../state/noteStore';
-import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { debounce } from '../../utils/debounce';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<
@@ -28,7 +28,6 @@ const NotesScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { selectedStory } = useStoryStore();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<NotesScreenNavigationProp>();
 
@@ -36,89 +35,46 @@ const NotesScreen = () => {
   const tagService = useRef(createTagService(drizzleDb)).current;
 
   const {
-    notes,
-    searchTerm: storeSearchTerm, // Renamed to avoid collision with local state
+    items: notes,
+    loading,
+    error,
+    storyId,
+    searchQuery,
     activeFilterTags,
     activeSort,
     sortDirection,
     favoriteFilterState,
     advancedSearchCriteria,
-    loading,
-    error,
-    fetchNotes,
-    setSearchTerm: setStoreSearchTerm, // Renamed to avoid collision with local state
-    setDbAndStoryId,
-    initializeService,
-    setSort,
-    setFilterTags,
-    setFavoriteFilter,
+    handleSearch,
+    handleSortChange,
+    handleSortDirectionChange,
+    handleFilterTagsChange,
+    handleFavoriteFilterChange,
     setAdvancedSearchCriteria,
     toggleFavorite,
-  } = useNoteStore();
+  } = useEntityListScreen({
+    useStore: useNoteStore,
+    collectionKey: 'notes',
+    changeEvent: 'note_changed',
+  });
 
-  const [searchQuery, setSearchQuery] = useState(storeSearchTerm); // Local state for immediate input feedback
-
-  // Synchronize local searchQuery with storeSearchTerm if storeSearchTerm changes externally
-  useEffect(() => {
-    if (storeSearchTerm !== searchQuery) {
-      setSearchQuery(storeSearchTerm);
-    }
-  }, [storeSearchTerm]); // Only react to storeSearchTerm changes
-
-  const debouncedSetStoreSearchTerm = useMemo(
-    () => debounce((term: string) => setStoreSearchTerm(term), 1000), // Debounce for 1000ms
-    [setStoreSearchTerm]
-  );
-
-  // Debounce the update to the store's searchTerm
-  useEffect(() => {
-    debouncedSetStoreSearchTerm(searchQuery);
-
-    return () => {
-      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
-    };
-  }, [searchQuery, debouncedSetStoreSearchTerm]);
-
+  // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
   const fetchTags = useCallback(async () => {
-    if (!selectedStory?.id) {
+    if (!storyId) {
       setAllTags([]);
       return;
     }
     try {
-      const fetchedTags = await tagService.getTagsByStoryId(selectedStory.id);
+      const fetchedTags = await tagService.getTagsByStoryId(storyId);
       setAllTags(fetchedTags);
     } catch (error) {
       console.error('Failed to fetch tags:', error);
     }
-  }, [selectedStory?.id, tagService]);
+  }, [storyId, tagService]);
 
   useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeService();
-      fetchTags();
-    }
-  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService, fetchTags]);
-
-  // Effect to trigger fetch when storeSearchTerm changes (after debounce)
-  // or when other filter/sort criteria change (immediately via store setters)
-  useEffect(() => {
-    fetchNotes();
-  }, [storeSearchTerm, activeFilterTags, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, fetchNotes]);
-
-  useEffect(() => {
-    const handleNoteChange = (storyId: string) => {
-      if (selectedStory?.id === storyId) {
-        fetchNotes(); // Call the immediate fetchNotes
-      }
-    };
-
-    entityEventEmitter.on('note_changed', handleNoteChange);
-
-    return () => {
-      entityEventEmitter.off('note_changed', handleNoteChange);
-    };
-  }, [selectedStory?.id, fetchNotes]);
+    fetchTags();
+  }, [fetchTags]);
 
   // Listen for reset event
   useEffect(() => {
@@ -175,66 +131,19 @@ const NotesScreen = () => {
     ];
   }, [t]);
 
-  const handleSearch = useCallback((term: string) => {
-    setSearchQuery(term); // Update local state immediately
-  }, [setSearchQuery]);
-
-  const handleSortChange = useCallback((sortBy: string | null) => {
-    setSort(sortBy, sortDirection);
-  }, [setSort, sortDirection]);
-
-  const handleSortDirectionChange = useCallback((direction: 'asc' | 'desc') => {
-    setSort(activeSort, direction);
-  }, [setSort, activeSort]);
-
-  const handleFilterChange = useCallback((selectedValues: string[]) => {
-    setFilterTags(selectedValues);
-  }, [setFilterTags]);
-
-  const handleFavoriteFilterChange = useCallback((state: FavoriteFilterState) => {
-    setFavoriteFilter(state);
-  }, [setFavoriteFilter]);
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    errorText: {
-      color: colors.error,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
   });
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_notes')}</Text>
-      </View>
-    );
+    return <ScreenLoading message={t('loading_notes')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -247,7 +156,7 @@ const NotesScreen = () => {
         searchPlaceholder={t('search_notes')}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
-        onFilterChange={handleFilterChange}
+        onFilterChange={handleFilterTagsChange}
         selectedFilterValues={activeFilterTags}
         sortOptions={memoizedSortOptions}
         onSortChange={handleSortChange}
@@ -258,7 +167,7 @@ const NotesScreen = () => {
         currentFavoriteFilterState={favoriteFilterState}
         disableTagFilter={false}
         entityName="Note"
-        storyId={selectedStory?.id || ''}
+        storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
       />

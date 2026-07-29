@@ -2,22 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import SceneListItem from '../../components/listitem/SceneListItem';
 import SceneReorderModal from '../../components/SceneReorderModal/SceneReorderModal'; // Import the modal
-import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { MainSystemDrawerParamList, SceneStackParamList } from '../../navigation/MainSystemStack';
-import { FavoriteFilterState } from '../../services/storymanagement/SceneService';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { debounce } from '../../utils/debounce';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type ScenesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ScenesStack'>,
@@ -29,69 +27,34 @@ const SceneListScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
-  const drizzleDb = useDrizzle();
   const navigation = useNavigation<ScenesScreenNavigationProp>();
 
   const {
-    scenes,
-    searchTerm: storeSearchTerm,
+    items: scenes,
+    loading,
+    error,
+    storyId,
+    searchQuery,
     activeSort,
     sortDirection,
     favoriteFilterState,
     advancedSearchCriteria,
-    loading,
-    error,
-    fetchScenes,
-    setSearchTerm: setStoreSearchTerm,
-    setDbAndStoryId,
-    initializeService,
-    setSort,
-    setFavoriteFilter,
+    handleSearch,
+    handleSortChange,
+    handleSortDirectionChange,
+    handleFavoriteFilterChange,
     setAdvancedSearchCriteria,
     toggleFavorite,
-    reorderScenes,
-  } = useSceneStore();
+  } = useEntityListScreen({
+    useStore: useSceneStore,
+    collectionKey: 'scenes',
+    changeEvent: 'scene_changed',
+  });
 
-  const [searchQuery, setSearchQuery] = useState(storeSearchTerm);
+  // Reordering isn't part of the shared list wiring, so it comes straight from the store.
+  const reorderScenes = useSceneStore((state) => state.reorderScenes);
+
   const [isReorderModalVisible, setIsReorderModalVisible] = useState(false);
-
-  const debouncedSetStoreSearchTerm = useMemo(
-    () => debounce((term: string) => setStoreSearchTerm(term), 1000),
-    [setStoreSearchTerm]
-  );
-
-  useEffect(() => {
-    debouncedSetStoreSearchTerm(searchQuery);
-
-    return () => {
-      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
-    };
-  }, [searchQuery, debouncedSetStoreSearchTerm]);
-
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeService();
-    }
-  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService]);
-
-  useEffect(() => {
-    fetchScenes();
-  }, [storeSearchTerm, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, fetchScenes]);
-
-  useEffect(() => {
-    const handleSceneChange = (storyId: string) => {
-      if (selectedStory?.id === storyId) {
-        fetchScenes();
-      }
-    };
-
-    entityEventEmitter.on('scene_changed', handleSceneChange);
-
-    return () => {
-      entityEventEmitter.off('scene_changed', handleSceneChange);
-    };
-  }, [selectedStory?.id, fetchScenes]);
 
   const handleToggleFavorite = useCallback(async (sceneId: string, isFavorite: boolean) => {
     await toggleFavorite(sceneId, isFavorite);
@@ -118,22 +81,6 @@ const SceneListScreen = () => {
       { label: t('sort_by_updated_at'), value: 'updatedAt' }
     ];
   }, [t]);
-
-  const handleSearch = useCallback((term: string) => {
-    setSearchQuery(term);
-  }, [setSearchQuery]);
-
-  const handleSortChange = useCallback((sortBy: string | null) => {
-    setSort(sortBy, sortDirection);
-  }, [setSort, sortDirection]);
-
-  const handleSortDirectionChange = useCallback((direction: 'asc' | 'desc') => {
-    setSort(activeSort, direction);
-  }, [setSort, activeSort]);
-
-  const handleFavoriteFilterChange = useCallback((state: FavoriteFilterState) => {
-    setFavoriteFilter(state);
-  }, [setFavoriteFilter]);
 
   const handleReorderPress = useCallback(() => {
     setIsReorderModalVisible(true);
@@ -175,18 +122,6 @@ const SceneListScreen = () => {
       flex: 1,
       backgroundColor: colors.background,
     },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    errorText: {
-      color: colors.error,
-    },
     headerRightContainer: {
       flexDirection: 'row',
       marginRight: 15,
@@ -194,29 +129,14 @@ const SceneListScreen = () => {
     headerButton: {
       marginLeft: 15,
     },
-    buttonContainer: {
-      marginTop: 20,
-    },
   });
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_scenes')}</Text>
-      </View>
-    );
+    return <ScreenLoading message={t('loading_scenes')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -240,14 +160,14 @@ const SceneListScreen = () => {
         currentFavoriteFilterState={favoriteFilterState}
         disableTagFilter={true}
         entityName="Scene"
-        storyId={selectedStory?.id || ''}
+        storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
       />
       <SceneReorderModal
         isVisible={isReorderModalVisible}
         onClose={() => setIsReorderModalVisible(false)}
-        storyId={selectedStory?.id || ''} // Pass storyId
+        storyId={storyId || ''} // Pass storyId
         scenes={scenes}
         onReorderConfirm={handleReorderConfirm}
       />

@@ -2,20 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react'; // Added useState
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TagListItem from '../../components/listitem/TagListItem';
-import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schemas/tags';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack';
-import { FavoriteFilterState } from '../../services/storymanagement/TagService';
-import { useStoryStore } from '../../state/storyStore';
 import { useTagStore } from '../../state/tagStore';
 import { useTheme } from '../../theme';
-import { debounce } from '../../utils/debounce';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type TagsScreenNavigationProp = CompositeNavigationProp<
@@ -27,73 +25,29 @@ const TagsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { selectedStory } = useStoryStore();
-  const drizzleDb = useDrizzle();
   const navigation = useNavigation<TagsScreenNavigationProp>();
 
   const {
-    tags,
-    searchTerm: storeSearchTerm, // Renamed to avoid collision with local state
+    items: tags,
+    loading,
+    error,
+    storyId,
+    searchQuery,
     activeSort,
     sortDirection,
     favoriteFilterState,
-    advancedSearchCriteria, // Destructure advancedSearchCriteria
-    loading,
-    error,
-    fetchTags,
-    setSearchTerm: setStoreSearchTerm, // Renamed to avoid collision with local state
-    setDbAndStoryId,
-    initializeService,
-    setSort,
-    setFavoriteFilter,
-    setAdvancedSearchCriteria, // Destructure setAdvancedSearchCriteria
+    advancedSearchCriteria,
+    handleSearch,
+    handleSortChange,
+    handleSortDirectionChange,
+    handleFavoriteFilterChange,
+    setAdvancedSearchCriteria,
     toggleFavorite,
-  } = useTagStore();
-
-  const [searchQuery, setSearchQuery] = useState(storeSearchTerm); // Local state for immediate input feedback
-
-  const debouncedSetStoreSearchTerm = useMemo(
-    () => debounce((term: string) => setStoreSearchTerm(term), 1000), // Debounce for 1000ms
-    [setStoreSearchTerm]
-  );
-
-  // Debounce the update to the store's searchTerm
-  useEffect(() => {
-    debouncedSetStoreSearchTerm(searchQuery);
-
-    return () => {
-      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
-    };
-  }, [searchQuery, debouncedSetStoreSearchTerm]);
-
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeService();
-    }
-  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService]);
-
-  // Effect to trigger fetch when storeSearchTerm changes (after debounce)
-  // or when other filter/sort criteria change (immediately via store setters)
-  useEffect(() => {
-    fetchTags();
-  }, [storeSearchTerm, activeSort, sortDirection, favoriteFilterState, advancedSearchCriteria, fetchTags]);
-
-
-  useEffect(() => {
-    const handleTagChange = (storyId: string) => {
-      if (selectedStory?.id === storyId) {
-        fetchTags(); // Call the immediate fetchTags
-      }
-    };
-
-    entityEventEmitter.on('tag_changed', handleTagChange);
-
-    return () => {
-      entityEventEmitter.off('tag_changed', handleTagChange);
-    };
-  }, [selectedStory?.id, fetchTags]);
-
+  } = useEntityListScreen({
+    useStore: useTagStore,
+    collectionKey: 'tags',
+    changeEvent: 'tag_changed',
+  });
 
   // Listen for reset event
   useEffect(() => {
@@ -147,62 +101,19 @@ const TagsScreen = () => {
     ];
   }, [t]);
 
-  const handleSearch = useCallback((term: string) => {
-    setSearchQuery(term); // Update local state immediately
-  }, [setSearchQuery]);
-
-  const handleSortChange = useCallback((sortBy: string | null) => {
-    setSort(sortBy, sortDirection);
-  }, [setSort, sortDirection]);
-
-  const handleSortDirectionChange = useCallback((direction: 'asc' | 'desc') => {
-    setSort(activeSort, direction);
-  }, [setSort, activeSort]);
-
-  const handleFavoriteFilterChange = useCallback((state: FavoriteFilterState) => {
-    setFavoriteFilter(state);
-  }, [setFavoriteFilter]);
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    errorText: {
-      color: colors.error,
-    },
-    buttonContainer: {
-      marginTop: 20,
-    },
   });
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_tags')}</Text>
-      </View>
-    );
+    return <ScreenLoading message={t('loading_tags')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -226,7 +137,7 @@ const TagsScreen = () => {
         currentFavoriteFilterState={favoriteFilterState}
         disableTagFilter={true} // Disable the tag filter select since there are no filter options
         entityName="Tag"
-        storyId={selectedStory?.id || ''}
+        storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria} // Pass the setter
         currentAdvancedSearchCriteria={advancedSearchCriteria} // Pass the criteria
       />

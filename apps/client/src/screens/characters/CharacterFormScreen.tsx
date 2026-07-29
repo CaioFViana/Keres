@@ -15,6 +15,7 @@ import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
@@ -44,6 +45,7 @@ const CharacterFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
+  const confirmDelete = useConfirmDelete();
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
   const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
 
@@ -252,38 +254,22 @@ const CharacterFormScreen = () => {
       return;
     }
 
-    Alert.alert(
-      t('delete_character_title'),
-      t('delete_character_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (currentCharacterId && characterServiceRef.current) {
-              try {
-                setLoading(true);
-                await characterServiceRef.current.deleteCharacter(userId, currentCharacterId);
-                entityEventEmitter.emit('character_changed', selectedStory?.id, currentCharacterId); // Emit change event
-                Alert.alert(t('success'), t('character_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete character:', err);
-                setError(t('failed_to_delete_character'));
-                Alert.alert(t('error'), t('failed_to_delete_character'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    if (!currentCharacterId || !characterServiceRef.current) {
+      return;
+    }
+
+    confirmDelete({
+      titleKey: 'delete_character_title',
+      messageKey: 'delete_character_message',
+      successKey: 'character_deleted_successfully',
+      failureKey: 'failed_to_delete_character',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await characterServiceRef.current!.deleteCharacter(userId, currentCharacterId);
+        entityEventEmitter.emit('character_changed', selectedStory?.id, currentCharacterId);
+        navigation.goBack();
+      },
+    });
   };
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {

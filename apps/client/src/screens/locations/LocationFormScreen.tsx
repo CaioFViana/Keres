@@ -10,6 +10,7 @@ import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelect
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createLocationService } from '../../services/storymanagement/LocationService';
@@ -37,6 +38,7 @@ const LocationFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
+  const confirmDelete = useConfirmDelete();
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
 
   useEffect(() => {
@@ -180,38 +182,22 @@ const LocationFormScreen = () => {
       return;
     }
 
-    Alert.alert(
-      t('delete_location_title'),
-      t('delete_location_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (currentLocationId && locationServiceRef.current) {
-              try {
-                setLoading(true);
-                await locationServiceRef.current.deleteLocation(userId, currentLocationId);
-                entityEventEmitter.emit('location_changed', selectedStory?.id, currentLocationId);
-                Alert.alert(t('success'), t('location_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete location:', err);
-                setError(t('failed_to_delete_location'));
-                Alert.alert(t('error'), t('failed_to_delete_location'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    if (!currentLocationId || !locationServiceRef.current) {
+      return;
+    }
+
+    confirmDelete({
+      titleKey: 'delete_location_title',
+      messageKey: 'delete_location_message',
+      successKey: 'location_deleted_successfully',
+      failureKey: 'failed_to_delete_location',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await locationServiceRef.current!.deleteLocation(userId, currentLocationId);
+        entityEventEmitter.emit('location_changed', selectedStory?.id, currentLocationId);
+        navigation.goBack();
+      },
+    });
   };
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {

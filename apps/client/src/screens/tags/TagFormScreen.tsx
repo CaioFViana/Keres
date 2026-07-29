@@ -9,6 +9,7 @@ import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPick
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
@@ -33,6 +34,7 @@ const TagFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const tagService = useCallback(() => createTagService(drizzleDb), [drizzleDb]);
+  const confirmDelete = useConfirmDelete();
 
 
   const [name, setName] = useState('');
@@ -128,38 +130,21 @@ const TagFormScreen = () => {
       Alert.alert(t('error'), t('user_not_identified'));
       return;
     }
+    if (!tagId) {
+      return;
+    }
 
-    Alert.alert(
-      t('delete_tag_title'),
-      t('delete_tag_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (tagId) {
-              try {
-                setLoading(true);
-                await tagService().deleteTag(userId, tagId);
-                Alert.alert(t('success'), t('tag_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete tag:', err);
-                setError(t('failed_to_delete_tag'));
-                Alert.alert(t('error'), t('failed_to_delete_tag'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    confirmDelete({
+      titleKey: 'delete_tag_title',
+      messageKey: 'delete_tag_message',
+      successKey: 'tag_deleted_successfully',
+      failureKey: 'failed_to_delete_tag',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await tagService().deleteTag(userId, tagId);
+        navigation.goBack();
+      },
+    });
   };
 
   const styles = StyleSheet.create({

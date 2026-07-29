@@ -13,6 +13,7 @@ import CharacterRelationManager from '../../components/CharacterManager/Characte
 import Button from '../../components/common/Button/Button';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { SceneStackParamList } from '../../navigation/MainSystemStack';
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
@@ -47,6 +48,7 @@ const SceneFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
+  const confirmDelete = useConfirmDelete();
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null); // Ref for LocationService
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
@@ -310,38 +312,22 @@ const SceneFormScreen = () => {
       return;
     }
 
-    Alert.alert(
-      t('delete_scene_title'),
-      t('delete_scene_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (currentSceneId && sceneServiceRef.current) {
-              try {
-                setLoading(true);
-                await sceneServiceRef.current.deleteScene(userId, currentSceneId);
-                entityEventEmitter.emit('scene_changed', selectedStory?.id, currentSceneId);
-                Alert.alert(t('success'), t('scene_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete scene:', err);
-                setError(t('failed_to_delete_scene'));
-                Alert.alert(t('error'), t('failed_to_delete_scene'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    if (!currentSceneId || !sceneServiceRef.current) {
+      return;
+    }
+
+    confirmDelete({
+      titleKey: 'delete_scene_title',
+      messageKey: 'delete_scene_message',
+      successKey: 'scene_deleted_successfully',
+      failureKey: 'failed_to_delete_scene',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await sceneServiceRef.current!.deleteScene(userId, currentSceneId);
+        entityEventEmitter.emit('scene_changed', selectedStory?.id, currentSceneId);
+        navigation.goBack();
+      },
+    });
   };
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {

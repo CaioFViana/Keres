@@ -9,6 +9,7 @@ import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelect
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { MainSystemDrawerParamList, NotesStackParamList } from '../../navigation/MainSystemStack';
 import { createNoteService } from '../../services/storymanagement/NoteService';
@@ -34,6 +35,7 @@ const NoteFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const noteService = useCallback(() => createNoteService(drizzleDb), [drizzleDb]);
+  const confirmDelete = useConfirmDelete();
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState<string | null>(null);
@@ -144,38 +146,21 @@ const NoteFormScreen = () => {
       Alert.alert(t('error'), t('user_not_identified'));
       return;
     }
+    if (!noteId) {
+      return;
+    }
 
-    Alert.alert(
-      t('delete_note_title'),
-      t('delete_note_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (noteId) {
-              try {
-                setLoading(true);
-                await noteService().deleteNote(userId, noteId);
-                Alert.alert(t('success'), t('note_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete note:', err);
-                setError(t('failed_to_delete_note'));
-                Alert.alert(t('error'), t('failed_to_delete_note'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    confirmDelete({
+      titleKey: 'delete_note_title',
+      messageKey: 'delete_note_message',
+      successKey: 'note_deleted_successfully',
+      failureKey: 'failed_to_delete_note',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await noteService().deleteNote(userId, noteId);
+        navigation.goBack();
+      },
+    });
   };
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {

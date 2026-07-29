@@ -12,6 +12,7 @@ import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { ItemStackParamList } from '../../navigation/MainSystemStack'; // Use ItemStackParamList
 import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
@@ -40,6 +41,7 @@ const ItemFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
+  const confirmDelete = useConfirmDelete();
   const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
 
   useEffect(() => {
@@ -182,35 +184,22 @@ const ItemFormScreen = () => {
       Alert.alert(t('error'), t('user_not_identified'));
       return;
     }
-    Alert.alert(
-      t('delete_item_title'), // Changed
-      t('delete_item_message'), // Changed
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (currentItemId && itemServiceRef.current) { // Changed
-              try {
-                setLoading(true);
-                await itemServiceRef.current.deleteItem(userId, currentItemId); // Changed
-                entityEventEmitter.emit('item_changed', selectedStory?.id, currentItemId); // Changed
-                Alert.alert(t('success'), t('item_deleted_successfully')); // Changed
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete item:', err); // Changed
-                setError(t('failed_to_delete_item')); // Changed
-                Alert.alert(t('error'), t('failed_to_delete_item')); // Changed
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    if (!currentItemId || !itemServiceRef.current) {
+      return;
+    }
+
+    confirmDelete({
+      titleKey: 'delete_item_title',
+      messageKey: 'delete_item_message',
+      successKey: 'item_deleted_successfully',
+      failureKey: 'failed_to_delete_item',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await itemServiceRef.current!.deleteItem(userId, currentItemId);
+        entityEventEmitter.emit('item_changed', selectedStory?.id, currentItemId);
+        navigation.goBack();
+      },
+    });
   };
 
   const characterOptions = useMemo(() =>

@@ -11,6 +11,7 @@ import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { ChoiceStackParamList } from '../../navigation/MainSystemStack';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
@@ -39,6 +40,7 @@ const ChoiceFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
+  const confirmDelete = useConfirmDelete();
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
 
   useEffect(() => {
@@ -180,35 +182,22 @@ const ChoiceFormScreen = () => {
       Alert.alert(t('error'), t('user_not_identified'));
       return;
     }
-    Alert.alert(
-      t('delete_choice_title'),
-      t('delete_choice_message'),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (currentChoiceId && choiceServiceRef.current) {
-              try {
-                setLoading(true);
-                await choiceServiceRef.current.deleteChoice(userId, currentChoiceId);
-                entityEventEmitter.emit('choice_changed', selectedStory?.id, currentChoiceId);
-                Alert.alert(t('success'), t('choice_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete choice:', err);
-                setError(t('failed_to_delete_choice'));
-                Alert.alert(t('error'), t('failed_to_delete_choice'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    if (!currentChoiceId || !choiceServiceRef.current) {
+      return;
+    }
+
+    confirmDelete({
+      titleKey: 'delete_choice_title',
+      messageKey: 'delete_choice_message',
+      successKey: 'choice_deleted_successfully',
+      failureKey: 'failed_to_delete_choice',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await choiceServiceRef.current!.deleteChoice(userId, currentChoiceId);
+        entityEventEmitter.emit('choice_changed', selectedStory?.id, currentChoiceId);
+        navigation.goBack();
+      },
+    });
   };
 
   const sceneOptions = useMemo(() => scenes.map(scene => ({ label: scene.name, value: scene.id })), [scenes]);

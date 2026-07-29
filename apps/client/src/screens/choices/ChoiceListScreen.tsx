@@ -4,20 +4,20 @@ import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-n
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import Select from '../../components/common/Select/Select';
 import ChoiceListItem from '../../components/listitem/ChoiceListItem';
 import { useDrizzle } from '../../db';
 import { ChoiceSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { ChoiceStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useChapterStore } from '../../state/chapterStore';
 import { useChoiceStore } from '../../state/choiceStore';
 import { useSceneStore } from '../../state/sceneStore';
-import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { debounce } from '../../utils/debounce';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type ChoicesScreenNavigationProp = CompositeNavigationProp<
@@ -29,57 +29,46 @@ const ChoiceListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { selectedStory } = useStoryStore();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<ChoicesScreenNavigationProp>();
 
   const {
-    choices,
-    searchTerm: storeSearchTerm,
+    items: choices,
+    loading,
+    error,
+    storyId,
+    searchQuery,
     activeSort,
     sortDirection,
     advancedSearchCriteria,
-    loading,
-    error,
-    fetchChoices,
-    setSearchTerm: setStoreSearchTerm,
-    setDbAndStoryId,
-    initializeService,
-    setSort,
+    handleSearch,
+    handleSortChange,
+    handleSortDirectionChange,
     setAdvancedSearchCriteria,
-  } = useChoiceStore();
+    refetch: fetchChoices,
+  } = useEntityListScreen({
+    useStore: useChoiceStore,
+    collectionKey: 'choices',
+    changeEvent: 'choice_changed',
+  });
 
+  // Chapters and scenes feed this screen's own filter dropdowns, so they stay wired here.
   const { chapters, fetchChapters: fetchAllChapters, setDbAndStoryId: setChapterDb, initializeService: initializeChapterService } = useChapterStore();
   const { scenes, fetchScenes: fetchAllScenes, setDbAndStoryId: setSceneDb, initializeService: initializeSceneService } = useSceneStore();
 
-  const [searchQuery, setSearchQuery] = useState(storeSearchTerm);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
 
-  const debouncedSetStoreSearchTerm = useMemo(
-    () => debounce((term: string) => setStoreSearchTerm(term), 1000),
-    [setStoreSearchTerm]
-  );
-
   useEffect(() => {
-    debouncedSetStoreSearchTerm(searchQuery);
-    return () => {
-      debouncedSetStoreSearchTerm.cancel && debouncedSetStoreSearchTerm.cancel();
-    };
-  }, [searchQuery, debouncedSetStoreSearchTerm]);
-
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeService();
-      setChapterDb(drizzleDb, selectedStory.id);
+    if (drizzleDb && storyId) {
+      setChapterDb(drizzleDb, storyId);
       initializeChapterService();
-      setSceneDb(drizzleDb, selectedStory.id);
+      setSceneDb(drizzleDb, storyId);
       initializeSceneService();
       fetchAllChapters();
       fetchAllScenes();
     }
-  }, [drizzleDb, selectedStory?.id, setDbAndStoryId, initializeService, setChapterDb, initializeChapterService, setSceneDb, initializeSceneService, fetchAllChapters, fetchAllScenes]);
+  }, [drizzleDb, storyId, setChapterDb, initializeChapterService, setSceneDb, initializeSceneService, fetchAllChapters, fetchAllScenes]);
 
   useEffect(() => {
     const criteria: { [key: string]: any } = {};
@@ -88,27 +77,22 @@ const ChoiceListScreen = () => {
     setAdvancedSearchCriteria(criteria);
   }, [selectedChapterId, selectedSceneId, setAdvancedSearchCriteria]);
 
+  // Choices are derived from chapters and scenes, so their changes refresh this list too.
   useEffect(() => {
-    fetchChoices();
-  }, [storeSearchTerm, activeSort, sortDirection, advancedSearchCriteria, fetchChoices]);
-
-  useEffect(() => {
-    const handleEntityChange = (storyId: string) => {
-      if (selectedStory?.id === storyId) {
+    const handleStructureChange = (changedStoryId: string) => {
+      if (changedStoryId === storyId) {
         fetchChoices();
         fetchAllChapters();
         fetchAllScenes();
       }
     };
-    entityEventEmitter.on('choice_changed', handleEntityChange);
-    entityEventEmitter.on('chapter_changed', handleEntityChange);
-    entityEventEmitter.on('scene_changed', handleEntityChange);
+    entityEventEmitter.on('chapter_changed', handleStructureChange);
+    entityEventEmitter.on('scene_changed', handleStructureChange);
     return () => {
-      entityEventEmitter.off('choice_changed', handleEntityChange);
-      entityEventEmitter.off('chapter_changed', handleEntityChange);
-      entityEventEmitter.off('scene_changed', handleEntityChange);
+      entityEventEmitter.off('chapter_changed', handleStructureChange);
+      entityEventEmitter.off('scene_changed', handleStructureChange);
     };
-  }, [selectedStory?.id, fetchChoices, fetchAllChapters, fetchAllScenes]);
+  }, [storyId, fetchChoices, fetchAllChapters, fetchAllScenes]);
 
   const handleViewDetails = useCallback((choiceId: string) => {
     navigation.navigate('ChoiceDetail', { choiceId });
@@ -134,9 +118,6 @@ const ChoiceListScreen = () => {
     { label: t('sort_by_updated_at'), value: 'updatedAt' }
   ]), [t]);
 
-  const handleSearch = useCallback((term: string) => setSearchQuery(term), []);
-  const handleSortChange = useCallback((sortBy: string | null) => setSort(sortBy, sortDirection), [setSort, sortDirection]);
-  const handleSortDirectionChange = useCallback((direction: 'asc' | 'desc') => setSort(activeSort, direction), [setSort, activeSort]);
 
   useFocusEffect(
     useCallback(() => {
@@ -158,12 +139,8 @@ const ChoiceListScreen = () => {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    centerContent: { justifyContent: 'center', alignItems: 'center' },
-    detailText: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    errorText: { color: colors.error },
     headerRightContainer: { flexDirection: 'row', marginRight: 15 },
     headerButton: { marginLeft: 15 },
-    buttonContainer: { marginTop: 20 },
     filterContainer: { flexDirection: 'row', padding:0, paddingBottom: 10, zIndex: 1000 },
     selectWrapperLeft: { flex: 1, paddingRight:5},
     selectWrapperRight: { flex: 1, paddingLeft:5}
@@ -196,23 +173,11 @@ const ChoiceListScreen = () => {
   );
 
   if (loading && choices.length === 0) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_choices')}</Text>
-      </View>
-    );
+    return <ScreenLoading message={t('loading_choices')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -235,7 +200,7 @@ const ChoiceListScreen = () => {
         currentSortValue={activeSort}
         disableTagFilter={true}
         entityName="Choice"
-        storyId={selectedStory?.id || ''}
+        storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
         isLoading={loading}

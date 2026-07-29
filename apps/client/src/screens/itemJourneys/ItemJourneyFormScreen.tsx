@@ -12,6 +12,7 @@ import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { ItemJourneyStackParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
@@ -45,6 +46,7 @@ const ItemJourneyFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
+  const confirmDelete = useConfirmDelete();
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
 
   useEffect(() => {
@@ -203,35 +205,22 @@ const ItemJourneyFormScreen = () => {
       Alert.alert(t('error'), t('user_not_identified'));
       return;
     }
-    Alert.alert(
-      t('delete_item_journey_title'),
-      t('delete_item_journey_message'),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            if (currentItemJourneyId && itemJourneyServiceRef.current) {
-              try {
-                setLoading(true);
-                await itemJourneyServiceRef.current.deleteItemJourney(userId, currentItemJourneyId);
-                entityEventEmitter.emit('item_journey_changed', selectedStory?.id, currentItemJourneyId);
-                Alert.alert(t('success'), t('item_journey_deleted_successfully'));
-                navigation.goBack();
-              } catch (err) {
-                console.error('Failed to delete item journey:', err);
-                setError(t('failed_to_delete_item_journey'));
-                Alert.alert(t('error'), t('failed_to_delete_item_journey'));
-              } finally {
-                setLoading(false);
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+    if (!currentItemJourneyId || !itemJourneyServiceRef.current) {
+      return;
+    }
+
+    confirmDelete({
+      titleKey: 'delete_item_journey_title',
+      messageKey: 'delete_item_journey_message',
+      successKey: 'item_journey_deleted_successfully',
+      failureKey: 'failed_to_delete_item_journey',
+      onLoadingChange: setLoading,
+      onConfirm: async () => {
+        await itemJourneyServiceRef.current!.deleteItemJourney(userId, currentItemJourneyId);
+        entityEventEmitter.emit('item_journey_changed', selectedStory?.id, currentItemJourneyId);
+        navigation.goBack();
+      },
+    });
   };
 
   const itemOptions = useMemo(() =>

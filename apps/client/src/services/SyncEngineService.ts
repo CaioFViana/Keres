@@ -1,11 +1,11 @@
 import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, StoryReorderingStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { AxiosInstance } from 'axios';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
+import { ServerSelect } from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
-import { createKeresAxiosInstance } from './apiClient';
+import { createKeresAxiosInstance, isOfflineError, KeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
@@ -30,12 +30,28 @@ export interface ServerStoryPreview {
   lastOperationVersion: number;
 }
 
+/** Normal cadence while the server is responding. */
+export const SYNC_INTERVAL_MS = 30000;
+/**
+ * Cadence while the server is unreachable. Much shorter than the normal interval so
+ * that coming back online is noticed (and announced) within seconds instead of leaving
+ * the user staring at an "offline" banner long after the server is back.
+ */
+export const OFFLINE_RETRY_MS = 5000;
+
 export class SyncEngineService {
   private static instance: SyncEngineService;
-  private syncInterval: number | null = null;
+  private syncTimer: ReturnType<typeof setTimeout> | null = null;
+  private isRunning: boolean = false;
+  /**
+   * Incremented by every start/stop. A cycle captures the value it started under and
+   * refuses to schedule its successor once it changes, so a cycle still in flight when
+   * sync is restarted can't leave a second timer chain running alongside the new one.
+   */
+  private syncGeneration: number = 0;
   private storyId: string | null = null;
-  private client: AxiosInstance;
-  private intervalTimeMs: number = 30000;
+  private client: KeresAxiosInstance;
+  private intervalTimeMs: number = SYNC_INTERVAL_MS;
   private _db: AppDrizzleClient | null = null;
   private entityHandlers: Map<string, ClientSyncEntityHandler>; // Map to hold entity handlers
 
@@ -82,12 +98,15 @@ export class SyncEngineService {
     authTokenManager.setGetServerById(serverService.getServerById);
   }
 
-  public async configure(storyId: string | undefined, serverUrl: string | null) {
+  public async configure(storyId: string | undefined, server: ServerSelect | null) {
     this.storyId = storyId || null;
-    if (serverUrl) {
-      this.client = createKeresAxiosInstance({ baseURL: serverUrl });
-      // The JWT handling is now centralized in the apiClient interceptor, so no need to add headers here.
-      console.log(`SyncEngineService configured for story ${this.storyId} with server: ${serverUrl}`);
+    if (server?.url) {
+      this.client = createKeresAxiosInstance({ baseURL: server.url });
+      // Bind this client to the specific server so the request interceptor always attaches
+      // *this* server's token, regardless of what any other concurrent sync/refresh is doing.
+      this.client.setTokenProvider(authTokenManager);
+      this.client.setActiveServer(server);
+      console.log(`SyncEngineService configured for story ${this.storyId} with server: ${server.url}`);
     } else {
       console.log('SyncEngineService configured without a server URL. Sync will be disabled.');
       this.stopSync();
@@ -95,7 +114,7 @@ export class SyncEngineService {
   }
 
   public startSync(intervalTimeMs?: number) {
-    if (this.syncInterval) {
+    if (this.isRunning) {
       console.log('Sync engine already running.');
       return;
     }
@@ -118,17 +137,44 @@ export class SyncEngineService {
     this.intervalTimeMs = intervalTimeMs || this.intervalTimeMs;
     console.log(`Starting sync for story ${this.storyId} with interval ${this.intervalTimeMs / 1000}s`);
 
-    this.performSync();
+    this.isRunning = true;
+    this.syncGeneration += 1;
+    const generation = this.syncGeneration;
 
-    this.syncInterval = setInterval(() => {
-      this.performSync();
-    }, this.intervalTimeMs);
+    // Self-scheduling rather than setInterval: each cycle picks its own next delay, so
+    // an unreachable server is retried quickly while a healthy one keeps the slow
+    // cadence. It also guarantees cycles never overlap, which setInterval does not.
+    const runCycle = async () => {
+      let wasOffline = false;
+      try {
+        wasOffline = await this.performSync();
+      } catch (error) {
+        if (isOfflineError(error)) {
+          console.log('SyncEngineService: sync cycle skipped, server unreachable.');
+          wasOffline = true;
+        } else {
+          console.error('SyncEngineService: Unexpected error during sync cycle.', error);
+        }
+      }
+
+      // Bail out if sync was stopped, or restarted under a new generation, while this
+      // cycle was in flight - otherwise we'd leave a stray timer chain behind.
+      if (!this.isRunning || this.syncGeneration !== generation) {
+        return;
+      }
+      this.syncTimer = setTimeout(runCycle, wasOffline ? OFFLINE_RETRY_MS : this.intervalTimeMs);
+    };
+
+    // First cycle runs immediately - no waiting for the interval to elapse.
+    runCycle();
   }
 
   public stopSync() {
-    if (this.syncInterval) {
-      clearInterval(this.syncInterval);
-      this.syncInterval = null;
+    this.isRunning = false;
+    this.syncGeneration += 1; // Invalidate any cycle currently in flight
+    if (this.syncTimer) {
+      clearTimeout(this.syncTimer);
+      this.syncTimer = null;
       console.log('Sync engine stopped.');
     }
     this.storyId = null;
@@ -141,23 +187,26 @@ export class SyncEngineService {
     console.log('Sync engine has been reset, database instance cleared.');
   }
 
-  public async fetchServerStoryPreviews(serverUrl: string): Promise<ServerStoryPreview[]> {
-    if (!serverUrl) {
-      console.log('Server URL is required to fetch story previews.');
+  public async fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]> {
+    if (!server?.url) {
+      console.log('A server with a URL is required to fetch story previews.');
       return [];
     }
 
-    // Use a new instance from the factory, configured with the specific serverUrl
-    // JWT handling is done by the interceptor if a tokenProvider is set
+    // Use a new instance from the factory, bound to this specific server so the
+    // interceptor attaches this server's own token rather than whatever another
+    // concurrent client last set.
     const tempClient = createKeresAxiosInstance({
-      baseURL: serverUrl,
+      baseURL: server.url,
     });
+    tempClient.setTokenProvider(authTokenManager);
+    tempClient.setActiveServer(server);
 
     try {
       const response = await tempClient.get<{ message: string; storyPreviews: ServerStoryPreview[] }>('/sync/pullpreviews');
       return response.data.storyPreviews;
     } catch (error) {
-      console.log(`Error fetching server story previews from ${serverUrl}:`, error);
+      console.log(`Error fetching server story previews from ${server.url}:`, error);
       return [];
     }
   }
@@ -177,14 +226,11 @@ export class SyncEngineService {
       return;
     }
 
-    let serverUrl: string | null = null;
+    let server: ServerSelect | undefined;
     try {
       const serverService = createServerService(this._db);
-      const server = await serverService.getServerById(queriedServerId);
-      if (server?.url) {
-        serverUrl = server.url;
-      }
-      else {
+      server = await serverService.getServerById(queriedServerId);
+      if (!server?.url) {
         showNotification(`Failed to download story '${storyId}': Server URL not found for ID ${queriedServerId}.`, 'error');
         return;
       }
@@ -194,13 +240,19 @@ export class SyncEngineService {
       return;
     }
 
+    if (!server?.url) {
+      return;
+    }
+
     const tempClient = createKeresAxiosInstance({
-      baseURL: serverUrl,
+      baseURL: server.url,
     });
+    tempClient.setTokenProvider(authTokenManager);
+    tempClient.setActiveServer(server);
 
     try {
       const exportUrl = `/stories/${storyId}/export`;
-      console.log(`Attempting to download story ${storyId} from ${serverUrl}${exportUrl}`);
+      console.log(`Attempting to download story ${storyId} from ${server.url}${exportUrl}`);
       const response = await tempClient.get(exportUrl);
       const fullStoryData = response.data;
 
@@ -210,29 +262,30 @@ export class SyncEngineService {
       showNotification(`Story '${storyId}' downloaded and imported!`, 'success');
 
     } catch (error) {
-      console.log(`Error downloading or importing story ${storyId} from ${serverUrl}:`, error);
+      console.log(`Error downloading or importing story ${storyId} from ${server.url}:`, error);
       showNotification(`Failed to download story '${storyId}'.`, 'error');
     }
   }
 
 
-  private async performSync() {
+  /** Runs one full pull/push cycle. Resolves to true when the server was unreachable. */
+  private async performSync(): Promise<boolean> {
     const { showNotification } = useNotificationStore.getState();
     if (!this.storyId) {
       console.log('No storyId set for sync operation.');
-      return;
+      return false;
     }
 
     if (!this.client.defaults.baseURL) {
       console.log('No server URL set for sync operation.');
       this.stopSync();
-      return;
+      return false;
     }
 
     if (!this._db) {
       console.log('Drizzle client (db) is not initialized. Cannot perform sync.');
       this.stopSync();
-      return;
+      return false;
     }
 
     try {
@@ -249,7 +302,7 @@ export class SyncEngineService {
       if (!localStory) {
         console.log(`Story with ID ${this.storyId} not found locally.`);
         this.stopSync();
-        return;
+        return false;
       }
 
       let currentServerMaxOperationVersion = localStory.lastServerSyncedLog || 0;
@@ -265,6 +318,7 @@ export class SyncEngineService {
       if (remoteUpdates && remoteUpdates.length > 0) {
         let totalUpdates = remoteUpdates.length;
         let entitiesUpdated: string[] = [];
+        let failedEntities: string[] = [];
 
         console.log(`Received ${totalUpdates} remote updates. Applying to local DB...`);
         for (const update of remoteUpdates) {
@@ -339,10 +393,21 @@ export class SyncEngineService {
 
           } catch (handlerError) {
             console.log(`Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`, handlerError);
-            showNotification(`Failed to apply remote update for ${update.entity} ID ${update.id}.`, 'error');
+            if (!failedEntities.includes(update.entity)) {
+              failedEntities.push(update.entity);
+            }
           }
         }
-        showNotification(`${totalUpdates} new updates from server. Updated: ${entitiesUpdated.join(', ')}.`, 'info');
+
+        // One consolidated notification per sync cycle instead of one per failed
+        // item - a single flaky entity type shouldn't flood the user with a
+        // notification for every record it touches.
+        if (entitiesUpdated.length > 0) {
+          showNotification(`${totalUpdates} new updates from server. Updated: ${entitiesUpdated.join(', ')}.`, 'info');
+        }
+        if (failedEntities.length > 0) {
+          showNotification(`Failed to apply some remote updates: ${failedEntities.join(', ')}.`, 'error');
+        }
         // Emit event to signal operation log update after applying remote updates
         entityEventEmitter.emit('operation_log_updated', this.storyId);
       } else {
@@ -463,7 +528,13 @@ export class SyncEngineService {
           showNotification(`Pushed ${pendingLocalOperations.length} updates.`, 'success');
 
         } catch (pushError: any) {
-          console.log(`Error pushing local operations for story ${this.storyId}:`, pushError);
+          if (isOfflineError(pushError)) {
+            // Server unreachable: the operations stay unsynced and will be retried
+            // on the next cycle. Nothing for the user to act on.
+            console.log(`Push skipped for story ${this.storyId}: server unreachable.`);
+            return true;
+          }
+          console.log(`Error pushing local operations for story ${this.storyId}:`, pushError?.message || pushError);
           showNotification(`Failed to push updates: ${pushError.message || 'Unknown error'}`, 'error');
         }
       }
@@ -473,9 +544,17 @@ export class SyncEngineService {
         .set({ lastServerSyncedLog: currentServerMaxOperationVersion })
         .where(eq(schema.stories.id, this.storyId));
 
+      return false;
     } catch (error: any) {
-      console.log('Error during sync operation:', error);
+      if (isOfflineError(error)) {
+        // Offline-first: an unreachable server is expected, not a failure worth
+        // interrupting the user for. Retried on a shorter delay.
+        console.log(`Sync skipped for story ${this.storyId}: server unreachable.`);
+        return true;
+      }
+      console.log('Error during sync operation:', error?.message || error);
       showNotification(`Sync failed: ${error.message || 'Unknown error'}`, 'error');
+      return false;
     }
   }
 

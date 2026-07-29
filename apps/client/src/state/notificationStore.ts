@@ -28,6 +28,14 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     };
 
     set((state) => {
+      // Avoid piling up duplicates of the same message (e.g. a persistent sync
+      // failure repeating every polling interval) either currently on screen or
+      // already waiting in the queue.
+      const isDuplicate = (n: Notification | null) => n?.type === type && n?.message === message;
+      if (state.currentNotifications.some(isDuplicate) || state.queue.some(isDuplicate)) {
+        return state;
+      }
+
       const currentNotifications = [...state.currentNotifications];
       const emptyLaneIndex = currentNotifications.findIndex(n => n === null);
 

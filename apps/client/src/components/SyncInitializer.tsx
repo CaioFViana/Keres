@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createStoryService, useDrizzle } from '../db';
-import apiClient from '../services/apiClient';
+import apiClient, { isOfflineError } from '../services/apiClient';
 import { authTokenManager, setAuthDb } from '../services/AuthTokenManager';
 import { createFriendshipService } from '../services/FriendshipService';
 import { createServerService } from '../services/ServerService';
-import { ServerStoryPreview, SyncEngineService } from '../services/SyncEngineService';
+import { OFFLINE_RETRY_MS, ServerStoryPreview, SYNC_INTERVAL_MS, SyncEngineService } from '../services/SyncEngineService';
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';
 import { useStoryStore } from '../state/storyStore'; // Import useStoryStore
@@ -33,18 +33,28 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     return () => {};
   }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
 
-  const syncDataWithServers = useCallback(async () => {
+  /** Resolves to true when at least one server was unreachable, so the caller can retry sooner. */
+  const syncDataWithServers = useCallback(async (): Promise<boolean> => {
     if (!drizzleClient || !userId) {
       console.warn('Drizzle client or userId not available for sync. Skipping.');
-      return;
+      return false;
     }
 
     SyncEngineService.getInstance().setDbInstance(drizzleClient);
     setAuthDb(drizzleClient); // Ensure authDb is set, especially if drizzleClient changes
 
     const serverService = createServerService(drizzleClient);
-    const localStories = await storyService.getAllStories();
-    const servers = await serverService.getAllServers();
+    let localStories: Awaited<ReturnType<typeof storyService.getAllStories>>;
+    let servers: Awaited<ReturnType<typeof serverService.getAllServers>>;
+    try {
+      localStories = await storyService.getAllStories();
+      servers = await serverService.getAllServers();
+    } catch (error) {
+      console.error('SyncInitializer: Failed to read local stories/servers, skipping this sync cycle.', error);
+      return false;
+    }
+
+    let sawUnreachableServer = false;
 
     for (let server of servers) {
       if (!server.url) {
@@ -61,7 +71,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         server = await serverService.refreshServerToken(server);
         await friendshipService.syncFriendshipsWithServer(userId, server.id); // Call friendship sync
 
-        const serverStoryPreviews = await SyncEngineService.getInstance().fetchServerStoryPreviews(server.url);
+        const serverStoryPreviews = await SyncEngineService.getInstance().fetchServerStoryPreviews(server);
 
         const localStoryIds = new Set(localStories.map(s => s.id));
         const newStoriesOnServer = serverStoryPreviews.filter(
@@ -77,7 +87,12 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
               console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
               fetchStoryList(storyService); // Refresh the story list after import
             } catch (downloadError) {
-              console.error(`Failed to download and import story ${storyPreview.storyId}:`, downloadError);
+              if (isOfflineError(downloadError)) {
+                console.log(`Server unreachable while downloading story ${storyPreview.storyId}, will retry.`);
+                sawUnreachableServer = true;
+                continue;
+              }
+              console.log(`Failed to download and import story ${storyPreview.storyId}:`, (downloadError as Error)?.message || downloadError);
               showNotification(t('failed_to_download_story') + `: ${storyPreview.storyId}`, 'error');
             }
           }
@@ -85,21 +100,58 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           console.log(`No new stories found on server ${server.name}.`);
         }
       } catch (error) {
-        console.error(`Error during sync with server ${server.name} at ${server.url}:`, error);
+        if (isOfflineError(error)) {
+          // Server unreachable: expected in an offline-first app, retried on a shorter delay.
+          console.log(`Server ${server.name} is unreachable, skipping this cycle.`);
+          sawUnreachableServer = true;
+          continue;
+        }
+        console.log(`Error during sync with server ${server.name} at ${server.url}:`, (error as Error)?.message || error);
         showNotification(t('failed_to_sync_with_server') + `: ${server.name}`, 'error');
       }
     }
+
+    return sawUnreachableServer;
   }, [drizzleClient, userId, storyService, showNotification, t, fetchStoryList, friendshipService]);
 
-  // Use a separate useEffect with an empty dependency array to call syncStoriesWithServers once and set up the interval
   useEffect(() => {
-    syncDataWithServers();
-    const syncInterval = setInterval(syncDataWithServers, 30000); // 30 seconds
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    // Self-scheduling instead of setInterval: an unreachable server is retried within
+    // seconds (so reconnecting is noticed and announced promptly) while a healthy one
+    // keeps the slow cadence. Cycles also can't overlap, which setInterval allows.
+    const runCycle = async () => {
+      let wasOffline = false;
+      try {
+        // syncDataWithServers handles its own errors, but guard the call site too: an
+        // async call left uncaught turns any escaped error into an unhandled rejection.
+        wasOffline = await syncDataWithServers();
+      } catch (error) {
+        if (isOfflineError(error)) {
+          console.log('SyncInitializer: server sync cycle skipped, server unreachable.');
+          wasOffline = true;
+        } else {
+          console.error('SyncInitializer: Unexpected error during server sync cycle.', error);
+        }
+      }
+
+      if (cancelled) {
+        return;
+      }
+      timer = setTimeout(runCycle, wasOffline ? OFFLINE_RETRY_MS : SYNC_INTERVAL_MS);
+    };
+
+    // First cycle runs immediately on mount - no waiting for the interval to elapse.
+    runCycle();
 
     return () => {
-      clearInterval(syncInterval);
+      cancelled = true;
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
-  }, [syncDataWithServers]); // Dependency on syncStoriesWithServers ensures the latest version is used
+  }, [syncDataWithServers]); // Dependency on syncDataWithServers ensures the latest version is used
 
   // NEW: useEffect to handle push synchronization for the selected story
   useEffect(() => {
@@ -122,7 +174,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           const server = await serverService.getServerById(selectedStory.serverId);
           if (server?.url) {
             console.log(`SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`);
-            SyncEngineService.getInstance().configure(selectedStory.id, server.url);
+            SyncEngineService.getInstance().configure(selectedStory.id, server);
             SyncEngineService.getInstance().startSync();
             useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store
           } else {
@@ -143,7 +195,13 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       }
     };
 
-    manageStorySync();
+    manageStorySync().catch((error) => {
+      if (isOfflineError(error)) {
+        console.log('SyncInitializer: story sync setup skipped, server unreachable.');
+        return;
+      }
+      console.error('SyncInitializer: Unexpected error while managing story sync.', error);
+    });
 
     // Cleanup function: stop sync when component unmounts or dependencies change
     return () => {
@@ -151,7 +209,9 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       SyncEngineService.getInstance().stopSync();
       useUserSettingsStore.getState().clearActiveServer(); // Clear active server on unmount/dependency change
     };
-  }, [selectedStory?.id, drizzleClient, showNotification, t]); // Dependencies for this effect
+    // serverId matters as much as id here: linking an existing story to a server changes
+    // serverId while id stays put, and sync must reconfigure when that happens.
+  }, [selectedStory?.id, selectedStory?.serverId, drizzleClient, showNotification, t]);
 
   return <>{children}</>;
 };

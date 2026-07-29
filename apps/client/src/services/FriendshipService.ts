@@ -8,6 +8,7 @@ import { AppDrizzleClient, AppDrizzleTransaction } from '../db';
 import { useNotificationStore } from '../state/notificationStore'; // Import notification store and types
 import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
+import { isOfflineError } from './apiClient';
 import { friendshipApiService } from './FriendshipApiService'; // Import the API service
 
 export type FriendshipWithServer = FriendshipSelect & {
@@ -227,9 +228,22 @@ export class FriendshipService {
   }
 
   async syncFriendshipsWithServer(currentUserId: string, serverId: string): Promise<void> {
+    // Fetch before opening the transaction: a network round-trip inside a DB
+    // transaction holds it open for the whole request and aborts it on failure.
+    let serverFriendships: EnrichedFriendship[];
+    try {
+      serverFriendships = await friendshipApiService.getFriendships();
+    } catch (error) {
+      if (isOfflineError(error)) {
+        // Expected while the server is unreachable - keep local friendships as-is.
+        console.log('FriendshipService: server unreachable, skipping friendship sync.');
+        return;
+      }
+      throw error;
+    }
+
     try {
       await this.db.transaction(async (tx: AppDrizzleTransaction) => {
-        const serverFriendships: EnrichedFriendship[] = await friendshipApiService.getFriendships();
         const showNotification = useNotificationStore.getState().showNotification;
 
         // --- Notification Preparation & Deletion Logic ---
@@ -289,7 +303,7 @@ export class FriendshipService {
 
       entityEventEmitter.emit('friendship_changed'); // Emit event after sync to notify of potential changes
     } catch (error) {
-      console.error('FriendshipService: Error syncing friendships with server:', error);
+      console.log('FriendshipService: Error syncing friendships with server:', (error as Error)?.message || error);
       throw error;
     }
   }

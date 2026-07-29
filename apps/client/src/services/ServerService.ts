@@ -4,6 +4,7 @@ import { ServerInsert, ServerSelect, servers } from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added
+import { isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 
 export interface ServerService {
@@ -54,9 +55,9 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
 
     async refreshServerToken(server: ServerSelect): Promise<ServerSelect> {
       if (!server.jwtToken || !server.refreshToken) {
-        const message = `Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`;
-        console.log(message);
-        showNotification(message, 'error');
+        // Persistent state (the server was never authenticated), re-evaluated on every
+        // sync cycle - log it, but don't notify the user every interval.
+        console.log(`Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`);
         return server;
       }
 
@@ -96,8 +97,13 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         return updatedServer;
 
       } catch (error) {
+        if (isOfflineError(error)) {
+          // Can't refresh while the server is unreachable - not a credentials problem.
+          console.log(`Server ${server.name} is unreachable, token refresh deferred.`);
+          return server;
+        }
         const message = `Failed to refresh token for server ${server.name}. Please re-authenticate.`;
-        console.log(message, error);
+        console.log(message, (error as Error)?.message || error);
         showNotification(message, 'error');
         return server; // Return original server on any refresh error
       }

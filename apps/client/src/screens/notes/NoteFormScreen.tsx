@@ -8,12 +8,10 @@ import Button from '../../components/common/Button/Button';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { MainSystemDrawerParamList, NotesStackParamList } from '../../navigation/MainSystemStack';
 import { createNoteService } from '../../services/storymanagement/NoteService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -36,27 +34,19 @@ const NoteFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const noteService = useCallback(() => createNoteService(drizzleDb), [drizzleDb]);
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
-
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!tagServiceRef.current) {
-        tagServiceRef.current = createTagService(drizzleDb);
-      }
-      if (!tagRelationServiceRef.current) {
-        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
-  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  // Notes can't be attached to other notes, so only the tag half of the hook applies.
+  const {
+    availableTags,
+    selectedTagIds,
+    setSelectedTagIds,
+    persistTagRelations,
+  } = useEntityRelations({ entityType: 'Note', entityId: noteId, withNotes: false });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,37 +62,10 @@ const NoteFormScreen = () => {
     }, [navigation, isEditing, t])
   );
 
-  const fetchAvailableTags = useCallback(async () => {
-    if (!tagServiceRef.current || !selectedStory?.id) {
-      setAvailableTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagServiceRef.current.getTagsByStoryId(selectedStory.id);
-      setAvailableTags(fetchedTags);
-    } catch (err) {
-      console.error('Failed to fetch available tags:', err);
-    }
-  }, [selectedStory?.id, tagServiceRef.current]);
-
-  const fetchNoteTags = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id || !noteId) {
-      setSelectedTagIds([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, noteId, 'Note');
-      setSelectedTagIds(fetchedTags.map(tag => tag.id));
-    } catch (err) {
-      console.error('Failed to fetch note tags:', err);
-    }
-  }, [selectedStory?.id, noteId, tagRelationServiceRef.current]);
-
   useEffect(() => {
-    const loadNoteAndTags = async () => {
+    const loadNote = async () => {
       if (!isEditing) {
         setLoading(false);
-        fetchAvailableTags();
         return;
       }
       try {
@@ -121,12 +84,10 @@ const NoteFormScreen = () => {
         setError(t('failed_to_load_note'));
       } finally {
         setLoading(false);
-        fetchAvailableTags();
-        fetchNoteTags();
       }
     };
-    loadNoteAndTags();
-  }, [noteId, isEditing, noteService, t, fetchAvailableTags, fetchNoteTags]);
+    loadNote();
+  }, [noteId, isEditing, noteService, t]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -164,9 +125,8 @@ const NoteFormScreen = () => {
         currentNoteId = newNote.id; // Get the ID of the newly created note
       }
 
-      // Update tag relations
-      if (currentNoteId && tagRelationServiceRef.current && selectedStory?.id) {
-        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, currentNoteId, 'Note', selectedTagIds);
+      if (currentNoteId) {
+        await persistTagRelations(currentNoteId);
       }
 
       navigation.goBack();

@@ -3,7 +3,6 @@ import Select from '@/src/components/common/Select/Select';
 import SuggestionTextInput from '@/src/components/common/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { ItemJourney } from '@keres/shared/entities/Item';
-import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,14 +11,10 @@ import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet
 import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { ItemJourneyStackParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { createTagService } from '../../services/storymanagement/TagService';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characters
 import { useItemStore } from '../../state/itemStore'; // Assuming ItemStore for items
 import { useSceneStore } from '../../state/sceneStore'; // Assuming SceneStore for scenes
@@ -51,18 +46,10 @@ const ItemJourneyFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
-  const noteServiceRef = useRef<NoteService | null>(null);
-  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null);
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
 
   useEffect(() => {
-    if (drizzleDb) {
-      if (!itemJourneyServiceRef.current) itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
-      if (!noteServiceRef.current) noteServiceRef.current = createNoteService(drizzleDb);
-      if (!noteRelationServiceRef.current) noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
-      if (!tagServiceRef.current) tagServiceRef.current = createTagService(drizzleDb);
-      if (!tagRelationServiceRef.current) tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+    if (drizzleDb && !itemJourneyServiceRef.current) {
+      itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
     }
   }, [drizzleDb]);
 
@@ -94,10 +81,16 @@ const ItemJourneyFormScreen = () => {
   const [newState, setNewState] = useState<string>('');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
-  const [allNotes, setAllNotes] = useState<Note[]>([]);
-  const [itemJourneyNoteRelations, setItemJourneyNoteRelations] = useState<NoteRelation[]>([]);
-  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const {
+    availableTags,
+    selectedTagIds,
+    setSelectedTagIds,
+    allNotes,
+    noteRelations: itemJourneyNoteRelations,
+    persistTagRelations,
+    saveNoteRelation,
+    deleteNoteRelation,
+  } = useEntityRelations({ entityType: 'ItemJourney', entityId: currentItemJourneyId });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,48 +106,8 @@ const ItemJourneyFormScreen = () => {
     }, [navigation, isEditing, t])
   );
 
-  const fetchNotesForStory = useCallback(async () => {
-    if (!noteServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
-      setAllNotes(fetchedNotes);
-    } catch (err) {
-      console.error('Failed to fetch notes for story:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchNoteRelationsForItemJourney = useCallback(async () => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentItemJourneyId) return;
-    try {
-      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, currentItemJourneyId, 'ItemJourney');
-      setItemJourneyNoteRelations(fetchedNoteRelations);
-    } catch (err) {
-      console.error('Failed to fetch note relations for item journey:', err);
-    }
-  }, [selectedStory?.id, currentItemJourneyId]);
-
-  const fetchAvailableTags = useCallback(async () => {
-    if (!tagServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedTags = await tagServiceRef.current.getTagsByStoryId(selectedStory.id);
-      setAvailableTags(fetchedTags);
-    } catch (err) {
-      console.error('Failed to fetch available tags:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchItemJourneyTags = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id || !currentItemJourneyId) return;
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, currentItemJourneyId, 'ItemJourney');
-      setSelectedTagIds(fetchedTags.map(tag => tag.id));
-    } catch (err) {
-      console.error('Failed to fetch item journey tags:', err);
-    }
-  }, [selectedStory?.id, currentItemJourneyId]);
-
   useEffect(() => {
-    const loadItemJourneyAndData = async () => {
+    const loadItemJourney = async () => {
       if (!itemJourneyServiceRef.current || !selectedStory?.id) {
         setLoading(false);
         return;
@@ -174,18 +127,14 @@ const ItemJourneyFormScreen = () => {
           }
         }
       } catch (err) {
-        console.error('Failed to load item journey or related data:', err);
+        console.error('Failed to load item journey:', err);
         setError(t('failed_to_load_item_journey'));
       } finally {
         setLoading(false);
-        fetchNotesForStory();
-        fetchNoteRelationsForItemJourney();
-        fetchAvailableTags();
-        fetchItemJourneyTags();
       }
     };
-    loadItemJourneyAndData();
-  }, [currentItemJourneyId, isEditing, selectedStory?.id, t, fetchNotesForStory, fetchNoteRelationsForItemJourney, fetchAvailableTags, fetchItemJourneyTags]);
+    loadItemJourney();
+  }, [currentItemJourneyId, isEditing, selectedStory?.id, t]);
 
   const handleSave = async () => {
     if (!itemId) {
@@ -230,8 +179,8 @@ const ItemJourneyFormScreen = () => {
         Alert.alert(t('success'), t('item_journey_created_successfully'));
       }
 
-      if (savedItemJourneyId && tagRelationServiceRef.current) {
-        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, savedItemJourneyId, 'ItemJourney', selectedTagIds);
+      if (savedItemJourneyId) {
+        await persistTagRelations(savedItemJourneyId);
       }
       entityEventEmitter.emit('item_journey_changed', selectedStory.id, savedItemJourneyId);
 
@@ -283,48 +232,6 @@ const ItemJourneyFormScreen = () => {
       ],
       { cancelable: true }
     );
-  };
-
-  const handleSaveNoteRelation = async (relation: NoteRelation) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentItemJourneyId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
-      setItemJourneyNoteRelations(prev => {
-        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
-        if (existingIndex > -1) {
-          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
-        }
-        return [...prev, savedRelation];
-      });
-      entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentItemJourneyId);
-      Alert.alert(t('success'), t('note_relation_saved_successfully'));
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_note_relation'));
-      console.error('Failed to save note relation:', error);
-    }
-  };
-
-  const handleDeleteNoteRelation = async (relationId: string) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentItemJourneyId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
-      if (success) {
-        setItemJourneyNoteRelations(prev => prev.filter(r => r.id !== relationId));
-        entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentItemJourneyId);
-        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
-      } else {
-        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      }
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      console.error('Failed to delete note relation:', error);
-    }
   };
 
   const itemOptions = useMemo(() =>
@@ -436,8 +343,8 @@ const ItemJourneyFormScreen = () => {
               <NoteManager
                 noteRelations={itemJourneyNoteRelations}
                 availableNotes={allNotes}
-                onSave={handleSaveNoteRelation}
-                onDelete={handleDeleteNoteRelation}
+                onSave={saveNoteRelation}
+                onDelete={deleteNoteRelation}
                 editable={true}
                 currentStoryId={selectedStory.id}
                 currentEntityId={currentItemJourneyId}

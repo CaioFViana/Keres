@@ -1,21 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
-import { ChoiceSelect, TagSelect } from '../../db/schema';
+import { ChoiceSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
@@ -33,30 +28,26 @@ const ChoiceDetailScreen = () => {
   const route = useRoute<ChoiceDetailScreenRouteProp>();
   const { choiceId } = route.params;
   const { t } = useTranslation();
-  const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
 
   const drizzleDb = useDrizzle();
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
-  const noteServiceRef = useRef<NoteService | null>(null);
-  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null);
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
 
   useEffect(() => {
-    if (drizzleDb) {
-      if (!choiceServiceRef.current) choiceServiceRef.current = createChoiceService(drizzleDb);
-      if (!noteServiceRef.current) noteServiceRef.current = createNoteService(drizzleDb);
-      if (!noteRelationServiceRef.current) noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
-      if (!tagServiceRef.current) tagServiceRef.current = createTagService(drizzleDb);
-      if (!tagRelationServiceRef.current) tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+    if (drizzleDb && !choiceServiceRef.current) {
+      choiceServiceRef.current = createChoiceService(drizzleDb);
     }
   }, [drizzleDb]);
 
   const [choice, setChoice] = useState<ChoiceSelect | null>(null);
-  const [allNotes, setAllNotes] = useState<Note[]>([]);
-  const [choiceNoteRelations, setChoiceNoteRelations] = useState<NoteRelation[]>([]);
-  const [choiceTags, setChoiceTags] = useState<TagSelect[]>([]);
+
+  const {
+    selectedTags: choiceTags,
+    allNotes,
+    noteRelations: choiceNoteRelations,
+    saveNoteRelation,
+    deleteNoteRelation,
+  } = useEntityRelations({ entityType: 'Choice', entityId: choiceId });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -98,36 +89,6 @@ const ChoiceDetailScreen = () => {
     }
   }, [choiceId, navigation, t]);
 
-  const fetchNotesForStory = useCallback(async () => {
-    if (!noteServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
-      setAllNotes(fetchedNotes);
-    } catch (err) {
-      console.error('Failed to fetch notes for story:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchNoteRelationsForChoice = useCallback(async () => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, choiceId, 'Choice');
-      setChoiceNoteRelations(fetchedNoteRelations);
-    } catch (err) {
-      console.error('Failed to fetch note relations for choice:', err);
-    }
-  }, [selectedStory?.id, choiceId]);
-
-  const fetchTagsForChoice = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, choiceId, 'Choice');
-      setChoiceTags(fetchedTags);
-    } catch (err) {
-      console.error('Failed to fetch tags for choice:', err);
-    }
-  }, [selectedStory?.id, choiceId]);
-
   const handleChoiceChange = useCallback(async (changedStoryId: string, changedChoiceId: string) => {
     if (changedChoiceId === choiceId && choiceServiceRef.current) {
       const updatedChoice = await choiceServiceRef.current.getById(choiceId);
@@ -140,81 +101,15 @@ const ChoiceDetailScreen = () => {
     }
   }, [choiceId, navigation, t]);
 
-  const handleNoteChange = useCallback(() => {
-    fetchNotesForStory();
-  }, [fetchNotesForStory]);
-
-  const handleNoteRelationChange = useCallback(() => {
-    fetchNoteRelationsForChoice();
-  }, [fetchNoteRelationsForChoice]);
-
-  const handleTagRelationChange = useCallback((changedStoryId: string, changedEntityId: string) => {
-    if (changedEntityId === choiceId) fetchTagsForChoice();
-  }, [choiceId, fetchTagsForChoice]);
-
+  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     fetchChoice();
     entityEventEmitter.on('choice_changed', handleChoiceChange);
-    entityEventEmitter.on('note_changed', handleNoteChange);
-    entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
-    entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
     return () => {
       entityEventEmitter.off('choice_changed', handleChoiceChange);
-      entityEventEmitter.off('note_changed', handleNoteChange);
-      entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
-      entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
     };
-  }, [choiceId, fetchChoice, handleChoiceChange, handleNoteChange, handleNoteRelationChange, handleTagRelationChange]);
+  }, [choiceId, fetchChoice, handleChoiceChange]);
 
-  useEffect(() => {
-    if (choice) {
-      fetchNotesForStory();
-      fetchNoteRelationsForChoice();
-      fetchTagsForChoice();
-    }
-  }, [choice, fetchNotesForStory, fetchNoteRelationsForChoice, fetchTagsForChoice]);
-
-  const handleSaveNoteRelation = async (relation: NoteRelation) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
-      setChoiceNoteRelations(prev => {
-        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
-        if (existingIndex > -1) {
-          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
-        }
-        return [...prev, savedRelation];
-      });
-      entityEventEmitter.emit('note_relation_changed', selectedStory.id, choiceId);
-      Alert.alert(t('success'), t('note_relation_saved_successfully'));
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_note_relation'));
-      console.error('Failed to save note relation:', error);
-    }
-  };
-
-  const handleDeleteNoteRelation = async (relationId: string) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
-      if (success) {
-        setChoiceNoteRelations(prev => prev.filter(r => r.id !== relationId));
-        entityEventEmitter.emit('note_relation_changed', selectedStory.id, choiceId);
-        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
-      } else {
-        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      }
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      console.error('Failed to delete note relation:', error);
-    }
-  };
 
   const renderHeaderRight = useCallback(() => (
     <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', { choiceId })} style={{ marginRight: 15 }}>
@@ -246,8 +141,8 @@ const ChoiceDetailScreen = () => {
       <NoteManager
         noteRelations={choiceNoteRelations}
         availableNotes={allNotes}
-        onSave={handleSaveNoteRelation}
-        onDelete={handleDeleteNoteRelation}
+        onSave={saveNoteRelation}
+        onDelete={deleteNoteRelation}
         editable={false}
         currentStoryId={selectedStory?.id || ''}
         currentEntityId={choiceId}

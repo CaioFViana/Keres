@@ -1,23 +1,20 @@
 import NoteManager from '@/src/components/NoteManager';
-import { createNoteRelationService, NoteRelationServiceInterface } from '@/src/services/storymanagement/NoteRelationService';
-import { createNoteService, NoteService } from '@/src/services/storymanagement/NoteService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
-import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
 import LocationItemManager from '../../components/LocationManager/LocationItemManager'; // Import LocationItemManager
 import LocationSceneManager from '../../components/LocationManager/LocationSceneManager'; // Import LocationSceneManager
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
-import { LocationSelect, SceneSelect, TagSelect } from '../../db/schema'; // Explicitly import SceneSelect
+import { LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { CharacterService, createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
@@ -25,8 +22,6 @@ import { createItemJourneyService, ItemJourneyService } from '../../services/sto
 import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -51,10 +46,6 @@ const LocationDetailsScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
-  const noteServiceRef = useRef<NoteService | null>(null); // Ref for NoteService
-  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null); // Ref for NoteRelationService
   const characterServiceRef = useRef<CharacterService | null>(null); // Ref for CharacterService
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
   const itemServiceRef = useRef<ItemService | null>(null); // Ref for ItemService
@@ -63,34 +54,26 @@ const LocationDetailsScreen = () => {
   const [location, setLocation] = useState<LocationSelect | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [locationTags, setLocationTags] = useState<TagSelect[]>([]);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
-  const [allNotes, setAllNotes] = useState<Note[]>([]); // State for all notes in story
-  const [locationNoteRelations, setLocationNoteRelations] = useState<NoteRelation[]>([]); // State for note relations
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
   const [allScenes, setAllScenes] = useState<SceneSelect[]>([]); // State for all scenes in story
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character scene relations
   const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in story
   const [allItemJourneys, setAllItemJourneys] = useState<ItemJourney[]>([]); // State for all item journeys in story
-  const { userId } = useUserSettingsStore(); // Get userId from store
+
+  const {
+    selectedTags: locationTags,
+    allNotes,
+    noteRelations: locationNoteRelations,
+    saveNoteRelation,
+    deleteNoteRelation,
+  } = useEntityRelations({ entityType: 'Location', entityId: locationId });
 
 
   useEffect(() => {
     if (drizzleDb) {
       if (!locationServiceRef.current) {
         locationServiceRef.current = createLocationService(drizzleDb);
-      }
-      if (!tagServiceRef.current) {
-        tagServiceRef.current = createTagService(drizzleDb);
-      }
-      if (!tagRelationServiceRef.current) {
-        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
-      }
-      if (!noteServiceRef.current) {
-        noteServiceRef.current = createNoteService(drizzleDb);
-      }
-      if (!noteRelationServiceRef.current) {
-        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
       }
       if (!characterServiceRef.current) {
         characterServiceRef.current = createCharacterService(drizzleDb);
@@ -150,46 +133,6 @@ const LocationDetailsScreen = () => {
       setLoading(false);
     }
   }, [locationId, navigation, setLocation, setLoading, setError, setHeaderTitle, locationServiceRef.current, t]);
-
-  const fetchTagsForLocation = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id || !locationId) {
-      setLocationTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, locationId, 'Location');
-      setLocationTags(fetchedTags);
-    } catch (err) {
-      console.error('Failed to fetch tags for location:', err);
-      // Optionally set an error state for tags specifically
-    }
-  }, [selectedStory?.id, locationId, tagRelationServiceRef.current]);
-
-  const fetchNotesForStory = useCallback(async () => {
-    if (!noteServiceRef.current || !selectedStory?.id) {
-      setAllNotes([]);
-      return;
-    }
-    try {
-      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
-      setAllNotes(fetchedNotes);
-    } catch (err) {
-      console.error('Failed to fetch notes for story:', err);
-    }
-  }, [selectedStory?.id, noteServiceRef.current]);
-
-  const fetchNoteRelationsForLocation = useCallback(async () => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !locationId) {
-      setLocationNoteRelations([]);
-      return;
-    }
-    try {
-      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, locationId, 'Location');
-      setLocationNoteRelations(fetchedNoteRelations);
-    } catch (err) {
-      console.error('Failed to fetch note relations for location:', err);
-    }
-  }, [selectedStory?.id, locationId, noteRelationServiceRef.current]);
 
   const fetchAllCharactersInStory = useCallback(async () => {
     if (!characterServiceRef.current || !selectedStory?.id) {
@@ -271,24 +214,6 @@ const LocationDetailsScreen = () => {
     }
   }, [locationId, navigation, setLocation, locationServiceRef.current]);
 
-  const handleTagRelationChange = useCallback((changedStoryId: string, changedEntityId: string) => {
-    if (changedEntityId === locationId) {
-      fetchTagsForLocation();
-    }
-  }, [locationId, fetchTagsForLocation]);
-
-  const handleNoteChange = useCallback((changedStoryId: string, changedNoteId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchNotesForStory();
-    }
-  }, [selectedStory?.id, fetchNotesForStory]);
-
-  const handleNoteRelationChange = useCallback((changedStoryId: string, changedNoteRelationId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchNoteRelationsForLocation();
-    }
-  }, [selectedStory?.id, fetchNoteRelationsForLocation]);
-
   const handleCharacterChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
     if (selectedStory?.id === changedStoryId) {
       fetchAllCharactersInStory();
@@ -319,14 +244,11 @@ const LocationDetailsScreen = () => {
     }
   }, [selectedStory?.id, fetchAllItemJourneysInStory]);
 
+  // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     if (locationServiceRef.current) {
-      fetchLocationDetails(); 
-      fetchTagsForLocation();
+      fetchLocationDetails();
       entityEventEmitter.on('location_changed', handleLocationChange);
-      entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
-      entityEventEmitter.on('note_changed', handleNoteChange);
-      entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
       entityEventEmitter.on('character_changed', handleCharacterChange);
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange);
       entityEventEmitter.on('scene_changed', handleSceneChange);
@@ -335,9 +257,6 @@ const LocationDetailsScreen = () => {
 
       return () => {
         entityEventEmitter.off('location_changed', handleLocationChange);
-        entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
-        entityEventEmitter.off('note_changed', handleNoteChange);
-        entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
         entityEventEmitter.off('character_changed', handleCharacterChange);
         entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange);
         entityEventEmitter.off('scene_changed', handleSceneChange);
@@ -345,63 +264,18 @@ const LocationDetailsScreen = () => {
         entityEventEmitter.off('item_journey_changed', handleItemJourneyChange);
       };
     }
-  }, [locationId, fetchLocationDetails, fetchTagsForLocation, handleLocationChange, handleTagRelationChange, handleNoteChange, handleNoteRelationChange, locationServiceRef.current]);
+  }, [locationId, fetchLocationDetails, handleLocationChange, handleCharacterChange,
+    handleCharacterSceneChange, handleSceneChange, handleItemChange, handleItemJourneyChange]);
 
   useEffect(() => {
-    // Fetch notes and note relations when location is loaded or changes
     if (location) {
-      fetchNotesForStory(); // Fetch all notes
-      fetchNoteRelationsForLocation(); // Fetch note relations
       fetchAllCharactersInStory(); // Fetch all characters
       fetchAllScenesInStory(); // Fetch all scenes
       fetchAllCharacterSceneRelations(); // Fetch all character scene relations
       fetchAllItemsInStory(); // Fetch all items
       fetchAllItemJourneysInStory(); // Fetch all item journeys
     }
-  }, [location, fetchNotesForStory, fetchNoteRelationsForLocation, fetchAllCharactersInStory, fetchAllScenesInStory, fetchAllCharacterSceneRelations, fetchAllItemsInStory, fetchAllItemJourneysInStory]);
-
-  const handleSaveNoteRelation = async (relation: NoteRelation) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
-      setLocationNoteRelations(prev => {
-        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
-        if (existingIndex > -1) {
-          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
-        } else {
-          return [...prev, savedRelation];
-        }
-      });
-      entityEventEmitter.emit('note_relation_changed', selectedStory.id, locationId);
-      Alert.alert(t('success'), t('note_relation_saved_successfully'));
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_note_relation'));
-      console.error('Failed to save note relation:', error);
-    }
-  };
-
-  const handleDeleteNoteRelation = async (relationId: string) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
-      if (success) {
-        setLocationNoteRelations(prev => prev.filter(r => r.id !== relationId));
-        entityEventEmitter.emit('note_relation_changed', selectedStory.id, locationId);
-        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
-      } else {
-        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      }
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      console.error('Failed to delete note relation:', error);
-    }
-  };
+  }, [location, fetchAllCharactersInStory, fetchAllScenesInStory, fetchAllCharacterSceneRelations, fetchAllItemsInStory, fetchAllItemJourneysInStory]);
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -546,8 +420,8 @@ const LocationDetailsScreen = () => {
       <NoteManager
         noteRelations={locationNoteRelations}
         availableNotes={allNotes}
-        onSave={handleSaveNoteRelation}
-        onDelete={handleDeleteNoteRelation}
+        onSave={saveNoteRelation}
+        onDelete={deleteNoteRelation}
         editable={false}
         currentStoryId={selectedStory?.id || ''}
         currentEntityId={locationId}

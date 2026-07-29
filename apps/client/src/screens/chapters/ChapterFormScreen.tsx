@@ -1,7 +1,6 @@
 import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Chapter } from '@keres/shared/entities/Chapter';
-import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -10,14 +9,11 @@ import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet
 import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
-import { ChapterSelect, TagSelect } from '../../db/schema'; // Import TagSelect
+import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { ChapterStackParamList } from '../../navigation/MainSystemStack';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import TagRelationService
-import { createTagService } from '../../services/storymanagement/TagService'; // Import TagService
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -42,28 +38,10 @@ const ChapterFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
-  const noteServiceRef = useRef<NoteService | null>(null);
-  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null);
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null); // Ref for TagService
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null); // Ref for TagRelationService
 
   useEffect(() => {
-    if (drizzleDb) {
-      if (!chapterServiceRef.current) {
-        chapterServiceRef.current = createChapterService(drizzleDb);
-      }
-      if (!noteServiceRef.current) {
-        noteServiceRef.current = createNoteService(drizzleDb);
-      }
-      if (!noteRelationServiceRef.current) {
-        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
-      }
-      if (!tagServiceRef.current) {
-        tagServiceRef.current = createTagService(drizzleDb);
-      }
-      if (!tagRelationServiceRef.current) {
-        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
-      }
+    if (drizzleDb && !chapterServiceRef.current) {
+      chapterServiceRef.current = createChapterService(drizzleDb);
     }
   }, [drizzleDb]);
 
@@ -73,10 +51,16 @@ const ChapterFormScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
-  const [allNotes, setAllNotes] = useState<Note[]>([]);
-  const [chapterNoteRelations, setChapterNoteRelations] = useState<NoteRelation[]>([]);
-  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]); // State for available tags
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]); // State for selected tag IDs
+  const {
+    availableTags,
+    selectedTagIds,
+    setSelectedTagIds,
+    allNotes,
+    noteRelations: chapterNoteRelations,
+    persistTagRelations,
+    saveNoteRelation,
+    deleteNoteRelation,
+  } = useEntityRelations({ entityType: 'Chapter', entityId: currentChapterId });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,60 +76,8 @@ const ChapterFormScreen = () => {
     }, [navigation, isEditing, t])
   );
 
-  const fetchNotesForStory = useCallback(async () => {
-    if (!noteServiceRef.current || !selectedStory?.id) {
-      setAllNotes([]);
-      return;
-    }
-    try {
-      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
-      setAllNotes(fetchedNotes);
-    } catch (err) {
-      console.error('Failed to fetch notes for story:', err);
-    }
-  }, [selectedStory?.id, noteServiceRef.current]);
-
-  const fetchNoteRelationsForChapter = useCallback(async () => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentChapterId) {
-      setChapterNoteRelations([]);
-      return;
-    }
-    try {
-      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, currentChapterId, 'Chapter');
-      setChapterNoteRelations(fetchedNoteRelations);
-    } catch (err) {
-      console.error('Failed to fetch note relations for chapter:', err);
-    }
-  }, [selectedStory?.id, currentChapterId, noteRelationServiceRef.current]);
-
-  const fetchAvailableTags = useCallback(async () => {
-    if (!tagServiceRef.current || !selectedStory?.id) {
-      setAvailableTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagServiceRef.current.getTagsByStoryId(selectedStory.id);
-      setAvailableTags(fetchedTags);
-    } catch (err) {
-      console.error('Failed to fetch available tags:', err);
-    }
-  }, [selectedStory?.id, tagServiceRef.current]);
-
-  const fetchChapterTags = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id || !currentChapterId) {
-      setSelectedTagIds([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, currentChapterId, 'Chapter');
-      setSelectedTagIds(fetchedTags.map(tag => tag.id));
-    } catch (err) {
-      console.error('Failed to fetch chapter tags:', err);
-    }
-  }, [selectedStory?.id, currentChapterId, tagRelationServiceRef.current]);
-
   useEffect(() => {
-    const loadChapterAndData = async () => {
+    const loadChapter = async () => {
       if (!chapterServiceRef.current || !selectedStory?.id) {
         console.warn('Chapter service or selected story not available.');
         setLoading(false);
@@ -166,20 +98,14 @@ const ChapterFormScreen = () => {
           }
         }
       } catch (err) {
-        console.error('Failed to load chapter or related data:', err);
+        console.error('Failed to load chapter:', err);
         setError(t('failed_to_load_chapter'));
       } finally {
         setLoading(false);
-        fetchNotesForStory();
-        fetchNoteRelationsForChapter();
-        fetchAvailableTags(); // Fetch available tags
-        fetchChapterTags();   // Fetch chapter-specific tags
       }
     };
-    loadChapterAndData();
-  }, [currentChapterId, isEditing, selectedStory?.id, chapterServiceRef.current, t,
-    fetchNotesForStory, fetchNoteRelationsForChapter, fetchAvailableTags, fetchChapterTags
-  ]);
+    loadChapter();
+  }, [currentChapterId, isEditing, selectedStory?.id, t]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -220,11 +146,11 @@ const ChapterFormScreen = () => {
         setCurrentChapterId(savedChapter.id);
       }
       
-      // Update tag relations
-      if (savedChapter.id && tagRelationServiceRef.current && selectedStory?.id) {
-        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, savedChapter.id, 'Chapter', selectedTagIds);
+      if (savedChapter.id) {
+        await persistTagRelations(savedChapter.id);
       }
-      
+
+
       entityEventEmitter.emit('chapter_changed', selectedStory.id, savedChapter.id);
 
       if (!isEditing && savedChapter.id) {
@@ -285,50 +211,6 @@ const ChapterFormScreen = () => {
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
   }, []);
-
-  const handleSaveNoteRelation = async (relation: NoteRelation) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentChapterId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
-      setChapterNoteRelations(prev => {
-        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
-        if (existingIndex > -1) {
-          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
-        } else {
-          return [...prev, savedRelation];
-        }
-      });
-      entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentChapterId);
-      Alert.alert(t('success'), t('note_relation_saved_successfully'));
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_note_relation'));
-      console.error('Failed to save note relation:', error);
-    }
-  };
-
-  const handleDeleteNoteRelation = async (relationId: string) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentChapterId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
-      if (success) {
-        setChapterNoteRelations(prev => prev.filter(r => r.id !== relationId));
-        entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentChapterId);
-        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
-      } else {
-        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      }
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      console.error('Failed to delete note relation:', error);
-    }
-  };
-
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -452,8 +334,8 @@ const ChapterFormScreen = () => {
               <NoteManager
                 noteRelations={chapterNoteRelations}
                 availableNotes={allNotes}
-                onSave={handleSaveNoteRelation}
-                onDelete={handleDeleteNoteRelation}
+                onSave={saveNoteRelation}
+                onDelete={deleteNoteRelation}
                 editable={true}
                 currentStoryId={selectedStory.id}
                 currentEntityId={currentChapterId}

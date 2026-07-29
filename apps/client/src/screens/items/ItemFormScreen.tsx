@@ -3,7 +3,6 @@ import Select from '@/src/components/common/Select/Select';
 import SuggestionTextInput from '@/src/components/common/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Item } from '@keres/shared/entities/Item'; // Import Item entity
-import { Note, NoteRelation } from '@keres/shared/entities/Note';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,14 +11,10 @@ import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet
 import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { ItemStackParamList } from '../../navigation/MainSystemStack'; // Use ItemStackParamList
 import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService';
-import { createNoteService, NoteService } from '../../services/storymanagement/NoteService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { createTagService } from '../../services/storymanagement/TagService';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characterOwnerId
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -45,19 +40,11 @@ const ItemFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
 
-  const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null); // Changed from choiceServiceRef
-  const noteServiceRef = useRef<NoteService | null>(null);
-  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null);
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
+  const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
 
   useEffect(() => {
-    if (drizzleDb) {
-      if (!itemServiceRef.current) itemServiceRef.current = createItemService(drizzleDb); // Changed
-      if (!noteServiceRef.current) noteServiceRef.current = createNoteService(drizzleDb);
-      if (!noteRelationServiceRef.current) noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
-      if (!tagServiceRef.current) tagServiceRef.current = createTagService(drizzleDb);
-      if (!tagRelationServiceRef.current) tagRelationServiceRef.current = createTagRelationService(drizzleDb);
+    if (drizzleDb && !itemServiceRef.current) {
+      itemServiceRef.current = createItemService(drizzleDb);
     }
   }, [drizzleDb]);
 
@@ -78,10 +65,16 @@ const ItemFormScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [characterOwnerId, setCharacterOwnerId] = useState<string | null>(null);
 
-  const [allNotes, setAllNotes] = useState<Note[]>([]);
-  const [itemNoteRelations, setItemNoteRelations] = useState<NoteRelation[]>([]); // Changed
-  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const {
+    availableTags,
+    selectedTagIds,
+    setSelectedTagIds,
+    allNotes,
+    noteRelations: itemNoteRelations,
+    persistTagRelations,
+    saveNoteRelation,
+    deleteNoteRelation,
+  } = useEntityRelations({ entityType: 'Item', entityId: currentItemId });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,56 +90,16 @@ const ItemFormScreen = () => {
     }, [navigation, isEditing, t])
   );
 
-  const fetchNotesForStory = useCallback(async () => {
-    if (!noteServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
-      setAllNotes(fetchedNotes);
-    } catch (err) {
-      console.error('Failed to fetch notes for story:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchNoteRelationsForItem = useCallback(async () => { // Changed
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentItemId) return; // Changed
-    try {
-      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, currentItemId, 'Item'); // Changed
-      setItemNoteRelations(fetchedNoteRelations); // Changed
-    } catch (err) {
-      console.error('Failed to fetch note relations for item:', err); // Changed
-    }
-  }, [selectedStory?.id, currentItemId]); // Changed
-
-  const fetchAvailableTags = useCallback(async () => {
-    if (!tagServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedTags = await tagServiceRef.current.getTagsByStoryId(selectedStory.id);
-      setAvailableTags(fetchedTags);
-    } catch (err) {
-      console.error('Failed to fetch available tags:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchItemTags = useCallback(async () => { // Changed
-    if (!tagRelationServiceRef.current || !selectedStory?.id || !currentItemId) return; // Changed
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, currentItemId, 'Item'); // Changed
-      setSelectedTagIds(fetchedTags.map(tag => tag.id));
-    } catch (err) {
-      console.error('Failed to fetch item tags:', err); // Changed
-    }
-  }, [selectedStory?.id, currentItemId]); // Changed
-
   useEffect(() => {
-    const loadItemAndData = async () => { // Changed
-      if (!itemServiceRef.current || !selectedStory?.id) { // Changed
+    const loadItem = async () => {
+      if (!itemServiceRef.current || !selectedStory?.id) {
         setLoading(false);
         return;
       }
       try {
         setLoading(true);
         if (isEditing) {
-          const fetchedItem = await itemServiceRef.current.getById(currentItemId!); // Changed
+          const fetchedItem = await itemServiceRef.current.getById(currentItemId!);
           if (fetchedItem) {
             setName(fetchedItem.name);
             setCategory(fetchedItem.category);
@@ -156,22 +109,18 @@ const ItemFormScreen = () => {
             setExtraNotes(fetchedItem.extraNotes);
             setCharacterOwnerId(fetchedItem.characterOwnerId);
           } else {
-            setError(t('item_not_found')); // Changed
+            setError(t('item_not_found'));
           }
         }
       } catch (err) {
-        console.error('Failed to load item or related data:', err); // Changed
-        setError(t('failed_to_load_item')); // Changed
+        console.error('Failed to load item:', err);
+        setError(t('failed_to_load_item'));
       } finally {
         setLoading(false);
-        fetchNotesForStory();
-        fetchNoteRelationsForItem(); // Changed
-        fetchAvailableTags();
-        fetchItemTags(); // Changed
       }
     };
-    loadItemAndData();
-  }, [currentItemId, isEditing, selectedStory?.id, t, fetchNotesForStory, fetchNoteRelationsForItem, fetchAvailableTags, fetchItemTags]); // Changed dependencies
+    loadItem();
+  }, [currentItemId, isEditing, selectedStory?.id, t]);
 
   const handleSave = async () => {
     if (!name.trim()) { // Changed from text.trim()
@@ -209,8 +158,8 @@ const ItemFormScreen = () => {
         Alert.alert(t('success'), t('item_created_successfully')); // Changed
       }
 
-      if (savedItemId && tagRelationServiceRef.current) { // Changed
-        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, savedItemId, 'Item', selectedTagIds); // Changed
+      if (savedItemId) {
+        await persistTagRelations(savedItemId);
       }
       entityEventEmitter.emit('item_changed', selectedStory.id, savedItemId); // Changed
 
@@ -264,49 +213,7 @@ const ItemFormScreen = () => {
     );
   };
 
-  const handleSaveNoteRelation = async (relation: NoteRelation) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentItemId || !userId) { // Changed currentChoiceId to currentItemId
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
-      setItemNoteRelations(prev => { // Changed choiceNoteRelations to itemNoteRelations
-        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
-        if (existingIndex > -1) {
-          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
-        }
-        return [...prev, savedRelation];
-      });
-      entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentItemId); // Changed currentChoiceId to currentItemId
-      Alert.alert(t('success'), t('note_relation_saved_successfully'));
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_note_relation'));
-      console.error('Failed to save note relation:', error);
-    }
-  };
-
-  const handleDeleteNoteRelation = async (relationId: string) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentItemId || !userId) { // Changed currentChoiceId to currentItemId
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
-      if (success) {
-        setItemNoteRelations(prev => prev.filter(r => r.id !== relationId)); // Changed choiceNoteRelations to itemNoteRelations
-        entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentItemId); // Changed currentChoiceId to currentItemId
-        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
-      } else {
-        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      }
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      console.error('Failed to delete note relation:', error);
-    }
-  };
-
-  const characterOptions = useMemo(() => 
+  const characterOptions = useMemo(() =>
     characters
       .filter(char => !char.isDeleted) // Explicitly filter out deleted characters
       .map(char => ({ label: char.name, value: char.id })), 
@@ -418,8 +325,8 @@ const ItemFormScreen = () => {
               <NoteManager
                 noteRelations={itemNoteRelations}
                 availableNotes={allNotes}
-                onSave={handleSaveNoteRelation}
-                onDelete={handleDeleteNoteRelation}
+                onSave={saveNoteRelation}
+                onDelete={deleteNoteRelation}
                 editable={true}
                 currentStoryId={selectedStory.id}
                 currentEntityId={currentItemId}

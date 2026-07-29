@@ -1,6 +1,5 @@
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Location } from '@keres/shared/entities/Location';
-import { Note, NoteRelation } from '@keres/shared/entities/Note'; // Import Note and NoteRelation
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -10,14 +9,10 @@ import Button from '../../components/common/Button/Button';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
-import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createLocationService } from '../../services/storymanagement/LocationService';
-import { createNoteRelationService, NoteRelationServiceInterface } from '../../services/storymanagement/NoteRelationService'; // Import NoteRelationService
-import { createNoteService, NoteService } from '../../services/storymanagement/NoteService'; // Import NoteService
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -43,28 +38,10 @@ const LocationFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
-  const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
-  const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
-  const noteServiceRef = useRef<NoteService | null>(null); // Ref for NoteService
-  const noteRelationServiceRef = useRef<NoteRelationServiceInterface | null>(null); // Ref for NoteRelationService
 
   useEffect(() => {
-    if (drizzleDb) {
-      if (!locationServiceRef.current) {
-        locationServiceRef.current = createLocationService(drizzleDb);
-      }
-      if (!tagServiceRef.current) {
-        tagServiceRef.current = createTagService(drizzleDb);
-      }
-      if (!tagRelationServiceRef.current) {
-        tagRelationServiceRef.current = createTagRelationService(drizzleDb);
-      }
-      if (!noteServiceRef.current) {
-        noteServiceRef.current = createNoteService(drizzleDb);
-      }
-      if (!noteRelationServiceRef.current) {
-        noteRelationServiceRef.current = createNoteRelationService(drizzleDb);
-      }
+    if (drizzleDb && !locationServiceRef.current) {
+      locationServiceRef.current = createLocationService(drizzleDb);
     }
   }, [drizzleDb]);
 
@@ -77,10 +54,16 @@ const LocationFormScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
-  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [allNotes, setAllNotes] = useState<Note[]>([]); // State for all notes in story
-  const [locationNoteRelations, setLocationNoteRelations] = useState<NoteRelation[]>([]); // State for note relations
+  const {
+    availableTags,
+    selectedTagIds,
+    setSelectedTagIds,
+    allNotes,
+    noteRelations: locationNoteRelations,
+    persistTagRelations,
+    saveNoteRelation,
+    deleteNoteRelation,
+  } = useEntityRelations({ entityType: 'Location', entityId: currentLocationId });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,60 +79,8 @@ const LocationFormScreen = () => {
     }, [navigation, isEditing, t])
   );
 
-  const fetchAvailableTags = useCallback(async () => {
-    if (!tagServiceRef.current || !selectedStory?.id) {
-      setAvailableTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagServiceRef.current.getTagsByStoryId(selectedStory.id);
-      setAvailableTags(fetchedTags);
-    } catch (err) {
-      console.error('Failed to fetch available tags:', err);
-    }
-  }, [selectedStory?.id, tagServiceRef.current]);
-
-  const fetchLocationTags = useCallback(async () => {
-    if (!tagRelationServiceRef.current || !selectedStory?.id || !currentLocationId) {
-      setSelectedTagIds([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(selectedStory.id, currentLocationId, 'Location');
-      setSelectedTagIds(fetchedTags.map(tag => tag.id));
-    } catch (err) {
-      console.error('Failed to fetch location tags:', err);
-    }
-  }, [selectedStory?.id, currentLocationId, tagRelationServiceRef.current]);
-
-  const fetchNotesForStory = useCallback(async () => {
-    if (!noteServiceRef.current || !selectedStory?.id) {
-      setAllNotes([]);
-      return;
-    }
-    try {
-      const fetchedNotes = await noteServiceRef.current.getNotesByStoryId(selectedStory.id);
-      setAllNotes(fetchedNotes);
-    } catch (err) {
-      console.error('Failed to fetch notes for story:', err);
-    }
-  }, [selectedStory?.id, noteServiceRef.current]);
-
-  const fetchNoteRelationsForLocation = useCallback(async () => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentLocationId) {
-      setLocationNoteRelations([]);
-      return;
-    }
-    try {
-      const fetchedNoteRelations = await noteRelationServiceRef.current.getRelationsForEntity(selectedStory.id, currentLocationId, 'Location');
-      setLocationNoteRelations(fetchedNoteRelations);
-    } catch (err) {
-      console.error('Failed to fetch note relations for location:', err);
-    }
-  }, [selectedStory?.id, currentLocationId, noteRelationServiceRef.current]);
-
   useEffect(() => {
-    const loadLocationAndData = async () => {
+    const loadLocation = async () => {
       if (!locationServiceRef.current || !selectedStory?.id) {
         console.warn('Location service or selected story not available.');
         setLoading(false);
@@ -173,20 +104,14 @@ const LocationFormScreen = () => {
           }
         }
       } catch (err) {
-        console.error('Failed to load location or related data:', err);
+        console.error('Failed to load location:', err);
         setError(t('failed_to_load_location'));
       } finally {
         setLoading(false);
-        fetchAvailableTags();
-        fetchLocationTags();
-        fetchNotesForStory();
-        fetchNoteRelationsForLocation();
       }
     };
-    loadLocationAndData();
-  }, [currentLocationId, isEditing, selectedStory?.id, locationServiceRef.current, t,
-    fetchAvailableTags, fetchLocationTags, fetchNotesForStory, fetchNoteRelationsForLocation
-  ]);
+    loadLocation();
+  }, [currentLocationId, isEditing, selectedStory?.id, t]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -227,10 +152,11 @@ const LocationFormScreen = () => {
         setCurrentLocationId(savedLocation.id);
       }
 
-      if (savedLocation.id && tagRelationServiceRef.current && selectedStory?.id) {
-        await tagRelationServiceRef.current.updateTagsForEntity(userId, selectedStory.id, savedLocation.id, 'Location', selectedTagIds);
+      if (savedLocation.id) {
+        await persistTagRelations(savedLocation.id);
       }
-      
+
+
       entityEventEmitter.emit('location_changed', selectedStory.id, savedLocation.id);
 
       if (!isEditing && savedLocation.id) {
@@ -290,50 +216,7 @@ const LocationFormScreen = () => {
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
-  }, []);
-
-  const handleSaveNoteRelation = async (relation: NoteRelation) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentLocationId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const savedRelation = await noteRelationServiceRef.current.saveNoteRelation(userId, relation);
-      setLocationNoteRelations(prev => {
-        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
-        if (existingIndex > -1) {
-          return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
-        } else {
-          return [...prev, savedRelation];
-        }
-      });
-      entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentLocationId);
-      Alert.alert(t('success'), t('note_relation_saved_successfully'));
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_note_relation'));
-      console.error('Failed to save note relation:', error);
-    }
-  };
-
-  const handleDeleteNoteRelation = async (relationId: string) => {
-    if (!noteRelationServiceRef.current || !selectedStory?.id || !currentLocationId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
-      return;
-    }
-    try {
-      const success = await noteRelationServiceRef.current.deleteNoteRelation(userId, relationId);
-      if (success) {
-        setLocationNoteRelations(prev => prev.filter(r => r.id !== relationId));
-        entityEventEmitter.emit('note_relation_changed', selectedStory.id, currentLocationId);
-        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
-      } else {
-        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      }
-    } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_note_relation'));
-      console.error('Failed to delete note relation:', error);
-    }
-  };
+  }, [setSelectedTagIds]);
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -475,8 +358,8 @@ const LocationFormScreen = () => {
               <NoteManager
                 noteRelations={locationNoteRelations}
                 availableNotes={allNotes}
-                onSave={handleSaveNoteRelation}
-                onDelete={handleDeleteNoteRelation}
+                onSave={saveNoteRelation}
+                onDelete={deleteNoteRelation}
                 editable={true}
                 currentStoryId={selectedStory.id}
                 currentEntityId={currentLocationId}

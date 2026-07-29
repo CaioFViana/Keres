@@ -6,8 +6,9 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
+import type { FavoriteFilterState } from '../../types/entityFilters';
 
-export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+export type { FavoriteFilterState };
 
 export interface TagService {
   getTagsByStoryId(

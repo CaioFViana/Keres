@@ -6,10 +6,11 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import type { FavoriteFilterState } from '../../types/entityFilters';
 
 export type LocationWithTags = LocationSelect & { tags: TagSelect[] };
 
-export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+export type { FavoriteFilterState };
 
 export interface LocationService {
   getLocationsByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], favoriteFilterState?: FavoriteFilterState, sortBy?: string, sortDirection?: 'asc' | 'desc', advancedSearchCriteria?: { [key: string]: any }): Promise<LocationWithTags[]>;

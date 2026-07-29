@@ -6,8 +6,9 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import type { FavoriteFilterState } from '../../types/entityFilters';
 
-export type FavoriteFilterState = 'all' | 'favorites' | 'not-favorites';
+export type { FavoriteFilterState };
 
 export interface ItemService {
   getItemsByStoryId(
@@ -46,9 +47,11 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
         conditions.push(sql`${items.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
       }
 
-      if (favoriteFilterState === 'favorites') {
+      // These were previously compared against 'favorites'/'not-favorites' (plural), which
+      // no caller ever sends - the UI emits the singular form - so the filter never matched.
+      if (favoriteFilterState === 'favorite') {
         conditions.push(eq(items.isFavorite, true) as SQL<boolean>);
-      } else if (favoriteFilterState === 'not-favorites') {
+      } else if (favoriteFilterState === 'not-favorite') {
         conditions.push(eq(items.isFavorite, false) as SQL<boolean>);
       }
 

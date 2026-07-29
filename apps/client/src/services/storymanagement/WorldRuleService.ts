@@ -8,8 +8,9 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import type { FavoriteFilterState } from '../../types/entityFilters';
 
-export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+export type { FavoriteFilterState };
 
 export interface WorldRuleService {
   getWorldRulesByStoryId(

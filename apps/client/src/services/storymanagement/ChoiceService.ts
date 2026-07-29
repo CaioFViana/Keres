@@ -7,8 +7,11 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import type { FavoriteFilterState } from '../../types/entityFilters';
 
-export type FavoriteFilterState = 'all'; // Removed favorite/not-favorite
+// Choices have no favourite flag; the parameter is accepted for signature parity with
+// the other entity services and ignored by the implementation.
+export type { FavoriteFilterState };
 
 export interface ChoiceService {
   getChoicesByStoryId(

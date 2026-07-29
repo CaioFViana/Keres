@@ -6,10 +6,11 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import characterEventEmitter
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
+import type { FavoriteFilterState } from '../../types/entityFilters';
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
-export type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+export type { FavoriteFilterState };
 
 export interface CharacterService {
   getCharactersByStoryId(storyId: string, searchTerm?: string, tagFilterIds?: string[], favoriteFilterState?: FavoriteFilterState, sortBy?: string, sortDirection?: 'asc' | 'desc', advancedSearchCriteria?: { [key: string]: any }): Promise<CharacterWithTags[]>;

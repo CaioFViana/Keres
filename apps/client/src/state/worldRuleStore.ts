@@ -1,136 +1,25 @@
-import { create } from 'zustand';
-import { AppDrizzleClient } from '../db';
 import { WorldRuleWithTags } from '../db/schemas/worldRules';
-import { createWorldRuleService, FavoriteFilterState, WorldRuleService } from '../services/storymanagement/WorldRuleService';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { useUserSettingsStore } from './userSettingsStore';
+import { createWorldRuleService, WorldRuleService } from '../services/storymanagement/WorldRuleService';
+import { createEntityStore } from './createEntityStore';
 
-interface WorldRuleStore {
-  worldRules: WorldRuleWithTags[];
-  searchTerm: string;
-  activeFilterTags: string[];
-  favoriteFilterState: FavoriteFilterState;
-  activeSort: string | null;
-  sortDirection: 'asc' | 'desc';
-  loading: boolean;
-  error: string | null;
-  db: AppDrizzleClient | null;
-  storyId: string | null;
-  worldRuleService: WorldRuleService | null;
-  advancedSearchCriteria: { [key: string]: any };
-
-  setDbAndStoryId: (db: AppDrizzleClient, storyId: string) => void;
-  initializeService: () => void;
-  fetchWorldRules: () => Promise<void>;
-  setSearchTerm: (term: string) => void;
-  setFilterTags: (tagIds: string[]) => void;
-  setFavoriteFilter: (state: FavoriteFilterState) => void;
-  setSort: (sortBy: string | null, direction: 'asc' | 'desc') => void;
-  toggleFavorite: (worldRuleId: string, isFavorite: boolean) => Promise<void>;
-  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => void;
-  resetStore: () => void;
-}
-
-const defaultState = {
-  worldRules: [] as WorldRuleWithTags[],
-  searchTerm: '',
-  activeFilterTags: [],
-  favoriteFilterState: 'all' as FavoriteFilterState,
-  activeSort: null,
-  sortDirection: 'asc' as 'asc' | 'desc',
-  loading: false,
-  error: null,
-  db: null,
-  storyId: null,
-  worldRuleService: null,
-  advancedSearchCriteria: {},
-};
-
-export const worldRuleStore = create<WorldRuleStore>((set, get) => ({
-  ...defaultState,
-
-  setDbAndStoryId: (db, storyId) => set({ db, storyId }),
-  initializeService: () => {
-    const { db } = get();
-    if (db) {
-      set({ worldRuleService: createWorldRuleService(db) });
-    }
+export const worldRuleStore = createEntityStore<'worldRules', WorldRuleWithTags, WorldRuleService>({
+  collectionKey: 'worldRules',
+  createService: createWorldRuleService,
+  fetchEntities: (service, p) =>
+    service.getWorldRulesByStoryId(
+      p.storyId,
+      p.searchTerm,
+      p.activeFilterTags,
+      p.activeSort,
+      p.sortDirection,
+      p.favoriteFilterState,
+      p.advancedSearchCriteria,
+    ),
+  updateFavorite: (service, userId, id, isFavorite) =>
+    service.updateWorldRule(userId, id, { isFavorite }),
+  changeEvent: 'worldrule_changed',
+  errorMessages: {
+    fetch: 'Failed to load world rules.',
+    toggleFavorite: 'Failed to update world rule favorite status.',
   },
-
-  fetchWorldRules: async () => {
-    const { worldRuleService, storyId, searchTerm, activeFilterTags, favoriteFilterState, activeSort, sortDirection, advancedSearchCriteria } = get();
-    if (!worldRuleService || !storyId) {
-      set({ worldRules: [], loading: false });
-      return;
-    }
-
-    set({ loading: true, error: null });
-    try {
-      const fetchedWorldRules = await worldRuleService.getWorldRulesByStoryId(
-        storyId,
-        searchTerm,
-        activeFilterTags,
-        activeSort,
-        sortDirection,
-        favoriteFilterState,
-        advancedSearchCriteria,
-      );
-      set({ worldRules: fetchedWorldRules, loading: false });
-    } catch (err) {
-      console.error('Failed to fetch world rules:', err);
-      set({ error: 'Failed to load world rules.', loading: false });
-    }
-  },
-
-  setSearchTerm: (term: string) => {
-    set({ searchTerm: term });
-  },
-  setFilterTags: (tagIds: string[]) => {
-    set({ activeFilterTags: tagIds });
-    get().fetchWorldRules();
-  },
-  setFavoriteFilter: (state: FavoriteFilterState) => {
-    set({ favoriteFilterState: state });
-    get().fetchWorldRules();
-  },
-  setSort: (sortBy: string | null, direction: 'asc' | 'desc') => {
-    set({ activeSort: sortBy, sortDirection: direction });
-    get().fetchWorldRules();
-  },
-
-  toggleFavorite: async (worldRuleId: string, isFavorite: boolean) => {
-    const { worldRuleService, storyId } = get();
-    if (!worldRuleService || !storyId) {
-      console.warn('WorldRuleService not initialized or storyId not set.');
-      return;
-    }
-
-    const userId = useUserSettingsStore.getState().userId;
-    if (!userId) {
-      console.error('User ID not available. Cannot toggle world rule favorite status.');
-      return;
-    }
-
-    // Optimistic UI update
-    set(state => ({
-      worldRules: state.worldRules.map(worldRule =>
-        worldRule.id === worldRuleId ? { ...worldRule, isFavorite: isFavorite } : worldRule
-      ),
-    }));
-
-    try {
-      await worldRuleService.updateWorldRule(userId, worldRuleId, { isFavorite });
-      entityEventEmitter.emit('worldrule_changed', storyId);
-    } catch (error) {
-      console.error('Failed to toggle world rule favorite status:', error);
-      set({ error: 'Failed to update world rule favorite status.' });
-    }
-  },
-
-  setAdvancedSearchCriteria: (criteria: { [key: string]: any }) => {
-    set({ advancedSearchCriteria: criteria });
-    get().fetchWorldRules();
-  },
-  
-  resetStore: () => set(defaultState),
-}));
+});

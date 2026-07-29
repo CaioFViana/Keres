@@ -8,7 +8,7 @@ import Select from '../Select/Select';
 import TextInput from '../TextInput/TextInput';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Import metadata
 
-type FavoriteFilterState = 'all' | 'favorite' | 'not-favorite';
+import type { FavoriteFilterState } from '../../../types/entityFilters';
 
 interface GenericFilterSortListProps<T> {
   data: T[];

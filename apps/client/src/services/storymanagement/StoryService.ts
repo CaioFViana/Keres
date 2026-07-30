@@ -77,7 +77,7 @@ export interface StoryService {
   updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void>;
   deleteStory(currentUserId: string, storyId: string): Promise<void>;
   getBranchingStoryForkCount(): Promise<number>;
-  importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null): Promise<string>;
+  importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, localMediaPaths?: Map<string, string>): Promise<string>;
   exportFullStory(storyId: string): Promise<FullStoryExportType>;
 }
 
@@ -442,7 +442,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       });
     },
 
-    async importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null): Promise<string> {
+    async importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, localMediaPaths?: Map<string, string>): Promise<string> {
       return db.transaction(async (tx) => {
         // 1. Process Story
         const originalStory = fullStoryData.story;
@@ -680,6 +680,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // 14. Process GalleryItems
         if (fullStoryData.galleryItems) {
           for (const galleryItem of fullStoryData.galleryItems) {
+            // Um pacote `.zip` já trouxe os bytes desta mídia para o aparelho antes desta
+            // transação começar (ver `ImportExportScreen.handleImport`); um `.json` puro
+            // carrega só os metadados, e os bytes ficam no servidor, endereçados pelo hash.
+            const localPath = localMediaPaths?.get(galleryItem.hash);
             const galleryItemToInsert: GalleryInsert = {
               ...galleryItem,
               storyId: galleryItem.storyId,
@@ -688,12 +692,12 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               version: galleryItem.version,
               isDeleted: false,
               deletedAt: null,
-              // O pacote carrega só os metadados da mídia - os bytes ficam no servidor,
-              // endereçados pelo hash. A mídia entra sem arquivo local e a sincronização
-              // busca o conteúdo depois.
-              localPath: null,
-              uploadState: 'uploaded',
-              downloadState: 'pending',
+              localPath: localPath ?? null,
+              // Com o arquivo já aqui, falta subir para o servidor (se/quando a história
+              // for vinculada a um); sem ele, falta baixar - a sincronização decide sozinha
+              // com base nestes dois estados.
+              uploadState: localPath ? 'pending' : 'uploaded',
+              downloadState: localPath ? 'downloaded' : 'pending',
             };
             await tx.insert(galleries).values(galleryItemToInsert).run();
           }

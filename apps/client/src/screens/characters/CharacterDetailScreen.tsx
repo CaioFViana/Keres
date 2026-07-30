@@ -10,6 +10,7 @@ import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, Touchab
 import CharacterLocationManager from '../../components/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
 import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import ItemCharacterManager from '../../components/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import TagChipList from '../../components/common/TagChipList/TagChipList';
@@ -492,6 +493,13 @@ const CharacterDetailScreen = () => {
       <Text style={styles.detailText}>{t('planned_timeline')}: {character.plannedTimeline || t('common_na')}</Text>
       <Text style={styles.detailText}>{t('is_favorite')}: {character.isFavorite ? t('common_yes') : t('common_no')}</Text>
       <Text style={styles.detailText}>{t('extra_notes')}: {character.extraNotes || t('common_na')}</Text>
+
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={characterId}
+        ownerType="Character"
+        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+      />
 
       <Text style={styles.sectionTitle}>{t('character_relations_title')}</Text>
       <CharacterRelationManager

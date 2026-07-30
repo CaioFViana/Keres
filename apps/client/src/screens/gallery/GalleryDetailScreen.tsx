@@ -12,6 +12,7 @@ import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { GallerySelect } from '../../db/schemas/galleries';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { decodeOwnerValue, encodeOwnerValue, useGalleryOwnerOptions } from '../../hooks/useGalleryOwnerOptions';
 import { GalleryStackParamList } from '../../navigation/MainSystemStack';
 import { mediaFileService } from '../../services/MediaFileService';
@@ -39,6 +40,7 @@ function formatSize(bytes: number): string {
 }
 
 const GalleryDetailScreen = () => {
+  useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<GalleryDetailNavigationProp>();

@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
+import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import ItemSceneManager from '../../components/ItemManager/ItemSceneManager'; // Import ItemSceneManager
 import NoteRelationManager from '../../components/NoteManager/NoteRelationManager'; // Import NoteRelationManager
 import SceneNavigationControls from '../../components/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
@@ -428,6 +429,13 @@ const SceneDetailScreen = () => {
           <Text style={styles.detailText}>{t('description')}: {location.description || t('common_na')}</Text>
         </>
       )}
+
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={sceneId}
+        ownerType="Scene"
+        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+      />
 
       <Text style={styles.sectionTitle}>{t('characters_title')}</Text>
       <CharacterRelationManager

@@ -14,7 +14,8 @@ import { GallerySelect } from '../../db/schemas/galleries';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { GalleryStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { mediaFileService, UnsupportedMediaError } from '../../services/MediaFileService';
+import { importPickedMediaAssets } from '../../services/galleryMediaImport';
+import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { useGalleryStore } from '../../state/galleryStore';
 import { useNotificationStore } from '../../state/notificationStore';
@@ -102,58 +103,17 @@ const GalleryListScreen = () => {
 
     setImporting(true);
     const galleryService = createGalleryService(db);
-    let added = 0;
-    let duplicates = 0;
-    let rejected = 0;
-
-    for (const asset of assets) {
-      try {
-        const imported = await mediaFileService.importAsset(storyId, asset);
-
-        const existing = await galleryService.getByHash(storyId, imported.hash);
-        if (existing) {
-          duplicates += 1;
-          // O registro pode existir sem arquivo local (veio do servidor e ainda não
-          // baixou); nesse caso o arquivo que a pessoa acabou de escolher resolve isso.
-          if (!mediaFileService.exists(existing.localPath)) {
-            await galleryService.setLocalFileState(existing.id, {
-              localPath: imported.localPath,
-              downloadState: 'downloaded',
-            });
-          }
-          continue;
-        }
-
-        await galleryService.createGallery(userId, {
-          storyId,
-          mediaType: imported.mediaType,
-          mimeType: imported.mimeType,
-          fileName: imported.fileName,
-          hash: imported.hash,
-          sizeBytes: imported.sizeBytes,
-          localPath: imported.localPath,
-        });
-        added += 1;
-      } catch (importError) {
-        if (importError instanceof UnsupportedMediaError) {
-          rejected += 1;
-        } else {
-          console.log('Failed to import media asset:', importError);
-          rejected += 1;
-        }
-      }
-    }
-
+    const summary = await importPickedMediaAssets(galleryService, storyId, userId, assets);
     setImporting(false);
 
-    if (added > 0) {
-      showNotification(t('media_added_successfully', { count: added }), 'success');
+    if (summary.added > 0) {
+      showNotification(t('media_added_successfully', { count: summary.added }), 'success');
     }
-    if (duplicates > 0) {
-      showNotification(t('media_already_in_gallery', { count: duplicates }), 'info');
+    if (summary.duplicates > 0) {
+      showNotification(t('media_already_in_gallery', { count: summary.duplicates }), 'info');
     }
-    if (rejected > 0) {
-      showNotification(t('media_unsupported_skipped', { count: rejected }), 'warning');
+    if (summary.rejected > 0) {
+      showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
     }
 
     await refetch();

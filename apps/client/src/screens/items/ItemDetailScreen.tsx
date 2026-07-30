@@ -5,6 +5,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import ItemJourneyManager from '../../components/ItemManager/ItemJourneyManager';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
@@ -208,6 +209,13 @@ const ItemDetailScreen = () => {
       {item.characterOwnerId && <Text style={styles.detailText}>Owner ID: {item.characterOwnerId}</Text>}
       {item.extraNotes && <Text style={styles.detailText}>Extra Notes: {item.extraNotes}</Text>}
       <Text style={styles.detailText}>Is Favorite: {item.isFavorite ? t('yes') : t('no')}</Text>
+
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={itemId}
+        ownerType="Item"
+        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+      />
 
       <Text style={styles.sectionTitle}>{t('item_journeys_title')}</Text>
       <ItemJourneyManager

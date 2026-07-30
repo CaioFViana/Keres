@@ -8,6 +8,8 @@ import {
   characters,
   characterScenes,
   choices,
+  galleries,
+  galleryRelations,
   itemJourneys,
   items,
   locations,
@@ -40,6 +42,8 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   noterelation: OperationLogEntityType.NoteRelation,
   tagrelation: OperationLogEntityType.TagRelation,
   characterscene: OperationLogEntityType.CharacterScene,
+  gallery: OperationLogEntityType.Gallery,
+  galleryrelation: OperationLogEntityType.GalleryRelation,
 };
 
 export class EntityService {
@@ -143,8 +147,38 @@ export class EntityService {
         translatedEntityType = t('choice')
         break;
       case OperationLogEntityType.Gallery:
-        entitySpecificName = `${t('gallery')} ${t('id')}: ${entityId}`; // Use t() for 'ID'
+        const gallery = await db.query.galleries.findFirst({
+          where: and(eq(galleries.id, entityId), eq(galleries.isDeleted, false)),
+          columns: { title: true, fileName: true },
+        });
+        entitySpecificName = gallery?.title || gallery?.fileName;
         translatedEntityType = t('gallery')
+        break;
+      case OperationLogEntityType.GalleryRelation:
+        const galleryRelation = await db.query.galleryRelations.findFirst({
+          where: and(eq(galleryRelations.id, entityId), eq(galleryRelations.storyId, storyId), eq(galleryRelations.isDeleted, false)),
+          columns: { galleryId: true, ownerId: true, ownerType: true },
+        });
+
+        if (galleryRelation) {
+          const relatedGallery = await db.query.galleries.findFirst({
+            where: and(eq(galleries.id, galleryRelation.galleryId), eq(galleries.isDeleted, false)),
+            columns: { title: true, fileName: true },
+          });
+          const relatedOwner = await EntityService._resolveRelationEntityName(
+            db,
+            galleryRelation.ownerType as OperationLogEntityType,
+            galleryRelation.ownerId,
+            storyId,
+            t
+          );
+          entitySpecificName = t('gallery_attributed_to_entity', {
+            medianame: relatedGallery?.title || relatedGallery?.fileName || t('unknown_gallery'),
+            entityname: relatedOwner.name || t('unknown_entity'),
+            entitytype: relatedOwner.type || t('unknown_entity_type')
+          });
+        }
+        translatedEntityType = t('gallery_relation');
         break;
       case OperationLogEntityType.Item:
         const item = await db.query.items.findFirst({
@@ -334,6 +368,11 @@ export class EntityService {
         const item = await db.query.items.findFirst({ where: and(eq(items.id, relationId), eq(items.storyId, storyId), eq(items.isDeleted, false)), columns: { name: true } });
         name = item?.name;
         type = t('item');
+        break;
+      case OperationLogEntityType.Gallery:
+        const gallery = await db.query.galleries.findFirst({ where: and(eq(galleries.id, relationId), eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)), columns: { title: true, fileName: true } });
+        name = gallery?.title || gallery?.fileName;
+        type = t('gallery');
         break;
       case OperationLogEntityType.ItemJourney:
         const itemJourney = await db.query.itemJourneys.findFirst({

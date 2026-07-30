@@ -6,6 +6,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
 import LocationItemManager from '../../components/LocationManager/LocationItemManager'; // Import LocationItemManager
 import LocationSceneManager from '../../components/LocationManager/LocationSceneManager'; // Import LocationSceneManager
@@ -392,6 +393,13 @@ const LocationDetailsScreen = () => {
           <Text style={styles.detailText}>{location.extraNotes}</Text>
         </View>
       )}
+
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={locationId}
+        ownerType="Location"
+        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+      />
 
       <Text style={styles.sectionTitle}>{t('characters_in_location_title')}</Text>
       <LocationCharacterManager

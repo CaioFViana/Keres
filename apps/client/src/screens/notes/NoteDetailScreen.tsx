@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
+import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { NoteSelect } from '../../db/schemas/notes';
@@ -331,6 +332,13 @@ const NoteDetailScreen = () => {
       {note.extraNotes && (
         <Text style={styles.detailText}>{t('extra_notes')}: {note.extraNotes}</Text>
       )}
+
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={noteId}
+        ownerType="Note"
+        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+      />
 
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
       <TagChipList tags={noteTags} />

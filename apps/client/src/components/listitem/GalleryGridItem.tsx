@@ -14,7 +14,7 @@ interface GalleryGridItemProps {
 }
 
 /** Ícone que representa a mídia quando não há miniatura para mostrar. */
-const MEDIA_TYPE_ICONS: Record<MediaType, keyof typeof Ionicons.glyphMap> = {
+export const MEDIA_TYPE_ICONS: Record<MediaType, keyof typeof Ionicons.glyphMap> = {
   image: 'image-outline',
   video: 'videocam-outline',
   audio: 'musical-notes-outline',

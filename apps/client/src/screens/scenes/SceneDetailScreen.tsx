@@ -232,7 +232,10 @@ const SceneDetailScreen = () => {
       return;
     }
     try {
-      const choices = await choiceServiceRef.current.getChoicesByStoryId(selectedStory.id, undefined, undefined, undefined, undefined, { fromSceneId: sceneId });
+      // `sceneId` é o critério que o serviço entende e filtra pelas escolhas que *saem* desta
+      // cena, que é o que os botões de navegação abaixo oferecem. `fromSceneId` não existia:
+      // caía na varredura de critérios genéricos e derrubava a consulta.
+      const choices = await choiceServiceRef.current.getChoicesByStoryId(selectedStory.id, undefined, undefined, undefined, undefined, { sceneId });
       setChoicesForScene(choices);
     } catch (err) {
       console.error('Failed to fetch choices for scene:', err);

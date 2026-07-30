@@ -128,6 +128,17 @@ const ChoiceViewScreen = () => {
     navigation.navigate('ScenesStack', { screen: 'SceneDetail', params: { sceneId } });
   }, [navigation]);
 
+  // Mesma linha de contexto na tela e no arquivo exportado: o mapa impresso e o mapa aberto
+  // no app precisam dizer a mesma coisa sobre o que está sendo mostrado.
+  const mapSubtitle = useMemo(
+    () => t('story_map_subtitle', {
+      sceneCount: layout.nodes.length,
+      choiceCount: layout.edges.length,
+      date: new Date().toLocaleDateString(),
+    }),
+    [layout.edges.length, layout.nodes.length, t]
+  );
+
   const handleExport = useCallback(async () => {
     if (!selectedStory || layout.nodes.length === 0) return;
 
@@ -135,11 +146,7 @@ const ChoiceViewScreen = () => {
     try {
       const svg = renderStoryMapSvg(layout, {
         title: selectedStory.title,
-        subtitle: t('story_map_subtitle', {
-          sceneCount: layout.nodes.length,
-          choiceCount: layout.edges.length,
-          date: new Date().toLocaleDateString(),
-        }),
+        subtitle: mapSubtitle,
         showEdgeLabels,
         labels: {
           start: t('story_map_badge_start'),
@@ -172,23 +179,43 @@ const ChoiceViewScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, layout, selectedStory, showEdgeLabels, showNotification, t]);
+  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    legendBar: {
+    header: {
+      backgroundColor: colors.surface,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
+      paddingTop: 9,
+      paddingBottom: 3,
+    },
+    headerTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: colors.text,
+      paddingHorizontal: 12,
+    },
+    headerSubtitle: {
+      fontSize: 11,
+      color: colors.textSecondary,
+      paddingHorizontal: 12,
+      marginTop: 1,
+    },
+    legendBar: {
+      // Sem isto o ScrollView horizontal estica na vertical e come metade da tela: dentro de
+      // um container em coluna ele cresce no eixo cruzado por padrão.
+      flexGrow: 0,
+      flexShrink: 0,
     },
     legendContent: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: 12,
-      paddingVertical: 9,
+      paddingVertical: 8,
     },
     legendChip: {
       flexDirection: 'row',
@@ -286,33 +313,40 @@ const ChoiceViewScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.legendBar}
-        contentContainerStyle={styles.legendContent}
-      >
-        {layout.chapters.map(chapter => (
-          <View key={chapter.id} style={styles.legendChip}>
-            <View style={[styles.legendSwatch, { backgroundColor: chapter.color }]} />
-            <Text style={styles.legendLabel}>{`${chapter.name} (${chapter.sceneCount})`}</Text>
-          </View>
-        ))}
-        <View style={styles.legendChip}>
-          <View style={[styles.legendOutline, { borderColor: colors.accent }]} />
-          <Text style={styles.legendLabel}>{t('story_map_badge_start')}</Text>
-        </View>
-        <View style={styles.legendChip}>
-          <View style={[styles.legendOutline, { borderColor: colors.error }]} />
-          <Text style={styles.legendLabel}>{t('story_map_badge_finish')}</Text>
-        </View>
-        {layout.hasBackwardEdges && (
-          <View style={styles.legendChip}>
-            <View style={[styles.legendDash, { borderTopColor: colors.textSecondary }]} />
-            <Text style={styles.legendLabel}>{t('story_map_legend_loops')}</Text>
-          </View>
+      <View style={styles.header}>
+        {!!selectedStory?.title && (
+          <Text style={styles.headerTitle} numberOfLines={1}>{selectedStory.title}</Text>
         )}
-      </ScrollView>
+        <Text style={styles.headerSubtitle} numberOfLines={1}>{mapSubtitle}</Text>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.legendBar}
+          contentContainerStyle={styles.legendContent}
+        >
+          {layout.chapters.map(chapter => (
+            <View key={chapter.id} style={styles.legendChip}>
+              <View style={[styles.legendSwatch, { backgroundColor: chapter.color }]} />
+              <Text style={styles.legendLabel}>{`${chapter.name} (${chapter.sceneCount})`}</Text>
+            </View>
+          ))}
+          <View style={styles.legendChip}>
+            <View style={[styles.legendOutline, { borderColor: colors.accent }]} />
+            <Text style={styles.legendLabel}>{t('story_map_badge_start')}</Text>
+          </View>
+          <View style={styles.legendChip}>
+            <View style={[styles.legendOutline, { borderColor: colors.error }]} />
+            <Text style={styles.legendLabel}>{t('story_map_badge_finish')}</Text>
+          </View>
+          {layout.hasBackwardEdges && (
+            <View style={styles.legendChip}>
+              <View style={[styles.legendDash, { borderTopColor: colors.textSecondary }]} />
+              <Text style={styles.legendLabel}>{t('story_map_legend_loops')}</Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
 
       {layout.danglingChoiceCount > 0 && (
         <View style={styles.warningBar}>

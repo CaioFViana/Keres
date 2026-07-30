@@ -54,7 +54,9 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       }
 
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        const chapterMetadata = entityFieldMetadata['Chapter'];
+        // Chapter não está descrito em `entityFieldMetadata`; sem o `?? []` um critério
+        // desconhecido derruba a consulta em vez de ser ignorado.
+        const chapterMetadata = entityFieldMetadata['Chapter'] ?? [];
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
             const value = advancedSearchCriteria[key];

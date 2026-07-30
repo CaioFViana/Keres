@@ -57,7 +57,9 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       }
 
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        const sceneMetadata = entityFieldMetadata['Scene'];
+        // Scene não está descrita em `entityFieldMetadata`; sem o `?? []` um critério
+        // desconhecido derruba a consulta em vez de ser ignorado.
+        const sceneMetadata = entityFieldMetadata['Scene'] ?? [];
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
             const value = advancedSearchCriteria[key];

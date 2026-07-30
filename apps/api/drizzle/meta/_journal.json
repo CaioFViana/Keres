@@ -113,6 +113,13 @@
       "when": 1769395416779,
       "tag": "0015_mushy_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785368108860,
+      "tag": "0016_first_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

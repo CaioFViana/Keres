@@ -1,10 +1,12 @@
-import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, StoryReorderingStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, StoryReorderingStoryUpdate, StoryUpdate, SyncConflict as SharedSyncConflict, SyncPushResult, UpdateStoryUpdate } from '@keres/shared';
+import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
-import { ServerSelect } from '../db/schema';
+import { OperationLogSelect, ServerSelect } from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
+import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import i18n from '../utils/i18n';
 import { createKeresAxiosInstance, isOfflineError, KeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
@@ -24,6 +26,7 @@ import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandle
 import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
 import { createServerService } from './ServerService';
 import { createStoryService } from './storymanagement/StoryService';
+import { createSyncConflictService, findContestedFields, mergeLocalOperationPayloads, SyncConflictService } from './SyncConflictService';
 
 export interface ServerStoryPreview {
   storyId: string;
@@ -53,6 +56,7 @@ export class SyncEngineService {
   private client: KeresAxiosInstance;
   private intervalTimeMs: number = SYNC_INTERVAL_MS;
   private _db: AppDrizzleClient | null = null;
+  private _conflictService: SyncConflictService | null = null;
   private entityHandlers: Map<string, ClientSyncEntityHandler>; // Map to hold entity handlers
 
   private constructor() {
@@ -90,6 +94,7 @@ export class SyncEngineService {
 
   public setDbInstance(dbInstance: AppDrizzleClient) {
     this._db = dbInstance;
+    this._conflictService = null; // Recriado sob demanda, já ligado ao novo banco.
     // Propagate the db instance to all registered handlers
     this.entityHandlers.forEach(handler => handler.setDb(dbInstance));
 
@@ -268,6 +273,37 @@ export class SyncEngineService {
   }
 
 
+  private get conflictService(): SyncConflictService {
+    if (!this._conflictService) {
+      if (!this._db) {
+        throw new Error('SyncEngineService: cannot use the conflict service before setDbInstance().');
+      }
+      this._conflictService = createSyncConflictService(this._db);
+    }
+    return this._conflictService;
+  }
+
+  /**
+   * Versão em que o usuário se apoiou ao fazer a edição.
+   *
+   * Todos os services locais incrementam `version` em exatamente 1 e gravam no payload da
+   * operação a versão *resultante*. O servidor precisa da base, não do resultado: é
+   * comparando a base com a versão que ele tem agora que se descobre se alguém escreveu no
+   * meio. Mandar o resultado (como era feito antes) fazia a checagem passar sempre.
+   */
+  private deriveBaseVersion(payload: Record<string, any>): number | undefined {
+    const resultingVersion = payload?.version;
+    if (typeof resultingVersion !== 'number' || resultingVersion < 1) {
+      return undefined;
+    }
+    return resultingVersion - 1;
+  }
+
+  /** Chave de agrupamento de operações e conflitos por entidade. */
+  private entityKey(entityType: string, entityId: string): string {
+    return `${entityType}:${entityId}`;
+  }
+
   /** Runs one full pull/push cycle. Resolves to true when the server was unreachable. */
   private async performSync(): Promise<boolean> {
     const { showNotification } = useNotificationStore.getState();
@@ -305,15 +341,20 @@ export class SyncEngineService {
         return false;
       }
 
-      let currentServerMaxOperationVersion = localStory.lastServerSyncedLog || 0;
+      const lastSyncedLog = localStory.lastServerSyncedLog || 0;
 
       // 2. Pull remote updates first (since the latest known server version)
-      console.log(`Pulling remote updates for story ${this.storyId} since version ${currentServerMaxOperationVersion}...`);
-      const pullResponse = await this.client.get<{ updates: StoryUpdate[]; serverMaxOperationVersion: number }>(`/sync/${this.storyId}/pull?lastOperationVersion=${currentServerMaxOperationVersion}`);
-      const { updates: remoteUpdates, serverMaxOperationVersion: newServerMaxOperationVersion } = pullResponse.data;
+      console.log(`Pulling remote updates for story ${this.storyId} since version ${lastSyncedLog}...`);
+      const pullResponse = await this.client.get<{ updates: StoryUpdate[]; serverMaxOperationVersion: number }>(`/sync/${this.storyId}/pull?lastOperationVersion=${lastSyncedLog}`);
+      const { updates: remoteUpdates } = pullResponse.data;
 
-      // Update currentServerMaxOperationVersion based on pull response
-      currentServerMaxOperationVersion = newServerMaxOperationVersion;
+      /**
+       * Avançamos o marcador apenas até a operação mais alta que realmente chegou, e não
+       * até o `serverMaxOperationVersion` da resposta. Os dois são lidos em consultas
+       * separadas no servidor: uma operação gravada entre elas entra no máximo mas não na
+       * lista, e confiar no máximo a puliria para sempre.
+       */
+      let highestAppliedRemoteVersion = lastSyncedLog;
 
       if (remoteUpdates && remoteUpdates.length > 0) {
         let totalUpdates = remoteUpdates.length;
@@ -321,6 +362,13 @@ export class SyncEngineService {
         let failedEntities: string[] = [];
 
         console.log(`Received ${totalUpdates} remote updates. Applying to local DB...`);
+
+        // Operações locais ainda não aceitas pelo servidor, indexadas por entidade. É com
+        // elas que as atualizações remotas podem colidir: aplicar a versão remota em cima
+        // apagaria em silêncio o que o usuário escreveu offline.
+        const pendingByEntity = await this.getPendingOperationsByEntity();
+        let conflictsDetected = 0;
+
         for (const update of remoteUpdates) {
           const handler = this.entityHandlers.get(update.entity);
           if (!handler) {
@@ -328,9 +376,31 @@ export class SyncEngineService {
             continue;
           }
 
+          // Operação que este próprio cliente enviou e o servidor está devolvendo. Já está
+          // aplicada aqui; reaplicá-la só duplicaria a linha no log local.
+          if (await this.isOwnEchoedOperation(update)) {
+            highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
+            continue;
+          }
+
+          const pendingLocalOps = pendingByEntity.get(this.entityKey(update.entity, update.id || '')) || [];
+
           try {
+            if (pendingLocalOps.length > 0 && update.type !== 'reorder') {
+              const outcome = await this.reconcileRemoteUpdate(update, pendingLocalOps, handler);
+              if (outcome.conflicted) {
+                conflictsDetected += 1;
+              }
+              if (!entitiesUpdated.includes(update.entity)) {
+                entitiesUpdated.push(update.entity);
+              }
+              await this.recordRemoteOperationLocally(update);
+              highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
+              continue;
+            }
+
             if (update.type === 'create') {
-              await handler.applyCreate(this.storyId, update);
+              await this.applyRemoteCreate(update, handler);
             } else if (update.type === 'update') {
               await handler.applyUpdate(this.storyId, update);
             } else if (update.type === 'delete') {
@@ -371,25 +441,8 @@ export class SyncEngineService {
               entitiesUpdated.push(update.entity);
             }
 
-            // Insert the pulled operation into the local operationLogs table
-            const payloadToStore = update.type === 'create' ? update.data :
-                                   update.type === 'update' ? update.changes :
-                                   update.type === 'reorder' ? update.reorderItems : // Store reorderItems for reorder operations
-                                   { id: update.id }; // For delete, just store the ID
-
-            await this._db.insert(schema.operationLogs).values({
-              id: update.id!,
-              storyId: this.storyId,
-              userId: update.originatingUser!, // Ensure originatingUser is present in StoryUpdate
-              operationVersion: update.operationVersion!,
-              operationType: update.type,
-              entityType: update.entity,
-              entityId: update.id!,
-              payload: JSON.stringify(payloadToStore),
-              createdAt: new Date(update.operationTime!),
-              isSynced: true, // Mark as synced because it came from the server
-              serverOperationVersion: update.operationVersion!,
-            });
+            await this.recordRemoteOperationLocally(update);
+            highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
 
           } catch (handlerError) {
             console.log(`Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`, handlerError);
@@ -403,42 +456,42 @@ export class SyncEngineService {
         // item - a single flaky entity type shouldn't flood the user with a
         // notification for every record it touches.
         if (entitiesUpdated.length > 0) {
-          showNotification(`${totalUpdates} new updates from server. Updated: ${entitiesUpdated.join(', ')}.`, 'info');
+          showNotification(i18n.t('sync_updates_received', { count: totalUpdates, entities: entitiesUpdated.join(', ') }), 'info');
         }
         if (failedEntities.length > 0) {
-          showNotification(`Failed to apply some remote updates: ${failedEntities.join(', ')}.`, 'error');
+          showNotification(i18n.t('sync_failed_to_apply_updates', { entities: failedEntities.join(', ') }), 'error');
+        }
+        if (conflictsDetected > 0) {
+          showNotification(i18n.t('sync_conflicts_detected', { count: conflictsDetected }), 'warning');
         }
         // Emit event to signal operation log update after applying remote updates
         entityEventEmitter.emit('operation_log_updated', this.storyId);
       } else {
-        console.log(`No new remote updates for story ${this.storyId} since version ${currentServerMaxOperationVersion}`);
+        console.log(`No new remote updates for story ${this.storyId} since version ${lastSyncedLog}`);
       }
 
       // 3. Fetch pending local operations (after applying remote updates to bring local DB up to date)
-      const pendingLocalOperations = await this._db.query.operationLogs.findMany({
-        where: and(
-          eq(schema.operationLogs.storyId, this.storyId),
-          eq(schema.operationLogs.isSynced, false)
-        ),
-        orderBy: ({ createdAt }) => [asc(createdAt)], // Order by creation time
-      });
+      const pendingLocalOperations = await this.getPushableOperations();
 
       // 4. Push local updates to server
       if (pendingLocalOperations.length > 0) {
         console.log(`Pushing ${pendingLocalOperations.length} local operations for story ${this.storyId} to server...`);
         try {
           const updatesToPush: StoryUpdate[] = pendingLocalOperations.map(op => {
+            const payloadData = JSON.parse(op.payload);
+
             const baseUpdate: Omit<StoryUpdate, 'type'> = {
               entity: op.entityType,
               id: op.entityId,
-              // The top-level 'version' field in StoryUpdate is the operation's version in the log.
-              // It's not directly used for entity version conflict detection on the server side
-              // for update/delete operations, but can be useful for logging or debugging.
-              version: op.operationVersion,
+              // Base sobre a qual o usuário editou. O servidor compara com a versão que ele
+              // tem para decidir se aceita ou se devolve conflito.
+              version: this.deriveBaseVersion(payloadData),
               operationTime: op.createdAt.toISOString(),
+              // Devolvido intacto na resposta, para sabermos exatamente quais operações
+              // passaram e quais foram recusadas.
+              clientOperationId: op.id,
             };
 
-            const payloadData = JSON.parse(op.payload);
             // Remove client-generated timestamp fields that should be server-managed
             const filteredPayloadData: Record<string, any> = { ...payloadData };
             delete filteredPayloadData.createdAt;
@@ -458,11 +511,6 @@ export class SyncEngineService {
               }
             }
 
-            // For update and delete, the server expects the client's current entity version
-            // for optimistic concurrency checks. This is the 'version' that was present
-            // in the entity when the client created the local operation.
-            const entityVersionAtClientChange = payloadData.version; // This is the entity's version, not the operation log version
-
             switch (op.operationType) {
               case 'create':
                 return {
@@ -476,18 +524,14 @@ export class SyncEngineService {
                   type: 'update',
                   changes: {
                     ...filteredPayloadData,
-                    // Explicitly include the entity's version at the time of client's change.
-                    // This is crucial for the server's checkVersionConflict method.
-                    version: entityVersionAtClientChange,
+                    // O servidor lê a base de `changes.version` para operações de update.
+                    version: baseUpdate.version,
                   },
                 } as UpdateStoryUpdate;
               case 'delete':
                 return {
                   ...baseUpdate,
                   type: 'delete',
-                  // For delete, the server checks 'update.version', so we place the entity's
-                  // client-known version here.
-                  version: entityVersionAtClientChange,
                 } as DeleteStoryUpdate;
               case 'reorder':
                 if (op.entityType === 'Chapter' && Array.isArray(filteredPayloadData.reorderItems)) {
@@ -513,19 +557,9 @@ export class SyncEngineService {
                 return null;
             }
           }).filter(Boolean) as StoryUpdate[];
-          console.log(updatesToPush) // Log the payload being sent
-          const pushResponse = await this.client.post<{ message: string; serverMaxOperationVersion: number }>(`/sync/${this.storyId}`, updatesToPush);
-          currentServerMaxOperationVersion = pushResponse.data.serverMaxOperationVersion;
-          // Mark local operations as synced
-          for (const op of pendingLocalOperations) {
-            await this._db.update(schema.operationLogs)
-              .set({ isSynced: true, serverOperationVersion: currentServerMaxOperationVersion })
-              .where(eq(schema.operationLogs.id, op.id));
-          }
-          // Emit event to signal operation log update
-          entityEventEmitter.emit('operation_log_updated', this.storyId);
-          console.log(`Successfully pushed ${pendingLocalOperations.length} operations. New server max version: ${currentServerMaxOperationVersion}`);
-          showNotification(`Pushed ${pendingLocalOperations.length} updates.`, 'success');
+
+          const pushResponse = await this.client.post<SyncPushResult>(`/sync/${this.storyId}`, updatesToPush);
+          await this.applyPushResult(pushResponse.data, pendingLocalOperations);
 
         } catch (pushError: any) {
           if (isOfflineError(pushError)) {
@@ -535,13 +569,13 @@ export class SyncEngineService {
             return true;
           }
           console.log(`Error pushing local operations for story ${this.storyId}:`, pushError?.message || pushError);
-          showNotification(`Failed to push updates: ${pushError.message || 'Unknown error'}`, 'error');
+          showNotification(i18n.t('sync_push_failed'), 'error');
         }
       }
 
       // 5. Update local story's lastServerSyncedLog
       await this._db.update(schema.stories)
-        .set({ lastServerSyncedLog: currentServerMaxOperationVersion })
+        .set({ lastServerSyncedLog: highestAppliedRemoteVersion })
         .where(eq(schema.stories.id, this.storyId));
 
       return false;
@@ -553,9 +587,303 @@ export class SyncEngineService {
         return true;
       }
       console.log('Error during sync operation:', error?.message || error);
-      showNotification(`Sync failed: ${error.message || 'Unknown error'}`, 'error');
+      showNotification(i18n.t('sync_failed'), 'error');
       return false;
     }
   }
 
+  /**
+   * Operações locais que podem ir para o servidor: ainda não sincronizadas e sem conflito
+   * pendente. Excluir as conflitadas é o que impede o ciclo de reenviar para sempre uma
+   * operação que o servidor já recusou.
+   */
+  private async getPushableOperations(): Promise<OperationLogSelect[]> {
+    return this._db!.query.operationLogs.findMany({
+      where: and(
+        eq(schema.operationLogs.storyId, this.storyId!),
+        eq(schema.operationLogs.isSynced, false),
+        isNull(schema.operationLogs.conflictState)
+      ),
+      orderBy: ({ createdAt }) => [asc(createdAt)], // Order by creation time
+    });
+  }
+
+  /** Operações locais pendentes agrupadas por entidade, para cruzar com o que vem do pull. */
+  private async getPendingOperationsByEntity(): Promise<Map<string, OperationLogSelect[]>> {
+    const pending = await this.getPushableOperations();
+    const byEntity = new Map<string, OperationLogSelect[]>();
+    for (const op of pending) {
+      const key = this.entityKey(op.entityType, op.entityId);
+      const bucket = byEntity.get(key);
+      if (bucket) {
+        bucket.push(op);
+      } else {
+        byEntity.set(key, [op]);
+      }
+    }
+    return byEntity;
+  }
+
+  /**
+   * A operação que veio do pull já está registrada localmente?
+   *
+   * Cobre dois casos: operações que este cliente empurrou e o servidor está devolvendo, e
+   * operações remotas que um pull anterior já aplicou. Nos dois, reaplicar é desnecessário
+   * e duplicaria a linha no log local.
+   */
+  private async isOwnEchoedOperation(update: StoryUpdate): Promise<boolean> {
+    if (!update.operationVersion) {
+      return false;
+    }
+    const existing = await this._db!.query.operationLogs.findFirst({
+      where: and(
+        eq(schema.operationLogs.storyId, this.storyId!),
+        eq(schema.operationLogs.serverOperationVersion, update.operationVersion),
+        eq(schema.operationLogs.isSynced, true)
+      ),
+      columns: { id: true },
+    });
+    return !!existing;
+  }
+
+  /**
+   * Aplica uma criação remota tolerando que a entidade já exista.
+   *
+   * Um `insert` cru falharia ao repetir a operação (por exemplo se a resposta de um push
+   * anterior se perdeu e o servidor devolveu a criação no pull seguinte), e a falha era
+   * contabilizada como "erro ao aplicar atualização remota" sem nada de errado ter
+   * acontecido de fato.
+   */
+  private async applyRemoteCreate(update: StoryUpdate, handler: ClientSyncEntityHandler): Promise<void> {
+    const createUpdate = update as CreateStoryUpdate;
+    const existing = update.id ? await handler.getById(update.id) : undefined;
+
+    if (!existing) {
+      await handler.applyCreate(this.storyId!, createUpdate);
+      return;
+    }
+
+    await handler.applyUpdate(this.storyId!, {
+      ...createUpdate,
+      type: 'update',
+      id: update.id!,
+      changes: createUpdate.data,
+    } as UpdateStoryUpdate);
+  }
+
+  /**
+   * Registra no log local uma operação vinda do servidor.
+   *
+   * O id usado é o da operação *no servidor*. Antes usava-se o id da entidade, o que fazia
+   * a segunda operação sobre a mesma entidade colidir na chave primária - a falha era
+   * engolida e reportada ao usuário como "falha ao aplicar atualizações remotas".
+   */
+  private async recordRemoteOperationLocally(update: StoryUpdate): Promise<void> {
+    const payloadToStore = update.type === 'create' ? update.data :
+                           update.type === 'update' ? update.changes :
+                           update.type === 'reorder' ? { reorderItems: update.reorderItems } :
+                           { id: update.id }; // For delete, just store the ID
+
+    await this._db!.insert(schema.operationLogs).values({
+      id: update.operationId || createULID(),
+      storyId: this.storyId!,
+      userId: update.originatingUser || 'unknown',
+      operationVersion: update.operationVersion || 0,
+      operationType: update.type,
+      entityType: update.entity,
+      entityId: update.id!,
+      payload: JSON.stringify(payloadToStore),
+      createdAt: update.operationTime ? new Date(update.operationTime) : new Date(),
+      isSynced: true, // Mark as synced because it came from the server
+      serverOperationVersion: update.operationVersion || 0,
+    }).onConflictDoNothing();
+  }
+
+  /**
+   * Reconcilia uma atualização remota com edições locais ainda não aceitas na mesma entidade.
+   *
+   * A regra é preservar o que a pessoa fez: campos que só o servidor mudou são aplicados,
+   * campos que a pessoa também mudou ficam com o valor dela e viram um conflito para ela
+   * decidir. Antes, a atualização remota era escrita por cima e a edição offline
+   * desaparecia sem aviso.
+   */
+  private async reconcileRemoteUpdate(
+    update: StoryUpdate,
+    pendingLocalOps: OperationLogSelect[],
+    handler: ClientSyncEntityHandler
+  ): Promise<{ conflicted: boolean }> {
+    const entityId = update.id!;
+    const localWantsDelete = pendingLocalOps.some(op => op.operationType === 'delete');
+    const localValues = mergeLocalOperationPayloads(pendingLocalOps);
+    const localOperationIds = pendingLocalOps.map(op => op.id);
+    const localOperationType = localWantsDelete
+      ? 'delete'
+      : pendingLocalOps.some(op => op.operationType === 'create') ? 'create' : 'update';
+
+    const recordConflict = (reason: 'deleted_on_server' | 'edited_on_server' | 'concurrent_edit', serverValues: Record<string, any> | null) =>
+      this.conflictService.recordConflict({
+        storyId: this.storyId!,
+        entityType: update.entity,
+        entityId,
+        reason,
+        localOperationType,
+        localOperationIds,
+        localValues,
+        serverValues,
+        clientVersion: this.deriveBaseVersion(JSON.parse(pendingLocalOps[0].payload)) ?? null,
+        serverVersion: update.version ?? null,
+        message: update.type === 'delete'
+          ? `Server deleted ${update.entity} ${entityId} while it had unsynced local edits.`
+          : `Server and local changes overlap on ${update.entity} ${entityId}.`,
+      });
+
+    if (update.type === 'delete') {
+      if (localWantsDelete) {
+        // Os dois lados excluíram: mesma intenção, nada a decidir.
+        await handler.applyDelete(this.storyId!, update as DeleteStoryUpdate);
+        return { conflicted: false };
+      }
+      // A exclusão remota não é aplicada de propósito: descartar aqui o que a pessoa
+      // escreveu tiraria dela a chance de recuperar a entidade.
+      await recordConflict('deleted_on_server', { isDeleted: true, version: update.version });
+      return { conflicted: true };
+    }
+
+    const remoteValues: Record<string, any> = update.type === 'create'
+      ? { ...(update as CreateStoryUpdate).data }
+      : update.type === 'update' ? { ...(update as UpdateStoryUpdate).changes } : {};
+
+    if (localWantsDelete) {
+      await recordConflict('edited_on_server', remoteValues);
+      return { conflicted: true };
+    }
+
+    const contestedFields = findContestedFields(localValues, remoteValues);
+    const mergeableEntries = Object.entries(remoteValues).filter(([key]) => !contestedFields.includes(key));
+
+    if (mergeableEntries.length > 0) {
+      await handler.applyUpdate(this.storyId!, {
+        ...update,
+        type: 'update',
+        id: entityId,
+        changes: Object.fromEntries(mergeableEntries),
+      } as UpdateStoryUpdate);
+    }
+
+    if (contestedFields.length === 0) {
+      // As duas edições cabem juntas. A local só precisa ser reapoiada na versão nova,
+      // e assim ela passa no próximo push sem incomodar o usuário com uma decisão.
+      await this.rebasePendingOperations(pendingLocalOps, update.version);
+      return { conflicted: false };
+    }
+
+    await recordConflict('concurrent_edit', remoteValues);
+    return { conflicted: true };
+  }
+
+  /**
+   * Reescreve a base das operações locais pendentes para a versão que a entidade tem
+   * agora, encadeando-as (a primeira apoia na versão nova, a segunda na seguinte, e assim
+   * por diante) para que o servidor as aceite em sequência.
+   */
+  private async rebasePendingOperations(pendingLocalOps: OperationLogSelect[], newEntityVersion?: number): Promise<void> {
+    if (typeof newEntityVersion !== 'number') {
+      return;
+    }
+
+    let base = newEntityVersion;
+    for (const op of pendingLocalOps) {
+      const payload = JSON.parse(op.payload);
+      // O motor deriva a base como `payload.version - 1`, então gravamos base + 1.
+      payload.version = base + 1;
+      await this._db!.update(schema.operationLogs)
+        .set({ payload: JSON.stringify(payload) })
+        .where(eq(schema.operationLogs.id, op.id));
+      base += 1;
+    }
+  }
+
+  /**
+   * Processa a resposta do push: marca como sincronizadas só as operações que o servidor
+   * aceitou e transforma as recusadas em conflitos pendentes.
+   *
+   * Antes, qualquer resposta 2xx marcava *todas* as operações como sincronizadas, então uma
+   * operação recusada era descartada em silêncio - a edição do usuário simplesmente
+   * desaparecia.
+   */
+  private async applyPushResult(result: SyncPushResult, pushedOperations: OperationLogSelect[]): Promise<void> {
+    const { showNotification } = useNotificationStore.getState();
+
+    if (!Array.isArray(result?.applied) && !Array.isArray(result?.conflicts)) {
+      // Servidor anterior a esta mudança: não há resultado por operação para inspecionar.
+      // Mantemos o comportamento antigo em vez de deixar de sincronizar com ele.
+      console.log('SyncEngineService: server did not report per-operation results, assuming the whole batch was applied.');
+      for (const op of pushedOperations) {
+        await this._db!.update(schema.operationLogs)
+          .set({ isSynced: true, serverOperationVersion: result?.serverMaxOperationVersion || 0 })
+          .where(eq(schema.operationLogs.id, op.id));
+      }
+      entityEventEmitter.emit('operation_log_updated', this.storyId);
+      return;
+    }
+
+    for (const entry of result.applied || []) {
+      if (!entry.clientOperationId) {
+        continue;
+      }
+      await this._db!.update(schema.operationLogs)
+        .set({ isSynced: true, serverOperationVersion: entry.operationVersion })
+        .where(eq(schema.operationLogs.id, entry.clientOperationId));
+    }
+
+    // Conflitos vêm por operação, mas a decisão é por entidade: cinco edições recusadas no
+    // mesmo capítulo são uma escolha do usuário, não cinco.
+    const conflictsByEntity = new Map<string, SharedSyncConflict[]>();
+    for (const conflict of result.conflicts || []) {
+      const key = this.entityKey(conflict.entity, conflict.entityId);
+      const bucket = conflictsByEntity.get(key);
+      if (bucket) {
+        bucket.push(conflict);
+      } else {
+        conflictsByEntity.set(key, [conflict]);
+      }
+    }
+
+    for (const [key, group] of conflictsByEntity) {
+      const first = group[0];
+      // Todas as operações locais daquela entidade entram no conflito, e não só a que o
+      // servidor citou: as seguintes se apoiavam na base recusada.
+      const relatedOps = pushedOperations.filter(op => this.entityKey(op.entityType, op.entityId) === key);
+      const localOperationType = relatedOps.some(op => op.operationType === 'delete')
+        ? 'delete'
+        : relatedOps.some(op => op.operationType === 'create') ? 'create' : 'update';
+
+      await this.conflictService.recordConflict({
+        storyId: this.storyId!,
+        entityType: first.entity,
+        entityId: first.entityId,
+        reason: first.reason,
+        localOperationType,
+        localOperationIds: relatedOps.map(op => op.id),
+        localValues: relatedOps.length > 0
+          ? mergeLocalOperationPayloads(relatedOps)
+          : first.attemptedChanges || {},
+        serverValues: first.serverEntity ?? null,
+        clientVersion: first.clientVersion ?? null,
+        serverVersion: first.serverVersion ?? null,
+        message: group.map(conflict => conflict.message).join(' | '),
+      });
+    }
+
+    entityEventEmitter.emit('operation_log_updated', this.storyId);
+
+    const appliedCount = (result.applied || []).length;
+    if (appliedCount > 0) {
+      console.log(`Successfully pushed ${appliedCount} operations for story ${this.storyId}.`);
+      showNotification(i18n.t('sync_pushed_updates', { count: appliedCount }), 'success');
+    }
+    if (conflictsByEntity.size > 0) {
+      showNotification(i18n.t('sync_conflicts_detected', { count: conflictsByEntity.size }), 'warning');
+    }
+  }
 }

@@ -17,6 +17,7 @@ export * from './servers';
 export * from './stories';
 export * from './storyPermissions';
 export * from './suggestions';
+export * from './syncConflicts';
 export * from './tagRelations';
 export * from './tags';
 export * from './users';

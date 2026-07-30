@@ -9,7 +9,9 @@ import { OFFLINE_RETRY_MS, ServerStoryPreview, SYNC_INTERVAL_MS, SyncEngineServi
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';
 import { useStoryStore } from '../state/storyStore'; // Import useStoryStore
+import { useSyncConflictStore } from '../state/syncConflictStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+import { entityEventEmitter } from '../utils/EventEmitter';
 
 interface SyncInitializerProps {
   children: React.ReactNode;
@@ -152,6 +154,27 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       }
     };
   }, [syncDataWithServers]); // Dependency on syncDataWithServers ensures the latest version is used
+
+  // Mantém a lista de conflitos pendentes em sincronia com o banco. O motor de
+  // sincronização emite o evento quando um push é recusado ou quando um pull colide com
+  // edições locais; é isso que faz a tela de resolução aparecer.
+  useEffect(() => {
+    if (!drizzleClient) {
+      return;
+    }
+
+    const refreshConflicts = () => {
+      useSyncConflictStore.getState().refresh(drizzleClient, selectedStory?.id).catch((error) => {
+        console.log('SyncInitializer: failed to refresh sync conflicts.', error);
+      });
+    };
+
+    refreshConflicts();
+    entityEventEmitter.on('sync_conflicts_changed', refreshConflicts);
+    return () => {
+      entityEventEmitter.off('sync_conflicts_changed', refreshConflicts);
+    };
+  }, [drizzleClient, selectedStory?.id]);
 
   // NEW: useEffect to handle push synchronization for the selected story
   useEffect(() => {

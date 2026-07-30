@@ -13,6 +13,16 @@ export const operationLog = pgTable('operation_log', {
   entityType: text('entity_type').notNull(),
   entityId: text('entity_id').notNull(),
   payload: jsonb('payload').notNull(), // Store the data/changes as JSONB
+  /**
+   * Versão da *entidade* depois desta operação, distinta de `operationVersion` (que é a
+   * posição da operação na sequência da história). Sem esta coluna o pull não tem como
+   * informar a versão real da entidade e acaba mandando `operationVersion` no lugar -
+   * um número muito maior, que faz a checagem de concorrência otimista do cliente passar
+   * sempre e portanto nunca detectar conflito.
+   *
+   * Nulo nas linhas gravadas antes desta coluna existir.
+   */
+  entityVersion: integer('entity_version'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 

@@ -14,14 +14,18 @@ export const syncRoute = new Elysia()
     const { storyId } = params;
     const parsedUpdates = StoryUpdatesArraySchema.parse(body);
 
-    const { lastOperationVersion } = await syncService.processAndRecordUpdates(user.userId, storyId, parsedUpdates);
+    const { lastOperationVersion, applied, conflicts } = await syncService.processAndRecordUpdates(user.userId, storyId, parsedUpdates);
 
-    console.log(`Received sync updates for story ${storyId}. Last operation version: ${lastOperationVersion}`);
+    console.log(`Received sync updates for story ${storyId}. Applied ${applied.length}, conflicts ${conflicts.length}. Last operation version: ${lastOperationVersion}`);
 
     return {
       message: `Sync updates received and processed for story ${storyId}`,
       processedUpdates: parsedUpdates.length,
       serverMaxOperationVersion: lastOperationVersion,
+      // Resultado por operação: sem isto o cliente não distingue quais operações passaram
+      // e quais foram recusadas, e acaba marcando as recusadas como sincronizadas.
+      applied,
+      conflicts,
     };
   }, {
     params: t.Object({

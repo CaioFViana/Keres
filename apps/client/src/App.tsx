@@ -5,6 +5,7 @@ import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NotificationPopup from './components/common/NotificationPopup/NotificationPopup';
+import SyncConflictModal from './components/SyncConflictModal/SyncConflictModal';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
@@ -29,6 +30,12 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       <StatusBar style={statusBarStyle} />
       {children}
       <NotificationPopup />
+      {/*
+        Montado aqui, junto das notificações, para poder aparecer sobre qualquer tela: um
+        conflito trava a sincronização daquela entidade e precisa ser decidido onde o
+        usuário estiver, não numa aba que ele talvez nunca abra.
+      */}
+      <SyncConflictModal />
     </View>
   );
 };

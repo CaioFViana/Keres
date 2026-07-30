@@ -59,6 +59,13 @@ const ItemJourneyListScreen = () => {
     // Add more sort options as needed for ItemJourney
   ]), [t]);
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    headerRightContainer: { flexDirection: 'row', marginRight: 15 },
+    headerButton: { marginLeft: 15 },
+    filterContainer: { flexDirection: 'row', padding:0, paddingBottom: 10, zIndex: 1000 },
+  });
+
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({
@@ -71,15 +78,8 @@ const ItemJourneyListScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer])
   );
-
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    headerRightContainer: { flexDirection: 'row', marginRight: 15 },
-    headerButton: { marginLeft: 15 },
-    filterContainer: { flexDirection: 'row', padding:0, paddingBottom: 10, zIndex: 1000 },
-  });
 
   const filterComponent = (
     <View style={styles.filterContainer}>

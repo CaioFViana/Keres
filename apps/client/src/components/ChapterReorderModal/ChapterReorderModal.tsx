@@ -133,7 +133,7 @@ const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
         </TouchableOpacity>
       </View>
     </View>
-  ), [reorderedChapters, moveChapter, colors.primary, colors.textSecondary]);
+  ), [reorderedChapters, moveChapter, colors.primary, colors.textSecondary, styles.chapterItem, styles.chapterName, styles.controlButton, styles.controls]);
 
   return (
     <Modal

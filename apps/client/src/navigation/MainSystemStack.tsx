@@ -72,13 +72,7 @@ export type MainSystemDrawerParamList = {
   StorySelection: undefined;
 };
 
-export type ListingDetailStackParamList = {
-  Listing: { entityType: string };
-  Detail: { entityType: string; itemId: string };
-};
-
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
-const Stack = createNativeStackNavigator<ListingDetailStackParamList>();
 
 //#region Character
 

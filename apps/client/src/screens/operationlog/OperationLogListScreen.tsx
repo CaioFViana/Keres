@@ -1,6 +1,6 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
-import { CompositeNavigationProp, RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
@@ -10,8 +10,6 @@ import { MainSystemDrawerParamList, OperationLogStackParamList } from '../../nav
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import entityEventEmitter
-
-type OperationLogScreenRouteProp = RouteProp<MainSystemDrawerParamList, 'OperationLogStack'>;
 
 // Redefine OperationLogScreenNavigationProp as CompositeNavigationProp
 export type OperationLogScreenNavigationProp = CompositeNavigationProp<
@@ -24,7 +22,6 @@ const OperationLogScreen: React.FC = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<OperationLogScreenNavigationProp>();
-  const route = useRoute<OperationLogScreenRouteProp>();
   const { selectedStory } = useStoryStore();
 
   const [shouldRefetch, setShouldRefetch] = useState(false); // New state for refetch trigger
@@ -45,7 +42,7 @@ const OperationLogScreen: React.FC = () => {
           </TouchableOpacity>
         ),
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, t])
   );
 
   const handlePressLogItem = useCallback((logId: string) => {

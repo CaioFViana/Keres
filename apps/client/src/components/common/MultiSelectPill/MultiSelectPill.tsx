@@ -27,7 +27,6 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
-  const [dropdownHeight, setDropdownHeight] = useState(0);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
 
   const getOptionByValue = useCallback((value: string) => {

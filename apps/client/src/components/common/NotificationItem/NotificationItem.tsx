@@ -47,7 +47,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, laneI
     }, 5000); // 5 seconds
 
     return () => clearTimeout(timer); // Clear timeout on unmount or if notification changes
-  }, [notification.id, laneIndex]); // Re-run effect if notification.id or laneIndex changes
+  }, [notification.id, laneIndex, clearNotificationLane, progressBarAnim, slideAnim]); // Re-run effect if notification.id or laneIndex changes
 
   // Determine background color based on notification type
   const backgroundColor = notification.type === 'error' ? colors.error : (notification.type === 'success' ? colors.primary : colors.card);

@@ -122,7 +122,6 @@ const SceneFormScreen = () => {
   } = useEntityRelations({ entityType: 'Scene', entityId: currentSceneId });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!currentSceneId;
 
@@ -130,7 +129,7 @@ const SceneFormScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_scene_title') : t('create_scene_title'),
-        headerRight: () => {<View/>}
+        headerRight: () => <View/>
       });
     }, [navigation, isEditing, t])
   );
@@ -146,7 +145,7 @@ const SceneFormScreen = () => {
     } catch (err) {
       console.error('Failed to fetch character-scene relations:', err);
     }
-  }, [selectedStory?.id, currentSceneId, characterSceneServiceRef.current]);
+  }, [selectedStory?.id, currentSceneId]);
 
 
   useEffect(() => {
@@ -175,12 +174,11 @@ const SceneFormScreen = () => {
             setIsStart(fetchedScene.isStart);
             setIsFinish(fetchedScene.isFinish);
           } else {
-            setError(t('scene_not_found'));
+            console.warn('Scene not found:', currentSceneId);
           }
         }
       } catch (err) {
         console.error('Failed to load scene:', err);
-        setError(t('failed_to_load_scene'));
       } finally {
         setLoading(false);
         fetchCharacterSceneRelations(); // Fetch character-scene relations
@@ -212,7 +210,6 @@ const SceneFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const sceneData: Omit<Scene, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'index'> = {
@@ -283,6 +280,7 @@ const SceneFormScreen = () => {
             const nextIndex = allScenesInChapter.length > 0 ? Math.max(...allScenesInChapter.map(scn => scn.index || 0)) + 1 : 1;
             const savedScene = await sceneServiceRef.current!.createScene(userId, { ...sceneData, storyId: selectedStory.id, index: nextIndex });
             savedSceneId = savedScene.id;
+            setCurrentSceneId(savedScene.id);
             Alert.alert(t('success'), t('scene_created_successfully'));
         }
 
@@ -299,7 +297,6 @@ const SceneFormScreen = () => {
 
     } catch (err) {
         console.error('Failed to save scene:', err);
-        setError(t('failed_to_save_scene'));
         Alert.alert(t('error'), t('failed_to_save_scene'));
     } finally {
         setLoading(false);
@@ -332,7 +329,7 @@ const SceneFormScreen = () => {
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
-  }, []);
+  }, [setSelectedTagIds]);
 
   const handleSaveCharacterSceneRelation = async (relation: CharacterScene) => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !currentSceneId || !userId) {
@@ -457,6 +454,14 @@ const SceneFormScreen = () => {
         marginBottom: 10,
     },
   });
+
+  if (loading) {
+    return (
+      <View style={[commonContainerStyles.container, styles.centered]}>
+        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

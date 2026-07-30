@@ -1,5 +1,4 @@
 import { Tag } from '@keres/shared/entities/Tag';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,7 @@ import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
+import { TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
@@ -23,7 +22,6 @@ const TagFormScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const drawerNavigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>();
   const route = useRoute<TagFormScreenRouteProp>();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore()
@@ -43,7 +41,6 @@ const TagFormScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!tagId;
 
@@ -51,7 +48,7 @@ const TagFormScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_tag_title') : t('create_tag_title'),
-        headerRight: () => {<View/>}
+        headerRight: () => <View/>
       });
     }, [navigation, isEditing, t])
   );
@@ -71,11 +68,10 @@ const TagFormScreen = () => {
           setIsFavorite(fetchedTag.isFavorite);
           setExtraNotes(fetchedTag.extraNotes);
         } else {
-          setError(t('tag_not_found'));
+          console.warn('Tag not found:', tagId);
         }
       } catch (err) {
         console.error('Failed to load tag:', err);
-        setError(t('failed_to_load_tag'));
       } finally {
         setLoading(false);
       }
@@ -98,7 +94,6 @@ const TagFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const tagData: Omit<Tag, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
@@ -118,7 +113,6 @@ const TagFormScreen = () => {
       navigation.goBack();
     } catch (err) {
       console.error('Failed to save tag:', err);
-      setError(t('failed_to_save_tag'));
       Alert.alert(t('error'), t('failed_to_save_tag'));
     } finally {
       setLoading(false);

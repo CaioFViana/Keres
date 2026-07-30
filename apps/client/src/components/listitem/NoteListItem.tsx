@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { NoteWithTags } from '../../services/storymanagement/NoteService';
 import { useTheme } from '../../theme';
@@ -16,7 +15,6 @@ interface NoteListItemProps {
 
 const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onToggleFavorite }) => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
 
   const bodySummary = truncate(note.body || '', 300);
 

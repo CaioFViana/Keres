@@ -119,6 +119,15 @@ const ChoiceListScreen = () => {
   ]), [t]);
 
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    headerRightContainer: { flexDirection: 'row', marginRight: 15 },
+    headerButton: { marginLeft: 15 },
+    filterContainer: { flexDirection: 'row', padding:0, paddingBottom: 10, zIndex: 1000 },
+    selectWrapperLeft: { flex: 1, paddingRight:5},
+    selectWrapperRight: { flex: 1, paddingLeft:5}
+  });
+
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({
@@ -138,17 +147,8 @@ const ChoiceListScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer])
   );
-
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    headerRightContainer: { flexDirection: 'row', marginRight: 15 },
-    headerButton: { marginLeft: 15 },
-    filterContainer: { flexDirection: 'row', padding:0, paddingBottom: 10, zIndex: 1000 },
-    selectWrapperLeft: { flex: 1, paddingRight:5},
-    selectWrapperRight: { flex: 1, paddingLeft:5}
-  });
 
   const filterComponent = (
     <View style={styles.filterContainer}>

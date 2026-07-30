@@ -3,7 +3,7 @@ import { TextInput as RNTextInput, StyleSheet, TextInputProps } from 'react-nati
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
 
-interface CustomTextInputProps extends TextInputProps {}
+type CustomTextInputProps = TextInputProps;
 
 const TextInput: React.FC<CustomTextInputProps> = ({ style, ...rest }) => {
   const { colors } = useTheme();

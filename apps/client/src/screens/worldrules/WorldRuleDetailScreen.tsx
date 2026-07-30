@@ -121,7 +121,7 @@ const WorldRuleDetailScreen = () => {
     finally {
       setLoading(false);
     }
-  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, worldRuleServiceRef.current, t]);
+  }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, t]);
 
   const handleWorldRuleChange = useCallback(async (changedStoryId: string, changedWorldRuleId: string) => {
     if (changedWorldRuleId === worldRuleId) {
@@ -135,7 +135,7 @@ const WorldRuleDetailScreen = () => {
         }
       }
     }
-  }, [worldRuleId, navigation, setWorldRule, setHeaderTitle, worldRuleServiceRef.current, t]);
+  }, [worldRuleId, navigation, setWorldRule, setHeaderTitle, t]);
 
   const handleTagRelationChange = useCallback(async (changedStoryId: string, changedEntityId: string) => {
     if (changedEntityId === worldRuleId && worldRuleServiceRef.current) {
@@ -144,7 +144,7 @@ const WorldRuleDetailScreen = () => {
         setWorldRule(updatedWorldRule);
       }
     }
-  }, [worldRuleId, setWorldRule, worldRuleServiceRef.current]);
+  }, [worldRuleId, setWorldRule]);
 
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {

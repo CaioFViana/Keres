@@ -84,6 +84,20 @@ const ChapterListScreen = () => {
     setIsReorderModalVisible(false);
   }, [reorderChapters]);
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    headerRightContainer: {
+      flexDirection: 'row',
+      marginRight: 15,
+    },
+    headerButton: {
+      marginLeft: 15,
+    },
+  });
+
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({
@@ -105,22 +119,8 @@ const ChapterListScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, handleReorderPress])
+    }, [navigation, colors.text, t, handleReorderPress, styles.headerButton, styles.headerRightContainer])
   );
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    headerRightContainer: {
-      flexDirection: 'row',
-      marginRight: 15,
-    },
-    headerButton: {
-      marginLeft: 15,
-    },
-  });
 
   if (loading) {
     return <ScreenLoading message={t('loading_chapters')} />;

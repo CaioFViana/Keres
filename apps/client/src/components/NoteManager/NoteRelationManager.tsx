@@ -132,15 +132,7 @@ const NoteRelationManager: React.FC<NoteRelationManagerProps> = ({
         selectItemToAddMessage={t('select_note_to_add')}
         deleteConfirmationTitle={t('delete_note_relation_title')}
         deleteConfirmationMessage={t('delete_note_relation_message')}
-        renderRelationItemExtraContent={(relation, items) => {
-          const note = items.find(n => n.id === relation.noteId);
-          if (!note) return null;
-          return (
-            <TouchableOpacity style={{ flex: 1, paddingVertical: 10 }} onPress={() => handleNotePress(note)}>
-              <Text style={{ fontSize: 16, color: colors.text }}>{note.title}</Text>
-            </TouchableOpacity>
-          );
-        }}
+        renderRelationItemExtraContent={renderNoteRelationExtraContent}
         title={t('notes_title')}
       />
 

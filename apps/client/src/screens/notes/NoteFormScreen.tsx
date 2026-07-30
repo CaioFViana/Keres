@@ -1,7 +1,6 @@
 import { Note } from '@keres/shared/entities/Note';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
@@ -11,7 +10,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { MainSystemDrawerParamList, NotesStackParamList } from '../../navigation/MainSystemStack';
+import { NotesStackParamList } from '../../navigation/MainSystemStack';
 import { createNoteService } from '../../services/storymanagement/NoteService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -24,7 +23,6 @@ const NoteFormScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const drawerNavigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>();
   const route = useRoute<NoteFormScreenRouteProp>();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore()
@@ -51,7 +49,6 @@ const NoteFormScreen = () => {
   } = useEntityRelations({ entityType: 'Note', entityId: noteId, withNotes: false });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!noteId;
 
@@ -59,7 +56,7 @@ const NoteFormScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_note_title') : t('create_note_title'),
-        headerRight: () => {<View/>}
+        headerRight: () => <View/>
       });
     }, [navigation, isEditing, t])
   );
@@ -79,11 +76,10 @@ const NoteFormScreen = () => {
           setIsFavorite(fetchedNote.isFavorite);
           setExtraNotes(fetchedNote.extraNotes);
         } else {
-          setError(t('note_not_found'));
+          console.warn('Note not found:', noteId);
         }
       } catch (err) {
         console.error('Failed to load note:', err);
-        setError(t('failed_to_load_note'));
       } finally {
         setLoading(false);
       }
@@ -106,7 +102,6 @@ const NoteFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const noteData: Omit<Note, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
@@ -134,7 +129,6 @@ const NoteFormScreen = () => {
       navigation.goBack();
     } catch (err) {
       console.error('Failed to save note:', err);
-      setError(t('failed_to_save_note'));
       Alert.alert(t('error'), t('failed_to_save_note'));
     } finally {
       setLoading(false);
@@ -165,7 +159,7 @@ const NoteFormScreen = () => {
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
-  }, []);
+  }, [setSelectedTagIds]);
 
   const styles = StyleSheet.create({
     scrollViewContent: {

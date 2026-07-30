@@ -22,7 +22,7 @@ const ChoiceListItem: React.FC<ChoiceListItemProps> = ({ choice, onViewDetails }
   const renderHeaderContent = (cho: ChoiceSelect) => (
     <View style={styles.headerLeft}>
       <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {truncate(choice.text, 150)}
+        {choiceText}
       </Text>
     </View>
   );

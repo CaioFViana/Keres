@@ -162,7 +162,7 @@ const TagDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [tagId, setTag, setLoading, setError, setHeaderTitle, navigation, tagServiceRef.current, t]);
+  }, [tagId, setTag, setLoading, setError, setHeaderTitle, navigation, t]);
 
   const fetchTagRelations = useCallback(async () => {
     if (!tagRelationServiceRef.current || !selectedStory?.id) {
@@ -175,7 +175,7 @@ const TagDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch tag relations:', err);
     }
-  }, [tagId, selectedStory?.id, tagRelationServiceRef.current]);
+  }, [tagId, selectedStory?.id]);
 
   const processTagRelations = useCallback(async () => {
     if (!drizzleDb || !selectedStory?.id) return;
@@ -224,7 +224,7 @@ const TagDetailScreen = () => {
       }
       fetchTagRelations(); // Also refetch relations if the tag itself changed
     }
-  }, [tagId, navigation, setTag, setHeaderTitle, tagServiceRef.current, t, fetchTagRelations]);
+  }, [tagId, navigation, setTag, setHeaderTitle, t, fetchTagRelations]);
 
   const handleTagRelationChange = useCallback((changedStoryId: string, changedTagId: string) => {
     if (changedTagId === tagId) {
@@ -246,7 +246,7 @@ const TagDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [tagId, fetchTag, handleTagChange, tagServiceRef.current, selectedStory?.id, fetchTagRelations, handleTagRelationChange]);
+  }, [tagId, fetchTag, handleTagChange, selectedStory?.id, fetchTagRelations, handleTagRelationChange]);
 
   useEffect(() => {
     if (allTagRelations.length > 0 && selectedStory?.id) {

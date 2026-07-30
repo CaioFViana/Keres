@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, View } from 'react-native';
 import { ItemJourney, Item } from '@keres/shared/entities/Item';
 import { Scene } from '@keres/shared/entities/Scene';
 import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay';

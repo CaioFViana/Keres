@@ -75,7 +75,6 @@ const ChoiceFormScreen = () => {
   } = useEntityRelations({ entityType: 'Choice', entityId: currentChoiceId });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!currentChoiceId;
 
@@ -104,12 +103,11 @@ const ChoiceFormScreen = () => {
             setText(fetchedChoice.text); // Use text
             setIsImplicit(fetchedChoice.isImplicit);
           } else {
-            setError(t('choice_not_found'));
+            console.warn('Choice not found:', currentChoiceId);
           }
         }
       } catch (err) {
         console.error('Failed to load choice:', err);
-        setError(t('failed_to_load_choice'));
       } finally {
         setLoading(false);
       }
@@ -136,7 +134,6 @@ const ChoiceFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const choiceData: Omit<Choice, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
@@ -155,6 +152,7 @@ const ChoiceFormScreen = () => {
       } else {
         const savedChoice = await choiceServiceRef.current!.createChoice(userId, { ...choiceData, storyId: selectedStory.id });
         savedChoiceId = savedChoice.id;
+        setCurrentChoiceId(savedChoice.id);
         Alert.alert(t('success'), t('choice_created_successfully'));
       }
 
@@ -170,7 +168,6 @@ const ChoiceFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save choice:', err);
-      setError(t('failed_to_save_choice'));
       Alert.alert(t('error'), t('failed_to_save_choice'));
     } finally {
       setLoading(false);
@@ -214,6 +211,14 @@ const ChoiceFormScreen = () => {
     tagSection: { marginTop: 20, marginBottom: 10 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
   });
+
+  if (loading) {
+    return (
+      <View style={[commonContainerStyles.container, styles.centered]}>
+        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>

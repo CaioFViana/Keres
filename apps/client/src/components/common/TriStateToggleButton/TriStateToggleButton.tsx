@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../theme';
 
@@ -13,7 +12,6 @@ interface TriStateToggleButtonProps {
 
 const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({ label, value, onChange, style }) => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
 
   const handlePress = useCallback(() => {
     if (value === undefined) {

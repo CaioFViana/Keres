@@ -48,7 +48,7 @@ export function useEntityName(entityType: OperationLogEntityType, entityId: stri
     return () => {
       isMounted = false;
     };
-  }, [db, entityType, entityId, storyId]);
+  }, [db, entityType, entityId, storyId, t]);
 
   return { entityName, loading };
 }

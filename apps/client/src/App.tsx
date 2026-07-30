@@ -15,7 +15,6 @@ import { useUserSettingsStore } from './state/userSettingsStore';
 import { useTheme } from './theme';
 import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
-import './utils/i18n';
 import i18n from './utils/i18n';
 
 // Create a wrapper component for safe area

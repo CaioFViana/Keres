@@ -1,7 +1,6 @@
 import TextInput from '@/src/components/common/TextInput/TextInput';
 import { Character } from '@keres/shared/entities/Character';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
-import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -17,7 +16,7 @@ import { CharacterSelect } from '../../db/schemas/characters'; // Import Charact
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { useStoryStore } from '../../state/storyStore';
@@ -34,7 +33,6 @@ const CharacterFormScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation<CharacterFormScreenNavigationProp>(); // Use the specific navigation type
-  const drawerNavigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>();
   const route = useRoute<CharacterFormScreenRouteProp>();
   const { characterId: initialCharacterId } = route.params || {}; // Renamed to initialCharacterId
   const { t } = useTranslation();
@@ -93,7 +91,6 @@ const CharacterFormScreen = () => {
 
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!currentCharacterId;
 
@@ -101,7 +98,7 @@ const CharacterFormScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_character_title') : t('create_character_title'),
-        headerRight: () => {<View/>}
+        headerRight: () => <View/>
       });
     }, [navigation, isEditing, t])
   );
@@ -117,7 +114,7 @@ const CharacterFormScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all characters:', err);
     }
-  }, [selectedStory?.id, characterServiceRef.current]);
+  }, [selectedStory?.id]);
 
   const fetchRelationsForCharacter = useCallback(async () => {
     if (!characterRelationServiceRef.current || !selectedStory?.id || !currentCharacterId) {
@@ -130,7 +127,7 @@ const CharacterFormScreen = () => {
     } catch (err) {
       console.error('Failed to fetch character relations:', err);
     }
-  }, [selectedStory?.id, currentCharacterId, characterRelationServiceRef.current]);
+  }, [selectedStory?.id, currentCharacterId]);
 
   useEffect(() => {
     const loadCharacterAndData = async () => {
@@ -160,12 +157,11 @@ const CharacterFormScreen = () => {
             setIsFavorite(fetchedCharacter.isFavorite);
             setExtraNotes(fetchedCharacter.extraNotes);
           } else {
-            setError(t('character_not_found'));
+            console.warn('Character not found:', currentCharacterId);
           }
         }
       } catch (err) {
         console.error('Failed to load character:', err);
-        setError(t('failed_to_load_character'));
       } finally {
         setLoading(false);
         fetchAllCharactersInStory();
@@ -191,7 +187,6 @@ const CharacterFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const characterData: Omit<Character, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
@@ -241,7 +236,6 @@ const CharacterFormScreen = () => {
 
     } catch (err) {
       console.error('Failed to save character:', err);
-      setError(t('failed_to_save_character'));
       Alert.alert(t('error'), t('failed_to_save_character'));
     } finally {
       setLoading(false);
@@ -274,7 +268,7 @@ const CharacterFormScreen = () => {
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
-  }, []);
+  }, [setSelectedTagIds]);
 
   const handleSaveRelation = async (relation: CharacterRelation) => {
     if (!characterRelationServiceRef.current || !selectedStory?.id || !currentCharacterId || !userId) {
@@ -366,6 +360,14 @@ const CharacterFormScreen = () => {
       marginBottom: 10,
     },
   });
+
+  if (loading) {
+    return (
+      <View style={[commonContainerStyles.container, styles.centered]}>
+        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

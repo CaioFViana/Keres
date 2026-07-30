@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SceneSelect } from '../../db/schema'; // SceneSelect type
 import { useTheme } from '../../theme';
-import GenericRelationDisplay, { BaseItem } from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay
+import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay
 
 interface LocationSceneManagerProps {
   currentLocationId: string;

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer'; // Import DrawerNavigationProp
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { eq, gt, sql } from 'drizzle-orm'; // Added sql for subquery
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
@@ -14,11 +14,9 @@ import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; //
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { getCommonCardStyles } from '../../theme/commonStyles';
 
 const MainDashboardScreen = () => {
   const { colors } = useTheme();
-  const commonCardStyles = getCommonCardStyles(colors);
   const { selectedStory } = useStoryStore();
   const db = useDrizzle(); // Get the Drizzle client
   const navigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
@@ -76,7 +74,7 @@ const MainDashboardScreen = () => {
     return () => backHandler.remove();
   }, [navigation, showNotification, t]); // Add t to dependencies
 
-  async function fetchCounts() {
+  const fetchCounts = useCallback(async () => {
     if (selectedStory?.id && db) {
       try {
         const characters = await db.select().from(schema.characters).where(eq(schema.characters.storyId, selectedStory.id)).execute();
@@ -132,11 +130,11 @@ const MainDashboardScreen = () => {
       setWorldRuleCount(undefined);
       setForkCount(undefined); // Reset forkCount if no story selected
     }
-  }
+  }, [selectedStory?.id, db]);
 
   useEffect(() => {
     fetchCounts();
-  }, [selectedStory, db]); // Re-run fetchCounts if selectedStory or db changes
+  }, [fetchCounts]); // Re-run fetchCounts if selectedStory or db changes
 
   useEffect(() => {
     navigation.setOptions({

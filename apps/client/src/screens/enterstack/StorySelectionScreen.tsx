@@ -12,10 +12,9 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useSummaryStore } from '../../state/summaryStore';
-import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonCardStyles, getCommonContainerStyles, getThemeColors } from '../../theme/commonStyles';
+import { getCommonCardStyles, getCommonContainerStyles, useThemeColors } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Add entityEventEmitter
 
 type RootStackParamList = {
@@ -48,7 +47,7 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
   styles,
   t,
 }) => {
-  const storyThemeColors = getThemeColors(story.theme);
+  const storyThemeColors = useThemeColors(story.theme);
 
   return (
     <TouchableOpacity
@@ -110,8 +109,7 @@ const StorySelectionScreen = () => {
   const summary = useSummaryStore((state) => state.summary);
   const updateSummary = useSummaryStore((state) => state.updateSummary);
 
-  const { username, language, userId } = useUserSettingsStore();
-  const { darkMode } = useThemeStore();
+  const { userId } = useUserSettingsStore();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonCardStyles = getCommonCardStyles(colors);
@@ -145,7 +143,7 @@ const StorySelectionScreen = () => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => backHandler.remove();
-  }, [isFocused, t]);
+  }, [isFocused, t, showNotification]);
 
   // Add this useEffect block
   useEffect(() => {

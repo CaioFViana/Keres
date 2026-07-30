@@ -102,7 +102,7 @@ const LocationDetailsScreen = () => {
           ) : null
         ),
       });
-    }, [navigation, location, headerTitle, t, colors])
+    }, [navigation, location, headerTitle, colors])
   );
 
   const fetchLocationDetails = useCallback(async () => {
@@ -132,7 +132,7 @@ const LocationDetailsScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [locationId, navigation, setLocation, setLoading, setError, setHeaderTitle, locationServiceRef.current, t]);
+  }, [locationId, navigation, setLocation, setLoading, setError, setHeaderTitle, t]);
 
   const fetchAllCharactersInStory = useCallback(async () => {
     if (!characterServiceRef.current || !selectedStory?.id) {
@@ -145,7 +145,7 @@ const LocationDetailsScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all characters:', err);
     }
-  }, [selectedStory?.id, characterServiceRef.current]);
+  }, [selectedStory?.id]);
 
   const fetchAllScenesInStory = useCallback(async () => {
     if (!drizzleDb || !selectedStory?.id) {
@@ -173,7 +173,7 @@ const LocationDetailsScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all character scene relations:', err);
     }
-  }, [selectedStory?.id, characterSceneServiceRef.current]);
+  }, [selectedStory?.id]);
 
   const fetchAllItemsInStory = useCallback(async () => {
     if (!itemServiceRef.current || !selectedStory?.id) {
@@ -186,7 +186,7 @@ const LocationDetailsScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all items:', err);
     }
-  }, [selectedStory?.id, itemServiceRef.current]);
+  }, [selectedStory?.id]);
 
   const fetchAllItemJourneysInStory = useCallback(async () => {
     if (!itemJourneyServiceRef.current || !selectedStory?.id) {
@@ -199,7 +199,7 @@ const LocationDetailsScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all item journeys:', err);
     }
-  }, [selectedStory?.id, itemJourneyServiceRef.current]);
+  }, [selectedStory?.id]);
 
   const handleLocationChange = useCallback(async (changedStoryId: string, changedLocationId: string) => {
     if (changedLocationId === locationId) {
@@ -212,7 +212,7 @@ const LocationDetailsScreen = () => {
         }
       }
     }
-  }, [locationId, navigation, setLocation, locationServiceRef.current]);
+  }, [locationId, navigation, setLocation]);
 
   const handleCharacterChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
     if (selectedStory?.id === changedStoryId) {

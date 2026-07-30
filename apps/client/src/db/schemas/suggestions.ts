@@ -1,5 +1,4 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 
 export const suggestions = sqliteTable('suggestions', {
   id: text('id').primaryKey(),

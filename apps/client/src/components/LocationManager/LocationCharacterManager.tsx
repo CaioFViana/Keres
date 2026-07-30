@@ -5,7 +5,7 @@ import { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import { SceneSelect } from '../../db/schema'; // SceneSelect type
 import { CharacterSelect } from '../../db/schemas/characters'; // CharacterSelect type
 import { useTheme } from '../../theme';
-import GenericRelationDisplay, { BaseRelation, BaseItem } from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
+import GenericRelationDisplay, { BaseRelation } from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
 
 // Define the relation type for GenericRelationDisplay
 interface CharacterInLocationRelation extends BaseRelation {
@@ -105,7 +105,7 @@ const LocationCharacterManager: React.FC<LocationCharacterManagerProps> = ({
         ))}
       </View>
     );
-  }, [colors.text, colors.textSecondary]);
+  }, [colors.text, styles.sceneName]);
 
 
   return (

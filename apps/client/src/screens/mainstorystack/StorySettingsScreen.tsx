@@ -31,17 +31,6 @@ const StorySettingsScreen = () => {
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const commonContainerStyles = getCommonContainerStyles(colors);
-
-  // Early return if no storyId is available
-  if (!storyId) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.error }}>{t('no_story_selected_for_settings')}</Text>
-        <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-      </View>
-    );
-  }
-
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const storyService = useCallback(() => createStoryService(drizzleDb), [drizzleDb]);
@@ -63,6 +52,10 @@ const StorySettingsScreen = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!storyId) {
+      setLoading(false);
+      return;
+    }
     const loadStoryAndServers = async () => {
       try {
         setLoading(true);
@@ -114,6 +107,8 @@ const StorySettingsScreen = () => {
   }, [storyId, storyService, serverService, userId, t, applyTheme]);
 
   const handleSave = async () => {
+    if (!storyId) return;
+
     if (!title.trim()) {
       Alert.alert(t('error'), t('title_required'));
       return;
@@ -153,6 +148,8 @@ const StorySettingsScreen = () => {
   };
 
   const handleDelete = () => {
+    if (!storyId) return;
+
     if (!userId) {
       Alert.alert(t('error'), t('user_not_identified'));
       return;
@@ -208,6 +205,15 @@ const StorySettingsScreen = () => {
   }));
   // Add an option for "No Server" with empty string value
   serverOptions.unshift({ label: t('no_server'), value: '' });
+
+  if (!storyId) {
+    return (
+      <View style={[commonContainerStyles.container, styles.centered]}>
+        <Text style={{ color: colors.error }}>{t('no_story_selected_for_settings')}</Text>
+        <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+      </View>
+    );
+  }
 
   if (loading) {
     return (

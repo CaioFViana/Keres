@@ -95,7 +95,6 @@ const ItemJourneyFormScreen = () => {
   } = useEntityRelations({ entityType: 'ItemJourney', entityId: currentItemJourneyId });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!currentItemJourneyId;
 
@@ -125,12 +124,11 @@ const ItemJourneyFormScreen = () => {
             setNewState(fetchedItemJourney.newState);
             setExtraNotes(fetchedItemJourney.extraNotes);
           } else {
-            setError(t('item_journey_not_found'));
+            console.warn('Item journey not found:', currentItemJourneyId);
           }
         }
       } catch (err) {
         console.error('Failed to load item journey:', err);
-        setError(t('failed_to_load_item_journey'));
       } finally {
         setLoading(false);
       }
@@ -157,7 +155,6 @@ const ItemJourneyFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const itemJourneyData: Omit<ItemJourney, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
@@ -178,6 +175,7 @@ const ItemJourneyFormScreen = () => {
       } else {
         const savedItemJourney = await itemJourneyServiceRef.current!.createItemJourney(userId, itemJourneyData);
         savedItemJourneyId = savedItemJourney.id;
+        setCurrentItemJourneyId(savedItemJourney.id);
         Alert.alert(t('success'), t('item_journey_created_successfully'));
       }
 
@@ -193,7 +191,6 @@ const ItemJourneyFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save item journey:', err);
-      setError(t('failed_to_save_item_journey'));
       Alert.alert(t('error'), t('failed_to_save_item_journey'));
     } finally {
       setLoading(false);
@@ -256,6 +253,14 @@ const ItemJourneyFormScreen = () => {
     tagSection: { marginTop: 20, marginBottom: 10 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
   });
+
+  if (loading) {
+    return (
+      <View style={[commonContainerStyles.container, styles.centered]}>
+        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>

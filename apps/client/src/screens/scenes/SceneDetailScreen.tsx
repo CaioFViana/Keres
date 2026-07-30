@@ -179,7 +179,7 @@ const SceneDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [sceneId, setScene, setLoading, setError, setHeaderTitle, navigation, sceneServiceRef.current, t]);
+  }, [sceneId, setScene, setLoading, setError, setHeaderTitle, navigation, t]);
 
   const fetchChapter = useCallback(async () => {
     if (!chapterServiceRef.current || !scene?.chapterId) {
@@ -193,7 +193,7 @@ const SceneDetailScreen = () => {
       console.error('Failed to fetch chapter details:', err);
       setChapter(null);
     }
-  }, [chapterServiceRef.current, scene?.chapterId]);
+  }, [scene?.chapterId]);
 
   const fetchLocation = useCallback(async () => {
     if (!locationServiceRef.current || !scene?.locationId) {
@@ -207,7 +207,7 @@ const SceneDetailScreen = () => {
       console.error('Failed to fetch location details:', err);
       setLocation(null);
     }
-  }, [locationServiceRef.current, scene?.locationId]);
+  }, [scene?.locationId]);
 
   const fetchPreviousNextScenes = useCallback(async () => {
     if (!sceneServiceRef.current || !selectedStory?.id || !sceneId || !chapter?.id || selectedStory.type !== 'linear') {
@@ -224,7 +224,7 @@ const SceneDetailScreen = () => {
       setPreviousScene(undefined);
       setNextScene(undefined);
     }
-  }, [sceneServiceRef.current, selectedStory?.id, sceneId, chapter?.id, selectedStory?.type]);
+  }, [selectedStory?.id, sceneId, chapter?.id, selectedStory?.type]);
 
   const fetchChoicesForScene = useCallback(async () => {
     if (!choiceServiceRef.current || !selectedStory?.id || !sceneId || selectedStory.type !== 'branching') {
@@ -241,7 +241,7 @@ const SceneDetailScreen = () => {
       console.error('Failed to fetch choices for scene:', err);
       setChoicesForScene([]);
     }
-  }, [choiceServiceRef.current, selectedStory?.id, sceneId, selectedStory?.type]);
+  }, [selectedStory?.id, sceneId, selectedStory?.type]);
 
   const fetchCharacterSceneRelations = useCallback(async () => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !sceneId) {
@@ -254,7 +254,7 @@ const SceneDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch character-scene relations:', err);
     }
-  }, [selectedStory?.id, sceneId, characterSceneServiceRef.current]);
+  }, [selectedStory?.id, sceneId]);
 
   const fetchAllItems = useCallback(async () => {
     if (!itemServiceRef.current || !selectedStory?.id) {
@@ -267,7 +267,7 @@ const SceneDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all items:', err);
     }
-  }, [selectedStory?.id, itemServiceRef.current]);
+  }, [selectedStory?.id]);
 
   const fetchItemJourneysForScene = useCallback(async () => {
     if (!itemJourneyServiceRef.current || !selectedStory?.id || !sceneId) {
@@ -280,7 +280,7 @@ const SceneDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch item journeys for scene:', err);
     }
-  }, [selectedStory?.id, sceneId, itemJourneyServiceRef.current]);
+  }, [selectedStory?.id, sceneId]);
 
   const handleItemChange = useCallback((changedStoryId: string, changedItemId: string) => {
     if (selectedStory?.id === changedStoryId) {
@@ -312,7 +312,7 @@ const SceneDetailScreen = () => {
         fetchChoicesForScene();
       }
     }
-  }, [sceneId, navigation, setScene, setHeaderTitle, sceneServiceRef.current, t, fetchChapter, selectedStory?.type, fetchPreviousNextScenes, fetchChoicesForScene]);
+  }, [sceneId, navigation, setScene, setHeaderTitle, t, fetchChapter, selectedStory?.type, fetchPreviousNextScenes, fetchChoicesForScene]);
 
   const handleCharacterSceneChange = useCallback((changedStoryId: string, changedSceneId: string) => {
     if (changedSceneId === sceneId) {

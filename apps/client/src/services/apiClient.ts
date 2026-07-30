@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig, isAxiosError } from 'axios';
 import { Platform } from 'react-native';
 import { ServerSelect } from '../db/schema'; // Import ServerSelect
 import { useConnectivityStore } from '../state/connectivityStore';
@@ -216,7 +216,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
       }
 
       // Standard error handling
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         const requestLabel = `${originalRequest?.method?.toUpperCase() || 'GET'} ${originalRequest?.url || 'unknown'}`;
 
         if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {

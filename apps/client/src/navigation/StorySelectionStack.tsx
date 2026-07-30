@@ -2,10 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
 import { DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useRef } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
-import { createStoryService, useDrizzle } from '../db';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
@@ -14,10 +13,6 @@ import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
-import { createFriendshipService } from '../services/FriendshipService'; // Import createFriendshipService
-import { useNotificationStore } from '../state/notificationStore';
-import { useStoryListStore } from '../state/storyListStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
 
@@ -128,12 +123,6 @@ const FriendshipStackNavigator = () => {
 const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const drizzleClient = useDrizzle();
-  const storyService = useRef(createStoryService(drizzleClient)).current;
-  const friendshipService = useRef(createFriendshipService(drizzleClient)).current; // Create FriendshipService instance
-  const { userId } = useUserSettingsStore();
-  const { showNotification } = useNotificationStore();
-  const { fetchStories: fetchStoryList } = useStoryListStore();
 
   return (
     <Drawer.Navigator

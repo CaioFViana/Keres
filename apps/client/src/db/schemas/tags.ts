@@ -1,6 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import { sql } from 'drizzle-orm'; // Import sql
+import { InferInsertModel, InferSelectModel, sql } from 'drizzle-orm';
 
 export const tags = sqliteTable('tags', {
   id: text('id').primaryKey(),

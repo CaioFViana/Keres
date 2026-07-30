@@ -24,7 +24,7 @@ type FriendshipFormScreenRouteProp = RouteProp<FriendshipStackParamList, 'Friend
 type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
 
 const FriendshipFormScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>>();
+  const navigation = useNavigation<FriendshipFormScreenNavigationProp>();
   const route = useRoute<FriendshipFormScreenRouteProp>();
   const { friendshipId } = route.params || {};
 

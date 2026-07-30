@@ -65,7 +65,6 @@ const ChapterFormScreen = () => {
   } = useEntityRelations({ entityType: 'Chapter', entityId: currentChapterId });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!currentChapterId;
 
@@ -73,7 +72,7 @@ const ChapterFormScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_chapter_title') : t('create_chapter_title'),
-        headerRight: () => {<View/>}
+        headerRight: () => <View/>
       });
     }, [navigation, isEditing, t])
   );
@@ -96,12 +95,11 @@ const ChapterFormScreen = () => {
             setIsFavorite(fetchedChapter.isFavorite);
             setExtraNotes(fetchedChapter.extraNotes);
           } else {
-            setError(t('chapter_not_found'));
+            console.warn('Chapter not found:', currentChapterId);
           }
         }
       } catch (err) {
         console.error('Failed to load chapter:', err);
-        setError(t('failed_to_load_chapter'));
       } finally {
         setLoading(false);
       }
@@ -124,7 +122,6 @@ const ChapterFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       let chapterData: Omit<Chapter, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'index'> = {
@@ -163,7 +160,6 @@ const ChapterFormScreen = () => {
 
     } catch (err) {
       console.error('Failed to save chapter:', err);
-      setError(t('failed_to_save_chapter'));
       Alert.alert(t('error'), t('failed_to_save_chapter'));
     } finally {
       setLoading(false);
@@ -196,7 +192,7 @@ const ChapterFormScreen = () => {
 
   const handleTagSelectionChange = useCallback((newSelection: string[]) => {
     setSelectedTagIds(newSelection);
-  }, []);
+  }, [setSelectedTagIds]);
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -250,6 +246,14 @@ const ChapterFormScreen = () => {
       marginBottom: 10,
     },
   });
+
+  if (loading) {
+    return (
+      <View style={[commonContainerStyles.container, styles.centered]}>
+        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

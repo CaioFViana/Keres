@@ -79,7 +79,6 @@ const ItemFormScreen = () => {
   } = useEntityRelations({ entityType: 'Item', entityId: currentItemId });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!currentItemId; // Changed
 
@@ -111,12 +110,11 @@ const ItemFormScreen = () => {
             setExtraNotes(fetchedItem.extraNotes);
             setCharacterOwnerId(fetchedItem.characterOwnerId);
           } else {
-            setError(t('item_not_found'));
+            console.warn('Item not found:', currentItemId);
           }
         }
       } catch (err) {
         console.error('Failed to load item:', err);
-        setError(t('failed_to_load_item'));
       } finally {
         setLoading(false);
       }
@@ -135,7 +133,6 @@ const ItemFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const itemData: Omit<Item, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = { // Changed
@@ -157,6 +154,7 @@ const ItemFormScreen = () => {
       } else {
         const savedItem = await itemServiceRef.current!.createItem(userId, { ...itemData, storyId: selectedStory.id }); // Changed
         savedItemId = savedItem.id;
+        setCurrentItemId(savedItem.id);
         Alert.alert(t('success'), t('item_created_successfully')); // Changed
       }
 
@@ -172,7 +170,6 @@ const ItemFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save item:', err); // Changed
-      setError(t('failed_to_save_item')); // Changed
       Alert.alert(t('error'), t('failed_to_save_item')); // Changed
     } finally {
       setLoading(false);
@@ -221,6 +218,14 @@ const ItemFormScreen = () => {
     tagSection: { marginTop: 20, marginBottom: 10 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
   });
+
+  if (loading) {
+    return (
+      <View style={[commonContainerStyles.container, styles.centered]}>
+        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>

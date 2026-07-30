@@ -30,7 +30,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     } else {
       opacity.value = withTiming(0, { duration: 300 });
     }
-  }, [isOpen]);
+  }, [isOpen, opacity]);
 
   useAnimatedReaction(
     () => ({ isOpen, contentHeight: contentHeight.value }),
@@ -105,7 +105,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
         animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
       }
     }
-  }, [isOpen]); // Depend only on isOpen here, contentHeight is a shared value
+  }, [isOpen, animatedHeight, contentHeight]);
 
   return (
     <View style={styles.container}>

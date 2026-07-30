@@ -1,6 +1,5 @@
 import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
 import { WorldRule } from '@keres/shared/entities/WorldRule';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +11,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack';
+import { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -26,7 +25,6 @@ const WorldRuleFormScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const drawerNavigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList>>();
   const route = useRoute<WorldRuleFormScreenRouteProp>();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore()
@@ -63,7 +61,6 @@ const WorldRuleFormScreen = () => {
   } = useEntityRelations({ entityType: 'WorldRule', entityId: currentWorldRuleId });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!currentWorldRuleId;
 
@@ -71,7 +68,7 @@ const WorldRuleFormScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'),
-        headerRight: () => {<View/>}
+        headerRight: () => <View/>
       });
     }, [navigation, isEditing, t])
   );
@@ -94,12 +91,11 @@ const WorldRuleFormScreen = () => {
             setIsFavorite(fetchedWorldRule.isFavorite);
             setExtraNotes(fetchedWorldRule.extraNotes);
           } else {
-            setError(t('world_rule_not_found'));
+            console.warn('World rule not found:', currentWorldRuleId);
           }
         }
       } catch (err) {
         console.error('Failed to load world rule:', err);
-        setError(t('failed_to_load_world_rule'));
       } finally {
         setLoading(false);
       }
@@ -122,7 +118,6 @@ const WorldRuleFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const worldRuleData: Omit<WorldRule, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
@@ -157,7 +152,6 @@ const WorldRuleFormScreen = () => {
 
     } catch (err) {
       console.error('Failed to save world rule:', err);
-      setError(t('failed_to_save_world_rule'));
       Alert.alert(t('error'), t('failed_to_save_world_rule'));
     } finally {
       setLoading(false);

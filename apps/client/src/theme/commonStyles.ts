@@ -36,7 +36,7 @@ export const isColorLight = (hexColor: string): boolean => {
   return luminance > 0.5;
 };
 
-export const getThemeColors = (themeName: string | null | undefined): ThemeColors => {
+export const useThemeColors = (themeName: string | null | undefined): ThemeColors => {
   const { darkMode } = useThemeStore(); // Get darkMode state
 
   const selectedTheme = themes[themeName || 'default'] || themes["default"];

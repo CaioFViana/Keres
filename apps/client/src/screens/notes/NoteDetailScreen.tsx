@@ -157,7 +157,7 @@ const NoteDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [noteId, setNote, setLoading, setError, setHeaderTitle, navigation, noteServiceRef.current, t]);
+  }, [noteId, setNote, setLoading, setError, setHeaderTitle, navigation, t]);
 
   const fetchTagsForNote = useCallback(async () => {
     if (!tagRelationServiceRef.current || !note?.storyId || !noteId) {
@@ -170,7 +170,7 @@ const NoteDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch tags for note:', err);
     }
-  }, [note?.storyId, noteId, tagRelationServiceRef.current]);
+  }, [note?.storyId, noteId]);
 
   const fetchNoteRelations = useCallback(async () => {
     if (!noteRelationServiceRef.current || !note?.storyId || !noteId) {
@@ -183,7 +183,7 @@ const NoteDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch note relations:', err);
     }
-  }, [note?.storyId, noteId, noteRelationServiceRef.current]);
+  }, [note?.storyId, noteId]);
 
   const processNoteRelations = useCallback(async () => {
     if (!drizzleDb || !note?.storyId) return;
@@ -231,7 +231,7 @@ const NoteDetailScreen = () => {
       }
       fetchNoteRelations(); // Refetch relations if the note itself changed
     }
-  }, [noteId, navigation, setNote, setHeaderTitle, noteServiceRef.current, t, fetchNoteRelations]);
+  }, [noteId, navigation, setNote, setHeaderTitle, t, fetchNoteRelations]);
 
   const handleNoteRelationChange = useCallback((changedStoryId: string, changedRelationId: string) => {
     // This event is emitted when any note_relation changes. We need to check if it affects *this* note.
@@ -261,7 +261,7 @@ const NoteDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [noteId, fetchNote, handleNoteChange, handleTagRelationChange, noteServiceRef.current, selectedStory?.id, fetchNoteRelations, handleNoteRelationChange]); // Add selectedStory?.id and fetchNoteRelations to dependencies
+  }, [noteId, fetchNote, handleNoteChange, handleTagRelationChange, selectedStory?.id, fetchNoteRelations, handleNoteRelationChange]); // Add selectedStory?.id and fetchNoteRelations to dependencies
 
   useEffect(() => {
     if (note) {

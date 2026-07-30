@@ -137,7 +137,7 @@ const ChapterDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [chapterId, setChapter, setLoading, setError, setHeaderTitle, navigation, chapterServiceRef.current, t]);
+  }, [chapterId, setChapter, setLoading, setError, setHeaderTitle, navigation, t]);
 
   const fetchAllScenesInStory = useCallback(async () => {
     if (!sceneServiceRef.current || !selectedStory?.id) {
@@ -150,7 +150,7 @@ const ChapterDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all scenes:', err);
     }
-  }, [selectedStory?.id, sceneServiceRef.current]);
+  }, [selectedStory?.id]);
 
   const fetchAllLocationsInStory = useCallback(async () => {
     if (!locationServiceRef.current || !selectedStory?.id) {
@@ -163,7 +163,7 @@ const ChapterDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all locations:', err);
     }
-  }, [selectedStory?.id, locationServiceRef.current]);
+  }, [selectedStory?.id]);
 
   const handleChapterChange = useCallback(async (changedStoryId: string, changedChapterId: string) => {
     if (changedChapterId === chapterId) {
@@ -177,7 +177,7 @@ const ChapterDetailScreen = () => {
         }
       }
     }
-  }, [chapterId, navigation, setChapter, setHeaderTitle, chapterServiceRef.current, t]);
+  }, [chapterId, navigation, setChapter, setHeaderTitle, t]);
 
   const handleSceneChange = useCallback((changedStoryId: string, changedSceneId: string) => {
     if (selectedStory?.id === changedStoryId) {

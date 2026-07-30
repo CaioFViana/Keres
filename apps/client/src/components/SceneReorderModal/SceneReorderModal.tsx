@@ -184,7 +184,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
         </TouchableOpacity>
       </View>
     </View>
-  ), [reorderedScenes, moveScene, colors.primary, colors.textSecondary]);
+  ), [reorderedScenes, moveScene, colors.primary, colors.textSecondary, styles.controlButton, styles.controls, styles.sceneItem, styles.sceneName]);
 
   return (
     <Modal

@@ -28,7 +28,7 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
     } else {
       opacity.value = withTiming(0, { duration: 300 });
     }
-  }, [expanded]);
+  }, [expanded, opacity]);
 
   useAnimatedReaction(
     () => ({ expanded, contentHeight: contentHeight.value }),
@@ -103,7 +103,7 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
         animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
       }
     }
-  }, [expanded]);
+  }, [expanded, animatedHeight, contentHeight]);
 
 
   return (

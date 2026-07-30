@@ -68,7 +68,6 @@ const LocationFormScreen = () => {
   } = useEntityRelations({ entityType: 'Location', entityId: currentLocationId });
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!currentLocationId;
 
@@ -76,7 +75,7 @@ const LocationFormScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_location_title') : t('create_location_title'),
-        headerRight: () => {<View/>}
+        headerRight: () => <View/>
       });
     }, [navigation, isEditing, t])
   );
@@ -102,12 +101,11 @@ const LocationFormScreen = () => {
             setIsFavorite(fetchedLocation.isFavorite);
             setExtraNotes(fetchedLocation.extraNotes);
           } else {
-            setError(t('location_not_found'));
+            console.warn('Location not found:', currentLocationId);
           }
         }
       } catch (err) {
         console.error('Failed to load location:', err);
-        setError(t('failed_to_load_location'));
       } finally {
         setLoading(false);
       }
@@ -130,7 +128,6 @@ const LocationFormScreen = () => {
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const locationData: Omit<Location, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
@@ -169,7 +166,6 @@ const LocationFormScreen = () => {
 
     } catch (err) {
       console.error('Failed to save location:', err);
-      setError(t('failed_to_save_location'));
       Alert.alert(t('error'), t('failed_to_save_location'));
     } finally {
       setLoading(false);
@@ -252,6 +248,14 @@ const LocationFormScreen = () => {
       marginBottom: 10,
     },
   });
+
+  if (loading) {
+    return (
+      <View style={[commonContainerStyles.container, styles.centered]}>
+        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

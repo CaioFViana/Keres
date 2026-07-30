@@ -165,7 +165,7 @@ const CharacterDetailScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, characterServiceRef.current, t]);
+  }, [characterId, setCharacter, setLoading, setError, setHeaderTitle, navigation, t]);
 
   const fetchRelationsForCharacter = useCallback(async () => {
     if (!characterRelationServiceRef.current || !character?.storyId || !characterId) {
@@ -178,7 +178,7 @@ const CharacterDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch character relations:', err);
     }
-  }, [character?.storyId, characterId, characterRelationServiceRef.current]);
+  }, [character?.storyId, characterId]);
 
   const fetchAllCharactersInStory = useCallback(async () => {
     if (!characterServiceRef.current || !character?.storyId) {
@@ -191,7 +191,7 @@ const CharacterDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all characters:', err);
     }
-  }, [character?.storyId, characterServiceRef.current]);
+  }, [character?.storyId]);
 
   const fetchScenesForCharacter = useCallback(async () => {
     if (!characterSceneServiceRef.current || !character?.storyId || !characterId) {
@@ -204,7 +204,7 @@ const CharacterDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch character scene relations:', err);
     }
-  }, [character?.storyId, characterId, characterSceneServiceRef.current]);
+  }, [character?.storyId, characterId]);
 
   const fetchAllScenesInStory = useCallback(async () => {
     if (!drizzleDb || !character?.storyId) {
@@ -231,7 +231,7 @@ const CharacterDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all items:', err);
     }
-  }, [character?.storyId, itemServiceRef.current]);
+  }, [character?.storyId]);
 
   const fetchAllItemJourneysInStory = useCallback(async () => {
     if (!itemJourneyServiceRef.current || !character?.storyId) {
@@ -244,7 +244,7 @@ const CharacterDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all item journeys:', err);
     }
-  }, [character?.storyId, itemJourneyServiceRef.current]);
+  }, [character?.storyId]);
 
   const fetchAllLocationsInStory = useCallback(async () => {
     if (!locationServiceRef.current || !character?.storyId) {
@@ -257,7 +257,7 @@ const CharacterDetailScreen = () => {
     } catch (err) {
       console.error('Failed to fetch all locations:', err);
     }
-  }, [character?.storyId, locationServiceRef.current]);
+  }, [character?.storyId]);
 
   const handleCharacterChange = useCallback(async (changedStoryId: string, changedCharacterId: string) => {
     if (changedCharacterId === characterId) {
@@ -271,7 +271,7 @@ const CharacterDetailScreen = () => {
         }
       }
     }
-  }, [characterId, navigation, setCharacter, setHeaderTitle, characterServiceRef.current, t]);
+  }, [characterId, navigation, setCharacter, setHeaderTitle, t]);
 
   const handleCharacterRelationChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
     if (changedCharacterId === characterId) {

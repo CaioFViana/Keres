@@ -57,7 +57,7 @@ const ServerManagementScreen = () => {
       } else {
         return { ...server, pingStatus: 'offline', apiVersion: null };
       }
-    } catch (err) {
+    } catch {
       return Promise.resolve({ ...server, pingStatus: 'offline', apiVersion: null });
     }
   };

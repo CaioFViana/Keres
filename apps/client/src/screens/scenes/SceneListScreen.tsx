@@ -91,6 +91,20 @@ const SceneListScreen = () => {
     setIsReorderModalVisible(false);
   }, [reorderScenes]);
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    headerRightContainer: {
+      flexDirection: 'row',
+      marginRight: 15,
+    },
+    headerButton: {
+      marginLeft: 15,
+    },
+  });
+
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({
@@ -114,22 +128,8 @@ const SceneListScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, handleReorderPress, selectedStory?.type])
+    }, [navigation, colors.text, t, handleReorderPress, selectedStory?.type, styles.headerButton, styles.headerRightContainer])
   );
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    headerRightContainer: {
-      flexDirection: 'row',
-      marginRight: 15,
-    },
-    headerButton: {
-      marginLeft: 15,
-    },
-  });
 
   if (loading) {
     return <ScreenLoading message={t('loading_scenes')} />;

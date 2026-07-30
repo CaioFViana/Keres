@@ -32,7 +32,7 @@ const ServerRegistrationScreen = () => {
     const commonInputStyles = getCommonInputStyles(colors);
     const drizzleDb = useDrizzle();
     const serverService = useRef(createServerService(drizzleDb)).current;
-    const { userId, setActiveServer } = useUserSettingsStore();
+    const { setActiveServer } = useUserSettingsStore();
   
     const [serverAddress, setServerAddress] = useState('');
     const [username, setUsername] = useState('');
@@ -112,8 +112,6 @@ const ServerRegistrationScreen = () => {
           setLoading(false); // Ensure loading is reset on error
           return;
         }
-        const serverVersion = checkResponse.data.version;
-  
         // 2. Login (/auth/login) - only for new registration or if password is provided for update
         const isNewServer = !serverId;
         const isPasswordProvided = password.trim().length > 0;
@@ -197,7 +195,7 @@ const ServerRegistrationScreen = () => {
       } finally {
         setLoading(false);
       }
-    }, [serverAddress, username, password, serverName, serverService, navigation, t, serverId]);
+    }, [serverAddress, username, password, serverName, serverService, navigation, t, serverId, setActiveServer]);
   
     const handleDeleteServer = useCallback(() => {
       Alert.alert(

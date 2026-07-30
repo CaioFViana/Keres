@@ -136,6 +136,7 @@ export class MediaSyncService {
         await this.galleryService.setLocalFileState(media.id, {
           localPath: existingPath,
           downloadState: 'downloaded',
+          thumbnailPath: await this.ensureThumbnail(storyId, media, existingPath),
         });
         summary.downloaded += 1;
         continue;
@@ -159,6 +160,7 @@ export class MediaSyncService {
         await this.galleryService.setLocalFileState(media.id, {
           localPath: downloaded.uri,
           downloadState: 'downloaded',
+          thumbnailPath: await this.ensureThumbnail(storyId, media, downloaded.uri),
         });
         summary.downloaded += 1;
       } catch (error) {
@@ -167,6 +169,24 @@ export class MediaSyncService {
         summary.failed += 1;
       }
     }
+  }
+
+  /**
+   * Gera a miniatura de um vídeo que acabou de chegar por sincronização.
+   *
+   * Só se aplica a `mediaType: 'video'`, e só quando ainda não existe uma - o mesmo
+   * conteúdo baixado de novo (outra entidade vinculada, um retry) reaproveita o arquivo já
+   * extraído em vez de gerar de novo.
+   */
+  private async ensureThumbnail(storyId: string, media: GallerySelect, videoUri: string): Promise<string | null | undefined> {
+    if (media.mediaType !== 'video') {
+      return undefined;
+    }
+    const expectedPath = mediaFileService.thumbnailPathFor(storyId, media.hash);
+    if (mediaFileService.exists(media.thumbnailPath) || mediaFileService.exists(expectedPath)) {
+      return media.thumbnailPath ?? expectedPath;
+    }
+    return (await mediaFileService.generateVideoThumbnail(storyId, media.hash, videoUri)) ?? null;
   }
 
   private async fetchBlobStatus(client: KeresAxiosInstance, storyId: string, hashes: string[]): Promise<MediaBlobStatusResponseType> {

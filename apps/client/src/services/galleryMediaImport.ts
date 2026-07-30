@@ -46,6 +46,7 @@ export async function importPickedMediaAssets(
           await galleryService.setLocalFileState(existing.id, {
             localPath: imported.localPath,
             downloadState: 'downloaded',
+            thumbnailPath: imported.thumbnailPath ?? existing.thumbnailPath,
           });
         }
         summary.galleryIds.push(existing.id);
@@ -60,6 +61,7 @@ export async function importPickedMediaAssets(
         hash: imported.hash,
         sizeBytes: imported.sizeBytes,
         localPath: imported.localPath,
+        thumbnailPath: imported.thumbnailPath,
       });
       summary.added += 1;
       summary.galleryIds.push(created.id);

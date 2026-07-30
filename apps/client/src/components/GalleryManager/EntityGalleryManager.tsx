@@ -102,6 +102,15 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ow
       alignItems: 'center',
       justifyContent: 'center',
     },
+    playOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     removeBadge: {
       position: 'absolute',
       top: 4,
@@ -120,14 +129,25 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ow
   const renderThumb = (item: GallerySelect) => {
     const mediaType = item.mediaType as MediaType;
     const hasLocalImage = mediaType === 'image' && !!item.localPath;
+    const hasVideoThumbnail = mediaType === 'video' && !!item.thumbnailPath;
 
     return (
       <TouchableOpacity key={item.id} style={styles.thumbWrapper} onPress={() => onPressMedia(item.id)}>
-        {hasLocalImage ? (
-          <Image source={{ uri: item.localPath as string }} style={styles.thumbImage} contentFit="cover" transition={150} />
+        {hasLocalImage || hasVideoThumbnail ? (
+          <Image
+            source={{ uri: (hasLocalImage ? item.localPath : item.thumbnailPath) as string }}
+            style={styles.thumbImage}
+            contentFit="cover"
+            transition={150}
+          />
         ) : (
           <View style={styles.thumbFallback}>
             <Ionicons name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'} size={28} color={colors.textSecondary} />
+          </View>
+        )}
+        {mediaType === 'video' && (
+          <View style={styles.playOverlay} pointerEvents="none">
+            <Ionicons name="play-circle" size={24} color="#ffffff" />
           </View>
         )}
         <TouchableOpacity

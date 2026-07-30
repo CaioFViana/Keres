@@ -7,6 +7,7 @@ import {
 } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 
 /**
  * Arquivos de mídia no aparelho.
@@ -28,6 +29,8 @@ export interface ImportedMedia {
   hash: string;
   sizeBytes: number;
   localPath: string;
+  /** Só para vídeo; ver `mediaFileService.thumbnailPathFor`. */
+  thumbnailPath?: string;
 }
 
 export class UnsupportedMediaError extends Error {
@@ -73,10 +76,49 @@ function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | un
   return byExtension[extension];
 }
 
+/**
+ * Extrai um quadro do vídeo e o grava junto da mídia, com o mesmo endereço por hash.
+ *
+ * Gerado uma vez e persistido (em vez de recalculado a cada exibição) porque extrair um
+ * quadro é caro o bastante para travar a rolagem se acontecesse por célula de grade a cada
+ * render. Falha aqui não impede a mídia de existir - vídeo sem miniatura ainda toca, só
+ * mostra o ícone genérico na lista.
+ */
+async function generateVideoThumbnail(storyId: string, hash: string, videoUri: string): Promise<string | undefined> {
+  try {
+    const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, { time: 1000, quality: 0.5 });
+    const directory = ensureDirectory(storyMediaDirectory(storyId));
+    const destination = new File(directory, `${hash}_thumb.jpg`);
+    if (destination.exists) {
+      destination.delete();
+    }
+    new File(uri).copy(destination);
+    return destination.uri;
+  } catch (error) {
+    console.warn('Could not generate video thumbnail:', error);
+    return undefined;
+  }
+}
+
 export const mediaFileService = {
   /** Caminho onde o arquivo desta mídia mora (ou moraria) neste aparelho. */
   localPathFor(storyId: string, hash: string, mimeType: string): string {
     return new File(storyMediaDirectory(storyId), `${hash}.${extensionForMimeType(mimeType)}`).uri;
+  },
+
+  /** Caminho onde a miniatura deste vídeo moraria neste aparelho. */
+  thumbnailPathFor(storyId: string, hash: string): string {
+    return new File(storyMediaDirectory(storyId), `${hash}_thumb.jpg`).uri;
+  },
+
+  /**
+   * Gera (ou regenera) a miniatura de um vídeo já presente no aparelho.
+   *
+   * Usada tanto ao importar quanto depois de um download vindo do servidor - nos dois
+   * casos o arquivo de vídeo já está local, só falta o quadro extraído.
+   */
+  async generateVideoThumbnail(storyId: string, hash: string, videoUri: string): Promise<string | undefined> {
+    return generateVideoThumbnail(storyId, hash, videoUri);
   },
 
   exists(localPath: string | null | undefined): boolean {
@@ -141,6 +183,10 @@ export const mediaFileService = {
       source.copy(destination);
     }
 
+    const thumbnailPath = mediaType === 'video'
+      ? await generateVideoThumbnail(storyId, hash, destination.uri)
+      : undefined;
+
     return {
       mediaType,
       mimeType,
@@ -148,6 +194,7 @@ export const mediaFileService = {
       hash,
       sizeBytes: asset.size ?? destination.size ?? 0,
       localPath: destination.uri,
+      thumbnailPath,
     };
   },
 

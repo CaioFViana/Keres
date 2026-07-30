@@ -1,0 +1,1 @@
+ALTER TABLE `galleries` ADD `thumbnail_path` text;

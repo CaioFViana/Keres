@@ -10,6 +10,8 @@ import Button from '../../components/common/Button/Button';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TextInput from '../../components/common/TextInput/TextInput';
+import AudioPreviewPlayer from '../../components/MediaPlayer/AudioPreviewPlayer';
+import VideoPreviewPlayer from '../../components/MediaPlayer/VideoPreviewPlayer';
 import { useDrizzle } from '../../db';
 import { GallerySelect } from '../../db/schemas/galleries';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -268,12 +270,18 @@ const GalleryDetailScreen = () => {
 
   const mediaType = media.mediaType as MediaType;
   const hasLocalImage = mediaType === 'image' && !!media.localPath;
+  const hasLocalVideo = mediaType === 'video' && !!media.localPath;
+  const hasLocalAudio = mediaType === 'audio' && !!media.localPath;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.preview}>
         {hasLocalImage ? (
           <Image source={{ uri: media.localPath as string }} style={styles.image} contentFit="contain" />
+        ) : hasLocalVideo ? (
+          <VideoPreviewPlayer key={media.hash} uri={media.localPath as string} />
+        ) : hasLocalAudio ? (
+          <AudioPreviewPlayer key={media.hash} uri={media.localPath as string} />
         ) : (
           <View style={{ alignItems: 'center' }}>
             <Ionicons

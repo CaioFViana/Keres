@@ -11,7 +11,7 @@ import type { FavoriteFilterState } from '../../types/entityFilters';
 export type { FavoriteFilterState };
 
 /** Campos que descrevem só o estado deste aparelho e não pertencem ao log de operações. */
-const LOCAL_ONLY_FIELDS = ['localPath', 'uploadState', 'downloadState'] as const;
+const LOCAL_ONLY_FIELDS = ['localPath', 'uploadState', 'downloadState', 'thumbnailPath'] as const;
 
 /**
  * Remove do payload as colunas locais antes de gravá-lo no log de operações.
@@ -46,6 +46,8 @@ export interface NewGalleryMedia {
   hash: string;
   sizeBytes: number;
   localPath: string;
+  /** Só para vídeo. */
+  thumbnailPath?: string;
   title?: string | null;
   extraNotes?: string | null;
   isFavorite?: boolean;
@@ -65,7 +67,7 @@ export interface GalleryService {
    * Atualiza apenas o estado de transferência/arquivo local. Deliberadamente não gera
    * operação nem incrementa `version`: nada disto existe fora deste aparelho.
    */
-  setLocalFileState(galleryId: string, state: { localPath?: string | null; uploadState?: MediaTransferState; downloadState?: MediaTransferState }): Promise<void>;
+  setLocalFileState(galleryId: string, state: { localPath?: string | null; uploadState?: MediaTransferState; downloadState?: MediaTransferState; thumbnailPath?: string | null }): Promise<void>;
   /** Mídias cujos bytes ainda não subiram. */
   getPendingUploads(storyId: string): Promise<GallerySelect[]>;
   /** Mídias que existem como metadado mas cujo arquivo ainda não está no aparelho. */
@@ -182,6 +184,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         extraNotes: media.extraNotes ?? null,
         isFavorite: media.isFavorite ?? false,
         localPath: media.localPath,
+        thumbnailPath: media.thumbnailPath ?? null,
         // O arquivo nasce aqui: já está no aparelho e ainda não foi para o servidor.
         uploadState: 'pending',
         downloadState: 'downloaded',

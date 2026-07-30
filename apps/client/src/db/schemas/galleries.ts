@@ -36,6 +36,12 @@ export const galleries = sqliteTable('galleries', {
   uploadState: text('upload_state').notNull().default('pending'),
   /** 'pending' | 'downloaded' | 'failed' — se os bytes já chegaram a este aparelho. */
   downloadState: text('download_state').notNull().default('downloaded'),
+  /**
+   * Frame extraído de um vídeo, para mostrar em grades/tiras sem montar um player por
+   * célula. Só se aplica a `mediaType: 'video'`; imagem usa o próprio arquivo e áudio não
+   * tem um quadro para extrair.
+   */
+  thumbnailPath: text('thumbnail_path'),
 });
 
 export type GalleryInsert = InferInsertModel<typeof galleries>;

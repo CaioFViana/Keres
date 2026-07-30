@@ -30,9 +30,10 @@ function formatSize(bytes: number): string {
 /**
  * Uma célula da grade da galeria.
  *
- * Só imagem tem miniatura de verdade. Vídeo e áudio mostram um ícone do tipo: gerar quadro
- * de vídeo exigiria uma dependência nativa a mais, e o que a pessoa precisa aqui é
- * distinguir e encontrar a mídia, não assisti-la na grade.
+ * Imagem usa o próprio arquivo como miniatura; vídeo usa um quadro extraído e persistido
+ * em `thumbnailPath` (ver `MediaFileService.generateVideoThumbnail`), porque gerar isso na
+ * hora do render travaria a rolagem de uma grade inteira. Áudio não tem quadro para
+ * mostrar e fica só com o ícone do tipo.
  */
 const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onToggleFavorite }) => {
   const { colors } = useTheme();
@@ -40,6 +41,7 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
 
   const mediaType = media.mediaType as MediaType;
   const hasLocalImage = mediaType === 'image' && !!media.localPath;
+  const hasVideoThumbnail = mediaType === 'video' && !!media.thumbnailPath;
   const isDownloading = media.downloadState === 'pending';
   const transferFailed = media.uploadState === 'failed' || media.downloadState === 'failed';
   const pendingUpload = media.uploadState === 'pending';
@@ -78,6 +80,15 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
       color: colors.textSecondary,
       marginTop: 2,
     },
+    playOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     badgeRow: {
       position: 'absolute',
       top: 6,
@@ -104,9 +115,9 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(media.id)}>
       <View style={styles.preview}>
-        {hasLocalImage ? (
+        {hasLocalImage || hasVideoThumbnail ? (
           <Image
-            source={{ uri: media.localPath as string }}
+            source={{ uri: (hasLocalImage ? media.localPath : media.thumbnailPath) as string }}
             style={styles.image}
             contentFit="cover"
             transition={150}
@@ -117,6 +128,12 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
             size={48}
             color={colors.textSecondary}
           />
+        )}
+
+        {mediaType === 'video' && (
+          <View style={styles.playOverlay} pointerEvents="none">
+            <Ionicons name="play-circle" size={36} color="#ffffff" />
+          </View>
         )}
 
         <View style={styles.badgeRow}>

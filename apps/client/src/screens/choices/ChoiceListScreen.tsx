@@ -125,8 +125,12 @@ const ChoiceListScreen = () => {
         title: t('choices_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('ChoiceView')} style={styles.headerButton}>
-              <Ionicons name="search" size={30} color={colors.text} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ChoiceView')}
+              style={styles.headerButton}
+              accessibilityLabel={t('story_map_title')}
+            >
+              <Ionicons name="git-network-outline" size={28} color={colors.text} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', {})} style={styles.headerButton}>
               <Ionicons name="add" size={30} color={colors.text} />

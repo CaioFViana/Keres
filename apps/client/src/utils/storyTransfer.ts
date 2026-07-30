@@ -31,13 +31,8 @@ export class StoryImportError extends Error {
  */
 const COMBINING_MARKS = new RegExp('[\u0300-\u036f]', 'g');
 
-/**
- * Nome de arquivo derivado do título, seguro para qualquer sistema de arquivos.
- *
- * A data entra no nome porque exportar a mesma história duas vezes é o caso comum (backup),
- * e dois arquivos com o mesmo nome na pasta de downloads viram uma adivinhação.
- */
-export function buildExportFileName(storyTitle: string, now: Date = new Date()): string {
+/** Título reduzido a algo que qualquer sistema de arquivos aceita. */
+function slugify(storyTitle: string): string {
   const slug = storyTitle
     .normalize('NFD')
     .replace(COMBINING_MARKS, '')
@@ -46,8 +41,22 @@ export function buildExportFileName(storyTitle: string, now: Date = new Date()):
     .toLowerCase()
     .slice(0, 60);
 
-  const datePart = now.toISOString().slice(0, 10);
-  return `${slug || 'story'}-${datePart}.json`;
+  return slug || 'story';
+}
+
+/**
+ * Nome de arquivo derivado do título, seguro para qualquer sistema de arquivos.
+ *
+ * A data entra no nome porque exportar a mesma história duas vezes é o caso comum (backup),
+ * e dois arquivos com o mesmo nome na pasta de downloads viram uma adivinhação.
+ */
+export function buildExportFileName(storyTitle: string, now: Date = new Date()): string {
+  return `${slugify(storyTitle)}-${now.toISOString().slice(0, 10)}.json`;
+}
+
+/** Nome do arquivo de imagem do mapa, no mesmo padrão da exportação de dados. */
+export function buildStoryMapFileName(storyTitle: string, now: Date = new Date()): string {
+  return `${slugify(storyTitle)}-mapa-${now.toISOString().slice(0, 10)}.svg`;
 }
 
 /** Resultado da tentativa de entregar o arquivo ao usuário. */
@@ -60,20 +69,20 @@ export interface ExportDeliveryResult {
 }
 
 /**
- * Escreve o pacote em arquivo e entrega ao usuário.
+ * Escreve texto em arquivo e entrega ao usuário.
  *
  * No celular, o arquivo vai para o cache e o share sheet do sistema decide o destino (Drive,
  * Arquivos, e-mail...). Gravar direto em alguma pasta pública exigiria permissão de
  * armazenamento e daria menos escolha ao usuário, não mais.
  */
-export async function deliverStoryExport(
-  storyExport: FullStoryExportType,
-  fileName: string
+async function deliverTextFile(
+  contents: string,
+  fileName: string,
+  mimeType: string,
+  uti: string
 ): Promise<ExportDeliveryResult> {
-  const contents = JSON.stringify(storyExport, null, 2);
-
   if (Platform.OS === 'web') {
-    triggerBrowserDownload(contents, fileName);
+    triggerBrowserDownload(contents, fileName, mimeType);
     return { delivered: true, fileName };
   }
 
@@ -87,18 +96,27 @@ export async function deliverStoryExport(
     return { delivered: false, uri: file.uri, fileName };
   }
 
-  await Sharing.shareAsync(file.uri, {
-    mimeType: 'application/json',
-    dialogTitle: fileName,
-    UTI: 'public.json',
-  });
+  await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: fileName, UTI: uti });
 
   return { delivered: true, uri: file.uri, fileName };
 }
 
+/** Entrega o pacote de dados da história como `.json`. */
+export function deliverStoryExport(
+  storyExport: FullStoryExportType,
+  fileName: string
+): Promise<ExportDeliveryResult> {
+  return deliverTextFile(JSON.stringify(storyExport, null, 2), fileName, 'application/json', 'public.json');
+}
+
+/** Entrega a imagem do mapa da história como `.svg`. */
+export function deliverStoryMap(svg: string, fileName: string): Promise<ExportDeliveryResult> {
+  return deliverTextFile(svg, fileName, 'image/svg+xml', 'public.svg-image');
+}
+
 /** Download no navegador via link temporário — não existe share sheet na web. */
-function triggerBrowserDownload(contents: string, fileName: string): void {
-  const blob = new Blob([contents], { type: 'application/json' });
+function triggerBrowserDownload(contents: string, fileName: string, mimeType: string): void {
+  const blob = new Blob([contents], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

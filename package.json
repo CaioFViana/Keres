@@ -12,8 +12,5 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "dependencies": {
-    "react-native-webview": "^13.16.0"
-  }
+  ]
 }

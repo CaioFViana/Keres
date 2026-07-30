@@ -1,335 +1,389 @@
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Asset } from 'expo-asset';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { WebView, WebViewMessageEvent } from 'react-native-webview';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
+import SceneNodeSheet, { SceneNodeConnection } from '../../components/StoryGraph/SceneNodeSheet';
+import StoryGraphCanvas, { StoryGraphCanvasHandle } from '../../components/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../db';
 import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
+import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
+import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
+import { buildStoryMapFileName, deliverStoryMap } from '../../utils/storyTransfer';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
-interface GraphElement {
-  data: {
-    id: string;
-    label?: string;
-    entityType: 'Scene' | 'Choice' | 'Chapter'; // Added Chapter entityType
-    parent?: string; // Added parent property for compound nodes
-    source?: string; // For edges
-    target?: string; // For edges
-    [key: string]: any; // Allow other properties from SceneSelect or ChoiceSelect
-  };
-}
+/**
+ * Mapa da história: as cenas e as escolhas que ligam uma à outra.
+ *
+ * Substitui a tentativa anterior em WebView + Cytoscape, que carregava a biblioteca de uma CDN
+ * (ou seja, não funcionava offline, num app cujo ponto é funcionar offline) e usava um layout
+ * de força que empilhava os nós um sobre o outro. Aqui o posicionamento é calculado em
+ * `storyGraphLayout` e desenhado nativamente, então o mapa é o mesmo em toda abertura, sai
+ * legível e pode ser exportado inteiro como imagem.
+ */
+
+/** Acima disso o texto das escolhas polui mais do que informa; o usuário pode reativar. */
+const EDGE_LABEL_AUTO_LIMIT = 40;
 
 const ChoiceViewScreen = () => {
-  useBackButtonHandler()
+  useBackButtonHandler();
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const navigation = useNavigation<ChoicesScreenNavigationProp>();
-  const { colors } = useTheme(); // Get current theme colors
-  const webViewRef = useRef<WebView>(null);
-  const [htmlUri, setHtmlUri] = useState<string | null>(null);
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
+  const { showNotification } = useNotificationStore();
+
+  const canvasRef = useRef<StoryGraphCanvasHandle>(null);
 
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
-  const [chapters, setChapters] = useState<ChapterSelect[]>([]); // Added chapters state
-  const [loadingGraphData, setLoadingGraphData] = useState(true);
-  const [graphDataError, setGraphDataError] = useState<string | null>(null);
-  const [webViewLoaded, setWebViewLoaded] = useState(false);
+  const [chapters, setChapters] = useState<ChapterSelect[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
+  const [exporting, setExporting] = useState(false);
 
-  const [tooltipVisible, setTooltipVisible] = useState(false);
-  const [tooltipData, setTooltipData] = useState<any | null>(null);
-  // For simplicity, position will be centered. More complex positioning would require
-  // mapping WebView coordinates to RN layout coordinates, which is beyond this initial scope.
+  const storyId = selectedStory?.id;
 
-  const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
-  const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
-  const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null); // Added chapterServiceRef
-
-  useEffect(() => {
-    async function loadHtml() {
-      try {
-        const asset = Asset.fromModule(require('./GraphView.html'));
-        await asset.downloadAsync();
-        const loadedUri = asset.localUri || asset.uri;
-        setHtmlUri(loadedUri);
-        console.log('Loaded HTML URI:', loadedUri);
-      } catch (error) {
-        console.error('Failed to load GraphView.html asset:', error);
-        // Fallback or error state handling for HTML loading
-      }
+  const loadGraph = useCallback(async () => {
+    if (!storyId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const [loadedScenes, loadedChoices, loadedChapters] = await Promise.all([
+        createSceneService(drizzleDb).getScenesByStoryId(storyId),
+        createChoiceService(drizzleDb).getChoicesByStoryId(storyId),
+        createChapterService(drizzleDb).getChaptersByStoryId(storyId),
+      ]);
+      setScenes(loadedScenes);
+      setChoices(loadedChoices);
+      setChapters(loadedChapters);
+    } catch (loadError) {
+      console.log('ChoiceViewScreen: failed to load graph data.', loadError);
+      setError(t('failed_to_load_graph_data'));
+    } finally {
+      setLoading(false);
     }
-    loadHtml();
-  }, []);
+  }, [drizzleDb, storyId, t]);
 
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      if (!sceneServiceRef.current) sceneServiceRef.current = createSceneService(drizzleDb);
-      if (!choiceServiceRef.current) choiceServiceRef.current = createChoiceService(drizzleDb);
-      if (!chapterServiceRef.current) chapterServiceRef.current = createChapterService(drizzleDb); // Initialize chapterServiceRef
+  // Recarrega ao focar: cenas e escolhas podem ter mudado em outra tela.
+  useFocusEffect(useCallback(() => {
+    loadGraph();
+  }, [loadGraph]));
 
-      const fetchGraphData = async () => {
-        setLoadingGraphData(true);
-        try {
-          const fetchedScenes = await sceneServiceRef.current!.getScenesByStoryId(selectedStory.id);
-          const fetchedChoices = await choiceServiceRef.current!.getChoicesByStoryId(selectedStory.id);
-          const fetchedChapters = await chapterServiceRef.current!.getChaptersByStoryId(selectedStory.id); // Fetch chapters
-          setScenes(fetchedScenes);
-          setChoices(fetchedChoices);
-          setChapters(fetchedChapters); // Set chapters state
-          setGraphDataError(null);
-        } catch (error) {
-          console.error('Failed to fetch graph data:', error);
-          setGraphDataError(t('failed_to_load_graph_data'));
-        } finally {
-          setLoadingGraphData(false);
-        }
-      };
-      fetchGraphData();
-    }
-  }, [drizzleDb, selectedStory?.id, t]);
+  useFocusEffect(useCallback(() => {
+    navigation.getParent()?.setOptions({ title: t('story_map_title'), headerRight: undefined });
+  }, [navigation, t]));
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('choice_view_title'), headerRight: undefined });
-    }, [navigation, t])
+  const layout = useMemo(
+    () => buildStoryGraphLayout(scenes, choices, chapters),
+    [scenes, choices, chapters]
   );
 
-  const styles = StyleSheet.create({
+  const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;
+
+  const selectedNode = useMemo(
+    () => layout.nodes.find(node => node.id === selectedNodeId) ?? null,
+    [layout.nodes, selectedNodeId]
+  );
+
+  const connections = useMemo(() => {
+    if (!selectedNodeId) return { outgoing: [] as SceneNodeConnection[], incoming: [] as SceneNodeConnection[] };
+    const nameById = new Map(layout.nodes.map(node => [node.id, node.scene.name]));
+
+    const toConnection = (edge: GraphEdge, sceneId: string): SceneNodeConnection => ({
+      choiceId: edge.id,
+      text: edge.label.trim(),
+      isImplicit: !!edge.choice.isImplicit,
+      sceneId,
+      sceneName: nameById.get(sceneId) ?? t('unknown_scene'),
+    });
+
+    return {
+      outgoing: layout.edges
+        .filter(edge => edge.sourceId === selectedNodeId)
+        .map(edge => toConnection(edge, edge.targetId)),
+      incoming: layout.edges
+        .filter(edge => edge.targetId === selectedNodeId)
+        .map(edge => toConnection(edge, edge.sourceId)),
+    };
+  }, [layout.edges, layout.nodes, selectedNodeId, t]);
+
+  const handleSelectNode = useCallback((node: GraphNode) => {
+    setSelectedNodeId(node.id);
+  }, []);
+
+  const handleOpenScene = useCallback((sceneId: string) => {
+    setSelectedNodeId(null);
+    navigation.navigate('ScenesStack', { screen: 'SceneDetail', params: { sceneId } });
+  }, [navigation]);
+
+  const handleExport = useCallback(async () => {
+    if (!selectedStory || layout.nodes.length === 0) return;
+
+    setExporting(true);
+    try {
+      const svg = renderStoryMapSvg(layout, {
+        title: selectedStory.title,
+        subtitle: t('story_map_subtitle', {
+          sceneCount: layout.nodes.length,
+          choiceCount: layout.edges.length,
+          date: new Date().toLocaleDateString(),
+        }),
+        showEdgeLabels,
+        labels: {
+          start: t('story_map_badge_start'),
+          finish: t('story_map_badge_finish'),
+          loops: t('story_map_legend_loops'),
+          detached: t('story_map_badge_detached'),
+        },
+        colors: {
+          background: colors.background,
+          surface: colors.surface,
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          border: colors.border,
+          accent: colors.accent,
+          error: colors.error,
+        },
+      });
+
+      const result = await deliverStoryMap(svg, buildStoryMapFileName(selectedStory.title));
+      if (result.delivered) {
+        showNotification(t('story_map_export_success', { fileName: result.fileName }), 'success');
+      } else {
+        // Sem share sheet o arquivo existe mas o usuário não tem como alcançá-lo; dizer onde
+        // ele está é mais útil do que alegar sucesso.
+        showNotification(t('story_map_export_no_share_target', { path: result.uri || result.fileName }), 'warning');
+      }
+    } catch (exportError) {
+      console.log('ChoiceViewScreen: failed to export story map.', exportError);
+      showNotification(t('story_map_export_failed'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  }, [colors, layout, selectedStory, showEdgeLabels, showNotification, t]);
+
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors.background,
-    },
-    errorText: {
-      color: colors.error,
-      fontSize: 16,
-      textAlign: 'center',
-      marginHorizontal: 20,
-    },
-    loadingText: {
-      color: colors.text,
-      fontSize: 16,
-      marginTop: 10,
-    },
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContent: {
+    legendBar: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
       backgroundColor: colors.surface,
-      padding: 20,
-      borderRadius: 10,
-      width: '80%',
-      maxHeight: '80%',
     },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-    },
-    modalDetailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    modalCloseButton: {
-      marginTop: 20,
-      padding: 10,
-      backgroundColor: colors.primary,
-      borderRadius: 5,
+    legendContent: {
+      flexDirection: 'row',
       alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 9,
     },
-    modalCloseButtonText: {
-      color: colors.onPrimary,
-      fontWeight: 'bold',
+    legendChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: 14,
     },
-  });
+    legendSwatch: {
+      width: 11,
+      height: 11,
+      borderRadius: 3,
+      marginRight: 5,
+    },
+    legendOutline: {
+      width: 11,
+      height: 11,
+      borderRadius: 3,
+      borderWidth: 2,
+      marginRight: 5,
+    },
+    legendDash: {
+      width: 14,
+      height: 0,
+      borderTopWidth: 2,
+      borderStyle: 'dashed',
+      marginRight: 5,
+    },
+    legendLabel: {
+      fontSize: 11,
+      color: colors.textSecondary,
+    },
+    warningBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      backgroundColor: colors.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    warningText: {
+      flex: 1,
+      marginLeft: 7,
+      fontSize: 11.5,
+      color: colors.textSecondary,
+    },
+    controls: {
+      position: 'absolute',
+      right: 14,
+      bottom: 18,
+    },
+    controlButton: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 9,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    emptyContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 32,
+    },
+    emptyText: {
+      marginTop: 12,
+      fontSize: 15,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 21,
+    },
+  }), [colors]);
 
-  const onWebViewMessage = (event: WebViewMessageEvent) => {
-    const { type, id, data, message } = JSON.parse(event.nativeEvent.data);
-    if (type === 'NODE_CLICKED') {
-      console.log('Node clicked:', id, data);
-      setTooltipData({ type: 'Node', ...data });
-      setTooltipVisible(true);
-    } else if (type === 'EDGE_CLICKED') {
-      console.log('Edge clicked:', id, data);
-      const sourceScene = scenes.find(s => s.id === data.source);
-      const targetScene = scenes.find(s => s.id === data.target);
-      setTooltipData({
-        type: 'Edge',
-        ...data,
-        sourceSceneName: sourceScene ? sourceScene.name : 'Unknown',
-        targetSceneName: targetScene ? targetScene.name : 'Unknown',
-      });
-      setTooltipVisible(true);
-    } else if (type === 'WEBVIEW_CONSOLE') {
-      // Now that we override console in WebView, these messages should come through
-      console.log('WebView Console (from override):', message);
-    }
-  };
-
-  useEffect(() => {
-    // Only send data to WebView if HTML is loaded, graph data is fetched, AND WebView itself is loaded
-    if (htmlUri && !loadingGraphData && webViewRef.current && webViewLoaded) {
-      const elements: GraphElement[] = [];
-
-      // Add chapter nodes
-      chapters.forEach(chapter => {
-        elements.push({
-          data: {
-            label: chapter.name,
-            entityType: 'Chapter',
-            ...chapter
-          }
-        });
-      });
-
-      // Add scenes as nodes
-      scenes.forEach(scene => {
-        elements.push({
-          data: {
-            label: scene.name,
-            entityType: 'Scene',
-            parent: scene.chapterId, // Set parent to chapter ID
-            ...scene // Spread all scene data
-          }
-        });
-      });
-
-      // Add choices as edges
-      choices.forEach(choice => {
-        if (choice.sceneId && choice.nextSceneId) {
-          elements.push({
-            data: {
-              // id: choice.id, // Removed redundant id, spread will provide it
-              source: choice.sceneId,
-              target: choice.nextSceneId,
-              label: choice.text,
-              entityType: 'Choice',
-              ...choice // Spread all choice data
-            }
-          });
-        }
-      });
-
-      if (elements.length > 0) {
-        console.log('Injecting elements to WebView:', elements);
-        // Stringify colors object to pass it correctly
-        const themeColorsJson = JSON.stringify(colors);
-        const script = `
-          if (window.setGraphElements) {
-            window.setGraphElements(${JSON.stringify(elements)}, ${themeColorsJson});
-            true; // Return true to indicate success
-          } else {
-            console.error('window.setGraphElements is not defined in WebView.');
-            false; // Return false if function is not defined yet
-          }
-        `;
-        webViewRef.current.injectJavaScript(script);
-      }
-    }
-  }, [htmlUri, loadingGraphData, scenes, choices, chapters, webViewLoaded, colors]); // Added chapters to dependencies
-
-
-  if (!htmlUri) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>{t('loading_graph_view')}</Text>
-      </View>
-    );
+  if (loading) {
+    return <ScreenLoading message={t('loading_graph_data')} />;
   }
 
-  if (graphDataError) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>{graphDataError}</Text>
-      </View>
-    );
+  if (error) {
+    return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
   }
 
-  if (loadingGraphData) {
+  if (layout.nodes.length === 0) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>{t('loading_graph_data')}</Text>
+      <View style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="git-network-outline" size={54} color={colors.textSecondary} />
+          <Text style={styles.emptyText}>{t('story_map_empty')}</Text>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <WebView
-        ref={webViewRef}
-        originWhitelist={['*']}
-        source={{ uri: htmlUri }}
-        style={styles.container}
-        onMessage={onWebViewMessage}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        allowFileAccess={true}
-        allowUniversalAccessFromFileURLs={true}
-        allowFileAccessFromFileURLs={true}
-        mixedContentMode="always"
-        onLoadEnd={() => {
-          console.log('RN WebView: onLoadEnd triggered. Setting webViewLoaded to true.');
-          setWebViewLoaded(true);
-        }}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.legendBar}
+        contentContainerStyle={styles.legendContent}
+      >
+        {layout.chapters.map(chapter => (
+          <View key={chapter.id} style={styles.legendChip}>
+            <View style={[styles.legendSwatch, { backgroundColor: chapter.color }]} />
+            <Text style={styles.legendLabel}>{`${chapter.name} (${chapter.sceneCount})`}</Text>
+          </View>
+        ))}
+        <View style={styles.legendChip}>
+          <View style={[styles.legendOutline, { borderColor: colors.accent }]} />
+          <Text style={styles.legendLabel}>{t('story_map_badge_start')}</Text>
+        </View>
+        <View style={styles.legendChip}>
+          <View style={[styles.legendOutline, { borderColor: colors.error }]} />
+          <Text style={styles.legendLabel}>{t('story_map_badge_finish')}</Text>
+        </View>
+        {layout.hasBackwardEdges && (
+          <View style={styles.legendChip}>
+            <View style={[styles.legendDash, { borderTopColor: colors.textSecondary }]} />
+            <Text style={styles.legendLabel}>{t('story_map_legend_loops')}</Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {layout.danglingChoiceCount > 0 && (
+        <View style={styles.warningBar}>
+          <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
+          <Text style={styles.warningText}>
+            {t('story_map_dangling_choices', { count: layout.danglingChoiceCount })}
+          </Text>
+        </View>
+      )}
+
+      <StoryGraphCanvas
+        ref={canvasRef}
+        layout={layout}
+        showEdgeLabels={showEdgeLabels}
+        selectedNodeId={selectedNodeId}
+        onSelectNode={handleSelectNode}
       />
 
-      {tooltipVisible && tooltipData && (
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={tooltipVisible}
-          onRequestClose={() => setTooltipVisible(false)}
+      <View style={styles.controls}>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => canvasRef.current?.zoomBy(1.25)}
+          accessibilityLabel={t('story_map_zoom_in')}
         >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPressOut={() => setTooltipVisible(false)} // Dismiss on tap outside
-          >
-            <View style={styles.modalContent} onStartShouldSetResponder={() => true} onResponderRelease={(e) => e.stopPropagation()}>
-              <Text style={styles.modalTitle}>
-                {tooltipData.type === 'Node' ? t('scene_details_title') : t('choice_details_title')}
-              </Text>
-              <Text selectable={true} style={styles.modalDetailText}>ID: {tooltipData.id}</Text>
-              <Text selectable={true} style={styles.modalDetailText}>Label: {tooltipData.label}</Text>
-              {tooltipData.entityType === 'Scene' && (
-                <>
-                  <Text selectable={true} style={styles.modalDetailText}>Name: {tooltipData.name}</Text>
-                  <Text selectable={true} style={styles.modalDetailText}>Summary: {tooltipData.summary}</Text>
-                </>
-              )}
-              {tooltipData.entityType === 'Choice' && (
-                <>
-                  <Text selectable={true} style={styles.modalDetailText}>Text: {tooltipData.text}</Text>
-                  <Text selectable={true} style={styles.modalDetailText}>Source Scene: {tooltipData.sourceSceneName}</Text>
-                  <Text selectable={true} style={styles.modalDetailText}>Target Scene: {tooltipData.targetSceneName}</Text>
-                </>
-              )}
-              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setTooltipVisible(false)}>
-                <Text style={styles.modalCloseButtonText}>{t('close')}</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-      )}
+          <Ionicons name="add" size={22} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => canvasRef.current?.zoomBy(0.8)}
+          accessibilityLabel={t('story_map_zoom_out')}
+        >
+          <Ionicons name="remove" size={22} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => canvasRef.current?.fitToScreen()}
+          accessibilityLabel={t('story_map_fit')}
+        >
+          <Ionicons name="scan-outline" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => setLabelsOverride(!showEdgeLabels)}
+          accessibilityLabel={t('story_map_toggle_labels')}
+        >
+          <Ionicons
+            name={showEdgeLabels ? 'chatbox' : 'chatbox-outline'}
+            size={19}
+            color={showEdgeLabels ? colors.primary : colors.text}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={handleExport}
+          disabled={exporting}
+          accessibilityLabel={t('story_map_export')}
+        >
+          {exporting
+            ? <ActivityIndicator size="small" color={colors.primary} />
+            : <Ionicons name="image-outline" size={20} color={colors.text} />}
+        </TouchableOpacity>
+      </View>
+
+      <SceneNodeSheet
+        node={selectedNode}
+        outgoing={connections.outgoing}
+        incoming={connections.incoming}
+        onClose={() => setSelectedNodeId(null)}
+        onOpenScene={handleOpenScene}
+        onSelectScene={setSelectedNodeId}
+      />
     </View>
   );
 };

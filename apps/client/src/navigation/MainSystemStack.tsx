@@ -55,7 +55,9 @@ export type MainSystemDrawerParamList = {
   CharactersStack: undefined;
   LocationsStack: undefined;
   ChaptersStack: undefined;
-  ScenesStack: undefined;
+  // Tipado com os parâmetros da pilha interna porque o mapa da história abre uma cena
+  // específica a partir de outra aba do drawer.
+  ScenesStack: NavigatorScreenParams<SceneStackParamList> | undefined;
   ChoicesStack: undefined;
   ItemsStack: undefined;
   ItemJourneysStack: undefined;

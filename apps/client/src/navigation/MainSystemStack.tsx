@@ -20,6 +20,7 @@ import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
 import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
+import GalleryMediaViewerOverlay from '../components/GalleryManager/GalleryMediaViewerOverlay';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import ItemJourneyDetailScreen from '../screens/itemJourneys/ItemJourneyDetailScreen';
@@ -389,6 +390,7 @@ const MainSystemNavigator = () => {
   const { t } = useTranslation();
 
   return (
+    <>
     <Drawer.Navigator
       defaultStatus="closed"
       backBehavior="history"
@@ -616,6 +618,8 @@ const MainSystemNavigator = () => {
         })}
       />
     </Drawer.Navigator>
+    <GalleryMediaViewerOverlay />
+    </>
   );
 };
 

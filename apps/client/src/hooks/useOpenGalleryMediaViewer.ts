@@ -1,27 +1,21 @@
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback } from 'react';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { useGalleryMediaViewerStore } from '../state/galleryMediaViewerStore';
 
 /**
- * Abre uma mídia da galeria por cima da tela atual, empilhada na navegação raiz - e não
- * dentro da aba de Galeria do Drawer.
+ * Abre uma mídia da galeria por cima da tela atual - sem navegar.
  *
- * A diferença importa para o botão de voltar do Android. A aba de Galeria é uma pilha
- * própria (`GalleryStack`) que, na primeira vez que é visitada nesta sessão, nasce com
- * `[GalleryList, GalleryDetail]` - a lista por baixo do detalhe, mesmo que a pessoa nunca
- * tenha realmente passado por ela. Empilhar ali faria o voltar devolver essa lista em vez
- * da tela de entidade de onde a pessoa veio. Empilhando na raiz (`GalleryMediaViewer`, que
- * monta o mesmo `GalleryDetailScreen`), voltar desfaz só este passo - a aba do Drawer em
- * que a pessoa estava nunca chega a ser tocada, então continua exatamente como estava.
+ * Historicamente isto tentou duas formas de navegação de verdade (dentro da aba de
+ * Galeria, depois na pilha raiz) e as duas quebravam o botão de voltar de um jeito
+ * diferente: a primeira devolvia a lista de galeria em vez da tela de entidade; a segunda
+ * corrigia isso mas fazia a PRÓPRIA tela de entidade perder o foco do Drawer, acionando o
+ * reset de pilha daquela aba (ver `GalleryDetailContent.tsx`) e devolvendo a lista da
+ * entidade em vez do detalhe. A causa raiz dos dois é a mesma: qualquer navegação real
+ * para fora da aba atual mexe no foco de alguma coisa que não deveria mudar.
+ *
+ * Por isso a mídia agora é só um `Modal` (`GalleryMediaViewerOverlay`) controlado por
+ * estado simples, fora do React Navigation - nada perde foco, nada reseta.
  */
 export function useOpenGalleryMediaViewer() {
-  const navigation = useNavigation();
-
-  return useCallback((galleryId: string) => {
-    const rootNavigation = navigation
-      .getParent()
-      ?.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    rootNavigation?.navigate('GalleryMediaViewer', { galleryId });
-  }, [navigation]);
+  const open = useGalleryMediaViewerStore((state) => state.open);
+  return useCallback((galleryId: string) => open(galleryId), [open]);
 }

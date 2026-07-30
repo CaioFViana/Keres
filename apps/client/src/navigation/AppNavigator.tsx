@@ -4,7 +4,6 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native'; // Import Ac
 
 import SyncInitializer from '../components/SyncInitializer'; // Import SyncInitializer
 import { useDrizzle } from '../db';
-import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import { getClientSettings } from '../services/ClientSettingsService';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
@@ -16,15 +15,6 @@ export type RootStackParamList = {
   ColdInstall: undefined;
   StorySelection: undefined;
   MainSystem: undefined;
-  /**
-   * Mesma tela de `GalleryStack.GalleryDetail`, montada aqui também (fora do Drawer) para
-   * quando uma tela de entidade abre uma mídia vinculada. Empilhar na aba de Galeria faria
-   * o voltar do Android cair na lista de galeria (a aba nasce com [GalleryList,
-   * GalleryDetail] se ainda não tiver sido visitada nesta sessão); empilhando aqui na raiz,
-   * voltar desfaz só este passo e devolve exatamente a tela de onde a pessoa veio - a aba
-   * do Drawer em que ela estava nunca é tocada. Ver `useOpenGalleryMediaViewer`.
-   */
-  GalleryMediaViewer: { galleryId: string };
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -84,7 +74,6 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
         <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
         <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
         <RootStack.Screen name="MainSystem" component={MainSystemStack} />
-        <RootStack.Screen name="GalleryMediaViewer" component={GalleryDetailScreen} />
       </RootStack.Navigator>
     </SyncInitializer>
   );

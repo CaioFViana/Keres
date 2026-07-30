@@ -322,6 +322,8 @@
   "genre_placeholder": "Enter story genre",
   "global_summary": "Global Summary",
   "go_back": "Go Back",
+  "grouped_select_count_selected": "{{selected}} of {{total}} selected",
+  "grouped_select_count_total": "{{total}} available",
   "hours": "Hours",
   "id": "ID",
   "import_export_title": "Import/Export",

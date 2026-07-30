@@ -322,6 +322,8 @@
   "genre_placeholder": "Digite o gênero da história",
   "global_summary": "Resumo Global",
   "go_back": "Voltar",
+  "grouped_select_count_selected": "{{selected}} de {{total}} selecionado(s)",
+  "grouped_select_count_total": "{{total}} disponível(is)",
   "hours": "Horas",
   "id": "ID",
   "import_export_title": "Importar/Exportar",

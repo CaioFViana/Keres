@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
-import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
+import GroupedMultiSelectPill from '../../components/common/GroupedMultiSelectPill/GroupedMultiSelectPill';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TextInput from '../../components/common/TextInput/TextInput';
 import AudioPreviewPlayer from '../../components/MediaPlayer/AudioPreviewPlayer';
@@ -74,7 +74,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
 
   const galleryService = useMemo(() => createGalleryService(db), [db]);
   const relationService = useMemo(() => createGalleryRelationService(db), [db]);
-  const { options: ownerOptions } = useGalleryOwnerOptions(storyId);
+  const { groupedOptions: ownerGroups } = useGalleryOwnerOptions(storyId);
 
   const [media, setMedia] = useState<GallerySelect | null>(null);
   const [title, setTitle] = useState('');
@@ -375,8 +375,8 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
         />
 
         <Text style={styles.sectionTitle}>{t('media_linked_entities')}</Text>
-        <MultiSelectPill
-          options={ownerOptions}
+        <GroupedMultiSelectPill
+          groups={ownerGroups}
           selectedValues={selectedOwners}
           onSelectionChange={setSelectedOwners}
           placeholder={t('media_select_entities')}

@@ -52,6 +52,9 @@ export class StoryExportImportService {
         const galleryItems = await db.query.galleries.findMany({
             where: (galleries, { eq, and }) => and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)),
         });
+        const galleryRelations = await db.query.galleryRelations.findMany({
+            where: (galleryRelations, { eq, and }) => and(eq(galleryRelations.storyId, storyId), eq(galleryRelations.isDeleted, false)),
+        });
         const items = await db.query.items.findMany({
             where: (items, { eq, and }) => and(eq(items.storyId, storyId), eq(items.isDeleted, false)),
         });
@@ -91,6 +94,7 @@ export class StoryExportImportService {
             characterRelations,
             characterScenes,
             galleryItems,
+            galleryRelations,
             items,
             itemJourneys,
             tagRelations,
@@ -480,6 +484,34 @@ export class StoryExportImportService {
                     };
                 });
                 await tx.insert(dbSchema.tagRelations).values(newTagRelationsData);
+            }
+
+            // --- GalleryRelations (map gallery ID and owner ID) ---
+            // Por último de propósito: o dono pode ser um Item, e os itens só entram no
+            // mapa de IDs no bloco acima.
+            if (validatedFullStory.galleryRelations && validatedFullStory.galleryRelations.length > 0) {
+                const newGalleryRelationsData = validatedFullStory.galleryRelations.map(original => {
+                    const newId = ulid();
+                    idMap.set(original.id, newId);
+                    const mappedGalleryId = idMap.get(original.galleryId);
+                    if (!mappedGalleryId) {
+                        throw new Error(`Import Error: Gallery ID ${original.galleryId} not found in ID map for gallery relation ${original.id}.`);
+                    }
+                    const mappedOwnerId = idMap.get(original.ownerId);
+                    if (!mappedOwnerId) {
+                        throw new Error(`Import Error: Owner ID ${original.ownerId} (${original.ownerType}) not found in ID map for gallery relation ${original.id}.`);
+                    }
+
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        galleryId: mappedGalleryId,
+                        ownerId: mappedOwnerId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.galleryRelations).values(newGalleryRelationsData);
             }
         });
 

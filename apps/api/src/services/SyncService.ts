@@ -11,6 +11,7 @@ import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRe
 import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
 import { CharacterSyncHandler } from './entity-sync-handlers/CharacterSyncHandler';
 import { ChoiceSyncHandler } from './entity-sync-handlers/ChoiceSyncHandler';
+import { GalleryRelationSyncHandler } from './entity-sync-handlers/GalleryRelationSyncHandler';
 import { GallerySyncHandler } from './entity-sync-handlers/GallerySyncHandler';
 import { ItemJourneySyncHandler } from './entity-sync-handlers/ItemJourneySyncHandler';
 import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
@@ -36,6 +37,7 @@ export class SyncService {
     this.registerEntityHandler(new LocationSyncHandler());
     this.registerEntityHandler(new SceneSyncHandler());
     this.registerEntityHandler(new GallerySyncHandler());
+    this.registerEntityHandler(new GalleryRelationSyncHandler());
     this.registerEntityHandler(new NoteSyncHandler());
     this.registerEntityHandler(new WorldRuleSyncHandler());
     this.registerEntityHandler(new ChoiceSyncHandler());

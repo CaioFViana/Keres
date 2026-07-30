@@ -20,7 +20,8 @@ import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
 import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
-import GalleryScreen from '../screens/GalleryScreen';
+import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
+import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import ItemJourneyDetailScreen from '../screens/itemJourneys/ItemJourneyDetailScreen';
 import ItemJourneyFormScreen from '../screens/itemJourneys/ItemJourneyFormScreen';
 import ItemJourneyListScreen from '../screens/itemJourneys/ItemJourneyListScreen';
@@ -64,7 +65,7 @@ export type MainSystemDrawerParamList = {
   TagsStack: undefined;
   WorldRulesStack: undefined;
   NotesStack: undefined;
-  Gallery: undefined;
+  GalleryStack: undefined;
   CharacterRelationsStack: undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
@@ -266,6 +267,25 @@ const CharacterRelationsStackNavigator = () => {
       <CharacterRelationsStack.Screen name="CharacterRelationDetail" component={CharacterRelationDetailScreen} />
       <CharacterRelationsStack.Screen name="CharacterRelationForm" component={CharacterRelationFormScreen} />
     </CharacterRelationsStack.Navigator>
+  );
+};
+//#endregion
+//#region Gallery
+
+const GalleryStack = createNativeStackNavigator<GalleryStackParamList>();
+
+export type GalleryStackParamList = {
+  GalleryList: undefined;
+  GalleryDetail: { galleryId: string };
+};
+
+const GalleryStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <GalleryStack.Navigator screenOptions={{ headerShown: false }}>
+      <GalleryStack.Screen name="GalleryList" component={GalleryListScreen} />
+      <GalleryStack.Screen name="GalleryDetail" component={GalleryDetailScreen} />
+    </GalleryStack.Navigator>
   );
 };
 //#endregion
@@ -526,7 +546,19 @@ const MainSystemNavigator = () => {
           },
         })}
       />
-      <Drawer.Screen name="Gallery" component={GalleryScreen} options={{ title: t('gallery_title') }} />
+      <Drawer.Screen
+        name="GalleryStack"
+        component={GalleryStackNavigator}
+        options={{
+          title: t('gallery_title'),
+          drawerLabel: t('gallery_title'),
+        }}
+        listeners={() => ({
+          blur: () => {
+            entityEventEmitter.emit('gallery_navigation_reset');
+          },
+        })}
+      />
       <Drawer.Screen
         name="CharacterRelationsStack"
         component={CharacterRelationsStackNavigator}

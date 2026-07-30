@@ -1,9 +1,16 @@
-import { CreateGalleryDataSchema, CreateGalleryDataType, CreateStoryUpdate, PartialGallerySchema, UpdateStoryUpdate } from '@keres/shared';
+import { CreateGalleryDataSchema, CreateGalleryDataType, CreateStoryUpdate, isSupportedMediaMimeType, mediaTypeForMimeType, PartialGallerySchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { characters, galleries, locations, notes, scenes } from '../../db/schema';
+import { galleries } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
+/**
+ * Sincroniza os *metadados* de uma mídia. Os bytes não passam por aqui: eles sobem e
+ * descem pelas rotas `/media`, endereçados pelo `hash` que esta linha carrega.
+ *
+ * Não há validação de dono porque a mídia não tem dono - o vínculo com personagens,
+ * locais, notas, cenas e itens vive em `GalleryRelationSyncHandler`.
+ */
 export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalleryDataSchema, typeof PartialGallerySchema> {
   entityName = 'Gallery';
 
@@ -22,43 +29,17 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
     );
   }
 
-  private async validateRelatedEntities(storyId: string, ownerId: string, ownerType: 'Character' | 'Location' | 'Note' | 'Scene' | null): Promise<void> {
-    if (!ownerType) {
-      return; // No ownerType, no specific entity to validate against
+  /**
+   * Recusa formatos que o aplicativo não conseguiria exibir e `mediaType` incoerente com
+   * o `mimeType`. Deixar passar produziria mídia que sincroniza e depois não abre.
+   */
+  private assertSupportedMedia(mimeType: string, mediaType: string): void {
+    if (!isSupportedMediaMimeType(mimeType)) {
+      throw new Error(`Validation Error: unsupported media MIME type "${mimeType}".`);
     }
-
-    let ownerExists = false;
-    switch (ownerType) {
-      case 'Character':
-        const character = await db.query.characters.findFirst({
-          where: and(eq(characters.id, ownerId), eq(characters.storyId, storyId), eq(characters.isDeleted, false)),
-        });
-        ownerExists = !!character;
-        break;
-      case 'Location':
-        const location = await db.query.locations.findFirst({
-          where: and(eq(locations.id, ownerId), eq(locations.storyId, storyId), eq(locations.isDeleted, false)),
-        });
-        ownerExists = !!location;
-        break;
-      case 'Note':
-        const note = await db.query.notes.findFirst({
-          where: and(eq(notes.id, ownerId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)),
-        });
-        ownerExists = !!note;
-        break;
-      case 'Scene':
-        const scene = await db.query.scenes.findFirst({
-          where: and(eq(scenes.id, ownerId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
-        });
-        ownerExists = !!scene;
-        break;
-      default:
-        throw new Error(`Invalid ownerType: ${ownerType}`);
-    }
-
-    if (!ownerExists) {
-      throw new Error(`${ownerType} with ID ${ownerId} not found or does not belong to story ${storyId}.`);
+    const expected = mediaTypeForMimeType(mimeType);
+    if (expected !== mediaType) {
+      throw new Error(`Validation Error: mediaType "${mediaType}" does not match MIME type "${mimeType}" (expected "${expected}").`);
     }
   }
 
@@ -71,7 +52,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
       throw new Error(`Conflict: Gallery with ID ${update.id} already exists.`);
     }
 
-    await this.validateRelatedEntities(storyId, validatedData.ownerId, validatedData.ownerType);
+    this.assertSupportedMedia(validatedData.mimeType, validatedData.mediaType);
 
     await db.insert(galleries).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
@@ -88,11 +69,11 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
   async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
-    // If ownerId or ownerType are being updated, validate them
-    if (validatedChanges.ownerId !== undefined || validatedChanges.ownerType !== undefined) {
-      const newOwnerId = validatedChanges.ownerId !== undefined ? validatedChanges.ownerId : currentEntity.ownerId;
-      const newOwnerType = validatedChanges.ownerType !== undefined ? validatedChanges.ownerType : currentEntity.ownerType;
-      await this.validateRelatedEntities(storyId, newOwnerId, newOwnerType);
+    if (validatedChanges.mimeType !== undefined || validatedChanges.mediaType !== undefined) {
+      this.assertSupportedMedia(
+        validatedChanges.mimeType ?? currentEntity.mimeType,
+        validatedChanges.mediaType ?? currentEntity.mediaType
+      );
     }
 
     await db.update(galleries)

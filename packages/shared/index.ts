@@ -5,6 +5,7 @@ export * from "./entities/CharacterScene";
 export * from "./entities/Choice";
 export * from "./entities/ClientSettings";
 export * from "./entities/Gallery";
+export * from "./entities/GalleryRelation";
 export * from "./entities/Location";
 export * from "./entities/Note";
 export * from "./entities/Scene";

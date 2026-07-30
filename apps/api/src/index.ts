@@ -7,6 +7,7 @@ import * as path from 'path';
 import { env } from './config/env';
 import { authRoutes } from './modules/auth/auth.route';
 import { friendRoutes } from './modules/friend/friend.route';
+import { mediaRoutes } from './modules/media/media.route';
 import { storyRoutes } from './modules/story/story.route';
 import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route';
 import { syncRoute } from './modules/sync/sync.route';
@@ -119,6 +120,7 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
   .group('/auth', (app) => app.use(authRoutes))
   .group('/sync', (app) => app.use(syncRoute))
   .group('/stories', (app) => app.use(storyRoutes))
+  .group('/media', (app) => app.use(mediaRoutes))
   .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
   .group('/friend', (app) => app.use(friendRoutes))
   .group('/user', (app) => app.use(userRoutes)) // Add userRoutes

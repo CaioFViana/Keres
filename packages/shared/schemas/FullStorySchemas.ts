@@ -4,7 +4,7 @@ import { CharacterSchema } from './CharacterSchemas'; // Adjusted path
 import { CharacterRelationSchema } from './CharacterRelationSchemas'; // Adjusted path
 import { CharacterSceneSchema } from './CharacterSceneSchemas'; // Adjusted path
 import { ChoiceSchema } from './ChoiceSchemas'; // Adjusted path
-import { GallerySchema } from './GallerySchemas'; // Adjusted path
+import { GalleryRelationSchema, GallerySchema } from './GallerySchemas'; // Adjusted path
 import { ItemJourneySchema } from './ItemJourneySchemas'; // Adjusted path
 import { ItemSchema } from './ItemSchemas'; // Adjusted path
 import { LocationSchema } from './LocationSchemas'; // Adjusted path
@@ -35,6 +35,8 @@ export const FullStoryExportSchema = z.object({
     characterRelations: z.array(CharacterRelationSchema),
     characterScenes: z.array(CharacterSceneSchema),
     galleryItems: z.array(GallerySchema),
+    // Opcional para que pacotes gerados antes da galeria virar N:N continuem importáveis.
+    galleryRelations: z.array(GalleryRelationSchema).optional(),
     items: z.array(ItemSchema).optional(),
     itemJourneys: z.array(ItemJourneySchema),
     serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version

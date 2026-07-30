@@ -15,6 +15,8 @@ import { CharacterRelationClientSyncHandler } from './entity-sync-handlers/Chara
 import { CharacterSceneClientSyncHandler } from './entity-sync-handlers/CharacterSceneClientSyncHandler';
 import { ChoiceClientSyncHandler } from './entity-sync-handlers/ChoiceClientSyncHandler';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
+import { GalleryClientSyncHandler } from './entity-sync-handlers/GalleryClientSyncHandler';
+import { GalleryRelationClientSyncHandler } from './entity-sync-handlers/GalleryRelationClientSyncHandler';
 import { ItemClientSyncHandler } from './entity-sync-handlers/ItemClientSyncHandler';
 import { ItemJourneyClientSyncHandler } from './entity-sync-handlers/ItemJourneyClientSyncHandler';
 import { LocationClientSyncHandler } from './entity-sync-handlers/LocationClientSyncHandler';
@@ -24,6 +26,7 @@ import { SceneClientSyncHandler } from './entity-sync-handlers/SceneClientSyncHa
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
+import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
 import { createServerService } from './ServerService';
 import { createStoryService } from './storymanagement/StoryService';
 import { createSyncConflictService, findContestedFields, mergeLocalOperationPayloads, SyncConflictService } from './SyncConflictService';
@@ -53,10 +56,16 @@ export class SyncEngineService {
    */
   private syncGeneration: number = 0;
   private storyId: string | null = null;
+  /**
+   * Guardado porque a transferência de mídia não passa pelo Axios (ver `MediaSyncService`)
+   * e precisa do servidor para montar a autenticação por conta própria.
+   */
+  private activeServer: ServerSelect | null = null;
   private client: KeresAxiosInstance;
   private intervalTimeMs: number = SYNC_INTERVAL_MS;
   private _db: AppDrizzleClient | null = null;
   private _conflictService: SyncConflictService | null = null;
+  private _mediaSyncService: MediaSyncService | null = null;
   private entityHandlers: Map<string, ClientSyncEntityHandler>; // Map to hold entity handlers
 
   private constructor() {
@@ -77,6 +86,8 @@ export class SyncEngineService {
     this.registerEntityHandler(new ItemClientSyncHandler())
     this.registerEntityHandler(new ItemJourneyClientSyncHandler())
     this.registerEntityHandler(new SceneClientSyncHandler())
+    this.registerEntityHandler(new GalleryClientSyncHandler())
+    this.registerEntityHandler(new GalleryRelationClientSyncHandler())
     // TODO: Register other entity handlers here
   }
 
@@ -105,6 +116,7 @@ export class SyncEngineService {
 
   public async configure(storyId: string | undefined, server: ServerSelect | null) {
     this.storyId = storyId || null;
+    this.activeServer = server?.url ? server : null;
     if (server?.url) {
       this.client = createKeresAxiosInstance({ baseURL: server.url });
       // Bind this client to the specific server so the request interceptor always attaches
@@ -183,6 +195,7 @@ export class SyncEngineService {
       console.log('Sync engine stopped.');
     }
     this.storyId = null;
+    this.activeServer = null;
     this.client.defaults.baseURL = undefined;
   }
 
@@ -578,7 +591,10 @@ export class SyncEngineService {
         .set({ lastServerSyncedLog: highestAppliedRemoteVersion })
         .where(eq(schema.stories.id, this.storyId));
 
-      return false;
+      // 6. Reconcile media files. Roda depois dos metadados de propósito: uma mídia só
+      // pode ser baixada depois que a linha que a descreve chegou, e só pode ser enviada
+      // depois que o servidor aceitou essa mesma linha.
+      return await this.syncMedia();
     } catch (error: any) {
       if (isOfflineError(error)) {
         // Offline-first: an unreachable server is expected, not a failure worth
@@ -588,6 +604,36 @@ export class SyncEngineService {
       }
       console.log('Error during sync operation:', error?.message || error);
       showNotification(i18n.t('sync_failed'), 'error');
+      return false;
+    }
+  }
+
+  /**
+   * Sobe e baixa os arquivos da galeria. Resolve para `true` se o servidor estiver
+   * inacessível, para o ciclo tratar como offline.
+   *
+   * Uma falha aqui nunca derruba a sincronização: mídia que não transferiu continua
+   * marcada como pendente e é tentada de novo no ciclo seguinte, enquanto o texto da
+   * história segue sincronizando normalmente.
+   */
+  private async syncMedia(): Promise<boolean> {
+    if (!this._db || !this.storyId || !this.activeServer) {
+      return false;
+    }
+
+    try {
+      if (!this._mediaSyncService) {
+        this._mediaSyncService = createMediaSyncService(this._db);
+      }
+      const summary = await this._mediaSyncService.syncStoryMedia(this.client, this.activeServer, this.storyId);
+
+      if (summary.uploaded > 0 || summary.downloaded > 0) {
+        console.log(`Media sync for story ${this.storyId}: ${summary.uploaded} uploaded, ${summary.downloaded} downloaded, ${summary.failed} failed.`);
+        entityEventEmitter.emit('gallery_changed', this.storyId);
+      }
+      return summary.offline;
+    } catch (error) {
+      console.log(`Media sync skipped for story ${this.storyId}.`, error);
       return false;
     }
   }

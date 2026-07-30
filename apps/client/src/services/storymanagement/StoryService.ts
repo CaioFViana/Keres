@@ -17,6 +17,8 @@ import {
   ChoiceSelect,
   galleries,
   GalleryInsert,
+  galleryRelations,
+  GalleryRelationInsert,
   ItemInsert,
   ItemJourneyInsert,
   itemJourneys,
@@ -368,7 +370,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyChapters, storyScenes, storyChoices, storyCharacters, storyLocations,
         storyWorldRules, storyNotes, storyNoteRelations, storyTags, storyTagRelations,
         storySuggestions, storyCharacterRelations, storyCharacterScenes, storyGalleryItems,
-        storyItems, storyItemJourneys,
+        storyGalleryRelations, storyItems, storyItemJourneys,
       ] = await Promise.all([
         db.query.chapters.findMany({ where: belongsToStory(chapters) }),
         db.query.scenes.findMany({ where: belongsToStory(scenes) }),
@@ -384,6 +386,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.characterRelations.findMany({ where: belongsToStory(characterRelations) }),
         db.query.characterScenes.findMany({ where: belongsToStory(characterScenes) }),
         db.query.galleries.findMany({ where: belongsToStory(galleries) }),
+        db.query.galleryRelations.findMany({ where: belongsToStory(galleryRelations) }),
         db.query.items.findMany({ where: belongsToStory(items) }),
         db.query.itemJourneys.findMany({ where: belongsToStory(itemJourneys) }),
       ]);
@@ -412,6 +415,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         })),
         characterScenes: storyCharacterScenes,
         galleryItems: storyGalleryItems,
+        galleryRelations: storyGalleryRelations,
         items: storyItems,
         itemJourneys: storyItemJourneys,
         // O importador usa este número como ponto de partida da sincronização. Preservar o
@@ -661,17 +665,39 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             const galleryItemToInsert: GalleryInsert = {
               ...galleryItem,
               storyId: galleryItem.storyId,
-              ownerId: galleryItem.ownerId,
               createdAt: new Date(galleryItem.createdAt),
               updatedAt: new Date(),
               version: galleryItem.version,
               isDeleted: false,
               deletedAt: null,
+              // O pacote carrega só os metadados da mídia - os bytes ficam no servidor,
+              // endereçados pelo hash. A mídia entra sem arquivo local e a sincronização
+              // busca o conteúdo depois.
+              localPath: null,
+              uploadState: 'uploaded',
+              downloadState: 'pending',
             };
             await tx.insert(galleries).values(galleryItemToInsert).run();
           }
         }
-        
+
+        // 14b. Process GalleryRelations
+        if (fullStoryData.galleryRelations) {
+          for (const galleryRelation of fullStoryData.galleryRelations) {
+            const galleryRelationToInsert: GalleryRelationInsert = {
+              ...galleryRelation,
+              storyId: galleryRelation.storyId,
+              createdAt: new Date(galleryRelation.createdAt),
+              updatedAt: new Date(),
+              version: galleryRelation.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(galleryRelations).values(galleryRelationToInsert).run();
+          }
+        }
+
+
         // 15. Process Items (if optional) - Assuming there's an 'items' table
         if (fullStoryData.items) {
           for (const item of fullStoryData.items) {

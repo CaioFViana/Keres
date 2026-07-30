@@ -120,6 +120,20 @@
       "when": 1785368108860,
       "tag": "0016_first_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1785433871032,
+      "tag": "0017_gallery_drop_owner",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785433894271,
+      "tag": "0018_gallery_media",
+      "breakpoints": true
     }
   ]
 }

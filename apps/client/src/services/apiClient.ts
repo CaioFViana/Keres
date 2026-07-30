@@ -62,6 +62,18 @@ export function clearServerTokenCache(serverId: string): void {
   serverTokenCache.delete(serverId);
 }
 
+/**
+ * Token de acesso de um servidor, para quem precisa autenticar fora do Axios.
+ *
+ * O interceptor de request resolve o cabeçalho sozinho e essa é a via normal. Downloads de
+ * mídia, porém, vão direto para o disco pelo `expo-file-system` - trazer um vídeo para a
+ * memória do JS só para o Axios repassá-lo estouraria o heap -, e por não passarem pelo
+ * interceptor precisam montar o `Authorization` à mão.
+ */
+export function getServerAccessToken(serverId: string): string | null {
+  return serverTokenCache.get(serverId)?.jwtToken || null;
+}
+
 interface RefreshState {
   isRefreshing: boolean;
   failedQueue: { resolve: (value?: any) => void; reject: (reason?: any) => void; config: InternalAxiosRequestConfig }[];

@@ -1,3 +1,7 @@
 node_modules
 bun.lockb
 bun.lock
+
+# Arquivos de mídia da galeria, gravados em disco pelo servidor e endereçados por hash.
+# São conteúdo de usuário, não código - o caminho é configurável por MEDIA_STORAGE_PATH.
+media-storage/

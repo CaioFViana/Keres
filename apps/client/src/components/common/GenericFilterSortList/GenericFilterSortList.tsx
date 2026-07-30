@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useTheme } from '../../../theme';
 import AdvancedSearchModal from '../AdvancedSearchModal/AdvancedSearchModal';
 import Select from '../Select/Select';
@@ -41,6 +41,12 @@ interface GenericFilterSortListProps<T> {
   currentAdvancedSearchCriteria?: { [key: string]: any };
   disableTagFilter?: boolean;
   isLoading?: boolean;
+  /**
+   * Colunas da lista. A galeria mostra miniaturas em grade; as demais telas são listas de
+   * uma coluna e não passam nada.
+   */
+  numColumns?: number;
+  columnWrapperStyle?: StyleProp<ViewStyle>;
 }
 
 const GenericFilterSortList = <T,>({
@@ -69,6 +75,8 @@ const GenericFilterSortList = <T,>({
   disableFavoriteFilter = false,
   disableTagFilter = false,
   isLoading = false,
+  numColumns = 1,
+  columnWrapperStyle,
 }: GenericFilterSortListProps<T>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -235,6 +243,8 @@ const GenericFilterSortList = <T,>({
         data={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? columnWrapperStyle : undefined}
         ListEmptyComponent={emptyListComponent || <Text style={styles(colors).emptyText}>{t('no_items_found')}</Text>}
         style={styles(colors).list}
       />

@@ -6,6 +6,7 @@ export * from './choices';
 export * from './clientSettings';
 export * from './friendships';
 export * from './galleries';
+export * from './galleryRelations';
 export * from './itemJourneys';
 export * from './items';
 export * from './locations';

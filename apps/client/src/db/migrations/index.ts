@@ -19,6 +19,8 @@ import migration_15 from './0014_little_junta';
 import migration_16 from './0015_strong_archangel';
 import migration_17 from './0016_fine_mercury';
 import migration_18 from './0017_peaceful_darkstar';
+import migration_19 from './0018_gallery_drop_owner';
+import migration_20 from './0019_gallery_media';
 
 
 const migrations = [
@@ -40,6 +42,8 @@ const migrations = [
   { id: 16, name: '0015_strong_archangel', run: migration_16 },
   { id: 17, name: '0016_fine_mercury', run: migration_17 },
   { id: 18, name: '0017_peaceful_darkstar', run: migration_18 },
+  { id: 19, name: '0018_gallery_drop_owner', run: migration_19 },
+  { id: 20, name: '0019_gallery_media', run: migration_20 },
 ];
 
 export default migrations;

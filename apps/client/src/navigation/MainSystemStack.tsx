@@ -30,7 +30,6 @@ import ItemListScreen from '../screens/items/ItemListScreen';
 import LocationDetailsScreen, { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
-import ImportExportScreen from '../screens/mainstorystack/ImportExportScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import NoteDetailScreen, { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
@@ -67,7 +66,6 @@ export type MainSystemDrawerParamList = {
   CharacterRelationsStack: undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
-  ImportExport: undefined;
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList>;
   StorySelection: undefined;
 };
@@ -559,7 +557,6 @@ const MainSystemNavigator = () => {
           },
         })}
       />
-      <Drawer.Screen name="ImportExport" component={ImportExportScreen} options={{ title: t('import_export_title') }} />
       <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
       <Drawer.Screen
         name="StorySelection"

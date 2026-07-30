@@ -9,6 +9,7 @@ import { createStoryService, useDrizzle } from '../db';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
+import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
@@ -39,6 +40,7 @@ export type StorySelectionDrawerParamList = {
   StorySelectionMain: NavigatorScreenParams<StorySelectionMainStackParamList>;
   ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
   FriendshipDrawer: NavigatorScreenParams<FriendshipStackParamList>;
+  ImportExport: undefined;
   Settings: undefined;
 };
 
@@ -189,6 +191,19 @@ const StorySelectionNavigator = () => {
             entityEventEmitter.emit('friendship_navigation_reset');
           },
         })}
+      />
+      {/*
+        Import/export vive no menu principal, e não no menu de uma história: importar cria
+        uma história nova (não existe história ativa nesse momento) e exportar deve poder
+        alcançar qualquer uma das histórias, não só a que estiver aberta.
+      */}
+      <Drawer.Screen
+        name="ImportExport"
+        component={ImportExportScreen}
+        options={{
+          title: t('import_export_title'),
+          drawerLabel: t('import_export_title'),
+        }}
       />
       <Drawer.Screen
         name="Settings"

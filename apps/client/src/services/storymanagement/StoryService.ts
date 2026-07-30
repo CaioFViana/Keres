@@ -1,4 +1,4 @@
-import { FullStoryExportType } from '@keres/shared';
+import { FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import {
@@ -74,6 +74,7 @@ export interface StoryService {
   deleteStory(currentUserId: string, storyId: string): Promise<void>;
   getBranchingStoryForkCount(): Promise<number>;
   importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null): Promise<string>;
+  exportFullStory(storyId: string): Promise<FullStoryExportType>;
 }
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
@@ -343,6 +344,80 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         .all();
 
       return result.length;
+    },
+
+    /**
+     * Monta o pacote completo de uma história a partir do banco local.
+     *
+     * É a contraparte de `importFullStory` e usa a mesma forma (`FullStoryExportSchema`)
+     * que o servidor, então um arquivo exportado aqui pode ser importado lá e vice-versa.
+     *
+     * Registros marcados como excluídos ficam de fora: o pacote representa a história como
+     * ela é, não o histórico de como chegou até aqui.
+     */
+    async exportFullStory(storyId: string): Promise<FullStoryExportType> {
+      const story = await db.select().from(stories).where(eq(stories.id, storyId)).get();
+      if (!story) {
+        throw new Error(`Story with ID ${storyId} not found for export.`);
+      }
+
+      const belongsToStory = (table: { storyId: any; isDeleted: any }) =>
+        and(eq(table.storyId, storyId), eq(table.isDeleted, false));
+
+      const [
+        storyChapters, storyScenes, storyChoices, storyCharacters, storyLocations,
+        storyWorldRules, storyNotes, storyNoteRelations, storyTags, storyTagRelations,
+        storySuggestions, storyCharacterRelations, storyCharacterScenes, storyGalleryItems,
+        storyItems, storyItemJourneys,
+      ] = await Promise.all([
+        db.query.chapters.findMany({ where: belongsToStory(chapters) }),
+        db.query.scenes.findMany({ where: belongsToStory(scenes) }),
+        db.query.choices.findMany({ where: belongsToStory(choices) }),
+        db.query.characters.findMany({ where: belongsToStory(characters) }),
+        db.query.locations.findMany({ where: belongsToStory(locations) }),
+        db.query.worldRules.findMany({ where: belongsToStory(worldRules) }),
+        db.query.notes.findMany({ where: belongsToStory(notes) }),
+        db.query.noteRelations.findMany({ where: belongsToStory(noteRelations) }),
+        db.query.tags.findMany({ where: belongsToStory(tags) }),
+        db.query.tagRelations.findMany({ where: belongsToStory(tagRelations) }),
+        db.query.suggestions.findMany({ where: belongsToStory(suggestions) }),
+        db.query.characterRelations.findMany({ where: belongsToStory(characterRelations) }),
+        db.query.characterScenes.findMany({ where: belongsToStory(characterScenes) }),
+        db.query.galleries.findMany({ where: belongsToStory(galleries) }),
+        db.query.items.findMany({ where: belongsToStory(items) }),
+        db.query.itemJourneys.findMany({ where: belongsToStory(itemJourneys) }),
+      ]);
+
+      return FullStoryExportSchema.parse({
+        story,
+        chapters: storyChapters,
+        scenes: storyScenes,
+        choices: storyChoices,
+        characters: storyCharacters,
+        locations: storyLocations,
+        worldRules: storyWorldRules,
+        notes: storyNotes,
+        noteRelations: storyNoteRelations,
+        tags: storyTags,
+        tagRelations: storyTagRelations,
+        suggestions: storySuggestions,
+        // A tabela local chama os lados da relação de `charId1`/`charId2`, mas o formato de
+        // arquivo (e o servidor) usa `character1Id`/`character2Id`. `importFullStory` faz a
+        // tradução na entrada; sem a simétrica aqui, o arquivo gerado seria recusado na
+        // volta.
+        characterRelations: storyCharacterRelations.map(relation => ({
+          ...relation,
+          character1Id: relation.charId1,
+          character2Id: relation.charId2,
+        })),
+        characterScenes: storyCharacterScenes,
+        galleryItems: storyGalleryItems,
+        items: storyItems,
+        itemJourneys: storyItemJourneys,
+        // O importador usa este número como ponto de partida da sincronização. Preservar o
+        // marcador local mantém o pacote útil para uma história já ligada a um servidor.
+        serverLastOperationVersion: story.lastServerSyncedLog || 0,
+      });
     },
 
     async importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null): Promise<string> {

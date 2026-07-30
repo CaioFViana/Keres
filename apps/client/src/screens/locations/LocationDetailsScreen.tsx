@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
 import LocationItemManager from '../../components/LocationManager/LocationItemManager'; // Import LocationItemManager
 import LocationSceneManager from '../../components/LocationManager/LocationSceneManager'; // Import LocationSceneManager
@@ -39,6 +40,7 @@ const LocationDetailsScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>(); // Use the imported navigation type
+  const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<LocationDetailScreenRouteProp>();
   const { locationId } = route.params;
   const { t } = useTranslation();
@@ -398,7 +400,7 @@ const LocationDetailsScreen = () => {
       <EntityGalleryManager
         ownerId={locationId}
         ownerType="Location"
-        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+        onPressMedia={openGalleryMediaViewer}
       />
 
       <Text style={styles.sectionTitle}>{t('characters_in_location_title')}</Text>

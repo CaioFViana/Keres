@@ -168,6 +168,8 @@ const StorySelectionScreen = () => {
       const sceneCount = await storyService.getSceneCount();
       const noteCount = await storyService.getNoteCount();
       const worldRuleCount = await storyService.getWorldRuleCount();
+      const itemCount = await storyService.getItemCount();
+      const galleryCount = await storyService.getGalleryCount();
       const branchingStoryForkCount = await storyService.getBranchingStoryForkCount();
 
       updateSummary({
@@ -180,6 +182,8 @@ const StorySelectionScreen = () => {
         sceneCount,
         noteCount,
         worldRuleCount,
+        itemCount,
+        galleryCount,
         branchingStoryForkCount,
       });
     } catch (error) {

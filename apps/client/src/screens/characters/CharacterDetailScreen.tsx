@@ -11,6 +11,7 @@ import CharacterLocationManager from '../../components/CharacterManager/Characte
 import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import ItemCharacterManager from '../../components/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import TagChipList from '../../components/common/TagChipList/TagChipList';
@@ -42,6 +43,7 @@ const CharacterDetailScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
+  const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<CharacterDetailScreenRouteProp>();
   const { characterId } = route.params;
   const { t } = useTranslation();
@@ -498,7 +500,7 @@ const CharacterDetailScreen = () => {
       <EntityGalleryManager
         ownerId={characterId}
         ownerType="Character"
-        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+        onPressMedia={openGalleryMediaViewer}
       />
 
       <Text style={styles.sectionTitle}>{t('character_relations_title')}</Text>

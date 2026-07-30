@@ -11,6 +11,8 @@ interface StorySummary {
   noteCount: number;
   worldRuleCount: number;
   branchingStoryForkCount: number;
+  itemCount: number;
+  galleryCount: number;
 }
 
 interface SummaryState {

@@ -11,6 +11,7 @@ import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpaci
 import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import ItemSceneManager from '../../components/ItemManager/ItemSceneManager'; // Import ItemSceneManager
 import NoteRelationManager from '../../components/NoteManager/NoteRelationManager'; // Import NoteRelationManager
 import SceneNavigationControls from '../../components/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
@@ -42,6 +43,7 @@ const SceneDetailScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation<ScenesScreenNavigationProp>();
+  const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<SceneDetailScreenRouteProp>();
   const { sceneId } = route.params;
   const { t } = useTranslation();
@@ -434,7 +436,7 @@ const SceneDetailScreen = () => {
       <EntityGalleryManager
         ownerId={sceneId}
         ownerType="Scene"
-        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+        onPressMedia={openGalleryMediaViewer}
       />
 
       <Text style={styles.sectionTitle}>{t('characters_title')}</Text>

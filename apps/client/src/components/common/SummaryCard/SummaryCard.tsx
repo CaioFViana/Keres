@@ -61,6 +61,8 @@ interface SummaryCardProps {
   sceneCount?: number;
   noteCount?: number;
   worldRuleCount?: number;
+  itemCount?: number;
+  galleryCount?: number;
   branchingStoryForkCount?: number; // New prop for the count of forks in branching stories
   isBranchingStory?: boolean; // New prop to indicate if the summary is for a single branching story
   title?: string; // Optional title for the card, e.g., "Global Summary" or "Story Summary"
@@ -76,6 +78,8 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   sceneCount,
   noteCount,
   worldRuleCount,
+  itemCount,
+  galleryCount,
   branchingStoryForkCount,
   isBranchingStory, // Destructure new prop
   title,
@@ -99,6 +103,8 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     { label: t('characters'), count: characterCount, icon: 'people', color: '#37afa5ff' }, // light blue
     { label: t('notes'), count: noteCount, icon: 'document', color: '#FFEB3B' }, // yellow
     { label: t('world_rules'), count: worldRuleCount, icon: 'globe', color: '#03A9F4' }, // blue
+    { label: t('items'), count: itemCount, icon: 'cube', color: '#795548' }, // brown
+    { label: t('gallery'), count: galleryCount, icon: 'images', color: '#009688' }, // teal
   ];
 
   // Add "Forks" and "Choices" tiles if it's a branching story or if there are multiple branching stories.

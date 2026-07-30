@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import ItemJourneyManager from '../../components/ItemManager/ItemJourneyManager';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
@@ -32,6 +33,7 @@ const ItemDetailScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const navigation = useNavigation<ItemsScreenNavigationProp>();
+  const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<ItemDetailScreenRouteProp>();
   const { itemId } = route.params;
   const { t } = useTranslation();
@@ -214,7 +216,7 @@ const ItemDetailScreen = () => {
       <EntityGalleryManager
         ownerId={itemId}
         ownerType="Item"
-        onPressMedia={(galleryId) => navigation.navigate('GalleryStack', { screen: 'GalleryDetail', params: { galleryId } })}
+        onPressMedia={openGalleryMediaViewer}
       />
 
       <Text style={styles.sectionTitle}>{t('item_journeys_title')}</Text>

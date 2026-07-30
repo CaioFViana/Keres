@@ -65,9 +65,7 @@ export type MainSystemDrawerParamList = {
   TagsStack: undefined;
   WorldRulesStack: undefined;
   NotesStack: undefined;
-  // Tipado com os parâmetros da pilha interna porque as telas de entidade abrem uma mídia
-  // específica da galeria a partir de outra aba do drawer.
-  GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
+  GalleryStack: undefined;
   CharacterRelationsStack: undefined;
   Settings: undefined;
   StorySettings: { storyId: string };

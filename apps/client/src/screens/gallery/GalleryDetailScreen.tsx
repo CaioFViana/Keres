@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { MediaType } from '@keres/shared';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { NavigationProp, ParamListBase, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,12 +10,12 @@ import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelect
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TextInput from '../../components/common/TextInput/TextInput';
 import AudioPreviewPlayer from '../../components/MediaPlayer/AudioPreviewPlayer';
+import ImageZoomViewer from '../../components/MediaPlayer/ImageZoomViewer';
 import VideoPreviewPlayer from '../../components/MediaPlayer/VideoPreviewPlayer';
 import { useDrizzle } from '../../db';
 import { GallerySelect } from '../../db/schemas/galleries';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { decodeOwnerValue, encodeOwnerValue, useGalleryOwnerOptions } from '../../hooks/useGalleryOwnerOptions';
-import { GalleryStackParamList } from '../../navigation/MainSystemStack';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryRelationService, GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -25,8 +24,14 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 
-type GalleryDetailRouteProp = RouteProp<GalleryStackParamList, 'GalleryDetail'>;
-type GalleryDetailNavigationProp = NativeStackNavigationProp<GalleryStackParamList, 'GalleryDetail'>;
+/**
+ * Não referencia `GalleryStackParamList`/`RootStackParamList` de propósito: esta tela é
+ * montada nas duas pilhas (`GalleryStack.GalleryDetail` para navegação dentro da aba de
+ * Galeria, `RootStack.GalleryMediaViewer` para o "espiar" vindo de uma tela de entidade -
+ * ver `useOpenGalleryMediaViewer`), e só usa `route.params.galleryId` e `navigation.goBack()`,
+ * que qualquer uma das duas fornece igualmente.
+ */
+type GalleryDetailRouteProp = RouteProp<Record<'GalleryDetail', { galleryId: string }>, 'GalleryDetail'>;
 
 const MEDIA_TYPE_ICONS: Record<MediaType, keyof typeof Ionicons.glyphMap> = {
   image: 'image-outline',
@@ -45,7 +50,7 @@ const GalleryDetailScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation<GalleryDetailNavigationProp>();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const route = useRoute<GalleryDetailRouteProp>();
   const { galleryId } = route.params;
 
@@ -63,6 +68,7 @@ const GalleryDetailScreen = () => {
   const [title, setTitle] = useState('');
   const [extraNotes, setExtraNotes] = useState('');
   const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
+  const [zoomVisible, setZoomVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -274,10 +280,13 @@ const GalleryDetailScreen = () => {
   const hasLocalAudio = mediaType === 'audio' && !!media.localPath;
 
   return (
+    <>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.preview}>
         {hasLocalImage ? (
-          <Image source={{ uri: media.localPath as string }} style={styles.image} contentFit="contain" />
+          <TouchableOpacity activeOpacity={0.9} onPress={() => setZoomVisible(true)} style={styles.image}>
+            <Image source={{ uri: media.localPath as string }} style={styles.image} contentFit="contain" />
+          </TouchableOpacity>
         ) : hasLocalVideo ? (
           <VideoPreviewPlayer key={media.hash} uri={media.localPath as string} />
         ) : hasLocalAudio ? (
@@ -371,6 +380,14 @@ const GalleryDetailScreen = () => {
         </Button>
       </View>
     </ScrollView>
+    {hasLocalImage && (
+      <ImageZoomViewer
+        visible={zoomVisible}
+        uri={media.localPath as string}
+        onClose={() => setZoomVisible(false)}
+      />
+    )}
+    </>
   );
 };
 

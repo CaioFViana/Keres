@@ -62,6 +62,8 @@ export interface StoryService {
   getSceneCount(storyId?: string): Promise<number>;
   getNoteCount(storyId?: string): Promise<number>;
   getWorldRuleCount(storyId?: string): Promise<number>;
+  getItemCount(storyId?: string): Promise<number>;
+  getGalleryCount(storyId?: string): Promise<number>;
 
   // New creation methods using Create<T>
   createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect>;
@@ -202,6 +204,22 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const result = await db.select({ count: count() }).from(worldRules)
         .innerJoin(stories, eq(worldRules.storyId, stories.id))
         .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(worldRules.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(worldRules.isDeleted, false)))
+        .get();
+      return result?.count || 0;
+    },
+
+    async getItemCount(storyId?: string): Promise<number> {
+      const result = await db.select({ count: count() }).from(items)
+        .innerJoin(stories, eq(items.storyId, stories.id))
+        .where(storyId ? and(eq(items.storyId, storyId), eq(stories.isDeleted, false), eq(items.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(items.isDeleted, false)))
+        .get();
+      return result?.count || 0;
+    },
+
+    async getGalleryCount(storyId?: string): Promise<number> {
+      const result = await db.select({ count: count() }).from(galleries)
+        .innerJoin(stories, eq(galleries.storyId, stories.id))
+        .where(storyId ? and(eq(galleries.storyId, storyId), eq(stories.isDeleted, false), eq(galleries.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(galleries.isDeleted, false)))
         .get();
       return result?.count || 0;
     },

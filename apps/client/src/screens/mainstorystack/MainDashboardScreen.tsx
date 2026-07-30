@@ -31,6 +31,8 @@ const MainDashboardScreen = () => {
   const [choiceCount, setChoiceCount] = useState<number | undefined>(undefined);
   const [noteCount, setNoteCount] = useState<number | undefined>(undefined);
   const [worldRuleCount, setWorldRuleCount] = useState<number | undefined>(undefined);
+  const [itemCount, setItemCount] = useState<number | undefined>(undefined);
+  const [galleryCount, setGalleryCount] = useState<number | undefined>(undefined);
   const [forkCount, setForkCount] = useState<number | undefined>(undefined); // New state for fork count
 
   const backPressTimer = useRef<number | null>(null);
@@ -98,6 +100,12 @@ const MainDashboardScreen = () => {
         const worldRules = await db.select().from(schema.worldRules).where(eq(schema.worldRules.storyId, selectedStory.id)).execute();
         setWorldRuleCount(worldRules.length);
 
+        const items = await db.select().from(schema.items).where(eq(schema.items.storyId, selectedStory.id)).execute();
+        setItemCount(items.length);
+
+        const galleryItems = await db.select().from(schema.galleries).where(eq(schema.galleries.storyId, selectedStory.id)).execute();
+        setGalleryCount(galleryItems.length);
+
         // Calculate forkCount: scenes with more than one choice using a subquery
         const subquery = db
           .select({
@@ -128,6 +136,8 @@ const MainDashboardScreen = () => {
       setChoiceCount(undefined);
       setNoteCount(undefined);
       setWorldRuleCount(undefined);
+      setItemCount(undefined);
+      setGalleryCount(undefined);
       setForkCount(undefined); // Reset forkCount if no story selected
     }
   }, [selectedStory?.id, db]);
@@ -220,6 +230,8 @@ const MainDashboardScreen = () => {
         choiceCount={choiceCount}
         noteCount={noteCount}
         worldRuleCount={worldRuleCount}
+        itemCount={itemCount}
+        galleryCount={galleryCount}
         isBranchingStory={selectedStory?.type === 'branching'}
         branchingStoryForkCount={forkCount}
       />

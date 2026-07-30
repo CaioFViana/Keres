@@ -13,7 +13,7 @@
     "lint": "expo lint",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "locales:audit": "tsx scripts/verify-translations.ts",
-    "locales:audit --force": "tsx scripts/verify-translations.ts --force"
+    "locales:audit:force": "tsx scripts/verify-translations.ts --force"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

@@ -2,14 +2,70 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
 
-// Helper to flatten a nested object into dot-separated keys
+/**
+ * Audits `src/locales/*.json` against the codebase: every locale file has the same keys
+ * (Step "cross-locale consistency"), every key the code actually asks `t()` for exists in
+ * every locale (Step "missing keys"), and every key that exists in the locales is
+ * reachable from somewhere in the code (Step "unused keys").
+ *
+ * Earlier versions of this script only trusted `t('literal_key')` call sites. That breaks
+ * down in two ways that keep recurring as the app grows:
+ *
+ *  1. Dynamic keys - `t(\`media_type_${mediaType}\`)`, `t(\`${entityType.toLowerCase()}_plural\`)`.
+ *     The concrete key can't be known statically, so these were silently skipped: missing
+ *     keys behind a dynamic branch went undetected, and the branch's own key family
+ *     couldn't be marked "used" for the unused-key check either.
+ *  2. Indirection - `useConfirmDelete({ titleKey: 'delete_character_title', ... })`,
+ *     `<GenericRelationDisplay noItemsMessage="notes_empty" />`, `entityFields.ts`'s
+ *     `label: 'field_name'`. The literal key is a plain string somewhere in the source,
+ *     but never inside a `t(...)` call at that spot - the component/hook calls `t()` on it
+ *     later. Chasing every such prop/parameter by name doesn't scale; new ones appear
+ *     every time a screen introduces another "pass a translation key down" pattern.
+ *
+ * The fix used here: keep `t()`/`i18n.t()` call sites as the *authoritative* signal for
+ * "missing key" (a real typo there is a real bug - raw key or fallback text on screen),
+ * but widen "unused key" detection to also treat any string literal anywhere in the
+ * scanned source that happens to match a locale key as evidence of use - covering
+ * indirection without having to enumerate every pattern - plus a best-effort regex derived
+ * from each dynamic template so its key family isn't flagged unused wholesale, and so a
+ * completely broken dynamic branch (no locale key matches its pattern) still surfaces.
+ */
+
+interface KeyUsage {
+  key: string;
+  file: string;
+  line: number;
+}
+
+interface DynamicKeyPattern {
+  pattern: RegExp;
+  raw: string;
+  file: string;
+  line: number;
+}
+
+interface ScanResult {
+  exactUsages: KeyUsage[];
+  dynamicPatterns: DynamicKeyPattern[];
+  allLiterals: Set<string>;
+}
+
+const clientSrcPath = path.join(__dirname, '..', 'src');
+const localesPath = path.join(clientSrcPath, 'locales');
+const sharedSrcPath = path.join(__dirname, '..', '..', '..', 'packages', 'shared');
+// Everywhere a translation key can plausibly originate: the app itself, and the shared
+// package whose `entityFields.ts` feeds form-field labels into `t()` indirectly.
+const SCAN_ROOTS = [clientSrcPath, sharedSrcPath];
+
+// --- JSON helpers -----------------------------------------------------------------
+
 function flattenObject(obj: Record<string, any>, prefix = ''): Set<string> {
-  let keys = new Set<string>();
+  const keys = new Set<string>();
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const newKey = prefix ? `${prefix}.${key}` : key;
       if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-        flattenObject(obj[key], newKey).forEach(k => keys.add(k));
+        flattenObject(obj[key], newKey).forEach((k) => keys.add(k));
       } else {
         keys.add(newKey);
       }
@@ -18,48 +74,30 @@ function flattenObject(obj: Record<string, any>, prefix = ''): Set<string> {
   return keys;
 }
 
-// Helper to remove a nested key from an object given its dot-separated path
 function removeKeyFromObject(obj: Record<string, any>, keyPath: string): boolean {
   const parts = keyPath.split('.');
-  let current: Record<string, any> = obj; // Start with the main object
-  let parent: Record<string, any> | undefined;
+  let current: Record<string, any> = obj;
 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
     if (typeof current !== 'object' || current === null || Array.isArray(current)) {
-      return false; // Current path segment is not an object or is null/array
+      return false;
     }
-
-    if (i === parts.length - 1) { // This is the last part of the path
+    if (i === parts.length - 1) {
       if (Object.prototype.hasOwnProperty.call(current, part)) {
         delete current[part];
         return true;
       }
-      return false; // Key not found at the end of the path
-    } else { // Not the last part, so traverse deeper
-      parent = current;
-      current = current[part];
-      if (current === undefined) {
-        return false; // Intermediate path segment does not exist
-      }
+      return false;
+    }
+    current = current[part];
+    if (current === undefined) {
+      return false;
     }
   }
-  return false; // Should not reach here if path has parts
+  return false;
 }
 
-// New helper function to extract keys using regex
-function extractTranslationKeysFromRegex(fileContent: string): Set<string> {
-  const keys = new Set<string>();
-  // Regex to find t('key'), t("key"), t(`key`)
-  const regex = /\bt\(['"`]([a-zA-Z0-9._-]+)['"`]\)/g;
-  let match;
-  while ((match = regex.exec(fileContent)) !== null) {
-    keys.add(match[1]);
-  }
-  return keys;
-}
-
-// Helper to sort a JSON object by its top-level keys
 function sortObjectKeys(obj: Record<string, any>): Record<string, any> {
   const sortedKeys = Object.keys(obj).sort();
   const sortedObject: Record<string, any> = {};
@@ -69,18 +107,15 @@ function sortObjectKeys(obj: Record<string, any>): Record<string, any> {
   return sortedObject;
 }
 
-// Helper to read and parse a JSON file
 function readJsonFile(filePath: string): Record<string, any> {
   try {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(fileContent);
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (error: any) {
     console.error(`❌ Error reading or parsing ${filePath}:`, error.message);
     process.exit(1);
   }
 }
 
-// Helper to write data to a JSON file (sorted)
 function writeJsonFile(filePath: string, data: Record<string, any>) {
   try {
     const sortedData = sortObjectKeys(data);
@@ -91,99 +126,107 @@ function writeJsonFile(filePath: string, data: Record<string, any>) {
   }
 }
 
-/**
- * Extracts translation keys from a TypeScript/TSX file content using AST parsing.
- * Supports t('key'), t("key"), t(`key`), and t('key', { ... }).
- * @param fileContent The content of the file.
- * @returns A Set of extracted translation keys.
- */
-function extractTranslationKeysFromAST(fileContent: string): Set<string> {
-  const keys = new Set<string>();
-  // Use a dummy file name for ts.createSourceFile, it doesn't affect AST parsing
-  const sourceFile = ts.createSourceFile('dummy.ts', fileContent, ts.ScriptTarget.Latest, true);
+// --- Source scanning ---------------------------------------------------------------
+
+function walkSourceFiles(rootDir: string): string[] {
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir)) {
+      if (entry === 'node_modules' || entry === 'dist' || entry === '.expo') continue;
+      const entryPath = path.join(dir, entry);
+      const stat = fs.statSync(entryPath);
+      if (stat.isDirectory()) {
+        walk(entryPath);
+      } else if (entryPath.endsWith('.ts') || entryPath.endsWith('.tsx')) {
+        files.push(entryPath);
+      }
+    }
+  };
+  walk(rootDir);
+  return files;
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** `media_type_${mediaType}` -> /^media_type_.+$/ - loose on purpose, see file header. */
+function patternFromTemplate(node: ts.TemplateExpression): RegExp {
+  let source = '^' + escapeRegExp(node.head.text);
+  for (const span of node.templateSpans) {
+    source += '.+' + escapeRegExp(span.literal.text);
+  }
+  return new RegExp(source + '$');
+}
+
+function isTranslationCallee(expression: ts.LeftHandSideExpression): boolean {
+  if (ts.isIdentifier(expression) && expression.text === 't') return true;
+  if (ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.name) && expression.name.text === 't') return true;
+  return false;
+}
+
+function scanFile(filePath: string): ScanResult {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const scriptKind = filePath.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, scriptKind);
+
+  const exactUsages: KeyUsage[] = [];
+  const dynamicPatterns: DynamicKeyPattern[] = [];
+  const allLiterals = new Set<string>();
+  const lineOf = (pos: number) => sourceFile.getLineAndCharacterOfPosition(pos).line + 1;
 
   function visit(node: ts.Node) {
-    if (ts.isCallExpression(node)) {
-      let expression = node.expression;
-      let isTCall = false;
-
-      // Check for 't('key')'
-      if (ts.isIdentifier(expression) && expression.text === 't') {
-        isTCall = true;
-      }
-      // Check for 'i18n.t('key')'
-      else if (ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.name) && expression.name.text === 't') {
-        isTCall = true;
-      }
-
-      if (isTCall && node.arguments.length > 0) {
-        const firstArg = node.arguments[0];
-
-        // Directly extract string literals
-        if (ts.isStringLiteral(firstArg) || ts.isNoSubstitutionTemplateLiteral(firstArg)) {
-          keys.add(firstArg.text);
-        }
-        // Extract from template expressions (like `key ${variable}`) - though i18n usually expects plain string keys
-        else if (ts.isTemplateExpression(firstArg)) {
-          // If it's a template expression without substitutions, it's basically a string literal
-          if (firstArg.templateSpans.length === 0) {
-            keys.add(firstArg.head.text);
-          }
-          // If it has substitutions, we can't reliably get a static key, so ignore or warn
-          // For simplicity here, we'll ignore dynamic template strings
-        }
-        // Handle cases where the key might be a variable or property access
-        // This is more complex and usually requires type checking, but we can try to find simple cases.
-        // For example, if it's an Identifier whose value is a string literal.
-        else if (ts.isIdentifier(firstArg)) {
-            // This case needs symbol resolution or more advanced flow analysis to get the literal string value.
-            // For now, we'll assume direct string literals or template expressions.
-            // A common pattern where this fails is `const KEY = 'some_key'; t(KEY);`
-            // If we strictly follow the 'string literal' requirement for t() args, then this is outside current scope.
-        }
-        // This is where 'PropertyAccessExpression' from the previous debug might have come from
-        // e.g., t(someObject.key) - we would ignore these for now as they are dynamic keys.
-      }
-    }
-    // Handle JSX expressions (e.g., { expression } in JSX)
-    else if (ts.isJsxExpression(node)) {
-      if (node.expression) {
-        // Recursively visit the expression inside { }
-        visit(node.expression);
-      }
-    }
-    // Handle JSX attributes (e.g., <MyComponent prop={expression} />)
-    else if (ts.isJsxAttribute(node)) {
-      if (node.initializer && ts.isJsxExpression(node.initializer) && node.initializer.expression) {
-        visit(node.initializer.expression);
-      }
-    }
-    // Explicitly handle BinaryExpression to ensure traversal into its parts, especially in JSX context
-    else if (ts.isBinaryExpression(node)) {
-        visit(node.left);
-        visit(node.right);
+    // Every literal string, anywhere - the fallback that covers keys reaching `t()`
+    // through a prop or hook argument instead of a literal `t('key')` at that spot.
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      allLiterals.add(node.text);
     }
 
+    if (ts.isCallExpression(node) && isTranslationCallee(node.expression) && node.arguments.length > 0) {
+      const arg = node.arguments[0];
+      if (ts.isStringLiteral(arg) || ts.isNoSubstitutionTemplateLiteral(arg)) {
+        exactUsages.push({ key: arg.text, file: filePath, line: lineOf(arg.getStart(sourceFile)) });
+      } else if (ts.isTemplateExpression(arg)) {
+        dynamicPatterns.push({
+          pattern: patternFromTemplate(arg),
+          raw: arg.getText(sourceFile),
+          file: filePath,
+          line: lineOf(arg.getStart(sourceFile)),
+        });
+      }
+    }
+
+    // `entityFields.ts`-style metadata: `{ label: 'field_name' }`, resolved via `t(field.label)`
+    // somewhere else entirely, so it never appears as a `t(...)` call site itself.
+    if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === 'label') {
+      const init = node.initializer;
+      if (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) {
+        exactUsages.push({ key: init.text, file: filePath, line: lineOf(init.getStart(sourceFile)) });
+      }
+    }
 
     ts.forEachChild(node, visit);
   }
 
-  ts.forEachChild(sourceFile, visit);
-  return keys;
+  visit(sourceFile);
+  return { exactUsages, dynamicPatterns, allLiterals };
 }
 
-async function auditLocales() {
-  const clientSrcPath = path.join(__dirname, '..', 'src');
-  const localesPath = path.join(clientSrcPath, 'locales');
+function toRelative(filePath: string): string {
+  return path.relative(path.join(__dirname, '..', '..', '..'), filePath).split(path.sep).join('/');
+}
 
-  // Parse command-line arguments
+// --- Main ---------------------------------------------------------------------------
+
+async function auditLocales() {
   const args = process.argv.slice(2);
   const forceRemoveUnused = args.includes('--force');
 
   let hasErrors = false;
 
   // --- Step 1: Read, Sort, and Write all locale JSON files ---
-  const localeFiles = fs.readdirSync(localesPath).filter(file => file.endsWith('.json'));
+  const localeFiles = fs.readdirSync(localesPath).filter((file) => file.endsWith('.json'));
   if (localeFiles.length === 0) {
     console.warn('⚠️ No locale JSON files found.');
     return;
@@ -196,110 +239,105 @@ async function auditLocales() {
   for (const file of localeFiles) {
     const filePath = path.join(localesPath, file);
     const data = readJsonFile(filePath);
-    allLocalesContent[file] = data; // Store original for cross-locale validation
-    writeJsonFile(filePath, data); // Write back sorted content
+    writeJsonFile(filePath, data);
     console.log(`✅ Sorted and wrote to ${file}`);
   }
-  console.log('✅ Locale files sorted.');
 
-  // Reload flattened keys after sorting and writing
   for (const file of localeFiles) {
-    const filePath = path.join(localesPath, file);
-    const data = readJsonFile(filePath);
+    const data = readJsonFile(path.join(localesPath, file));
+    allLocalesContent[file] = data;
     allLocaleKeysFlattened[file] = flattenObject(data);
   }
 
-  // --- Step 2: Extract translation keys from TS/TSX files and entityFields.ts ---
-  const tsFiles: string[] = [];
-  const walkDir = (dir: string) => {
-    fs.readdirSync(dir).forEach(file => {
-      const filePath = path.join(dir, file);
-      if (fs.statSync(filePath).isDirectory()) {
-        walkDir(filePath);
-      } else if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
-        tsFiles.push(filePath);
-      }
-    });
-  };
-  walkDir(clientSrcPath);
-
-  const extractedKeys = new Set<string>();
-  for (const file of tsFiles) {
-    const content = fs.readFileSync(file, 'utf-8');
-    extractTranslationKeysFromAST(content).forEach(key => {
-        extractedKeys.add(key);
-    });
-    // Add regex extraction for fallback
-    extractTranslationKeysFromRegex(content).forEach(key => {
-        extractedKeys.add(key);
-    });
+  const allUniqueLocaleKeys = new Set<string>();
+  for (const file of localeFiles) {
+    allLocaleKeysFlattened[file].forEach((key) => allUniqueLocaleKeys.add(key));
   }
 
-  // Extract keys from entityFields.ts - using a more robust regex for 'label'
-  const entityFieldsPath = path.join(__dirname, '..', '..', '..', 'packages', 'shared', 'metadata', 'entityFields.ts');
-  try {
-    const entityFieldsContent = fs.readFileSync(entityFieldsPath, 'utf8');
-    // This regex looks for 'label: "key"' or 'label: 'key'' in an object-like structure
-    const labelKeyRegex = /label:\s*['"]([a-zA-Z0-9._-]+)['"]/g;
-    let match;
-    while ((match = labelKeyRegex.exec(entityFieldsContent)) !== null) {
-      extractedKeys.add(match[1]);
+  // --- Step 2: Scan the source tree once, collect every kind of evidence ---
+  console.log('\n🔄 Scanning source for translation key usage...');
+  const exactUsages: KeyUsage[] = [];
+  const dynamicPatterns: DynamicKeyPattern[] = [];
+  const allLiterals = new Set<string>();
+
+  for (const root of SCAN_ROOTS) {
+    for (const file of walkSourceFiles(root)) {
+      const result = scanFile(file);
+      exactUsages.push(...result.exactUsages);
+      dynamicPatterns.push(...result.dynamicPatterns);
+      result.allLiterals.forEach((literal) => allLiterals.add(literal));
     }
-  } catch (error: any) {
-    console.warn(`⚠️ Could not extract label keys from ${entityFieldsPath}:`, error.message);
-    // Do not exit, just warn, as this file might not always exist or parse perfectly in all contexts.
+  }
+  console.log(`✅ Scanned. ${exactUsages.length} literal t() usages, ${dynamicPatterns.length} dynamic key patterns.`);
+
+  // First occurrence per key, for readable diagnostics below.
+  const firstUsageByKey = new Map<string, KeyUsage>();
+  for (const usage of exactUsages) {
+    if (!firstUsageByKey.has(usage.key)) {
+      firstUsageByKey.set(usage.key, usage);
+    }
   }
 
-
-  // --- Step 3: Validate Extracted Keys against all Locale Files ---
-  console.log('\n🔄 Validating extracted keys against locale files...');
-  for (const key of extractedKeys) {
-    for (const localeFile in allLocaleKeysFlattened) {
+  // --- Step 3: Missing keys - code asks for a key that no locale file has ---
+  console.log('\n🔄 Checking for keys used in code but missing from locale files...');
+  for (const [key, usage] of firstUsageByKey) {
+    for (const localeFile of localeFiles) {
       if (!allLocaleKeysFlattened[localeFile].has(key)) {
-        console.error(`❌ Missing key '${key}' in locale file '${localeFile}' (found in TS/TSX files or entityFields.ts)`);
+        console.error(
+          `❌ Missing key '${key}' in '${localeFile}' (used at ${toRelative(usage.file)}:${usage.line})`
+        );
         hasErrors = true;
       }
     }
   }
+
+  for (const dynamic of dynamicPatterns) {
+    for (const localeFile of localeFiles) {
+      const hasMatch = [...allLocaleKeysFlattened[localeFile]].some((key) => dynamic.pattern.test(key));
+      if (!hasMatch) {
+        console.error(
+          `❌ Dynamic key ${dynamic.raw} (${toRelative(dynamic.file)}:${dynamic.line}) matches no key in '${localeFile}'`
+        );
+        hasErrors = true;
+      }
+    }
+  }
+
   if (!hasErrors) {
-    console.log('✅ All extracted keys are present in all locale files.');
+    console.log('✅ All keys used in code are present in every locale file.');
   }
 
-  // --- Step 4: Validate Cross-Locale Consistency (keys in one locale missing in another) ---
+  // --- Step 4: Cross-locale consistency - keys present in one locale but not another ---
   console.log('\n🔄 Validating cross-locale consistency...');
-  const allUniqueLocaleKeys = new Set<string>();
-  for (const localeFile in allLocaleKeysFlattened) {
-    allLocaleKeysFlattened[localeFile].forEach(key => allUniqueLocaleKeys.add(key));
-  }
-
+  let crossLocaleErrors = false;
   for (const uniqueKey of allUniqueLocaleKeys) {
-    for (const localeFile in allLocaleKeysFlattened) {
+    for (const localeFile of localeFiles) {
       if (!allLocaleKeysFlattened[localeFile].has(uniqueKey)) {
         console.error(`❌ Missing key '${uniqueKey}' in locale file '${localeFile}' (present in other locale files)`);
-        hasErrors = true;
+        crossLocaleErrors = true;
       }
     }
   }
-  if (!hasErrors) {
+  if (crossLocaleErrors) {
+    hasErrors = true;
+  } else {
     console.log('✅ All locale files have consistent keys.');
   }
 
-  // --- Step 5: Detect and Optionally Remove Unused Translations ---
-  /* // BUGGED ATM. Do NOT trust the results of it.
+  // --- Step 5: Unused keys - present in locales, unreachable from the source tree ---
   console.log('\n🔄 Detecting unused translations...');
   const unusedKeys = new Set<string>();
-  let unusedTranslationsFound = false;
-  for (const uniqueKey of allUniqueLocaleKeys) {
-    if (!extractedKeys.has(uniqueKey)) {
-      unusedKeys.add(uniqueKey);
-    }
+  for (const key of allUniqueLocaleKeys) {
+    if (firstUsageByKey.has(key)) continue;
+    if (allLiterals.has(key)) continue;
+    if (dynamicPatterns.some((dynamic) => dynamic.pattern.test(key))) continue;
+    unusedKeys.add(key);
   }
 
   if (unusedKeys.size > 0) {
-    unusedTranslationsFound = true;
     if (forceRemoveUnused) {
       console.log('🗑️ --force flag detected. Removing unused translation keys...');
-      for (const localeFile in allLocalesContent) {
+      for (const localeFile of localeFiles) {
         let fileModified = false;
         for (const unusedKey of unusedKeys) {
           if (removeKeyFromObject(allLocalesContent[localeFile], unusedKey)) {
@@ -312,17 +350,16 @@ async function auditLocales() {
           console.log(`✅ Updated '${localeFile}' with unused keys removed.`);
         }
       }
-      // Since unused keys were removed, they don't count as an error for process.exit(1)
     } else {
-      for (const unusedKey of unusedKeys) {
-        console.warn(`⚠️ Unused translation key: '${unusedKey}' (present in locale files but not used in code)`);
+      for (const unusedKey of [...unusedKeys].sort()) {
+        console.warn(`⚠️ Unused translation key: '${unusedKey}'`);
       }
-      hasErrors = true; // Only set hasErrors if not forced removal
+      console.warn(`\n${unusedKeys.size} unused key(s) found. Re-run with --force to remove them from every locale file.`);
+      hasErrors = true;
     }
   } else {
     console.log('✅ No unused translations found.');
-  }*/
-
+  }
 
   if (hasErrors) {
     console.error('\n🚫 Some translation key issues were found.');
@@ -332,7 +369,7 @@ async function auditLocales() {
   }
 }
 
-auditLocales().catch(error => {
+auditLocales().catch((error) => {
   console.error('An unexpected error occurred during locale auditing:', error);
   process.exit(1);
 });

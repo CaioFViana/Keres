@@ -65,9 +65,11 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
         console.warn('getRecentOperationLogs: storyId is required.');
         return [];
       }
+      // Batched operations (e.g. a multi-entity save) share the same millisecond in
+      // createdAt, so `rowid` (monotonic insertion order) breaks the tie deterministically.
       return db.query.operationLogs.findMany({
         where: eq(operationLogs.storyId, storyId),
-        orderBy: desc(operationLogs.createdAt),
+        orderBy: [desc(operationLogs.createdAt), desc(sql`rowid`)],
         limit: limit,
       });
     },
@@ -82,7 +84,7 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
 
       const logs = await db.query.operationLogs.findMany({
         where: eq(operationLogs.storyId, storyId),
-        orderBy: desc(operationLogs.createdAt),
+        orderBy: [desc(operationLogs.createdAt), desc(sql`rowid`)],
         limit: pageSize,
         offset: offset,
       });

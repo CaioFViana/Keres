@@ -2,7 +2,7 @@ import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, LogBox, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NotificationPopup from './components/common/NotificationPopup/NotificationPopup';
 import SyncConflictModal from './components/SyncConflictModal/SyncConflictModal';
@@ -16,6 +16,12 @@ import { useTheme } from './theme';
 import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
 import i18n from './utils/i18n';
+
+// react-native-dropdown-picker (used by our Select component everywhere) imports the
+// deprecated SafeAreaView from 'react-native' for its modal list mode, even though we
+// always use listMode="SCROLLVIEW" - the warning fires from building that unused JSX
+// branch, not from anything in our own screens, so there's nothing here to actually fix.
+LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
 
 // Create a wrapper component for safe area
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {

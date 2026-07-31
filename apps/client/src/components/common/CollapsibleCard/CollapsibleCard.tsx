@@ -10,6 +10,8 @@ interface CollapsibleCardProps {
   initialExpanded?: boolean;
 }
 
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
 const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, initialExpanded = true }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded);
   const { colors } = useTheme();
@@ -55,6 +57,13 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
     };
   });
 
+  // Border should stay visible while the collapse animation is still shrinking, not just
+  // while `expanded` is true - reading `animatedHeight.value` for that has to happen here
+  // (a worklet), not in the plain StyleSheet below, which runs during render.
+  const animatedHeaderStyle = useAnimatedStyle(() => ({
+    borderBottomWidth: expanded || animatedHeight.value > 0 ? 1 : 0,
+  }));
+
   const styles = StyleSheet.create({
     container: {
       backgroundColor: colors.card,
@@ -69,7 +78,6 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: 15,
-      borderBottomWidth: expanded || animatedHeight.value > 0 ? 1 : 0,
       borderBottomColor: colors.border,
     },
     titleText: {
@@ -108,14 +116,14 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={toggleExpanded} style={styles.header}>
+      <AnimatedTouchableOpacity onPress={toggleExpanded} style={[styles.header, animatedHeaderStyle]}>
         <Text style={styles.titleText}>{title}</Text>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={24}
           color={colors.text}
         />
-      </TouchableOpacity>
+      </AnimatedTouchableOpacity>
 
       {/* This View is for measuring the content's natural height */}
       <View style={styles.measurementContent} onLayout={onLayout}>

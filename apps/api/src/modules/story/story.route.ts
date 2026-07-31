@@ -6,6 +6,7 @@ import { stories, storyTypeEnum } from '../../db/schema';
 import { JWTPayload } from '../../index';
 import { StoryExportImportService } from '../../services/StoryExportImportService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
+import { AppError } from '../../utils/errors';
 
 // Convert the enumValues array to an object for t.Enum()
 const storyTypeEnumObject = storyTypeEnum.enumValues.reduce((acc, val) => {
@@ -37,8 +38,7 @@ export const storyRoutes = new Elysia()
       .returning();
 
     if (!newStory) {
-      set.status = 500;
-      throw new Error('Failed to create story.');
+      throw new AppError(500, 'Failed to create story.');
     }
 
     return newStory;

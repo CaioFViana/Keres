@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '../db';
 import { operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
 import { eventManager } from '../utils/EventManager'; // Import eventManager
+import { logger } from '../utils/logger';
 import { SyncConflictError, SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
 import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
@@ -205,7 +206,7 @@ export class SyncService {
         // Falha inesperada ao aplicar esta operação. Registrada como conflito em vez de
         // derrubar o lote: as outras operações do usuário ainda podem ser salvas, e o
         // cliente para de reenviar em loop uma operação que nunca vai passar.
-        console.error(`SyncService: failed to apply ${update.type} on ${entityKey}:`, error);
+        logger.error(`SyncService: failed to apply ${update.type} on ${entityKey}`, error);
         recordConflict('unknown', `Failed to apply ${update.type} on ${entityKey}: ${(error as Error)?.message}`, conflictContext());
         continue;
       }

@@ -2,6 +2,7 @@ import { Elysia } from 'elysia';
 import { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { eventManager } from '../../utils/EventManager'; // Import eventManager
+import { logger } from '../../utils/logger';
 
 export const wsRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -27,7 +28,7 @@ export const wsRoutes = new Elysia()
         open(ws) {
             const storyId = ws.data.params.storyid;
             ws.subscribe(storyId);
-            console.log(`User ${ws.data.user?.userId} joined story channel: ${storyId}`);
+            logger.info('User joined story channel', { userId: ws.data.user?.userId, storyId });
 
             // Define the callback for story updates
             const storyUpdateCallback = (payload: any) => {
@@ -49,7 +50,7 @@ export const wsRoutes = new Elysia()
         close(ws) {
             const storyId = ws.data.params.storyid;
             ws.unsubscribe(storyId);
-            console.log(`User ${ws.data.user?.userId} left story channel: ${storyId}`);
+            logger.info('User left story channel', { userId: ws.data.user?.userId, storyId });
 
             // Unsubscribe this WebSocket from events
             if ((ws as any).storyUpdateCallback) {

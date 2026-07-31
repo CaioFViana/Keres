@@ -13,6 +13,32 @@ import { storyPermissionRoutes } from './modules/storyPermission/storyPermission
 import { syncRoute } from './modules/sync/sync.route';
 import { userRoutes } from './modules/user/user.route'; // Import userRoutes
 import { wsRoutes } from './modules/websocket/webSocket.route';
+import { AppError } from './utils/errors';
+import { logger } from './utils/logger';
+
+/** pg/network error codes that mean "couldn't reach or lost the database", not an app bug. */
+const DB_CONNECTIVITY_ERROR_CODES = new Set([
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'ETIMEDOUT',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+  'EAI_AGAIN',
+  '57P03', // Postgres: cannot_connect_now
+]);
+
+function isDatabaseConnectivityError(error: unknown): boolean {
+  let current: unknown = error;
+  // drizzle/pg wrap the root network error in `.cause`, sometimes more than one layer deep.
+  for (let depth = 0; current && depth < 5; depth++) {
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === 'string' && DB_CONNECTIVITY_ERROR_CODES.has(code)) {
+      return true;
+    }
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
+}
 
 // Define a placeholder type for the JWT payload
 // In a real application, this would be derived from your User entity
@@ -88,6 +114,38 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
       throw new Error('Invalid token');
     }
   })
+  .onError(({ code, error, set, path, request }) => {
+    const err = error instanceof Error ? error : new Error(String(error));
+    const label = `${request.method} ${path}`;
+
+    // A route that deliberately rejected with AppError (any status, including 500)
+    // already chose a safe, user-facing message - relay it as-is.
+    if (err instanceof AppError) {
+      set.status = err.status;
+      logger.warn(`Rejected request: ${label}`, { status: err.status, message: err.message });
+      return { message: err.message };
+    }
+
+    // Route handlers that deliberately picked a non-500 status before throwing a plain
+    // Error (401/403/404/409...) already chose a safe message too - relay it as-is.
+    // 500 is excluded here because Elysia defaults untouched status to 500 for any
+    // unclassified thrown error, so it can't tell "the app chose 500" from "nothing did".
+    if (typeof set.status === 'number' && set.status !== 500) {
+      logger.warn(`Rejected request: ${label}`, { status: set.status, message: err.message });
+      return { message: err.message };
+    }
+
+    if (isDatabaseConnectivityError(err)) {
+      set.status = 503;
+      logger.error(`Database unreachable while handling ${label}`, err, { code });
+      return { message: 'Service temporarily unavailable. Please try again shortly.' };
+    }
+
+    // Anything else is unexpected - never leak internals (SQL, stack traces) to the client.
+    set.status = 500;
+    logger.error(`Unhandled error while handling ${label}`, err, { code });
+    return { message: 'Internal server error.' };
+  })
   .get('/', ({ redirect }) => {
     redirect('/swagger')
   }, {
@@ -126,7 +184,7 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
   .group('/user', (app) => app.use(userRoutes)) // Add userRoutes
   .group('/ws', (app) => app.use(wsRoutes))
   .listen(env.PORT, ({ hostname, port }) => { // Corrected parameters
-    console.log(`🦊 Elysia is running at http://${hostname}:${port}`);
-    console.log(`📖 Swagger UI at http://${hostname}:${port}/swagger`);
-    console.log(`🧪 Test Client at http://${hostname}:${port}/test-client`);
+    logger.info(`Elysia is running at http://${hostname}:${port}`);
+    logger.info(`Swagger UI at http://${hostname}:${port}/swagger`);
+    logger.info(`Test Client at http://${hostname}:${port}/test-client`);
   });

@@ -2,6 +2,7 @@ import { StoryUpdatesArraySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { JWTPayload } from '../../index';
 import { syncService } from '../../services/SyncService';
+import { logger } from '../../utils/logger';
 
 export const syncRoute = new Elysia()
   .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
@@ -16,7 +17,7 @@ export const syncRoute = new Elysia()
 
     const { lastOperationVersion, applied, conflicts } = await syncService.processAndRecordUpdates(user.userId, storyId, parsedUpdates);
 
-    console.log(`Received sync updates for story ${storyId}. Applied ${applied.length}, conflicts ${conflicts.length}. Last operation version: ${lastOperationVersion}`);
+    logger.info('Received sync updates', { storyId, applied: applied.length, conflicts: conflicts.length, lastOperationVersion });
 
     return {
       message: `Sync updates received and processed for story ${storyId}`,
@@ -49,7 +50,7 @@ export const syncRoute = new Elysia()
 
     const { updates, serverMaxOperationVersion } = await syncService.getUpdatesForStory(user.userId, storyId, lastOperationVersion);
 
-    console.log(`Received pull request for storyId: ${storyId} with lastOperationVersion: ${lastOperationVersion}. Found ${updates.length} updates. Server max operation version: ${serverMaxOperationVersion}`);
+    logger.info('Received pull request', { storyId, lastOperationVersion, updatesFound: updates.length, serverMaxOperationVersion });
 
     return {
       message: `Pull request received for story ${storyId}`,

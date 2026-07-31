@@ -42,6 +42,7 @@ const StoryFormScreen = () => {
   const [description, setDescription] = useState<string | null>(null);
   const [genre, setGenre] = useState<string | null>(null);
   const [language, setLanguage] = useState<string | null>(null);
+  const [author, setAuthor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
@@ -70,6 +71,7 @@ const StoryFormScreen = () => {
             setDescription(fetchedStory.description);
             setGenre(fetchedStory.genre);
             setLanguage(fetchedStory.language);
+            setAuthor(fetchedStory.author);
             setIsFavorite(fetchedStory.isFavorite);
             setExtraNotes(fetchedStory.extraNotes);
             setTheme(fetchedStory.theme);
@@ -113,6 +115,7 @@ const StoryFormScreen = () => {
         description,
         genre,
         language,
+        author,
         isFavorite,
         extraNotes,
         theme,
@@ -250,6 +253,14 @@ const StoryFormScreen = () => {
             placeholder={t('genre_placeholder')}
             value={genre || ""}
             onChangeText={setGenre}
+            style={commonInputStyles.input}
+          />
+
+          <Text style={[styles.label, { color: colors.text }]}>{t('author')}</Text>
+          <TextInput
+            placeholder={t('author_placeholder')}
+            value={author || ""}
+            onChangeText={setAuthor}
             style={commonInputStyles.input}
           />
 

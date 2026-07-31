@@ -6,6 +6,9 @@ export interface Story {
   description: string | null
   genre: string | null
   language: string | null
+  // Free-text credit for who wrote the story, separate from `userId` (the account that
+  // owns/manages it in the app) - e.g. the original author for an imported public-domain tale.
+  author: string | null
   isFavorite: boolean
   extraNotes: string | null
   theme: string | null

@@ -51,15 +51,17 @@ interface StoryPreview {
   title: string;
   description: string | null;
   type: string | null;
+  author: string | null;
 }
 
 /** Leitura defensiva - o conteúdo só é validado de verdade (`FullStoryExportSchema`) na instalação. */
 function getStoryPreview(language: ExampleStoryLanguage, fallbackTitle: string): StoryPreview {
-  const story = (language.story as { story?: { title?: unknown; description?: unknown; type?: unknown } } | null)?.story;
+  const story = (language.story as { story?: { title?: unknown; description?: unknown; type?: unknown; author?: unknown } } | null)?.story;
   return {
     title: typeof story?.title === 'string' && story.title.trim() ? story.title : fallbackTitle,
     description: typeof story?.description === 'string' ? story.description : null,
     type: typeof story?.type === 'string' ? story.type : null,
+    author: typeof story?.author === 'string' && story.author.trim() ? story.author : null,
   };
 }
 
@@ -143,6 +145,12 @@ const ExampleStoriesScreen = () => {
       marginLeft: 8,
       flexShrink: 1,
     },
+    cardAuthor: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      marginTop: 2,
+    },
     cardDescription: {
       fontSize: 13,
       color: colors.textSecondary,
@@ -203,6 +211,9 @@ const ExampleStoriesScreen = () => {
           />
           <Text style={styles.cardTitle} numberOfLines={1}>{preview.title}</Text>
         </View>
+        {!!preview.author && (
+          <Text style={styles.cardAuthor} numberOfLines={1}>{t('example_stories_author', { author: preview.author })}</Text>
+        )}
         {!!preview.description && (
           <Text style={styles.cardDescription} numberOfLines={2}>{preview.description}</Text>
         )}

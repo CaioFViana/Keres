@@ -9,6 +9,7 @@ export const stories = sqliteTable('stories', {
   description: text('description'),
   genre: text('genre'),
   language: text('language'),
+  author: text('author'),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   extraNotes: text('extra_notes'),
   theme: text('theme'),

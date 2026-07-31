@@ -27,6 +27,7 @@ export const stories = pgTable('stories', {
   description: text('description'),
   genre: text('genre'),
   language: text('language'),
+  author: text('author'),
   isFavorite: boolean('is_favorite').notNull().default(false),
   extraNotes: text('extra_notes'),
   theme: text('theme'),

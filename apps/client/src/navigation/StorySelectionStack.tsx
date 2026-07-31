@@ -6,6 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
+import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
 import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
@@ -36,6 +37,7 @@ export type StorySelectionDrawerParamList = {
   ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
   FriendshipDrawer: NavigatorScreenParams<FriendshipStackParamList>;
   ImportExport: undefined;
+  ExampleStories: undefined;
   Settings: undefined;
 };
 
@@ -192,6 +194,18 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('import_export_title'),
           drawerLabel: t('import_export_title'),
+        }}
+      />
+      {/*
+        Mesmo raciocínio do Import/Export logo acima: instalar um exemplo cria uma história
+        nova, então não depende de (nem pertence ao menu de) uma história já aberta.
+      */}
+      <Drawer.Screen
+        name="ExampleStories"
+        component={ExampleStoriesScreen}
+        options={{
+          title: t('examples_title'),
+          drawerLabel: t('examples_title'),
         }}
       />
       <Drawer.Screen

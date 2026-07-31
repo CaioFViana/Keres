@@ -3,11 +3,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Story } from '@keres/shared/entities/Story';
 import { StackActions, useIsFocused, useNavigation } from '@react-navigation/native'; // Add StackActions
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
 import { createStoryService, useDrizzle } from '../../db';
+import { createServerService } from '../../services/ServerService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -30,6 +31,7 @@ type StorySelectionScreenNavigationProp = NativeStackNavigationProp<RootStackPar
 // ThemedStoryItem component
 interface ThemedStoryItemProps {
   story: Story;
+  serverName: string | undefined;
   onSelectStory: (story: Story) => void;
   onToggleFavorite: (storyId: string, currentFavoriteStatus: boolean) => void;
   onEditStory: (storyId: string) => void;
@@ -40,6 +42,7 @@ interface ThemedStoryItemProps {
 
 const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
   story,
+  serverName,
   onSelectStory,
   onToggleFavorite,
   onEditStory,
@@ -69,7 +72,7 @@ const ThemedStoryItem: React.FC<ThemedStoryItemProps> = ({
           <Text style={[styles.storyTitle, { color: storyThemeColors.text }]}>{story.title}</Text>
         </View>
         {story.genre && <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>{t('genre')}: {story.genre}</Text>}
-        {story.serverId && <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>{t('server')}: {story.serverId}</Text>}
+        {story.serverId && <Text style={[styles.storyDetail, { color: storyThemeColors.textSecondary }]}>{t('server')}: {serverName || story.serverId}</Text>}
         {story.description && (
           <Text style={[styles.storyDescription, { color: storyThemeColors.textSecondary }]}>
             {story.description.length > 50
@@ -101,10 +104,12 @@ const StorySelectionScreen = () => {
   const { colors, setTheme } = useTheme();
   const drizzleClient = useDrizzle();
   const storyService = useRef(createStoryService(drizzleClient)).current;
+  const serverService = useRef(createServerService(drizzleClient)).current;
   const { setSelectedStory } = useStoryStore();
   const { stories, fetchStories, updateStoryFavoriteStatus } = useStoryListStore();
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
+  const [serverNamesById, setServerNamesById] = useState<Record<string, string>>({});
 
   const summary = useSummaryStore((state) => state.summary);
   const updateSummary = useSummaryStore((state) => state.updateSummary);
@@ -120,6 +125,11 @@ const StorySelectionScreen = () => {
   const fetchStoriesData = useCallback(async () => {
     await fetchStories(storyService);
   }, [fetchStories, storyService]);
+
+  const fetchServerNames = useCallback(async () => {
+    const servers = await serverService.getAllServers();
+    setServerNamesById(Object.fromEntries(servers.map((server) => [server.id, server.name])));
+  }, [serverService]);
 
 
 
@@ -196,9 +206,10 @@ const StorySelectionScreen = () => {
     if (isFocused) {
       fetchStoriesData();
       fetchSummary();
+      fetchServerNames();
       setTheme('default');
     }
-  }, [isFocused, setTheme, fetchStoriesData, fetchSummary]);
+  }, [isFocused, setTheme, fetchStoriesData, fetchSummary, fetchServerNames]);
 
   const handleSelectStory = (story: Story) => {
     setSelectedStory(story);
@@ -299,6 +310,7 @@ const StorySelectionScreen = () => {
         renderItem={({ item }) => (
           <ThemedStoryItem
             story={item}
+            serverName={item.serverId ? serverNamesById[item.serverId] : undefined}
             onSelectStory={handleSelectStory}
             onToggleFavorite={toggleFavorite}
             onEditStory={handleEditStory}

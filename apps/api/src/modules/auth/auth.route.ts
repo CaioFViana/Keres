@@ -64,7 +64,7 @@ export const authRoutes = new Elysia()
         maxAge: 7 * 24 * 3600, // 7 days
       });
 
-      return { accessToken, refreshToken, userId: user.id, username: user.username };
+      return { accessToken, refreshToken, userId: user.id, username: user.username, tag: user.tag };
     },
     {
       body: t.Object({
@@ -92,15 +92,39 @@ export const authRoutes = new Elysia()
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
+      const newUserId = ulid();
 
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          id: ulid(),
-          username,
-          password: hashedPassword,
-        })
-        .returning({ id: users.id, username: users.username });
+      // Seed the @tag with the username so every account has a valid one from the
+      // start - the user can freely change it later via PUT /user/tag. On the rare
+      // chance someone already claimed this exact string as their tag (tags and
+      // usernames share no uniqueness guarantee with each other), fall back to a
+      // short unique suffix rather than failing registration outright.
+      let newUser;
+      try {
+        [newUser] = await db
+          .insert(users)
+          .values({
+            id: newUserId,
+            username,
+            tag: username,
+            password: hashedPassword,
+          })
+          .returning({ id: users.id, username: users.username, tag: users.tag });
+      } catch (error) {
+        if ((error as { code?: string })?.code === '23505') {
+          [newUser] = await db
+            .insert(users)
+            .values({
+              id: newUserId,
+              username,
+              tag: `${username}${newUserId.slice(-4)}`,
+              password: hashedPassword,
+            })
+            .returning({ id: users.id, username: users.username, tag: users.tag });
+        } else {
+          throw error;
+        }
+      }
 
       if (!newUser) {
         set.status = 500;
@@ -127,7 +151,7 @@ export const authRoutes = new Elysia()
         maxAge: 7 * 24 * 3600, // 7 days
       });
 
-      return { accessToken, refreshToken, userId: newUser.id, username: newUser.username };
+      return { accessToken, refreshToken, userId: newUser.id, username: newUser.username, tag: newUser.tag };
     },
     {
       body: t.Object({

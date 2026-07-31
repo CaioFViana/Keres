@@ -96,6 +96,7 @@ const ServerRegistrationScreen = () => {
       }
 
       let serverUserId: string | null = null; // Variable to hold the server-provided userId
+      let serverUserTag: string | null = existingServer?.tag ?? null;
       let newAccessToken = existingServer ? existingServer.jwtToken : '';
       let newRefreshToken = existingServer ? existingServer.refreshToken : '';
       
@@ -148,6 +149,7 @@ const ServerRegistrationScreen = () => {
           newAccessToken = loginResponse.data.accessToken;
           newRefreshToken = loginResponse.data.refreshToken;
           serverUserId = loginResponse.data.userId; // Extract the server-provided userId
+          serverUserTag = loginResponse.data.tag ?? serverUserTag;
         } else {
           // If not re-authenticating, use the existing server's idUser
           serverUserId = existingServer?.idUser || null;
@@ -162,6 +164,7 @@ const ServerRegistrationScreen = () => {
         const serverData = {
           idUser: serverUserId, // Use the server-provided userId
           userName: username,
+          tag: serverUserTag,
           name: serverName || serverAddress,
           url: serverAddress,
           jwtToken: newAccessToken,

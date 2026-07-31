@@ -8,9 +8,11 @@ import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/Button/Button'; // Custom Button
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
+import { ServerSelect } from '../../db/schemas/servers';
 import { friendshipApiService } from '../../services/FriendshipApiService'; // Import friendshipApiService
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import ServerService
+import { userApiService } from '../../services/UserApiService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
@@ -35,10 +37,11 @@ const FriendshipFormScreen = () => {
   const serverService = createServerService(drizzleClient); // Initialize ServerService
   const { userId: currentUserId } = useUserSettingsStore();
 
-  const [friendId, setFriendId] = useState('');
+  const [friendTag, setFriendTag] = useState('');
+  const [resolvedFriendUserId, setResolvedFriendUserId] = useState<string | null>(null);
   const [selectedServerId, setSelectedServerId] = useState('');
   const [status, setStatus] = useState<FriendStatus>(FriendStatus.PENDING);
-  const [servers, setServers] = useState<{ id: string; name: string; idUser?: string }[]>([]); // Added idUser
+  const [servers, setServers] = useState<ServerSelect[]>([]);
   const [isEditingExisting, setIsEditingExisting] = useState(false);
   const [friendUsername, setFriendUsername] = useState<string | null>(null); // New state for friend's username
   const [isCheckingFriend, setIsCheckingFriend] = useState(false); // New state for loading indicator
@@ -51,13 +54,16 @@ const FriendshipFormScreen = () => {
     const fetchServersAndFriendship = async () => {
       try {
         const fetchedServers = await serverService.getAllServers();
-        setServers(fetchedServers.map(s => ({ id: s.id, name: s.name, idUser: s.idUser }))); // Map idUser
+        setServers(fetchedServers);
+        if (!friendshipId && fetchedServers.length === 1) {
+          setSelectedServerId(fetchedServers[0].id); // Only one server: pick it automatically
+        }
 
         if (friendshipId) {
           setIsEditingExisting(true);
           const friendship = await friendshipService.getFriendshipById(friendshipId);
           if (friendship) {
-            setFriendId(friendship.receiverId); // Assuming receiverId is the friend's ID
+            setResolvedFriendUserId(friendship.receiverId);
             setSelectedServerId(friendship.serverId);
             setStatus(friendship.status);
             setFriendUsername(friendship.friendUsername); // Set friendUsername for editing
@@ -75,21 +81,30 @@ const FriendshipFormScreen = () => {
     fetchServersAndFriendship();
   }, [friendshipId, friendshipService, serverService, navigation, t]);
 
-  const handleCheckFriendId = useCallback(async () => {
-    if (!friendId || friendId.length !== 26) { // Basic ULID validation
+  const selectedServer = servers.find(s => s.id === selectedServerId);
+
+  const handleCheckFriendTag = useCallback(async () => {
+    if (!friendTag || friendTag.trim().length < 3) {
       Alert.alert(t('error'), t('invalid_friend_id_format'));
       setFriendUsername(null);
       setFriendFound(null);
       return;
     }
 
+    if (!selectedServer) {
+      Alert.alert(t('error'), t('selected_server_invalid'));
+      return;
+    }
+
     setIsCheckingFriend(true);
     setFriendFound(null); // Reset
     setFriendUsername(null); // Reset
+    setResolvedFriendUserId(null);
     try {
-      const userDetails = await friendshipApiService.getUserDetails(friendId);
+      const userDetails = await userApiService.getUserByTag(selectedServer, friendTag.trim());
       if (userDetails) {
         setFriendUsername(userDetails.username);
+        setResolvedFriendUserId(userDetails.id);
         setFriendFound(true);
         Alert.alert(t('success'), t('user_found_with_username', { username: userDetails.username }));
       } else {
@@ -97,36 +112,31 @@ const FriendshipFormScreen = () => {
         Alert.alert(t('error'), t('user_not_found_on_server'));
       }
     } catch (error) {
-      console.error('Error checking friend ID:', error);
+      console.error('Error checking friend tag:', error);
       Alert.alert(t('error'), t('failed_to_check_user_id'));
       setFriendFound(false);
     } finally {
       setIsCheckingFriend(false);
     }
-  }, [friendId, t]);
+  }, [friendTag, selectedServer, t]);
 
   const handleSaveFriendship = useCallback(async () => {
     if (!currentUserId) {
       Alert.alert(t('error'), t('not_logged_in'));
       return;
     }
-    if (!friendId || !selectedServerId) {
+    if (!resolvedFriendUserId || !selectedServerId) {
       Alert.alert(t('error'), t('all_fields_required'));
       return;
     }
-    if (friendFound === false) { // Prevent saving if friend ID is explicitly not found
+    if (friendFound === false) { // Prevent saving if friend tag is explicitly not found
       Alert.alert(t('error'), t('friend_not_found_on_server'));
-      return;
-    }
-    if (friendId === currentUserId) { // Prevent friending self
-      Alert.alert(t('error'), t('cannot_friend_self'));
       return;
     }
     if (!friendUsername) { // Ensure username is available after check
       Alert.alert(t('error'), t('please_check_friend_id'));
       return;
     }
-
 
     try {
       if (friendshipId) {
@@ -137,22 +147,31 @@ const FriendshipFormScreen = () => {
         Alert.alert(t('success'), t('friendship_updated_successfully'));
       } else {
         // Add new friendship
-        const selectedServer = servers.find(s => s.id === selectedServerId);
         if (!selectedServer || !selectedServer.idUser) {
             Alert.alert(t('error'), t('selected_server_invalid'));
             return;
         }
         const currentUserServerId = selectedServer.idUser; // The current user's ID on the selected server
 
+        // Compare per-server IDs, not the local app-installation currentUserId (a
+        // different ID namespace entirely) - otherwise this check can never fire.
+        if (resolvedFriendUserId === currentUserServerId) {
+          Alert.alert(t('error'), t('cannot_friend_self'));
+          return;
+        }
+
+        // Call the server first: if it rejects the request (already friends, blocked,
+        // wrong server, etc.) we must not leave an orphaned local PENDING row behind.
+        await friendshipApiService.sendFriendRequest(selectedServer, resolvedFriendUserId);
+
         await friendshipService.addFriendship({
           senderId: currentUserServerId, // Use the current user's ID on the selected server
-          receiverId: friendId, // The friend's ID on the selected server (from input)
+          receiverId: resolvedFriendUserId, // The friend's ID on the selected server (resolved from their tag)
           serverId: selectedServerId,
           status: FriendStatus.PENDING, // New friendships always start as PENDING
           friendUsername: friendUsername, // Use the fetched username
         });
-        
-        await friendshipApiService.sendFriendRequest(friendId); // friendId is the targetUserId
+
         Alert.alert(t('success'), t('friendship_added_successfully'));
       }
       navigation.goBack();
@@ -162,7 +181,7 @@ const FriendshipFormScreen = () => {
       console.error('FriendshipFormScreen: Detailed error object:', error);
       Alert.alert(t('error'), t('failed_to_save_friendship'));
     }
-  }, [currentUserId, friendId, selectedServerId, status, friendshipId, friendshipService, navigation, t, servers, friendUsername, friendFound]); // Added new dependencies
+  }, [currentUserId, resolvedFriendUserId, selectedServerId, selectedServer, status, friendshipId, friendshipService, navigation, t, friendUsername, friendFound]);
 
 
   return (
@@ -171,51 +190,71 @@ const FriendshipFormScreen = () => {
         {friendshipId ? t('edit_friendship') : t('add_new_friendship')}
       </Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('friend_id')}</Text>
-      <View style={styles.inputWithButton}>
-        <TextInput
-          style={[commonInputStyles.input, styles.friendIdInput]}
-          placeholder={t('enter_friend_id')}
-          value={friendId}
-          onChangeText={(text) => {
-            setFriendId(text);
-            setFriendUsername(null); // Reset username and found status on change
-            setFriendFound(null);
-          }}
-          editable={!isEditingExisting} // Cannot edit friend ID when editing existing friendship
-        />
-        {!isEditingExisting && (
-          <Button
-            onPress={handleCheckFriendId}
-            disabled={isCheckingFriend || !friendId || friendId.length !== 26} // Disable button if checking, empty, or invalid length
-          >
-            {t('check_user')}
-          </Button>
-        )}
-      </View>
-
-      {isCheckingFriend && <ActivityIndicator size="small" color={colors.primary} />}
-      {friendFound === true && friendUsername && (
-        <Text style={[styles.friendInfo, { color: colors.primary }]}>{t('user_found')}: {friendUsername}</Text>
-      )}
-      {friendFound === false && friendId.length === 26 && ( // Only show "not found" if ID length is correct
-        <Text style={[styles.friendInfo, { color: colors.error }]}>{t('user_not_found')}</Text>
-      )}
-
       <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
       <View style={[commonInputStyles.input, isEditingExisting && { backgroundColor: colors.secondary }]}>
         <Picker
           selectedValue={selectedServerId}
-          onValueChange={(itemValue) => setSelectedServerId(itemValue)}
+          onValueChange={(itemValue) => {
+            setSelectedServerId(itemValue);
+            // Changing the server invalidates any tag already checked against the previous one.
+            setFriendUsername(null);
+            setFriendFound(null);
+            setResolvedFriendUserId(null);
+          }}
           style={{ color: colors.text }}
           enabled={!isEditingExisting} // Cannot edit server when editing existing friendship
         >
           {servers.length === 0 && <Picker.Item label={t('no_servers_available')} value="" />}
           {servers.map((server) => (
-            <Picker.Item key={server.id} label={server.name} value={server.id} />
+            <Picker.Item
+              key={server.id}
+              label={server.tag ? `@${server.tag} — ${server.name}` : server.name}
+              value={server.id}
+            />
           ))}
         </Picker>
       </View>
+
+      {isEditingExisting ? (
+        <>
+          <Text style={[styles.label, { color: colors.text }]}>{t('friend_id')}</Text>
+          <Text style={[commonInputStyles.input, styles.readOnlyValue, { color: colors.text }]}>
+            {friendUsername}
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text style={[styles.label, { color: colors.text }]}>{t('friend_id')}</Text>
+          <View style={styles.inputWithButton}>
+            <TextInput
+              style={[commonInputStyles.input, styles.friendIdInput]}
+              placeholder={t('enter_friend_id')}
+              value={friendTag}
+              onChangeText={(text) => {
+                setFriendTag(text);
+                setFriendUsername(null); // Reset username and found status on change
+                setFriendFound(null);
+                setResolvedFriendUserId(null);
+              }}
+              autoCapitalize="none"
+            />
+            <Button
+              onPress={handleCheckFriendTag}
+              disabled={isCheckingFriend || !friendTag.trim() || !selectedServerId}
+            >
+              {t('check_user')}
+            </Button>
+          </View>
+
+          {isCheckingFriend && <ActivityIndicator size="small" color={colors.primary} />}
+          {friendFound === true && friendUsername && (
+            <Text style={[styles.friendInfo, { color: colors.primary }]}>{t('user_found')}: {friendUsername}</Text>
+          )}
+          {friendFound === false && (
+            <Text style={[styles.friendInfo, { color: colors.error }]}>{t('user_not_found')}</Text>
+          )}
+        </>
+      )}
 
       {friendshipId && ( // Only show status picker when editing
         <>
@@ -227,7 +266,7 @@ const FriendshipFormScreen = () => {
               style={{ color: colors.text }}
             >
               {Object.values(FriendStatus)
-                .map((s) => ( // Removed .filter(s => s !== FriendStatus.COMMON_FRIEND)
+                .map((s) => (
                   <Picker.Item key={s} label={t(s.toLowerCase())} value={s} />
                 ))}
             </Picker>
@@ -272,6 +311,9 @@ const styles = StyleSheet.create({
   friendIdInput: {
     flex: 1,
     marginRight: 10,
+  },
+  readOnlyValue: {
+    textAlignVertical: 'center',
   },
 });
 

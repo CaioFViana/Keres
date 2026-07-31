@@ -19,7 +19,7 @@ export const friendships = sqliteTable(
       .references(() => users.idUser),
     friendUsername: text('friend_username').notNull(),
     status: text('status', {
-      enum: [FriendStatus.PENDING, FriendStatus.FRIEND, FriendStatus.BLACKLISTED, FriendStatus.COMMON_FRIEND],
+      enum: [FriendStatus.PENDING, FriendStatus.FRIEND, FriendStatus.BLACKLISTED],
     })
       .notNull()
       .default(FriendStatus.PENDING),

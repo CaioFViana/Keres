@@ -71,7 +71,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       console.log(`Checking server ${server.name} at ${server.url} for new stories...`);
       try {
         server = await serverService.refreshServerToken(server);
-        await friendshipService.syncFriendshipsWithServer(userId, server.id); // Call friendship sync
+        await friendshipService.syncFriendshipsWithServer(userId, server); // Call friendship sync
 
         const serverStoryPreviews = await SyncEngineService.getInstance().fetchServerStoryPreviews(server);
 

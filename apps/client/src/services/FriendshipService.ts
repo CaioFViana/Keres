@@ -1,5 +1,5 @@
 import { FriendshipInsert, friendships, FriendshipSelect } from '@/src/db/schemas/friendships'; // Import friendships here
-import { servers } from '@/src/db/schemas/servers'; // Import servers schema and ServerSelect
+import { servers, ServerSelect } from '@/src/db/schemas/servers'; // Import servers schema and ServerSelect
 import { UserInsert, users } from '@/src/db/schemas/users'; // Import users schema and UserInsert
 import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
@@ -92,16 +92,6 @@ export class FriendshipService {
     entityEventEmitter.emit('friendship_changed'); // Emit event after deleting
   }
 
-  async clearAllFriendshipsForUser(currentUserId: string): Promise<void> {
-    await this.db.delete(friendships)
-      .where(or(
-        eq(friendships.senderId, currentUserId),
-        eq(friendships.receiverId, currentUserId)
-      ))
-      .run();
-    entityEventEmitter.emit('friendship_changed'); // Emit event after clearing
-  }
-
   private async getTargetUserId(friendshipId: string, currentUserId: string): Promise<string> {
     const friendship = await this.getFriendshipById(friendshipId);
     if (!friendship) {
@@ -109,6 +99,17 @@ export class FriendshipService {
     }
     // The target is the user who is not the current user in the friendship
     return friendship.senderId === currentUserId ? friendship.receiverId : friendship.senderId;
+  }
+
+  // Every friendship action call must go out to the specific server that friendship
+  // belongs to - not whichever server the shared apiClient last happened to point at
+  // (see FriendshipApiService, which requires an explicit ServerSelect for this reason).
+  private async getServerOrThrow(serverId: string): Promise<ServerSelect> {
+    const server = await this.db.query.servers.findFirst({ where: eq(servers.id, serverId) });
+    if (!server) {
+      throw new Error('Server not found for this friendship.');
+    }
+    return server;
   }
 
   async acceptFriendRequest(friendshipId: string, currentUserId: string): Promise<void> {
@@ -119,8 +120,9 @@ export class FriendshipService {
       throw new Error('Not authorized to accept this request or request is not pending.');
     }
     const targetUserId = friendship.senderId; // The sender is the target for acceptance
+    const server = await this.getServerOrThrow(friendship.serverId);
 
-    await friendshipApiService.acceptFriendRequest(targetUserId);
+    await friendshipApiService.acceptFriendRequest(server, targetUserId);
     await this.updateFriendship(friendshipId, { status: FriendStatus.FRIEND });
     entityEventEmitter.emit('friendship_changed');
   }
@@ -133,8 +135,9 @@ export class FriendshipService {
       throw new Error('Not authorized to decline this request or request is not pending.');
     }
     const targetUserId = friendship.senderId; // The sender is the target for declining
+    const server = await this.getServerOrThrow(friendship.serverId);
 
-    await friendshipApiService.declineFriendRequest(targetUserId);
+    await friendshipApiService.declineFriendRequest(server, targetUserId);
     await this.deleteFriendship(friendshipId);
     entityEventEmitter.emit('friendship_changed');
   }
@@ -147,8 +150,9 @@ export class FriendshipService {
       throw new Error('Not authorized to cancel this request or request is not pending.');
     }
     const targetUserId = friendship.receiverId; // The receiver is the target for canceling
+    const server = await this.getServerOrThrow(friendship.serverId);
 
-    await friendshipApiService.cancelSentFriendRequest(targetUserId);
+    await friendshipApiService.cancelSentFriendRequest(server, targetUserId);
     await this.deleteFriendship(friendshipId);
     entityEventEmitter.emit('friendship_changed');
   }
@@ -161,8 +165,9 @@ export class FriendshipService {
       throw new Error('Users are not friends.');
     }
     const targetUserId = await this.getTargetUserId(friendshipId, currentUserId);
+    const server = await this.getServerOrThrow(friendship.serverId);
 
-    await friendshipApiService.unfriendUser(targetUserId);
+    await friendshipApiService.unfriendUser(server, targetUserId);
     await this.deleteFriendship(friendshipId);
     entityEventEmitter.emit('friendship_changed');
   }
@@ -171,8 +176,9 @@ export class FriendshipService {
     const friendship = await this.getFriendshipById(friendshipId);
     if (!friendship) throw new Error('Friendship not found.');
     const targetUserId = await this.getTargetUserId(friendshipId, currentUserId);
+    const server = await this.getServerOrThrow(friendship.serverId);
 
-    await friendshipApiService.blacklistUser(targetUserId);
+    await friendshipApiService.blacklistUser(server, targetUserId);
     // If the friendship exists, update its status. If not, the API will create a new blacklisted entry.
     // The sync process will reconcile if a new entry is created on the server.
     await this.updateFriendship(friendshipId, { status: FriendStatus.BLACKLISTED });
@@ -187,8 +193,9 @@ export class FriendshipService {
       throw new Error('User is not blacklisted.');
     }
     const targetUserId = await this.getTargetUserId(friendshipId, currentUserId);
+    const server = await this.getServerOrThrow(friendship.serverId);
 
-    await friendshipApiService.unblacklistUser(targetUserId);
+    await friendshipApiService.unblacklistUser(server, targetUserId);
     await this.deleteFriendship(friendshipId); // Blacklisted friendships are deleted upon unblacklist locally
     entityEventEmitter.emit('friendship_changed');
   }
@@ -227,12 +234,13 @@ export class FriendshipService {
     }
   }
 
-  async syncFriendshipsWithServer(currentUserId: string, serverId: string): Promise<void> {
+  async syncFriendshipsWithServer(currentUserId: string, server: ServerSelect): Promise<void> {
+    const serverId = server.id;
     // Fetch before opening the transaction: a network round-trip inside a DB
     // transaction holds it open for the whole request and aborts it on failure.
     let serverFriendships: EnrichedFriendship[];
     try {
-      serverFriendships = await friendshipApiService.getFriendships();
+      serverFriendships = await friendshipApiService.getFriendships(server);
     } catch (error) {
       if (isOfflineError(error)) {
         // Expected while the server is unreachable - keep local friendships as-is.
@@ -247,8 +255,11 @@ export class FriendshipService {
         const showNotification = useNotificationStore.getState().showNotification;
 
         // --- Notification Preparation & Deletion Logic ---
+        // Scoped to this server only: serverFriendships below only ever contains rows
+        // from `server`, so diffing against every locally-stored friendship (including
+        // other servers') would delete other servers' friendships on every sync cycle.
         const previousLocalFriendshipMap = new Map<string, FriendshipSelect>();
-        const localFriendshipsBeforeSync = await tx.select().from(friendships).all(); 
+        const localFriendshipsBeforeSync = await tx.select().from(friendships).where(eq(friendships.serverId, serverId)).all();
         localFriendshipsBeforeSync.forEach(f => previousLocalFriendshipMap.set(f.id, f));
 
         const serverFriendshipIds = new Set(serverFriendships.map(sf => sf.id));

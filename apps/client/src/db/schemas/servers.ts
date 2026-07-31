@@ -5,6 +5,8 @@ export const servers = sqliteTable('servers', {
   id: text('id').primaryKey(),
   idUser: text('id_user').notNull(),
   userName: text('user_name').notNull(),
+  /** Cached copy of the account's @tag on this server, refreshed on login/registration and edits. */
+  tag: text('tag'),
   name: text('name').notNull(),
   url: text('url').notNull(),
   lastSyncDate: integer('last_sync_date', { mode: 'timestamp' }), // Nullable

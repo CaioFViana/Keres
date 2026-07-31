@@ -5,11 +5,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
-import apiClient from '../../services/apiClient'; // Import axios and AxiosError
+import apiClient, { isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
 import { createServerService } from '../../services/ServerService';
+import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Add entityEventEmitter
@@ -35,6 +37,9 @@ const ServerManagementScreen = () => {
   const [servers, setServers] = useState<ServerWithStatus[]>([]);
   const [loading, setLoading] = useState(true); // Set to true initially to load servers
   const [error, setError] = useState<string | null>(null);
+  const [editingTagServerId, setEditingTagServerId] = useState<string | null>(null);
+  const [editingTagValue, setEditingTagValue] = useState('');
+  const [savingTag, setSavingTag] = useState(false);
 
   const pingServer = async (server: ServerWithStatus): Promise<ServerWithStatus> => {
     try {
@@ -142,6 +147,44 @@ const ServerManagementScreen = () => {
     );
   };
 
+  const handleStartEditTag = (server: ServerWithStatus) => {
+    setEditingTagServerId(server.id);
+    setEditingTagValue(server.tag || '');
+  };
+
+  const handleCancelEditTag = () => {
+    setEditingTagServerId(null);
+    setEditingTagValue('');
+  };
+
+  const handleSaveTag = async (server: ServerWithStatus) => {
+    const newTag = editingTagValue.trim();
+    if (!newTag || newTag === server.tag) {
+      handleCancelEditTag();
+      return;
+    }
+
+    setSavingTag(true);
+    try {
+      const updated = await userApiService.updateOwnTag(server, newTag);
+      await serverService.updateServer(server.id, { tag: updated.tag });
+      setServers(prev => prev.map(s => (s.id === server.id ? { ...s, tag: updated.tag } : s)));
+      handleCancelEditTag();
+    } catch (err: any) {
+      if (isOfflineError(err)) {
+        Alert.alert(t('error'), t('server_unreachable'));
+      } else if (err?.response?.status === 409) {
+        Alert.alert(t('error'), t('tag_already_taken'));
+      } else if (err?.response?.status === 400) {
+        Alert.alert(t('error'), t('invalid_tag_format'));
+      } else {
+        Alert.alert(t('error'), t('failed_to_update_tag'));
+      }
+    } finally {
+      setSavingTag(false);
+    }
+  };
+
   const getPingIconColor = (status: ServerWithStatus['pingStatus']) => {
     switch (status) {
       case 'pending':
@@ -162,6 +205,38 @@ const ServerManagementScreen = () => {
         <Text style={[styles.serverName, { color: colors.text }]}>{item.name}</Text>
         <Text style={[styles.serverUrl, { color: colors.textSecondary }]}>{item.url}</Text>
         <Text style={[styles.serverUser, { color: colors.textSecondary }]}>User: {item.userName}</Text>
+        {editingTagServerId === item.id ? (
+          <View style={styles.tagEditRow}>
+            <Text style={[styles.tagAtPrefix, { color: colors.textSecondary }]}>@</Text>
+            <TextInput
+              style={[styles.tagInput, { color: colors.text, borderColor: colors.border }]}
+              value={editingTagValue}
+              onChangeText={setEditingTagValue}
+              autoCapitalize="none"
+              autoFocus
+              editable={!savingTag}
+            />
+            {savingTag ? (
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />
+            ) : (
+              <>
+                <TouchableOpacity onPress={() => handleSaveTag(item)} style={{ marginLeft: 8 }}>
+                  <Ionicons name="checkmark-outline" size={20} color={colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleCancelEditTag} style={{ marginLeft: 8 }}>
+                  <Ionicons name="close-outline" size={20} color={colors.error} />
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.tagEditRow} onPress={() => handleStartEditTag(item)}>
+            <Text style={[styles.serverTag, { color: colors.primary }]}>
+              {item.tag ? `@${item.tag}` : t('no_tag_set')}
+            </Text>
+            <Ionicons name="pencil-outline" size={14} color={colors.textSecondary} style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
+        )}
         {item.lastSyncDate && (
           <Text style={[styles.serverDetail, { color: colors.textSecondary }]}>
             {t('last_sync')}: {new Date(item.lastSyncDate).toLocaleString()}
@@ -261,6 +336,29 @@ const styles = StyleSheet.create({
   serverUser: {
     fontSize: 12,
     fontStyle: 'italic',
+  },
+  serverTag: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tagEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  tagAtPrefix: {
+    fontSize: 13,
+  },
+  tagInput: {
+    fontSize: 13,
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    width: 140,
+    height: 30,
+    marginBottom: 0,
   },
   serverDetail: {
     fontSize: 12,

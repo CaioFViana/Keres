@@ -201,16 +201,14 @@ const FriendshipListScreen = () => {
             }
           </Text>
           <Text style={[styles.friendshipText, { color: colors.textSecondary }]}>
-            {t('server')}: {item.serverName || item.serverId} {item.serverUrl && `(${item.serverUrl})`}
+            {server?.tag && `@${server.tag} · `}{t('server')}: {item.serverName || item.serverId} {item.serverUrl && `(${item.serverUrl})`}
           </Text>
           <Text style={[styles.friendshipText, { color: colors.textSecondary }]}>
             {t('status')}: {item.status === FriendStatus.PENDING
               ? t('status_pending')
               : item.status === FriendStatus.FRIEND
                 ? t('status_friend')
-                : item.status === FriendStatus.BLACKLISTED
-                  ? t('status_blacklisted')
-                  : t('status_common_friend')
+                : t('status_blacklisted')
             }
           </Text>
         </View>

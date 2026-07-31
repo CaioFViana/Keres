@@ -23,6 +23,7 @@ import migration_19 from './0018_gallery_drop_owner';
 import migration_20 from './0019_gallery_media';
 import migration_21 from './0020_gallery_video_thumbnail';
 import migration_22 from './0021_clumsy_spirit';
+import migration_23 from './0022_odd_the_phantom';
 
 
 const migrations = [
@@ -48,6 +49,7 @@ const migrations = [
   { id: 20, name: '0019_gallery_media', run: migration_20 },
   { id: 21, name: '0020_gallery_video_thumbnail', run: migration_21 },
   { id: 22, name: '0021_clumsy_spirit', run: migration_22 },
+  { id: 23, name: '0022_odd_the_phantom', run: migration_23 },
 ];
 
 export default migrations;

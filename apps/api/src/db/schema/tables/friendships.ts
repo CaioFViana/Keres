@@ -9,7 +9,6 @@ export const friendStatusEnum = pgEnum('friend_status', [
   FriendStatus.PENDING,
   FriendStatus.FRIEND,
   FriendStatus.BLACKLISTED,
-  FriendStatus.COMMON_FRIEND,
 ]);
 
 export const friendships = pgTable(

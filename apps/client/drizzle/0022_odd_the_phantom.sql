@@ -1,1 +1,0 @@
-ALTER TABLE `servers` ADD `tag` text;

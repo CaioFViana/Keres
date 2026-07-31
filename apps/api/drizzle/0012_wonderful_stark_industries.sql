@@ -1,1 +1,0 @@
-ALTER TABLE "friendships" DROP COLUMN "server_id";

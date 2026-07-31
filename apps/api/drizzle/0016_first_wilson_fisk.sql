@@ -1,1 +1,0 @@
-ALTER TABLE "operation_log" ADD COLUMN "entity_version" integer;

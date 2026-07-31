@@ -1,1 +1,0 @@
-ALTER TABLE "characters" ADD COLUMN "title" text;

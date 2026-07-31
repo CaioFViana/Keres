@@ -12,6 +12,7 @@ import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
 import ChapterListScreen from '../screens/chapters/ChapterListScreen';
 import CharacterRelationDetailScreen from '../screens/characterrelations/CharacterRelationDetailScreen';
 import CharacterRelationFormScreen from '../screens/characterrelations/CharacterRelationFormScreen';
+import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationListScreen';
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
@@ -54,7 +55,9 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
-  CharactersStack: undefined;
+  // Tipado com os parâmetros da pilha interna porque o mapa de relações abre um personagem
+  // específico a partir de outra aba do drawer.
+  CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
   LocationsStack: undefined;
   ChaptersStack: undefined;
   // Tipado com os parâmetros da pilha interna porque o mapa da história abre uma cena
@@ -258,6 +261,7 @@ export type CharacterRelationsStackParamList = {
   CharacterRelations: undefined;
   CharacterRelationDetail: CharacterRelationDetailScreenParamList['CharacterRelationDetail'];
   CharacterRelationForm: { characterRelationId?: string };
+  CharacterRelationView: undefined;
 };
 
 const CharacterRelationsStackNavigator = () => {
@@ -267,6 +271,7 @@ const CharacterRelationsStackNavigator = () => {
       <CharacterRelationsStack.Screen name="CharacterRelations" component={CharacterRelationsScreen} />
       <CharacterRelationsStack.Screen name="CharacterRelationDetail" component={CharacterRelationDetailScreen} />
       <CharacterRelationsStack.Screen name="CharacterRelationForm" component={CharacterRelationFormScreen} />
+      <CharacterRelationsStack.Screen name="CharacterRelationView" component={CharacterRelationGraphScreen} />
     </CharacterRelationsStack.Navigator>
   );
 };

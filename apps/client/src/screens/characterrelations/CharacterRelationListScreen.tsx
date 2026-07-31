@@ -18,7 +18,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type CharacterRelationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharacterRelationsStack'>,
-  NativeStackNavigationProp<CharacterRelationsStackParamList, 'CharacterRelationDetail'>
+  NativeStackNavigationProp<CharacterRelationsStackParamList, 'CharacterRelationDetail' | 'CharacterRelationView'>
 >;
 
 const CharacterRelationsScreen = () => {
@@ -62,20 +62,43 @@ const CharacterRelationsScreen = () => {
     };
   }, [navigation]);
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    headerRightContainer: {
+      flexDirection: 'row',
+      marginRight: 15,
+    },
+    headerButton: {
+      marginLeft: 15,
+    },
+  });
+
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: t('character_relations_title'),
         headerRight: () => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CharacterRelationForm', { characterRelationId: undefined })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="add" size={30} color={colors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerRightContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('CharacterRelationView')}
+              style={styles.headerButton}
+              accessibilityLabel={t('character_relation_map_title')}
+            >
+              <Ionicons name="git-network-outline" size={28} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('CharacterRelationForm', { characterRelationId: undefined })}
+              style={styles.headerButton}
+            >
+              <Ionicons name="add" size={30} color={colors.text} />
+            </TouchableOpacity>
+          </View>
         ),
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer])
   );
 
   const handleViewDetails = useCallback((relationId: string) => {
@@ -95,13 +118,6 @@ const CharacterRelationsScreen = () => {
       { label: t('sort_by_updated_at'), value: 'updatedAt' },
     ];
   }, [t]);
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-  });
 
   if (loading) {
     return <ScreenLoading message={t('loading_relations')} />;

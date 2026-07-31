@@ -591,6 +591,14 @@ export class SyncEngineService {
         .set({ lastServerSyncedLog: highestAppliedRemoteVersion })
         .where(eq(schema.stories.id, this.storyId));
 
+      // Reaching here means the pull round-trip against the server succeeded, so this is
+      // a real "last synced" timestamp - not just when the server was registered (which is
+      // all `servers.lastSyncDate` ever reflected before, since nothing else touched it).
+      if (this.activeServer) {
+        const serverService = createServerService(this._db);
+        await serverService.updateServer(this.activeServer.id, { lastSyncDate: new Date() });
+      }
+
       // 6. Reconcile media files. Roda depois dos metadados de propósito: uma mídia só
       // pode ser baixada depois que a linha que a descreve chegou, e só pode ser enviada
       // depois que o servidor aceitou essa mesma linha.

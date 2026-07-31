@@ -36,14 +36,6 @@ const ServerManagementScreen = () => {
   const [loading, setLoading] = useState(true); // Set to true initially to load servers
   const [error, setError] = useState<string | null>(null);
 
-  // Ref to hold the latest servers state
-  const serversRef = useRef<ServerWithStatus[]>(servers);
-
-  // Keep the ref updated whenever servers state changes
-  useEffect(() => {
-    serversRef.current = servers;
-  }, [servers]);
-
   const pingServer = async (server: ServerWithStatus): Promise<ServerWithStatus> => {
     try {
       const checkUrl = `${server.url}/kerescheck`;
@@ -62,48 +54,52 @@ const ServerManagementScreen = () => {
     }
   };
 
-  const loadServers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  /**
+   * Re-reads the servers from the local DB (so fields like `lastSyncDate`, kept fresh by
+   * the background sync engine, show up without needing to leave and re-enter the screen)
+   * and pings them right away - not on a delay, so the pulse icon isn't stuck gray/idle
+   * until the first interval tick fires.
+   */
+  const loadAndPingServers = useCallback(async () => {
     try {
       const fetchedServers = await serverService.getAllServers();
       const serversWithStatus: ServerWithStatus[] = fetchedServers.map(s => ({
         ...s,
-        pingStatus: 'idle', // Initialize ping status
-        apiVersion: null, // Initialize version
+        pingStatus: 'pending',
+        apiVersion: null,
       }));
       setServers(serversWithStatus);
+      setError(null);
+
+      if (serversWithStatus.length > 0) {
+        const pinged = await Promise.all(serversWithStatus.map(pingServer));
+        setServers(pinged);
+      }
     } catch (err) {
       console.error('Failed to load servers:', err);
       setError(t('failed_to_load_servers'));
-    } finally {
-      setLoading(false);
     }
   }, [serverService, t]);
 
-  const pingAllServers = useCallback(async () => {
-    const currentServersToPing = serversRef.current;
-
-    // Set all to 'pending' first
-    setServers(prevServers =>
-      prevServers.map(server => ({ ...server, pingStatus: 'pending' }))
-    );
-
-    // Then, ping them and update their status
-    const updatedServers = await Promise.all(
-      currentServersToPing.map(server => pingServer(server))
-    );
-
-    setServers(updatedServers);
-  }, []);
-
   useEffect(() => {
-    if (isFocused) {
-      loadServers(); // Load servers when screen is focused
-      const intervalId = setInterval(pingAllServers, 7000); // Ping every 7 seconds
-      return () => clearInterval(intervalId); // Cleanup on unmount or unfocus
+    if (!isFocused) {
+      return;
     }
-  }, [isFocused, loadServers, pingAllServers]);
+
+    let cancelled = false;
+    setLoading(true);
+    loadAndPingServers().finally(() => {
+      if (!cancelled) {
+        setLoading(false);
+      }
+    });
+
+    const intervalId = setInterval(loadAndPingServers, 7000); // Refresh + ping every 7 seconds
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [isFocused, loadAndPingServers]);
 
   // Add this useEffect block for navigation reset
   useEffect(() => {
@@ -171,9 +167,6 @@ const ServerManagementScreen = () => {
             {t('last_sync')}: {new Date(item.lastSyncDate).toLocaleString()}
           </Text>
         )}
-        <Text style={[styles.serverDetail, { color: colors.textSecondary }]}>
-            Version: {item.version}
-        </Text>
       </View>
       <View style={styles.serverActions}>
         <Ionicons

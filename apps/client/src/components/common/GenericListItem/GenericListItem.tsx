@@ -12,6 +12,8 @@ interface GenericListItemProps {
   rightActions?: React.ReactNode;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 const GenericListItem: React.FC<GenericListItemProps> = ({
   headerContent,
   expandedContent,
@@ -57,6 +59,13 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     };
   });
 
+  // Border should stay visible while the collapse animation is still shrinking, not just
+  // while `isOpen` is true - reading `animatedHeight.value` for that has to happen here
+  // (a worklet), not in the plain StyleSheet below, which runs during render.
+  const animatedHeaderStyle = useAnimatedStyle(() => ({
+    borderBottomWidth: isOpen || animatedHeight.value > 0 ? 1 : 0,
+  }));
+
   const styles = StyleSheet.create({
     container: {
       backgroundColor: colors.card,
@@ -71,8 +80,6 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: 10,
-      // Keep border if animating (height > 0) or explicitly open
-      borderBottomWidth: isOpen || animatedHeight.value > 0 ? 1 : 0, 
       borderBottomColor: colors.border,
     },
     headerRight: {
@@ -109,7 +116,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={onPress} style={styles.header}>
+      <AnimatedPressable onPress={onPress} style={[styles.header, animatedHeaderStyle]}>
         {headerContent}
         <View style={styles.headerRight}>
           {rightActions}
@@ -120,7 +127,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
             style={styles.dropdownArrow}
           />
         </View>
-      </Pressable>
+      </AnimatedPressable>
 
       <View style={styles.measurementContent} onLayout={onLayout}>
         {expandedContent}

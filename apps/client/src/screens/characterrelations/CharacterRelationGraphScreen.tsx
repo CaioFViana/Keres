@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import CharacterRelationNodeSheet, { CharacterRelationNodeConnection } from '../../components/CharacterRelationGraph/CharacterRelationNodeSheet';
 import CharacterRelationGraphCanvas, { CharacterRelationGraphCanvasHandle } from '../../components/CharacterRelationGraph/CharacterRelationGraphCanvas';
@@ -11,9 +11,12 @@ import { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createCharacterRelationService, CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
+import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { buildCharacterRelationGraphLayout, RelationGraphNode } from '../../utils/characterRelationGraphLayout';
+import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
+import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { CharacterRelationsScreenNavigationProp } from './CharacterRelationListScreen';
 
 /**
@@ -35,6 +38,7 @@ const CharacterRelationGraphScreen = () => {
   const navigation = useNavigation<CharacterRelationsScreenNavigationProp>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
+  const { showNotification } = useNotificationStore();
 
   const canvasRef = useRef<CharacterRelationGraphCanvasHandle>(null);
 
@@ -44,6 +48,7 @@ const CharacterRelationGraphScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const storyId = selectedStory?.id;
 
@@ -121,6 +126,44 @@ const CharacterRelationGraphScreen = () => {
     }),
     [layout.edges.length, layout.isolatedCount, layout.nodes.length, t]
   );
+
+  const handleExport = useCallback(async () => {
+    if (!selectedStory || layout.nodes.length === 0) return;
+
+    setExporting(true);
+    try {
+      const svg = renderCharacterRelationMapSvg(layout, {
+        title: selectedStory.title,
+        subtitle: mapSubtitle,
+        showEdgeLabels,
+        labels: {
+          isolated: t('character_relation_map_badge_isolated'),
+        },
+        colors: {
+          background: colors.background,
+          surface: colors.surface,
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          border: colors.border,
+          primaryContainer: colors.primaryContainer,
+        },
+      });
+
+      const result = await deliverSvgMap(svg, buildCharacterRelationMapFileName(selectedStory.title));
+      if (result.delivered) {
+        showNotification(t('character_relation_map_export_success', { fileName: result.fileName }), 'success');
+      } else {
+        // Sem share sheet o arquivo existe, mas o usuário não tem como alcançá-lo; dizer onde
+        // ele está é mais útil do que alegar sucesso.
+        showNotification(t('character_relation_map_export_no_share_target', { path: result.uri || result.fileName }), 'warning');
+      }
+    } catch (exportError) {
+      console.log('CharacterRelationGraphScreen: failed to export relation map.', exportError);
+      showNotification(t('character_relation_map_export_failed'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -244,6 +287,16 @@ const CharacterRelationGraphScreen = () => {
             size={19}
             color={showEdgeLabels ? colors.primary : colors.text}
           />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={handleExport}
+          disabled={exporting}
+          accessibilityLabel={t('character_relation_map_export')}
+        >
+          {exporting
+            ? <ActivityIndicator size="small" color={colors.primary} />
+            : <Ionicons name="image-outline" size={20} color={colors.text} />}
         </TouchableOpacity>
       </View>
 

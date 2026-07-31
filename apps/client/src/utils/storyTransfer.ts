@@ -54,9 +54,14 @@ export function buildExportZipFileName(storyTitle: string, now: Date = new Date(
   return `${slugify(storyTitle)}-${now.toISOString().slice(0, 10)}.zip`;
 }
 
-/** Nome do arquivo de imagem do mapa, no mesmo padrão da exportação de dados. */
+/** Nome do arquivo de imagem do mapa da história, no mesmo padrão da exportação de dados. */
 export function buildStoryMapFileName(storyTitle: string, now: Date = new Date()): string {
   return `${slugify(storyTitle)}-mapa-${now.toISOString().slice(0, 10)}.svg`;
+}
+
+/** Nome do arquivo de imagem do mapa de relações, no mesmo padrão da exportação de dados. */
+export function buildCharacterRelationMapFileName(storyTitle: string, now: Date = new Date()): string {
+  return `${slugify(storyTitle)}-relacoes-${now.toISOString().slice(0, 10)}.svg`;
 }
 
 /** Resultado da tentativa de entregar o arquivo ao usuário. */
@@ -120,8 +125,8 @@ export function deliverStoryZipExport(
   return deliverFile(zipBytes, fileName, 'application/zip', 'public.zip-archive');
 }
 
-/** Entrega a imagem do mapa da história como `.svg`. */
-export function deliverStoryMap(svg: string, fileName: string): Promise<ExportDeliveryResult> {
+/** Entrega a imagem de um mapa (história ou relações) como `.svg`. */
+export function deliverSvgMap(svg: string, fileName: string): Promise<ExportDeliveryResult> {
   return deliverFile(svg, fileName, 'image/svg+xml', 'public.svg-image');
 }
 

@@ -17,7 +17,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
 import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
-import { buildStoryMapFileName, deliverStoryMap } from '../../utils/storyTransfer';
+import { buildStoryMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
 /**
@@ -165,7 +165,7 @@ const ChoiceViewScreen = () => {
         },
       });
 
-      const result = await deliverStoryMap(svg, buildStoryMapFileName(selectedStory.title));
+      const result = await deliverSvgMap(svg, buildStoryMapFileName(selectedStory.title));
       if (result.delivered) {
         showNotification(t('story_map_export_success', { fileName: result.fileName }), 'success');
       } else {

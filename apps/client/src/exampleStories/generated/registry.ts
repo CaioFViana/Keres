@@ -2,7 +2,51 @@
 // Do not modify this file directly.
 import { ExampleStoryEntry } from '../types';
 
+import aliceInWonderland_en from '../content/alice-in-wonderland/en.json';
+import aliceInWonderland_pt from '../content/alice-in-wonderland/pt.json';
+import beautyAndTheBeast_en from '../content/beauty-and-the-beast/en.json';
+import beautyAndTheBeast_pt from '../content/beauty-and-the-beast/pt.json';
+import cinderella_en from '../content/cinderella/en.json';
+import cinderella_pt from '../content/cinderella/pt.json';
+import goldilocks_en from '../content/goldilocks/en.json';
+import goldilocks_pt from '../content/goldilocks/pt.json';
+import littleMermaid_en from '../content/little-mermaid/en.json';
+import littleMermaid_pt from '../content/little-mermaid/pt.json';
 
 export const exampleStoryRegistry: ExampleStoryEntry[] = [
-
+  {
+    slug: 'alice-in-wonderland',
+    languages: [
+        { language: 'en', story: aliceInWonderland_en },
+        { language: 'pt', story: aliceInWonderland_pt },
+    ],
+  },
+  {
+    slug: 'beauty-and-the-beast',
+    languages: [
+        { language: 'en', story: beautyAndTheBeast_en },
+        { language: 'pt', story: beautyAndTheBeast_pt },
+    ],
+  },
+  {
+    slug: 'cinderella',
+    languages: [
+        { language: 'en', story: cinderella_en },
+        { language: 'pt', story: cinderella_pt },
+    ],
+  },
+  {
+    slug: 'goldilocks',
+    languages: [
+        { language: 'en', story: goldilocks_en },
+        { language: 'pt', story: goldilocks_pt },
+    ],
+  },
+  {
+    slug: 'little-mermaid',
+    languages: [
+        { language: 'en', story: littleMermaid_en },
+        { language: 'pt', story: littleMermaid_pt },
+    ],
+  },
 ];

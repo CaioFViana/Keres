@@ -2,6 +2,7 @@ import { FullStoryExportSchema } from '@keres/shared';
 import { AppDrizzleClient } from '../../db';
 import { exampleStoryRegistry } from '../../exampleStories/generated/registry';
 import { ExampleStoryEntry } from '../../exampleStories/types';
+import { reviveDates } from '../../utils/reviveDates';
 import { createStoryService } from './StoryService';
 
 /**
@@ -41,7 +42,10 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
         return { status: 'not_found' };
       }
 
-      const parsed = FullStoryExportSchema.safeParse(languageEntry.story);
+      // O JSON empacotado nunca teve suas datas revividas (é um `import` estático de `.json`,
+      // igual ao `JSON.parse` de um arquivo escolhido pelo usuário) - mesmo cuidado de
+      // `pickStoryExportFile`.
+      const parsed = FullStoryExportSchema.safeParse(reviveDates(languageEntry.story));
       if (!parsed.success) {
         console.error(`ExampleStoryService: bundled content for ${slug}/${language} failed validation.`, parsed.error);
         return { status: 'invalid_content' };

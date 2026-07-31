@@ -3,6 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
+import { reviveDates } from './reviveDates';
 import { ExtractedZipMedia, extractStoryZip } from './storyMediaBundle';
 import { StoryImportError } from './StoryImportError';
 
@@ -204,7 +205,10 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
 
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(rawContents);
+    // `JSON.parse` nunca revive `Date` (`FullStoryExportSchema` usa `z.date()`, que rejeita
+    // string) - sem isto, reimportar um `.json` que este mesmo app acabou de exportar falharia
+    // na validação.
+    parsedJson = reviveDates(JSON.parse(rawContents));
   } catch {
     throw new StoryImportError('invalid_format', `${asset.name} is not valid JSON.`);
   }

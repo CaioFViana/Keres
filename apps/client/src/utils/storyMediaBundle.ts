@@ -2,6 +2,7 @@ import { extensionForMimeType, FullStoryExportSchema, FullStoryExportType, Galle
 import { File } from 'expo-file-system';
 import JSZip from 'jszip';
 import { mediaFileService } from '../services/MediaFileService';
+import { reviveDates } from './reviveDates';
 import { StoryImportError } from './StoryImportError';
 
 /**
@@ -95,7 +96,9 @@ export async function extractStoryZip(bytes: Uint8Array, sourceName: string): Pr
 
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(await storyEntry.async('string'));
+    // `JSON.parse` nunca revive `Date` - mesmo cuidado de `pickStoryExportFile` com o `.json`
+    // solto, senão a validação abaixo rejeitaria toda data como string.
+    parsedJson = reviveDates(JSON.parse(await storyEntry.async('string')));
   } catch {
     throw new StoryImportError('invalid_format', `${sourceName}'s ${STORY_JSON_ENTRY} is not valid JSON.`);
   }

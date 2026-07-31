@@ -13,6 +13,7 @@ import { createStoryService } from '../../services/storymanagement/StoryService'
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { themeDisplayOptions } from '../../theme/palettes';
 import { getLanguageOptions } from '../../utils/i18n';
 
 type RootStackParamList = {
@@ -182,12 +183,10 @@ const StoryFormScreen = () => {
 
   const languageOptions = getLanguageOptions(t);
 
-  // Placeholder for theme options - will need to be dynamic later
-  const themeOptions = [
-    { label: t('default_theme'), value: 'default' },
-    { label: t('forest_theme'), value: 'forest' },
-    { label: t('ocean_theme'), value: 'ocean' },
-  ];
+  const themeOptions = themeDisplayOptions.map(theme => ({
+    label: t(theme.labelKey),
+    value: theme.value,
+  }));
 
   if (loading) {
     return (

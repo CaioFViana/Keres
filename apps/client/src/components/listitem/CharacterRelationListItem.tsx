@@ -1,19 +1,20 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
 import { useTheme } from '../../theme';
 
+/**
+ * Linha só de leitura: criar/editar uma relação acontece pelo gerenciador embutido na tela do
+ * personagem (`CharacterRelationManager`), e visualizar a rede de relações acontece no mapa
+ * (`CharacterRelationGraphScreen`) - esta lista existe para buscar/ordenar, não para navegar.
+ */
 interface CharacterRelationListItemProps {
   relation: CharacterRelationWithNames;
-  onViewDetails: (relationId: string) => void;
-  // No onToggleFavorite as CharacterRelations don't have a favorite status
 }
 
 const CharacterRelationListItem: React.FC<CharacterRelationListItemProps> = ({
   relation,
-  onViewDetails,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -47,24 +48,15 @@ const CharacterRelationListItem: React.FC<CharacterRelationListItemProps> = ({
       fontSize: 14,
       color: colors.textSecondary,
     },
-    icon: {
-      padding: 8,
-    },
   });
 
   return (
-    <TouchableOpacity onPress={() => onViewDetails(relation.id)} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{`${relation.char1Name} - ${relation.char2Name}`}</Text>
         <Text style={styles.details}>{t('relation_type')}: {relation.relationType}</Text>
       </View>
-      <Ionicons
-        name="chevron-forward"
-        size={24}
-        color={colors.textSecondary}
-        style={styles.icon}
-      />
-    </TouchableOpacity>
+    </View>
   );
 };
 

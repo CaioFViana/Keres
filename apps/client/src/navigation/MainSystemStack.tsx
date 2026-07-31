@@ -10,8 +10,6 @@ import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
 import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
 import ChapterListScreen from '../screens/chapters/ChapterListScreen';
-import CharacterRelationDetailScreen from '../screens/characterrelations/CharacterRelationDetailScreen';
-import CharacterRelationFormScreen from '../screens/characterrelations/CharacterRelationFormScreen';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import CharacterRelationsScreen from '../screens/characterrelations/CharacterRelationListScreen';
 import CharacterDetailScreen, { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
@@ -249,18 +247,8 @@ const LocationStackNavigator = () => {
 
 const CharacterRelationsStack = createNativeStackNavigator<CharacterRelationsStackParamList>();
 
-export type CharacterRelationDetailScreenParamList = {
-  CharacterRelationDetail: { relationId: string };
-};
-
-export type CharacterRelationFormScreenParamList = {
-  CharacterRelationForm: { relationId?: string };
-};
-
 export type CharacterRelationsStackParamList = {
   CharacterRelations: undefined;
-  CharacterRelationDetail: CharacterRelationDetailScreenParamList['CharacterRelationDetail'];
-  CharacterRelationForm: { characterRelationId?: string };
   CharacterRelationView: undefined;
 };
 
@@ -269,8 +257,6 @@ const CharacterRelationsStackNavigator = () => {
   return (
     <CharacterRelationsStack.Navigator screenOptions={{ headerShown: false }}>
       <CharacterRelationsStack.Screen name="CharacterRelations" component={CharacterRelationsScreen} />
-      <CharacterRelationsStack.Screen name="CharacterRelationDetail" component={CharacterRelationDetailScreen} />
-      <CharacterRelationsStack.Screen name="CharacterRelationForm" component={CharacterRelationFormScreen} />
       <CharacterRelationsStack.Screen name="CharacterRelationView" component={CharacterRelationGraphScreen} />
     </CharacterRelationsStack.Navigator>
   );

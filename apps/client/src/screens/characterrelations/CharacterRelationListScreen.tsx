@@ -18,7 +18,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type CharacterRelationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharacterRelationsStack'>,
-  NativeStackNavigationProp<CharacterRelationsStackParamList, 'CharacterRelationDetail' | 'CharacterRelationView'>
+  NativeStackNavigationProp<CharacterRelationsStackParamList, 'CharacterRelationView'>
 >;
 
 const CharacterRelationsScreen = () => {
@@ -67,12 +67,8 @@ const CharacterRelationsScreen = () => {
       flex: 1,
       backgroundColor: colors.background,
     },
-    headerRightContainer: {
-      flexDirection: 'row',
-      marginRight: 15,
-    },
     headerButton: {
-      marginLeft: 15,
+      marginRight: 15,
     },
   });
 
@@ -81,33 +77,21 @@ const CharacterRelationsScreen = () => {
       navigation.getParent()?.setOptions({
         title: t('character_relations_title'),
         headerRight: () => (
-          <View style={styles.headerRightContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('CharacterRelationView')}
-              style={styles.headerButton}
-              accessibilityLabel={t('character_relation_map_title')}
-            >
-              <Ionicons name="git-network-outline" size={28} color={colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('CharacterRelationForm', { characterRelationId: undefined })}
-              style={styles.headerButton}
-            >
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CharacterRelationView')}
+            style={styles.headerButton}
+            accessibilityLabel={t('character_relation_map_title')}
+          >
+            <Ionicons name="git-network-outline" size={28} color={colors.text} />
+          </TouchableOpacity>
         ),
       });
-    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer])
+    }, [navigation, colors.text, t, styles.headerButton])
   );
 
-  const handleViewDetails = useCallback((relationId: string) => {
-    navigation.navigate('CharacterRelationDetail', { relationId });
-  }, [navigation]);
-
   const memoizedListItem = useCallback(({ item }: { item: CharacterRelationWithNames }) => (
-    <CharacterRelationListItem relation={item} onViewDetails={handleViewDetails} />
-  ), [handleViewDetails]);
+    <CharacterRelationListItem relation={item} />
+  ), []);
 
   const memoizedSortOptions = useMemo(() => {
     return [

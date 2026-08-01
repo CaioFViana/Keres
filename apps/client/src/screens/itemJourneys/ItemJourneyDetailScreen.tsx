@@ -39,15 +39,35 @@ const ItemJourneyDetailScreen = () => {
   const drizzleDb = useDrizzle();
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
 
-  const { items } = useItemStore();
-  const { scenes } = useSceneStore();
-  const { characters } = useCharacterStore();
+  const { items, fetchItems, setDbAndStoryId: setItemDbAndStoryId, initializeService: initializeItemService } = useItemStore();
+  const { scenes, fetchScenes, setDbAndStoryId: setSceneDbAndStoryId, initializeService: initializeSceneService } = useSceneStore();
+  const { characters, fetchCharacters, setDbAndStoryId: setCharacterDbAndStoryId, initializeService: initializeCharacterService } = useCharacterStore();
 
   useEffect(() => {
     if (drizzleDb && !itemJourneyServiceRef.current) {
       itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
     }
   }, [drizzleDb]);
+
+  useEffect(() => {
+    if (drizzleDb && selectedStory?.id) {
+      setItemDbAndStoryId(drizzleDb, selectedStory.id);
+      initializeItemService();
+      fetchItems();
+
+      setSceneDbAndStoryId(drizzleDb, selectedStory.id);
+      initializeSceneService();
+      fetchScenes();
+
+      setCharacterDbAndStoryId(drizzleDb, selectedStory.id);
+      initializeCharacterService();
+      fetchCharacters();
+    }
+  }, [drizzleDb, selectedStory?.id,
+    setItemDbAndStoryId, initializeItemService, fetchItems,
+    setSceneDbAndStoryId, initializeSceneService, fetchScenes,
+    setCharacterDbAndStoryId, initializeCharacterService, fetchCharacters
+  ]);
 
   const [itemJourney, setItemJourney] = useState<ItemJourneySelect | null>(null);
 

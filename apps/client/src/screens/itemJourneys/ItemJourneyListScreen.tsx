@@ -2,17 +2,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import ItemJourneyListItem from '../../components/listitem/ItemJourneyListItem';
+import { useDrizzle } from '../../db';
 import { ItemJourneySelect } from '../../db/schemas/itemJourneys';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { ItemJourneyStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { useCharacterStore } from '../../state/characterStore';
 import { useItemJourneyStore } from '../../state/itemJourneyStore';
+import { useItemStore } from '../../state/itemStore';
+import { useSceneStore } from '../../state/sceneStore';
+import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 
 export type ItemJourneysScreenNavigationProp = CompositeNavigationProp<
@@ -25,6 +30,8 @@ const ItemJourneyListScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ItemJourneysScreenNavigationProp>();
+  const drizzleDb = useDrizzle();
+  const { selectedStory } = useStoryStore();
 
   const {
     items: itemJourneys,
@@ -44,6 +51,30 @@ const ItemJourneyListScreen = () => {
     collectionKey: 'itemJourneys',
     changeEvent: 'item_journey_changed',
   });
+
+  const { fetchItems, setDbAndStoryId: setItemDbAndStoryId, initializeService: initializeItemService } = useItemStore();
+  const { fetchScenes, setDbAndStoryId: setSceneDbAndStoryId, initializeService: initializeSceneService } = useSceneStore();
+  const { fetchCharacters, setDbAndStoryId: setCharacterDbAndStoryId, initializeService: initializeCharacterService } = useCharacterStore();
+
+  useEffect(() => {
+    if (drizzleDb && selectedStory?.id) {
+      setItemDbAndStoryId(drizzleDb, selectedStory.id);
+      initializeItemService();
+      fetchItems();
+
+      setSceneDbAndStoryId(drizzleDb, selectedStory.id);
+      initializeSceneService();
+      fetchScenes();
+
+      setCharacterDbAndStoryId(drizzleDb, selectedStory.id);
+      initializeCharacterService();
+      fetchCharacters();
+    }
+  }, [drizzleDb, selectedStory?.id,
+    setItemDbAndStoryId, initializeItemService, fetchItems,
+    setSceneDbAndStoryId, initializeSceneService, fetchScenes,
+    setCharacterDbAndStoryId, initializeCharacterService, fetchCharacters
+  ]);
 
   const handleViewDetails = useCallback((itemJourneyId: string) => {
     navigation.navigate('ItemJourneyDetail', { itemJourneyId });

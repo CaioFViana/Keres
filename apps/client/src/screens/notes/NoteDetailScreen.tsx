@@ -4,7 +4,10 @@ import { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelati
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import DetailField from '../../components/common/DetailField/DetailField';
+import RelatedEntitiesList from '../../components/common/RelatedEntitiesList/RelatedEntitiesList';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -18,6 +21,7 @@ import { createTagRelationService } from '../../services/storymanagement/TagRela
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { NotesScreenNavigationProp } from './NoteListScreen';
 
@@ -79,35 +83,13 @@ const NoteDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-      padding: 20,
-    },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     mainTitle: {
       fontSize: 28,
       fontWeight: 'bold',
       color: colors.text,
       marginBottom: 5,
-    },
-    subTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: colors.textSecondary,
-      marginBottom: 15,
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    errorText: {
-      color: colors.error,
     },
     buttonContainer: {
       marginTop: 20,
@@ -118,20 +100,6 @@ const NoteDetailScreen = () => {
       color: colors.text,
       marginTop: 15,
       marginBottom: 5,
-    },
-    entityGroup: {
-      marginBottom: 10,
-    },
-    entityGroupTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
-    entityName: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginLeft: 10,
     },
   });
 
@@ -293,47 +261,23 @@ const NoteDetailScreen = () => {
   );
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_note_details')}</Text>
-      </View>
-    );
+    return <ScreenLoading padded message={t('loading_note_details')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   if (!note) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{t('note_data_missing')}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={t('note_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={commonContainerStyles.container}>
       <Text style={styles.mainTitle}>{note.title}</Text>
-      
-      {note.body && (
-        <Text style={styles.detailText}>{t('body')}: {note.body}</Text>
-      )}
 
-      {note.extraNotes && (
-        <Text style={styles.detailText}>{t('extra_notes')}: {note.extraNotes}</Text>
-      )}
+      <DetailField label={t('body')} value={note.body || t('common_na')} />
+      <DetailField label={t('extra_notes')} value={note.extraNotes || t('common_na')} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager
@@ -345,22 +289,12 @@ const NoteDetailScreen = () => {
       <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
       <TagChipList tags={noteTags} />
 
-      <Text style={styles.sectionTitle}>{t('related_entities_title')}</Text>
-      {Object.values(groupedEntities).every(arr => arr.length === 0) ? (
-        <Text style={{ color: colors.textSecondary }}>{t('no_entities_related')}</Text>
-      ) : (
-        Object.entries(groupedEntities).map(([entityType, entityNames]) => (
-          entityNames.length > 0 && (
-            <View key={entityType} style={styles.entityGroup}>
-              <Text style={styles.entityGroupTitle}>{t(`${entityType.toLowerCase()}_plural`)}</Text>
-              {entityNames.map((name, index) => (
-                <Text key={index} style={styles.entityName}>- {name}</Text>
-              ))}
-            </View>
-          )
-        ))
-      )}
-      
+      <RelatedEntitiesList
+        title={t('related_entities_title')}
+        noItemsMessage={t('no_entities_related')}
+        groupedEntities={groupedEntities}
+      />
+
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
       </View>

@@ -5,7 +5,9 @@ import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item 
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import DetailField from '../../components/common/DetailField/DetailField';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
@@ -291,29 +293,6 @@ const LocationDetailsScreen = () => {
       color: colors.text,
       marginBottom: 10,
     },
-    detailItem: {
-      marginBottom: 10,
-    },
-    detailLabel: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.textSecondary,
-      marginBottom: 2,
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-    },
-    errorText: {
-      color: colors.error,
-      textAlign: 'center',
-      marginTop: 20,
-    },
-    centered: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     buttonContainer: {
       marginTop: 20,
     },
@@ -327,74 +306,26 @@ const LocationDetailsScreen = () => {
   });
 
   if (loading) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_location_details')}</Text>
-      </View>
-    );
+    return <ScreenLoading padded message={t('loading_location_details')} />;
   }
 
   if (error) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={styles.errorText}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   if (!location) {
-    return (
-      <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={styles.errorText}>{t('location_not_found')}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={t('location_not_found')} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>{location.name}</Text>
 
-      {location.description && (
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>{t('description')}</Text>
-          <Text style={styles.detailText}>{location.description}</Text>
-        </View>
-      )}
-
-      {location.climate && (
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>{t('field_climate')}</Text>
-          <Text style={styles.detailText}>{location.climate}</Text>
-        </View>
-      )}
-
-      {location.culture && (
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>{t('field_culture')}</Text>
-          <Text style={styles.detailText}>{location.culture}</Text>
-        </View>
-      )}
-
-      {location.politics && (
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>{t('field_politics')}</Text>
-          <Text style={styles.detailText}>{location.politics}</Text>
-        </View>
-      )}
-
-      {location.extraNotes && (
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>{t('extra_notes')}</Text>
-          <Text style={styles.detailText}>{location.extraNotes}</Text>
-        </View>
-      )}
+      <DetailField label={t('description')} value={location.description || t('common_na')} />
+      <DetailField label={t('field_climate')} value={location.climate || t('common_na')} />
+      <DetailField label={t('field_culture')} value={location.culture || t('common_na')} />
+      <DetailField label={t('field_politics')} value={location.politics || t('common_na')} />
+      <DetailField label={t('extra_notes')} value={location.extraNotes || t('common_na')} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager
@@ -403,7 +334,6 @@ const LocationDetailsScreen = () => {
         onPressMedia={openGalleryMediaViewer}
       />
 
-      <Text style={styles.sectionTitle}>{t('characters_in_location_title')}</Text>
       <LocationCharacterManager
         currentLocationId={locationId}
         availableScenes={allScenes}
@@ -411,13 +341,11 @@ const LocationDetailsScreen = () => {
         availableCharacters={allCharacters}
       />
 
-      <Text style={styles.sectionTitle}>{t('scenes_in_location_title')}</Text>
       <LocationSceneManager
         currentLocationId={locationId}
         availableScenes={allScenes}
       />
 
-      <Text style={styles.sectionTitle}>{t('items_in_location_title')}</Text>
       <LocationItemManager
         currentLocationId={locationId}
         availableItemJourneys={allItemJourneys}
@@ -426,7 +354,6 @@ const LocationDetailsScreen = () => {
         availableCharacters={allCharacters}
       />
 
-      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
       <NoteManager
         noteRelations={locationNoteRelations}
         availableNotes={allNotes}
@@ -437,11 +364,9 @@ const LocationDetailsScreen = () => {
         currentEntityId={locationId}
         currentEntityType="Location"
       />
-      
-      <View style={{ marginTop: 20 }}>
-        <Text style={[styles.detailLabel, { marginBottom: 5 }]}>{t('tags_title')}</Text>
-        <TagChipList tags={locationTags} />
-      </View>
+
+      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+      <TagChipList tags={locationTags} />
     </ScrollView>
   );
 };

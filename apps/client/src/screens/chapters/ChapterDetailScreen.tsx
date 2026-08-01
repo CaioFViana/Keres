@@ -1,4 +1,6 @@
 import ChapterSceneManager from '@/src/components/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
+import DetailField from '@/src/components/common/DetailField/DetailField';
+import { ScreenError, ScreenLoading } from '@/src/components/common/ScreenState/ScreenState';
 import NoteManager from '@/src/components/NoteManager';
 import TagChipList from '@/src/components/common/TagChipList/TagChipList'; // Import TagChipList
 import { useDrizzle } from '@/src/db';
@@ -10,13 +12,14 @@ import { createLocationService, LocationService } from '@/src/services/storymana
 import { createSceneService, SceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { Ionicons } from '@expo/vector-icons';
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ChaptersScreenNavigationProp } from './ChapterListScreen';
 
 // Define the parameter list for this screen
@@ -71,16 +74,8 @@ const ChapterDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-      padding: 20,
-    },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     mainTitle: {
       fontSize: 28,
       fontWeight: 'bold',
@@ -92,14 +87,6 @@ const ChapterDetailScreen = () => {
       fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 15,
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    errorText: {
-      color: colors.error,
     },
     buttonContainer: {
       marginTop: 20,
@@ -233,51 +220,30 @@ const ChapterDetailScreen = () => {
   );
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_chapter_details')}</Text>
-      </View>
-    );
+    return <ScreenLoading padded message={t('loading_chapter_details')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   if (!chapter) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{t('chapter_data_missing')}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={t('chapter_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={commonContainerStyles.container}>
       <Text style={styles.mainTitle}>{chapter.name}</Text>
-      <Text style={styles.detailText}>{t('summary')}: {chapter.summary || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('is_favorite')}: {chapter.isFavorite ? t('common_yes') : t('common_no')}</Text>
-      <Text style={styles.detailText}>{t('extra_notes')}: {chapter.extraNotes || t('common_na')}</Text>
+      <DetailField label={t('summary')} value={chapter.summary || t('common_na')} />
+      <DetailField label={t('is_favorite')} value={chapter.isFavorite ? t('common_yes') : t('common_no')} />
+      <DetailField label={t('extra_notes')} value={chapter.extraNotes || t('common_na')} />
 
-      <Text style={styles.sectionTitle}>{t('scenes_in_chapter_title')}</Text>
       <ChapterSceneManager
         currentChapterId={chapterId}
         availableScenes={allScenes}
         availableLocations={allLocations}
       />
 
-      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
       <NoteManager
         noteRelations={chapterNoteRelations}
         availableNotes={allNotes}

@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
@@ -12,6 +13,7 @@ import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
@@ -52,13 +54,9 @@ const ChoiceDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background, padding: 20 },
-    centerContent: { justifyContent: 'center', alignItems: 'center' },
     mainTitle: { fontSize: 28, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
-    subTitle: { fontSize: 20, fontWeight: '600', color: colors.textSecondary, marginBottom: 15 },
-    detailText: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    errorText: { color: colors.error },
     buttonContainer: { marginTop: 20 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
   });
@@ -124,20 +122,19 @@ const ChoiceDetailScreen = () => {
   );
 
   if (loading) {
-    return <View style={[styles.container, styles.centerContent]}><ActivityIndicator size="large" color={colors.primary} /><Text style={styles.detailText}>{t('loading_choice_details')}</Text></View>;
+    return <ScreenLoading padded message={t('loading_choice_details')} />;
   }
   if (error) {
-    return <View style={[styles.container, styles.centerContent]}><Text style={[styles.detailText, styles.errorText]}>{error}</Text><View style={styles.buttonContainer}><Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} /></View></View>;
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!choice) {
-    return <View style={[styles.container, styles.centerContent]}><Text style={[styles.detailText, styles.errorText]}>{t('choice_data_missing')}</Text><View style={styles.buttonContainer}><Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} /></View></View>;
+    return <ScreenError padded message={t('choice_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={commonContainerStyles.container}>
       <Text style={styles.mainTitle}>{choice.text}</Text>
 
-      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
       <NoteManager
         noteRelations={choiceNoteRelations}
         availableNotes={allNotes}

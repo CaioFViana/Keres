@@ -2,7 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import DetailField from '../../components/common/DetailField/DetailField';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
@@ -15,6 +17,7 @@ import { useItemStore } from '../../state/itemStore';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ItemJourneysScreenNavigationProp } from './ItemJourneyListScreen';
 
@@ -59,16 +62,12 @@ const ItemJourneyDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background, padding: 20 },
-    centerContent: { justifyContent: 'center', alignItems: 'center' },
     mainTitle: { fontSize: 28, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
     subTitle: { fontSize: 20, fontWeight: '600', color: colors.textSecondary, marginBottom: 15 },
-    detailText: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    errorText: { color: colors.error },
     buttonContainer: { marginTop: 20 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
-    detailLabel: { fontSize: 16, fontWeight: 'bold', color: colors.textSecondary, marginTop: 5 },
   });
 
   const fetchItemJourney = useCallback(async () => {
@@ -138,25 +137,24 @@ const ItemJourneyDetailScreen = () => {
   );
 
   if (loading) {
-    return <View style={[styles.container, styles.centerContent]}><ActivityIndicator size="large" color={colors.primary} /><Text style={styles.detailText}>{t('loading_item_journey_details')}</Text></View>;
+    return <ScreenLoading padded message={t('loading_item_journey_details')} />;
   }
   if (error) {
-    return <View style={[styles.container, styles.centerContent]}><Text style={[styles.detailText, styles.errorText]}>{error}</Text><View style={styles.buttonContainer}><Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} /></View></View>;
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!itemJourney) {
-    return <View style={[styles.container, styles.centerContent]}><Text style={[styles.detailText, styles.errorText]}>{t('item_journey_data_missing')}</Text><View style={styles.buttonContainer}><Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} /></View></View>;
+    return <ScreenError padded message={t('item_journey_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={commonContainerStyles.container}>
       <Text style={styles.mainTitle}>{relatedItem?.name || t('unknown_item')}</Text>
       <Text style={styles.subTitle}>{itemJourney.newState}</Text>
-      
-      {itemJourney.extraNotes && <Text style={styles.detailText}>{t('extra_notes')}: {itemJourney.extraNotes}</Text>}
-      {relatedScene && <Text style={styles.detailText}>{t('scene')}: {relatedScene.name}</Text>}
-      {newCharacterOwner && <Text style={styles.detailText}>{t('new_character_owner')}: {newCharacterOwner.name}</Text>}
-      
-      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+
+      <DetailField label={t('extra_notes')} value={itemJourney.extraNotes || t('common_na')} />
+      {relatedScene && <DetailField label={t('scene')} value={relatedScene.name} />}
+      {newCharacterOwner && <DetailField label={t('new_character_owner')} value={newCharacterOwner.name} />}
+
       <NoteManager
         noteRelations={itemJourneyNoteRelations}
         availableNotes={allNotes}

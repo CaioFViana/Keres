@@ -7,8 +7,10 @@ import { Location } from '@keres/shared/entities/Location'; // Import Location
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
+import DetailField from '../../components/common/DetailField/DetailField';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -29,6 +31,7 @@ import { createSceneService } from '../../services/storymanagement/SceneService'
 import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ScenesScreenNavigationProp } from './SceneListScreen';
 
@@ -116,16 +119,8 @@ const SceneDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-      padding: 20,
-    },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     mainTitle: {
       fontSize: 28,
       fontWeight: 'bold',
@@ -137,14 +132,6 @@ const SceneDetailScreen = () => {
       fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 15,
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    errorText: {
-      color: colors.error,
     },
     buttonContainer: {
       marginTop: 20,
@@ -378,38 +365,19 @@ const SceneDetailScreen = () => {
   );
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_scene_details')}</Text>
-      </View>
-    );
+    return <ScreenLoading padded message={t('loading_scene_details')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   if (!scene) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{t('scene_data_missing')}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={t('scene_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={commonContainerStyles.container}>
       {chapter && (
         <Text style={styles.subTitle}>
           {selectedStory?.type === 'linear' ? `${chapter.index}. ` : ''}
@@ -420,15 +388,15 @@ const SceneDetailScreen = () => {
         {selectedStory?.type === 'linear' ? `${scene.index}. ` : ''}
         {scene.name}
       </Text>
-      <Text style={styles.detailText}>{t('summary')}: {scene.summary || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('is_favorite')}: {scene.isFavorite ? t('common_yes') : t('common_no')}</Text>
-      <Text style={styles.detailText}>{t('extra_notes')}: {scene.extraNotes || t('common_na')}</Text>
+      <DetailField label={t('summary')} value={scene.summary || t('common_na')} />
+      <DetailField label={t('is_favorite')} value={scene.isFavorite ? t('common_yes') : t('common_no')} />
+      <DetailField label={t('extra_notes')} value={scene.extraNotes || t('common_na')} />
 
       {location && (
         <>
           <Text style={styles.sectionTitle}>{t('location')}</Text>
-          <Text style={styles.detailText}>{t('name')}: {location.name}</Text>
-          <Text style={styles.detailText}>{t('description')}: {location.description || t('common_na')}</Text>
+          <DetailField label={t('name')} value={location.name} />
+          <DetailField label={t('description')} value={location.description || t('common_na')} />
         </>
       )}
 
@@ -439,7 +407,6 @@ const SceneDetailScreen = () => {
         onPressMedia={openGalleryMediaViewer}
       />
 
-      <Text style={styles.sectionTitle}>{t('characters_title')}</Text>
       <CharacterRelationManager
         characterRelations={characterSceneRelations}
         availableCharacters={characters.filter(char => !char.isDeleted)}
@@ -450,7 +417,6 @@ const SceneDetailScreen = () => {
         currentSceneId={sceneId}
       />
 
-      <Text style={styles.sectionTitle}>{t('items_title')}</Text>
       <ItemSceneManager
         itemJourneys={itemJourneys}
         allItems={allItems.filter(item => !item.isDeleted)}
@@ -458,7 +424,6 @@ const SceneDetailScreen = () => {
         currentSceneId={sceneId}
       />
 
-      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
       <NoteRelationManager
         noteRelations={sceneNoteRelations}
         availableNotes={allNotes}

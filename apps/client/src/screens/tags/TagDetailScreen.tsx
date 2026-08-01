@@ -3,7 +3,10 @@ import { TagRelation } from '@keres/shared/entities/Tag'; // Import TagRelation
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import DetailField from '../../components/common/DetailField/DetailField';
+import RelatedEntitiesList from '../../components/common/RelatedEntitiesList/RelatedEntitiesList';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -12,6 +15,7 @@ import { createTagRelationService } from '../../services/storymanagement/TagRela
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { TagsScreenNavigationProp } from './TagListScreen';
 
@@ -74,27 +78,13 @@ const TagDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-      padding: 20,
-    },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     mainTitle: {
       fontSize: 28,
       fontWeight: 'bold',
       color: colors.text,
       marginBottom: 5,
-    },
-    subTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: colors.textSecondary,
-      marginBottom: 15,
     },
     detailText: {
       fontSize: 16,
@@ -114,27 +104,10 @@ const TagDetailScreen = () => {
       borderColor: colors.textSecondary,
       marginRight: 10,
     },
-    errorText: {
-      color: colors.error,
-    },
     buttonContainer: {
       marginTop: 20,
     },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
-    entityGroup: {
-      marginBottom: 10,
-    },
-    entityGroupTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
-    entityName: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginLeft: 10,
-    },
   });
 
   const fetchTag = useCallback(async () => {
@@ -274,40 +247,21 @@ const TagDetailScreen = () => {
   );
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_tag_details')}</Text>
-      </View>
-    );
+    return <ScreenLoading padded message={t('loading_tag_details')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   if (!tag) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{t('tag_data_missing')}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={t('tag_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={commonContainerStyles.container}>
       <Text style={styles.mainTitle}>{tag.name}</Text>
-      
+
       {tag.color && (
         <View style={styles.colorDisplayContainer}>
           <View style={[styles.colorCircle, { backgroundColor: tag.color }]} />
@@ -315,26 +269,14 @@ const TagDetailScreen = () => {
         </View>
       )}
 
-      {tag.extraNotes && (
-        <Text style={styles.detailText}>{t('extra_notes')}: {tag.extraNotes}</Text>
-      )}
+      <DetailField label={t('extra_notes')} value={tag.extraNotes || t('common_na')} />
 
-      <Text style={styles.sectionTitle}>{t('tagged_entities_title')}</Text>
-      {Object.values(groupedEntities).every(arr => arr.length === 0) ? (
-        <Text style={{ color: colors.textSecondary }}>{t('no_entities_tagged')}</Text>
-      ) : (
-        Object.entries(groupedEntities).map(([entityType, entityNames]) => (
-          entityNames.length > 0 && (
-            <View key={entityType} style={styles.entityGroup}>
-              <Text style={styles.entityGroupTitle}>{t(`${entityType.toLowerCase()}_plural`)}</Text>
-              {entityNames.map((name, index) => (
-                <Text key={index} style={styles.entityName}>- {name}</Text>
-              ))}
-            </View>
-          )
-        ))
-      )}
-      
+      <RelatedEntitiesList
+        title={t('tagged_entities_title')}
+        noItemsMessage={t('no_entities_tagged')}
+        groupedEntities={groupedEntities}
+      />
+
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
       </View>

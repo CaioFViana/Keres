@@ -4,7 +4,9 @@ import { ItemJourney } from '@keres/shared/entities/Item';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import DetailField from '../../components/common/DetailField/DetailField';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import ItemJourneyManager from '../../components/ItemManager/ItemJourneyManager';
@@ -20,6 +22,7 @@ import { createItemService } from '../../services/storymanagement/ItemService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ItemsScreenNavigationProp } from './ItemListScreen';
 
@@ -71,16 +74,11 @@ const ItemDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background, padding: 20 },
-    centerContent: { justifyContent: 'center', alignItems: 'center' },
     mainTitle: { fontSize: 28, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
-    subTitle: { fontSize: 20, fontWeight: '600', color: colors.textSecondary, marginBottom: 15 },
-    detailText: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    errorText: { color: colors.error },
     buttonContainer: { marginTop: 20 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
-    detailLabel: { fontSize: 16, fontWeight: 'bold', color: colors.textSecondary, marginTop: 5 },
   });
 
   const fetchItem = useCallback(async () => {
@@ -193,24 +191,26 @@ const ItemDetailScreen = () => {
   );
 
   if (loading) {
-    return <View style={[styles.container, styles.centerContent]}><ActivityIndicator size="large" color={colors.primary} /><Text style={styles.detailText}>{t('loading_item_details')}</Text></View>;
+    return <ScreenLoading padded message={t('loading_item_details')} />;
   }
   if (error) {
-    return <View style={[styles.container, styles.centerContent]}><Text style={[styles.detailText, styles.errorText]}>{error}</Text><View style={styles.buttonContainer}><Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} /></View></View>;
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!item) {
-    return <View style={[styles.container, styles.centerContent]}><Text style={[styles.detailText, styles.errorText]}>{t('item_data_missing')}</Text><View style={styles.buttonContainer}><Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} /></View></View>;
+    return <ScreenError padded message={t('item_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
+  const owner = item.characterOwnerId ? allCharacters.find(c => c.id === item.characterOwnerId) : undefined;
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={commonContainerStyles.container}>
       <Text style={styles.mainTitle}>{item.name}</Text>
-      {item.description && <Text style={styles.detailText}>{item.description}</Text>}
-      {item.category && <Text style={styles.detailText}>Category: {item.category}</Text>}
-      {item.initialState && <Text style={styles.detailText}>Initial State: {item.initialState}</Text>}
-      {item.characterOwnerId && <Text style={styles.detailText}>Owner ID: {item.characterOwnerId}</Text>}
-      {item.extraNotes && <Text style={styles.detailText}>Extra Notes: {item.extraNotes}</Text>}
-      <Text style={styles.detailText}>Is Favorite: {item.isFavorite ? t('yes') : t('no')}</Text>
+      <DetailField label={t('description')} value={item.description || t('common_na')} />
+      <DetailField label={t('category')} value={item.category || t('common_na')} />
+      <DetailField label={t('initial_state')} value={item.initialState || t('common_na')} />
+      <DetailField label={t('character_owner')} value={owner?.name || t('common_na')} />
+      <DetailField label={t('extra_notes')} value={item.extraNotes || t('common_na')} />
+      <DetailField label={t('is_favorite')} value={item.isFavorite ? t('common_yes') : t('common_no')} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager
@@ -219,7 +219,6 @@ const ItemDetailScreen = () => {
         onPressMedia={openGalleryMediaViewer}
       />
 
-      <Text style={styles.sectionTitle}>{t('item_journeys_title')}</Text>
       <ItemJourneyManager
         allItemJourneys={allItemJourneys}
         allItems={allItems}
@@ -228,7 +227,6 @@ const ItemDetailScreen = () => {
         currentItemId={itemId}
       />
 
-      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
       <NoteManager
         noteRelations={itemNoteRelations}
         availableNotes={allNotes}

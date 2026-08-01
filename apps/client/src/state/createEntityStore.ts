@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create, StateCreator } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { AppDrizzleClient } from '../db';
@@ -73,14 +74,7 @@ export interface EntityStoreConfig<TKey extends string, TEntity, TService> {
    */
   fetchOnSearchTermChange?: boolean;
   errorMessages?: { fetch?: string; toggleFavorite?: string };
-  /**
-   * Persists the filter/sort selection under this key.
-   *
-   * Note this only takes effect on web: the backing store is `localStorage`, which does
-   * not exist in React Native's runtime, and `createJSONStorage` swallows the resulting
-   * error and disables persistence. That matches the previous per-store behaviour; it is
-   * centralised here so switching to AsyncStorage is a one-line change.
-   */
+  /** Persists the filter/sort selection under this key, via AsyncStorage. */
   persistKey?: string;
   /** Store-specific actions (reordering, etc.) that the shared core doesn't cover. */
   extraActions?: (helpers: EntityStoreHelpers<TKey, TEntity, TService>) => object;
@@ -262,7 +256,7 @@ export function createEntityStore<
   return create<Store>()(
     persist(creator, {
       name: config.persistKey,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => AsyncStorage),
       // Only the user's filter/sort selection is worth restoring - never the entity
       // rows themselves (they belong to the local DB) nor the live service handle.
       partialize: (state) =>

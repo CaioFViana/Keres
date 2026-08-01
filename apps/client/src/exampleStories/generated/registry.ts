@@ -12,6 +12,8 @@ import goldilocks_en from '../content/goldilocks/en.json';
 import goldilocks_pt from '../content/goldilocks/pt.json';
 import littleMermaid_en from '../content/little-mermaid/en.json';
 import littleMermaid_pt from '../content/little-mermaid/pt.json';
+import princessKaguya_en from '../content/princess-kaguya/en.json';
+import princessKaguya_pt from '../content/princess-kaguya/pt.json';
 
 export const exampleStoryRegistry: ExampleStoryEntry[] = [
   {
@@ -47,6 +49,13 @@ export const exampleStoryRegistry: ExampleStoryEntry[] = [
     languages: [
         { language: 'en', story: littleMermaid_en },
         { language: 'pt', story: littleMermaid_pt },
+    ],
+  },
+  {
+    slug: 'princess-kaguya',
+    languages: [
+        { language: 'en', story: princessKaguya_en },
+        { language: 'pt', story: princessKaguya_pt },
     ],
   },
 ];

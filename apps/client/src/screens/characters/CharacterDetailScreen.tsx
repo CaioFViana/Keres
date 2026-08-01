@@ -6,10 +6,12 @@ import { Location } from '@keres/shared/entities/Location'; // Import Location e
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Added Alert
+import { Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Added Alert
 import CharacterLocationManager from '../../components/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
 import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import DetailField from '../../components/common/DetailField/DetailField';
+import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import ItemCharacterManager from '../../components/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
@@ -29,6 +31,7 @@ import { createLocationService, LocationService } from '../../services/storymana
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharacterListScreen';
 
@@ -102,16 +105,8 @@ const CharacterDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
+  const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-      padding: 20,
-    },
-    centerContent: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     mainTitle: {
       fontSize: 28,
       fontWeight: 'bold',
@@ -123,14 +118,6 @@ const CharacterDetailScreen = () => {
       fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 15,
-    },
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    errorText: {
-      color: colors.error,
     },
     buttonContainer: {
       marginTop: 20,
@@ -448,53 +435,34 @@ const CharacterDetailScreen = () => {
   );
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.detailText}>{t('loading_character_details')}</Text>
-      </View>
-    );
+    return <ScreenLoading padded message={t('loading_character_details')} />;
   }
 
   if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
 
   if (!character) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={[styles.detailText, styles.errorText]}>{t('character_data_missing')}</Text>
-        <View style={styles.buttonContainer}>
-          <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <ScreenError padded message={t('character_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={commonContainerStyles.container}>
       <Text style={styles.mainTitle}>{character.name}</Text>
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
-      
-      <Text style={styles.detailText}>{t('gender')}: {character.gender || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('race')}: {character.race || t('common_na')}</Text>
-      {character.subrace && <Text style={styles.detailText}>{t('subrace')}: {character.subrace}</Text>}
-      <Text style={styles.detailText}>{t('description')}: {character.description || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('personality')}: {character.personality || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('motivation')}: {character.motivation || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('qualities')}: {character.qualities || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('weaknesses')}: {character.weaknesses || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('biography')}: {character.biography || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('planned_timeline')}: {character.plannedTimeline || t('common_na')}</Text>
-      <Text style={styles.detailText}>{t('is_favorite')}: {character.isFavorite ? t('common_yes') : t('common_no')}</Text>
-      <Text style={styles.detailText}>{t('extra_notes')}: {character.extraNotes || t('common_na')}</Text>
+
+      <DetailField label={t('gender')} value={character.gender || t('common_na')} />
+      <DetailField label={t('race')} value={character.race || t('common_na')} />
+      {character.subrace && <DetailField label={t('subrace')} value={character.subrace} />}
+      <DetailField label={t('description')} value={character.description || t('common_na')} />
+      <DetailField label={t('personality')} value={character.personality || t('common_na')} />
+      <DetailField label={t('motivation')} value={character.motivation || t('common_na')} />
+      <DetailField label={t('qualities')} value={character.qualities || t('common_na')} />
+      <DetailField label={t('weaknesses')} value={character.weaknesses || t('common_na')} />
+      <DetailField label={t('biography')} value={character.biography || t('common_na')} />
+      <DetailField label={t('planned_timeline')} value={character.plannedTimeline || t('common_na')} />
+      <DetailField label={t('is_favorite')} value={character.isFavorite ? t('common_yes') : t('common_no')} />
+      <DetailField label={t('extra_notes')} value={character.extraNotes || t('common_na')} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager
@@ -503,7 +471,6 @@ const CharacterDetailScreen = () => {
         onPressMedia={openGalleryMediaViewer}
       />
 
-      <Text style={styles.sectionTitle}>{t('character_relations_title')}</Text>
       <CharacterRelationManager
         characterRelations={characterRelations}
         characters={allCharacters}
@@ -514,7 +481,6 @@ const CharacterDetailScreen = () => {
         currentCharacterId={characterId}
       />
 
-      <Text style={styles.sectionTitle}>{t('character_scenes_title')}</Text>
       <CharacterSceneManager
         characterSceneRelations={characterSceneRelations}
         availableScenes={allScenes}
@@ -525,7 +491,6 @@ const CharacterDetailScreen = () => {
         editable={false}
       />
 
-      <Text style={styles.sectionTitle}>{t('character_items_title')}</Text>
       <ItemCharacterManager
         allItems={allItems}
         allItemJourneys={allItemJourneys}
@@ -533,7 +498,6 @@ const CharacterDetailScreen = () => {
         currentCharacterId={characterId}
       />
 
-      <Text style={styles.sectionTitle}>{t('character_locations_title')}</Text>
       <CharacterLocationManager
         characterSceneRelations={characterSceneRelations}
         availableScenes={allScenes}
@@ -541,7 +505,6 @@ const CharacterDetailScreen = () => {
         currentCharacterId={characterId}
       />
 
-      <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
       <NoteManager
         noteRelations={characterNoteRelations}
         availableNotes={allNotes}

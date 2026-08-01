@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { relationSectionStyleDefs } from './relationSectionStyles';
 
 
 // Generic types for items and relations, similar to RelationManager
@@ -34,45 +35,7 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
   const [isCollapsed, setIsCollapsed] = useState(true); // Add isCollapsed state, default to true
 
   const styles = StyleSheet.create({
-    container: {
-      marginTop: 0,
-    },
-    relationItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      backgroundColor: colors.surface,
-      borderRadius: 8,
-      marginBottom: 8,
-    },
-    relationText: {
-      fontSize: 16,
-      color: colors.text,
-      flex: 1,
-    },
-    collapsibleHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 5,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      marginBottom: 10,
-      borderColor: colors.border,
-      borderWidth: 1,
-    },
-    collapsibleHeaderText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    collapsibleContent: {
-      paddingHorizontal: 5,
-      marginBottom: 10,
-    },
+    ...relationSectionStyleDefs(colors),
   });
 
   const filteredRelations = relations.filter(rel => !rel.isDeleted);

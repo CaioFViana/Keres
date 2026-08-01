@@ -5,6 +5,7 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../theme';
 import Select from '../common/Select/Select';
 import TextInput from '../common/TextInput/TextInput'; // Import TextInput
+import { relationSectionStyleDefs } from './relationSectionStyles';
 
 // Generic types for items and relations
 export type BaseItem = { id: string; isDeleted: boolean; };
@@ -71,24 +72,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
   const [isCollapsed, setIsCollapsed] = useState(true); // Add isCollapsed state, default to true
 
   const styles = StyleSheet.create({
-    container: {
-      marginTop: 0,
-    },
-    relationItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      backgroundColor: colors.surface,
-      borderRadius: 8,
-      marginBottom: 8,
-    },
-    relationText: {
-      fontSize: 16,
-      color: colors.text,
-      flex: 1,
-    },
+    ...relationSectionStyleDefs(colors),
     deleteButton: {
       marginLeft: 10,
       padding: 5,
@@ -133,27 +117,6 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
         alignItems: 'center',
         gap: 10,
         marginBottom: 10,
-    },
-    collapsibleHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 5,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      marginBottom: 10,
-      borderColor: colors.border,
-      borderWidth: 1,
-    },
-    collapsibleHeaderText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    collapsibleContent: {
-      paddingHorizontal: 5,
-      marginBottom: 10,
     },
   });
 

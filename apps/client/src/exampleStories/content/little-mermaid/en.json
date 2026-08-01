@@ -1,6 +1,6 @@
 {
   "story": {
-    "id": "STORYLITTLEMERMAID00000000",
+    "id": "01KYXBHD0ME7CZXCJDMH2Q8586",
     "userId": "EXAMPLEUSERPLACEHOLDER0000",
     "title": "The Little Mermaid",
     "type": "linear",
@@ -18,8 +18,8 @@
   },
   "chapters": [
     {
-      "id": "chapter-1",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "Daughter of the Sea",
       "index": 1,
       "summary": null,
@@ -34,10 +34,10 @@
   ],
   "scenes": [
     {
-      "id": "scene-5",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0M83N1C3AX7JH04JD2",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
       "name": "The world above the waves",
       "index": 0,
       "summary": "On turning fifteen, the little mermaid rises to the surface for the first time and falls, from afar, for a prince celebrating his birthday aboard a ship.",
@@ -56,10 +56,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-6",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0MQP5BEK9PFDBE3580",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
       "name": "A rescue in silence",
       "index": 1,
       "summary": "A storm sinks the ship; the little mermaid saves the Prince from drowning and leaves him by a temple, watching in hiding as a young woman finds him there - he will never know who truly saved him.",
@@ -78,10 +78,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-7",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0MKXH274VYGG8CD6H4",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MESF281V4YSN4MAA5",
       "name": "The price of a soul",
       "index": 2,
       "summary": "Her grandmother tells her that only a human's love can grant a mermaid an immortal soul; desperate, she seeks out the Sea Witch, who trades her voice for a pair of human legs - every step will feel like walking on knives, and if the Prince ever marries another, she will turn to sea foam at dawn.",
@@ -100,10 +100,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-8",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0M17B0T316JQAMJBEZ",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
       "name": "A silent companion",
       "index": 3,
       "summary": "Mute but graceful, she becomes the Prince's favorite companion at court; he is fond of her, but confesses his heart belongs to the girl he believes saved him from the wreck.",
@@ -122,10 +122,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-9",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0MX4ZRJ6V6EE57QCXG",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
       "name": "A royal wedding",
       "index": 4,
       "summary": "The Prince marries a neighboring princess - who is, in truth, the girl from the temple; heartbroken, the little mermaid watches the ceremony aboard the ship, knowing what the dawn will bring.",
@@ -144,10 +144,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-10",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0MYMJ2B760NNHVCP90",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
       "name": "Her sisters' gift",
       "index": 5,
       "summary": "Her sisters surface with a magic knife, traded with the Witch for their own hair: if she kills the Prince before sunrise and lets his blood touch her feet, she will become a mermaid again; if not, she will perish.",
@@ -166,10 +166,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-11",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0MQG0B9N41TXGDA4V3",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
       "name": "Daughter of the air",
       "index": 6,
       "summary": "Unable to harm the man she loves, the little mermaid casts the knife and herself into the sea at dawn - but instead of turning to foam, she rises among the daughters of the air, spirits who may earn an immortal soul after three hundred years of good deeds.",
@@ -191,8 +191,8 @@
   "choices": [],
   "characters": [
     {
-      "id": "CHARLITTLEMERMAIDSEREIA000",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "The Little Mermaid",
       "title": null,
       "gender": null,
@@ -214,8 +214,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARLITTLEMERMAIDREIDOMAR0",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MZVSA263GJW277EVN",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "The Sea King",
       "title": "King of the sea",
       "gender": null,
@@ -237,8 +237,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARLITTLEMERMAIDAVO000000",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0M7HY3ZTY4ZB6KK0DB",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "The Grandmother",
       "title": null,
       "gender": null,
@@ -260,8 +260,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARLITTLEMERMAIDBRUXA0000",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MCQ94ERVCE9ZVYN6E",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "The Sea Witch",
       "title": null,
       "gender": null,
@@ -283,8 +283,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARLITTLEMERMAIDPRINCIPE0",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MGZX5FHEC1RQ243PV",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "The Prince",
       "title": null,
       "gender": null,
@@ -308,8 +308,8 @@
   ],
   "locations": [
     {
-      "id": "location-2",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "The Sea Kingdom",
       "description": "The coral and shell palace where the royal family of the deep ocean lives.",
       "climate": null,
@@ -324,8 +324,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-3",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MESF281V4YSN4MAA5",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "The Witch's Lair",
       "description": "The shadowy dwelling beyond the whirlpools, where the Sea Witch strikes her bargains.",
       "climate": null,
@@ -340,8 +340,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-4",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MPFV1BDE676KHZCBV",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "The Prince's Palace",
       "description": "The seaside castle where the Prince lives, on the surface.",
       "climate": null,
@@ -358,8 +358,8 @@
   ],
   "worldRules": [
     {
-      "id": "worldrule-12",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MH44DFPQ2ZT6MMV5R",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "title": "The Price of a Soul",
       "description": "Mermaids live three hundred years but have no immortal soul - only a human's love and marriage could grant one. If that last chance fails, they do not die: they dissolve into sea foam at dawn.",
       "isFavorite": false,
@@ -378,10 +378,10 @@
   "suggestions": [],
   "characterRelations": [
     {
-      "id": "charrel-13",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "character1Id": "CHARLITTLEMERMAIDSEREIA000",
-      "character2Id": "CHARLITTLEMERMAIDREIDOMAR0",
+      "id": "01KYXBHD0M2X4TZ0WEEYKMK96G",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "character1Id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "character2Id": "01KYXBHD0MZVSA263GJW277EVN",
       "relationType": "Father and daughter",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -390,10 +390,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-14",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "character1Id": "CHARLITTLEMERMAIDSEREIA000",
-      "character2Id": "CHARLITTLEMERMAIDAVO000000",
+      "id": "01KYXBHD0M53SWXM71P7SDH9QQ",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "character1Id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "character2Id": "01KYXBHD0M7HY3ZTY4ZB6KK0DB",
       "relationType": "Granddaughter and grandmother",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -402,10 +402,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-15",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "character1Id": "CHARLITTLEMERMAIDSEREIA000",
-      "character2Id": "CHARLITTLEMERMAIDPRINCIPE0",
+      "id": "01KYXBHD0MSMJQ956T5ZYBYHMF",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "character1Id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "character2Id": "01KYXBHD0MGZX5FHEC1RQ243PV",
       "relationType": "Unrequited love",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -414,10 +414,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-16",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "character1Id": "CHARLITTLEMERMAIDSEREIA000",
-      "character2Id": "CHARLITTLEMERMAIDBRUXA0000",
+      "id": "01KYXBHD0M1VZ6Y5NCYGFHSFNX",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "character1Id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "character2Id": "01KYXBHD0MCQ94ERVCE9ZVYN6E",
       "relationType": "Bargain",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",

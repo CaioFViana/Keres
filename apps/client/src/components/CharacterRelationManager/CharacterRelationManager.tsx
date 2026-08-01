@@ -3,9 +3,10 @@ import { Character } from '@keres/shared/entities/Character';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Removed FlatList
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../theme';
 import { createULID } from '../../utils/entityUtils';
+import { relationSectionStyleDefs } from '../RelationManager/relationSectionStyles';
 import Button from '../common/Button/Button';
 import CharacterRelationModal from './CharacterRelationModal';
 
@@ -33,6 +34,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRelation, setEditingRelation] = useState<CharacterRelation | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const getCharacterName = (charId: string) => {
     return characters.find(char => char.id === charId)?.name || `Unknown Character (${charId})`;
@@ -98,86 +100,71 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
   };
 
   const styles = StyleSheet.create({
-    container: {
+    ...relationSectionStyleDefs(colors),
+    relationTextGroup: {
       flex: 1,
-      padding: 10,
     },
-    headerRow: {
+    relationTypeText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    actionsRow: {
       flexDirection: 'row',
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.card,
-    },
-    row: {
-      flexDirection: 'row',
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      alignItems: 'center',
-    },
-    cell: {
-      flex: 1,
-      paddingHorizontal: 5,
-      color: colors.text,
-    },
-    headerCell: {
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    actionsCell: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      width: 100, // Fixed width for action buttons
+      gap: 12,
     },
     buttonContainer: {
       marginBottom: 10,
     },
     noRelationsText: {
       color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 20,
     },
   });
 
   return (
     <View style={styles.container}>
-      {editable && (
-        <View style={styles.buttonContainer}>
-          <Button onPress={handleAddRelation}>
-            {t('add_character_relation')}
-          </Button>
-        </View>
-      )}
+      <TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)} style={styles.collapsibleHeader}>
+        <Text style={styles.collapsibleHeaderText}>{t('character_relations_title')}</Text>
+        <Ionicons name={isCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'} size={24} color={colors.text} />
+      </TouchableOpacity>
 
-      {filteredRelations.length === 0 ? (
-        <Text style={styles.noRelationsText}>{t('no_character_relations_found')}</Text>
-      ) : (
-        <View>
-          <View style={styles.headerRow}>
-            <Text style={[styles.cell, styles.headerCell]}>{t('related_character')}</Text>
-            <Text style={[styles.cell, styles.headerCell]}>{t('relation_type')}</Text>
-            {editable && <Text style={styles.actionsCell}></Text>}
-          </View>
-          {filteredRelations.map((item) => { // Replaced FlatList with map
-            const relatedChar = item.charId1 === currentCharacterId ? item.charId2 : item.charId1;
-            return (
-              <View key={item.id} style={styles.row}>
-                <Text style={styles.cell}>{getCharacterName(relatedChar)}</Text>
-                <Text style={styles.cell}>{item.relationType}</Text>
-                {editable && (
-                  <View style={styles.actionsCell}>
-                    <TouchableOpacity onPress={() => handleEditRelation(item)}>
-                      <Ionicons name="create-outline" size={24} color={colors.primary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteRelation(item.id)}>
-                      <Ionicons name="trash-outline" size={24} color={colors.error} />
-                    </TouchableOpacity>
+      {!isCollapsed && (
+        <View style={styles.collapsibleContent}>
+          {editable && (
+            <View style={styles.buttonContainer}>
+              <Button onPress={handleAddRelation}>
+                {t('add_character_relation')}
+              </Button>
+            </View>
+          )}
+
+          {filteredRelations.length === 0 ? (
+            <Text style={styles.noRelationsText}>{t('no_character_relations_found')}</Text>
+          ) : (
+            <View>
+              {filteredRelations.map((item) => {
+                const relatedChar = item.charId1 === currentCharacterId ? item.charId2 : item.charId1;
+                return (
+                  <View key={item.id} style={styles.relationItem}>
+                    <View style={styles.relationTextGroup}>
+                      <Text style={styles.relationText}>{getCharacterName(relatedChar)}</Text>
+                      <Text style={styles.relationTypeText}>{item.relationType}</Text>
+                    </View>
+                    {editable && (
+                      <View style={styles.actionsRow}>
+                        <TouchableOpacity onPress={() => handleEditRelation(item)}>
+                          <Ionicons name="create-outline" size={22} color={colors.primary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteRelation(item.id)}>
+                          <Ionicons name="trash-outline" size={22} color={colors.error} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-            );
-          })}
+                );
+              })}
+            </View>
+          )}
         </View>
       )}
 

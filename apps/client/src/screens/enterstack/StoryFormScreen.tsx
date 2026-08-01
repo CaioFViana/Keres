@@ -160,7 +160,7 @@ const StoryFormScreen = () => {
             if (storyId) {
               try {
                 setLoading(true);
-                await storyService().deleteStory(userId, storyId);
+                await storyService().deleteStory(storyId);
                 Alert.alert(t('success'), t('story_deleted_successfully'));
                 navigation.goBack();
               } catch (err) {

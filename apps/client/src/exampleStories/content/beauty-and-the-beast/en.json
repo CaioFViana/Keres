@@ -1,6 +1,6 @@
 {
   "story": {
-    "id": "STORYBEAUTYANDTHEBEAST0000",
+    "id": "01KYXBHD0FH380VGZSZQMXQEWM",
     "userId": "EXAMPLEUSERPLACEHOLDER0000",
     "title": "Beauty and the Beast",
     "type": "branching",
@@ -18,8 +18,8 @@
   },
   "chapters": [
     {
-      "id": "chapter-1",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "A Promise of Return",
       "index": 1,
       "summary": null,
@@ -34,10 +34,10 @@
   ],
   "scenes": [
     {
-      "id": "scene-5",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0F6JAR48EF3W034H4S",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "The requested rose",
       "index": 0,
       "summary": "Lost in the forest on his way home from a journey, the Merchant shelters in the Beast's castle and picks a rose for Beauty, the only gift she had asked for - and the Beast demands his life in payment for the theft.",
@@ -56,10 +56,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-6",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0FT4ZRD77W22A1SPXT",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "Beauty's offer",
       "index": 1,
       "summary": "Hearing what happened, Beauty rushes to the castle and offers to live there in her father's place.",
@@ -78,10 +78,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-7",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0F2WTDYAAN0EMWZA7K",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "A strange kindness",
       "index": 2,
       "summary": "The Beast treats Beauty with unexpected courtesy, granting her every comfort, and each night asks if she will marry him; she always refuses, though she begins to enjoy his company.",
@@ -100,10 +100,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-8",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0FY4PN6VXMXA3AAH94",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FKEFPV8HHMXJJBST2",
       "name": "Leave to depart",
       "index": 3,
       "summary": "Beauty grows homesick, and the Beast gives her a magic ring to visit her family for one week - warning that he will die of grief if she does not return in time.",
@@ -122,10 +122,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-9",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0FP0MCK3BYTQ2F68S3",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
       "name": "Her sisters' envy",
       "index": 4,
       "summary": "Seeing Beauty happy and well cared for, her sisters talk her into staying past the promised week, hoping the Beast will suffer for it.",
@@ -144,10 +144,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-10",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0FF1H85QR8W0FP4RAY",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
       "name": "An early return",
       "index": 5,
       "summary": "Beauty sees through her sisters' envy behind their pleading and decides to return to the castle before the week is even over.",
@@ -166,10 +166,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-11",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "A vision of sorrow",
       "index": 6,
       "summary": "Whether from the delay or from an early ache of longing, Beauty dreams - or senses - that the Beast is wasting away alone in the garden, and rushes back to him.",
@@ -188,10 +188,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-12",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FKEFPV8HHMXJJBST2",
       "name": "Beauty's confession",
       "index": 7,
       "summary": "Finding the Beast by the fountain, Beauty realizes she cannot live without him and finally confesses her love.",
@@ -210,10 +210,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-13",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0FVKWVAB6FKV7FP326",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "A merciful ending",
       "index": 8,
       "summary": "The curse breaks and the Beast becomes a prince again. Out of kindness, Beauty asks the Fairy to spare her envious sisters, who live on humbled but free.",
@@ -232,10 +232,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-14",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0F6KZ6K8P86KN8ETRW",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "A just ending",
       "index": 9,
       "summary": "The curse breaks and the Beast becomes a prince again. The Fairy, however, judges the sisters' envy without mercy, turning them to stone statues at the castle gate until they learn to truly repent.",
@@ -256,10 +256,10 @@
   ],
   "choices": [
     {
-      "id": "choice-15",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-5",
-      "nextSceneId": "scene-6",
+      "id": "01KYXBHD0FYG19BNN68ADCP4Q0",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
+      "nextSceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
       "text": "Beauty goes to the castle",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -269,10 +269,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-16",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-6",
-      "nextSceneId": "scene-7",
+      "id": "01KYXBHD0FZ68JCDMR2AEYA347",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
+      "nextSceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
       "text": "The Beast accepts the trade",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -282,10 +282,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-17",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-7",
-      "nextSceneId": "scene-8",
+      "id": "01KYXBHD0FNV64B29THWZ031VK",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
+      "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "text": "Beauty asks to visit her family",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -295,10 +295,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-18",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-8",
-      "nextSceneId": "scene-9",
+      "id": "01KYXBHD0FB3NHYC94DQKV5B7P",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
+      "nextSceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
       "text": "Her sisters beg Beauty to stay longer",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -308,10 +308,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-19",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-8",
-      "nextSceneId": "scene-10",
+      "id": "01KYXBHD0F2FR0K874TWRMB5ZN",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
+      "nextSceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
       "text": "Beauty sees through her sisters' envy and returns early",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -321,10 +321,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-20",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-9",
-      "nextSceneId": "scene-11",
+      "id": "01KYXBHD0F0K30BESNFF10V27W",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
+      "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "text": "The week passes and Beauty is still at home",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -334,10 +334,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-21",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-10",
-      "nextSceneId": "scene-11",
+      "id": "01KYXBHD0FQH6AP1693RJ4GVJP",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
+      "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "text": "Beauty reaches the castle earlier than promised",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -347,10 +347,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-22",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-11",
-      "nextSceneId": "scene-12",
+      "id": "01KYXBHD0F7R9FK63S9TJSAB06",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
+      "nextSceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
       "text": "Beauty rushes to the Beast's side",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -360,10 +360,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-23",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-12",
-      "nextSceneId": "scene-13",
+      "id": "01KYXBHD0FBVHJVASASYHT9CFA",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
+      "nextSceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
       "text": "Beauty pleads mercy for her sisters",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -373,10 +373,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-24",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-12",
-      "nextSceneId": "scene-14",
+      "id": "01KYXBHD0FQE9X9A4MPDZMADCR",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
+      "nextSceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "text": "The Fairy decides to judge the sisters' envy",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -388,8 +388,8 @@
   ],
   "characters": [
     {
-      "id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "Beauty",
       "title": null,
       "gender": null,
@@ -411,8 +411,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTFERA0",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "The Beast",
       "title": "Cursed prince",
       "gender": null,
@@ -434,8 +434,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTMERCA",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FTSMRJEM98HEJJXWA",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "The Merchant",
       "title": "Beauty's father",
       "gender": null,
@@ -457,8 +457,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTIRMA1",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FJ3X4WT2JMHTHE360",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "The Elder Sister",
       "title": null,
       "gender": null,
@@ -480,8 +480,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTIRMA2",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FPZMZ9C3EWEP05AZX",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "The Second Sister",
       "title": null,
       "gender": null,
@@ -503,8 +503,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTFADA0",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "The Fairy",
       "title": null,
       "gender": null,
@@ -528,8 +528,8 @@
   ],
   "locations": [
     {
-      "id": "location-2",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FT43JJV1HABMERBPA",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "The Merchant's House",
       "description": "The modest house where Beauty lives with her father and sisters since the family fortune was lost.",
       "climate": null,
@@ -544,8 +544,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-3",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "The Beast's Castle",
       "description": "An enchanted castle where Beauty's every wish is granted, except to see the Beast's true face.",
       "climate": null,
@@ -560,8 +560,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-4",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FKEFPV8HHMXJJBST2",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "The Enchanted Garden",
       "description": "The garden and fountain where the Beast seeks comfort in his loneliness.",
       "climate": null,
@@ -578,8 +578,8 @@
   ],
   "worldRules": [
     {
-      "id": "worldrule-25",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0F4BB8WS98MC1Z1Y6P",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "title": "A Promise of Return",
       "description": "The Beast can only be freed if he is loved of his own free will. When he allows Beauty to visit her family, he warns her: if she does not return within the promised time, he will die of sorrow.",
       "isFavorite": false,
@@ -598,10 +598,10 @@
   "suggestions": [],
   "characterRelations": [
     {
-      "id": "charrel-26",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTMERCA",
+      "id": "01KYXBHD0FETYZS3CQAVQC6C3D",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FTSMRJEM98HEJJXWA",
       "relationType": "Father and daughter",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -610,10 +610,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-27",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTFERA0",
+      "id": "01KYXBHD0F6D63EBTC5DDRFV8S",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FE9MY6A6A9B1GT176",
       "relationType": "True love",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -622,10 +622,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-28",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTIRMA1",
+      "id": "01KYXBHD0FKH79QNFWWY87BXZG",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FJ3X4WT2JMHTHE360",
       "relationType": "Sisters",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -634,10 +634,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-29",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTIRMA2",
+      "id": "01KYXBHD0FAZT1VFF7F53KN34T",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FPZMZ9C3EWEP05AZX",
       "relationType": "Sisters",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -646,10 +646,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-30",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTFADA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTFERA0",
+      "id": "01KYXBHD0FV44E32DK6YE5MRQ5",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
+      "character2Id": "01KYXBHD0FE9MY6A6A9B1GT176",
       "relationType": "Fairy and cursed",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",

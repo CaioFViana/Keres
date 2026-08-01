@@ -1,6 +1,6 @@
 {
   "story": {
-    "id": "STORYCINDERELLA00000000000",
+    "id": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
     "userId": "EXAMPLEUSERPLACEHOLDER0000",
     "title": "Cinderella",
     "type": "linear",
@@ -18,8 +18,8 @@
   },
   "chapters": [
     {
-      "id": "chapter-1",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0JH5KTAS6FWM0PF2CE",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "The Royal Ball",
       "index": 1,
       "summary": null,
@@ -34,10 +34,10 @@
   ],
   "scenes": [
     {
-      "id": "scene-4",
-      "storyId": "STORYCINDERELLA00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0JB67SHJWE64QS23PY",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
+      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "name": "A servant's life",
       "index": 0,
       "summary": "Cinderella lives mistreated by her stepmother and stepsisters, doing all the housework.",
@@ -56,10 +56,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-5",
-      "storyId": "STORYCINDERELLA00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0JDZ1QN91ZB47TF1TX",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
+      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "name": "The invitation to the ball",
       "index": 1,
       "summary": "A royal invitation arrives for a ball where the prince will choose his bride - every young woman in the kingdom is invited.",
@@ -78,10 +78,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-6",
-      "storyId": "STORYCINDERELLA00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0J6R5HRKSAC9B75CGZ",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
+      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "name": "The torn dress",
       "index": 2,
       "summary": "Out of jealousy, the stepmother and stepsisters destroy Cinderella's dress, stopping her from going to the ball.",
@@ -100,10 +100,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-7",
-      "storyId": "STORYCINDERELLA00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0JX39TA6HVMB9D9Z0D",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
+      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "name": "The Fairy Godmother",
       "index": 3,
       "summary": "The Fairy Godmother appears and transforms a pumpkin, mice, and rags into a dress and carriage, warning that the spell ends at midnight.",
@@ -122,10 +122,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-8",
-      "storyId": "STORYCINDERELLA00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
+      "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "name": "The ball",
       "index": 4,
       "summary": "Cinderella and the prince dance all night and fall in love, but she flees in a hurry as the clock starts striking midnight, losing a glass slipper on the staircase.",
@@ -144,10 +144,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-9",
-      "storyId": "STORYCINDERELLA00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0JYHST89WZ1A72TCCQ",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
+      "locationId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
       "name": "The search for the slipper",
       "index": 5,
       "summary": "The prince searches the kingdom with the glass slipper, determined to find the young woman who danced with him.",
@@ -166,10 +166,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-10",
-      "storyId": "STORYCINDERELLA00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0JG76K402BJRX50QB4",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "chapterId": "01KYXBHD0JH5KTAS6FWM0PF2CE",
+      "locationId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
       "name": "The glass slipper",
       "index": 6,
       "summary": "The slipper fits Cinderella perfectly before her stepmother's shock, and she marries the prince.",
@@ -191,8 +191,8 @@
   "choices": [],
   "characters": [
     {
-      "id": "CHARCINDERELLACINDERELA000",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "Cinderella",
       "title": null,
       "gender": null,
@@ -214,8 +214,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARCINDERELLAMADRASTA0000",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0J895XZFCMMV9X03V5",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "Stepmother",
       "title": null,
       "gender": null,
@@ -237,8 +237,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARCINDERELLASTEPSIS10000",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0JRER5VNKDJB326PKK",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "The Elder Stepsister",
       "title": null,
       "gender": null,
@@ -260,8 +260,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARCINDERELLASTEPSIS20000",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "The Younger Stepsister",
       "title": null,
       "gender": null,
@@ -283,8 +283,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARCINDERELLAMADRINHA0000",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0JN10GNFGP4M876AKZ",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "Fairy Godmother",
       "title": null,
       "gender": null,
@@ -306,8 +306,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARCINDERELLAPRINCIPE0000",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "Prince",
       "title": null,
       "gender": null,
@@ -331,8 +331,8 @@
   ],
   "locations": [
     {
-      "id": "location-2",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "Cinderella's House",
       "description": "The house where Cinderella lives under her stepmother's rule.",
       "climate": null,
@@ -347,8 +347,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-3",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "name": "Royal Palace",
       "description": "Where the great ball is held in search of a bride for the prince.",
       "climate": null,
@@ -365,8 +365,8 @@
   ],
   "worldRules": [
     {
-      "id": "worldrule-11",
-      "storyId": "STORYCINDERELLA00000000000",
+      "id": "01KYXBHD0J4Z72KGB3F4P37R4W",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
       "title": "The Midnight Spell",
       "description": "The Fairy Godmother's spell breaks precisely at midnight, when everything returns to how it was.",
       "isFavorite": false,
@@ -385,10 +385,10 @@
   "suggestions": [],
   "characterRelations": [
     {
-      "id": "charrel-12",
-      "storyId": "STORYCINDERELLA00000000000",
-      "character1Id": "CHARCINDERELLACINDERELA000",
-      "character2Id": "CHARCINDERELLAMADRASTA0000",
+      "id": "01KYXBHD0J1X5ZXJRAPM4QDQYT",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0J895XZFCMMV9X03V5",
       "relationType": "Stepdaughter and stepmother",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -397,10 +397,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-13",
-      "storyId": "STORYCINDERELLA00000000000",
-      "character1Id": "CHARCINDERELLACINDERELA000",
-      "character2Id": "CHARCINDERELLASTEPSIS10000",
+      "id": "01KYXBHD0J2XQAY4T0Q0ZQXWH7",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0JRER5VNKDJB326PKK",
       "relationType": "Stepsisters",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -409,10 +409,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-14",
-      "storyId": "STORYCINDERELLA00000000000",
-      "character1Id": "CHARCINDERELLACINDERELA000",
-      "character2Id": "CHARCINDERELLASTEPSIS20000",
+      "id": "01KYXBHD0JTFZ3P4TTNWVWY0TN",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0JA1MR77MHPJ7R4KNS",
       "relationType": "Stepsisters",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -421,10 +421,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-15",
-      "storyId": "STORYCINDERELLA00000000000",
-      "character1Id": "CHARCINDERELLACINDERELA000",
-      "character2Id": "CHARCINDERELLAMADRINHA0000",
+      "id": "01KYXBHD0J6VT8BDBX19S266PT",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0JN10GNFGP4M876AKZ",
       "relationType": "Godchild",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -433,10 +433,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-16",
-      "storyId": "STORYCINDERELLA00000000000",
-      "character1Id": "CHARCINDERELLACINDERELA000",
-      "character2Id": "CHARCINDERELLAPRINCIPE0000",
+      "id": "01KYXBHD0JKVZV3BFQQTVZ5SWA",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "character1Id": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "character2Id": "01KYXBHD0JQHBZYH3E8YPD0PJN",
       "relationType": "True love",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",

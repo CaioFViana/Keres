@@ -31,13 +31,17 @@ import {
   noteRelations,
   notes,
   NoteSelect,
+  operationLogs,
   SceneInsert,
   scenes,
   SceneSelect,
+  servers,
   stories,
   StoryInsert, StorySelect,
+  storyPermissions,
   SuggestionInsert,
   suggestions,
+  syncConflicts,
   TagInsert,
   TagRelationInsert,
   tagRelations,
@@ -47,7 +51,43 @@ import {
   WorldRuleSelect
 } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
+import { authTokenManager } from '../AuthTokenManager';
 import { createOperationLogService } from '../OperationLogService';
+
+/**
+ * Wipes a story and every entity that belongs to it from the local database. Story
+ * deletion is the one entity in this app that's always permanent locally - unlike every
+ * other entity, which soft-deletes so the change can sync - because a story is the sync
+ * unit itself: once it's gone, there's nothing left to reconcile it against, and leaving
+ * a tombstone around only lets its (often fixed, e.g. example-story) ID collide with a
+ * future re-creation. See deleteStory for the server-notification step this follows.
+ */
+async function purgeStoryLocally(db: AppDrizzleClient, storyId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
+    await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
+    await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
+    await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
+    await tx.delete(choices).where(eq(choices.storyId, storyId)).run();
+    await tx.delete(galleryRelations).where(eq(galleryRelations.storyId, storyId)).run();
+    await tx.delete(galleries).where(eq(galleries.storyId, storyId)).run();
+    await tx.delete(itemJourneys).where(eq(itemJourneys.storyId, storyId)).run();
+    await tx.delete(items).where(eq(items.storyId, storyId)).run();
+    await tx.delete(locations).where(eq(locations.storyId, storyId)).run();
+    await tx.delete(noteRelations).where(eq(noteRelations.storyId, storyId)).run();
+    await tx.delete(notes).where(eq(notes.storyId, storyId)).run();
+    await tx.delete(operationLogs).where(eq(operationLogs.storyId, storyId)).run();
+    await tx.delete(scenes).where(eq(scenes.storyId, storyId)).run();
+    await tx.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
+    await tx.delete(suggestions).where(eq(suggestions.storyId, storyId)).run();
+    await tx.delete(syncConflicts).where(eq(syncConflicts.storyId, storyId)).run();
+    await tx.delete(tagRelations).where(eq(tagRelations.storyId, storyId)).run();
+    await tx.delete(tags).where(eq(tags.storyId, storyId)).run();
+    await tx.delete(worldRules).where(eq(worldRules.storyId, storyId)).run();
+    await tx.delete(stories).where(eq(stories.id, storyId)).run();
+  });
+}
 
 export interface StoryService {
   getAllStories(): Promise<StorySelect[]>;
@@ -75,7 +115,7 @@ export interface StoryService {
   createChoice(currentUserId: string, choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect>;
 
   updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void>;
-  deleteStory(currentUserId: string, storyId: string): Promise<void>;
+  deleteStory(storyId: string): Promise<void>;
   getBranchingStoryForkCount(): Promise<number>;
   importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, localMediaPaths?: Map<string, string>): Promise<string>;
   exportFullStory(storyId: string): Promise<FullStoryExportType>;
@@ -323,7 +363,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       });
     },
 
-    async deleteStory(currentUserId: string, storyId: string): Promise<void> {
+    async deleteStory(storyId: string): Promise<void> {
       const storyToDelete = await db.query.stories.findFirst({
         where: eq(stories.id, storyId),
       });
@@ -333,22 +373,36 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         return;
       }
 
-      // Perform the update and return the new version
-      const [updatedStory] = await db.update(stories)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${stories.version} + 1` })
-        .where(eq(stories.id, storyId))
-        .returning({ version: stories.version }); // Return relevant fields
-      
-      if (!updatedStory) {
-        throw new Error(`Failed to delete story ${storyId} or story not found.`);
+      // Story deletion is always permanent and always local-first (see purgeStoryLocally).
+      // If the story is attached to a server, make a best-effort attempt to tell it first
+      // - so its own copy gets soft-deleted there too and stays recoverable - but a
+      // failed/offline attempt never blocks the local purge; deleting a story here is the
+      // end of it on this device regardless of connectivity.
+      if (storyToDelete.serverId) {
+        const server = await db.query.servers.findFirst({ where: eq(servers.id, storyToDelete.serverId) });
+        if (server?.url) {
+          try {
+            const client = createKeresAxiosInstance({ baseURL: server.url });
+            client.setTokenProvider(authTokenManager);
+            client.setActiveServer(server);
+            await client.post(`/sync/${storyId}`, [{
+              entity: 'Story',
+              id: storyId,
+              // The version the client last knew, before this delete - the server compares
+              // against its own version to decide whether to accept it.
+              version: storyToDelete.version,
+              operationTime: new Date().toISOString(),
+              type: 'delete',
+            }]);
+          } catch (err) {
+            if (!isOfflineError(err)) {
+              console.warn(`Failed to notify server of deletion for story ${storyId} (proceeding with local deletion regardless):`, (err as Error)?.message || err);
+            }
+          }
+        }
       }
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, storyId, userIdToLog, 'delete', 'Story', storyId, {
-        id: storyId,
-        isDeleted: true,
-        version: updatedStory.version,
-      });
+      await purgeStoryLocally(db, storyId);
     },
 
     async getBranchingStoryForkCount(): Promise<number> {

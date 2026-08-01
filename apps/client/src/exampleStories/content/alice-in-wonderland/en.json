@@ -1,6 +1,6 @@
 {
   "story": {
-    "id": "STORYALICEINWONDERLAND0000",
+    "id": "01KYXBHD0B9D8J4CNXNRAG7CJS",
     "userId": "EXAMPLEUSERPLACEHOLDER0000",
     "title": "Alice in Wonderland",
     "type": "branching",
@@ -18,8 +18,8 @@
   },
   "chapters": [
     {
-      "id": "chapter-1",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0BR7MK2JRVEFXQMKFE",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "Nothing Is What It Seems",
       "index": 1,
       "summary": null,
@@ -34,10 +34,10 @@
   ],
   "scenes": [
     {
-      "id": "scene-5",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
+      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
       "name": "The rabbit hole",
       "index": 0,
       "summary": "Alice chases the hurried White Rabbit and falls down a hole that takes her to the strange land of Wonderland.",
@@ -56,10 +56,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-6",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
+      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
       "name": "Too small, too big",
       "index": 1,
       "summary": "Alice tries potions and cakes that change her size without warning, trying to reach a tiny door.",
@@ -78,10 +78,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-7",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0BV57YSDKQAR1T1764",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
+      "locationId": "01KYXBHD0B6RME43YC69PZR0W2",
       "name": "The mad tea party",
       "index": 2,
       "summary": "Following a path through the woods, Alice meets the Mad Hatter at a never-ending tea party, where nothing makes much sense.",
@@ -100,10 +100,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-8",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0BKDNRQMZJ17RYF1DS",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
+      "locationId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
       "name": "The grinning cat",
       "index": 3,
       "summary": "Following the river of tears, Alice meets the Cheshire Cat, who gives her enigmatic clues about where to go.",
@@ -122,10 +122,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-9",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0BBHSKQPWQBKK5QXMT",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
+      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
       "name": "The croquet ground",
       "index": 4,
       "summary": "Alice is dragged into an absurd game of croquet, played with flamingos and hedgehogs, under the impatient eye of the Queen of Hearts.",
@@ -144,10 +144,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-10",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0B4DE9B4MK3N9BW73M",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
+      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
       "name": "A quiet dismissal",
       "index": 5,
       "summary": "Alice politely disagrees with the Queen; annoyed but with no actual proof of any crime, the Queen sends her away from the castle without further fuss - and Alice wakes up in the shade of a tree, as if it had all been a vivid dream.",
@@ -166,10 +166,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-11",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0BC0D1AGHBNZHY2E31",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "chapterId": "01KYXBHD0BR7MK2JRVEFXQMKFE",
+      "locationId": "01KYXBHD0BC0GSK6TA2F61ZSHW",
       "name": "Off with her head",
       "index": 6,
       "summary": "Alice dares to openly defy the Queen; furious, the Queen screams \"Off with her head!\" and the whole deck of cards rushes at Alice - who wakes with a start by the riverbank, and Wonderland dissolves like smoke.",
@@ -190,10 +190,10 @@
   ],
   "choices": [
     {
-      "id": "choice-12",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "sceneId": "scene-5",
-      "nextSceneId": "scene-6",
+      "id": "01KYXBHD0B1KYWRWAKMB645XTB",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "nextSceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "text": "Alice falls down the rabbit hole",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -203,10 +203,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-13",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "sceneId": "scene-6",
-      "nextSceneId": "scene-7",
+      "id": "01KYXBHD0B9ATWT2E9GJZC44FK",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "nextSceneId": "01KYXBHD0BV57YSDKQAR1T1764",
       "text": "Alice follows the forest path",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -216,10 +216,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-14",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "sceneId": "scene-6",
-      "nextSceneId": "scene-8",
+      "id": "01KYXBHD0B8X0Y9MNNHMWQP7EB",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "nextSceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "text": "Alice follows the river of tears",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -229,10 +229,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-15",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "sceneId": "scene-7",
-      "nextSceneId": "scene-9",
+      "id": "01KYXBHD0BBDYN155X60SPG3D3",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
+      "nextSceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
       "text": "The tea party suddenly ends",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -242,10 +242,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-16",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "sceneId": "scene-8",
-      "nextSceneId": "scene-9",
+      "id": "01KYXBHD0B43S0RXFACYXY4TGV",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
+      "nextSceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
       "text": "The Cat points the way to the castle",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -255,10 +255,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-17",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "sceneId": "scene-9",
-      "nextSceneId": "scene-10",
+      "id": "01KYXBHD0BE7EHZ3QPF28AZ6GG",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
+      "nextSceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
       "text": "Alice politely disagrees with the Queen",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -268,10 +268,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-18",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "sceneId": "scene-9",
-      "nextSceneId": "scene-11",
+      "id": "01KYXBHD0BDWWFAJMK5HZX07C3",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
+      "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
       "text": "Alice openly defies the Queen",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -283,8 +283,8 @@
   ],
   "characters": [
     {
-      "id": "CHARALICEINWONDERLANDALICE",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0BESDGG77MG3F2A721",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "Alice",
       "title": null,
       "gender": null,
@@ -306,8 +306,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARALICEINWONDERLANDCOELH",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "White Rabbit",
       "title": null,
       "gender": null,
@@ -329,8 +329,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARALICEINWONDERLANDCHAPE",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0BR4KWKGX998QM9YHK",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "Mad Hatter",
       "title": null,
       "gender": null,
@@ -352,8 +352,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARALICEINWONDERLANDGATO0",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "Cheshire Cat",
       "title": null,
       "gender": null,
@@ -375,8 +375,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARALICEINWONDERLANDRAINH",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0BBZN1R7TSRF3M00GN",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "Queen of Hearts",
       "title": null,
       "gender": null,
@@ -400,8 +400,8 @@
   ],
   "locations": [
     {
-      "id": "location-2",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "Wonderland",
       "description": "The strange world on the other side of the rabbit hole.",
       "climate": null,
@@ -416,8 +416,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-3",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0B6RME43YC69PZR0W2",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "The Mad Hatter's House",
       "description": "Where a tea party goes on without end, always at six o'clock.",
       "climate": null,
@@ -432,8 +432,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-4",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0BC0GSK6TA2F61ZSHW",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "name": "The Queen of Hearts' Castle",
       "description": "Where the Queen rules her croquet ground and her card subjects.",
       "climate": null,
@@ -450,8 +450,8 @@
   ],
   "worldRules": [
     {
-      "id": "worldrule-19",
-      "storyId": "STORYALICEINWONDERLAND0000",
+      "id": "01KYXBHD0B3KDBE4FC0Z8YWDH8",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
       "title": "The Logic of Wonderland",
       "description": "In Wonderland, nothing is what it seems - and following the rules closely rarely leads anywhere.",
       "isFavorite": false,
@@ -470,10 +470,10 @@
   "suggestions": [],
   "characterRelations": [
     {
-      "id": "charrel-20",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "character1Id": "CHARALICEINWONDERLANDALICE",
-      "character2Id": "CHARALICEINWONDERLANDCOELH",
+      "id": "01KYXBHD0BDQZCZ54XX052NY9X",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
+      "character2Id": "01KYXBHD0BF8DTMDDG223S8DYY",
       "relationType": "Accidental guide",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -482,10 +482,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-21",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "character1Id": "CHARALICEINWONDERLANDALICE",
-      "character2Id": "CHARALICEINWONDERLANDCHAPE",
+      "id": "01KYXBHD0BT43PMTZ3P5PEV7YA",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
+      "character2Id": "01KYXBHD0BR4KWKGX998QM9YHK",
       "relationType": "Eccentric host",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -494,10 +494,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-22",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "character1Id": "CHARALICEINWONDERLANDALICE",
-      "character2Id": "CHARALICEINWONDERLANDGATO0",
+      "id": "01KYXBHD0BXFK500GC86J86MVE",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
+      "character2Id": "01KYXBHD0BAT4GXF7ANC6C4BJN",
       "relationType": "Enigmatic advisor",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -506,10 +506,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-23",
-      "storyId": "STORYALICEINWONDERLAND0000",
-      "character1Id": "CHARALICEINWONDERLANDALICE",
-      "character2Id": "CHARALICEINWONDERLANDRAINH",
+      "id": "01KYXBHD0BS3VZB7YWWKJGZMGD",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "character1Id": "01KYXBHD0BESDGG77MG3F2A721",
+      "character2Id": "01KYXBHD0BBZN1R7TSRF3M00GN",
       "relationType": "Conflict",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",

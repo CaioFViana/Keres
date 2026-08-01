@@ -1,6 +1,6 @@
 {
   "story": {
-    "id": "STORYBEAUTYANDTHEBEAST0000",
+    "id": "01KYXBHD0FH380VGZSZQMXQEWM",
     "userId": "EXAMPLEUSERPLACEHOLDER0000",
     "title": "A Bela e a Fera",
     "type": "branching",
@@ -18,8 +18,8 @@
   },
   "chapters": [
     {
-      "id": "chapter-1",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "A Promessa de Retorno",
       "index": 1,
       "summary": null,
@@ -34,10 +34,10 @@
   ],
   "scenes": [
     {
-      "id": "scene-5",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0F6JAR48EF3W034H4S",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "A rosa pedida",
       "index": 0,
       "summary": "Perdido na floresta ao voltar de uma viagem, o Mercador se abriga no castelo da Fera e colhe uma rosa para Bela, o único presente que ela havia pedido - e a Fera exige sua vida em troca do roubo.",
@@ -56,10 +56,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-6",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0FT4ZRD77W22A1SPXT",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "A oferta de Bela",
       "index": 1,
       "summary": "Ao saber do ocorrido, Bela corre até o castelo e se oferece para viver ali no lugar do pai.",
@@ -78,10 +78,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-7",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0F2WTDYAAN0EMWZA7K",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "Uma gentileza estranha",
       "index": 2,
       "summary": "A Fera trata Bela com cortesia inesperada, dando-lhe todo conforto, e todas as noites pergunta se ela aceita se casar com ele; ela sempre recusa, embora comece a apreciar sua companhia.",
@@ -100,10 +100,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-8",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0FY4PN6VXMXA3AAH94",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FKEFPV8HHMXJJBST2",
       "name": "Licença para partir",
       "index": 3,
       "summary": "Bela sente saudade da família, e a Fera lhe dá um anel mágico para visitá-los por uma semana - avisando que morrerá de tristeza se ela não voltar a tempo.",
@@ -122,10 +122,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-9",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0FP0MCK3BYTQ2F68S3",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
       "name": "A inveja das irmãs",
       "index": 4,
       "summary": "Vendo Bela feliz e bem tratada, suas irmãs a convencem a ficar além do prazo prometido, na esperança de que a Fera sofra por isso.",
@@ -144,10 +144,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-10",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0FF1H85QR8W0FP4RAY",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FT43JJV1HABMERBPA",
       "name": "Um retorno antecipado",
       "index": 5,
       "summary": "Bela percebe a inveja por trás da insistência das irmãs e decide voltar ao castelo antes mesmo que a semana termine.",
@@ -166,10 +166,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-11",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "Uma visão de tristeza",
       "index": 6,
       "summary": "Seja pelo atraso, seja por saudade antecipada, Bela sonha (ou sente) que a Fera definha sozinha no jardim, e corre de volta ao seu encontro.",
@@ -188,10 +188,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-12",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FKEFPV8HHMXJJBST2",
       "name": "A confissão de Bela",
       "index": 7,
       "summary": "Ao encontrar a Fera junto à fonte, Bela compreende que não pode viver sem ele e finalmente lhe confessa seu amor.",
@@ -210,10 +210,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-13",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0FVKWVAB6FKV7FP326",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "Um final piedoso",
       "index": 8,
       "summary": "A maldição se quebra e a Fera volta a ser príncipe. Por bondade, Bela pede à Fada que poupe suas irmãs invejosas, que passam a viver arrependidas, mas livres.",
@@ -232,10 +232,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-14",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0F6KZ6K8P86KN8ETRW",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "chapterId": "01KYXBHD0FJ4JN4WQ19T2Q9A8S",
+      "locationId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
       "name": "Um final de justiça",
       "index": 9,
       "summary": "A maldição se quebra e a Fera volta a ser príncipe. A Fada, porém, julga a inveja das irmãs sem piedade, e as transforma em estátuas de pedra no portão do castelo, até que aprendam a se arrepender de verdade.",
@@ -256,10 +256,10 @@
   ],
   "choices": [
     {
-      "id": "choice-15",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-5",
-      "nextSceneId": "scene-6",
+      "id": "01KYXBHD0FYG19BNN68ADCP4Q0",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
+      "nextSceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
       "text": "Bela vai até o castelo",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -269,10 +269,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-16",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-6",
-      "nextSceneId": "scene-7",
+      "id": "01KYXBHD0FZ68JCDMR2AEYA347",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
+      "nextSceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
       "text": "A Fera aceita a troca",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -282,10 +282,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-17",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-7",
-      "nextSceneId": "scene-8",
+      "id": "01KYXBHD0FNV64B29THWZ031VK",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
+      "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "text": "Bela pede para visitar sua família",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -295,10 +295,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-18",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-8",
-      "nextSceneId": "scene-9",
+      "id": "01KYXBHD0FB3NHYC94DQKV5B7P",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
+      "nextSceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
       "text": "As irmãs de Bela pedem que ela fique mais tempo",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -308,10 +308,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-19",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-8",
-      "nextSceneId": "scene-10",
+      "id": "01KYXBHD0F2FR0K874TWRMB5ZN",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
+      "nextSceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
       "text": "Bela percebe a inveja das irmãs e volta antes do prazo",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -321,10 +321,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-20",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-9",
-      "nextSceneId": "scene-11",
+      "id": "01KYXBHD0F0K30BESNFF10V27W",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
+      "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "text": "O prazo passa e Bela ainda está em casa",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -334,10 +334,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-21",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-10",
-      "nextSceneId": "scene-11",
+      "id": "01KYXBHD0FQH6AP1693RJ4GVJP",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
+      "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "text": "Bela chega ao castelo mais cedo do que prometera",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -347,10 +347,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-22",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-11",
-      "nextSceneId": "scene-12",
+      "id": "01KYXBHD0F7R9FK63S9TJSAB06",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
+      "nextSceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
       "text": "Bela corre para o lado da Fera",
       "isImplicit": true,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -360,10 +360,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-23",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-12",
-      "nextSceneId": "scene-13",
+      "id": "01KYXBHD0FBVHJVASASYHT9CFA",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
+      "nextSceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
       "text": "Bela pede clemência para suas irmãs",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -373,10 +373,10 @@
       "deletedAt": null
     },
     {
-      "id": "choice-24",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "sceneId": "scene-12",
-      "nextSceneId": "scene-14",
+      "id": "01KYXBHD0FQE9X9A4MPDZMADCR",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
+      "nextSceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "text": "A Fada decide julgar a inveja das irmãs",
       "isImplicit": false,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -388,8 +388,8 @@
   ],
   "characters": [
     {
-      "id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "Bela",
       "title": null,
       "gender": null,
@@ -411,8 +411,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTFERA0",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "A Fera",
       "title": "Príncipe amaldiçoado",
       "gender": null,
@@ -434,8 +434,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTMERCA",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FTSMRJEM98HEJJXWA",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "O Mercador",
       "title": "Pai de Bela",
       "gender": null,
@@ -457,8 +457,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTIRMA1",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FJ3X4WT2JMHTHE360",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "A Irmã Mais Velha",
       "title": null,
       "gender": null,
@@ -480,8 +480,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTIRMA2",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FPZMZ9C3EWEP05AZX",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "A Segunda Irmã",
       "title": null,
       "gender": null,
@@ -503,8 +503,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARBEAUTYANDTHEBEASTFADA0",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "A Fada",
       "title": null,
       "gender": null,
@@ -528,8 +528,8 @@
   ],
   "locations": [
     {
-      "id": "location-2",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FT43JJV1HABMERBPA",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "A Casa do Mercador",
       "description": "A casa modesta onde Bela vive com o pai e as irmãs desde que a fortuna da família se perdeu.",
       "climate": null,
@@ -544,8 +544,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-3",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "Castelo da Fera",
       "description": "Um castelo encantado onde todo desejo de Bela é atendido, exceto o de ver seu rosto verdadeiro.",
       "climate": null,
@@ -560,8 +560,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-4",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0FKEFPV8HHMXJJBST2",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "name": "Jardim Encantado",
       "description": "O jardim e a fonte onde a Fera busca consolo em sua solidão.",
       "climate": null,
@@ -578,8 +578,8 @@
   ],
   "worldRules": [
     {
-      "id": "worldrule-25",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
+      "id": "01KYXBHD0F4BB8WS98MC1Z1Y6P",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
       "title": "A Promessa de Retorno",
       "description": "A Fera só se livra da maldição se for amada de livre vontade. Quando permite que Bela visite sua família, ele avisa: se ela não voltar no prazo prometido, ele morrerá de tristeza.",
       "isFavorite": false,
@@ -598,10 +598,10 @@
   "suggestions": [],
   "characterRelations": [
     {
-      "id": "charrel-26",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTMERCA",
+      "id": "01KYXBHD0FETYZS3CQAVQC6C3D",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FTSMRJEM98HEJJXWA",
       "relationType": "Pai e filha",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -610,10 +610,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-27",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTFERA0",
+      "id": "01KYXBHD0F6D63EBTC5DDRFV8S",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FE9MY6A6A9B1GT176",
       "relationType": "Amor verdadeiro",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -622,10 +622,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-28",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTIRMA1",
+      "id": "01KYXBHD0FKH79QNFWWY87BXZG",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FJ3X4WT2JMHTHE360",
       "relationType": "Irmãs",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -634,10 +634,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-29",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTBELA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTIRMA2",
+      "id": "01KYXBHD0FAZT1VFF7F53KN34T",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "character2Id": "01KYXBHD0FPZMZ9C3EWEP05AZX",
       "relationType": "Irmãs",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -646,10 +646,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-30",
-      "storyId": "STORYBEAUTYANDTHEBEAST0000",
-      "character1Id": "CHARBEAUTYANDTHEBEASTFADA0",
-      "character2Id": "CHARBEAUTYANDTHEBEASTFERA0",
+      "id": "01KYXBHD0FV44E32DK6YE5MRQ5",
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "character1Id": "01KYXBHD0FXNK8WNHEXYJ6K4SH",
+      "character2Id": "01KYXBHD0FE9MY6A6A9B1GT176",
       "relationType": "Fada e amaldiçoado",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",

@@ -1,6 +1,6 @@
 {
   "story": {
-    "id": "STORYGOLDILOCKS00000000000",
+    "id": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
     "userId": "EXAMPLEUSERPLACEHOLDER0000",
     "title": "Cachinhos Dourados e os Três Ursos",
     "type": "linear",
@@ -18,8 +18,8 @@
   },
   "chapters": [
     {
-      "id": "chapter-1",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "A Casa na Floresta",
       "index": 1,
       "summary": null,
@@ -34,10 +34,10 @@
   ],
   "scenes": [
     {
-      "id": "scene-4",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0KQNJ4T7GWC4W6VD18",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "Uma casa na floresta",
       "index": 0,
       "summary": "Perdida na floresta, Cachinhos Dourados encontra uma casinha vazia e entra sem ser convidada.",
@@ -56,10 +56,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-5",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0K044SNWCNX8SZ2C3R",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "As três sopas",
       "index": 1,
       "summary": "Com fome, ela experimenta as três tigelas de sopa na mesa e come inteira a do Ursinho, a única em temperatura perfeita.",
@@ -78,10 +78,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-6",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0K17NGGSSYC2SN0K46",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "As três cadeiras",
       "index": 2,
       "summary": "Ela testa as três cadeiras da sala e acaba quebrando a menor delas, a do Ursinho.",
@@ -100,10 +100,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-7",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0KHP8ZRVERF5SSG2C4",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "As três camas",
       "index": 3,
       "summary": "Cansada, ela sobe e testa as três camas do andar de cima, e adormece profundamente na cama do Ursinho.",
@@ -122,10 +122,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-8",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0KZS1Q3QSR04EYYCMT",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "O susto e a fuga",
       "index": 4,
       "summary": "Os três ursos voltam para casa, encontram a bagunça e a garota dormindo em sua cama; assustada, Cachinhos Dourados pula pela janela e foge para a floresta, e nunca mais volta.",
@@ -147,8 +147,8 @@
   "choices": [],
   "characters": [
     {
-      "id": "CHARGOLDILOCKSCACHINHOS000",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Cachinhos Dourados",
       "title": null,
       "gender": null,
@@ -170,8 +170,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARGOLDILOCKSPAPAIURSO000",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KADEQ76V5K52QR225",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Papai Urso",
       "title": null,
       "gender": null,
@@ -193,8 +193,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARGOLDILOCKSMAMAEURSA000",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KQYHTPN4R67PZQ1K3",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Mamãe Ursa",
       "title": null,
       "gender": null,
@@ -216,8 +216,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARGOLDILOCKSURSINHO00000",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Ursinho",
       "title": null,
       "gender": null,
@@ -241,8 +241,8 @@
   ],
   "locations": [
     {
-      "id": "location-2",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "A Floresta",
       "description": "Floresta densa onde Cachinhos Dourados se perde.",
       "climate": null,
@@ -257,8 +257,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-3",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Casa dos Três Ursos",
       "description": "Uma casinha aconchegante no meio da floresta, com tudo em três tamanhos.",
       "climate": null,
@@ -275,8 +275,8 @@
   ],
   "worldRules": [
     {
-      "id": "worldrule-9",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KRSQSBEM4JC7WRX3Y",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "title": "Curiosidade sem Permissão",
       "description": "Entrar sem ser convidado e mexer no que não é seu quase sempre tem um preço.",
       "isFavorite": false,
@@ -295,10 +295,10 @@
   "suggestions": [],
   "characterRelations": [
     {
-      "id": "charrel-10",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "character1Id": "CHARGOLDILOCKSPAPAIURSO000",
-      "character2Id": "CHARGOLDILOCKSMAMAEURSA000",
+      "id": "01KYXBHD0KGJXYSKT167R05EX7",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "character1Id": "01KYXBHD0KADEQ76V5K52QR225",
+      "character2Id": "01KYXBHD0KQYHTPN4R67PZQ1K3",
       "relationType": "Casal",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -307,10 +307,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-11",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "character1Id": "CHARGOLDILOCKSPAPAIURSO000",
-      "character2Id": "CHARGOLDILOCKSURSINHO00000",
+      "id": "01KYXBHD0KTKMQE1KXV49GE9S2",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "character1Id": "01KYXBHD0KADEQ76V5K52QR225",
+      "character2Id": "01KYXBHD0K041CY3XA9T3X1BPX",
       "relationType": "Pai e filho",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -319,10 +319,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-12",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "character1Id": "CHARGOLDILOCKSMAMAEURSA000",
-      "character2Id": "CHARGOLDILOCKSURSINHO00000",
+      "id": "01KYXBHD0KTXBKK3Y3FXGENFR9",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "character1Id": "01KYXBHD0KQYHTPN4R67PZQ1K3",
+      "character2Id": "01KYXBHD0K041CY3XA9T3X1BPX",
       "relationType": "Mãe e filho",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",

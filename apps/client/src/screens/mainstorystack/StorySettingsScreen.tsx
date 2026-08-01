@@ -1,6 +1,6 @@
 import { Story } from '@keres/shared/entities/Story';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
@@ -171,9 +171,25 @@ const StorySettingsScreen = () => {
           onPress: async () => {
             try {
               setLoading(true);
-              await storyService().deleteStory(userId, storyId);
+              await storyService().deleteStory(storyId);
               Alert.alert(t('success'), t('story_deleted_successfully'));
-              navigation.navigate('StorySelection'); // Corrected navigation
+
+              // 'StorySelection' here is a dummy drawer route that only exists to intercept
+              // the drawer sidebar's tap event (see MainSystemStack) - navigating to it
+              // directly just shows a blank screen and never leaves MainSystemStack. Reaching
+              // the real Story Selection screen means resetting the *root* stack, same as
+              // MainDashboardScreen's double-back-press handler does.
+              const rootStackNavigation = navigation.getParent();
+              const resetToStorySelection = CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'StorySelection' }],
+              });
+              if (rootStackNavigation) {
+                rootStackNavigation.dispatch(resetToStorySelection);
+              } else {
+                console.error('Could not find root stack navigation to dispatch reset action. This is unexpected.');
+                navigation.dispatch(resetToStorySelection);
+              }
             } catch (err) {
               console.error('Failed to delete story:', err);
               setError(t('failed_to_delete_story'));

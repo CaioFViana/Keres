@@ -1,6 +1,6 @@
 {
   "story": {
-    "id": "STORYGOLDILOCKS00000000000",
+    "id": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
     "userId": "EXAMPLEUSERPLACEHOLDER0000",
     "title": "Goldilocks and the Three Bears",
     "type": "linear",
@@ -18,8 +18,8 @@
   },
   "chapters": [
     {
-      "id": "chapter-1",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "The House in the Woods",
       "index": 1,
       "summary": null,
@@ -34,10 +34,10 @@
   ],
   "scenes": [
     {
-      "id": "scene-4",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0KQNJ4T7GWC4W6VD18",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "A house in the woods",
       "index": 0,
       "summary": "Lost in the forest, Goldilocks finds a small, empty house and walks in uninvited.",
@@ -56,10 +56,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-5",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0K044SNWCNX8SZ2C3R",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "The three bowls of soup",
       "index": 1,
       "summary": "Hungry, she tries the three bowls of soup on the table and eats all of Baby Bear's, the only one at just the right temperature.",
@@ -78,10 +78,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-6",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0K17NGGSSYC2SN0K46",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "The three chairs",
       "index": 2,
       "summary": "She tries the three chairs in the living room and ends up breaking the smallest one, Baby Bear's.",
@@ -100,10 +100,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-7",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0KHP8ZRVERF5SSG2C4",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "The three beds",
       "index": 3,
       "summary": "Tired, she goes upstairs and tries the three beds, falling fast asleep in Baby Bear's bed.",
@@ -122,10 +122,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-8",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0KZS1Q3QSR04EYYCMT",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "chapterId": "01KYXBHD0KMAG4ETVE6J1ZVT6A",
+      "locationId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
       "name": "The fright and the flight",
       "index": 4,
       "summary": "The three bears come home, find the mess and the girl asleep in his bed; startled, Goldilocks jumps out the window and runs off into the forest, never to return.",
@@ -147,8 +147,8 @@
   "choices": [],
   "characters": [
     {
-      "id": "CHARGOLDILOCKSCACHINHOS000",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Goldilocks",
       "title": null,
       "gender": null,
@@ -170,8 +170,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARGOLDILOCKSPAPAIURSO000",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KADEQ76V5K52QR225",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Papa Bear",
       "title": null,
       "gender": null,
@@ -193,8 +193,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARGOLDILOCKSMAMAEURSA000",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KQYHTPN4R67PZQ1K3",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Mama Bear",
       "title": null,
       "gender": null,
@@ -216,8 +216,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARGOLDILOCKSURSINHO00000",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0K041CY3XA9T3X1BPX",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "Baby Bear",
       "title": null,
       "gender": null,
@@ -241,8 +241,8 @@
   ],
   "locations": [
     {
-      "id": "location-2",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "The Forest",
       "description": "Dense woods where Goldilocks loses her way.",
       "climate": null,
@@ -257,8 +257,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-3",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "name": "The Three Bears' House",
       "description": "A cozy little house in the middle of the forest, with everything in three sizes.",
       "climate": null,
@@ -275,8 +275,8 @@
   ],
   "worldRules": [
     {
-      "id": "worldrule-9",
-      "storyId": "STORYGOLDILOCKS00000000000",
+      "id": "01KYXBHD0KRSQSBEM4JC7WRX3Y",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
       "title": "Curiosity Without Permission",
       "description": "Walking in uninvited and touching what isn't yours almost always comes with a price.",
       "isFavorite": false,
@@ -295,10 +295,10 @@
   "suggestions": [],
   "characterRelations": [
     {
-      "id": "charrel-10",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "character1Id": "CHARGOLDILOCKSPAPAIURSO000",
-      "character2Id": "CHARGOLDILOCKSMAMAEURSA000",
+      "id": "01KYXBHD0KGJXYSKT167R05EX7",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "character1Id": "01KYXBHD0KADEQ76V5K52QR225",
+      "character2Id": "01KYXBHD0KQYHTPN4R67PZQ1K3",
       "relationType": "Couple",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -307,10 +307,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-11",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "character1Id": "CHARGOLDILOCKSPAPAIURSO000",
-      "character2Id": "CHARGOLDILOCKSURSINHO00000",
+      "id": "01KYXBHD0KTKMQE1KXV49GE9S2",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "character1Id": "01KYXBHD0KADEQ76V5K52QR225",
+      "character2Id": "01KYXBHD0K041CY3XA9T3X1BPX",
       "relationType": "Father and son",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -319,10 +319,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-12",
-      "storyId": "STORYGOLDILOCKS00000000000",
-      "character1Id": "CHARGOLDILOCKSMAMAEURSA000",
-      "character2Id": "CHARGOLDILOCKSURSINHO00000",
+      "id": "01KYXBHD0KTXBKK3Y3FXGENFR9",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "character1Id": "01KYXBHD0KQYHTPN4R67PZQ1K3",
+      "character2Id": "01KYXBHD0K041CY3XA9T3X1BPX",
       "relationType": "Mother and son",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",

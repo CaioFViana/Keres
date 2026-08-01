@@ -1,6 +1,6 @@
 {
   "story": {
-    "id": "STORYLITTLEMERMAID00000000",
+    "id": "01KYXBHD0ME7CZXCJDMH2Q8586",
     "userId": "EXAMPLEUSERPLACEHOLDER0000",
     "title": "A Pequena Sereia",
     "type": "linear",
@@ -18,8 +18,8 @@
   },
   "chapters": [
     {
-      "id": "chapter-1",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "Filha do Mar",
       "index": 1,
       "summary": null,
@@ -34,10 +34,10 @@
   ],
   "scenes": [
     {
-      "id": "scene-5",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0M83N1C3AX7JH04JD2",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
       "name": "O mundo acima das ondas",
       "index": 0,
       "summary": "Ao completar quinze anos, a pequena sereia sobe à superfície pela primeira vez e se encanta, à distância, por um príncipe que celebra seu aniversário a bordo de um navio.",
@@ -56,10 +56,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-6",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-2",
+      "id": "01KYXBHD0MQP5BEK9PFDBE3580",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
       "name": "Um resgate em silêncio",
       "index": 1,
       "summary": "Uma tempestade afunda o navio; a pequena sereia salva o Príncipe da morte e o deixa à beira de um templo, observando escondida quando uma jovem o encontra ali - e ele nunca saberá quem de fato o salvou.",
@@ -78,10 +78,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-7",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-3",
+      "id": "01KYXBHD0MKXH274VYGG8CD6H4",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MESF281V4YSN4MAA5",
       "name": "O preço da alma",
       "index": 2,
       "summary": "Sua avó lhe conta que só o amor de um humano pode dar a uma sereia uma alma imortal; desesperada, ela procura a Bruxa do Mar, que troca sua voz por um par de pernas humanas - cada passo doerá como lâminas, e se o Príncipe se casar com outra, ela se desfará em espuma do mar ao amanhecer.",
@@ -100,10 +100,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-8",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0M17B0T316JQAMJBEZ",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
       "name": "Uma companhia muda",
       "index": 3,
       "summary": "Muda, mas graciosa, ela se torna a companhia favorita do Príncipe na corte; ele a trata com carinho, mas confessa que seu coração pertence à jovem que acredita tê-lo salvo do naufrágio.",
@@ -122,10 +122,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-9",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0MX4ZRJ6V6EE57QCXG",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
       "name": "Um casamento real",
       "index": 4,
       "summary": "O Príncipe se casa com uma princesa vizinha - que é, de fato, a jovem do templo; de coração partido, a pequena sereia assiste à cerimônia no convés do navio, sabendo o que o amanhecer trará.",
@@ -144,10 +144,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-10",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0MYMJ2B760NNHVCP90",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
       "name": "O presente das irmãs",
       "index": 5,
       "summary": "Suas irmãs emergem do mar com uma faca mágica, trocada por seus próprios cabelos com a Bruxa: se ela matar o Príncipe antes do sol nascer e deixar o sangue tocar seus pés, voltará a ser sereia; se não, perecerá.",
@@ -166,10 +166,10 @@
       "deletedAt": null
     },
     {
-      "id": "scene-11",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "chapterId": "chapter-1",
-      "locationId": "location-4",
+      "id": "01KYXBHD0MQG0B9N41TXGDA4V3",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "chapterId": "01KYXBHD0M0HW4SKV8FKM79THS",
+      "locationId": "01KYXBHD0MPFV1BDE676KHZCBV",
       "name": "Filha do ar",
       "index": 6,
       "summary": "Incapaz de ferir quem ama, a pequena sereia lança a faca e a si mesma ao mar ao amanhecer - mas em vez de virar espuma, ergue-se entre as filhas do ar, espíritos que podem conquistar uma alma imortal após trezentos anos de boas ações.",
@@ -191,8 +191,8 @@
   "choices": [],
   "characters": [
     {
-      "id": "CHARLITTLEMERMAIDSEREIA000",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "A Pequena Sereia",
       "title": null,
       "gender": null,
@@ -214,8 +214,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARLITTLEMERMAIDREIDOMAR0",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MZVSA263GJW277EVN",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "O Rei do Mar",
       "title": "Rei do mar",
       "gender": null,
@@ -237,8 +237,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARLITTLEMERMAIDAVO000000",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0M7HY3ZTY4ZB6KK0DB",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "A Avó",
       "title": null,
       "gender": null,
@@ -260,8 +260,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARLITTLEMERMAIDBRUXA0000",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MCQ94ERVCE9ZVYN6E",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "A Bruxa do Mar",
       "title": null,
       "gender": null,
@@ -283,8 +283,8 @@
       "deletedAt": null
     },
     {
-      "id": "CHARLITTLEMERMAIDPRINCIPE0",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MGZX5FHEC1RQ243PV",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "O Príncipe",
       "title": null,
       "gender": null,
@@ -308,8 +308,8 @@
   ],
   "locations": [
     {
-      "id": "location-2",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "O Reino do Mar",
       "description": "O palácio de coral e conchas onde vive a família real do fundo do oceano.",
       "climate": null,
@@ -324,8 +324,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-3",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MESF281V4YSN4MAA5",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "O Covil da Bruxa",
       "description": "A morada sombria além dos redemoinhos, onde a Bruxa do Mar faz seus acordos.",
       "climate": null,
@@ -340,8 +340,8 @@
       "deletedAt": null
     },
     {
-      "id": "location-4",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MPFV1BDE676KHZCBV",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "name": "O Palácio do Príncipe",
       "description": "O castelo à beira-mar onde o Príncipe mora, na superfície.",
       "climate": null,
@@ -358,8 +358,8 @@
   ],
   "worldRules": [
     {
-      "id": "worldrule-12",
-      "storyId": "STORYLITTLEMERMAID00000000",
+      "id": "01KYXBHD0MH44DFPQ2ZT6MMV5R",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
       "title": "O Preço de uma Alma",
       "description": "Sereias vivem trezentos anos, mas não têm alma imortal - só o amor e o casamento com um humano poderiam lhes dar uma. Se essa última chance falhar, elas não morrem: dissolvem-se em espuma do mar ao amanhecer.",
       "isFavorite": false,
@@ -378,10 +378,10 @@
   "suggestions": [],
   "characterRelations": [
     {
-      "id": "charrel-13",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "character1Id": "CHARLITTLEMERMAIDSEREIA000",
-      "character2Id": "CHARLITTLEMERMAIDREIDOMAR0",
+      "id": "01KYXBHD0M2X4TZ0WEEYKMK96G",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "character1Id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "character2Id": "01KYXBHD0MZVSA263GJW277EVN",
       "relationType": "Pai e filha",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -390,10 +390,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-14",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "character1Id": "CHARLITTLEMERMAIDSEREIA000",
-      "character2Id": "CHARLITTLEMERMAIDAVO000000",
+      "id": "01KYXBHD0M53SWXM71P7SDH9QQ",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "character1Id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "character2Id": "01KYXBHD0M7HY3ZTY4ZB6KK0DB",
       "relationType": "Neta e avó",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -402,10 +402,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-15",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "character1Id": "CHARLITTLEMERMAIDSEREIA000",
-      "character2Id": "CHARLITTLEMERMAIDPRINCIPE0",
+      "id": "01KYXBHD0MSMJQ956T5ZYBYHMF",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "character1Id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "character2Id": "01KYXBHD0MGZX5FHEC1RQ243PV",
       "relationType": "Amor não correspondido",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -414,10 +414,10 @@
       "deletedAt": null
     },
     {
-      "id": "charrel-16",
-      "storyId": "STORYLITTLEMERMAID00000000",
-      "character1Id": "CHARLITTLEMERMAIDSEREIA000",
-      "character2Id": "CHARLITTLEMERMAIDBRUXA0000",
+      "id": "01KYXBHD0M1VZ6Y5NCYGFHSFNX",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "character1Id": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "character2Id": "01KYXBHD0MCQ94ERVCE9ZVYN6E",
       "relationType": "Barganha",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",

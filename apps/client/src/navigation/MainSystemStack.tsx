@@ -49,7 +49,6 @@ import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
-import { entityEventEmitter } from '../utils/EventEmitter';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -59,23 +58,27 @@ export type MainSystemDrawerParamList = {
   // Tipado com os parâmetros da pilha interna: GenericRelationDisplay (via navigateToEntityDetail)
   // abre um local específico a partir de outras abas do drawer (ex: a partir de um Personagem).
   LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
-  ChaptersStack: undefined;
+  // Todas as pilhas abaixo aceitam `{ screen, params }` opcional pela mesma razão: cada
+  // `Drawer.Screen` tem seu próprio `drawerItemPress` (ver mais abaixo) que navega
+  // explicitamente para a tela de lista da pilha ao ser tocado no menu, em vez de deixar o
+  // Drawer restaurar o estado aninhado como estava.
+  ChaptersStack: NavigatorScreenParams<ChapterStackParamList> | undefined;
   // Tipado com os parâmetros da pilha interna porque o mapa da história abre uma cena
   // específica a partir de outra aba do drawer.
   ScenesStack: NavigatorScreenParams<SceneStackParamList> | undefined;
-  ChoicesStack: undefined;
+  ChoicesStack: NavigatorScreenParams<ChoiceStackParamList> | undefined;
   // Tipado com os parâmetros da pilha interna: GenericRelationDisplay (via navigateToEntityDetail)
   // abre um item específico a partir de outras abas do drawer (ex: a partir de um Local).
   ItemsStack: NavigatorScreenParams<ItemStackParamList> | undefined;
-  ItemJourneysStack: undefined;
-  TagsStack: undefined;
-  WorldRulesStack: undefined;
-  NotesStack: undefined;
-  GalleryStack: undefined;
-  CharacterRelationsStack: undefined;
+  ItemJourneysStack: NavigatorScreenParams<ItemJourneyStackParamList> | undefined;
+  TagsStack: NavigatorScreenParams<TagsStackParamList> | undefined;
+  WorldRulesStack: NavigatorScreenParams<WorldRulesStackParamList> | undefined;
+  NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
+  GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
+  CharacterRelationsStack: NavigatorScreenParams<CharacterRelationsStackParamList> | undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
-  OperationLogStack: NavigatorScreenParams<OperationLogStackParamList>;
+  OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   StorySelection: undefined;
 };
 
@@ -433,9 +436,17 @@ const MainSystemNavigator = () => {
           title: t('characters_title'),
           drawerLabel: t('characters_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('character_navigation_reset');
+        listeners={({ navigation }) => ({
+          // O comportamento padrão do Drawer, ao tocar num item, restaura o estado
+          // aninhado exatamente como ele estava (é assim que abas preservam navegação -
+          // é intencional na maioria dos apps). Aqui a gente quer o oposto: tocar "Personagens"
+          // sempre deve levar à lista, não a onde a pilha ficou. `preventDefault` bloqueia essa
+          // restauração, e navegar direto para a rota "Characters" (a raiz da pilha) faz o
+          // stack navigator descartar tudo acima dela - sem depender de um evento global
+          // separado torcendo para a ListScreen estar montada a tempo de escutá-lo.
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('CharactersStack', { screen: 'Characters' });
           },
         })}
       />
@@ -446,9 +457,10 @@ const MainSystemNavigator = () => {
           title: t('locations_title'),
           drawerLabel: t('locations_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('location_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('LocationsStack', { screen: 'Locations' });
           },
         })}
       />
@@ -459,9 +471,10 @@ const MainSystemNavigator = () => {
           title: t('chapters_title'),
           drawerLabel: t('chapters_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('chapter_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('ChaptersStack', { screen: 'Chapters' });
           },
         })}
       />
@@ -476,9 +489,10 @@ const MainSystemNavigator = () => {
             overflow: 'hidden', // Ensure content is hidden
           },
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('choice_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('ChoicesStack', { screen: 'Choices' });
           },
         })}
       />
@@ -489,9 +503,10 @@ const MainSystemNavigator = () => {
           title: t('items_title'),
           drawerLabel: t('items_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('item_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('ItemsStack', { screen: 'Items' });
           },
         })}
       />
@@ -502,9 +517,10 @@ const MainSystemNavigator = () => {
           title: t('item_journeys_title'),
           drawerLabel: t('item_journeys_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('item_journey_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('ItemJourneysStack', { screen: 'ItemJourneys' });
           },
         })}
       />
@@ -515,9 +531,10 @@ const MainSystemNavigator = () => {
           title: t('scenes_title'),
           drawerLabel: t('scenes_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('scene_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('ScenesStack', { screen: 'Scenes' });
           },
         })}
       />
@@ -528,9 +545,10 @@ const MainSystemNavigator = () => {
           title: t('tags_title'),
           drawerLabel: t('tags_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('tag_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('TagsStack', { screen: 'Tags' });
           },
         })}
       />
@@ -541,9 +559,10 @@ const MainSystemNavigator = () => {
           title: t('world_rules_title'),
           drawerLabel: t('world_rules_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('worldrule_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('WorldRulesStack', { screen: 'WorldRules' });
           },
         })}
       />
@@ -554,9 +573,10 @@ const MainSystemNavigator = () => {
           title: t('notes_title'),
           drawerLabel: t('notes_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('note_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('NotesStack', { screen: 'Notes' });
           },
         })}
       />
@@ -567,9 +587,10 @@ const MainSystemNavigator = () => {
           title: t('gallery_title'),
           drawerLabel: t('gallery_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('gallery_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('GalleryStack', { screen: 'GalleryList' });
           },
         })}
       />
@@ -580,9 +601,10 @@ const MainSystemNavigator = () => {
           title: t('character_relations_title'),
           drawerLabel: t('character_relations_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('character_relation_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('CharacterRelationsStack', { screen: 'CharacterRelations' });
           },
         })}
       />
@@ -593,9 +615,10 @@ const MainSystemNavigator = () => {
           title: t('operation_logs_title'),
           drawerLabel: t('operation_logs_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('operation_logs_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
           },
         })}
       />

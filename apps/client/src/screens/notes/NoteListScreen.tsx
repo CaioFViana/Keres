@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,6 @@ import { NoteWithTags } from '../../services/storymanagement/NoteService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useNoteStore } from '../../state/noteStore';
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NotesStack'>,
@@ -75,21 +74,6 @@ const NotesScreen = () => {
   useEffect(() => {
     fetchTags();
   }, [fetchTags]);
-
-  // Listen for reset event
-  useEffect(() => {
-    const handleReset = () => {
-      if (navigation.getState().routes.length > 1) {
-        navigation.dispatch(StackActions.popToTop());
-      }
-    };
-
-    entityEventEmitter.on('note_navigation_reset', handleReset);
-
-    return () => {
-      entityEventEmitter.off('note_navigation_reset', handleReset);
-    };
-  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {

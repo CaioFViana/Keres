@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { MEDIA_TYPES } from '@keres/shared';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,6 @@ import { useGalleryStore } from '../../state/galleryStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'GalleryStack'>,
@@ -62,18 +61,6 @@ const GalleryListScreen = () => {
     collectionKey: 'galleries',
     changeEvent: 'gallery_changed',
   });
-
-  useEffect(() => {
-    const handleReset = () => {
-      if (navigation.getState().routes.length > 1) {
-        navigation.dispatch(StackActions.popToTop());
-      }
-    };
-    entityEventEmitter.on('gallery_navigation_reset', handleReset);
-    return () => {
-      entityEventEmitter.off('gallery_navigation_reset', handleReset);
-    };
-  }, [navigation]);
 
   /**
    * Importa os arquivos escolhidos.

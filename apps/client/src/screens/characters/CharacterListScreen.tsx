@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,6 @@ import { CharacterWithTags } from '../../services/storymanagement/CharacterServi
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type CharactersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,
@@ -83,21 +82,6 @@ const CharactersScreen = () => {
   useEffect(() => {
     fetchTags();
   }, [fetchTags]);
-
-  // Listen for reset event
-  useEffect(() => {
-    const handleReset = () => {
-      if (navigation.getState().routes.length > 1) {
-        navigation.dispatch(StackActions.popToTop());
-      }
-    };
-
-    entityEventEmitter.on('character_navigation_reset', handleReset);
-
-    return () => {
-      entityEventEmitter.off('character_navigation_reset', handleReset);
-    };
-  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {

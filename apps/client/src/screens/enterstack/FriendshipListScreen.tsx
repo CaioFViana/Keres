@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { StackActions, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -77,18 +77,6 @@ const FriendshipListScreen = () => {
       entityEventEmitter.off('friendship_changed', fetchFriendshipsAndServers);
     };
   }, [fetchFriendshipsAndServers, navigation]);
-
-  useEffect(() => {
-    const handleReset = () => {
-      if (navigation.getState().routes.length > 1) {
-        navigation.dispatch(StackActions.popToTop());
-      }
-    };
-    entityEventEmitter.on('friendship_navigation_reset', handleReset);
-    return () => {
-      entityEventEmitter.off('friendship_navigation_reset', handleReset);
-    };
-  }, [navigation]);
 
   const handleAddFriendship = () => {
     navigation.navigate('FriendshipForm', {});

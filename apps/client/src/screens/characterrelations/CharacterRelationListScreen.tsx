@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,6 @@ import { CharacterRelationsStackParamList, MainSystemDrawerParamList } from '../
 import { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterRelationStore } from '../../state/characterRelationStore';
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type CharacterRelationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharacterRelationsStack'>,
@@ -45,22 +44,6 @@ const CharacterRelationsScreen = () => {
     collectionKey: 'characterRelations',
     changeEvent: 'character_relation_changed',
   });
-
-  // Listen for reset event
-  useEffect(() => {
-    const handleReset = () => {
-      // Only pop to top if there's more than one screen in the stack
-      if (navigation.getState().routes.length > 1) {
-        navigation.dispatch(StackActions.popToTop());
-      }
-    };
-
-    entityEventEmitter.on('character_relation_navigation_reset', handleReset);
-
-    return () => {
-      entityEventEmitter.off('character_relation_navigation_reset', handleReset);
-    };
-  }, [navigation]);
 
   const styles = StyleSheet.create({
     container: {

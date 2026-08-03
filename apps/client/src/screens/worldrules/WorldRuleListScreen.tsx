@@ -1,7 +1,7 @@
 import { worldRuleStore } from '@/src/state/worldRuleStore';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,6 @@ import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack'; // Will create/update this later
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'WorldRulesStack'>,
@@ -75,21 +74,6 @@ const WorldRulesScreen = () => {
   useEffect(() => {
     fetchTags();
   }, [fetchTags]);
-
-  // Listen for reset event
-  useEffect(() => {
-    const handleReset = () => {
-      if (navigation.getState().routes.length > 1) {
-        navigation.dispatch(StackActions.popToTop());
-      }
-    };
-
-    entityEventEmitter.on('worldrule_navigation_reset', handleReset);
-
-    return () => {
-      entityEventEmitter.off('worldrule_navigation_reset', handleReset);
-    };
-  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {

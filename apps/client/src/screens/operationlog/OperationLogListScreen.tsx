@@ -1,6 +1,6 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
-import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
@@ -38,21 +38,6 @@ const OperationLogScreen: React.FC = () => {
     // Navigate to the OperationLogDetail screen within the OperationLogStack
     // This now works because OperationLogScreenNavigationProp is a CompositeNavigationProp
     navigation.navigate('OperationLogStack', { screen: 'OperationLogDetail', params: { logId: logId } });
-  }, [navigation]);
-
-  // Listen for reset event
-  useEffect(() => {
-    const handleReset = () => {
-      if (navigation.getState().routes.length > 1) {
-        navigation.dispatch(StackActions.popToTop());
-      }
-    };
-
-    entityEventEmitter.on('operation_logs_navigation_reset', handleReset);
-
-    return () => {
-      entityEventEmitter.off('operation_logs_navigation_reset', handleReset);
-    };
   }, [navigation]);
 
   // Listen for operation_log_updated event to trigger refetch

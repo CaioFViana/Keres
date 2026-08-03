@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,6 @@ import { LocationWithTags } from '../../services/storymanagement/LocationService
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
 import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -82,20 +81,6 @@ const LocationsScreen = () => {
   useEffect(() => {
     fetchTags();
   }, [fetchTags]);
-
-  useEffect(() => {
-    const handleReset = () => {
-      if (navigation.getState().routes.length > 1) {
-        navigation.dispatch(StackActions.popToTop());
-      }
-    };
-
-    entityEventEmitter.on('location_navigation_reset', handleReset);
-
-    return () => {
-      entityEventEmitter.off('location_navigation_reset', handleReset);
-    };
-  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {

@@ -15,7 +15,6 @@ import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationSc
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import { useTheme } from '../theme';
-import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -151,9 +150,10 @@ const StorySelectionNavigator = () => {
           title: t('story_selection_title'),
           drawerLabel: t('story_selection_title'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('story_selection_main_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('StorySelectionMain', { screen: 'StorySelectionScreen' });
           },
         })}
       />
@@ -164,9 +164,10 @@ const StorySelectionNavigator = () => {
           title: t('manage_servers'),
           drawerLabel: t('manage_servers'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('server_management_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
           },
         })}
       />
@@ -177,9 +178,10 @@ const StorySelectionNavigator = () => {
           title: t('manage_friendships'),
           drawerLabel: t('manage_friendships'),
         }}
-        listeners={() => ({
-          drawerItemPress: () => {
-            entityEventEmitter.emit('friendship_navigation_reset');
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('FriendshipDrawer', { screen: 'FriendshipList' });
           },
         })}
       />

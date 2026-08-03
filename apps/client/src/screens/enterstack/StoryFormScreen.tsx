@@ -9,6 +9,7 @@ import Button from '../../components/common/Button/Button';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -36,6 +37,7 @@ const StoryFormScreen = () => {
   const drizzleDb = useDrizzle();
   const storyService = useCallback(() => createStoryService(drizzleDb), [drizzleDb]);
   const { userId } = useUserSettingsStore(); // Get userId from store
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState<'linear' | 'branching'>('linear');
@@ -212,11 +214,11 @@ const StoryFormScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
           <Text style={[styles.title, { color: colors.text }]}>{storyId ? t('edit_story') : t('create_new_story_screen_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {storyId ? t('edit_story_description') : t('create_new_story_screen_description')}
@@ -312,13 +314,11 @@ const StoryFormScreen = () => {
               {t('delete_story_title')}
             </Button>
           )}
-
-          <View style={{ height: 90 }} />
         </ScrollView>
-      </TouchableWithoutFeedback>    
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
-}; // Last view of 90 size is to avoid a bug that happened with the screen scrolling.
+};
 
 const styles = StyleSheet.create({
   scrollViewContent: {

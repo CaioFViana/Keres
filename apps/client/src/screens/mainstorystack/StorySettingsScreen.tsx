@@ -10,6 +10,7 @@ import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -33,6 +34,7 @@ const StorySettingsScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const storyService = useCallback(() => createStoryService(drizzleDb), [drizzleDb]);
   const serverService = useCallback(() => createServerService(drizzleDb), [drizzleDb]);
   const { userId } = useUserSettingsStore();
@@ -255,11 +257,11 @@ const StorySettingsScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
           <Text style={[styles.title, { color: colors.text }]}>{t('story_settings_screen_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('story_settings_screen_description')}
@@ -363,8 +365,6 @@ const StorySettingsScreen = () => {
           <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
             {t('delete_story_title')}
           </Button>
-
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>    
     </KeyboardAvoidingView>

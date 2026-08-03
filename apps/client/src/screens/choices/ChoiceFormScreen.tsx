@@ -13,6 +13,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { ChoiceStackParamList } from '../../navigation/MainSystemStack';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { useSceneStore } from '../../state/sceneStore';
@@ -41,6 +42,7 @@ const ChoiceFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
 
   useEffect(() => {
@@ -200,7 +202,7 @@ const ChoiceFormScreen = () => {
   const sceneOptions = useMemo(() => scenes.map(scene => ({ label: scene.name, value: scene.id })), [scenes]);
 
   const styles = StyleSheet.create({
-    scrollViewContent: { padding: 20, paddingBottom: 350, flexGrow: 1 },
+    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
     title: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
     label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5 },
     switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 15, marginBottom: 5 },
@@ -221,7 +223,7 @@ const ChoiceFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_choice_title') : t('create_choice_title')}</Text>
@@ -284,7 +286,6 @@ const ChoiceFormScreen = () => {
 
           <Button onPress={handleSave} style={styles.saveButton}>{t('save_choice')}</Button>
           {isEditing && (<Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>{t('delete_choice_title')}</Button>)}
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

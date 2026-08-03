@@ -10,6 +10,7 @@ import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
@@ -36,6 +37,7 @@ const WorldRuleDetailScreen = () => {
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   // Initialize services only once when drizzleDb is available
   useEffect(() => {
@@ -172,7 +174,7 @@ const WorldRuleDetailScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <Text style={styles.mainTitle}>{worldRule.title}</Text>
 
       <DetailField label={t('description')} value={worldRule.description || t('common_na')} />

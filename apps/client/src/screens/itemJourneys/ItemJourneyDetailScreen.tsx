@@ -10,6 +10,7 @@ import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '../../state/characterStore';
@@ -35,6 +36,7 @@ const ItemJourneyDetailScreen = () => {
   const { itemJourneyId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
@@ -167,7 +169,7 @@ const ItemJourneyDetailScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <Text style={styles.mainTitle}>{relatedItem?.name || t('unknown_item')}</Text>
       <Text style={styles.subTitle}>{itemJourney.newState}</Text>
 

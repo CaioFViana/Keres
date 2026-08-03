@@ -14,6 +14,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { ItemJourneyStackParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characters
@@ -47,6 +48,7 @@ const ItemJourneyFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
 
   useEffect(() => {
@@ -242,7 +244,7 @@ const ItemJourneyFormScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    scrollViewContent: { padding: 20, paddingBottom: 350, flexGrow: 1 },
+    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
     title: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
     label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5 },
     switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 15, marginBottom: 5 },
@@ -263,7 +265,7 @@ const ItemJourneyFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_item_journey_title') : t('create_item_journey_title')}</Text>
@@ -349,7 +351,6 @@ const ItemJourneyFormScreen = () => {
 
           <Button onPress={handleSave} style={styles.saveButton}>{t('save_item_journey')}</Button>
           {isEditing && (<Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>{t('delete_item_journey_title')}</Button>)}
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

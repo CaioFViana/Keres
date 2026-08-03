@@ -16,6 +16,7 @@ import { CharacterSelect } from '../../db/schemas/characters'; // Import Charact
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
@@ -44,6 +45,7 @@ const CharacterFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
   const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
 
@@ -316,7 +318,7 @@ const CharacterFormScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
-      paddingBottom: 350,
+      paddingBottom: scrollBottomPadding,
       flexGrow: 1,
     },    title: {
       fontSize: 24,
@@ -372,7 +374,7 @@ const CharacterFormScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -554,8 +556,6 @@ const CharacterFormScreen = () => {
               {t('delete_character_title')}
             </Button>
           )}
-
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>    
     </KeyboardAvoidingView>

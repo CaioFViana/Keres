@@ -1,8 +1,8 @@
-import { eq } from 'drizzle-orm';
-import { mkdir } from 'node:fs/promises';
+import { and, eq } from 'drizzle-orm';
+import { mkdir, unlink } from 'node:fs/promises';
 import * as path from 'node:path';
 import { db } from '../db';
-import { mediaBlobs } from '../db/schema';
+import { galleries, mediaBlobs, stories } from '../db/schema';
 import { env } from '../config/env';
 
 /**
@@ -107,6 +107,51 @@ export class MediaStorageService {
       return null;
     }
     return { file, mimeType: record.mimeType, sizeBytes: record.sizeBytes };
+  }
+
+  /**
+   * Remove o blob de `hash` se nenhuma Gallery viva em nenhuma história ainda precisar dele.
+   *
+   * "Viva" exige duas coisas: a própria linha de `galleries` não estar excluída, *e* a
+   * história dela também não estar excluída - o tombstone de uma história não se propaga
+   * para suas Galleries (cada entidade sincroniza o próprio tombstone independentemente, ver
+   * `StorySyncHandler`), então um hash pode ficar órfão por qualquer um dos dois caminhos.
+   *
+   * Chamada depois de excluir uma Gallery e depois de excluir uma História, para cada hash
+   * que a exclusão pode ter deixado sem nenhuma referência restante. Sem isto, o armazenamento
+   * dedupado globalmente só cresce: nada nunca some.
+   */
+  async deleteBlobIfUnreferenced(hash: string): Promise<void> {
+    const stillReferenced = await db.select({ id: galleries.id })
+      .from(galleries)
+      .innerJoin(stories, eq(galleries.storyId, stories.id))
+      .where(and(
+        eq(galleries.hash, hash),
+        eq(galleries.isDeleted, false),
+        eq(stories.isDeleted, false)
+      ))
+      .limit(1);
+
+    if (stillReferenced.length > 0) {
+      return;
+    }
+
+    const record = await db.query.mediaBlobs.findFirst({ where: eq(mediaBlobs.hash, hash) });
+    if (!record) {
+      return;
+    }
+
+    try {
+      await unlink(path.join(this.root, record.storagePath));
+    } catch (error: any) {
+      // Já sumiu do disco (troca/limpeza de volume) - o objetivo é não ter mais o registro
+      // nem o arquivo, então isso ainda conta como sucesso.
+      if (error?.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    await db.delete(mediaBlobs).where(eq(mediaBlobs.hash, hash));
   }
 }
 

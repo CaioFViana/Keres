@@ -88,7 +88,7 @@ const SettingsScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust this value as needed
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

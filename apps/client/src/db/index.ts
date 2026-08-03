@@ -1,7 +1,6 @@
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { createContext, useContext } from 'react'; // Import React Context utilities
-import { createStoryService } from '../services/storymanagement/StoryService'; // Import createStoryService
 import * as schema from './schema';
 
 export let db: AppDrizzleClient | null = null; // Export the Drizzle client
@@ -47,5 +46,5 @@ export async function resetDatabase(dbInstance: SQLiteDatabase) { // Renamed par
 }
 
 export * from './schema';
-export { createStoryService, schema };
+export { schema };
 

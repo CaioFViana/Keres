@@ -13,6 +13,7 @@ import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { ChapterStackParamList } from '../../navigation/MainSystemStack';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { useStoryStore } from '../../state/storyStore';
@@ -39,6 +40,7 @@ const ChapterFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
 
   useEffect(() => {
@@ -197,7 +199,7 @@ const ChapterFormScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
-      paddingBottom: 350,
+      paddingBottom: scrollBottomPadding,
       flexGrow: 1,
     },
     title: {
@@ -258,7 +260,7 @@ const ChapterFormScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -343,8 +345,6 @@ const ChapterFormScreen = () => {
               {t('delete_chapter_title')}
             </Button>
           )}
-
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>    
     </KeyboardAvoidingView>

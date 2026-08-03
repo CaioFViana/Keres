@@ -15,6 +15,7 @@ import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { CharacterSelect, ItemSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
@@ -41,6 +42,7 @@ const ItemDetailScreen = () => {
   const { itemId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
@@ -203,7 +205,7 @@ const ItemDetailScreen = () => {
   const owner = item.characterOwnerId ? allCharacters.find(c => c.id === item.characterOwnerId) : undefined;
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <Text style={styles.mainTitle}>{item.name}</Text>
       <DetailField label={t('description')} value={item.description || t('common_na')} />
       <DetailField label={t('category')} value={item.category || t('common_na')} />

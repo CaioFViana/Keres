@@ -1,6 +1,7 @@
 import {
   CreateStoryDataSchema,
   CreateStoryUpdate,
+  DeleteStoryUpdate,
   PartialStorySchema,
   StoryReorderingStoryUpdate,
   StoryReorderingStoryUpdateSchema,
@@ -9,7 +10,8 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../db';
-import { chapters, stories } from '../../db/schema';
+import { chapters, galleries, stories } from '../../db/schema';
+import { mediaStorageService } from '../MediaStorageService';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 type CreateStoryDataType = z.infer<typeof CreateStoryDataSchema>;
@@ -125,6 +127,22 @@ export class StorySyncHandler extends BaseSyncEntityHandler<typeof CreateStoryDa
     } else {
       // If it's not a story reorder update, delegate to the base class's update method
       await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
+    }
+  }
+
+  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+    await super.delete(userId, storyId, update, currentEntity);
+
+    // O tombstone acima é só da história - ele não se propaga para as Galleries dela (cada
+    // entidade sincroniza o próprio tombstone independentemente), então sem esta varredura
+    // todo hash que essa história já referenciou ficaria órfão no disco para sempre assim
+    // que a história sumisse da visão de todo mundo.
+    const referencedHashes = await db.selectDistinct({ hash: galleries.hash })
+      .from(galleries)
+      .where(eq(galleries.storyId, update.id!));
+
+    for (const { hash } of referencedHashes) {
+      await mediaStorageService.deleteBlobIfUnreferenced(hash);
     }
   }
 }

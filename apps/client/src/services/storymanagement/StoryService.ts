@@ -53,6 +53,7 @@ import {
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
+import { mediaFileService } from '../MediaFileService';
 import { createOperationLogService } from '../OperationLogService';
 
 /**
@@ -403,6 +404,11 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
 
       await purgeStoryLocally(db, storyId);
+
+      // Safe to remove unconditionally: local media lives under a per-story directory
+      // (see mediaFileService.storyMediaDirectory), never shared with any other story on
+      // this device, so no other story can still be referencing a file in it.
+      mediaFileService.deleteStoryMedia(storyId);
     },
 
     async getBranchingStoryForkCount(): Promise<number> {

@@ -1,7 +1,8 @@
-import { CreateGalleryDataSchema, CreateGalleryDataType, CreateStoryUpdate, isSupportedMediaMimeType, mediaTypeForMimeType, PartialGallerySchema, UpdateStoryUpdate } from '@keres/shared';
+import { CreateGalleryDataSchema, CreateGalleryDataType, CreateStoryUpdate, DeleteStoryUpdate, isSupportedMediaMimeType, mediaTypeForMimeType, PartialGallerySchema, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { galleries } from '../../db/schema';
+import { mediaStorageService } from '../MediaStorageService';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 /**
@@ -86,5 +87,13 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
         eq(galleries.id, update.id!),
         eq(galleries.version, currentEntity.version)
       ));
+  }
+
+  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+    await super.delete(userId, storyId, update, currentEntity);
+    // A linha vira tombstone acima, mas o hash pode ser usado por outra Gallery (mesma
+    // história ou outra, já que o armazenamento é dedupado globalmente) - só o blob deixa
+    // de ter dono quando nenhuma referência viva sobra.
+    await mediaStorageService.deleteBlobIfUnreferenced(currentEntity.hash);
   }
 }

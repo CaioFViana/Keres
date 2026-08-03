@@ -6,6 +6,7 @@ import TagChipList from '@/src/components/common/TagChipList/TagChipList'; // Im
 import { useDrizzle } from '@/src/db';
 import { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createLocationService, LocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
@@ -37,6 +38,7 @@ const ChapterDetailScreen = () => {
   const { chapterId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
@@ -232,7 +234,7 @@ const ChapterDetailScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <Text style={styles.mainTitle}>{chapter.name}</Text>
       <DetailField label={t('summary')} value={chapter.summary || t('common_na')} />
       <DetailField label={t('is_favorite')} value={chapter.isFavorite ? t('common_yes') : t('common_no')} />

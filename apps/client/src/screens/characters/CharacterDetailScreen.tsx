@@ -21,6 +21,7 @@ import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema'; // For available scenes
 import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
@@ -51,6 +52,7 @@ const CharacterDetailScreen = () => {
   const { characterId } = route.params;
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore(); // Get userId from store
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
@@ -447,7 +449,7 @@ const CharacterDetailScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <Text style={styles.mainTitle}>{character.name}</Text>
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
 

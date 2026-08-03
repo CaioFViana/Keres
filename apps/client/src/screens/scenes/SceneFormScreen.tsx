@@ -15,6 +15,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { SceneStackParamList } from '../../navigation/MainSystemStack';
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
@@ -49,6 +50,7 @@ const SceneFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null); // Ref for LocationService
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
@@ -396,7 +398,7 @@ const SceneFormScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
-      paddingBottom: 350,
+      paddingBottom: scrollBottomPadding,
       flexGrow: 1,
     },
     title: {
@@ -466,7 +468,7 @@ const SceneFormScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -648,8 +650,6 @@ const SceneFormScreen = () => {
               {t('delete_scene_title')}
             </Button>
           )}
-
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>    
     </KeyboardAvoidingView>

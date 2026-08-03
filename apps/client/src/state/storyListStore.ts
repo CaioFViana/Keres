@@ -1,6 +1,6 @@
 import { Story } from '@keres/shared/entities/Story';
 import { create } from 'zustand';
-import { createStoryService } from '../db';
+import { createStoryService } from '../services/storymanagement/StoryService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 
 interface StoryListState {

@@ -206,6 +206,18 @@ function scanFile(filePath: string): ScanResult {
       }
     }
 
+    // `<GenericRelationDisplay noItemsMessage="notes_empty" />`: the component calls `t()` on
+    // the prop internally (see file header, indirection case 2), so the literal here never
+    // appears inside a `t(...)` call site itself. Without this, a typo'd/never-added key only
+    // gets caught by luck, if some other real key happens not to already cover it as "unused".
+    if (ts.isJsxAttribute(node) && ts.isIdentifier(node.name) && node.name.text === 'noItemsMessage' && node.initializer) {
+      const init = node.initializer;
+      const literal = ts.isJsxExpression(init) ? init.expression : init;
+      if (literal && (ts.isStringLiteral(literal) || ts.isNoSubstitutionTemplateLiteral(literal))) {
+        exactUsages.push({ key: literal.text, file: filePath, line: lineOf(literal.getStart(sourceFile)) });
+      }
+    }
+
     ts.forEachChild(node, visit);
   }
 

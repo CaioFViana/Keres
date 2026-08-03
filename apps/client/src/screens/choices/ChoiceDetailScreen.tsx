@@ -9,6 +9,7 @@ import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { ChoiceSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { useStoryStore } from '../../state/storyStore';
@@ -31,6 +32,7 @@ const ChoiceDetailScreen = () => {
   const { choiceId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
@@ -132,7 +134,7 @@ const ChoiceDetailScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <Text style={styles.mainTitle}>{choice.text}</Text>
 
       <NoteManager

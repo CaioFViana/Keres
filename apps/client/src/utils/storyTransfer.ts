@@ -4,7 +4,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { reviveDates } from './reviveDates';
-import { ExtractedZipMedia, extractStoryZip } from './storyMediaBundle';
+import { ExtractedZipMedia, extractStoryZip, stripUtf8Bom } from './storyMediaBundle';
 import { StoryImportError } from './StoryImportError';
 
 export { StoryImportError };
@@ -136,7 +136,13 @@ function triggerBrowserDownload(contents: string | Uint8Array, fileName: string,
   // `Uint8Array`'s tipo genérico aceita `ArrayBufferLike` (inclui `SharedArrayBuffer`), mas
   // `Blob` só aceita partes apoiadas em `ArrayBuffer`; nunca é de fato um `SharedArrayBuffer`
   // aqui (só web usa este caminho, com bytes vindos de `File.bytes()`/JSZip).
-  const blob = new Blob([contents as BlobPart], { type: mimeType });
+  //
+  // O `charset=utf-8` só entra para conteúdo textual (JSON/SVG): é o que faz o navegador abrir
+  // o arquivo como UTF-8 se a pessoa arrastar/abrir em vez de salvar, e não se aplica a um
+  // `.zip` binário. Só aqui, na web - o mesmo `mimeType` também vai para `Sharing.shareAsync`
+  // no app nativo, cujo seletor de apps espera um tipo MIME sem parâmetros.
+  const blobType = typeof contents === 'string' ? `${mimeType};charset=utf-8` : mimeType;
+  const blob = new Blob([contents as BlobPart], { type: blobType });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -208,7 +214,7 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
     // `JSON.parse` nunca revive `Date` (`FullStoryExportSchema` usa `z.date()`, que rejeita
     // string) - sem isto, reimportar um `.json` que este mesmo app acabou de exportar falharia
     // na validação.
-    parsedJson = reviveDates(JSON.parse(rawContents));
+    parsedJson = reviveDates(JSON.parse(stripUtf8Bom(rawContents)));
   } catch {
     throw new StoryImportError('invalid_format', `${asset.name} is not valid JSON.`);
   }

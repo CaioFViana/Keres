@@ -9,6 +9,7 @@ import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { TagsStackParamList } from '../../navigation/MainSystemStack'; // Import TagsStackParamList
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
@@ -33,6 +34,7 @@ const TagFormScreen = () => {
   const drizzleDb = useDrizzle();
   const tagService = useCallback(() => createTagService(drizzleDb), [drizzleDb]);
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
 
   const [name, setName] = useState('');
@@ -144,7 +146,7 @@ const TagFormScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
-      paddingBottom: 350,
+      paddingBottom: scrollBottomPadding,
       flexGrow: 1,
     },
     title: {
@@ -191,7 +193,7 @@ const TagFormScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -245,8 +247,6 @@ const TagFormScreen = () => {
               {t('delete_tag_title')}
             </Button>
           )}
-
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

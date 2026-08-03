@@ -12,6 +12,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { useStoryStore } from '../../state/storyStore';
@@ -39,6 +40,7 @@ const LocationFormScreen = () => {
   const drizzleDb = useDrizzle();
 
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
 
   useEffect(() => {
@@ -203,7 +205,7 @@ const LocationFormScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
-      paddingBottom: 350,
+      paddingBottom: scrollBottomPadding,
       flexGrow: 1,
     },
     title: {
@@ -260,7 +262,7 @@ const LocationFormScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -367,8 +369,6 @@ const LocationFormScreen = () => {
               {t('delete_location_title')}
             </Button>
           )}
-
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>    
     </KeyboardAvoidingView>

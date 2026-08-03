@@ -65,8 +65,6 @@ const DatabaseInitializer = () => {
   const [userSettingsLoaded, setUserSettingsLoaded] = useState(false);
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
 
-  console.log('DatabaseInitializer: db context', db);
-
   useEffect(() => {
     const initialize = async () => {
       console.log('DatabaseInitializer: Starting database initialization...');

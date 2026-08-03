@@ -17,9 +17,6 @@ export const useUserDisplayName = (
 
   useEffect(() => {
     const resolveUserName = async () => {
-      console.log('useUserDisplayName - Resolving username for:', logUserId, 'Story ID:', storyId);
-      console.log('useUserDisplayName - Current user settings:', { currentUsername, activeServerIdUser: activeServer?.idUser });
-
       if (!drizzle || !logUserId) {
         setDisplayName(t('user_not_found'));
         return;
@@ -29,7 +26,6 @@ export const useUserDisplayName = (
       if (activeServer && logUserId === activeServer.idUser) {
         const name = `${activeServer.userName} ${t('you_suffix')}`;
         setDisplayName(name);
-        console.log('useUserDisplayName - Identified as current user:', name);
         return;
       }
 
@@ -59,7 +55,6 @@ export const useUserDisplayName = (
 
       if (friend) {
         setDisplayName(friend.friendUsername);
-        console.log('useUserDisplayName - Identified as friend:', friend.friendUsername);
         return;
       }
 
@@ -70,13 +65,11 @@ export const useUserDisplayName = (
 
       if (foundServerUser) {
         setDisplayName(foundServerUser.userName);
-        console.log('useUserDisplayName - Identified via registered server:', foundServerUser.userName);
         return;
       }
 
       // 4. Fallback if not found
       setDisplayName(t('user_not_found'));
-      console.log('useUserDisplayName - Fallback: user not found.');
     };
 
     resolveUserName();

@@ -10,6 +10,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { NotesStackParamList } from '../../navigation/MainSystemStack';
 import { createNoteService } from '../../services/storymanagement/NoteService';
 import { useStoryStore } from '../../state/storyStore';
@@ -34,6 +35,7 @@ const NoteFormScreen = () => {
   const drizzleDb = useDrizzle();
   const noteService = useCallback(() => createNoteService(drizzleDb), [drizzleDb]);
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState<string | null>(null);
@@ -164,7 +166,7 @@ const NoteFormScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
-      paddingBottom: 350,
+      paddingBottom: scrollBottomPadding,
       flexGrow: 1,
     },
     title: {
@@ -221,7 +223,7 @@ const NoteFormScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -286,8 +288,6 @@ const NoteFormScreen = () => {
               {t('delete_note_title')}
             </Button>
           )}
-
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

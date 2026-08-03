@@ -7,6 +7,7 @@ import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, Scr
 import Button from '../../components/common/Button/Button';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import apiClient from '../../services/apiClient';
 import { createServerService } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -31,6 +32,7 @@ const ServerRegistrationScreen = () => {
     const commonContainerStyles = getCommonContainerStyles(colors);
     const commonInputStyles = getCommonInputStyles(colors);
     const drizzleDb = useDrizzle();
+    const scrollBottomPadding = useFormScrollBottomPadding();
     const serverService = useRef(createServerService(drizzleDb)).current;
     const { setActiveServer } = useUserSettingsStore();
   
@@ -256,11 +258,11 @@ const ServerRegistrationScreen = () => {
     return (
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+          <ScrollView style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
             <Text style={[styles.title, { color: colors.text }]}>
               {serverId ? t('edit_server') : t('register_new_server')}
             </Text>
@@ -335,8 +337,6 @@ const ServerRegistrationScreen = () => {
             )}
   
             {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
-  
-            <View style={{ height: 90 }} />
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>

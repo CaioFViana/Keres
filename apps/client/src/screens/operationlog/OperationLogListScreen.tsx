@@ -4,7 +4,7 @@ import { CompositeNavigationProp, StackActions, useFocusEffect, useNavigation } 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import OperationLogList from '../../components/OperationLogList/OperationLogList';
 import { MainSystemDrawerParamList, OperationLogStackParamList } from '../../navigation/MainSystemStack'; // Use MainSystemDrawerParamList
 import { useStoryStore } from '../../state/storyStore';
@@ -30,17 +30,6 @@ const OperationLogScreen: React.FC = () => {
     useCallback(() => {
       navigation.setOptions({
         title: t('operation_logs_title'),
-        headerRight: () => (
-          <TouchableOpacity
-            onPress={() => {
-              // Optionally add some action here, e.g., filter or settings for logs
-              console.log('Operation Log settings pressed');
-            }}
-            style={{ marginRight: 15 }}
-          >
-            {/* <Ionicons name="options-outline" size={24} color={colors.text} /> */}
-          </TouchableOpacity>
-        ),
       });
     }, [navigation, t])
   );

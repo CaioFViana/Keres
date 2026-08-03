@@ -26,6 +26,19 @@ import { StoryImportError } from './StoryImportError';
 const STORY_JSON_ENTRY = 'story.json';
 const MEDIA_DIR_PREFIX = 'media/';
 
+/**
+ * Remove um BOM UTF-8 (`﻿`) do início do texto, se houver.
+ *
+ * `Blob.text()` (usado no import pelo seletor da web) já descarta o BOM por especificação,
+ * mas `File.text()` do `expo-file-system` (usado no import nativo) não documenta esse
+ * comportamento - sem isto, o mesmo arquivo `.json`/`.zip` (por exemplo, um reexportado por
+ * um editor de texto que adiciona BOM) importaria na web e falharia com "Unexpected token"
+ * no aparelho.
+ */
+export function stripUtf8Bom(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
 export interface BuildZipResult {
   bytes: Uint8Array;
   /** Quantas mídias entraram no pacote, do total que a história referencia. */
@@ -98,7 +111,7 @@ export async function extractStoryZip(bytes: Uint8Array, sourceName: string): Pr
   try {
     // `JSON.parse` nunca revive `Date` - mesmo cuidado de `pickStoryExportFile` com o `.json`
     // solto, senão a validação abaixo rejeitaria toda data como string.
-    parsedJson = reviveDates(JSON.parse(await storyEntry.async('string')));
+    parsedJson = reviveDates(JSON.parse(stripUtf8Bom(await storyEntry.async('string'))));
   } catch {
     throw new StoryImportError('invalid_format', `${sourceName}'s ${STORY_JSON_ENTRY} is not valid JSON.`);
   }

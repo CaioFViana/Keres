@@ -4,7 +4,7 @@ import { CommonActions, DrawerActions, NavigatorScreenParams } from '@react-navi
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
@@ -403,7 +403,24 @@ const MainSystemNavigator = () => {
       <Drawer.Screen
         name="MainDashboard"
         component={MainDashboardScreen}
-        options={{ title: selectedStory?.title || t('dashboard_title') }}
+        options={{
+          title: selectedStory?.title || t('dashboard_title'),
+          // A história atual precisa se destacar das demais entradas do drawer, que são só
+          // navegação - sem isto, o nome da história some no meio da lista como se fosse mais
+          // um item igual a "Personagens" ou "Locais".
+          drawerLabel: ({ focused }) => (
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: 'bold',
+                color: focused ? colors.primary : colors.text,
+              }}
+              numberOfLines={1}
+            >
+              {selectedStory?.title || t('dashboard_title')}
+            </Text>
+          ),
+        }}
       />
       <Drawer.Screen
         name="CharactersStack"

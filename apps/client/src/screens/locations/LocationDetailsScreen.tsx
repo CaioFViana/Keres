@@ -18,6 +18,7 @@ import { useDrizzle } from '../../db';
 import { LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
@@ -47,6 +48,7 @@ const LocationDetailsScreen = () => {
   const { locationId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const drizzleDb = useDrizzle();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -285,6 +287,7 @@ const LocationDetailsScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
+      paddingBottom: scrollBottomPadding,
       flexGrow: 1,
     },
     title: {

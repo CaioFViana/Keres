@@ -10,6 +10,7 @@ import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import createTagRelationService
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
@@ -38,6 +39,7 @@ const TagDetailScreen = () => {
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const { t } = useTranslation(); // Initialize useTranslation
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   // Initialize tagService only once when drizzleDb is available
   useEffect(() => {
@@ -259,7 +261,7 @@ const TagDetailScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <Text style={styles.mainTitle}>{tag.name}</Text>
 
       {tag.color && (

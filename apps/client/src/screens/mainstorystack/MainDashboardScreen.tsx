@@ -216,9 +216,11 @@ const MainDashboardScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>{selectedStory?.title || t('no_story_selected')}</Text>
-      <Text style={styles.text}>
-        ({t('last_server_synced_log')} {selectedStory?.lastServerSyncedLog || 0})
-      </Text>
+      {selectedStory?.serverId && (
+        <Text style={styles.text}>
+          ({t('last_server_synced_log')} {selectedStory.lastServerSyncedLog || 0})
+        </Text>
+      )}
 
       <SummaryCard
         title={t('story_overview')}

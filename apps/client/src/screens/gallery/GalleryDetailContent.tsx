@@ -179,8 +179,11 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
               await galleryService.deleteGallery(userId, media.id);
               // O arquivo local só é removido depois que o registro foi marcado como
               // excluído: se a ordem fosse a inversa, uma falha na exclusão deixaria uma
-              // mídia ativa apontando para um arquivo que não existe mais.
+              // mídia ativa apontando para um arquivo que não existe mais. Hash é único por
+              // história (dedupe em galleryMediaImport), então este é o único registro que
+              // aponta para este arquivo e sua miniatura - remover ambos é seguro.
               mediaFileService.deleteLocal(media.localPath);
+              mediaFileService.deleteLocal(media.thumbnailPath);
               showNotification(t('media_deleted_successfully'), 'success');
               onClose();
             } catch (deleteError) {

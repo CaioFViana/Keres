@@ -15,6 +15,7 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
 import { createNoteService } from '../../services/storymanagement/NoteService';
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
@@ -47,6 +48,7 @@ const NoteDetailScreen = () => {
   const tagRelationServiceRef = useRef<ReturnType<typeof createTagRelationService> | null>(null);
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   // Initialize services only once when drizzleDb is available
   useEffect(() => {
@@ -273,7 +275,7 @@ const NoteDetailScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <Text style={styles.mainTitle}>{note.title}</Text>
 
       <DetailField label={t('body')} value={note.body || t('common_na')} />

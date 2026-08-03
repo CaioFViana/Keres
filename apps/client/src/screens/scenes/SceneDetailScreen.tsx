@@ -21,6 +21,7 @@ import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { ChapterService, createChapterService } from '../../services/storymanagement/ChapterService'; // Import ChapterService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { ChoiceService, createChoiceService } from '../../services/storymanagement/ChoiceService'; // Import ChoiceService
@@ -51,6 +52,7 @@ const SceneDetailScreen = () => {
   const { sceneId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const drizzleDb = useDrizzle();
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
@@ -377,7 +379,7 @@ const SceneDetailScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container}>
+    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       {chapter && (
         <Text style={styles.subTitle}>
           {selectedStory?.type === 'linear' ? `${chapter.index}. ` : ''}

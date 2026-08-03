@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createStoryService, useDrizzle } from '../db';
+import { useDrizzle } from '../db';
 import apiClient, { isOfflineError } from '../services/apiClient';
 import { authTokenManager, setAuthDb } from '../services/AuthTokenManager';
 import { createFriendshipService } from '../services/FriendshipService';
 import { createServerService } from '../services/ServerService';
+import { createStoryService } from '../services/storymanagement/StoryService';
 import { OFFLINE_RETRY_MS, ServerStoryPreview, SYNC_INTERVAL_MS, SyncEngineService } from '../services/SyncEngineService';
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';

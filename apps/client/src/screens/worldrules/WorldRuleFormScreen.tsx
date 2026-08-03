@@ -11,6 +11,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
@@ -35,6 +36,7 @@ const WorldRuleFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const confirmDelete = useConfirmDelete();
+  const scrollBottomPadding = useFormScrollBottomPadding();
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
 
   useEffect(() => {
@@ -188,7 +190,7 @@ const WorldRuleFormScreen = () => {
   const styles = StyleSheet.create({
     scrollViewContent: {
       padding: 20,
-      paddingBottom: 350,
+      paddingBottom: scrollBottomPadding,
       flexGrow: 1,
     },
     title: {
@@ -245,7 +247,7 @@ const WorldRuleFormScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -326,8 +328,6 @@ const WorldRuleFormScreen = () => {
               {t('delete_world_rule_title')}
             </Button>
           )}
-
-          <View style={{ height: 90 }} />
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

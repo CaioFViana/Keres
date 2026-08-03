@@ -2,10 +2,12 @@
 // Do not modify this file directly.
 
 import migration_1 from './0000_tough_nightcrawler';
+import migration_2 from './0001_lush_pandemic';
 
 
 const migrations = [
 { id: 1, name: '0000_tough_nightcrawler', run: migration_1 },
+  { id: 2, name: '0001_lush_pandemic', run: migration_2 },
 ];
 
 export default migrations;

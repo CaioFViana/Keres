@@ -29,14 +29,14 @@ A solução envolve a introdução de uma nova entidade `Choice` e um campo `typ
         *   `sceneId` (ULID, FK para a `Scene` onde a escolha é apresentada)
         *   `text` (string, o texto da escolha, ex: "Vire à esquerda")
         *   `nextSceneId` (ULID, FK para a `Scene` que esta escolha leva)
-        *   `isImplicit` (boolean, padrão `false`): Uma flag crucial que indica se a escolha foi gerada automaticamente pelo sistema para uma história linear.
         *   `createdAt`, `updatedAt`
 
 ### 2. Lógica de Backend (API)
 
 *   **Gerenciamento Condicional de `Choice`:**
-    *   **Para histórias `linear`:** Quando uma `Scene` é criada, atualizada ou reordenada, o backend **automaticamente criará ou atualizará uma `Choice` implícita** (`isImplicit: true`) que liga a cena atual à próxima cena na sequência linear (baseada no `index`). Isso garante que mesmo histórias lineares tenham uma representação de grafo subjacente.
+    *   **Para histórias `linear`:** nunca existe nenhuma `Choice` - a ordem é só o `index` da `Scene` dentro do capítulo. A API rejeita qualquer tentativa de criar/atualizar/excluir uma `Choice` via sync enquanto a história for `linear` (`ChoiceSyncHandler`).
     *   **Para histórias `branching`:** Os objetos `Choice` serão criados, atualizados e excluídos explicitamente pelos usuários através da API.
+    *   **Conversão entre os dois:** feita pelo usuário (não automática) - ver `StoryService.convertStoryType`/`checkLinearCompatibility` em `apps/client/src/services/storymanagement/storyTypeConversion.ts` e a seção 2.3 de `docs/choice_mechanics.md`.
 
 ### 3. Experiência do Frontend
 

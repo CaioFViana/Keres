@@ -6,11 +6,11 @@ export const CharacterRelationSchema = z.object({
   character1Id: z.string(),
   character2Id: z.string(),
   relationType: z.string().min(1, "Relation type cannot be empty"),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   version: z.number(),
   isDeleted: z.boolean(),
-  deletedAt: z.date().nullable(),
+  deletedAt: z.coerce.date().nullable(),
 });
 
 export const CreateCharacterRelationDataSchema = CharacterRelationSchema.omit({

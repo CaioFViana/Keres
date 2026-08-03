@@ -6,11 +6,11 @@ export const TagRelationSchema = z.object({
   tagId: z.string().min(1, "Tag ID cannot be empty"),
   relationId: z.string().min(1, "Relation ID cannot be empty"),
   relationType: z.string().min(1, "Relation type cannot be empty"), // e.g., 'Character', 'Location', 'Scene'
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   version: z.number(),
   isDeleted: z.boolean(),
-  deletedAt: z.date().nullable(),
+  deletedAt: z.coerce.date().nullable(),
 });
 
 export const CreateTagRelationDataSchema = TagRelationSchema.omit({

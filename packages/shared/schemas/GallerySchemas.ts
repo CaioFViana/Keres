@@ -134,11 +134,11 @@ export const GallerySchema = z.object({
   title: z.string().nullable(),
   isFavorite: z.boolean(),
   extraNotes: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   version: z.number(),
   isDeleted: z.boolean(),
-  deletedAt: z.date().nullable(),
+  deletedAt: z.coerce.date().nullable(),
 });
 
 export const CreateGalleryDataSchema = GallerySchema.omit({
@@ -173,11 +173,11 @@ export const GalleryRelationSchema = z.object({
   galleryId: z.string().min(1, 'Gallery ID cannot be empty'),
   ownerId: z.string().min(1, 'Owner ID cannot be empty'),
   ownerType: z.enum(GALLERY_OWNER_ENTITIES),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   version: z.number(),
   isDeleted: z.boolean(),
-  deletedAt: z.date().nullable(),
+  deletedAt: z.coerce.date().nullable(),
 });
 
 export const CreateGalleryRelationDataSchema = GalleryRelationSchema.omit({

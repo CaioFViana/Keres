@@ -17,7 +17,6 @@ export interface SceneNodeConnection {
   choiceId: string;
   /** Texto da escolha; vazio quando é uma transição implícita. */
   text: string;
-  isImplicit: boolean;
   sceneId: string;
   sceneName: string;
 }

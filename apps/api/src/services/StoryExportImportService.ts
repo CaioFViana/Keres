@@ -1,8 +1,9 @@
-import { FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
+import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema, FullStoryExportType, migrateStoryExport, StoryExportVersionError } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm'; // Import sql for aggregate functions
 import { ulid } from 'ulid'; // Import ulid for generating new IDs
 import { db } from '../db';
 import * as dbSchema from '../db/schema';
+import { AppError } from '../utils/errors';
 
 export class StoryExportImportService {
     async exportStory(storyId: string): Promise<FullStoryExportType> { // storyId type should be string
@@ -100,13 +101,23 @@ export class StoryExportImportService {
             tagRelations,
             noteRelations,
             serverLastOperationVersion: serverLastOperationVersion,
+            formatVersion: CURRENT_STORY_FORMAT_VERSION,
         });
 
         return fullStory;
     }
 
-    async importStory(userId: string, fullStoryJSON: FullStoryExportType, newStoryId?: string): Promise<string> {
-        const validatedFullStory = FullStoryExportSchema.parse(fullStoryJSON);
+    async importStory(userId: string, fullStoryJSON: unknown, newStoryId?: string): Promise<string> {
+        let migrated: unknown;
+        try {
+            migrated = migrateStoryExport(fullStoryJSON);
+        } catch (err) {
+            if (err instanceof StoryExportVersionError) {
+                throw new AppError(422, err.message);
+            }
+            throw err;
+        }
+        const validatedFullStory = FullStoryExportSchema.parse(migrated);
 
         // Determine the target story ID. If newStoryId is provided, use it. Otherwise, generate a new one.
         const targetStoryId = newStoryId || ulid();
@@ -159,6 +170,23 @@ export class StoryExportImportService {
             });
             if (newChaptersData.length > 0) {
                 await tx.insert(dbSchema.chapters).values(newChaptersData);
+            }
+
+            // --- Locations ---
+            // Antes de Scenes de propósito: toda Scene tem um locationId obrigatório, que
+            // precisa já estar no idMap quando o bloco de Scenes rodar logo abaixo.
+            const newLocationsData = validatedFullStory.locations.map(original => {
+                const newId = ulid();
+                idMap.set(original.id, newId);
+                return {
+                    ...original,
+                    id: newId,
+                    storyId: targetStoryId,
+                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                };
+            });
+            if (newLocationsData.length > 0) {
+                await tx.insert(dbSchema.locations).values(newLocationsData);
             }
 
             // --- Scenes ---
@@ -257,21 +285,6 @@ export class StoryExportImportService {
             });
             if (newCharactersData.length > 0) {
                 await tx.insert(dbSchema.characters).values(newCharactersData);
-            }
-
-            // --- Locations ---
-            const newLocationsData = validatedFullStory.locations.map(original => {
-                const newId = ulid();
-                idMap.set(original.id, newId);
-                return {
-                    ...original,
-                    id: newId,
-                    storyId: targetStoryId,
-                    version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
-                };
-            });
-            if (newLocationsData.length > 0) {
-                await tx.insert(dbSchema.locations).values(newLocationsData);
             }
 
             // --- WorldRules ---
@@ -376,8 +389,8 @@ export class StoryExportImportService {
                     ...original,
                     id: newId,
                     storyId: targetStoryId,
-                    characterId1: mappedCharacterId1,
-                    characterId2: mappedCharacterId2,
+                    character1Id: mappedCharacterId1,
+                    character2Id: mappedCharacterId2,
                     version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
                 };
             });
@@ -440,7 +453,7 @@ export class StoryExportImportService {
                 await tx.insert(dbSchema.items).values(newItemsData);
             }
 
-            // --- ItemJourneys (Optional, map item ID) ---
+            // --- ItemJourneys (Optional, map item ID, scene ID, and optional new owner character ID) ---
             if (validatedFullStory.itemJourneys && validatedFullStory.itemJourneys.length > 0) {
                 const newItemJourneysData = validatedFullStory.itemJourneys.map(original => {
                     const newId = ulid();
@@ -449,11 +462,24 @@ export class StoryExportImportService {
                     if (!mappedItemId) {
                         throw new Error(`Import Error: Item ID ${original.itemId} not found in ID map for item journey ${original.id}.`);
                     }
+                    const mappedSceneId = idMap.get(original.sceneId);
+                    if (!mappedSceneId) {
+                        throw new Error(`Import Error: Scene ID ${original.sceneId} not found in ID map for item journey ${original.id}.`);
+                    }
+                    let mappedNewCharacterOwnerId: string | null = null;
+                    if (original.newCharacterOwnerId) {
+                        mappedNewCharacterOwnerId = idMap.get(original.newCharacterOwnerId) ?? null;
+                        if (!mappedNewCharacterOwnerId) {
+                            throw new Error(`Import Error: Character ID ${original.newCharacterOwnerId} not found in ID map for item journey ${original.id}.`);
+                        }
+                    }
                     return {
                         ...original,
                         id: newId,
                         storyId: targetStoryId,
                         itemId: mappedItemId,
+                        sceneId: mappedSceneId,
+                        newCharacterOwnerId: mappedNewCharacterOwnerId,
                         version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
                     };
                 });

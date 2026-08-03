@@ -165,10 +165,12 @@ const ImportExportScreen = () => {
     } catch (importError) {
       if (importError instanceof StoryImportError) {
         console.log('ImportExportScreen: import rejected.', importError.message);
-        showNotification(
-          importError.reason === 'invalid_format' ? t('import_story_invalid_file') : t('import_story_unreadable_file'),
-          'error'
-        );
+        const messageKey = importError.reason === 'future_format_version'
+          ? 'import_story_future_version'
+          : importError.reason === 'invalid_format'
+            ? 'import_story_invalid_file'
+            : 'import_story_unreadable_file';
+        showNotification(t(messageKey), 'error');
         return;
       }
       console.log('ImportExportScreen: failed to import story.', importError);

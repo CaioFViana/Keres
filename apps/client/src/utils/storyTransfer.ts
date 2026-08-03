@@ -1,4 +1,4 @@
-import { FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
+import { FullStoryExportSchema, FullStoryExportType, migrateStoryExport, StoryExportVersionError } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -219,7 +219,17 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
     throw new StoryImportError('invalid_format', `${asset.name} is not valid JSON.`);
   }
 
-  const validation = FullStoryExportSchema.safeParse(parsedJson);
+  let migrated: unknown;
+  try {
+    migrated = migrateStoryExport(parsedJson);
+  } catch (error) {
+    if (error instanceof StoryExportVersionError) {
+      throw new StoryImportError('future_format_version', error.message);
+    }
+    throw error;
+  }
+
+  const validation = FullStoryExportSchema.safeParse(migrated);
   if (!validation.success) {
     throw new StoryImportError('invalid_format', `${asset.name} is not a Keres story export: ${validation.error.message}`);
   }

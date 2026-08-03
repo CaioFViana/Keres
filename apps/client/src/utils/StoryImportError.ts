@@ -6,9 +6,9 @@
  * depender do outro só por causa deste tipo.
  */
 export class StoryImportError extends Error {
-  readonly reason: 'unreadable' | 'invalid_format';
+  readonly reason: 'unreadable' | 'invalid_format' | 'future_format_version';
 
-  constructor(reason: 'unreadable' | 'invalid_format', message: string) {
+  constructor(reason: 'unreadable' | 'invalid_format' | 'future_format_version', message: string) {
     super(message);
     this.name = 'StoryImportError';
     this.reason = reason;

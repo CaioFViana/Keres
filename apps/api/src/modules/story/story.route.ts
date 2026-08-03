@@ -80,19 +80,26 @@ export const storyRoutes = new Elysia()
     },
   })
   // Route to import a full story
-  .post('/import', async ({ body, user, set }) => {
+  .post('/import', async ({ body, query, user, set }) => {
     if (!user || !user.userId) {
       set.status = 401;
       throw new Error('Unauthorized: User not authenticated.');
     }
 
-    const newStoryId = await storyExportImportService.importStory(user.userId, body);
+    const newStoryId = await storyExportImportService.importStory(user.userId, body, query.storyId);
     return { storyId: newStoryId };
   }, {
     body: FullStoryExportSchema, // Use the schema for validation
+    query: t.Object({
+      // Presente quando um cliente está enviando uma história local (nunca sincronizada) pela
+      // primeira vez, pra preservar o mesmo ID nos dois lados - ver `importStory`, que rejeita
+      // se já existir uma história com este ID para o usuário. Ausente (padrão): gera um ID
+      // novo, usado ao baixar/duplicar uma história já existente em outro servidor.
+      storyId: t.Optional(t.String()),
+    }),
     detail: {
       summary: 'Import a full story',
-      description: 'Imports a full story from a JSON object, creating all related entities. Generates new IDs for all imported entities.',
+      description: 'Imports a full story from a JSON object, creating all related entities. By default generates new IDs for all imported entities; pass `storyId` to preserve the original ID instead (fails if a story with that ID already exists for the authenticated user).',
       tags: ['Story'],
     },
   });

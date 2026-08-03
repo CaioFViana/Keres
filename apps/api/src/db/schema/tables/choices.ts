@@ -9,7 +9,6 @@ export const choices = pgTable('choices', {
   sceneId: text('scene_id').notNull().references(() => scenes.id),
   nextSceneId: text('next_scene_id').notNull().references(() => scenes.id),
   text: text('text').notNull(),
-  isImplicit: boolean('is_implicit').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   version: integer('version').notNull().default(1),

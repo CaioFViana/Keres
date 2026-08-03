@@ -286,6 +286,66 @@ export class SyncEngineService {
   }
 
 
+  /**
+   * Envia uma história totalmente local (`serverId` nulo) para um servidor pela primeira vez.
+   *
+   * Checa a existência direto no servidor (não via `fetchServerStoryPreviews`, que engole
+   * erros de rede e devolveria `[]` - o que pareceria "não existe" mesmo quando a checagem só
+   * falhou por estar offline) antes de exportar e enviar via `POST /stories/import?storyId=`,
+   * preservando o ID local. A checagem do lado da API (`StoryExportImportService.importStory`,
+   * escopada por id+usuário) é o backstop caso duas chamadas corram ao mesmo tempo.
+   */
+  public async uploadNewStoryToServer(
+    storyId: string,
+    server: ServerSelect,
+    userId: string
+  ): Promise<{ success: true } | { success: false; reason: 'already_exists' | 'error'; message?: string }> {
+    if (!this._db) {
+      return { success: false, reason: 'error', message: 'Database not set.' };
+    }
+    if (!server?.url) {
+      return { success: false, reason: 'error', message: 'Server URL not set.' };
+    }
+
+    const tempClient = createKeresAxiosInstance({ baseURL: server.url });
+    tempClient.setTokenProvider(authTokenManager);
+    tempClient.setActiveServer(server);
+
+    try {
+      const previewsResponse = await tempClient.get<{ message: string; storyPreviews: ServerStoryPreview[] }>('/sync/pullpreviews');
+      if (previewsResponse.data.storyPreviews.some((preview) => preview.storyId === storyId)) {
+        return { success: false, reason: 'already_exists' };
+      }
+    } catch (error) {
+      console.log(`Error checking story existence on ${server.url}:`, error);
+      return { success: false, reason: 'error', message: (error as Error)?.message };
+    }
+
+    const storyService = createStoryService(this._db);
+    const story = await storyService.getStoryById(storyId);
+    if (!story) {
+      return { success: false, reason: 'error', message: `Story ${storyId} not found locally.` };
+    }
+    const storyExport = await storyService.exportFullStory(storyId);
+
+    try {
+      await tempClient.post(`/stories/import?storyId=${encodeURIComponent(storyId)}`, storyExport);
+    } catch (error) {
+      console.log(`Error uploading story ${storyId} to ${server.url}:`, error);
+      return { success: false, reason: 'error', message: (error as Error)?.message };
+    }
+
+    // O servidor agora tem exatamente o que o op-log local tinha no momento do export - é essa
+    // a base correta pro próximo ciclo de sync, não o `serverLastOperationVersion` do pacote
+    // exportado (que reflete um vínculo anterior, sempre 0 pra uma história nunca vinculada).
+    await storyService.updateStory(userId, storyId, {
+      serverId: server.id,
+      lastServerSyncedLog: story.lastOperationLog,
+    });
+
+    return { success: true };
+  }
+
   private get conflictService(): SyncConflictService {
     if (!this._conflictService) {
       if (!this._db) {

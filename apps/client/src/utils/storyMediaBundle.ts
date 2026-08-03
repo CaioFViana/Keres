@@ -1,4 +1,4 @@
-import { extensionForMimeType, FullStoryExportSchema, FullStoryExportType, GalleryType } from '@keres/shared';
+import { extensionForMimeType, FullStoryExportSchema, FullStoryExportType, GalleryType, migrateStoryExport, StoryExportVersionError } from '@keres/shared';
 import { File } from 'expo-file-system';
 import JSZip from 'jszip';
 import { mediaFileService } from '../services/MediaFileService';
@@ -116,7 +116,17 @@ export async function extractStoryZip(bytes: Uint8Array, sourceName: string): Pr
     throw new StoryImportError('invalid_format', `${sourceName}'s ${STORY_JSON_ENTRY} is not valid JSON.`);
   }
 
-  const validation = FullStoryExportSchema.safeParse(parsedJson);
+  let migrated: unknown;
+  try {
+    migrated = migrateStoryExport(parsedJson);
+  } catch (error) {
+    if (error instanceof StoryExportVersionError) {
+      throw new StoryImportError('future_format_version', error.message);
+    }
+    throw error;
+  }
+
+  const validation = FullStoryExportSchema.safeParse(migrated);
   if (!validation.success) {
     throw new StoryImportError('invalid_format', `${sourceName} is not a Keres story export: ${validation.error.message}`);
   }

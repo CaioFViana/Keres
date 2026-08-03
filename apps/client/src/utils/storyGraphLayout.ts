@@ -31,7 +31,6 @@ export interface GraphChoice {
   sceneId: string;
   nextSceneId: string;
   text: string;
-  isImplicit?: boolean;
 }
 
 /** Capítulo, reduzido ao que o layout precisa (ChapterSelect satisfaz esta forma). */

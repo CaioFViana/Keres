@@ -17,6 +17,8 @@ export * from "./entities/EnrichedFriendship";
 export * from "./entities/UserPublicInfo";
 export * from "./schemas/SyncSchemas";
 export * from "./schemas/FullStorySchemas";
+export * from "./schemas/StoryExportVersion";
+export * from "./schemas/storyExportMigrations";
 export * from "./schemas/ChapterSchemas";
 export * from "./schemas/CharacterRelationSchemas";
 export * from "./schemas/CharacterSceneSchemas";

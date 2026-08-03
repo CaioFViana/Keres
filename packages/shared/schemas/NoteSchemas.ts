@@ -7,11 +7,11 @@ export const NoteSchema = z.object({
   body: z.string().nullable(),
   isFavorite: z.boolean(),
   extraNotes: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   version: z.number(),
   isDeleted: z.boolean(),
-  deletedAt: z.date().nullable(),
+  deletedAt: z.coerce.date().nullable(),
 });
 
 export const CreateNoteDataSchema = NoteSchema.omit({

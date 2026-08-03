@@ -6,7 +6,7 @@ import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
@@ -63,7 +63,6 @@ const ChoiceFormScreen = () => {
   const [sceneId, setSceneId] = useState<string | null>(null);
   const [nextSceneId, setNextSceneId] = useState<string | null>(null);
   const [text, setText] = useState(''); // Changed from description
-  const [isImplicit, setIsImplicit] = useState(false);
 
   const {
     availableTags,
@@ -103,7 +102,6 @@ const ChoiceFormScreen = () => {
             setSceneId(fetchedChoice.sceneId);
             setNextSceneId(fetchedChoice.nextSceneId);
             setText(fetchedChoice.text); // Use text
-            setIsImplicit(fetchedChoice.isImplicit);
           } else {
             console.warn('Choice not found:', currentChoiceId);
           }
@@ -142,7 +140,6 @@ const ChoiceFormScreen = () => {
         sceneId: sceneId,
         nextSceneId: nextSceneId,
         text: text.trim(), // Use text
-        isImplicit: isImplicit,
       };
 
       let savedChoiceId: string | undefined = currentChoiceId;
@@ -205,7 +202,6 @@ const ChoiceFormScreen = () => {
     scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
     title: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
     label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5 },
-    switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 15, marginBottom: 5 },
     saveButton: { marginTop: 20, marginBottom: 0 },
     deleteButton: { backgroundColor: 'red', marginBottom: 15 },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -243,17 +239,6 @@ const ChoiceFormScreen = () => {
 
           <Text style={[styles.label, { color: colors.text }]}>{t('next_scene')}</Text>
           <Select options={sceneOptions} value={nextSceneId} onValueChange={setNextSceneId} placeholder={t('select_next_scene')} multiple={false} />
-
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_implicit')}</Text>
-            <Switch
-              value={isImplicit}
-              onValueChange={setIsImplicit}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isImplicit ? colors.onPrimary : colors.textSecondary}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
 
           {currentChoiceId && selectedStory?.id && (
             <View style={styles.tagSection}>

@@ -6,12 +6,11 @@ export const ChoiceSchema = z.object({
   sceneId: z.string(),
   nextSceneId: z.string(),
   text: z.string(),
-  isImplicit: z.boolean(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   version: z.number(),
   isDeleted: z.boolean(),
-  deletedAt: z.date().nullable(),
+  deletedAt: z.coerce.date().nullable(),
 });
 
 export const CreateChoiceDataSchema = ChoiceSchema.omit({
@@ -26,7 +25,6 @@ export const CreateChoiceDataSchema = ChoiceSchema.omit({
   sceneId: z.string().min(1, "Scene ID cannot be empty"),
   nextSceneId: z.string().min(1, "Next Scene ID cannot be empty"),
   text: z.string().min(1, "Choice text cannot be empty"),
-  isImplicit: z.boolean().default(false),
 });
 
 export const PartialChoiceSchema = ChoiceSchema.partial();

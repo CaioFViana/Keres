@@ -12,8 +12,11 @@ import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { isOfflineError } from '../../services/apiClient';
 import { createServerService } from '../../services/ServerService';
+import { SyncEngineService } from '../../services/SyncEngineService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
+import { storyPermissionApi, StoryCollaborator } from '../../services/StoryPermissionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -48,8 +51,12 @@ const StorySettingsScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
-  const [serverId, setServerId] = useState<string | null>(null); // New state for serverId
+  const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
+  const [uploadTargetServerId, setUploadTargetServerId] = useState<string | null>(null);
+  const [isOwnerOnServer, setIsOwnerOnServer] = useState<boolean | null>(null); // null = ainda não checado / não foi possível checar
+  const [collaborators, setCollaborators] = useState<StoryCollaborator[] | null>(null);
+  const [serverActionLoading, setServerActionLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +117,39 @@ const StorySettingsScreen = () => {
     loadStoryAndServers();
   }, [storyId, storyService, serverService, userId, t, applyTheme]);
 
+  const linkedServer = availableServers.find((server) => server.id === serverId) ?? null;
+
+  useEffect(() => {
+    if (!storyId || !linkedServer) {
+      setIsOwnerOnServer(null);
+      setCollaborators(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const fetchedCollaborators = await storyPermissionApi.getCollaborators(linkedServer, storyId);
+        if (!cancelled) {
+          setIsOwnerOnServer(true);
+          setCollaborators(fetchedCollaborators);
+        }
+      } catch (err: any) {
+        if (cancelled) return;
+        if (err?.response?.status === 403) {
+          setIsOwnerOnServer(false);
+        } else {
+          // Erro de rede ou outro imprevisto - deixa como "não checado" em vez de assumir
+          // que não é dono; o botão de desvincular fica escondido de qualquer forma até
+          // conseguirmos confirmar.
+          console.error('Failed to check story ownership/collaborators on server:', err);
+          setIsOwnerOnServer(null);
+        }
+        setCollaborators(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [storyId, linkedServer]);
+
   const handleSave = async () => {
     if (!storyId) return;
 
@@ -127,9 +167,11 @@ const StorySettingsScreen = () => {
     setError(null);
 
     try {
+      // `type` não entra aqui - converter tipo tem efeitos colaterais (gerar/apagar Choices,
+      // reordenar cenas) que não fazem sentido como um campo de formulário comum; ver
+      // `handleTypeChange`, que já persiste a conversão por conta própria.
       const storyData: Partial<Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>> = {
         title: title.trim(),
-        type,
         description,
         genre,
         language,
@@ -137,7 +179,9 @@ const StorySettingsScreen = () => {
         isFavorite,
         extraNotes,
         theme,
-        serverId, // Include serverId in update
+        // `serverId` não entra aqui - vincular/desvincular tem efeitos colaterais de rede
+        // (enviar a história, avisar o servidor) que não fazem sentido como campo de
+        // formulário comum; ver handleSendToServer/handleUnlinkFromServer.
       };
 
       await storyService().updateStory(userId, storyId, storyData);
@@ -150,6 +194,170 @@ const StorySettingsScreen = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTypeChange = (newType: 'linear' | 'branching') => {
+    if (!storyId || !userId || newType === type) return;
+
+    if (newType === 'branching') {
+      Alert.alert(
+        t('convert_to_branching_title'),
+        t('convert_to_branching_message'),
+        [
+          { text: t('cancel'), style: 'cancel' },
+          {
+            text: t('convert'),
+            onPress: async () => {
+              try {
+                setLoading(true);
+                await storyService().convertStoryType(userId, storyId, 'branching');
+                setType('branching');
+                Alert.alert(t('success'), t('story_type_converted_successfully'));
+              } catch (err) {
+                console.error('Failed to convert story to branching:', err);
+                Alert.alert(t('error'), t('failed_to_convert_story_type'));
+              } finally {
+                setLoading(false);
+              }
+            },
+          },
+        ],
+        { cancelable: true }
+      );
+      return;
+    }
+
+    // branching -> linear: valida antes de perguntar qualquer coisa, pra mostrar exatamente
+    // o que está bloqueando em vez de deixar a conversão falhar sem explicação.
+    (async () => {
+      try {
+        setLoading(true);
+        const compatibility = await storyService().checkLinearCompatibility(storyId);
+        setLoading(false);
+
+        if (!compatibility.compatible) {
+          const reasonLines = compatibility.reasons
+            .map((r) => `• ${r.chapterName}: ${t(`linear_incompatibility_${r.kind}`)}`)
+            .join('\n');
+          Alert.alert(t('cannot_convert_to_linear_title'), `${t('cannot_convert_to_linear_message')}\n\n${reasonLines}`);
+          return;
+        }
+
+        Alert.alert(
+          t('convert_to_linear_title'),
+          t('convert_to_linear_message'),
+          [
+            { text: t('cancel'), style: 'cancel' },
+            {
+              text: t('convert'),
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  setLoading(true);
+                  await storyService().convertStoryType(userId, storyId, 'linear');
+                  setType('linear');
+                  Alert.alert(t('success'), t('story_type_converted_successfully'));
+                } catch (err) {
+                  console.error('Failed to convert story to linear:', err);
+                  Alert.alert(t('error'), t('failed_to_convert_story_type'));
+                } finally {
+                  setLoading(false);
+                }
+              },
+            },
+          ],
+          { cancelable: true }
+        );
+      } catch (err) {
+        setLoading(false);
+        console.error('Failed to check linear compatibility:', err);
+        Alert.alert(t('error'), t('failed_to_check_story_compatibility'));
+      }
+    })();
+  };
+
+  const handleSendToServer = async () => {
+    if (!storyId || !userId || !uploadTargetServerId) return;
+    const targetServer = availableServers.find((server) => server.id === uploadTargetServerId);
+    if (!targetServer) return;
+
+    setServerActionLoading(true);
+    try {
+      const result = await SyncEngineService.getInstance().uploadNewStoryToServer(storyId, targetServer, userId);
+      if (result.success) {
+        setServerId(targetServer.id);
+        setUploadTargetServerId(null);
+        Alert.alert(t('success'), t('send_to_server_success'));
+      } else if (result.reason === 'already_exists') {
+        Alert.alert(t('error'), t('send_to_server_already_exists'));
+      } else {
+        Alert.alert(t('error'), t('send_to_server_failed'));
+      }
+    } catch (err) {
+      console.error('Failed to send story to server:', err);
+      Alert.alert(t('error'), t('send_to_server_failed'));
+    } finally {
+      setServerActionLoading(false);
+    }
+  };
+
+  const handleRemoveCollaborator = (collaborator: StoryCollaborator) => {
+    if (!storyId || !linkedServer) return;
+    Alert.alert(
+      t('remove_collaborator_title'),
+      t('remove_collaborator_message', { username: collaborator.user?.username ?? collaborator.userId }),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('remove'),
+          style: 'destructive',
+          onPress: async () => {
+            setServerActionLoading(true);
+            try {
+              await storyPermissionApi.removeCollaborator(linkedServer, storyId, collaborator.userId);
+              setCollaborators((current) => (current ?? []).filter((c) => c.userId !== collaborator.userId));
+            } catch (err) {
+              console.error('Failed to remove collaborator:', err);
+              Alert.alert(t('error'), t('remove_collaborator_failed'));
+            } finally {
+              setServerActionLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleUnlinkFromServer = () => {
+    if (!storyId || !userId) return;
+    Alert.alert(
+      t('unlink_from_server_title'),
+      t('unlink_from_server_message'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('unlink'),
+          style: 'destructive',
+          onPress: async () => {
+            setServerActionLoading(true);
+            try {
+              await storyService().unlinkFromServer(userId, storyId);
+              setServerId(null);
+              setIsOwnerOnServer(null);
+              setCollaborators(null);
+              Alert.alert(t('success'), t('unlink_from_server_success'));
+            } catch (err) {
+              console.error('Failed to unlink story from server:', err);
+              Alert.alert(t('error'), isOfflineError(err) ? t('unlink_from_server_offline') : t('unlink_from_server_failed'));
+            } finally {
+              setServerActionLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const handleDelete = () => {
@@ -219,13 +427,13 @@ const StorySettingsScreen = () => {
     value: theme.value,
   }));
 
-  // Server options from available servers
-  const serverOptions = availableServers.map(server => ({
+  // Servidores disponíveis pra enviar uma história totalmente local pela primeira vez -
+  // ver handleSendToServer. Diferente do antigo Select genérico, não tem opção "Nenhum
+  // servidor": desvincular é uma ação própria (handleUnlinkFromServer), não um valor de campo.
+  const uploadServerOptions = availableServers.map(server => ({
     label: server.name,
     value: server.id,
   }));
-  // Add an option for "No Server" with empty string value
-  serverOptions.unshift({ label: t('no_server'), value: '' });
 
   if (!storyId) {
     return (
@@ -279,9 +487,8 @@ const StorySettingsScreen = () => {
           <Select
             options={storyTypeOptions}
             value={type}
-            onValueChange={(value) => setType(value as 'linear' | 'branching')}
+            onValueChange={(value) => handleTypeChange(value as 'linear' | 'branching')}
             placeholder={t('select_story_type')}
-            disabled={true}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
@@ -348,15 +555,68 @@ const StorySettingsScreen = () => {
             placeholder={t('select_theme')}
           />
 
-          {/* New Server Select Field */}
           <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
-          <Select
-            options={serverOptions}
-            value={serverId === null ? '' : serverId} // Convert null to empty string for Select component
-            onValueChange={(value) => setServerId(value === '' ? null : value)} // Convert empty string back to null
-            placeholder={t('select_server')}
-          />
+          {serverId === null ? (
+            uploadServerOptions.length > 0 ? (
+              <>
+                <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>{t('send_to_server_description')}</Text>
+                <Select
+                  options={uploadServerOptions}
+                  value={uploadTargetServerId}
+                  onValueChange={setUploadTargetServerId}
+                  placeholder={t('select_server')}
+                />
+                <Button
+                  onPress={handleSendToServer}
+                  disabled={!uploadTargetServerId || serverActionLoading}
+                  style={styles.saveButton}
+                >
+                  {t('send_to_server')}
+                </Button>
+              </>
+            ) : (
+              <Text style={{ color: colors.textSecondary }}>{t('no_registered_servers')}</Text>
+            )
+          ) : (
+            <>
+              <Text style={{ color: colors.text, marginBottom: 10 }}>{linkedServer?.name ?? serverId}</Text>
 
+              {isOwnerOnServer === true && (
+                <View style={styles.collaboratorsSection}>
+                  <Text style={[styles.label, { color: colors.text }]}>{t('collaborators_title')}</Text>
+                  {collaborators !== null && collaborators.length === 0 && (
+                    <Text style={{ color: colors.textSecondary }}>{t('no_collaborators')}</Text>
+                  )}
+                  {(collaborators ?? []).map((collaborator) => (
+                    <View key={collaborator.id} style={styles.collaboratorRow}>
+                      <Text style={{ color: colors.text, flex: 1 }}>
+                        {collaborator.user?.username ?? collaborator.userId} ({t(`permission_${collaborator.permissionType}`)})
+                      </Text>
+                      <Button
+                        onPress={() => handleRemoveCollaborator(collaborator)}
+                        disabled={serverActionLoading}
+                        style={styles.removeCollaboratorButton}
+                      >
+                        {t('remove')}
+                      </Button>
+                    </View>
+                  ))}
+
+                  {collaborators !== null && collaborators.length > 0 && (
+                    <Text style={{ color: colors.textSecondary, marginTop: 5 }}>{t('unlink_blocked_by_collaborators')}</Text>
+                  )}
+
+                  <Button
+                    onPress={handleUnlinkFromServer}
+                    disabled={serverActionLoading || collaborators === null || collaborators.length > 0}
+                    style={[styles.saveButton, styles.deleteButton]}
+                  >
+                    {t('unlink_from_server_title')}
+                  </Button>
+                </View>
+              )}
+            </>
+          )}
 
           <Button onPress={handleSave} style={styles.saveButton}>
             {t('update_story')}
@@ -400,6 +660,18 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: 'red', // Destructive color
+  },
+  collaboratorsSection: {
+    marginTop: 15,
+  },
+  collaboratorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  removeCollaboratorButton: {
+    marginLeft: 10,
+    paddingHorizontal: 12,
   },
   centered: {
     flex: 1,

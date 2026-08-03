@@ -33,11 +33,11 @@ export const CreateStoryDataSchema = z.object({
 // Full Story Schema, including server-managed fields like userId
 export const StorySchema = StoryCreateInputSchema.extend({
   userId: UlidSchema, // userId is set by the server
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+  createdAt: z.coerce.date().default(() => new Date()),
+  updatedAt: z.coerce.date().default(() => new Date()),
   version: z.number().int().min(1).default(1),
   isDeleted: z.boolean().default(false),
-  deletedAt: z.date().nullable().optional(),
+  deletedAt: z.coerce.date().nullable().optional(),
 });
 
 export const PartialStorySchema = StorySchema.partial();

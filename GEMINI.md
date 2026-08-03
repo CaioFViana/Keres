@@ -30,10 +30,8 @@ keres-monorepo/
 
 All persistent entities include a `version: number;` field crucial for conflict detection and resolution during synchronization.
 
-*   **Story:** Main entity, includes `type: 'linear' | 'branching'`.
-*   **Choice:** Represents transitions between scenes.
-    *   `isImplicit: true` for system-generated choices in linear stories.
-    *   `isImplicit: false` for user-defined choices in branching stories.
+*   **Story:** Main entity, includes `type: 'linear' | 'branching'`. Convertible either way by the user (`StoryService.convertStoryType`); linear stories never have any `Choice` rows.
+*   **Choice:** Represents user-defined transitions between scenes. Only exist for `branching` stories.
 *   **Chapter & Scene:** `index` field maintained for linear story ordering; serves as an organizational tool for branching stories.
 *   **User:** Supports multiple logins, each user can have multiple stories.
 *   **Characters, Gallery, Locations, World Rules, Notes, Tags, Suggestions:** Other core entities for story organization.

@@ -6,8 +6,8 @@ export const FriendshipSchema = z.object({
   senderId: z.string(),
   receiverId: z.string(),
   status: z.enum([FriendStatus.PENDING, FriendStatus.FRIEND, FriendStatus.BLACKLISTED]).default(FriendStatus.PENDING),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 }).refine(data => data.senderId !== data.receiverId, {
   message: 'senderId and receiverId cannot be the same',
   path: ['senderId', 'receiverId'],

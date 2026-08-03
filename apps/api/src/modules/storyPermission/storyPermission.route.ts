@@ -6,6 +6,25 @@ import {
 import { Elysia } from 'elysia';
 import { JWTPayload } from '../../index'; // Import JWTPayload
 import { storyPermissionService } from '../../services/StoryPermissionService';
+import { AppError } from '../../utils/errors';
+
+/**
+ * `StoryPermissionService` throws plain `Error`s for its ownership checks (message starting
+ * with "Unauthorized") - without translating those to a real status here, they'd fall through
+ * to Elysia's generic 500 fallback, indistinguishable from an actual server fault. Clients
+ * (e.g. the "unlink from server" ownership/collaborator gate) need a reliable 403 to tell
+ * "you're not the owner" apart from "something broke".
+ */
+async function withOwnershipCheck<T>(action: () => Promise<T>): Promise<T> {
+  try {
+    return await action();
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
+      throw new AppError(403, error.message);
+    }
+    throw error;
+  }
+}
 
 export const storyPermissionRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null) // Decorate 'user' property
@@ -16,12 +35,12 @@ export const storyPermissionRoutes = new Elysia()
           set.status = 401;
           throw new Error('Unauthorized: User not authenticated.');
         }
-        return storyPermissionService.upsertStoryPermission(
+        return withOwnershipCheck(() => storyPermissionService.upsertStoryPermission(
           user.userId,
           body.storyId,
           body.targetUserId,
           body.permissionType
-        );
+        ));
       },
       {
         body: CreateStoryPermissionSchema, // This schema now serves for upsert
@@ -39,11 +58,11 @@ export const storyPermissionRoutes = new Elysia()
           set.status = 401;
           throw new Error('Unauthorized: User not authenticated.');
         }
-        return storyPermissionService.deleteStoryPermission(
+        return withOwnershipCheck(() => storyPermissionService.deleteStoryPermission(
           user.userId,
           params.storyId,
           params.targetUserId
-        );
+        ));
       },
       {
         params: StoryAndTargetUserParams, // Use the new params schema
@@ -61,7 +80,7 @@ export const storyPermissionRoutes = new Elysia()
           set.status = 401;
           throw new Error('Unauthorized: User not authenticated.');
         }
-        return storyPermissionService.getStoryPermissionsForStory(user.userId, params.storyId);
+        return withOwnershipCheck(() => storyPermissionService.getStoryPermissionsForStory(user.userId, params.storyId));
       },
       {
         params: StoryIdParam,

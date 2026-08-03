@@ -1,5 +1,5 @@
-import { FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
-import { and, count, eq, sql } from 'drizzle-orm';
+import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
+import { and, asc, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import {
   ChapterInsert,
@@ -55,6 +55,16 @@ import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
 import { mediaFileService } from '../MediaFileService';
 import { createOperationLogService } from '../OperationLogService';
+import { createChoiceService } from './ChoiceService';
+import { createSceneService } from './SceneService';
+import {
+  checkLinearCompatibility as checkLinearCompatibilityGraph,
+  classifyEdges,
+  computeChapterChainOrder,
+  groupScenesByChapter,
+  LinearCompatibilityResult,
+  loadStoryGraph,
+} from './storyTypeConversion';
 
 /**
  * Wipes a story and every entity that belongs to it from the local database. Story
@@ -118,6 +128,9 @@ export interface StoryService {
 
   updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void>;
   deleteStory(storyId: string): Promise<void>;
+  checkLinearCompatibility(storyId: string): Promise<LinearCompatibilityResult>;
+  convertStoryType(currentUserId: string, storyId: string, targetType: 'linear' | 'branching'): Promise<void>;
+  unlinkFromServer(currentUserId: string, storyId: string): Promise<void>;
   getBranchingStoryForkCount(): Promise<number>;
   importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, localMediaPaths?: Map<string, string>): Promise<string>;
   exportFullStory(storyId: string): Promise<FullStoryExportType>;
@@ -344,6 +357,97 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       return result;
     },
 
+    async checkLinearCompatibility(storyId: string): Promise<LinearCompatibilityResult> {
+      return checkLinearCompatibilityGraph(db, storyId);
+    },
+
+    async convertStoryType(currentUserId: string, storyId: string, targetType: 'linear' | 'branching'): Promise<void> {
+      const story = await this.getStoryById(storyId);
+      if (!story) {
+        throw new Error(`Story with ID ${storyId} not found.`);
+      }
+      if (story.type === targetType) {
+        return;
+      }
+
+      if (targetType === 'branching') {
+        // Linear -> Branching: sempre permitido. Cada par de cenas consecutivas (por índice,
+        // dentro do capítulo) vira uma Choice explícita, incluindo a ponte entre o fim de um
+        // capítulo e o início do próximo - a mesma forma que a validação abaixo aceita na volta,
+        // pra a conversão de ida e volta ser estável.
+        const { storyChapters, storyScenes } = await loadStoryGraph(db, storyId);
+        const nonEmptyChapters = groupScenesByChapter(storyChapters, storyScenes);
+
+        for (const { scenes: chapterScenes } of nonEmptyChapters) {
+          for (let i = 0; i < chapterScenes.length - 1; i++) {
+            await this.createChoice(currentUserId, {
+              storyId,
+              sceneId: chapterScenes[i].id,
+              nextSceneId: chapterScenes[i + 1].id,
+              text: chapterScenes[i + 1].name,
+            });
+          }
+        }
+        for (let i = 0; i < nonEmptyChapters.length - 1; i++) {
+          const lastSceneOfCurrent = nonEmptyChapters[i].scenes[nonEmptyChapters[i].scenes.length - 1];
+          const firstSceneOfNext = nonEmptyChapters[i + 1].scenes[0];
+          await this.createChoice(currentUserId, {
+            storyId,
+            sceneId: lastSceneOfCurrent.id,
+            nextSceneId: firstSceneOfNext.id,
+            text: firstSceneOfNext.name,
+          });
+        }
+
+        await this.updateStory(currentUserId, storyId, { type: 'branching' });
+        return;
+      }
+
+      // Branching -> Linear: só quando o grafo é compatível - a UI deve chamar
+      // `checkLinearCompatibility` antes e nem oferecer esta conversão se não for; a checagem
+      // aqui é só a rede de segurança contra uma corrida entre as duas chamadas.
+      const compatibility = await checkLinearCompatibilityGraph(db, storyId);
+      if (!compatibility.compatible) {
+        throw new Error(
+          `Story is not compatible with Linear conversion: ${compatibility.reasons.map((r) => `${r.chapterName} (${r.kind})`).join(', ')}`
+        );
+      }
+
+      const { storyChapters, storyScenes, storyChoices } = await loadStoryGraph(db, storyId);
+      const nonEmptyChapters = groupScenesByChapter(storyChapters, storyScenes);
+      const { intraEdgesByChapter } = classifyEdges(nonEmptyChapters, storyChoices);
+
+      const sceneService = createSceneService(db);
+      const choiceService = createChoiceService(db);
+
+      const sceneUpdates: { sceneId: string; changes: { index: number } }[] = [];
+      for (const { chapter, scenes: chapterScenes } of nonEmptyChapters) {
+        const intraEdges = intraEdgesByChapter.get(chapter.id) ?? [];
+        const order = computeChapterChainOrder(chapterScenes, intraEdges);
+        const sceneById = new Map(chapterScenes.map((s) => [s.id, s]));
+        order.forEach((sceneId, newIndex) => {
+          const scene = sceneById.get(sceneId)!;
+          if (scene.index !== newIndex) {
+            sceneUpdates.push({ sceneId, changes: { index: newIndex } });
+          }
+        });
+      }
+      if (sceneUpdates.length > 0) {
+        await sceneService.batchUpdateScenes(currentUserId, storyId, sceneUpdates);
+      }
+
+      // Todas as escolhas somem na conversão pra Linear - o modo linear nunca guarda dados de
+      // navegação por Choice, e uma futura reconversão pra Branching gera escolhas novas a
+      // partir da ordem das cenas (ver o ramo acima).
+      const remainingChoices = await db.select({ id: choices.id }).from(choices)
+        .where(and(eq(choices.storyId, storyId), eq(choices.isDeleted, false))).all();
+      for (const choice of remainingChoices) {
+        await choiceService.deleteChoice(currentUserId, choice.id);
+      }
+
+      await this.updateStory(currentUserId, storyId, { type: 'linear' });
+    },
+
     async updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void> {
       const originalStory = await this.getStoryById(storyId);
 
@@ -395,15 +499,26 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             const client = createKeresAxiosInstance({ baseURL: server.url });
             client.setTokenProvider(authTokenManager);
             client.setActiveServer(server);
-            await client.post(`/sync/${storyId}`, [{
+            // Sem `version`: o objetivo aqui é apagar independente do que o servidor ache que
+            // é a versão atual (o local já decidiu apagar, incondicionalmente) - mandar a
+            // versão local faria o servidor tratar quase toda chamada como conflito de
+            // concorrência (`checkVersionConflict`) e devolver 200 sem aplicar nada, porque o
+            // contador local de versão nunca ficou de fato em lockstep com o do servidor.
+            // Sem `operationTime` também: o servidor recusa qualquer horário mais de 1s à
+            // frente do próprio relógio dele (`parseOperationTime`), e o relógio do
+            // aparelho/emulador não tem garantia nenhuma de estar sincronizado com o do
+            // servidor. Omitir deixa o servidor usar o `new Date()` dele mesmo - o único
+            // relógio que essa checagem pode comparar com segurança.
+            const response = await client.post(`/sync/${storyId}`, [{
               entity: 'Story',
               id: storyId,
-              // The version the client last knew, before this delete - the server compares
-              // against its own version to decide whether to accept it.
-              version: storyToDelete.version,
-              operationTime: new Date().toISOString(),
               type: 'delete',
             }]);
+            const conflict = (response.data?.conflicts as Array<{ entity: string; entityId: string; message?: string; reason?: string }> | undefined)
+              ?.find((c) => c.entity === 'Story' && c.entityId === storyId);
+            if (conflict) {
+              console.warn(`Server rejected deletion for story ${storyId} (proceeding with local deletion regardless): ${conflict.message || conflict.reason}`);
+            }
           } catch (err) {
             if (!isOfflineError(err)) {
               console.warn(`Failed to notify server of deletion for story ${storyId} (proceeding with local deletion regardless):`, (err as Error)?.message || err);
@@ -418,6 +533,63 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // (see mediaFileService.storyMediaDirectory), never shared with any other story on
       // this device, so no other story can still be referencing a file in it.
       mediaFileService.deleteStoryMedia(storyId);
+    },
+
+    async unlinkFromServer(currentUserId: string, storyId: string): Promise<void> {
+      const story = await this.getStoryById(storyId);
+      if (!story) {
+        throw new Error(`Story with ID ${storyId} not found.`);
+      }
+      if (!story.serverId) {
+        return; // Already fully local.
+      }
+
+      const server = await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) });
+      if (!server?.url) {
+        // The server row itself is gone locally - nothing to notify, just drop the stale link.
+        await this.updateStory(currentUserId, storyId, { serverId: null });
+        return;
+      }
+
+      // Unlike deleteStory's best-effort notification (the local purge happens regardless of
+      // connectivity), this one has to succeed - it's the only thing that actually removes the
+      // story's data from the server, which is the whole point of taking it offline. The
+      // caller (UI) is expected to have already confirmed ownership and zero collaborators
+      // before offering this action at all.
+      //
+      // No `version` in the payload, same reasoning as deleteStory: local `stories.version`
+      // was never kept in lockstep with the server's copy (nothing pushes plain Story-field
+      // edits through a version-checked path today), so sending it would make the server
+      // reject this as a concurrency conflict almost every time - a 200 response whose
+      // `conflicts` array says the delete never actually applied, silently defeating the
+      // whole point of this action. Omitting it opts into last-write-wins on the server
+      // (`checkVersionConflict` short-circuits when the client doesn't state a base version),
+      // which is exactly the semantics wanted here: this action means "delete it, whatever
+      // state it's in."
+      //
+      // No `operationTime` either: the server rejects any timestamp more than 1s ahead of
+      // its own clock (`parseOperationTime`), and a device/emulator's clock has no guarantee
+      // of being in sync with the server's. Omitting it lets the server fall back to its own
+      // `new Date()` - the only clock this check can safely compare against.
+      const client = createKeresAxiosInstance({ baseURL: server.url });
+      client.setTokenProvider(authTokenManager);
+      client.setActiveServer(server);
+      const response = await client.post(`/sync/${storyId}`, [{
+        entity: 'Story',
+        id: storyId,
+        type: 'delete',
+      }]);
+
+      // The route always answers 200 and reports per-operation outcome in the body - a
+      // rejected operation never throws, so this check is the only way to actually know
+      // whether the server's copy is gone.
+      const conflict = (response.data?.conflicts as Array<{ entity: string; entityId: string; message?: string; reason?: string }> | undefined)
+        ?.find((c) => c.entity === 'Story' && c.entityId === storyId);
+      if (conflict) {
+        throw new Error(`Server rejected the delete: ${conflict.message || conflict.reason || 'unknown reason'}`);
+      }
+
+      await this.updateStory(currentUserId, storyId, { serverId: null });
     },
 
     async getBranchingStoryForkCount(): Promise<number> {
@@ -508,6 +680,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // O importador usa este número como ponto de partida da sincronização. Preservar o
         // marcador local mantém o pacote útil para uma história já ligada a um servidor.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
+        formatVersion: CURRENT_STORY_FORMAT_VERSION,
       });
     },
 

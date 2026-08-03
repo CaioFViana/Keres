@@ -52,15 +52,14 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
   }
 
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
-    // If story is linear, prevent direct creation of choices
+    // Linear stories never have Choice rows - they're deleted on conversion to linear, and
+    // only (re)created by converting to branching. See StoryService.convertStoryType.
     if (await this._isStoryLinear(storyId)) {
-      throw new Error('Cannot create choices directly in a linear story. Choices are managed implicitly by scene operations.');
+      throw new Error('Cannot create choices directly in a linear story. Convert the story to branching first.');
     }
 
     // Validate incoming data against the create schema
     const validatedData: CreateChoiceDataType = this.createSchema.parse(update.data);
-
-    validatedData.isImplicit = false;
 
     const currentChoice = await this.findById(update.id!);
     if (currentChoice) {
@@ -84,12 +83,7 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
   async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
     // If story is linear, prevent direct updates of choices
     if (await this._isStoryLinear(storyId)) {
-      throw new Error('Cannot update choices directly in a linear story. Choices are managed implicitly by scene operations.');
-    }
-
-    // Prevent updating implicit choices (which should only exist in linear stories, but as a safeguard)
-    if (currentEntity.isImplicit === true) {
-      throw new Error('Cannot update implicit choices.');
+      throw new Error('Cannot update choices directly in a linear story. Convert the story to branching first.');
     }
 
     const validatedChanges = this.updateSchema.parse(update.changes);
@@ -114,12 +108,7 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
   async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
     // If story is linear, prevent direct deletion of choices
     if (await this._isStoryLinear(storyId)) {
-      throw new Error('Cannot delete choices directly in a linear story. Choices are managed implicitly by scene operations.');
-    }
-
-    // Prevent deleting implicit choices
-    if (currentEntity.isImplicit === true) {
-      throw new Error('Cannot delete implicit choices.');
+      throw new Error('Cannot delete choices directly in a linear story. Convert the story to branching first.');
     }
 
     await super.delete(userId, storyId, update, currentEntity);

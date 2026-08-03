@@ -18,11 +18,11 @@ export const CharacterSchema = z.object({
   plannedTimeline: z.string().nullable().optional(),
   isFavorite: z.boolean().default(false),
   extraNotes: z.string().nullable().optional(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+  createdAt: z.coerce.date().default(() => new Date()),
+  updatedAt: z.coerce.date().default(() => new Date()),
   version: z.number().int().min(1).default(1),
   isDeleted: z.boolean().default(false),
-  deletedAt: z.date().nullable().optional(),
+  deletedAt: z.coerce.date().nullable().optional(),
 });
 
 export const CreateCharacterDataSchema = z.object({

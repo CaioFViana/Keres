@@ -7,11 +7,11 @@ export const NoteRelationSchema = z.object({
   noteId: z.string(),
   relationId: z.string(),
   relationType: z.enum(['Character', 'WorldRule', 'Location', 'Scene', 'Chapter', 'Choice'] as const) satisfies z.ZodType<NoteRelationEntities>,
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   version: z.number(),
   isDeleted: z.boolean(),
-  deletedAt: z.date().nullable(),
+  deletedAt: z.coerce.date().nullable(),
 });
 
 export const CreateNoteRelationDataSchema = NoteRelationSchema.omit({

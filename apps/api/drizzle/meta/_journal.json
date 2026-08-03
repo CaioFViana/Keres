@@ -8,6 +8,13 @@
       "when": 1785539629180,
       "tag": "0000_perfect_celestials",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785795083168,
+      "tag": "0001_wise_dreaming_celestial",
+      "breakpoints": true
     }
   ]
 }

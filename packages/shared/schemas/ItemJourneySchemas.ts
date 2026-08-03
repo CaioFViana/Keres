@@ -8,11 +8,11 @@ export const ItemJourneySchema = z.object({
   newCharacterOwnerId: z.string().nullable(),
   newState: z.string(),
   extraNotes: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   version: z.number(),
   isDeleted: z.boolean(),
-  deletedAt: z.date().nullable(),
+  deletedAt: z.coerce.date().nullable(),
 });
 
 export const CreateItemJourneyDataSchema = ItemJourneySchema.omit({

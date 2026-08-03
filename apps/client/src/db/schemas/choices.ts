@@ -7,7 +7,6 @@ export const choices = sqliteTable('choices', {
   sceneId: text('scene_id').notNull(),
   nextSceneId: text('next_scene_id').notNull(),
   text: text('text').notNull(),
-  isImplicit: integer('is_implicit', { mode: 'boolean' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

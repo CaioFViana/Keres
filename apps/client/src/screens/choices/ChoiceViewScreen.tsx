@@ -104,7 +104,6 @@ const ChoiceViewScreen = () => {
     const toConnection = (edge: GraphEdge, sceneId: string): SceneNodeConnection => ({
       choiceId: edge.id,
       text: edge.label.trim(),
-      isImplicit: !!edge.choice.isImplicit,
       sceneId,
       sceneName: nameById.get(sceneId) ?? t('unknown_scene'),
     });

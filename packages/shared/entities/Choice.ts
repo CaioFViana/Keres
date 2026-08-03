@@ -4,7 +4,6 @@ export interface Choice {
   sceneId: string
   nextSceneId: string
   text: string
-  isImplicit: boolean
   createdAt: Date
   updatedAt: Date
   version: number

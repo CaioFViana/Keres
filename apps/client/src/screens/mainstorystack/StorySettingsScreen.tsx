@@ -32,7 +32,7 @@ const StorySettingsScreen = () => {
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StorySettingsScreenNavigationProp>();
   // Removed useRoute and route.params
-  const { selectedStory } = useStoryStore();
+  const { selectedStory, setSelectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -287,6 +287,12 @@ const StorySettingsScreen = () => {
       if (result.success) {
         setServerId(targetServer.id);
         setUploadTargetServerId(null);
+        // `SyncInitializer` só (re)configura o motor de sync quando `selectedStory.serverId`
+        // muda de verdade - sem atualizar a store aqui, ele continua achando que a história
+        // é local e nunca liga a sincronização, mesmo com o vínculo já gravado no banco.
+        if (selectedStory) {
+          setSelectedStory({ ...selectedStory, serverId: targetServer.id });
+        }
         Alert.alert(t('success'), t('send_to_server_success'));
       } else if (result.reason === 'already_exists') {
         Alert.alert(t('error'), t('send_to_server_already_exists'));
@@ -346,6 +352,14 @@ const StorySettingsScreen = () => {
               setServerId(null);
               setIsOwnerOnServer(null);
               setCollaborators(null);
+              // Mesma razão do handleSendToServer: sem isto o motor de sync continua rodando
+              // com a configuração antiga (mesmo storyId/servidor) até algo mais disparar o
+              // efeito do SyncInitializer de novo - e o próximo ciclo periódico encontraria a
+              // história marcada como excluída no servidor e tentaria aplicar isso localmente,
+              // exatamente o que "desvincular" deveria evitar.
+              if (selectedStory) {
+                setSelectedStory({ ...selectedStory, serverId: null });
+              }
               Alert.alert(t('success'), t('unlink_from_server_success'));
             } catch (err) {
               console.error('Failed to unlink story from server:', err);

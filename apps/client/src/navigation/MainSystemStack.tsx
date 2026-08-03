@@ -56,13 +56,17 @@ export type MainSystemDrawerParamList = {
   // Tipado com os parâmetros da pilha interna porque o mapa de relações abre um personagem
   // específico a partir de outra aba do drawer.
   CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
-  LocationsStack: undefined;
+  // Tipado com os parâmetros da pilha interna: GenericRelationDisplay (via navigateToEntityDetail)
+  // abre um local específico a partir de outras abas do drawer (ex: a partir de um Personagem).
+  LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
   ChaptersStack: undefined;
   // Tipado com os parâmetros da pilha interna porque o mapa da história abre uma cena
   // específica a partir de outra aba do drawer.
   ScenesStack: NavigatorScreenParams<SceneStackParamList> | undefined;
   ChoicesStack: undefined;
-  ItemsStack: undefined;
+  // Tipado com os parâmetros da pilha interna: GenericRelationDisplay (via navigateToEntityDetail)
+  // abre um item específico a partir de outras abas do drawer (ex: a partir de um Local).
+  ItemsStack: NavigatorScreenParams<ItemStackParamList> | undefined;
   ItemJourneysStack: undefined;
   TagsStack: undefined;
   WorldRulesStack: undefined;

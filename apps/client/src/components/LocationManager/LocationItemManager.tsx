@@ -1,11 +1,16 @@
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { ItemJourney, Item } from '@keres/shared/entities/Item';
 import { SceneSelect } from '../../db/schema'; // SceneSelect type
 import { CharacterSelect } from '../../db/schemas/characters'; // CharacterSelect type
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useTheme } from '../../theme';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import GenericRelationDisplay, { BaseRelation } from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
+import RelationAttributeLine from '../RelationManager/RelationAttributeLine';
 
 // Define the relation type for GenericRelationDisplay
 interface ItemInLocationRelation extends BaseRelation {
@@ -30,14 +35,14 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const navigation = useNavigation();
 
-  const styles = StyleSheet.create({
-    journeyDetailText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginLeft: 10,
-    },
-  });
+  const handleItemPress = useCallback((item: Item) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Item', item.id);
+    }
+  }, [navigation]);
 
   const itemsAsRelations = useMemo(() => {
     // 1. Get scenes relevant to the current location
@@ -93,37 +98,29 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
 
   const renderItemExtraContent = useCallback((relation: ItemInLocationRelation, relatedItem: Item) => {
     return (
-      <View style={{ flex: 1, paddingVertical: 10 }}>
-        <Text style={{ fontSize: 16, color: colors.text }}>{relatedItem.name}</Text>
+      <View>
+        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{relatedItem.name}</Text>
         {relation.journeys.map((journey) => {
           const scene = availableScenes.find(s => s.id === journey.sceneId);
           const newOwner = availableCharacters.find(char => char.id === journey.newCharacterOwnerId);
           return (
             <View key={journey.id}>
-              <Text style={styles.journeyDetailText}>
-                {t('scene')}: {scene?.name || t('unknown_scene')}
-              </Text>
+              <RelationAttributeLine label={t('scene')} value={scene?.name || t('unknown_scene')} />
               {journey.newState && (
-                <Text style={styles.journeyDetailText}>
-                  {t('item_state')}: {journey.newState}
-                </Text>
+                <RelationAttributeLine label={t('item_state')} value={journey.newState} />
               )}
               {newOwner && (
-                <Text style={styles.journeyDetailText}>
-                  {t('new_owner')}: {newOwner.name}
-                </Text>
+                <RelationAttributeLine label={t('new_owner')} value={newOwner.name} />
               )}
               {journey.extraNotes && (
-                <Text style={styles.journeyDetailText}>
-                  {t('extra_notes')}: {journey.extraNotes}
-                </Text>
+                <RelationAttributeLine label={t('extra_notes')} value={journey.extraNotes} />
               )}
             </View>
           );
         })}
       </View>
     );
-  }, [availableScenes, availableCharacters, colors.text, t, styles.journeyDetailText]);
+  }, [availableScenes, availableCharacters, colors.text, t]);
 
 
   return (
@@ -135,6 +132,7 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
       noItemsMessage={'no_items_in_location'}
       renderItemExtraContent={renderItemExtraContent}
       title={t('items_in_location_title')}
+      onItemPress={handleItemPress}
     />
   );
 };

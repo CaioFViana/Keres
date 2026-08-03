@@ -1,11 +1,16 @@
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import { SceneSelect } from '../../db/schema';
 import { Location } from '@keres/shared/entities/Location';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useTheme } from '../../theme';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import GenericRelationDisplay, { BaseRelation } from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
+import RelationAttributeLine from '../RelationManager/RelationAttributeLine';
 
 // Define the relation type for GenericRelationDisplay
 interface CharacterLocationRelation extends BaseRelation {
@@ -28,14 +33,14 @@ const CharacterLocationManager: React.FC<CharacterLocationManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const navigation = useNavigation();
 
-  const styles = StyleSheet.create({
-    sceneName: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginLeft: 10,
-    },
-  });
+  const handleLocationPress = useCallback((location: Location) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Location', location.id);
+    }
+  }, [navigation]);
 
   const locationsAsRelations = useMemo(() => {
     const relevantCharacterScenes = characterSceneRelations.filter(
@@ -87,16 +92,14 @@ const CharacterLocationManager: React.FC<CharacterLocationManagerProps> = ({
 
   const renderLocationExtraContent = useCallback((relation: CharacterLocationRelation, relatedLocation: Location) => {
     return (
-      <View style={{ flex: 1, paddingVertical: 10 }}>
-        <Text style={{ fontSize: 16, color: colors.text }}>{relatedLocation.name}</Text>
+      <View>
+        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{relatedLocation.name}</Text>
         {relation.scenes.map((scene) => (
-          <Text key={scene.id} style={styles.sceneName}>
-            - {scene.name}
-          </Text>
+          <RelationAttributeLine key={scene.id} label={t('scene')} value={scene.name} />
         ))}
       </View>
     );
-  }, [colors.text, styles.sceneName]);
+  }, [colors.text, t]);
 
 
   return (
@@ -108,6 +111,7 @@ const CharacterLocationManager: React.FC<CharacterLocationManagerProps> = ({
       noItemsMessage={'no_locations_assigned_to_character'}
       renderItemExtraContent={renderLocationExtraContent}
       title={t('character_locations_title')}
+      onItemPress={handleLocationPress}
     />
   );
 };

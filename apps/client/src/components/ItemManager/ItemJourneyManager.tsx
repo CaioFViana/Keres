@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 import { ItemJourney, Item } from '@keres/shared/entities/Item';
 import { Scene } from '@keres/shared/entities/Scene';
 import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay';
+import RelationAttributeLine from '../RelationManager/RelationAttributeLine';
 import { useTheme } from '../../theme';
 import { CharacterSelect } from '../../db/schema'; // Import CharacterSelect
 
@@ -39,18 +40,17 @@ const ItemJourneyManager: React.FC<ItemJourneyManagerProps> = ({
 
   const renderItemJourneyExtraContent = useCallback((journey: ItemJourney, actualItem: Item) => {
     const newCharacterOwner = allCharacters.find(char => char.id === journey.newCharacterOwnerId);
+    const sceneName = allScenes?.find(scene => scene.id === journey.sceneId)?.name;
     return (
-      <View style={{ flex: 1, paddingVertical: 10 }}>
-        <Text style={{ fontSize: 16, color: colors.text }}>{actualItem.name}</Text>
-        {journey.newState && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('item_state')}: {journey.newState}</Text>}
-        {allScenes?.find(scene => scene.id === journey.sceneId)?.name && (
-          <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('scene')}: {allScenes.find(scene => scene.id === journey.sceneId)?.name}</Text>
-        )}
-        {newCharacterOwner && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('new_owner')}: {newCharacterOwner.name}</Text>}
-        {journey.extraNotes && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('extra_notes')}: {journey.extraNotes}</Text>}
+      <View>
+        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{actualItem.name}</Text>
+        {journey.newState && <RelationAttributeLine label={t('item_state')} value={journey.newState} />}
+        {sceneName && <RelationAttributeLine label={t('scene')} value={sceneName} />}
+        {newCharacterOwner && <RelationAttributeLine label={t('new_owner')} value={newCharacterOwner.name} />}
+        {journey.extraNotes && <RelationAttributeLine label={t('extra_notes')} value={journey.extraNotes} />}
       </View>
     );
-  }, [allScenes, allCharacters, colors.text, colors.textSecondary, t]);
+  }, [allScenes, allCharacters, colors.text, t]);
 
 
   return (

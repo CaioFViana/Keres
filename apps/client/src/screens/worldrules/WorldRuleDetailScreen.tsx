@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '../../components/common/DetailField/DetailField';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
@@ -175,7 +176,7 @@ const WorldRuleDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <Text style={styles.mainTitle}>{worldRule.title}</Text>
+      <TagChipList tags={worldRule.tags} />
 
       <DetailField label={t('description')} value={worldRule.description || t('common_na')} />
       <DetailField label={t('extra_notes')} value={worldRule.extraNotes || t('common_na')} />
@@ -191,9 +192,8 @@ const WorldRuleDetailScreen = () => {
         currentEntityType="WorldRule"
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={worldRule.tags} />
-      
+      <EntityMetadata version={worldRule.version} createdAt={worldRule.createdAt} updatedAt={worldRule.updatedAt} />
+
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />
       </View>

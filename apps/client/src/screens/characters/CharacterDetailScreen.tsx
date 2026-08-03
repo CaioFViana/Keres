@@ -11,6 +11,7 @@ import CharacterLocationManager from '../../components/CharacterManager/Characte
 import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import DetailField from '../../components/common/DetailField/DetailField';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -450,8 +451,8 @@ const CharacterDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <Text style={styles.mainTitle}>{character.name}</Text>
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
+      <TagChipList tags={characterTags} />
 
       <DetailField label={t('gender')} value={character.gender || t('common_na')} />
       <DetailField label={t('race')} value={character.race || t('common_na')} />
@@ -518,8 +519,7 @@ const CharacterDetailScreen = () => {
         currentEntityType="Character"
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={characterTags} />
+      <EntityMetadata version={character.version} createdAt={character.createdAt} updatedAt={character.updatedAt} />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '../../components/common/DetailField/DetailField';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -206,7 +207,7 @@ const ItemDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <Text style={styles.mainTitle}>{item.name}</Text>
+      <TagChipList tags={itemTags} />
       <DetailField label={t('description')} value={item.description || t('common_na')} />
       <DetailField label={t('category')} value={item.category || t('common_na')} />
       <DetailField label={t('initial_state')} value={item.initialState || t('common_na')} />
@@ -240,8 +241,7 @@ const ItemDetailScreen = () => {
         currentEntityType="Item"
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={itemTags} />
+      <EntityMetadata version={item.version} createdAt={item.createdAt} updatedAt={item.updatedAt} />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

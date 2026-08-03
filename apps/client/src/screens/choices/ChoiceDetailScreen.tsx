@@ -3,6 +3,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
@@ -135,7 +136,7 @@ const ChoiceDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <Text style={styles.mainTitle}>{choice.text}</Text>
+      <TagChipList tags={choiceTags} />
 
       <NoteManager
         noteRelations={choiceNoteRelations}
@@ -148,8 +149,7 @@ const ChoiceDetailScreen = () => {
         currentEntityType="Choice"
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={choiceTags} />
+      <EntityMetadata version={choice.version} createdAt={choice.createdAt} updatedAt={choice.updatedAt} />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

@@ -1,9 +1,14 @@
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { ItemJourney, Item } from '@keres/shared/entities/Item';
 import { Character } from '@keres/shared/entities/Character';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay';
+import RelationAttributeLine from '../RelationManager/RelationAttributeLine';
 import { useTheme } from '../../theme';
 
 interface ItemSceneManagerProps {
@@ -21,6 +26,14 @@ const ItemSceneManager: React.FC<ItemSceneManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const navigation = useNavigation();
+
+  const handleItemPress = useCallback((item: Item) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Item', item.id);
+    }
+  }, [navigation]);
 
   const itemJourneysForScene = useMemo(() => {
     return itemJourneys.filter(journey => journey.sceneId === currentSceneId && !journey.isDeleted);
@@ -35,14 +48,14 @@ const ItemSceneManager: React.FC<ItemSceneManagerProps> = ({
   const renderItemJourneyExtraContent = useCallback((relation: ItemJourney, item: Item) => {
     const ownerName = allCharacters?.find(char => char.id === relation.newCharacterOwnerId)?.name;
     return (
-      <View style={{ flex: 1, paddingVertical: 10 }}>
-        <Text style={{ fontSize: 16, color: colors.text }}>{item.name}</Text>
-        {relation.newState && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('item_state')}: {relation.newState}</Text>}
-        {ownerName && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('new_owner')}: {ownerName}</Text>}
-        {relation.extraNotes && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('extra_notes')}: {relation.extraNotes}</Text>}
+      <View>
+        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{item.name}</Text>
+        {relation.newState && <RelationAttributeLine label={t('item_state')} value={relation.newState} />}
+        {ownerName && <RelationAttributeLine label={t('new_owner')} value={ownerName} />}
+        {relation.extraNotes && <RelationAttributeLine label={t('extra_notes')} value={relation.extraNotes} />}
       </View>
     );
-  }, [allCharacters, colors.text, colors.textSecondary, t]);
+  }, [allCharacters, colors.text, t]);
 
 
   return (
@@ -54,6 +67,7 @@ const ItemSceneManager: React.FC<ItemSceneManagerProps> = ({
       noItemsMessage={'no_items_assigned_to_scene'}
       renderItemExtraContent={renderItemJourneyExtraContent}
       title={t('items_title')}
+      onItemPress={handleItemPress}
     />
   );
 };

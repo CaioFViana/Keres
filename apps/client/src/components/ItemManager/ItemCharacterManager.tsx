@@ -1,9 +1,14 @@
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { ItemJourney, Item } from '@keres/shared/entities/Item';
 import { Scene } from '@keres/shared/entities/Scene';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay';
+import RelationAttributeLine from '../RelationManager/RelationAttributeLine';
 import { useTheme } from '../../theme';
 
 // Type Guards
@@ -30,6 +35,14 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const navigation = useNavigation();
+
+  const handleItemPress = useCallback((item: Item) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Item', item.id);
+    }
+  }, [navigation]);
 
   const displayItems = useMemo(() => {
     const ownedItems = allItems.filter(item => item.characterOwnerId === currentCharacterId && !item.isDeleted);
@@ -50,26 +63,26 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
 
   const renderItemExtraContent = useCallback((entity: Item | ItemJourney, actualItem: Item) => {
     return (
-      <View style={{ flex: 1, paddingVertical: 10 }}>
-        <Text style={{ fontSize: 16, color: colors.text }}>{actualItem.name}</Text>
+      <View>
+        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{actualItem.name}</Text>
         {isItem(entity) && (
           <>
-            {actualItem.initialState && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('initial_state')}: {actualItem.initialState}</Text>}
-            {actualItem.extraNotes && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('extra_notes')}: {actualItem.extraNotes}</Text>}
+            {actualItem.initialState && <RelationAttributeLine label={t('initial_state')} value={actualItem.initialState} />}
+            {actualItem.extraNotes && <RelationAttributeLine label={t('extra_notes')} value={actualItem.extraNotes} />}
           </>
         )}
         {isItemJourney(entity) && (
           <>
-            {entity.newState && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('item_state')}: {entity.newState}</Text>}
+            {entity.newState && <RelationAttributeLine label={t('item_state')} value={entity.newState} />}
             {allScenes?.find(scene => scene.id === entity.sceneId)?.name && (
-              <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('scene')}: {allScenes.find(scene => scene.id === entity.sceneId)?.name}</Text>
+              <RelationAttributeLine label={t('scene')} value={allScenes.find(scene => scene.id === entity.sceneId)!.name} />
             )}
-            {entity.extraNotes && <Text style={{ fontSize: 14, color: colors.textSecondary }}>{t('extra_notes')}: {entity.extraNotes}</Text>}
+            {entity.extraNotes && <RelationAttributeLine label={t('extra_notes')} value={entity.extraNotes} />}
           </>
         )}
       </View>
     );
-  }, [allScenes, colors.text, colors.textSecondary, t]);
+  }, [allScenes, colors.text, t]);
 
 
   return (
@@ -81,6 +94,7 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
       noItemsMessage={'no_items_assigned_to_character'}
       renderItemExtraContent={renderItemExtraContent}
       title={t('items_title')}
+      onItemPress={handleItemPress}
     />
   );
 };

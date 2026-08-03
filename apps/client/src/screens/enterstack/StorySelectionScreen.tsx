@@ -181,6 +181,7 @@ const StorySelectionScreen = () => {
       const worldRuleCount = await storyService.getWorldRuleCount();
       const itemCount = await storyService.getItemCount();
       const galleryCount = await storyService.getGalleryCount();
+      const tagCount = await storyService.getTagCount();
       const branchingStoryForkCount = await storyService.getBranchingStoryForkCount();
 
       updateSummary({
@@ -195,6 +196,7 @@ const StorySelectionScreen = () => {
         worldRuleCount,
         itemCount,
         galleryCount,
+        tagCount,
         branchingStoryForkCount,
       });
     } catch (error) {

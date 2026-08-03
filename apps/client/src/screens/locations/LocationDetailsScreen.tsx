@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import DetailField from '../../components/common/DetailField/DetailField';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -322,7 +323,7 @@ const LocationDetailsScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-      <Text style={styles.title}>{location.name}</Text>
+      <TagChipList tags={locationTags} />
 
       <DetailField label={t('description')} value={location.description || t('common_na')} />
       <DetailField label={t('field_climate')} value={location.climate || t('common_na')} />
@@ -368,8 +369,7 @@ const LocationDetailsScreen = () => {
         currentEntityType="Location"
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={locationTags} />
+      <EntityMetadata version={location.version} createdAt={location.createdAt} updatedAt={location.updatedAt} />
     </ScrollView>
   );
 };

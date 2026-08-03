@@ -13,6 +13,7 @@ interface StorySummary {
   branchingStoryForkCount: number;
   itemCount: number;
   galleryCount: number;
+  tagCount: number;
 }
 
 interface SummaryState {

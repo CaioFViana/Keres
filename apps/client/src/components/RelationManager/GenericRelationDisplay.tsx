@@ -18,6 +18,13 @@ interface GenericRelationDisplayProps<TItem extends BaseItem, TRelation extends 
   noItemsMessage: string;
   renderItemExtraContent?: (relation: TRelation, relatedItem: TItem) => React.ReactNode;
   title: string; // Add title prop for the collapsible header
+  /**
+   * Makes each row navigate to the related item's own Detail screen when tapped. Optional
+   * and opt-in: some callers show an entity that doesn't have its own Detail screen to jump
+   * to (e.g. ItemJourneyManager, where the "related item" is always the current item itself),
+   * so the row stays a plain, non-interactive display unless a caller opts in.
+   */
+  onItemPress?: (item: TItem) => void;
 }
 
 const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRelation>({
@@ -28,6 +35,7 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
   noItemsMessage,
   renderItemExtraContent,
   title, // Destructure title prop
+  onItemPress,
 }: GenericRelationDisplayProps<TItem, TRelation>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -57,14 +65,34 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
                 const relatedItem = getRelatedItem(getRelationItemId(relation));
                 if (!relatedItem) return null;
 
-                return (
-                  <View key={relation.id} style={styles.relationItem}>
+                const content = (
+                  <View style={styles.relationItemContent}>
                     {renderItemExtraContent ? (
                       renderItemExtraContent(relation, relatedItem)
                     ) : (
                       <Text style={styles.relationText}>{getItemDisplayName(relatedItem)}</Text>
                     )}
                   </View>
+                );
+
+                if (!onItemPress) {
+                  return (
+                    <View key={relation.id} style={styles.relationItem}>
+                      {content}
+                    </View>
+                  );
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={relation.id}
+                    style={styles.relationItem}
+                    onPress={() => onItemPress(relatedItem)}
+                    activeOpacity={0.7}
+                  >
+                    {content}
+                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={styles.chevron} />
+                  </TouchableOpacity>
                 );
               })}
             </View>

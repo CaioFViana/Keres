@@ -1,9 +1,14 @@
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SceneSelect } from '../../db/schema'; // SceneSelect type
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useTheme } from '../../theme';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay
+import RelationAttributeLine from '../RelationManager/RelationAttributeLine';
 
 interface LocationSceneManagerProps {
   currentLocationId: string;
@@ -16,6 +21,14 @@ const LocationSceneManager: React.FC<LocationSceneManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const navigation = useNavigation();
+
+  const handleScenePress = useCallback((scene: SceneSelect) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Scene', scene.id);
+    }
+  }, [navigation]);
 
   const scenesInLocation = useMemo(() => {
     return availableScenes.filter(
@@ -40,17 +53,15 @@ const LocationSceneManager: React.FC<LocationSceneManagerProps> = ({
       getItemDisplayName={getSceneDisplayName}
       noItemsMessage={'no_scenes_in_location'}
       renderItemExtraContent={(scene, relatedScene) => (
-        <View style={{ flex: 1, paddingVertical: 10 }}>
-          <Text style={{ fontSize: 16, color: colors.text }}>{relatedScene.name}</Text>
+        <View>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{relatedScene.name}</Text>
           {relatedScene.summary && (
-            <Text style={{ fontSize: 14, color: colors.textSecondary }}>
-              {t('summary')}: {relatedScene.summary}
-            </Text>
+            <RelationAttributeLine label={t('summary')} value={relatedScene.summary} />
           )}
-          {/* Add other scene details if needed */}
         </View>
       )}
       title={t('scenes_in_location_title')}
+      onItemPress={handleScenePress}
     />
   );
 };

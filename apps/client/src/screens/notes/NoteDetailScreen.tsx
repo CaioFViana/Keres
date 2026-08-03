@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '../../components/common/DetailField/DetailField';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import RelatedEntitiesList from '../../components/common/RelatedEntitiesList/RelatedEntitiesList';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
@@ -276,7 +277,7 @@ const NoteDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <Text style={styles.mainTitle}>{note.title}</Text>
+      <TagChipList tags={noteTags} />
 
       <DetailField label={t('body')} value={note.body || t('common_na')} />
       <DetailField label={t('extra_notes')} value={note.extraNotes || t('common_na')} />
@@ -288,14 +289,13 @@ const NoteDetailScreen = () => {
         onPressMedia={openGalleryMediaViewer}
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={noteTags} />
-
       <RelatedEntitiesList
         title={t('related_entities_title')}
         noItemsMessage={t('no_entities_related')}
         groupedEntities={groupedEntities}
       />
+
+      <EntityMetadata version={note.version} createdAt={note.createdAt} updatedAt={note.updatedAt} />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

@@ -4,12 +4,14 @@ import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Impor
 import { Choice } from '@keres/shared/entities/Choice'; // Import Choice
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
 import { Location } from '@keres/shared/entities/Location'; // Import Location
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import DetailField from '../../components/common/DetailField/DetailField';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
@@ -22,6 +24,7 @@ import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { ChapterService, createChapterService } from '../../services/storymanagement/ChapterService'; // Import ChapterService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { ChoiceService, createChoiceService } from '../../services/storymanagement/ChoiceService'; // Import ChoiceService
@@ -34,6 +37,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { ScenesScreenNavigationProp } from './SceneListScreen';
 
 // Define the parameter list for this screen
@@ -144,6 +148,10 @@ const SceneDetailScreen = () => {
       color: colors.text,
       marginTop: 15,
       marginBottom: 5,
+    },
+    locationLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
     },
   });
 
@@ -348,6 +356,14 @@ const SceneDetailScreen = () => {
     }
   }, [selectedStory, selectedStory?.type, scene, chapter, fetchPreviousNextScenes, fetchChoicesForScene]);
 
+  const handleLocationPress = useCallback(() => {
+    if (!location) return;
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Location', location.id);
+    }
+  }, [navigation, location]);
+
   const renderHeaderRight = useCallback(() => (
     <TouchableOpacity
       onPress={() => navigation.navigate('SceneForm', { sceneId: sceneId })}
@@ -386,10 +402,7 @@ const SceneDetailScreen = () => {
           {chapter.name}
         </Text>
       )}
-      <Text style={styles.mainTitle}>
-        {selectedStory?.type === 'linear' ? `${scene.index}. ` : ''}
-        {scene.name}
-      </Text>
+      <TagChipList tags={sceneTags} />
       <DetailField label={t('summary')} value={scene.summary || t('common_na')} />
       <DetailField label={t('is_favorite')} value={scene.isFavorite ? t('common_yes') : t('common_no')} />
       <DetailField label={t('extra_notes')} value={scene.extraNotes || t('common_na')} />
@@ -397,8 +410,13 @@ const SceneDetailScreen = () => {
       {location && (
         <>
           <Text style={styles.sectionTitle}>{t('location')}</Text>
-          <DetailField label={t('name')} value={location.name} />
-          <DetailField label={t('description')} value={location.description || t('common_na')} />
+          <TouchableOpacity onPress={handleLocationPress} style={styles.locationLink} activeOpacity={0.7}>
+            <View style={{ flex: 1 }}>
+              <DetailField label={t('name')} value={location.name} />
+              <DetailField label={t('description')} value={location.description || t('common_na')} />
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
         </>
       )}
 
@@ -437,15 +455,14 @@ const SceneDetailScreen = () => {
         currentEntityType="Scene"
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={sceneTags} />
-
       <SceneNavigationControls
         storyType={selectedStory?.type}
         previousScene={previousScene}
         nextScene={nextScene}
         choicesForScene={choicesForScene}
       />
+
+      <EntityMetadata version={scene.version} createdAt={scene.createdAt} updatedAt={scene.updatedAt} />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

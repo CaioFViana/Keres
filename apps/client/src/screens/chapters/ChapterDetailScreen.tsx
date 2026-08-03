@@ -1,5 +1,6 @@
 import ChapterSceneManager from '@/src/components/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
 import DetailField from '@/src/components/common/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '@/src/components/common/ScreenState/ScreenState';
 import NoteManager from '@/src/components/NoteManager';
 import TagChipList from '@/src/components/common/TagChipList/TagChipList'; // Import TagChipList
@@ -235,7 +236,7 @@ const ChapterDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <Text style={styles.mainTitle}>{chapter.name}</Text>
+      <TagChipList tags={chapterTags} />
       <DetailField label={t('summary')} value={chapter.summary || t('common_na')} />
       <DetailField label={t('is_favorite')} value={chapter.isFavorite ? t('common_yes') : t('common_no')} />
       <DetailField label={t('extra_notes')} value={chapter.extraNotes || t('common_na')} />
@@ -257,8 +258,7 @@ const ChapterDetailScreen = () => {
         currentEntityType="Chapter"
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={chapterTags} />
+      <EntityMetadata version={chapter.version} createdAt={chapter.createdAt} updatedAt={chapter.updatedAt} />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

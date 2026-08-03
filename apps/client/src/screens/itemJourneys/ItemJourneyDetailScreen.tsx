@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '../../components/common/DetailField/DetailField';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
@@ -170,9 +171,9 @@ const ItemJourneyDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <Text style={styles.mainTitle}>{relatedItem?.name || t('unknown_item')}</Text>
-      <Text style={styles.subTitle}>{itemJourney.newState}</Text>
+      <TagChipList tags={itemJourneyTags} />
 
+      <DetailField label={t('item_state')} value={itemJourney.newState || t('common_na')} />
       <DetailField label={t('extra_notes')} value={itemJourney.extraNotes || t('common_na')} />
       {relatedScene && <DetailField label={t('scene')} value={relatedScene.name} />}
       {newCharacterOwner && <DetailField label={t('new_character_owner')} value={newCharacterOwner.name} />}
@@ -188,8 +189,7 @@ const ItemJourneyDetailScreen = () => {
         currentEntityType="ItemJourney"
       />
 
-      <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-      <TagChipList tags={itemJourneyTags} />
+      <EntityMetadata version={itemJourney.version} createdAt={itemJourney.createdAt} updatedAt={itemJourney.updatedAt} />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

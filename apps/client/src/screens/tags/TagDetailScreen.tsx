@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '../../components/common/DetailField/DetailField';
+import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import RelatedEntitiesList from '../../components/common/RelatedEntitiesList/RelatedEntitiesList';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
@@ -262,8 +263,6 @@ const TagDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <Text style={styles.mainTitle}>{tag.name}</Text>
-
       {tag.color && (
         <View style={styles.colorDisplayContainer}>
           <View style={[styles.colorCircle, { backgroundColor: tag.color }]} />
@@ -278,6 +277,8 @@ const TagDetailScreen = () => {
         noItemsMessage={t('no_entities_tagged')}
         groupedEntities={groupedEntities}
       />
+
+      <EntityMetadata version={tag.version} createdAt={tag.createdAt} updatedAt={tag.updatedAt} />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

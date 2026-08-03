@@ -1,10 +1,15 @@
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SceneSelect } from '../../db/schema'; // SceneSelect type
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useTheme } from '../../theme';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import GenericRelationDisplay from '../RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay
+import RelationAttributeLine from '../RelationManager/RelationAttributeLine';
 
 interface ChapterSceneManagerProps {
   currentChapterId: string;
@@ -19,6 +24,14 @@ const ChapterSceneManager: React.FC<ChapterSceneManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const navigation = useNavigation();
+
+  const handleScenePress = useCallback((scene: SceneSelect) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Scene', scene.id);
+    }
+  }, [navigation]);
 
   const scenesInChapter = useMemo(() => {
     return availableScenes.filter(
@@ -44,23 +57,19 @@ const ChapterSceneManager: React.FC<ChapterSceneManagerProps> = ({
       renderItemExtraContent={(scene, relatedScene) => {
         const locationName = availableLocations.find(loc => loc.id === relatedScene.locationId)?.name;
         return (
-          <View style={{ flex: 1, paddingVertical: 10 }}>
-            <Text style={{ fontSize: 16, color: colors.text }}>{relatedScene.name}</Text>
+          <View>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{relatedScene.name}</Text>
             {relatedScene.summary && (
-              <Text style={{ fontSize: 14, color: colors.textSecondary }}>
-                {t('summary')}: {relatedScene.summary}
-              </Text>
+              <RelationAttributeLine label={t('summary')} value={relatedScene.summary} />
             )}
             {locationName && (
-              <Text style={{ fontSize: 14, color: colors.textSecondary }}>
-                {t('location')}: {locationName}
-              </Text>
+              <RelationAttributeLine label={t('location')} value={locationName} />
             )}
-            {/* Add other scene details if needed */}
           </View>
         );
       }}
       title={t('scenes_in_chapter_title')}
+      onItemPress={handleScenePress}
     />
   );
 };

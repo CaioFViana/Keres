@@ -1,10 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 import { Character } from '@keres/shared/entities/Character';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useTheme } from '../../theme';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { createULID } from '../../utils/entityUtils';
 import { relationSectionStyleDefs } from '../RelationManager/relationSectionStyles';
 import Button from '../common/Button/Button';
@@ -31,6 +35,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const navigation = useNavigation();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRelation, setEditingRelation] = useState<CharacterRelation | null>(null);
@@ -39,6 +44,13 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
   const getCharacterName = (charId: string) => {
     return characters.find(char => char.id === charId)?.name || `Unknown Character (${charId})`;
   };
+
+  const handleCharacterPress = useCallback((charId: string) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Character', charId);
+    }
+  }, [navigation]);
 
   // Filter relations relevant to the current character
   const filteredRelations = characterRelations.filter(
@@ -146,10 +158,15 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
                 const relatedChar = item.charId1 === currentCharacterId ? item.charId2 : item.charId1;
                 return (
                   <View key={item.id} style={styles.relationItem}>
-                    <View style={styles.relationTextGroup}>
+                    <TouchableOpacity
+                      style={styles.relationTextGroup}
+                      onPress={() => handleCharacterPress(relatedChar)}
+                      activeOpacity={0.7}
+                    >
                       <Text style={styles.relationText}>{getCharacterName(relatedChar)}</Text>
                       <Text style={styles.relationTypeText}>{item.relationType}</Text>
-                    </View>
+                    </TouchableOpacity>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={{ marginHorizontal: 4 }} />
                     {editable && (
                       <View style={styles.actionsRow}>
                         <TouchableOpacity onPress={() => handleEditRelation(item)}>

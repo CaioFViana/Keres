@@ -152,7 +152,7 @@ const StorySelectionNavigator = () => {
           drawerLabel: t('story_selection_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('story_selection_main_navigation_reset');
           },
         })}
@@ -165,7 +165,7 @@ const StorySelectionNavigator = () => {
           drawerLabel: t('manage_servers'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('server_management_navigation_reset');
           },
         })}
@@ -178,7 +178,7 @@ const StorySelectionNavigator = () => {
           drawerLabel: t('manage_friendships'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('friendship_navigation_reset');
           },
         })}

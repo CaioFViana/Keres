@@ -40,6 +40,8 @@ interface RelationManagerProps<TItem extends BaseItem, TRelation extends BaseRel
   deleteConfirmationMessage: string;
   renderRelationItemExtraContent?: (relation: TRelation, availableItems: TItem[]) => React.ReactNode;
   title: string; // Add title prop for the collapsible header
+  /** Same opt-in navigation affordance as GenericRelationDisplay: row becomes tappable, with a chevron, and navigates to the related item's own Detail screen. Independent of `editable` - the delete button (if any) is its own touch target and doesn't trigger this. */
+  onItemPress?: (item: TItem) => void;
 }
 
 const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>({
@@ -63,6 +65,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
   deleteConfirmationMessage,
   renderRelationItemExtraContent,
   title, // Destructure title prop
+  onItemPress,
 }: RelationManagerProps<TItem, TRelation>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -174,12 +177,23 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
     const relatedItem = availableItems.find(item => item.id === getRelationItemId(relation));
     if (!relatedItem) return null;
 
+    const content = renderRelationItemExtraContent ? (
+      renderRelationItemExtraContent(relation, availableItems)
+    ) : (
+      <Text style={styles.relationText}>{getItemDisplayName(relatedItem)}</Text>
+    );
+
     return (
       <View key={relation.id} style={styles.relationItem}>
-        {renderRelationItemExtraContent ? (
-          renderRelationItemExtraContent(relation, availableItems)
+        {onItemPress ? (
+          <TouchableOpacity style={styles.relationItemContent} onPress={() => onItemPress(relatedItem)} activeOpacity={0.7}>
+            {content}
+          </TouchableOpacity>
         ) : (
-          <Text style={styles.relationText}>{getItemDisplayName(relatedItem)}</Text>
+          <View style={styles.relationItemContent}>{content}</View>
+        )}
+        {onItemPress && !editable && (
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={styles.chevron} />
         )}
         {editable && (
           <TouchableOpacity onPress={() => handleDeleteRelation(relation.id)} style={styles.deleteButton}>

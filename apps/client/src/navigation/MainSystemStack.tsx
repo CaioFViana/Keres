@@ -434,7 +434,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('characters_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('character_navigation_reset');
           },
         })}
@@ -447,7 +447,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('locations_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('location_navigation_reset');
           },
         })}
@@ -460,7 +460,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('chapters_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('chapter_navigation_reset');
           },
         })}
@@ -477,7 +477,7 @@ const MainSystemNavigator = () => {
           },
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('choice_navigation_reset');
           },
         })}
@@ -490,7 +490,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('items_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('item_navigation_reset');
           },
         })}
@@ -503,7 +503,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('item_journeys_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('item_journey_navigation_reset');
           },
         })}
@@ -516,7 +516,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('scenes_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('scene_navigation_reset');
           },
         })}
@@ -529,7 +529,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('tags_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('tag_navigation_reset');
           },
         })}
@@ -542,7 +542,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('world_rules_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('worldrule_navigation_reset');
           },
         })}
@@ -555,7 +555,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('notes_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('note_navigation_reset');
           },
         })}
@@ -568,7 +568,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('gallery_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('gallery_navigation_reset');
           },
         })}
@@ -581,7 +581,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('character_relations_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('character_relation_navigation_reset');
           },
         })}
@@ -594,7 +594,7 @@ const MainSystemNavigator = () => {
           drawerLabel: t('operation_logs_title'),
         }}
         listeners={() => ({
-          blur: () => {
+          drawerItemPress: () => {
             entityEventEmitter.emit('operation_logs_navigation_reset');
           },
         })}

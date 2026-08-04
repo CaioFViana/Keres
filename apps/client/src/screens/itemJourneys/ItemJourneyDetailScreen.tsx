@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,7 @@ import { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useItemStore } from '../../state/itemStore';
@@ -21,6 +23,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { ItemJourneysScreenNavigationProp } from './ItemJourneyListScreen';
 
 export type ItemJourneyDetailScreenParamList = {
@@ -91,6 +94,7 @@ const ItemJourneyDetailScreen = () => {
     subTitle: { fontSize: 20, fontWeight: '600', color: colors.textSecondary, marginBottom: 15 },
     buttonContainer: { marginTop: 20 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
+    relationLink: { flexDirection: 'row', alignItems: 'center' },
   });
 
   const fetchItemJourney = useCallback(async () => {
@@ -147,6 +151,30 @@ const ItemJourneyDetailScreen = () => {
   const relatedScene = scenes.find(scene => scene.id === itemJourney?.sceneId);
   const newCharacterOwner = characters.find(char => char.id === itemJourney?.newCharacterOwnerId);
 
+  const handleItemPress = useCallback(() => {
+    if (!relatedItem) return;
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Item', relatedItem.id);
+    }
+  }, [navigation, relatedItem]);
+
+  const handleScenePress = useCallback(() => {
+    if (!relatedScene) return;
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Scene', relatedScene.id);
+    }
+  }, [navigation, relatedScene]);
+
+  const handleNewOwnerPress = useCallback(() => {
+    if (!newCharacterOwner) return;
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Character', newCharacterOwner.id);
+    }
+  }, [navigation, newCharacterOwner]);
+
   const renderHeaderRight = useCallback(() => (
     <TouchableOpacity onPress={() => navigation.navigate('ItemJourneyForm', { itemJourneyId })} style={{ marginRight: 15 }}>
       <Ionicons name="pencil-outline" size={24} color={colors.text} />
@@ -173,10 +201,32 @@ const ItemJourneyDetailScreen = () => {
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={itemJourneyTags} />
 
+      {relatedItem && (
+        <TouchableOpacity onPress={handleItemPress} style={styles.relationLink} activeOpacity={0.7}>
+          <View style={{ flex: 1 }}>
+            <DetailField label={t('item')} value={relatedItem.name} />
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      )}
       <DetailField label={t('item_state')} value={itemJourney.newState || t('common_na')} />
       <DetailField label={t('extra_notes')} value={itemJourney.extraNotes || t('common_na')} />
-      {relatedScene && <DetailField label={t('scene')} value={relatedScene.name} />}
-      {newCharacterOwner && <DetailField label={t('new_character_owner')} value={newCharacterOwner.name} />}
+      {relatedScene && (
+        <TouchableOpacity onPress={handleScenePress} style={styles.relationLink} activeOpacity={0.7}>
+          <View style={{ flex: 1 }}>
+            <DetailField label={t('scene')} value={relatedScene.name} />
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      )}
+      {newCharacterOwner && (
+        <TouchableOpacity onPress={handleNewOwnerPress} style={styles.relationLink} activeOpacity={0.7}>
+          <View style={{ flex: 1 }}>
+            <DetailField label={t('new_character_owner')} value={newCharacterOwner.name} />
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      )}
 
       <NoteManager
         noteRelations={itemJourneyNoteRelations}

@@ -21,8 +21,7 @@ interface GenericRelationDisplayProps<TItem extends BaseItem, TRelation extends 
   /**
    * Makes each row navigate to the related item's own Detail screen when tapped. Optional
    * and opt-in: some callers show an entity that doesn't have its own Detail screen to jump
-   * to (e.g. ItemJourneyManager, where the "related item" is always the current item itself),
-   * so the row stays a plain, non-interactive display unless a caller opts in.
+   * to, so the row stays a plain, non-interactive display unless a caller opts in.
    */
   onItemPress?: (item: TItem) => void;
 }

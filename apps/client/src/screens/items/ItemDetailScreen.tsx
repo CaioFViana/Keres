@@ -1,6 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Scene } from '@keres/shared';
-import { ItemJourney } from '@keres/shared/entities/Item';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +8,7 @@ import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadat
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import ItemJourneyManager from '../../components/ItemManager/ItemJourneyManager';
+import ItemJourneyTimeline from '../../components/ItemJourney/ItemJourneyTimeline';
 import NoteManager from '../../components/NoteManager';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
@@ -19,9 +17,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { createItemService } from '../../services/storymanagement/ItemService';
-import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -47,15 +43,11 @@ const ItemDetailScreen = () => {
 
   const drizzleDb = useDrizzle();
   const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
-  const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
-  const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
 
   useEffect(() => {
     if (drizzleDb) {
       if (!itemServiceRef.current) itemServiceRef.current = createItemService(drizzleDb);
-      if (!itemJourneyServiceRef.current) itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
-      if (!sceneServiceRef.current) sceneServiceRef.current = createSceneService(drizzleDb);
       if (!characterServiceRef.current) characterServiceRef.current = createCharacterService(drizzleDb);
     }
   }, [drizzleDb]);
@@ -69,9 +61,6 @@ const ItemDetailScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Item', entityId: itemId });
-  const [allItemJourneys, setAllItemJourneys] = useState<ItemJourney[]>([]);
-  const [allItems, setAllItems] = useState<ItemSelect[]>([]); // To get all items for the ItemJourneyManager
-  const [allScenes, setAllScenes] = useState<Scene[]>([]);
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,36 +100,6 @@ const ItemDetailScreen = () => {
   }, [itemId, navigation, t]);
 
 
-  const fetchItemJourneys = useCallback(async () => {
-    if (!itemJourneyServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedItemJourneys = await itemJourneyServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllItemJourneys(fetchedItemJourneys);
-    } catch (err) {
-      console.error('Failed to fetch item journeys:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchAllItems = useCallback(async () => {
-    if (!itemServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedItems = await itemServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllItems(fetchedItems);
-    } catch (err) {
-      console.error('Failed to fetch all items:', err);
-    }
-  }, [selectedStory?.id]);
-
-  const fetchAllScenes = useCallback(async () => {
-    if (!sceneServiceRef.current || !selectedStory?.id) return;
-    try {
-      const fetchedScenes = await sceneServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllScenes(fetchedScenes);
-    } catch (err) {
-      console.error('Failed to fetch all scenes:', err);
-    }
-  }, [selectedStory?.id]);
-
   const fetchAllCharacters = useCallback(async () => {
     if (!characterServiceRef.current || !selectedStory?.id) return;
     try {
@@ -174,12 +133,9 @@ const ItemDetailScreen = () => {
 
   useEffect(() => {
     if (item) {
-      fetchItemJourneys();
-      fetchAllItems();
-      fetchAllScenes();
       fetchAllCharacters();
     }
-  }, [item, fetchItemJourneys, fetchAllItems, fetchAllScenes, fetchAllCharacters]);
+  }, [item, fetchAllCharacters]);
 
   const renderHeaderRight = useCallback(() => (
     <TouchableOpacity onPress={() => navigation.navigate('ItemForm', { itemId })} style={{ marginRight: 15 }}>
@@ -222,13 +178,9 @@ const ItemDetailScreen = () => {
         onPressMedia={openGalleryMediaViewer}
       />
 
-      <ItemJourneyManager
-        allItemJourneys={allItemJourneys}
-        allItems={allItems}
-        allScenes={allScenes}
-        allCharacters={allCharacters}
-        currentItemId={itemId}
-      />
+      {selectedStory && (
+        <ItemJourneyTimeline item={item} storyId={selectedStory.id} storyType={selectedStory.type} />
+      )}
 
       <NoteManager
         noteRelations={itemNoteRelations}

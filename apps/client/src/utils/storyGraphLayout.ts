@@ -68,7 +68,7 @@ const SELF_LOOP_BULGE = 46;
  * Puxar do tema daria cores mais integradas, mas o mapa exportado sai do app e é visto em
  * qualquer lugar; daí saturação média em vez de tons extremos.
  */
-const CHAPTER_PALETTE = [
+export const CHAPTER_PALETTE = [
   '#4F8DF7',
   '#E4713C',
   '#39A867',
@@ -354,7 +354,7 @@ function compareByStoryOrder(a: WorkNode, b: WorkNode): number {
   return a.scene.id.localeCompare(b.scene.id);
 }
 
-function buildChapterColors(chapters: GraphChapter[]): Map<string, string> {
+export function buildChapterColors(chapters: GraphChapter[]): Map<string, string> {
   const ordered = [...chapters].sort((a, b) => a.index - b.index || a.id.localeCompare(b.id));
   return new Map(ordered.map((chapter, position) => [chapter.id, CHAPTER_PALETTE[position % CHAPTER_PALETTE.length]]));
 }

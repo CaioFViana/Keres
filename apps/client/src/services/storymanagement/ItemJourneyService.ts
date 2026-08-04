@@ -10,6 +10,7 @@ export interface ItemJourneyService {
   getById(id: string): Promise<ItemJourney | undefined>;
   getAllByStoryId(storyId: string): Promise<ItemJourney[]>;
   getItemJourneysBySceneId(storyId: string, sceneId: string): Promise<ItemJourney[]>;
+  getItemJourneysByItemId(storyId: string, itemId: string): Promise<ItemJourney[]>;
   createItemJourney(userId: string, itemJourneyData: Omit<ItemJourney, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>): Promise<ItemJourney>;
   updateItemJourney(userId: string, id: string, itemJourneyData: Partial<Omit<ItemJourney, 'id' | 'storyId' | 'itemId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<ItemJourney>;
   deleteItemJourney(userId: string, id: string): Promise<void>;
@@ -36,6 +37,17 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
         where: and(
           eq(itemJourneys.storyId, storyId),
           eq(itemJourneys.sceneId, sceneId),
+          eq(itemJourneys.isDeleted, false)
+        ),
+        orderBy: [itemJourneys.createdAt],
+      });
+    },
+
+    async getItemJourneysByItemId(storyId: string, itemId: string): Promise<ItemJourney[]> {
+      return db.query.itemJourneys.findMany({
+        where: and(
+          eq(itemJourneys.storyId, storyId),
+          eq(itemJourneys.itemId, itemId),
           eq(itemJourneys.isDeleted, false)
         ),
         orderBy: [itemJourneys.createdAt],

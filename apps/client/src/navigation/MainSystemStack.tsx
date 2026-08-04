@@ -214,7 +214,7 @@ export type ItemJourneyDetailScreenParamList = {
 export type ItemJourneyStackParamList = {
   ItemJourneys: undefined;
   ItemJourneyDetail: ItemJourneyDetailScreenParamList['ItemJourneyDetail'];
-  ItemJourneyForm: { itemJourneyId?: string };
+  ItemJourneyForm: { itemJourneyId?: string; itemId?: string };
 };
 
 const ItemJourneyStackNavigator = () => {

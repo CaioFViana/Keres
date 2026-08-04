@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 // erases at compile time and never touches the runtime require graph.
 import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
 
-export type NavigableEntityType = 'Character' | 'Scene' | 'Location' | 'Item';
+export type NavigableEntityType = 'Character' | 'Scene' | 'Location' | 'Item' | 'ItemJourney';
 
 interface EntityRoute {
   stack: keyof MainSystemDrawerParamList;
@@ -18,6 +18,7 @@ const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   Scene: { stack: 'ScenesStack', screen: 'SceneDetail', paramKey: 'sceneId' },
   Location: { stack: 'LocationsStack', screen: 'LocationDetail', paramKey: 'locationId' },
   Item: { stack: 'ItemsStack', screen: 'ItemDetail', paramKey: 'itemId' },
+  ItemJourney: { stack: 'ItemJourneysStack', screen: 'ItemJourneyDetail', paramKey: 'itemJourneyId' },
 };
 
 /**

@@ -34,7 +34,7 @@ const ItemJourneyFormScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<ItemJourneyFormScreenNavigationProp>();
   const route = useRoute<ItemJourneyFormScreenRouteProp>();
-  const { itemJourneyId: initialItemJourneyId } = route.params || {};
+  const { itemJourneyId: initialItemJourneyId, itemId: prefilledItemId } = route.params || {};
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
@@ -79,7 +79,9 @@ const ItemJourneyFormScreen = () => {
 
 
   const [currentItemJourneyId, setCurrentItemJourneyId] = useState<string | undefined>(initialItemJourneyId);
-  const [itemId, setItemId] = useState<string | null>(null);
+  // Pré-preenchido quando a criação parte da tela de um Item (ver ItemJourneyTimeline) - sem
+  // isso o usuário teria que selecionar de novo, na mão, o item de onde ele acabou de vir.
+  const [itemId, setItemId] = useState<string | null>(prefilledItemId ?? null);
   const [sceneId, setSceneId] = useState<string | null>(null);
   const [newCharacterOwnerId, setNewCharacterOwnerId] = useState<string | null>(null);
   const [newState, setNewState] = useState<string>('');

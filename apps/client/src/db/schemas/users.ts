@@ -5,6 +5,10 @@ export const users = sqliteTable('users', {
   idUser: text('id_user').primaryKey(),
   idServer: text('id_server').notNull(),
   displayName: text('display_name'),
+  /** Denormalized from the server, same reasoning as `displayName` - see FriendshipService.ts. */
+  avatarColor: text('avatar_color'),
+  avatarIcon: text('avatar_icon'),
+  bio: text('bio'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

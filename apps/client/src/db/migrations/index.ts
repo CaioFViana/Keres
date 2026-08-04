@@ -3,11 +3,13 @@
 
 import migration_1 from './0000_tough_nightcrawler';
 import migration_2 from './0001_lush_pandemic';
+import migration_3 from './0002_amazing_dragon_man';
 
 
 const migrations = [
 { id: 1, name: '0000_tough_nightcrawler', run: migration_1 },
   { id: 2, name: '0001_lush_pandemic', run: migration_2 },
+  { id: 3, name: '0002_amazing_dragon_man', run: migration_3 },
 ];
 
 export default migrations;

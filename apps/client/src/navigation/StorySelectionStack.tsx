@@ -7,9 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
+import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
 import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
+import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
@@ -24,11 +26,13 @@ export type StorySelectionMainStackParamList = {
 export type ServerManagementStackParamList = {
   ServerManagement: undefined;
   ServerRegistration: { serverId?: string };
+  MyProfile: { serverId: string };
 };
 
 export type FriendshipStackParamList = {
   FriendshipList: undefined;
-  FriendshipForm: { friendshipId?: string };
+  FriendshipForm: undefined;
+  FriendDetail: { friendshipId: string };
 };
 
 export type StorySelectionDrawerParamList = {
@@ -94,6 +98,11 @@ const ServerManagementStackNavigator = () => {
           headerTitle: route.params?.serverId ? t('edit_server') : t('register_new_server')
         })}
       />
+      <ServerManagementStack.Screen
+        name="MyProfile"
+        component={MyProfileScreen}
+        options={{ headerTitle: t('my_profile_title') }}
+      />
     </ServerManagementStack.Navigator>
   );
 };
@@ -113,9 +122,12 @@ const FriendshipStackNavigator = () => {
       <FriendshipStack.Screen
         name="FriendshipForm"
         component={FriendshipFormScreen}
-        options={({ route }) => ({
-          headerTitle: route.params?.friendshipId ? t('edit_friendship') : t('add_new_friendship')
-        })}
+        options={{ headerTitle: t('add_new_friendship') }}
+      />
+      <FriendshipStack.Screen
+        name="FriendDetail"
+        component={FriendDetailScreen}
+        options={{ headerTitle: t('friend_detail_title') }}
       />
     </FriendshipStack.Navigator>
   );

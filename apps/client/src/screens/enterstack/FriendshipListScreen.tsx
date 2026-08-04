@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Avatar from '../../components/common/Avatar/Avatar';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
+import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
 import { useNotificationStore } from '../../state/notificationStore';
@@ -14,13 +16,14 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-
-type FriendshipStackParamList = {
-  FriendshipList: undefined;
-  FriendshipForm: { friendshipId?: string };
-};
+import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
+
+type FriendshipSection = {
+  title: string;
+  data: FriendshipWithServer[];
+};
 
 const FriendshipListScreen = () => {
   const navigation = useNavigation<FriendshipListScreenNavigationProp>();
@@ -79,55 +82,15 @@ const FriendshipListScreen = () => {
   }, [fetchFriendshipsAndServers, navigation]);
 
   const handleAddFriendship = () => {
-    navigation.navigate('FriendshipForm', {});
+    navigation.navigate('FriendshipForm');
   };
 
-  const createActionHandler = useCallback((
-    action: (id: string, userId: string) => Promise<void>,
-    confirmationTitle: string,
-    confirmationMessage: string,
-    successMessage: string,
-    errorMessage: string
-  ) => async (friendshipId: string) => {
-    Alert.alert(
-      confirmationTitle,
-      confirmationMessage,
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('proceed'),
-          onPress: async () => {
-            try {
-              const friendship = friendships.find(f => f.id === friendshipId);
-              if (!friendship) {
-                showNotification(t('friendship_not_found'), 'error');
-                return;
-              }
-              const server = serversMap.get(friendship.serverId);
-              const currentUsersServerId = server?.idUser; // Get the user ID on that specific server
+  const runFriendshipAction = useFriendshipActionHandler(
+    useCallback((serverId: string) => serversMap.get(serverId), [serversMap]),
+    fetchFriendshipsAndServers
+  );
 
-              if (!currentUsersServerId) {
-                showNotification(t('not_logged_in_to_server'), 'error');
-                return;
-              }
-              await action(friendshipId, currentUsersServerId); // Pass the correct server-specific user ID
-              showNotification(successMessage, 'success');
-              fetchFriendshipsAndServers();
-            } catch (error) {
-              console.error(`Error during action (ID: ${friendshipId}):`, error);
-              showNotification(errorMessage, 'error');
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  }, [friendships, serversMap, showNotification, fetchFriendshipsAndServers, t]);
-
-  const handleAcceptFriendRequest = createActionHandler(
+  const handleAcceptFriendRequest = runFriendshipAction(
     friendshipService.acceptFriendRequest.bind(friendshipService),
     t('accept_request_confirmation_title'),
     t('accept_request_confirmation_message'),
@@ -135,7 +98,7 @@ const FriendshipListScreen = () => {
     t('failed_to_accept_request')
   );
 
-  const handleDeclineFriendRequest = createActionHandler(
+  const handleDeclineFriendRequest = runFriendshipAction(
     friendshipService.declineFriendRequest.bind(friendshipService),
     t('decline_request_confirmation_title'),
     t('decline_request_confirmation_message'),
@@ -143,7 +106,7 @@ const FriendshipListScreen = () => {
     t('failed_to_decline_request')
   );
 
-  const handleCancelSentFriendRequest = createActionHandler(
+  const handleCancelSentFriendRequest = runFriendshipAction(
     friendshipService.cancelSentFriendRequest.bind(friendshipService),
     t('cancel_request_confirmation_title'),
     t('cancel_request_confirmation_message'),
@@ -151,7 +114,7 @@ const FriendshipListScreen = () => {
     t('failed_to_cancel_request')
   );
 
-  const handleUnfriendUser = createActionHandler(
+  const handleUnfriendUser = runFriendshipAction(
     friendshipService.unfriendUser.bind(friendshipService),
     t('unfriend_confirmation_title'),
     t('unfriend_confirmation_message'),
@@ -159,7 +122,7 @@ const FriendshipListScreen = () => {
     t('failed_to_unfriend')
   );
 
-  const handleBlacklistUser = createActionHandler(
+  const handleBlacklistUser = runFriendshipAction(
     friendshipService.blacklistUser.bind(friendshipService),
     t('blacklist_confirmation_title'),
     t('blacklist_confirmation_message'),
@@ -167,7 +130,7 @@ const FriendshipListScreen = () => {
     t('failed_to_blacklist')
   );
 
-  const handleUnblacklistUser = createActionHandler(
+  const handleUnblacklistUser = runFriendshipAction(
     friendshipService.unblacklistUser.bind(friendshipService),
     t('unblacklist_confirmation_title'),
     t('unblacklist_confirmation_message'),
@@ -175,12 +138,32 @@ const FriendshipListScreen = () => {
     t('failed_to_unblacklist')
   );
 
+  const sections = useMemo<FriendshipSection[]>(() => {
+    const pending = friendships.filter((f) => f.status === FriendStatus.PENDING);
+    const friends = friendships.filter((f) => f.status === FriendStatus.FRIEND);
+    const blacklisted = friendships.filter((f) => f.status === FriendStatus.BLACKLISTED);
+    return [
+      { title: t('status_pending'), data: pending },
+      { title: t('status_friend'), data: friends },
+      { title: t('status_blacklisted'), data: blacklisted },
+    ].filter((section) => section.data.length > 0);
+  }, [friendships, t]);
+
   const renderFriendshipItem = ({ item }: { item: FriendshipWithServer }) => {
     const server = serversMap.get(item.serverId);
     const currentUsersServerId = server?.idUser;
 
     return (
-      <View style={[commonCardStyles.cardContainer, styles.friendshipItem]}>
+      <TouchableOpacity
+        style={[commonCardStyles.cardContainer, styles.friendshipItem]}
+        onPress={() => navigation.navigate('FriendDetail', { friendshipId: item.id })}
+      >
+        <Avatar
+          color={item.otherUserAvatarColor}
+          icon={item.otherUserAvatarIcon}
+          seed={item.otherUserId}
+          size={44}
+        />
         <View style={styles.friendshipInfo}>
           <Text style={[styles.friendshipText, { color: colors.text }]}>
             {item.senderId === currentUsersServerId
@@ -191,64 +174,62 @@ const FriendshipListScreen = () => {
           <Text style={[styles.friendshipText, { color: colors.textSecondary }]}>
             {server?.tag && `@${server.tag} · `}{t('server')}: {item.serverName || item.serverId} {item.serverUrl && `(${item.serverUrl})`}
           </Text>
-          <Text style={[styles.friendshipText, { color: colors.textSecondary }]}>
-            {t('status')}: {item.status === FriendStatus.PENDING
-              ? t('status_pending')
-              : item.status === FriendStatus.FRIEND
-                ? t('status_friend')
-                : t('status_blacklisted')
-            }
-          </Text>
         </View>
         <View style={styles.friendshipActions}>
           {item.status === FriendStatus.PENDING && item.receiverId === currentUsersServerId && (
             <>
-              <TouchableOpacity onPress={() => handleAcceptFriendRequest(item.id)} style={styles.actionButton}>
+              <TouchableOpacity onPress={() => handleAcceptFriendRequest(item.id, item.serverId)} style={styles.actionButton}>
                 <Ionicons name="checkmark-circle-outline" size={24} color={colors.primary} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDeclineFriendRequest(item.id)} style={styles.actionButton}>
+              <TouchableOpacity onPress={() => handleDeclineFriendRequest(item.id, item.serverId)} style={styles.actionButton}>
                 <Ionicons name="close-circle-outline" size={24} color={colors.error} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleBlacklistUser(item.id)} style={styles.actionButton}>
+              <TouchableOpacity onPress={() => handleBlacklistUser(item.id, item.serverId)} style={styles.actionButton}>
                 <Ionicons name="ban-outline" size={24} color={colors.accent} />
               </TouchableOpacity>
             </>
           )}
 
           {item.status === FriendStatus.PENDING && item.senderId === currentUsersServerId && (
-            <TouchableOpacity onPress={() => handleCancelSentFriendRequest(item.id)} style={styles.actionButton}>
+            <TouchableOpacity onPress={() => handleCancelSentFriendRequest(item.id, item.serverId)} style={styles.actionButton}>
               <Ionicons name="close-circle-outline" size={24} color={colors.secondary} />
             </TouchableOpacity>
           )}
 
           {item.status === FriendStatus.FRIEND && (
             <>
-              <TouchableOpacity onPress={() => handleUnfriendUser(item.id)} style={styles.actionButton}>
+              <TouchableOpacity onPress={() => handleUnfriendUser(item.id, item.serverId)} style={styles.actionButton}>
                 <Ionicons name="person-remove-outline" size={24} color={colors.error} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleBlacklistUser(item.id)} style={styles.actionButton}>
+              <TouchableOpacity onPress={() => handleBlacklistUser(item.id, item.serverId)} style={styles.actionButton}>
                 <Ionicons name="ban-outline" size={24} color={colors.accent} />
               </TouchableOpacity>
             </>
           )}
 
           {item.status === FriendStatus.BLACKLISTED && (
-            <TouchableOpacity onPress={() => handleUnblacklistUser(item.id)} style={styles.actionButton}>
+            <TouchableOpacity onPress={() => handleUnblacklistUser(item.id, item.serverId)} style={styles.actionButton}>
               <Ionicons name="person-add-outline" size={24} color={colors.primary} />
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   return (
     <View style={commonContainerStyles.container}>
       <Text style={[styles.title, { color: colors.text }]}>{t('your_friendships')}</Text>
-      <FlatList
-        data={friendships}
+      <SectionList
+        sections={sections}
         renderItem={renderFriendshipItem}
+        renderSectionHeader={({ section }) => (
+          <Text style={[styles.sectionHeader, { color: colors.textSecondary, backgroundColor: colors.background }]}>
+            {section.title}
+          </Text>
+        )}
         keyExtractor={(item) => item.id}
+        stickySectionHeadersEnabled={false}
         ListEmptyComponent={
           <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
             {t('no_friendships_found')}
@@ -272,6 +253,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  sectionHeader: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    marginTop: 10,
+    marginBottom: 5,
+  },
   friendshipItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -281,6 +269,7 @@ const styles = StyleSheet.create({
   },
   friendshipInfo: {
     flex: 1,
+    marginLeft: 12,
   },
   friendshipText: {
     fontSize: 16,

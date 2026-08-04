@@ -1,4 +1,4 @@
-import { UserPublicInfo } from '@keres/shared';
+import { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
 import { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
@@ -29,6 +29,25 @@ export class UserApiService {
   async updateOwnTag(server: ServerSelect, newTag: string): Promise<UserPublicInfo> {
     const response = await this.clientFor(server).put('/user/tag', { tag: newTag });
     return response.data;
+  }
+
+  async updateProfile(server: ServerSelect, profile: UpdateUserProfileType): Promise<UserPublicInfo> {
+    const response = await this.clientFor(server).put('/user/profile', profile);
+    return response.data;
+  }
+
+  /** The current user's own profile on `server`, including avatar/bio - `server.idUser` is
+   *  this account's own id on that server. */
+  async getOwnProfile(server: ServerSelect): Promise<UserPublicInfo | undefined> {
+    try {
+      const response = await this.clientFor(server).get(`/user/details/${server.idUser}`);
+      return response.data;
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        return undefined;
+      }
+      throw error;
+    }
   }
 }
 

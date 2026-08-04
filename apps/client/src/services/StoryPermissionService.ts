@@ -34,4 +34,9 @@ export const storyPermissionApi = {
   async removeCollaborator(server: ServerSelect, storyId: string, targetUserId: string): Promise<void> {
     await clientFor(server).delete(`/story-permissions/story/${storyId}/user/${targetUserId}`);
   },
+
+  /** Grants (or updates, if one already exists) a collaborator's permission on a story. Caller must re-fetch `getCollaborators` afterward - the upsert response doesn't carry the joined `user` info. */
+  async grantCollaborator(server: ServerSelect, storyId: string, targetUserId: string, permissionType: 'reader' | 'writer'): Promise<void> {
+    await clientFor(server).post('/story-permissions/', { storyId, targetUserId, permissionType });
+  },
 };

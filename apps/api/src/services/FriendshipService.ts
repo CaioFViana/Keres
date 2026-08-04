@@ -281,7 +281,10 @@ export class FriendshipService {
         createdAt: friendships.createdAt,
         updatedAt: friendships.updatedAt,
         // Corrected: friendUserAlias.username correctly identifies the other user's username due to the join condition.
-        friendUsername: friendUserAlias.username, 
+        friendUsername: friendUserAlias.username,
+        otherUserAvatarColor: friendUserAlias.avatarColor,
+        otherUserAvatarIcon: friendUserAlias.avatarIcon,
+        otherUserBio: friendUserAlias.bio,
         // otherUserId is dynamically determined based on which user in the friendship is not the current userId.
         otherUserId: sql<string>`
           CASE
@@ -308,6 +311,9 @@ export class FriendshipService {
         updatedAt: f.updatedAt.toISOString(),
         friendUsername: f.friendUsername || '',
         otherUserId: f.otherUserId || '', // Ensure otherUserId is included now that EnrichedFriendship type includes it
+        otherUserAvatarColor: f.otherUserAvatarColor,
+        otherUserAvatarIcon: f.otherUserAvatarIcon,
+        otherUserBio: f.otherUserBio,
       };
     });
 

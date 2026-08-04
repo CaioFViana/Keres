@@ -7,4 +7,9 @@ export interface EnrichedFriendship extends Omit<Friendship, 'createdAt' | 'upda
   updatedAt: string;
   friendUsername: string;
   otherUserId: string;
+  /** The other user's chosen avatar/bio - denormalized here so the friend list/avatar render
+   *  without a separate per-friend fetch, same reasoning as `friendUsername`. */
+  otherUserAvatarColor: string | null;
+  otherUserAvatarIcon: string | null;
+  otherUserBio: string | null;
 }

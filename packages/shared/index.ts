@@ -39,5 +39,6 @@ export * from "./schemas/TagSchemas";
 export * from "./schemas/WorldRuleSchemas";
 export * from "./schemas/FriendshipSchemas";
 export * from "./schemas/UserTagSchemas";
+export * from "./schemas/UserSchemas";
 export * from "./metadata/OperationLogEntityType";
 export * from "./metadata/FriendStatus";

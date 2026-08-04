@@ -1,4 +1,4 @@
-import { UserPublicInfo } from '@keres/shared';
+import { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../db'; // Assuming 'db' is exported from '../db/index.ts'
 import { users } from '../db/schema/tables/users'; // Import the users schema
@@ -10,14 +10,30 @@ export class TagAlreadyTakenError extends Error {
   }
 }
 
+// Shape differs between Drizzle's two query builders: the relational API (`db.query.users.
+// findFirst`) takes `{ column: true }`, the core API's `.returning()` takes `{ alias: table.column }`.
+const PUBLIC_INFO_COLUMNS = {
+  id: true,
+  username: true,
+  tag: true,
+  avatarColor: true,
+  avatarIcon: true,
+  bio: true,
+} as const;
+
+const PUBLIC_INFO_RETURNING = {
+  id: users.id,
+  username: users.username,
+  tag: users.tag,
+  avatarColor: users.avatarColor,
+  avatarIcon: users.avatarIcon,
+  bio: users.bio,
+};
+
 export class UserService {
   async getUserById(userId: string): Promise<UserPublicInfo | undefined> {
     const user = await db.query.users.findFirst({
-      columns: {
-        id: true,
-        username: true,
-        tag: true,
-      },
+      columns: PUBLIC_INFO_COLUMNS,
       where: eq(users.id, userId),
     });
     return user;
@@ -27,11 +43,7 @@ export class UserService {
   // enforces (see users_tag_lower_idx) - "@Caio" and "@caio" must resolve to the same user.
   async getUserByTag(tag: string): Promise<UserPublicInfo | undefined> {
     const user = await db.query.users.findFirst({
-      columns: {
-        id: true,
-        username: true,
-        tag: true,
-      },
+      columns: PUBLIC_INFO_COLUMNS,
       where: sql`lower(${users.tag}) = lower(${tag})`,
     });
     return user;
@@ -47,7 +59,20 @@ export class UserService {
       .update(users)
       .set({ tag: newTag, updatedAt: new Date() })
       .where(eq(users.id, userId))
-      .returning({ id: users.id, username: users.username, tag: users.tag });
+      .returning(PUBLIC_INFO_RETURNING);
+
+    if (!updated) {
+      throw new Error('User not found.');
+    }
+    return updated;
+  }
+
+  async updateUserProfile(userId: string, profile: UpdateUserProfileType): Promise<UserPublicInfo> {
+    const [updated] = await db
+      .update(users)
+      .set({ ...profile, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning(PUBLIC_INFO_RETURNING);
 
     if (!updated) {
       throw new Error('User not found.');

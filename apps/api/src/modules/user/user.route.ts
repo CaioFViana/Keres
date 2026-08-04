@@ -1,4 +1,4 @@
-import { UpdateUserTagSchema } from '@keres/shared';
+import { UpdateUserProfileSchema, UpdateUserTagSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { JWTPayload } from '../../index';
 import { TagAlreadyTakenError, userService } from '../../services/UserService';
@@ -7,6 +7,9 @@ const userResponseSchema = t.Object({
   id: t.String(),
   username: t.String(),
   tag: t.String(),
+  avatarColor: t.Nullable(t.String()),
+  avatarIcon: t.Nullable(t.String()),
+  bio: t.Nullable(t.String()),
 });
 
 export const userRoutes = new Elysia()
@@ -121,6 +124,38 @@ export const userRoutes = new Elysia()
     detail: {
       summary: 'Change your own @tag',
       description: 'Updates the current user\'s friend-discovery tag. Can be changed at any time.',
+      tags: ['User'],
+      security: [{ bearerAuth: [] }],
+    },
+  })
+  .put('/profile', async ({ body, set, user }) => {
+    if (!user) {
+      set.status = 401;
+      return { message: 'Unauthorized' };
+    }
+
+    const parsed = UpdateUserProfileSchema.safeParse(body);
+    if (!parsed.success) {
+      set.status = 400;
+      return { message: parsed.error.issues[0]?.message || 'Invalid profile data' };
+    }
+
+    const updated = await userService.updateUserProfile(user.userId, parsed.data);
+    return updated;
+  }, {
+    body: t.Object({
+      avatarColor: t.Optional(t.Nullable(t.String())),
+      avatarIcon: t.Optional(t.Nullable(t.String())),
+      bio: t.Optional(t.Nullable(t.String())),
+    }),
+    response: {
+      200: userResponseSchema,
+      400: t.Object({ message: t.String() }),
+      401: t.Object({ message: t.String() }),
+    },
+    detail: {
+      summary: 'Update your own avatar/bio',
+      description: 'Updates the current user\'s avatar color, avatar icon, and/or bio. Omitted fields are left unchanged; explicit `null` clears a field.',
       tags: ['User'],
       security: [{ bearerAuth: [] }],
     },

@@ -13,6 +13,8 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Impo
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { isOfflineError } from '../../services/apiClient';
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
 import { SyncEngineService } from '../../services/SyncEngineService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -57,6 +59,10 @@ const StorySettingsScreen = () => {
   const [isOwnerOnServer, setIsOwnerOnServer] = useState<boolean | null>(null); // null = ainda não checado / não foi possível checar
   const [collaborators, setCollaborators] = useState<StoryCollaborator[] | null>(null);
   const [serverActionLoading, setServerActionLoading] = useState(false);
+  const [addableFriends, setAddableFriends] = useState<{ id: string; username: string }[]>([]);
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
+  const [selectedPermissionType, setSelectedPermissionType] = useState<'reader' | 'writer'>('reader');
+  const friendshipService = useCallback(() => createFriendshipService(drizzleDb), [drizzleDb]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,6 +155,35 @@ const StorySettingsScreen = () => {
     })();
     return () => { cancelled = true; };
   }, [storyId, linkedServer]);
+
+  // Friends already granted access are excluded so the picker only ever offers people who
+  // can actually be added - re-adding an existing collaborator would just silently no-op
+  // their permission type through the same upsert route, which isn't what "Add" implies here.
+  useEffect(() => {
+    if (!linkedServer || isOwnerOnServer !== true) {
+      setAddableFriends([]);
+      setSelectedFriendId(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const allFriendships = await friendshipService().getAllFriendships();
+        const collaboratorIds = new Set((collaborators ?? []).map((c) => c.userId));
+        const friends = allFriendships
+          .filter((f) => f.serverId === linkedServer.id && f.status === FriendStatus.FRIEND)
+          .map((f) => ({ id: f.otherUserId, username: f.friendUsername }))
+          .filter((f) => !collaboratorIds.has(f.id));
+        if (!cancelled) setAddableFriends(friends);
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Failed to load friends for collaborator picker:', err);
+          setAddableFriends([]);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [linkedServer, isOwnerOnServer, collaborators, friendshipService]);
 
   const handleSave = async () => {
     if (!storyId) return;
@@ -307,6 +342,23 @@ const StorySettingsScreen = () => {
     }
   };
 
+  const handleAddCollaborator = async () => {
+    if (!storyId || !linkedServer || !selectedFriendId) return;
+    setServerActionLoading(true);
+    try {
+      await storyPermissionApi.grantCollaborator(linkedServer, storyId, selectedFriendId, selectedPermissionType);
+      const refreshedCollaborators = await storyPermissionApi.getCollaborators(linkedServer, storyId);
+      setCollaborators(refreshedCollaborators);
+      setSelectedFriendId(null);
+      setSelectedPermissionType('reader');
+    } catch (err) {
+      console.error('Failed to add collaborator:', err);
+      Alert.alert(t('error'), t('add_collaborator_failed'));
+    } finally {
+      setServerActionLoading(false);
+    }
+  };
+
   const handleRemoveCollaborator = (collaborator: StoryCollaborator) => {
     if (!storyId || !linkedServer) return;
     Alert.alert(
@@ -433,6 +485,13 @@ const StorySettingsScreen = () => {
     { label: t('linear'), value: 'linear' },
     { label: t('branching'), value: 'branching' },
   ];
+
+  const permissionTypeOptions = [
+    { label: t('permission_reader'), value: 'reader' },
+    { label: t('permission_writer'), value: 'writer' },
+  ];
+
+  const addableFriendOptions = addableFriends.map((f) => ({ label: f.username, value: f.id }));
 
   const languageOptions = getLanguageOptions(t);
 
@@ -598,6 +657,37 @@ const StorySettingsScreen = () => {
               {isOwnerOnServer === true && (
                 <View style={styles.collaboratorsSection}>
                   <Text style={[styles.label, { color: colors.text }]}>{t('collaborators_title')}</Text>
+
+                  {addableFriendOptions.length > 0 ? (
+                    <View style={styles.addCollaboratorRow}>
+                      <View style={styles.addCollaboratorFriendSelect}>
+                        <Select
+                          options={addableFriendOptions}
+                          value={selectedFriendId}
+                          onValueChange={setSelectedFriendId}
+                          placeholder={t('select_friend_to_add')}
+                        />
+                      </View>
+                      <View style={styles.addCollaboratorPermissionSelect}>
+                        <Select
+                          options={permissionTypeOptions}
+                          value={selectedPermissionType}
+                          onValueChange={(value) => setSelectedPermissionType(value as 'reader' | 'writer')}
+                          placeholder={t('select_permission_type')}
+                        />
+                      </View>
+                      <Button
+                        onPress={handleAddCollaborator}
+                        disabled={!selectedFriendId || serverActionLoading}
+                        style={styles.addCollaboratorButton}
+                      >
+                        {t('add')}
+                      </Button>
+                    </View>
+                  ) : (
+                    <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>{t('no_addable_friends')}</Text>
+                  )}
+
                   {collaborators !== null && collaborators.length === 0 && (
                     <Text style={{ color: colors.textSecondary }}>{t('no_collaborators')}</Text>
                   )}
@@ -677,6 +767,22 @@ const styles = StyleSheet.create({
   },
   collaboratorsSection: {
     marginTop: 15,
+  },
+  addCollaboratorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  addCollaboratorFriendSelect: {
+    flex: 2,
+    marginRight: 5,
+  },
+  addCollaboratorPermissionSelect: {
+    flex: 1,
+    marginRight: 5,
+  },
+  addCollaboratorButton: {
+    paddingHorizontal: 12,
   },
   collaboratorRow: {
     flexDirection: 'row',

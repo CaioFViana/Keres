@@ -236,6 +236,9 @@ const ServerManagementScreen = () => {
           color={getPingIconColor(item.pingStatus)}
           style={{ marginRight: 10 }}
         />
+        <TouchableOpacity onPress={() => navigation.navigate('MyProfile', { serverId: item.id })} style={{ marginRight: 10 }}>
+          <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('ServerRegistration', { serverId: item.id })}>
           <Ionicons name="pencil-outline" size={24} color={colors.primary} />
         </TouchableOpacity>

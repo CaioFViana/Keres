@@ -15,6 +15,13 @@
       "when": 1785795051634,
       "tag": "0001_lush_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785850466042,
+      "tag": "0002_amazing_dragon_man",
+      "breakpoints": true
     }
   ]
 }

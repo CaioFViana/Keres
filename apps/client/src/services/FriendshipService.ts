@@ -3,7 +3,7 @@ import { servers, ServerSelect } from '@/src/db/schemas/servers'; // Import serv
 import { UserInsert, users } from '@/src/db/schemas/users'; // Import users schema and UserInsert
 import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { eq, or, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { AppDrizzleClient, AppDrizzleTransaction } from '../db';
 import { useNotificationStore } from '../state/notificationStore'; // Import notification store and types
 import { createULID } from '../utils/entityUtils';
@@ -14,6 +14,11 @@ import { friendshipApiService } from './FriendshipApiService'; // Import the API
 export type FriendshipWithServer = FriendshipSelect & {
   serverName: string | null;
   serverUrl: string | null;
+  /** The "other side" of the friendship - senderId or receiverId, whichever isn't this device's own user id on that server. */
+  otherUserId: string;
+  otherUserAvatarColor: string | null;
+  otherUserAvatarIcon: string | null;
+  otherUserBio: string | null;
 };
 
 export const createFriendshipService = (db: AppDrizzleClient) => {
@@ -24,7 +29,7 @@ export class FriendshipService {
   constructor(private db: AppDrizzleClient) { }
 
   async getAllFriendships(): Promise<FriendshipWithServer[]> {
-    const result = await this.db.select({
+    const rows = await this.db.select({
       id: friendships.id,
       serverId: friendships.serverId,
       senderId: friendships.senderId,
@@ -36,11 +41,36 @@ export class FriendshipService {
       // Add server details
       serverName: servers.name,
       serverUrl: servers.url,
+      serverOwnUserId: servers.idUser,
     })
       .from(friendships)
       .leftJoin(servers, eq(friendships.serverId, servers.id))
       .all();
-    console.log('FriendshipService - Fetched friendships from DB:', result); // Debug log
+
+    const otherUserIds = rows.map((f) => (f.senderId === f.serverOwnUserId ? f.receiverId : f.senderId));
+    const uniqueOtherUserIds = Array.from(new Set(otherUserIds));
+    const profileRows = uniqueOtherUserIds.length > 0
+      ? await this.db.select({
+          idUser: users.idUser,
+          avatarColor: users.avatarColor,
+          avatarIcon: users.avatarIcon,
+          bio: users.bio,
+        }).from(users).where(inArray(users.idUser, uniqueOtherUserIds)).all()
+      : [];
+    const profileByUserId = new Map(profileRows.map((p) => [p.idUser, p]));
+
+    const result: FriendshipWithServer[] = rows.map((f, index) => {
+      const { serverOwnUserId: _serverOwnUserId, ...friendship } = f;
+      const otherUserId = otherUserIds[index];
+      const profile = profileByUserId.get(otherUserId);
+      return {
+        ...friendship,
+        otherUserId,
+        otherUserAvatarColor: profile?.avatarColor ?? null,
+        otherUserAvatarIcon: profile?.avatarIcon ?? null,
+        otherUserBio: profile?.bio ?? null,
+      };
+    });
     return result;
   }
 
@@ -200,38 +230,52 @@ export class FriendshipService {
     entityEventEmitter.emit('friendship_changed');
   }
 
-  private async ensureUsersExist(userIds: string[], serverId: string, tx?: AppDrizzleTransaction): Promise<void> {
+  /**
+   * Upserts a local `users` row for every "other side" of a friendship, using the profile
+   * data the server already sent along on `EnrichedFriendship` (`friendUsername`/
+   * `otherUser*`) - not a placeholder. Replaces the old `ensureUsersExist`, which only
+   * inserted a fake `User_<id8>` name for users not yet known locally and then never
+   * refreshed it - a friend who set a real display name, avatar, or bio later would stay
+   * stuck on the placeholder forever. Every sync now keeps the local copy current instead.
+   */
+  private async upsertUsersFromFriendships(serverFriendships: EnrichedFriendship[], serverId: string, tx?: AppDrizzleTransaction): Promise<void> {
     const dbClient = tx || this.db;
-    if (userIds.length === 0) {
+    if (serverFriendships.length === 0) {
       return;
     }
 
-    const uniqueUserIds = Array.from(new Set(userIds));
-    const existingUsers = await dbClient.select({ idUser: users.idUser }).from(users).where(or(...uniqueUserIds.map(id => eq(users.idUser, id)))).all();
-    const existingUserIdSet = new Set(existingUsers.map(u => u.idUser));
-
-    const usersToInsert: UserInsert[] = [];
     const now = new Date();
-
-    for (const userId of uniqueUserIds) {
-      if (!existingUserIdSet.has(userId)) {
-        usersToInsert.push({
-          idUser: userId,
-          idServer: serverId, // Use the serverId of the friendship
-          displayName: `User_${userId.substring(0, 8)}`, // Placeholder display name
-          createdAt: now,
-          updatedAt: now,
-          version: 1, // Default version
-          isDeleted: false,
-          deletedAt: null,
-        });
-      }
+    // A user can appear in more than one friendship row in the same batch - key by id so
+    // each user gets a single upsert with the freshest data seen.
+    const usersById = new Map<string, UserInsert>();
+    for (const sf of serverFriendships) {
+      usersById.set(sf.otherUserId, {
+        idUser: sf.otherUserId,
+        idServer: serverId,
+        displayName: sf.friendUsername,
+        avatarColor: sf.otherUserAvatarColor,
+        avatarIcon: sf.otherUserAvatarIcon,
+        bio: sf.otherUserBio,
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      });
     }
 
-    if (usersToInsert.length > 0) {
-      console.log(`Inserting ${usersToInsert.length} placeholder users into local DB.`);
-      await dbClient.insert(users).values(usersToInsert).onConflictDoNothing().run();
-    }
+    await dbClient.insert(users).values(Array.from(usersById.values()))
+      .onConflictDoUpdate({
+        target: users.idUser,
+        set: {
+          displayName: sql`excluded.display_name`,
+          avatarColor: sql`excluded.avatar_color`,
+          avatarIcon: sql`excluded.avatar_icon`,
+          bio: sql`excluded.bio`,
+          updatedAt: sql`excluded.updated_at`,
+        },
+      })
+      .run();
   }
 
   async syncFriendshipsWithServer(currentUserId: string, server: ServerSelect): Promise<void> {
@@ -274,13 +318,8 @@ export class FriendshipService {
           }
         }
 
-        // --- Ensure all users referenced in friendships exist locally ---
-        const allFriendshipUserIds: string[] = [];
-        serverFriendships.forEach(sf => {
-          allFriendshipUserIds.push(sf.senderId);
-          allFriendshipUserIds.push(sf.receiverId);
-        });
-        await this.ensureUsersExist(allFriendshipUserIds, serverId, tx);
+        // --- Keep local user profiles (name/avatar/bio) in sync with the server ---
+        await this.upsertUsersFromFriendships(serverFriendships, serverId, tx);
 
         // --- Insertion/Update Logic (with Notification Detection) ---
         const friendshipsToInsertOrUpdate: FriendshipInsert[] = [];

@@ -39,11 +39,18 @@ export function createULID(): string {
  * Compares two objects and returns a new object containing only the fields that have changed
  * from the old object to the new object. If a field exists in newObject but not in oldObject,
  * it's considered a new field. If a field exists in oldObject but not in newObject,
- * it's considered deleted (represented as `undefined` in the diff).
+ * it's considered deleted (represented as `null` in the diff - not `undefined`, which
+ * `JSON.stringify` silently drops, so a "field removed" signal would otherwise vanish by the
+ * time it reaches the operation log's stored payload).
  *
- * This function handles primitive values, arrays, and nested objects.
+ * This function handles primitive values, arrays, dates, and nested objects.
  * For arrays, it performs a shallow comparison. If arrays are different, the new array is returned.
  * For nested objects, it recursively finds changes.
+ *
+ * Dates are checked *before* the generic nested-object branch on purpose: a `Date` satisfies
+ * `typeof x === 'object' && x !== null && !Array.isArray(x)` just like a plain object, but has
+ * no enumerable own keys, so the object branch would recurse into `{}` vs `{}` and silently
+ * report "no change" no matter how different the two dates actually are.
  *
  * @param oldObject The original object.
  * @param newObject The updated object.
@@ -69,8 +76,16 @@ export function getChangedFields<T extends Record<string, any>>(oldObject: T, ne
     const oldValue = oldObject[key];
     const newValue = newObject[key];
 
+    // Handle dates - must come before the generic nested-object branch (see doc comment above).
+    if (oldValue instanceof Date || newValue instanceof Date) {
+      const oldTime = oldValue instanceof Date ? oldValue.getTime() : oldValue;
+      const newTime = newValue instanceof Date ? newValue.getTime() : newValue;
+      if (oldTime !== newTime) {
+        (changes as Record<string, any>)[key] = newValue;
+      }
+    }
     // Handle nested objects
-    if (typeof oldValue === 'object' && oldValue !== null && typeof newValue === 'object' && newValue !== null && !Array.isArray(oldValue) && !Array.isArray(newValue)) {
+    else if (typeof oldValue === 'object' && oldValue !== null && typeof newValue === 'object' && newValue !== null && !Array.isArray(oldValue) && !Array.isArray(newValue)) {
       const nestedChanges = getChangedFields(oldValue, newValue);
       if (Object.keys(nestedChanges).length > 0) {
         (changes as Record<string, any>)[key] = nestedChanges;
@@ -82,17 +97,12 @@ export function getChangedFields<T extends Record<string, any>>(oldObject: T, ne
         (changes as Record<string, any>)[key] = newValue;
       }
     }
-    // Handle dates
-    else if (oldValue instanceof Date && newValue instanceof Date) {
-      if (oldValue.getTime() !== newValue.getTime()) {
-        (changes as Record<string, any>)[key] = newValue;
-      }
-    }
     // Handle primitives and other types
     else if (oldValue !== newValue) {
-      // For fields removed from newObject, set them to undefined to signify deletion/removal
+      // For fields removed from newObject, mark them null rather than undefined so the
+      // "removed" signal survives JSON.stringify (see doc comment above).
       if (key in oldObject && !(key in newObject)) {
-        (changes as Record<string, any>)[key] = undefined;
+        (changes as Record<string, any>)[key] = null;
       } else {
         (changes as Record<string, any>)[key] = newValue;
       }

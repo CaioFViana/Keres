@@ -1,22 +1,21 @@
 import { desc, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { OperationLogInsert, operationLogs, OperationLogSelect, stories } from '../db/schema'; // Import OperationLogSelect
-import { createULID } from '../utils/entityUtils'; // Import createULID
+import { operationLogs, OperationLogSelect } from '../db/schema'; // Import OperationLogSelect
 
 export type OperationType = 'create' | 'update' | 'delete' | 'reorder';
 export type EntityType = string; // e.g., 'Story', 'Character', etc.
 
+/**
+ * Read-only queries over the operation log, for the List/Detail screens. Recording an
+ * operation is `utils/syncUtils.ts`'s `recordLocalOperation`/`getUserIdForOperation` - every
+ * entity service uses those (they correctly sequence `operationVersion` against
+ * `stories.lastOperationLog`). This file used to have its own second, divergent copy of both
+ * (hardcoded `operationVersion: 0`, never advanced `lastOperationLog`, different
+ * `getUserIdForOperation` semantics) that only `StoryService` called - removed once
+ * `StoryService` was switched to the shared implementation, so the two could never drift
+ * apart again.
+ */
 export interface OperationLogService {
-  getUserIdForOperation(db: AppDrizzleClient, storyId: string, currentUserId: string): Promise<string>;
-  recordLocalOperation<T extends object>(
-    db: AppDrizzleClient,
-    storyId: string,
-    userId: string,
-    operationType: OperationType,
-    entityType: EntityType,
-    entityId: string,
-    payload: T
-  ): Promise<void>;
   getRecentOperationLogs(storyId: string, limit: number): Promise<OperationLogSelect[]>;
   getPaginatedOperationLogs(storyId: string, page: number, pageSize: number): Promise<{ logs: OperationLogSelect[]; total: number }>;
   getOperationLogById(logId: string): Promise<OperationLogSelect | undefined>;
@@ -24,42 +23,6 @@ export interface OperationLogService {
 
 export const createOperationLogService = (db: AppDrizzleClient): OperationLogService => {
   return {
-    async getUserIdForOperation(db: AppDrizzleClient, storyId: string, currentUserId: string): Promise<string> {
-      const story = await db.select().from(stories).where(eq(stories.id, storyId)).get();
-      if (!story) {
-        // If story doesn't exist, log with current user ID, but this case should ideally not happen
-        console.warn(`Story with ID ${storyId} not found when trying to get userId for operation. Using currentUserId.`);
-        return currentUserId;
-      }
-      return story.serverId ? story.userId : currentUserId;
-    },
-
-    async recordLocalOperation<T extends object>(
-      db: AppDrizzleClient,
-      storyId: string,
-      userId: string,
-      operationType: OperationType,
-      entityType: EntityType,
-      entityId: string,
-      payload: T
-    ): Promise<void> {
-      console.log(payload)
-      const newOperationLog: OperationLogInsert = {
-        id: createULID(),
-        storyId,
-        userId,
-        operationVersion: 0, // This will be set by the sync engine later, or incremented locally
-        operationType,
-        entityType,
-        entityId,
-        payload: JSON.stringify(payload),
-        createdAt: new Date(),
-        isSynced: false,
-        serverOperationVersion: 0,
-      };
-      await db.insert(operationLogs).values(newOperationLog).run();
-    },
-
     async getRecentOperationLogs(storyId: string, limit: number): Promise<OperationLogSelect[]> {
       if (!storyId) {
         console.warn('getRecentOperationLogs: storyId is required.');

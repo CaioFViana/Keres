@@ -51,10 +51,11 @@ import {
   WorldRuleSelect
 } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
 import { mediaFileService } from '../MediaFileService';
-import { createOperationLogService } from '../OperationLogService';
+import { createServerService } from '../ServerService';
 import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
 import {
@@ -137,7 +138,7 @@ export interface StoryService {
 }
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
-  const operationLogService = createOperationLogService(db);
+  const serverService = createServerService(db);
   return {
     async getAllStories(): Promise<StorySelect[]> {
       return db.select().from(stories).where(eq(stories.isDeleted, false)).all();
@@ -151,8 +152,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newStory = prepareNewEntityData<StoryInsert>({ ...storyData, userId: currentUserId });
       const result = await db.insert(stories).values(newStory).returning().get();
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, newStory.id, currentUserId);
-      await operationLogService.recordLocalOperation(db, newStory.id, userIdToLog, 'create', 'Story', newStory.id, { ...newStory }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(db, serverService, newStory.id, currentUserId);
+      await recordLocalOperation(db, newStory.id, userIdToLog, 'create', 'Story', newStory.id, { ...newStory }); // Pass serializable data
 
       return result;
     },
@@ -164,37 +165,36 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         throw new Error(`Story with ID ${storyId} not found.`);
       }
 
-      // Calculate changes, excluding fields that should not trigger an update or are managed separately
-      const changes = getChangedFields(originalStory, storyData);
-      
-      // If the only change is to the 'version' (or if there are no changes), skip update and logging
-      // Assuming 'version' is always incremented by the DB, not directly passed in storyData for diffing.
-      // We only care about actual data changes.
-      const significantChanges = { ...changes };
-      
-      if (Object.keys(significantChanges).length === 0) {
+      // Pre-check against a merged copy, not `storyData` alone - `storyData` is a bare partial,
+      // so diffing it directly against `originalStory` would flag every field the caller didn't
+      // include (id, userId, serverId, ...) as "removed" and never actually skip a no-op save.
+      const potentialNewState = { ...originalStory, ...storyData };
+      const preCheckChanges = getChangedFields(originalStory, potentialNewState);
+      delete preCheckChanges.version;
+      delete preCheckChanges.updatedAt;
+
+      if (Object.keys(preCheckChanges).length === 0) {
         console.log(`No significant changes detected for story ${storyId}. Skipping update and operation log.`);
         return;
       }
-      
-      const updatedFields = { ...storyData, updatedAt: new Date() };
-      // Perform the update and return the new version
+
       const [updatedStory] = await db.update(stories)
-        .set({ ...updatedFields, version: sql`${stories.version} + 1` })
+        .set({ ...storyData, updatedAt: new Date(), version: sql`${stories.version} + 1` })
         .where(eq(stories.id, storyId))
-        .returning({ version: stories.version });
-      
+        .returning();
+
       if (!updatedStory) {
         throw new Error(`Failed to update story ${storyId} or story not found.`);
       }
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, storyId, currentUserId);
-      // Construct a clean payload for logging, ensuring dates are strings and no Drizzle SQL objects
-      const payloadForLog = {
-        ...storyData,
-        version: updatedStory.version, // Use the new version from DB
-      };
-      await operationLogService.recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, payloadForLog);
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      // Diffed against the actual persisted row, not the raw `storyData` input - logging the
+      // input directly would record every field the form sends (title, description, genre...)
+      // as "changed" even when only one of them actually was.
+      const changes = getChangedFields(originalStory, updatedStory);
+      delete changes.version;
+      delete changes.updatedAt;
+      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, changes);
     },
 
     async getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }> {
@@ -291,8 +291,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
       const result = await db.insert(characters).values(newCharacter).returning().get();
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, newCharacter.storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, newCharacter.storyId, userIdToLog, 'create', 'Character', newCharacter.id, { ...newCharacter }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(db, serverService, newCharacter.storyId, currentUserId);
+      await recordLocalOperation(db, newCharacter.storyId, userIdToLog, 'create', 'Character', newCharacter.id, { ...newCharacter }); // Pass serializable data
 
       return result;
     },
@@ -301,8 +301,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newChapter = prepareNewEntityData<ChapterInsert>(chapterData);
       const result = await db.insert(chapters).values(newChapter).returning().get();
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, newChapter.storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, newChapter.storyId, userIdToLog, 'create', 'Chapter', newChapter.id, { ...newChapter }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(db, serverService, newChapter.storyId, currentUserId);
+      await recordLocalOperation(db, newChapter.storyId, userIdToLog, 'create', 'Chapter', newChapter.id, { ...newChapter }); // Pass serializable data
 
       return result;
     },
@@ -311,8 +311,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newLocation = prepareNewEntityData<LocationInsert>(locationData);
       const result = await db.insert(locations).values(newLocation).returning().get();
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, newLocation.storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, newLocation.storyId, userIdToLog, 'create', 'Location', newLocation.id, { ...newLocation }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(db, serverService, newLocation.storyId, currentUserId);
+      await recordLocalOperation(db, newLocation.storyId, userIdToLog, 'create', 'Location', newLocation.id, { ...newLocation }); // Pass serializable data
 
       return result;
     },
@@ -321,8 +321,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newScene = prepareNewEntityData<SceneInsert>(sceneData);
       const result = await db.insert(scenes).values(newScene).returning().get();
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, newScene.storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, newScene.storyId, userIdToLog, 'create', 'Scene', newScene.id, { ...newScene }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(db, serverService, newScene.storyId, currentUserId);
+      await recordLocalOperation(db, newScene.storyId, userIdToLog, 'create', 'Scene', newScene.id, { ...newScene }); // Pass serializable data
 
       return result;
     },
@@ -331,8 +331,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newNote = prepareNewEntityData<NoteInsert>(noteData);
       const result = await db.insert(notes).values(newNote).returning().get();
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, newNote.storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, { ...newNote }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(db, serverService, newNote.storyId, currentUserId);
+      await recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, { ...newNote }); // Pass serializable data
 
       return result;
     },
@@ -341,8 +341,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newWorldRule = prepareNewEntityData<WorldRuleInsert>(worldRuleData);
       const result = await db.insert(worldRules).values(newWorldRule).returning().get();
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, newWorldRule.storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, newWorldRule.storyId, userIdToLog, 'create', 'WorldRule', newWorldRule.id, { ...newWorldRule }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(db, serverService, newWorldRule.storyId, currentUserId);
+      await recordLocalOperation(db, newWorldRule.storyId, userIdToLog, 'create', 'WorldRule', newWorldRule.id, { ...newWorldRule }); // Pass serializable data
 
       return result;
     },
@@ -351,8 +351,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const newChoice = prepareNewEntityData<ChoiceInsert>(choiceData);
       const result = await db.insert(choices).values(newChoice).returning().get();
 
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, newChoice.storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, newChoice.storyId, userIdToLog, 'create', 'Choice', newChoice.id, { ...newChoice }); // Pass serializable data
+      const userIdToLog = await getUserIdForOperation(db, serverService, newChoice.storyId, currentUserId);
+      await recordLocalOperation(db, newChoice.storyId, userIdToLog, 'create', 'Choice', newChoice.id, { ...newChoice }); // Pass serializable data
 
       return result;
     },
@@ -470,8 +470,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         throw new Error(`Failed to update favorite status for story ${storyId} or story not found.`);
       }
       
-      const userIdToLog = await operationLogService.getUserIdForOperation(db, storyId, currentUserId);
-      await operationLogService.recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, {
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, {
         isFavorite: updatedStory.isFavorite,
         version: updatedStory.version,
       });

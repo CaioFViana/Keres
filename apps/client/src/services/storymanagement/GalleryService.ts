@@ -223,8 +223,10 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       }
 
       const userIdToLog = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
+      // Log the diff already computed above, not the raw `data` input - the input has every
+      // field the caller sends, changed or not.
       await recordLocalOperation(db, updated.storyId, userIdToLog, 'update', 'Gallery', galleryId, {
-        ...syncablePayload(data),
+        ...syncablePayload(changes),
         version: updated.version,
       });
       entityEventEmitter.emit('gallery_changed', updated.storyId, galleryId);

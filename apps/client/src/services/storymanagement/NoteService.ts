@@ -233,8 +233,10 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       }
 
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedNote.storyId, currentUserId);
+      // Log the diff already computed above, not the raw `noteData` input - the input has
+      // every field the form sends, changed or not.
       await recordLocalOperation(db, updatedNote.storyId, userIdToLog, 'update', 'Note', noteId, {
-        ...noteData,
+        ...changes,
         version: updatedNote.version,
       });
       entityEventEmitter.emit('note_changed', updatedNote.storyId, updatedNote.id);

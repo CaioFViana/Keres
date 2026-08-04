@@ -146,8 +146,10 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       }
 
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedTag.storyId, currentUserId);
+      // Log the diff already computed above, not the raw `tagData` input - the input has
+      // every field the form sends, changed or not.
       await recordLocalOperation(db, updatedTag.storyId, userIdToLog, 'update', 'Tag', tagId, {
-        ...tagData,
+        ...changes,
         version: updatedTag.version,
       });
       entityEventEmitter.emit('tag_changed', updatedTag.storyId, updatedTag.id); // Emit event after update

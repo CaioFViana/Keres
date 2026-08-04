@@ -1,6 +1,7 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
+import { Ionicons } from '@expo/vector-icons';
 import { OperationLogEntityType } from '@keres/shared';
+import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -11,8 +12,49 @@ import { OperationLogSelect } from '../../db/schema'; // Ensure this path is cor
 import { useEntityName } from '../../hooks/useEntityName';
 import { useUserDisplayName } from '../../hooks/useUserDisplayName';
 import { OperationLogStackParamList } from '../../navigation/MainSystemStack'; // Corrected import path
+import { EntityService } from '../../services/EntityService';
 import { createOperationLogService } from '../../services/OperationLogService';
 import { useTheme } from '../../theme';
+import { ISO_DATE_PATTERN } from '../../utils/reviveDates';
+
+/** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
+function humanizeFieldName(key: string): string {
+  return key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+}
+
+/**
+ * Campos de payload que são um ID de outra entidade, e qual entidade. Não vem de
+ * `entityFieldMetadata` (que só marca `type: 'id'`, sem dizer qual entidade) - é o mapeamento
+ * que faltava para reaproveitar `EntityService.getEntityIdentifier` (o mesmo resolvedor de
+ * nome que `TagRelation`/`NoteRelation`/etc já usam) num campo qualquer do payload.
+ */
+const REFERENCE_FIELD_ENTITY_TYPES: Record<string, OperationLogEntityType> = {
+  characterId: OperationLogEntityType.Character,
+  character1Id: OperationLogEntityType.Character,
+  character2Id: OperationLogEntityType.Character,
+  characterOwnerId: OperationLogEntityType.Character,
+  newCharacterOwnerId: OperationLogEntityType.Character,
+  sceneId: OperationLogEntityType.Scene,
+  nextSceneId: OperationLogEntityType.Scene,
+  itemId: OperationLogEntityType.Item,
+  locationId: OperationLogEntityType.Location,
+  chapterId: OperationLogEntityType.Chapter,
+  tagId: OperationLogEntityType.Tag,
+  noteId: OperationLogEntityType.Note,
+  worldRuleId: OperationLogEntityType.WorldRule,
+  galleryId: OperationLogEntityType.Gallery,
+  choiceId: OperationLogEntityType.Choice,
+};
+
+const getOperationIcon = (operationType: string): keyof typeof Ionicons.glyphMap => {
+  switch (operationType) {
+    case 'create': return 'add-circle-outline';
+    case 'update': return 'create-outline';
+    case 'delete': return 'trash-outline';
+    case 'reorder': return 'repeat-outline';
+    default: return 'help-circle-outline';
+  }
+};
 
 type OperationLogDetailScreenRouteProp = RouteProp<OperationLogStackParamList, 'OperationLogDetail'>;
 type OperationLogDetailScreenNavigationProp = NativeStackNavigationProp<OperationLogStackParamList, 'OperationLogDetail'>;
@@ -84,32 +126,90 @@ const OperationLogDetailScreen: React.FC = () => {
     },
     scrollViewContent: {
       padding: 15,
+      paddingBottom: 30,
     },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: colors.text,
+    headerCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      padding: 16,
       marginBottom: 20,
-      textAlign: 'center',
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     },
-    detailRow: {
+    headerTopRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 10,
-      paddingBottom: 5,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      alignItems: 'center',
     },
-    detailLabel: {
+    headerTitle: {
+      fontSize: 19,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginLeft: 8,
+      flexShrink: 1,
+    },
+    headerSubtitle: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 2,
+      marginLeft: 30,
+      textTransform: 'uppercase',
+      letterSpacing: 0.3,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    metaIcon: {
+      marginRight: 8,
+    },
+    metaText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    sectionTitle: {
+      marginBottom: 10,
       fontSize: 16,
       fontWeight: 'bold',
-      color: colors.textSecondary,
+      color: colors.text,
     },
-    detailValue: {
+    changeCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 12,
+      marginBottom: 8,
+    },
+    changeLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.3,
+      marginBottom: 4,
+    },
+    changeValueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    changeValue: {
       fontSize: 16,
       color: colors.text,
-      flexShrink: 1, // Allow text to wrap
-      textAlign: 'right',
+      flexShrink: 1,
+    },
+    emptyValue: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+    },
+    jsonValue: {
+      fontSize: 13,
+      color: colors.text,
+      fontFamily: 'monospace',
     },
     loadingContainer: {
       flex: 1,
@@ -122,32 +222,17 @@ const OperationLogDetailScreen: React.FC = () => {
       textAlign: 'center',
       marginTop: 20,
     },
-    payloadHeader: {
-      marginTop: 20,
-      marginBottom: 10,
-      textAlign: 'center',
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    checkmarkIcon: {
-      color: colors.primary, // Assuming a 'success' color exists in the theme
-    },
-    xIcon: {
-      color: colors.error, // Assuming an 'error' color exists in the theme
-    },
-    reorderItemsHeader: {
-      marginTop: 10,
-      marginBottom: 5,
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.textSecondary,
-      textDecorationLine: 'underline',
-    },
     reorderItemRow: {
-      paddingLeft: 5, // Indent reorder items
-      marginRight: 5,
-      borderBottomWidth: 0, // Remove individual border for reorder items
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 6,
+      paddingLeft: 6,
+    },
+    reorderIndex: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.primary,
+      width: 28,
     },
   });
 
@@ -169,86 +254,146 @@ const OperationLogDetailScreen: React.FC = () => {
   }
 
   const formattedDate = operationLog.createdAt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-  // Removed formattedUpdatedAt as `updatedAt` is not in schema
+  const payload = operationLog.payload ? JSON.parse(operationLog.payload) : null;
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <Text style={styles.title}>{t('operation_log_detail_title')}</Text>
+        <View style={styles.headerCard}>
+          <View style={styles.headerTopRow}>
+            <Ionicons name={getOperationIcon(operationLog.operationType)} size={22} color={colors.primary} />
+            <Text style={styles.headerTitle} numberOfLines={2}>
+              {t(operationLog.operationType)} {mainEntityName || t('unknown_entity')}
+            </Text>
+          </View>
+          <Text style={styles.headerSubtitle}>{t(operationLog.entityType)}</Text>
 
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('id')}:</Text>
-          <Text style={styles.detailValue}>{operationLog.id}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('story')}:</Text>
-          <Text style={styles.detailValue}>{operationLog.storyId}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('user')}:</Text>
-          <Text style={styles.detailValue}>{userDisplayName}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('entity_type')}:</Text>
-          <Text style={styles.detailValue}>{t(operationLog.entityType)}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('entity_name')}:</Text>
-          <Text style={styles.detailValue}>{mainEntityName || t('unknown_entity')}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('operation_type')}:</Text>
-          <Text style={styles.detailValue}>{t(operationLog.operationType)}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('server_operation_version')}:</Text>
-          <Text style={styles.detailValue}>{operationLog.serverOperationVersion}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('is_synced')}:</Text>
-          <Text style={styles.detailValue}>{operationLog.isSynced ? t('yes') : t('no')}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{t('created_at')}:</Text>
-          <Text style={styles.detailValue}>{formattedDate}</Text>
+          <View style={styles.metaRow}>
+            <Ionicons name="person-circle-outline" size={18} color={colors.textSecondary} style={styles.metaIcon} />
+            <Text style={styles.metaText}>{userDisplayName}</Text>
+          </View>
+          <View style={styles.metaRow}>
+            <Ionicons name="time-outline" size={18} color={colors.textSecondary} style={styles.metaIcon} />
+            <Text style={styles.metaText}>{formattedDate}</Text>
+          </View>
+          <View style={styles.metaRow}>
+            <Ionicons
+              name={operationLog.isSynced ? 'cloud-done-outline' : 'cloud-offline-outline'}
+              size={18}
+              color={colors.textSecondary}
+              style={styles.metaIcon}
+            />
+            <Text style={styles.metaText}>
+              {operationLog.isSynced ? t('synced') : t('pending')} (v{operationLog.serverOperationVersion})
+            </Text>
+          </View>
         </View>
 
-        {operationLog.payload && (
+        {payload && (
           <View>
-            <Text style={styles.payloadHeader}>{t('payload')}:</Text>
+            <Text style={styles.sectionTitle}>{t('operation_log_changes_title')}</Text>
             {operationLog.operationType === 'reorder' ? (
-              // Specific rendering for reorder operations
-              <View>
-                <Text style={[styles.detailLabel, styles.reorderItemsHeader]}>{t('reorder_items')}:</Text>
-                {JSON.parse(operationLog.payload).reorderItems.map((item: { id: string, newIndex: number }) => (
-                  <View key={item.id} style={[styles.detailRow, styles.reorderItemRow]}>
-                    <Text style={styles.detailLabel}>{`${item.newIndex}. ID:`}</Text>
-                    <Text style={styles.detailValue}>{item.id}</Text>
+              <View style={styles.changeCard}>
+                {payload.reorderItems.map((item: { id: string; newIndex: number }) => (
+                  <View key={item.id} style={styles.reorderItemRow}>
+                    <Text style={styles.reorderIndex}>{item.newIndex}.</Text>
+                    <ResolvedFieldValue
+                      // Um 'reorder' registrado em 'Story' reordena Capítulos; registrado em
+                      // 'Chapter' reordena as Cenas daquele capítulo (ver
+                      // ChapterService.reorderChapters / SceneService.reorderScenes).
+                      entityType={
+                        operationLog.entityType === OperationLogEntityType.Story ? OperationLogEntityType.Chapter : OperationLogEntityType.Scene
+                      }
+                      entityId={item.id}
+                      storyId={operationLog.storyId}
+                      style={styles.changeValue}
+                    />
                   </View>
                 ))}
               </View>
+            ) : Object.keys(payload).length === 0 ? (
+              <Text style={styles.emptyValue}>{t('operation_log_no_changes')}</Text>
             ) : (
-              // Existing generic rendering for other operation types
-              Object.entries(JSON.parse(operationLog.payload)).map(([key, value]) => (
-                <View key={key} style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>{key}:</Text>
-                  {typeof value === 'boolean' ? (
-                    value ? (
-                      <Ionicons name="checkmark-circle" size={24} style={styles.checkmarkIcon} />
-                    ) : (
-                      <Ionicons name="close-circle" size={24} style={styles.xIcon} />
-                    )
-                  ) : (
-                    <Text style={styles.detailValue}>{String(value)}</Text>
-                  )}
-                </View>
-              ))
+              // Cada campo do payload já é uma mudança real de verdade (ver os serviços em
+              // services/storymanagement/*.ts) - o rótulo vem de entityFieldMetadata quando a
+              // entidade tem metadados cadastrados, senão de uma versão "humanizada" da chave.
+              Object.entries(payload).map(([key, value]) => {
+                const fieldMeta = entityFieldMetadata[operationLog.entityType]?.find((f) => f.name === key);
+                const label = fieldMeta ? t(fieldMeta.label) : humanizeFieldName(key);
+                const referenceEntityType = REFERENCE_FIELD_ENTITY_TYPES[key];
+
+                return (
+                  <View key={key} style={styles.changeCard}>
+                    <Text style={styles.changeLabel}>{label}</Text>
+                    <View style={styles.changeValueRow}>
+                      {value === null || value === undefined ? (
+                        <Text style={styles.emptyValue}>{t('conflict_empty_value')}</Text>
+                      ) : typeof value === 'boolean' ? (
+                        <Ionicons
+                          name={value ? 'checkmark-circle' : 'close-circle'}
+                          size={22}
+                          color={value ? colors.primary : colors.error}
+                        />
+                      ) : referenceEntityType && typeof value === 'string' ? (
+                        <ResolvedFieldValue
+                          entityType={referenceEntityType}
+                          entityId={value}
+                          storyId={operationLog.storyId}
+                          style={styles.changeValue}
+                        />
+                      ) : typeof value === 'string' && ISO_DATE_PATTERN.test(value) ? (
+                        <Text style={styles.changeValue}>{new Date(value).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</Text>
+                      ) : typeof value === 'object' ? (
+                        <Text style={styles.jsonValue}>{JSON.stringify(value, null, 2)}</Text>
+                      ) : (
+                        <Text style={styles.changeValue}>{String(value)}</Text>
+                      )}
+                    </View>
+                  </View>
+                );
+              })
             )}
           </View>
         )}
       </ScrollView>
     </View>
   );
+};
+
+/** Resolve um ID de referência dentro do payload para o nome da entidade que ele aponta, via
+ * o mesmo resolvedor que `TagRelation`/`NoteRelation`/etc já usam (`EntityService`) - não uma
+ * segunda implementação. Cai para o ID cru se a entidade não existir mais (excluída) ou o
+ * resolvedor não souber o tipo. */
+const ResolvedFieldValue: React.FC<{
+  entityType: OperationLogEntityType;
+  entityId: string;
+  storyId: string;
+  style: object;
+}> = ({ entityType, entityId, storyId, style }) => {
+  const db = useDrizzle();
+  const { t } = useTranslation();
+  const [name, setName] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    EntityService.getEntityIdentifier(db, entityType.toLowerCase(), entityId, storyId, t)
+      .then((resolved) => {
+        if (isMounted) setName(resolved);
+      })
+      .catch(() => {
+        if (isMounted) setName(undefined);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [db, entityType, entityId, storyId, t]);
+
+  return <Text style={style}>{loading ? '…' : (name || entityId)}</Text>;
 };
 
 export default OperationLogDetailScreen;

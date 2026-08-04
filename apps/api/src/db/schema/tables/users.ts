@@ -3,6 +3,7 @@ import { boolean, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-c
 import { operationLog } from './operationLog';
 import { stories } from './stories';
 import { storyPermissions } from './storyPermissions';
+import { tiers } from './tiers';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -21,6 +22,10 @@ export const users = pgTable('users', {
   avatarIcon: text('avatar_icon'),
   /** Free-text profile description, capped at 200 chars (enforced in UpdateUserProfileSchema). */
   bio: text('bio'),
+  /** Grants access to the /admin panel and /admin/api/* routes. Checked from the DB per request, never trusted from the JWT. */
+  isAdmin: boolean('is_admin').notNull().default(false),
+  /** `null` = no tier assigned; TierEnforcementService falls back to the registration settings' default tier, then to unlimited. */
+  tierId: text('tier_id').references(() => tiers.id),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   isDeleted: boolean('is_deleted').notNull().default(false),
@@ -29,8 +34,12 @@ export const users = pgTable('users', {
   uniqueIndex('users_tag_lower_idx').on(sql`lower(${table.tag})`),
 ]);
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   stories: many(stories),
   storyPermissions: many(storyPermissions),
   operationLogs: many(operationLog),
+  tier: one(tiers, {
+    fields: [users.tierId],
+    references: [tiers.id],
+  }),
 }));

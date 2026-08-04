@@ -1,5 +1,5 @@
 import { CreateStoryUpdate, DeleteStoryUpdate, SyncConflictReason, UpdateStoryUpdate } from '@keres/shared';
-import { SQL, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, SQL, sql } from 'drizzle-orm';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { z } from 'zod'; // Import Zod
 import { db } from '../../db';
@@ -39,6 +39,10 @@ export interface SyncEntityHandler {
   delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void>;
   checkOwnership(entity: any, userId: string): boolean;
   checkBelongsToStory(entity: any, storyId: string): boolean;
+  /** Conta linhas não excluídas desta entidade nas histórias dadas. Usado por TierEnforcementService. */
+  countForStoryIds(storyIds: string[]): Promise<number>;
+  /** Linhas excluídas (tombstones), opcionalmente restritas a uma história. Usado por AdminRecoveryService. */
+  findDeleted(storyId?: string): Promise<Array<{ id: string; storyId: string | null; deletedAt: Date | null; version: number }>>;
 }
 
 export abstract class BaseSyncEntityHandler<CreateType extends z.ZodType<Record<string, any>>, UpdateType extends z.ZodType<Record<string, any>>> implements SyncEntityHandler {
@@ -92,6 +96,38 @@ export abstract class BaseSyncEntityHandler<CreateType extends z.ZodType<Record<
       .where(eq((this.table as any)[this.idColumnName], id))
       .limit(1);
     return results.at(0);
+  }
+
+  async countForStoryIds(storyIds: string[]): Promise<number> {
+    if (!this.storyIdColumnName || storyIds.length === 0) {
+      return 0;
+    }
+    const conditions = [inArray((this.table as any)[this.storyIdColumnName], storyIds)];
+    if (this.isDeletedColumnName) {
+      conditions.push(eq((this.table as any)[this.isDeletedColumnName], false));
+    }
+    const [row] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(this.table)
+      .where(and(...conditions));
+    return row?.count ?? 0;
+  }
+
+  async findDeleted(storyId?: string): Promise<Array<{ id: string; storyId: string | null; deletedAt: Date | null; version: number }>> {
+    if (!this.isDeletedColumnName) {
+      return [];
+    }
+    const conditions = [eq((this.table as any)[this.isDeletedColumnName], true)];
+    if (storyId && this.storyIdColumnName) {
+      conditions.push(eq((this.table as any)[this.storyIdColumnName], storyId));
+    }
+    const rows = await db.select().from(this.table).where(and(...conditions));
+    return rows.map((r: any) => ({
+      id: r[this.idColumnName],
+      storyId: this.storyIdColumnName ? r[this.storyIdColumnName] : null,
+      deletedAt: this.deletedAtColumnName ? r[this.deletedAtColumnName] : null,
+      version: r[this.versionColumnName],
+    }));
   }
 
   abstract create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void>;

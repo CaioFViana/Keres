@@ -7,6 +7,7 @@ import { galleries } from '../../db/schema';
 import { JWTPayload } from '../../index';
 import { mediaStorageService } from '../../services/MediaStorageService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
+import { TierLimitExceededError, tierEnforcementService } from '../../services/TierEnforcementService';
 
 const HASH_PATTERN = /^[a-f0-9]{32}$/;
 
@@ -70,7 +71,7 @@ export const mediaRoutes = new Elysia()
     },
   })
 
-  .post('/:storyId/blobs/:hash', async ({ params, body, set, requirePermission }) => {
+  .post('/:storyId/blobs/:hash', async ({ params, body, set, requirePermission, user }) => {
     await requirePermission(params.storyId, 'writer');
 
     if (!HASH_PATTERN.test(params.hash)) {
@@ -89,6 +90,16 @@ export const mediaRoutes = new Elysia()
     if (file.size > env.MEDIA_MAX_BYTES) {
       set.status = 413;
       throw new Error(`Media exceeds the maximum size of ${env.MEDIA_MAX_BYTES} bytes.`);
+    }
+
+    try {
+      await tierEnforcementService.assertCanUploadMedia(user!.userId, params.storyId, file.size);
+    } catch (error) {
+      if (error instanceof TierLimitExceededError) {
+        set.status = 403;
+        throw new Error(error.message);
+      }
+      throw error;
     }
 
     try {

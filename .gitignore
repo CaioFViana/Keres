@@ -2,6 +2,10 @@ node_modules
 bun.lockb
 bun.lock
 
+# Build output do painel admin (apps/admin) - gerado por `bun run build`, servido pela API
+# em runtime (ver apps/api/src/index.ts). Não é código-fonte.
+apps/admin/dist
+
 # Arquivos de mídia da galeria, gravados em disco pelo servidor e endereçados por hash.
 # São conteúdo de usuário, não código - o caminho é configurável por MEDIA_STORAGE_PATH.
 media-storage/

@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm'; // Import sql for aggregate functions
 import { ulid } from 'ulid'; // Import ulid for generating new IDs
 import { db } from '../db';
 import * as dbSchema from '../db/schema';
+import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { AppError } from '../utils/errors';
 
 export class StoryExportImportService {
@@ -118,6 +119,18 @@ export class StoryExportImportService {
             throw err;
         }
         const validatedFullStory = FullStoryExportSchema.parse(migrated);
+
+        // Falha rápido antes de abrir a transação: importar uma história inteira e só
+        // então recusar deixaria o usuário sem saber por que nada foi salvo, e gastaria
+        // trabalho de banco à toa numa importação que já ia ser descartada.
+        try {
+            await tierEnforcementService.assertCanCreateStory(userId);
+        } catch (error) {
+            if (error instanceof TierLimitExceededError) {
+                throw new AppError(403, error.message);
+            }
+            throw error;
+        }
 
         // Determine the target story ID. If newStoryId is provided, use it. Otherwise, generate a new one.
         const targetStoryId = newStoryId || ulid();

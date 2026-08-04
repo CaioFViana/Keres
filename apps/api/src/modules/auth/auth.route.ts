@@ -8,6 +8,7 @@ import { env } from '../../config/env';
 import { jwtRefresh } from '../../config/jwt';
 import { db } from '../../db';
 import { users } from '../../db/schema';
+import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 
 export const authRoutes = new Elysia()
   .use(
@@ -82,6 +83,15 @@ export const authRoutes = new Elysia()
     async ({ jwt, jwtRefresh, body, set, cookie }) => { // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
+      // Avaliado ao vivo a cada tentativa (ver RegistrationSettingsService) em vez de
+      // confiar num booleano que ficaria desatualizado assim que o teto de usuários fosse
+      // atingido no modo de gestão automática.
+      const isOpen = await registrationSettingsService.isOpenForRegistration();
+      if (!isOpen) {
+        set.status = 403;
+        return { message: 'Registration is currently closed.' };
+      }
+
       const existingUser = await db.query.users.findFirst({
         where: eq(users.username, username),
       });
@@ -93,6 +103,7 @@ export const authRoutes = new Elysia()
 
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUserId = ulid();
+      const { defaultTierId } = await registrationSettingsService.getOrCreate();
 
       // Seed the @tag with the username so every account has a valid one from the
       // start - the user can freely change it later via PUT /user/tag. On the rare
@@ -108,6 +119,7 @@ export const authRoutes = new Elysia()
             username,
             tag: username,
             password: hashedPassword,
+            tierId: defaultTierId,
           })
           .returning({ id: users.id, username: users.username, tag: users.tag });
       } catch (error) {
@@ -119,6 +131,7 @@ export const authRoutes = new Elysia()
               username,
               tag: `${username}${newUserId.slice(-4)}`,
               password: hashedPassword,
+              tierId: defaultTierId,
             })
             .returning({ id: users.id, username: users.username, tag: users.tag });
         } else {

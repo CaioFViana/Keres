@@ -349,9 +349,13 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // versão atual do servidor.
         await writeEntity(conflict.entityType, conflict.entityId, { isDeleted: true, deletedAt: new Date() }, baseVersion + 1);
         await recordRebasedOperation(conflict, 'delete', { id: conflict.entityId, isDeleted: true }, baseVersion);
-      } else if (conflict.reason === 'not_found') {
-        // A entidade não existe mais no servidor. Preservar o trabalho do usuário aqui é
-        // recriá-la lá - é este caminho que "desfaz" uma exclusão feita por outro cliente.
+      } else if (conflict.reason === 'not_found' || conflict.reason === 'limit_exceeded') {
+        // A entidade não existe no servidor - por ter sido removida (`not_found`) ou por a
+        // criação original ter sido recusada pelo teto do plano (`limit_exceeded`, que só
+        // acontece em operações de criação - ver TierEnforcementService no servidor). Nos
+        // dois casos "manter a minha versão" tem que reenviar como `create`, não `update`:
+        // um `update` contra uma entidade que o servidor nunca teve voltaria como um novo
+        // conflito `not_found` em vez de dar à tentativa uma chance real de passar.
         const local = await readLocalEntity(conflict.entityType, conflict.entityId);
         await recordRebasedOperation(conflict, 'create', { ...(local ?? {}), ...values, isDeleted: false }, 0);
         await writeEntity(conflict.entityType, conflict.entityId, { ...values, isDeleted: false, deletedAt: null }, 1);

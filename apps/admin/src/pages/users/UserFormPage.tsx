@@ -1,0 +1,119 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import type { Tier } from '@keres/shared';
+import { AdminUserApiService } from '../../api/AdminUserApiService';
+import { TierApiService } from '../../api/TierApiService';
+
+export function UserFormPage() {
+  const { id } = useParams();
+  const isNew = !id;
+  const navigate = useNavigate();
+
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [tag, setTag] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [tierId, setTierId] = useState<string>('');
+  const [bio, setBio] = useState('');
+  const [loading, setLoading] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    TierApiService.list().then(setTiers).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (isNew || !id) return;
+    AdminUserApiService.get(id)
+      .then((u) => {
+        setUsername(u.username);
+        setTag(u.tag);
+        setIsAdmin(u.isAdmin);
+        setTierId(u.tierId ?? '');
+        setBio(u.bio ?? '');
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id, isNew]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      if (isNew) {
+        await AdminUserApiService.create({
+          username,
+          password,
+          tag: tag || undefined,
+          isAdmin,
+          tierId: tierId || null,
+        });
+      } else if (id) {
+        await AdminUserApiService.update(id, {
+          isAdmin,
+          tierId: tierId || null,
+          tag: tag || undefined,
+          bio: bio || null,
+        });
+      }
+      navigate('/users');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
+
+  return (
+    <div>
+      <h1>{isNew ? 'New user' : `Edit ${username}`}</h1>
+      <form className="form-card" onSubmit={onSubmit}>
+        {isNew && (
+          <>
+            <label>
+              Username
+              <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+            </label>
+            <label>
+              Password
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+            </label>
+          </>
+        )}
+        <label>
+          Tag
+          <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder={isNew ? username || '(defaults to username)' : ''} />
+        </label>
+        {!isNew && (
+          <label>
+            Bio
+            <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={200} />
+          </label>
+        )}
+        <label>
+          Tier
+          <select value={tierId} onChange={(e) => setTierId(e.target.value)}>
+            <option value="">(none / default)</option>
+            {tiers.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="checkbox-label">
+          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
+          Admin access
+        </label>
+        {error && <p className="error-text">{error}</p>}
+        <div className="form-actions">
+          <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+          <button type="button" onClick={() => navigate('/users')}>Cancel</button>
+        </div>
+      </form>
+    </div>
+  );
+}

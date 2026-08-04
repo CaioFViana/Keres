@@ -133,6 +133,11 @@ export const SyncConflictReasonSchema = z.enum([
   'validation',
   /** O usuário não tem permissão para a operação. Não é resolvível pelo usuário. */
   'unauthorized',
+  /**
+   * O plano do usuário não permite mais uma história/entidade/bytes de armazenamento.
+   * Não é resolvível editando a operação - é só informativo, não abre a tela de conflito.
+   */
+  'limit_exceeded',
   /** Qualquer outra falha ao aplicar a operação. */
   'unknown',
 ]);

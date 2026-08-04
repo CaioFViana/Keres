@@ -237,7 +237,12 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
           return Promise.reject(new AxiosError('Request timed out. Please check your internet connection or server availability.', TIMEOUT_ERROR, originalRequest, error.request, error.response));
         } else if (error.response) {
           console.log('API Response Error:', error.response.status, error.response.data);
-          const errorMessage = 'An unexpected error occurred.';
+          // O `onError` global da API (apps/api/src/index.ts) sempre escolhe uma mensagem
+          // seguro para o usuário antes de responder - descartá-la e usar um texto genérico
+          // fixo escondia coisas como "Story limit reached for your plan" atrás de "An
+          // unexpected error occurred", que não ajuda ninguém a entender o que aconteceu.
+          const serverMessage = (error.response.data as { message?: string } | undefined)?.message;
+          const errorMessage = serverMessage || 'An unexpected error occurred.';
           return Promise.reject(new AxiosError(`Server Error: ${error.response.status} - ${errorMessage}`, `SERVER_ERROR_${error.response.status}`, originalRequest, error.request, error.response));
         } else if (error.request) {
           // Server unreachable. This is the normal offline path, not an exceptional

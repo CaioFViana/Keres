@@ -1,10 +1,13 @@
 import { bearer } from '@elysiajs/bearer';
 import { cookie } from '@elysiajs/cookie';
 import { jwt } from '@elysiajs/jwt';
+import { staticPlugin } from '@elysiajs/static';
 import { swagger } from '@elysiajs/swagger';
+import { existsSync } from 'fs';
 import { Elysia, t } from 'elysia';
 import * as path from 'path';
 import { env } from './config/env';
+import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
 import { friendRoutes } from './modules/friend/friend.route';
 import { mediaRoutes } from './modules/media/media.route';
@@ -13,8 +16,33 @@ import { storyPermissionRoutes } from './modules/storyPermission/storyPermission
 import { syncRoute } from './modules/sync/sync.route';
 import { userRoutes } from './modules/user/user.route'; // Import userRoutes
 import { wsRoutes } from './modules/websocket/webSocket.route';
+import { reconcileRootAdmin } from './services/RootAdminService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';
+
+// Roda antes de qualquer coisa aceitar tráfego: garante que a conta admin "root"
+// configurada via env exista e esteja com isAdmin=true antes que qualquer login seja
+// possível (ver RootAdminService.ts para o porquê disso substituir um script de bootstrap).
+await reconcileRootAdmin();
+
+/**
+ * Co-hospedagem do painel admin: subir a API já serve o app web junto, no mesmo
+ * processo/porta, sem precisar de um segundo deploy. `apps/admin` continua sendo buildado
+ * separadamente (`bun run build`, que roda `vite build` - ver apps/admin/package.json); o
+ * que muda aqui é só servir o resultado estático.
+ *
+ * O prefixo do app é `/admin` (arquivos estáticos + fallback de SPA abaixo); a API JSON
+ * usada por ele mora em `/admin/api/*`, para as duas coisas não brigarem pelo mesmo espaço
+ * de URL. Se o build ainda não existir (dev sem `bun run build`, ou API rodando sozinha),
+ * isso não derruba o servidor - só o painel fica indisponível, a API continua normal.
+ */
+const adminDistPath = path.join(process.cwd(), '..', 'admin', 'dist');
+const adminDistIndexPath = path.join(adminDistPath, 'index.html');
+const adminUiAvailable = existsSync(adminDistIndexPath);
+
+if (!adminUiAvailable) {
+  logger.warn(`Admin UI not built - /admin will 404. Run 'bun run build' in apps/api (or apps/admin) to enable it.`);
+}
 
 /** pg/network error codes that mean "couldn't reach or lost the database", not an app bug. */
 const DB_CONNECTIVITY_ERROR_CODES = new Set([
@@ -175,6 +203,24 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
       tags: ['Test'],
     },
   })
+  .group('/admin/api', (app) => app.use(adminRoutes))
+  .use(adminUiAvailable ? await staticPlugin({ assets: adminDistPath, prefix: '/admin', alwaysStatic: true }) : new Elysia())
+  .get('/admin/*', ({ set }) => {
+    if (!adminUiAvailable) {
+      set.status = 404;
+      return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
+    }
+    // Fallback de SPA: qualquer rota do painel que não seja um arquivo estático real (ex:
+    // /admin/users, uma rota de cliente do React Router) recebe o mesmo index.html, que
+    // então resolve a rota no navegador. Sem isto, um F5 em /admin/users daria 404.
+    return Bun.file(adminDistIndexPath);
+  }, {
+    detail: {
+      summary: 'Admin panel (single-page app)',
+      description: 'Serves the built apps/admin SPA and its client-side routes.',
+      tags: ['Admin'],
+    },
+  })
   .group('/auth', (app) => app.use(authRoutes))
   .group('/sync', (app) => app.use(syncRoute))
   .group('/stories', (app) => app.use(storyRoutes))
@@ -187,4 +233,7 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
     logger.info(`Elysia is running at http://${hostname}:${port}`);
     logger.info(`Swagger UI at http://${hostname}:${port}/swagger`);
     logger.info(`Test Client at http://${hostname}:${port}/test-client`);
+    if (adminUiAvailable) {
+      logger.info(`Admin panel at http://${hostname}:${port}/admin`);
+    }
   });

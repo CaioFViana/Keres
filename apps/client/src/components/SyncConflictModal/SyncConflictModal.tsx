@@ -262,6 +262,15 @@ const SyncConflictModal: React.FC = () => {
   });
 
   /**
+   * `limit_exceeded` não é uma disputa entre duas versões - a operação nunca chegou a ser
+   * aplicada no servidor porque o plano do usuário não permite mais. Não há campos para
+   * comparar (por isso `showFieldPicker` já dava false para este caso, via
+   * `serverValues === null`), mas o texto/rótulos genéricos de "servidor não tem cópia" e
+   * "manter/usar servidor" seriam enganosos aqui, então ganham texto próprio.
+   */
+  const isLimitExceeded = conflict.reason === 'limit_exceeded';
+
+  /**
    * A escolha campo a campo só ajuda quando os dois lados têm valores concretos para
    * comparar. Numa exclusão (de qualquer um dos lados) ou quando o servidor não tem mais a
    * entidade, a decisão é binária, e oferecer rádios com "(vazio)" do outro lado só
@@ -272,22 +281,28 @@ const SyncConflictModal: React.FC = () => {
     && conflict.serverValues !== null
     && conflict.contestedFields.length > 0;
 
-  const fieldPickerFallbackText = conflict.serverValues === null
-    ? t('conflict_server_has_no_copy')
-    : conflict.isDeletedOnServer || conflict.isLocalDelete
-      ? t('conflict_binary_choice_note')
-      : t('conflict_no_contested_fields');
+  const fieldPickerFallbackText = isLimitExceeded
+    ? t('conflict_limit_exceeded_note')
+    : conflict.serverValues === null
+      ? t('conflict_server_has_no_copy')
+      : conflict.isDeletedOnServer || conflict.isLocalDelete
+        ? t('conflict_binary_choice_note')
+        : t('conflict_no_contested_fields');
 
   /** Rótulo do botão principal: no caso de exclusão remota, ele restaura a entidade. */
-  const keepMineLabel = conflict.isDeletedOnServer
-    ? t('conflict_restore_mine')
-    : hasServerChoice
-      ? t('conflict_apply_merge')
-      : t('conflict_keep_mine');
+  const keepMineLabel = isLimitExceeded
+    ? t('conflict_retry_mine')
+    : conflict.isDeletedOnServer
+      ? t('conflict_restore_mine')
+      : hasServerChoice
+        ? t('conflict_apply_merge')
+        : t('conflict_keep_mine');
 
-  const keepServerLabel = conflict.isDeletedOnServer
-    ? t('conflict_accept_deletion')
-    : t('conflict_keep_server');
+  const keepServerLabel = isLimitExceeded
+    ? t('conflict_discard_mine')
+    : conflict.isDeletedOnServer
+      ? t('conflict_accept_deletion')
+      : t('conflict_keep_server');
 
   return (
     <Modal visible={isVisible} transparent animationType="fade" onRequestClose={close}>

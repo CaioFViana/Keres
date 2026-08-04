@@ -6,6 +6,7 @@ import { stories, storyTypeEnum } from '../../db/schema';
 import { JWTPayload } from '../../index';
 import { StoryExportImportService } from '../../services/StoryExportImportService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
+import { TierLimitExceededError, tierEnforcementService } from '../../services/TierEnforcementService';
 import { AppError } from '../../utils/errors';
 
 // Convert the enumValues array to an object for t.Enum()
@@ -26,6 +27,15 @@ export const storyRoutes = new Elysia()
     }
 
     const { title, type } = body;
+
+    try {
+      await tierEnforcementService.assertCanCreateStory(user.userId);
+    } catch (error) {
+      if (error instanceof TierLimitExceededError) {
+        throw new AppError(403, error.message);
+      }
+      throw error;
+    }
 
     const [newStory] = await db
       .insert(stories)

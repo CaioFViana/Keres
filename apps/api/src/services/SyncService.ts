@@ -7,6 +7,7 @@ import { operationLog, operationTypeEnum, stories, storyPermissions } from '../d
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { logger } from '../utils/logger';
 import { SyncConflictError, SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
+import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
 import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
 import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
@@ -54,6 +55,11 @@ export class SyncService {
 
   private registerEntityHandler(handler: SyncEntityHandler) {
     this.entityHandlers.set(handler.entityName, handler);
+  }
+
+  /** Exposto para AdminRecoveryService (restaurar entidades) e TierEnforcementService (contar uso). */
+  getEntityHandlers(): ReadonlyMap<string, SyncEntityHandler> {
+    return this.entityHandlers;
   }
 
   /**
@@ -174,6 +180,11 @@ export class SyncService {
             // Recriar daria erro de chave duplicada e travaria o cliente para sempre.
             alreadyApplied = true;
           } else {
+            if (update.entity === 'Story') {
+              await tierEnforcementService.assertCanCreateStory(userId);
+            } else {
+              await tierEnforcementService.assertCanCreateEntity(userId, storyId);
+            }
             await handler.create(userId, storyId, update as CreateStoryUpdate);
           }
         } else if (update.type === 'update' || update.type === 'reorder') {
@@ -191,6 +202,10 @@ export class SyncService {
           }
         }
       } catch (error) {
+        if (error instanceof TierLimitExceededError) {
+          recordConflict('limit_exceeded', error.message, conflictContext());
+          continue;
+        }
         if (error instanceof SyncConflictError) {
           recordConflict(error.reason, error.message, {
             ...conflictContext(),
@@ -275,8 +290,11 @@ export class SyncService {
    * A numeração é calculada dentro do próprio INSERT em vez de lida antes em JavaScript,
    * para que dois pushes concorrentes na mesma história não recebam o mesmo número (o que
    * faria um dos dois ficar invisível para os pulls dos outros clientes).
+   *
+   * Pública para que AdminRecoveryService possa registrar uma restauração feita pelo
+   * painel administrativo com a mesma lógica de numeração, em vez de duplicá-la.
    */
-  private async appendOperationLog(args: {
+  async appendOperationLog(args: {
     storyId: string;
     userId: string;
     update: StoryUpdate;

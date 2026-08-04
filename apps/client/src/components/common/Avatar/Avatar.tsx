@@ -1,14 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { View } from 'react-native';
+import { isColorLight } from '../../../theme/commonStyles';
 import { CHAPTER_PALETTE } from '../../../utils/storyGraphLayout';
 
 /** Ícone padrão para quem ainda não escolheu um (perfil recém-criado). */
 const DEFAULT_ICON: keyof typeof Ionicons.glyphMap = 'person';
 
-/** Cor do glifo sobre o fundo colorido - cinza claro e semi-transparente de propósito
- *  (pedido explícito: "ícone cinza/transparente escolhido"), não branco puro nem opaco. */
-const ICON_TINT = 'rgba(160, 160, 160, 0.75)';
+/**
+ * O cinza semi-transparente original ficava pouco visível em várias cores de fundo da paleta -
+ * preto ou branco (também semi-transparentes, pro "cinza/transparente" do pedido original)
+ * garantem contraste em qualquer cor escolhida, decidido pela mesma luminância que já orienta
+ * texto sobre cor no resto do app (`isColorLight`, usado por Tag).
+ */
+const ICON_TINT_ON_LIGHT = 'rgba(0, 0, 0, 0.6)';
+const ICON_TINT_ON_DARK = 'rgba(255, 255, 255, 0.75)';
 
 /**
  * Deriva uma cor estável a partir de uma string (id ou username), para quem ainda não
@@ -38,6 +44,7 @@ export interface AvatarProps {
 const Avatar: React.FC<AvatarProps> = ({ color, icon, seed, size = 40 }) => {
   const backgroundColor = color || colorFromSeed(seed);
   const iconName = (icon as keyof typeof Ionicons.glyphMap) || DEFAULT_ICON;
+  const iconTint = isColorLight(backgroundColor) ? ICON_TINT_ON_LIGHT : ICON_TINT_ON_DARK;
 
   return (
     <View
@@ -50,7 +57,7 @@ const Avatar: React.FC<AvatarProps> = ({ color, icon, seed, size = 40 }) => {
         justifyContent: 'center',
       }}
     >
-      <Ionicons name={iconName} size={size * 0.58} color={ICON_TINT} />
+      <Ionicons name={iconName} size={size * 0.58} color={iconTint} />
     </View>
   );
 };

@@ -137,6 +137,7 @@ const FriendDetailScreen = () => {
     label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5, color: colors.text },
     bio: { fontSize: 15, color: colors.text, lineHeight: 21 },
     serverInfo: { fontSize: 13, color: colors.textSecondary, textAlign: 'center', marginBottom: 20 },
+    actionsContainer: { marginTop: 35 },
     actionButton: { marginTop: 10 },
     destructiveButton: { backgroundColor: colors.error },
   });
@@ -178,42 +179,44 @@ const FriendDetailScreen = () => {
         </>
       )}
 
-      {isPendingReceived && (
-        <>
-          <Button onPress={() => handleAccept(friendship.id, friendship.serverId)} style={styles.actionButton}>
-            {t('accept_request_confirmation_title')}
-          </Button>
-          <Button onPress={() => handleDecline(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
-            {t('decline_request_confirmation_title')}
-          </Button>
-          <Button onPress={() => handleBlacklist(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
-            {t('blacklist_confirmation_title')}
-          </Button>
-        </>
-      )}
+      <View style={styles.actionsContainer}>
+        {isPendingReceived && (
+          <>
+            <Button onPress={() => handleAccept(friendship.id, friendship.serverId)} style={styles.actionButton}>
+              {t('accept_request_confirmation_title')}
+            </Button>
+            <Button onPress={() => handleDecline(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
+              {t('decline_request_confirmation_title')}
+            </Button>
+            <Button onPress={() => handleBlacklist(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
+              {t('blacklist_confirmation_title')}
+            </Button>
+          </>
+        )}
 
-      {isPendingSent && (
-        <Button onPress={() => handleCancel(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
-          {t('cancel_request_confirmation_title')}
-        </Button>
-      )}
-
-      {isFriend && (
-        <>
-          <Button onPress={() => handleUnfriend(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
-            {t('unfriend_confirmation_title')}
+        {isPendingSent && (
+          <Button onPress={() => handleCancel(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
+            {t('cancel_request_confirmation_title')}
           </Button>
-          <Button onPress={() => handleBlacklist(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
-            {t('blacklist_confirmation_title')}
-          </Button>
-        </>
-      )}
+        )}
 
-      {isBlacklisted && (
-        <Button onPress={() => handleUnblacklist(friendship.id, friendship.serverId)} style={styles.actionButton}>
-          {t('unblacklist_confirmation_title')}
-        </Button>
-      )}
+        {isFriend && (
+          <>
+            <Button onPress={() => handleUnfriend(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
+              {t('unfriend_confirmation_title')}
+            </Button>
+            <Button onPress={() => handleBlacklist(friendship.id, friendship.serverId)} style={[styles.actionButton, styles.destructiveButton]}>
+              {t('blacklist_confirmation_title')}
+            </Button>
+          </>
+        )}
+
+        {isBlacklisted && (
+          <Button onPress={() => handleUnblacklist(friendship.id, friendship.serverId)} style={styles.actionButton}>
+            {t('unblacklist_confirmation_title')}
+          </Button>
+        )}
+      </View>
     </ScrollView>
   );
 };

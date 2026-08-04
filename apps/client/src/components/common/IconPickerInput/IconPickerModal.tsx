@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import Button from '../Button/Button';
 
@@ -24,7 +24,18 @@ interface IconPickerModalProps {
   title?: string;
 }
 
-const ICON_CELL_SIZE = 56;
+const NUM_COLUMNS = 4;
+const CELL_MARGIN = 4;
+
+/**
+ * Sized from the screen width (same 70% factor `ColorPickerModal` uses for its own grid) instead
+ * of a fixed pixel count - a fixed `ICON_CELL_SIZE * 4 + 40` container used to overflow the
+ * modal's available width on narrow phones (the outer `modalView` alone eats ~110dp of
+ * margin/padding), clipping the last column of icons.
+ */
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const ICON_GRID_SIZE = SCREEN_WIDTH * 0.7;
+const ICON_CELL_SIZE = ICON_GRID_SIZE / NUM_COLUMNS - CELL_MARGIN * 2;
 
 const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelectIcon, onClose, title }) => {
   const { colors } = useTheme();
@@ -32,7 +43,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelect
 
   const styles = StyleSheet.create({
     container: {
-      width: ICON_CELL_SIZE * 4 + 40,
+      width: ICON_GRID_SIZE + 40,
       alignItems: 'center',
       padding: 20,
       backgroundColor: colors.background,
@@ -50,7 +61,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelect
     cell: {
       width: ICON_CELL_SIZE,
       height: ICON_CELL_SIZE,
-      margin: 4,
+      margin: CELL_MARGIN,
       borderRadius: ICON_CELL_SIZE / 2,
       alignItems: 'center',
       justifyContent: 'center',
@@ -73,7 +84,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelect
       <FlatList
         data={AVATAR_ICON_OPTIONS}
         keyExtractor={(item) => item}
-        numColumns={4}
+        numColumns={NUM_COLUMNS}
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => (
           <TouchableOpacity

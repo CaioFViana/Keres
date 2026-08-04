@@ -62,12 +62,13 @@ export function RecoveryPage() {
         {loading ? <p>Loading...</p> : (
           <table className="data-table">
             <thead>
-              <tr><th>Entity</th><th>ID</th><th>Story</th><th>Deleted at</th><th>Version</th><th></th></tr>
+              <tr><th>Entity</th><th>Name</th><th>ID</th><th>Story</th><th>Deleted at</th><th>Version</th><th></th></tr>
             </thead>
             <tbody>
               {items.map((item) => (
                 <tr key={`${item.entityType}:${item.id}`}>
                   <td>{item.entityType}</td>
+                  <td>{item.name ?? <span className="hint">(unnamed)</span>}</td>
                   <td>{item.id}</td>
                   <td>{item.storyId ?? '-'}</td>
                   <td>{item.deletedAt ? new Date(item.deletedAt).toLocaleString() : '-'}</td>
@@ -75,7 +76,7 @@ export function RecoveryPage() {
                   <td><button onClick={() => restore(item)}>Restore</button></td>
                 </tr>
               ))}
-              {items.length === 0 && <tr><td colSpan={6}>No deleted items found. Search above.</td></tr>}
+              {items.length === 0 && <tr><td colSpan={7}>No deleted items found. Search above.</td></tr>}
             </tbody>
           </table>
         )}

@@ -42,7 +42,28 @@ export interface SyncEntityHandler {
   /** Conta linhas não excluídas desta entidade nas histórias dadas. Usado por TierEnforcementService. */
   countForStoryIds(storyIds: string[]): Promise<number>;
   /** Linhas excluídas (tombstones), opcionalmente restritas a uma história. Usado por AdminRecoveryService. */
-  findDeleted(storyId?: string): Promise<Array<{ id: string; storyId: string | null; deletedAt: Date | null; version: number }>>;
+  findDeleted(storyId?: string): Promise<Array<{ id: string; storyId: string | null; deletedAt: Date | null; version: number; name: string | null }>>;
+}
+
+/**
+ * Colunas candidatas a "nome de exibição", nesta ordem de preferência, testadas contra a
+ * linha crua. Cobre a maioria das entidades (Story.title, Character.name, Choice.text,
+ * Suggestion.value, Gallery.fileName) sem precisar de configuração por handler; tabelas de
+ * relação (CharacterRelation, TagRelation, ...) não têm nenhuma dessas colunas e ficam com
+ * `name: null` - resolver "Personagem A - Personagem B" exigiria a mesma cadeia de joins
+ * que `EntityService.getEntityIdentifier` já faz no cliente, o que é mais do que a lista de
+ * recuperação do admin precisa.
+ */
+const DISPLAY_NAME_CANDIDATE_COLUMNS = ['title', 'name', 'text', 'value', 'fileName'] as const;
+
+function extractDisplayName(row: Record<string, any>): string | null {
+  for (const column of DISPLAY_NAME_CANDIDATE_COLUMNS) {
+    const value = row[column];
+    if (typeof value === 'string' && value.length > 0) {
+      return value;
+    }
+  }
+  return null;
 }
 
 export abstract class BaseSyncEntityHandler<CreateType extends z.ZodType<Record<string, any>>, UpdateType extends z.ZodType<Record<string, any>>> implements SyncEntityHandler {
@@ -113,7 +134,7 @@ export abstract class BaseSyncEntityHandler<CreateType extends z.ZodType<Record<
     return row?.count ?? 0;
   }
 
-  async findDeleted(storyId?: string): Promise<Array<{ id: string; storyId: string | null; deletedAt: Date | null; version: number }>> {
+  async findDeleted(storyId?: string): Promise<Array<{ id: string; storyId: string | null; deletedAt: Date | null; version: number; name: string | null }>> {
     if (!this.isDeletedColumnName) {
       return [];
     }
@@ -127,6 +148,7 @@ export abstract class BaseSyncEntityHandler<CreateType extends z.ZodType<Record<
       storyId: this.storyIdColumnName ? r[this.storyIdColumnName] : null,
       deletedAt: this.deletedAtColumnName ? r[this.deletedAtColumnName] : null,
       version: r[this.versionColumnName],
+      name: extractDisplayName(r),
     }));
   }
 

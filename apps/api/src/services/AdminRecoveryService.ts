@@ -24,6 +24,8 @@ export interface DeletedItem {
   storyId: string | null;
   deletedAt: Date | null;
   version: number;
+  /** Melhor esforço (title/name/text/value/fileName da própria linha); `null` para tabelas de relação sem um campo assim. */
+  name: string | null;
 }
 
 export class AdminRecoveryService {

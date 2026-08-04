@@ -7,6 +7,8 @@ export interface DeletedItem {
   storyId: string | null;
   deletedAt: string | null;
   version: number;
+  /** Melhor esforço vindo do servidor (title/name/text/value/fileName); `null` para tabelas de relação. */
+  name: string | null;
 }
 
 export interface OperationLogEntry {

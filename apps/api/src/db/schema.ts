@@ -2,6 +2,7 @@
 export * from './schema/enums';
 
 // Tables
+export * from './schema/tables/attributeValues';
 export * from './schema/tables/chapters';
 export * from './schema/tables/characterRelations';
 export * from './schema/tables/characters';
@@ -19,6 +20,7 @@ export * from './schema/tables/registrationSettings';
 export * from './schema/tables/scenes';
 export * from './schema/tables/stories';
 export * from './schema/tables/storyPermissions';
+export * from './schema/tables/storySchemaFields';
 export * from './schema/tables/suggestions';
 export * from './schema/tables/tagRelations';
 export * from './schema/tables/tags';

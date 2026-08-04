@@ -3,6 +3,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
@@ -180,6 +181,8 @@ const WorldRuleDetailScreen = () => {
 
       <DetailField label={t('description')} value={worldRule.description || t('common_na')} />
       <DetailField label={t('extra_notes')} value={worldRule.extraNotes || t('common_na')} />
+
+      <CustomAttributeDetailFields storyId={worldRule.storyId} entityType="WorldRule" entityId={worldRuleId} />
 
       <NoteManager
         noteRelations={worldRuleNoteRelations}

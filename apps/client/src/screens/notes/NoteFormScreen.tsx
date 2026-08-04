@@ -1,9 +1,10 @@
 import { Note } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
@@ -11,7 +12,9 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { NotesStackParamList } from '../../navigation/MainSystemStack';
+import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import { createNoteService } from '../../services/storymanagement/NoteService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -50,6 +53,10 @@ const NoteFormScreen = () => {
     persistTagRelations,
   } = useEntityRelations({ entityType: 'Note', entityId: noteId, withNotes: false });
 
+  const customFields = useStorySchemaFields(selectedStory?.id, 'Note');
+  const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
+  const customDefaultsAppliedRef = useRef(false);
+
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!noteId;
@@ -77,6 +84,9 @@ const NoteFormScreen = () => {
           setBody(fetchedNote.body);
           setIsFavorite(fetchedNote.isFavorite);
           setExtraNotes(fetchedNote.extraNotes);
+
+          const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(noteId!);
+          setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
         } else {
           console.warn('Note not found:', noteId);
         }
@@ -89,9 +99,21 @@ const NoteFormScreen = () => {
     loadNote();
   }, [noteId, isEditing, noteService, t]);
 
+  useEffect(() => {
+    if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
+      setCustomValues(getDefaultCustomAttributeValues(customFields));
+      customDefaultsAppliedRef.current = true;
+    }
+  }, [isEditing, customFields]);
+
   const handleSave = async () => {
     if (!title.trim()) {
       Alert.alert(t('error'), t('note_title_required'));
+      return;
+    }
+    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+    if (missingRequiredField) {
+      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId) {
@@ -126,6 +148,7 @@ const NoteFormScreen = () => {
 
       if (currentNoteId) {
         await persistTagRelations(currentNoteId);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Note', currentNoteId, customValues);
       }
 
       navigation.goBack();
@@ -266,6 +289,13 @@ const NoteFormScreen = () => {
             value={extraNotes || ""}
             onChangeText={setExtraNotes}
             style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+          />
+
+          <CustomAttributeFields
+            storyId={selectedStory?.id || ''}
+            fields={customFields}
+            values={customValues}
+            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
           />
 
           <View style={styles.tagSection}>

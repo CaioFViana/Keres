@@ -1,3 +1,4 @@
+export * from './attributeValues';
 export * from './chapters';
 export * from './characterRelations';
 export * from './characters';
@@ -17,6 +18,7 @@ export * from './scenes';
 export * from './servers';
 export * from './stories';
 export * from './storyPermissions';
+export * from './storySchemaFields';
 export * from './suggestions';
 export * from './syncConflicts';
 export * from './tagRelations';

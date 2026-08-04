@@ -9,6 +9,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 
 export type { FavoriteFilterState };
 
@@ -80,6 +81,11 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
                 conditions.push(sql`${worldRules[key as keyof WorldRuleSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(worldRules[key as keyof WorldRuleSelect], value) as SQL<boolean>);
+              }
+            } else if (value !== undefined && value !== '') {
+              const customCondition = await buildCustomAttributeSearchCondition(db, worldRules.id, key, value);
+              if (customCondition) {
+                conditions.push(customCondition);
               }
             }
           }

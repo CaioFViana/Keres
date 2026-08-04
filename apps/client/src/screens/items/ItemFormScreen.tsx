@@ -9,13 +9,16 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { ItemStackParamList } from '../../navigation/MainSystemStack'; // Use ItemStackParamList
+import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
 import { useCharacterStore } from '../../state/characterStore'; // Assuming CharacterStore for characterOwnerId
 import { useStoryStore } from '../../state/storyStore';
@@ -80,6 +83,10 @@ const ItemFormScreen = () => {
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Item', entityId: currentItemId });
 
+  const customFields = useStorySchemaFields(selectedStory?.id, 'Item');
+  const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
+  const customDefaultsAppliedRef = useRef(false);
+
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentItemId; // Changed
@@ -111,6 +118,9 @@ const ItemFormScreen = () => {
             setIsFavorite(fetchedItem.isFavorite);
             setExtraNotes(fetchedItem.extraNotes);
             setCharacterOwnerId(fetchedItem.characterOwnerId);
+
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentItemId!);
+            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Item not found:', currentItemId);
           }
@@ -124,9 +134,21 @@ const ItemFormScreen = () => {
     loadItem();
   }, [currentItemId, isEditing, selectedStory?.id, t]);
 
+  useEffect(() => {
+    if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
+      setCustomValues(getDefaultCustomAttributeValues(customFields));
+      customDefaultsAppliedRef.current = true;
+    }
+  }, [isEditing, customFields]);
+
   const handleSave = async () => {
     if (!name.trim()) { // Changed from text.trim()
       Alert.alert(t('error'), t('item_name_required')); // Changed
+      return;
+    }
+    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+    if (missingRequiredField) {
+      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId || !selectedStory?.id) {
@@ -162,6 +184,7 @@ const ItemFormScreen = () => {
 
       if (savedItemId) {
         await persistTagRelations(savedItemId);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Item', savedItemId, customValues);
       }
       entityEventEmitter.emit('item_changed', selectedStory.id, savedItemId); // Changed
 
@@ -301,6 +324,13 @@ const ItemFormScreen = () => {
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>
+
+          <CustomAttributeFields
+            storyId={selectedStory?.id || ''}
+            fields={customFields}
+            values={customValues}
+            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+          />
 
           {currentItemId && selectedStory?.id && (
             <View style={styles.tagSection}>

@@ -17,6 +17,8 @@ import { TagSchema } from './TagSchemas'; // Adjusted path
 import { WorldRuleSchema } from './WorldRuleSchemas'; // Adjusted path
 import { NoteRelationSchema } from './NoteRelationSchemas';
 import { CURRENT_STORY_FORMAT_VERSION } from './StoryExportVersion';
+import { StorySchemaFieldSchema } from './StorySchemaFieldSchemas';
+import { AttributeValueSchema } from './AttributeValueSchemas';
 
 // This schema defines the structure for a full story export/import.
 // It includes the main story object and all its related entities as arrays.
@@ -40,6 +42,11 @@ export const FullStoryExportSchema = z.object({
     galleryRelations: z.array(GalleryRelationSchema).optional(),
     items: z.array(ItemSchema).optional(),
     itemJourneys: z.array(ItemJourneySchema),
+    // Opcionais pelo mesmo motivo de `items`/`galleryRelations`: exports gerados antes desta
+    // feature existir continuam importáveis sem precisar de uma migração de formatVersion -
+    // essa adição é puramente aditiva, não muda a forma de nenhum campo existente.
+    storySchemaFields: z.array(StorySchemaFieldSchema).optional(),
+    attributeValues: z.array(AttributeValueSchema).optional(),
     serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
     // Ausente em exports de antes deste campo existir - `migrateStoryExport` normaliza para
     // `CURRENT_STORY_FORMAT_VERSION` antes desta validação rodar, então o default aqui é só

@@ -7,6 +7,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter'; // Import charact
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
@@ -72,7 +73,12 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
             const fieldMetadata = characterMetadata.find(meta => meta.name === key);
 
             if (!fieldMetadata) {
-              console.warn(`No metadata found for advanced search field: ${key}`);
+              const customCondition = await buildCustomAttributeSearchCondition(db, characters.id, key, value);
+              if (customCondition) {
+                whereConditions.push(customCondition);
+              } else {
+                console.warn(`No metadata found for advanced search field: ${key}`);
+              }
               continue;
             }
 

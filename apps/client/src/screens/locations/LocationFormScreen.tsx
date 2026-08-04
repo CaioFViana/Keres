@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
@@ -13,7 +14,9 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
+import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -69,6 +72,10 @@ const LocationFormScreen = () => {
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Location', entityId: currentLocationId });
 
+  const customFields = useStorySchemaFields(selectedStory?.id, 'Location');
+  const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
+  const customDefaultsAppliedRef = useRef(false);
+
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentLocationId;
@@ -102,6 +109,9 @@ const LocationFormScreen = () => {
             setPolitics(fetchedLocation.politics);
             setIsFavorite(fetchedLocation.isFavorite);
             setExtraNotes(fetchedLocation.extraNotes);
+
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentLocationId!);
+            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Location not found:', currentLocationId);
           }
@@ -115,9 +125,21 @@ const LocationFormScreen = () => {
     loadLocation();
   }, [currentLocationId, isEditing, selectedStory?.id, t]);
 
+  useEffect(() => {
+    if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
+      setCustomValues(getDefaultCustomAttributeValues(customFields));
+      customDefaultsAppliedRef.current = true;
+    }
+  }, [isEditing, customFields]);
+
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert(t('error'), t('name_required'));
+      return;
+    }
+    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+    if (missingRequiredField) {
+      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId) {
@@ -155,6 +177,7 @@ const LocationFormScreen = () => {
 
       if (savedLocation.id) {
         await persistTagRelations(savedLocation.id);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Location', savedLocation.id, customValues);
       }
 
 
@@ -331,6 +354,13 @@ const LocationFormScreen = () => {
             onChangeText={setExtraNotes}
             style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
             multiline
+          />
+
+          <CustomAttributeFields
+            storyId={selectedStory?.id || ''}
+            fields={customFields}
+            values={customValues}
+            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
           />
 
           <View style={styles.tagSection}>

@@ -10,6 +10,7 @@ import { Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } f
 import CharacterLocationManager from '../../components/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
 import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
@@ -466,6 +467,8 @@ const CharacterDetailScreen = () => {
       <DetailField label={t('planned_timeline')} value={character.plannedTimeline || t('common_na')} />
       <DetailField label={t('is_favorite')} value={character.isFavorite ? t('common_yes') : t('common_no')} />
       <DetailField label={t('extra_notes')} value={character.extraNotes || t('common_na')} />
+
+      <CustomAttributeDetailFields storyId={character.storyId} entityType="Character" entityId={characterId} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager

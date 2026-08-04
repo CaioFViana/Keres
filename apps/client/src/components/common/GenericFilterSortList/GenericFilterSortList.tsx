@@ -7,6 +7,7 @@ import AdvancedSearchModal from '../AdvancedSearchModal/AdvancedSearchModal';
 import Select from '../Select/Select';
 import TextInput from '../TextInput/TextInput';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Import metadata
+import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 
 import type { FavoriteFilterState } from '../../../types/entityFilters';
 
@@ -87,11 +88,16 @@ const GenericFilterSortList = <T,>({
   const [internalFavoriteFilterState, setInternalFavoriteFilterState] = useState<FavoriteFilterState>(currentFavoriteFilterState || 'all');
   const [isAdvancedSearchModalVisible, setIsAdvancedSearchModalVisible] = useState(false);
 
-  // Calculate if there are any searchable fields for the current entity
+  // Calculate if there are any searchable fields for the current entity - either native
+  // (static registry) or, for entity types that support Story Schema custom attributes, the
+  // possibility of one existing (or being added later) is enough to keep the button live
+  // instead of needing a separate story-scoped fetch just to decide visibility.
   const hasAdvancedSearchFields = useMemo(() => {
     if (!entityName) return false;
     const metadata = entityFieldMetadata[entityName];
-    return metadata && metadata.some(field => field.isSearchable);
+    const hasNativeSearchableFields = !!metadata && metadata.some(field => field.isSearchable);
+    const supportsCustomAttributes = (STORY_SCHEMA_ENTITY_TYPES as readonly string[]).includes(entityName);
+    return hasNativeSearchableFields || supportsCustomAttributes;
   }, [entityName]);
 
   React.useEffect(() => {

@@ -6,6 +6,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
@@ -330,6 +331,8 @@ const LocationDetailsScreen = () => {
       <DetailField label={t('field_culture')} value={location.culture || t('common_na')} />
       <DetailField label={t('field_politics')} value={location.politics || t('common_na')} />
       <DetailField label={t('extra_notes')} value={location.extraNotes || t('common_na')} />
+
+      <CustomAttributeDetailFields storyId={location.storyId} entityType="Location" entityId={locationId} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager

@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
+import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
@@ -406,6 +407,8 @@ const SceneDetailScreen = () => {
       <DetailField label={t('summary')} value={scene.summary || t('common_na')} />
       <DetailField label={t('is_favorite')} value={scene.isFavorite ? t('common_yes') : t('common_no')} />
       <DetailField label={t('extra_notes')} value={scene.extraNotes || t('common_na')} />
+
+      <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
 
       {location && (
         <>

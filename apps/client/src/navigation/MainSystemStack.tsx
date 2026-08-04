@@ -1,3 +1,4 @@
+import { StorySchemaEntityType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
@@ -41,6 +42,8 @@ import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
 import SceneDetailScreen from '../screens/scenes/SceneDetailScreen';
 import SceneFormScreen from '../screens/scenes/SceneFormScreen';
 import SceneListScreen from '../screens/scenes/SceneListScreen';
+import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
+import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
@@ -78,6 +81,10 @@ export type MainSystemDrawerParamList = {
   CharacterRelationsStack: NavigatorScreenParams<CharacterRelationsStackParamList> | undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
+  // Não aparecem no menu lateral (drawerItemStyle: {height:0} no registro abaixo) - só
+  // alcançáveis a partir do botão "Gerenciar Atributos" em StorySettingsScreen.
+  StorySchemaList: { storyId: string };
+  StorySchemaFieldForm: { storyId: string; entityType: StorySchemaEntityType; fieldId?: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   StorySelection: undefined;
 };
@@ -623,6 +630,18 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
+      {/* Não são destinos do menu lateral, só alcançáveis via StorySettingsScreen - height:0
+          some do DrawerItemList sem precisar de um drawerContent customizado. */}
+      <Drawer.Screen
+        name="StorySchemaList"
+        component={StorySchemaListScreen}
+        options={{ title: t('story_schema_management_title'), drawerItemStyle: { height: 0 } }}
+      />
+      <Drawer.Screen
+        name="StorySchemaFieldForm"
+        component={StorySchemaFieldFormScreen}
+        options={{ title: t('create_attribute_title'), drawerItemStyle: { height: 0 } }}
+      />
       <Drawer.Screen
         name="StorySelection"
         component={() => <View />} // A dummy component, as it won't be displayed

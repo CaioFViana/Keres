@@ -2,11 +2,15 @@ export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id' | 'color
 
 export interface EntityFieldMetadata {
   name: string;          // The field name in the entity
-  label: string;         // Label for UI display
+  label: string;         // Translation key for UI display (ignored when `rawLabel` is set)
   type: FieldType;       // Basic type for rendering input components
   isSearchable: boolean; // Whether this field should appear in advanced search
   isSuggestion?: boolean; // Whether to use a suggestion component for this field
   suggestionsSource?: string; // Key to fetch suggestions (e.g., 'genderOptions', 'raceOptions')
+  /** Already-resolved display text, used as-is instead of `t(label)` - for synthetic metadata
+   *  built from user-defined data (Story Schema custom attributes) that has no translation key,
+   *  see `apps/client/src/utils/customAttributeFieldMetadata.ts`. */
+  rawLabel?: string;
 }
 
 // Metadata for all entities, grouped by entity name

@@ -9,6 +9,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 
 export type NoteWithTags = NoteSelect & {
   tags: TagSelect[];
@@ -84,6 +85,11 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
                 conditions.push(sql`${notes[key as keyof NoteSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(notes[key as keyof NoteSelect], value) as SQL<boolean>);
+              }
+            } else if (value !== undefined && value !== '') {
+              const customCondition = await buildCustomAttributeSearchCondition(db, notes.id, key, value);
+              if (customCondition) {
+                conditions.push(customCondition);
               }
             }
           }

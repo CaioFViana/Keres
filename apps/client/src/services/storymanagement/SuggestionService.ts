@@ -1,7 +1,18 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient, characterRelations, characters, itemJourneys, items, suggestions } from '../../db';
 import { createULID } from '../../utils/entityUtils'; // Changed ulid import
+import { createAttributeValueService } from './AttributeValueService';
 // Import other schemas as needed
+
+/** Prefixo reservado que marca um "type" de sugestão como um atributo customizado de Story
+ *  Schema (`custom:<fieldId>`) em vez de uma das categorias fixas de `suggestionConfig` - ver
+ *  `getSuggestions`/`addSuggestion` abaixo. `fieldId`, não a `key` legível do atributo, pra que
+ *  renomear o atributo não perca o histórico de sugestões já colhidas. */
+const CUSTOM_ATTRIBUTE_TYPE_PREFIX = 'custom:';
+
+export function customAttributeSuggestionType(fieldId: string): string {
+  return `${CUSTOM_ATTRIBUTE_TYPE_PREFIX}${fieldId}`;
+}
 
 // Define a flexible configuration for suggestion types
 // This maps a suggestion 'type' to its Drizzle schema, the column to query for dynamic data,
@@ -38,7 +49,14 @@ const suggestionConfig = {
   // Add more configurations as the system evolves
 };
 
-export type SuggestionType = keyof typeof suggestionConfig;
+/**
+ * Antes um union fechado (`keyof typeof suggestionConfig`) - agora `string` pra também aceitar
+ * `custom:<fieldId>` (atributos de Story Schema, ver `customAttributeSuggestionType`). Os ~5
+ * call sites com categorias fixas continuam passando literais de string, então isto não muda
+ * nada pra eles - só perde a checagem de exaustividade que um union fechado daria, e não há
+ * nenhum `switch`/exhaustiveness check sobre este tipo em nenhum outro lugar do código hoje.
+ */
+export type SuggestionType = string;
 
 export interface SuggestionServiceInterface {
   getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]>;
@@ -61,9 +79,10 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         return [];
       }
 
-      const config = suggestionConfig[type];
+      const isCustomAttribute = type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX);
+      const config = isCustomAttribute ? null : suggestionConfig[type as keyof typeof suggestionConfig];
 
-      if (!config) {
+      if (!isCustomAttribute && !config) {
         console.warn(`getSuggestions: No configuration found for suggestion type: ${type}`);
         return [];
       }
@@ -88,23 +107,34 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
           }
         });
 
-        // 2. Dynamically query unique values and their counts from the entity table
-        const dynamicCounts = await db.select({
-            value: config.column,
-            count: sql<number>`count(*)`,
-          })
-          .from(config.schema)
-          .where(and(eq(config.schema.storyId, storyId), eq(config.schema.isDeleted, false))) // Assuming isDeleted column exists and should be filtered
-          .groupBy(config.column)
-          .all();
-
-        dynamicCounts.forEach(row => {
-          const value = row.value;
-          const count = row.count;
-          if (value && typeof value === 'string') {
+        if (isCustomAttribute) {
+          // Atributo customizado: não tem coluna fixa pra minerar, os valores vivem em
+          // `attribute_values` - reaproveita a mesma contagem-por-valor que a busca avançada e
+          // o resto do app usam (ver AttributeValueService.getValueUsageCounts).
+          const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
+          const dynamicCounts = await createAttributeValueService(db).getValueUsageCounts(fieldId);
+          dynamicCounts.forEach(([value, count]) => {
             suggestionCounts.set(value, (suggestionCounts.get(value) || 0) + count);
-          }
-        });
+          });
+        } else {
+          // 2. Dynamically query unique values and their counts from the entity table
+          const dynamicCounts = await db.select({
+              value: config!.column,
+              count: sql<number>`count(*)`,
+            })
+            .from(config!.schema)
+            .where(and(eq(config!.schema.storyId, storyId), eq(config!.schema.isDeleted, false))) // Assuming isDeleted column exists and should be filtered
+            .groupBy(config!.column)
+            .all();
+
+          dynamicCounts.forEach(row => {
+            const value = row.value;
+            const count = row.count;
+            if (value && typeof value === 'string') {
+              suggestionCounts.set(value, (suggestionCounts.get(value) || 0) + count);
+            }
+          });
+        }
 
       } catch (error) {
         console.error(`Error fetching suggestions for type ${type} and story ${storyId}:`, error);

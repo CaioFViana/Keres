@@ -1,4 +1,5 @@
 import ChapterSceneManager from '@/src/components/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
+import CustomAttributeDetailFields from '@/src/components/common/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '@/src/components/common/ScreenState/ScreenState';
@@ -240,6 +241,8 @@ const ChapterDetailScreen = () => {
       <DetailField label={t('summary')} value={chapter.summary || t('common_na')} />
       <DetailField label={t('is_favorite')} value={chapter.isFavorite ? t('common_yes') : t('common_no')} />
       <DetailField label={t('extra_notes')} value={chapter.extraNotes || t('common_na')} />
+
+      <CustomAttributeDetailFields storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} />
 
       <ChapterSceneManager
         currentChapterId={chapterId}

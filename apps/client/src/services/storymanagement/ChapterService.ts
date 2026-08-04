@@ -7,6 +7,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 
 export type { FavoriteFilterState };
 
@@ -69,6 +70,11 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
                 conditions.push(eq(chapters[key as keyof ChapterSelect], value) as SQL<boolean>);
               } else if (fieldMeta.type === 'number') {
                 conditions.push(eq(chapters[key as keyof ChapterSelect], Number(value)) as SQL<boolean>);
+              }
+            } else if (value !== undefined && value !== '') {
+              const customCondition = await buildCustomAttributeSearchCondition(db, chapters.id, key, value);
+              if (customCondition) {
+                conditions.push(customCondition);
               }
             }
           }

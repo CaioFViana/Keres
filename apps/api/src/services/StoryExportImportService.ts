@@ -66,8 +66,14 @@ export class StoryExportImportService {
         const tagRelations = await db.query.tagRelations.findMany({
             where: (tagRelations, { eq, and }) => and(eq(tagRelations.storyId, storyId), eq(tagRelations.isDeleted, false)),
         });
-        const noteRelations = await db.query.noteRelations.findMany({ 
+        const noteRelations = await db.query.noteRelations.findMany({
             where: (noteRelations, { eq, and }) => and(eq(noteRelations.storyId, storyId), eq(noteRelations.isDeleted, false)),
+        });
+        const storySchemaFields = await db.query.storySchemaFields.findMany({
+            where: (storySchemaFields, { eq, and }) => and(eq(storySchemaFields.storyId, storyId), eq(storySchemaFields.isDeleted, false)),
+        });
+        const attributeValues = await db.query.attributeValues.findMany({
+            where: (attributeValues, { eq, and }) => and(eq(attributeValues.storyId, storyId), eq(attributeValues.isDeleted, false)),
         });
 
         // Query for the maximum operationVersion for this story
@@ -101,6 +107,8 @@ export class StoryExportImportService {
             itemJourneys,
             tagRelations,
             noteRelations,
+            storySchemaFields,
+            attributeValues,
             serverLastOperationVersion: serverLastOperationVersion,
             formatVersion: CURRENT_STORY_FORMAT_VERSION,
         });
@@ -551,6 +559,51 @@ export class StoryExportImportService {
                     };
                 });
                 await tx.insert(dbSchema.galleryRelations).values(newGalleryRelationsData);
+            }
+
+            // --- StorySchemaFields (Optional) ---
+            // Só depende da Story - pode entrar em qualquer ponto do idMap, mas fica perto de
+            // AttributeValues (que dependem dela) por clareza de leitura.
+            if (validatedFullStory.storySchemaFields && validatedFullStory.storySchemaFields.length > 0) {
+                const newStorySchemaFieldsData = validatedFullStory.storySchemaFields.map(original => {
+                    const newId = ulid();
+                    idMap.set(original.id, newId);
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.storySchemaFields).values(newStorySchemaFieldsData);
+            }
+
+            // --- AttributeValues (Optional) ---
+            // Por último de propósito: entityId pode apontar pra qualquer um dos 7 tipos de
+            // entidade suportados (Character/Location/Item/Scene/Chapter/Note/WorldRule), todos
+            // já precisam estar no idMap, e fieldId depende do bloco de StorySchemaFields acima.
+            if (validatedFullStory.attributeValues && validatedFullStory.attributeValues.length > 0) {
+                const newAttributeValuesData = validatedFullStory.attributeValues.map(original => {
+                    const newId = ulid();
+                    idMap.set(original.id, newId);
+                    const mappedFieldId = idMap.get(original.fieldId);
+                    if (!mappedFieldId) {
+                        throw new Error(`Import Error: Field ID ${original.fieldId} not found in ID map for attribute value ${original.id}.`);
+                    }
+                    const mappedEntityId = idMap.get(original.entityId);
+                    if (!mappedEntityId) {
+                        throw new Error(`Import Error: Entity ID ${original.entityId} (${original.entityType}) not found in ID map for attribute value ${original.id}.`);
+                    }
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        fieldId: mappedFieldId,
+                        entityId: mappedEntityId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.attributeValues).values(newAttributeValuesData);
             }
         });
 

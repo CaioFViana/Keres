@@ -8,6 +8,7 @@ import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { logger } from '../utils/logger';
 import { SyncConflictError, SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
+import { AttributeValueSyncHandler } from './entity-sync-handlers/AttributeValueSyncHandler';
 import { ChapterSyncHandler } from './entity-sync-handlers/ChapterSyncHandler';
 import { CharacterRelationSyncHandler } from './entity-sync-handlers/CharacterRelationSyncHandler';
 import { CharacterSceneSyncHandler } from './entity-sync-handlers/CharacterSceneSyncHandler';
@@ -21,6 +22,7 @@ import { LocationSyncHandler } from './entity-sync-handlers/LocationSyncHandler'
 import { NoteRelationSyncHandler } from './entity-sync-handlers/NoteRelationSyncHandler';
 import { NoteSyncHandler } from './entity-sync-handlers/NoteSyncHandler';
 import { SceneSyncHandler } from './entity-sync-handlers/SceneSyncHandler';
+import { StorySchemaFieldSyncHandler } from './entity-sync-handlers/StorySchemaFieldSyncHandler';
 import { StorySyncHandler } from './entity-sync-handlers/StorySyncHandler';
 import { SuggestionSyncHandler } from './entity-sync-handlers/SuggestionSyncHandler';
 import { TagRelationSyncHandler } from './entity-sync-handlers/TagRelationSyncHandler';
@@ -51,6 +53,8 @@ export class SyncService {
     this.registerEntityHandler(new TagSyncHandler());
     this.registerEntityHandler(new TagRelationSyncHandler());
     this.registerEntityHandler(new NoteRelationSyncHandler());
+    this.registerEntityHandler(new StorySchemaFieldSyncHandler());
+    this.registerEntityHandler(new AttributeValueSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {

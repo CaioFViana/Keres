@@ -8,6 +8,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 
 export type { FavoriteFilterState };
 
@@ -72,6 +73,11 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
                 conditions.push(eq(scenes[key as keyof SceneSelect], value) as SQL<boolean>);
               } else if (fieldMeta.type === 'number') {
                 conditions.push(eq(scenes[key as keyof SceneSelect], Number(value)) as SQL<boolean>);
+              }
+            } else if (value !== undefined && value !== '') {
+              const customCondition = await buildCustomAttributeSearchCondition(db, scenes.id, key, value);
+              if (customCondition) {
+                conditions.push(customCondition);
               }
             }
           }

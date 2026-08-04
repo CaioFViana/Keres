@@ -722,6 +722,12 @@ const StorySettingsScreen = () => {
             </>
           )}
 
+          <Text style={[styles.label, { color: colors.text }]}>{t('story_schema_management_title')}</Text>
+          <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>{t('story_schema_management_description')}</Text>
+          <Button onPress={() => navigation.navigate('StorySchemaList', { storyId })}>
+            {t('manage_custom_attributes')}
+          </Button>
+
           <Button onPress={handleSave} style={styles.saveButton}>
             {t('update_story')}
           </Button>

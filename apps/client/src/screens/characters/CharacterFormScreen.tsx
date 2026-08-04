@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import Button from '../../components/common/Button/Button';
+import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '../../components/common/SuggestionTextInput/SuggestionTextInput';
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
@@ -17,7 +18,9 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { CharacterStackParamList } from '../../navigation/MainSystemStack';
+import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { useStoryStore } from '../../state/storyStore';
@@ -79,6 +82,10 @@ const CharacterFormScreen = () => {
 
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // To pass to CharacterRelationManager
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
+
+  const customFields = useStorySchemaFields(selectedStory?.id, 'Character');
+  const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
+  const customDefaultsAppliedRef = useRef(false);
 
   const {
     availableTags,
@@ -158,6 +165,9 @@ const CharacterFormScreen = () => {
             setPlannedTimeline(fetchedCharacter.plannedTimeline);
             setIsFavorite(fetchedCharacter.isFavorite);
             setExtraNotes(fetchedCharacter.extraNotes);
+
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentCharacterId!);
+            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Character not found:', currentCharacterId);
           }
@@ -174,9 +184,22 @@ const CharacterFormScreen = () => {
   }, [currentCharacterId, isEditing, selectedStory?.id, t,
     fetchAllCharactersInStory, fetchRelationsForCharacter
   ]);
+
+  useEffect(() => {
+    if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
+      setCustomValues(getDefaultCustomAttributeValues(customFields));
+      customDefaultsAppliedRef.current = true;
+    }
+  }, [isEditing, customFields]);
+
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert(t('error'), t('name_required'));
+      return;
+    }
+    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+    if (missingRequiredField) {
+      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId) {
@@ -221,6 +244,7 @@ const CharacterFormScreen = () => {
 
       if (savedCharacter.id) {
         await persistTagRelations(savedCharacter.id);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Character', savedCharacter.id, customValues);
       }
 
 
@@ -503,6 +527,13 @@ const CharacterFormScreen = () => {
             onChangeText={setExtraNotes}
             style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
             multiline
+          />
+
+          <CustomAttributeFields
+            storyId={selectedStory?.id || ''}
+            fields={customFields}
+            values={customValues}
+            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
           />
 
           <View style={styles.tagSection}>

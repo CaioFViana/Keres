@@ -2,6 +2,8 @@ import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema, FullStoryExportTyp
 import { and, asc, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import {
+  AttributeValueInsert,
+  attributeValues,
   ChapterInsert,
   chapters,
   ChapterSelect,
@@ -39,6 +41,8 @@ import {
   stories,
   StoryInsert, StorySelect,
   storyPermissions,
+  StorySchemaFieldInsert,
+  storySchemaFields,
   SuggestionInsert,
   suggestions,
   syncConflicts,
@@ -630,6 +634,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyWorldRules, storyNotes, storyNoteRelations, storyTags, storyTagRelations,
         storySuggestions, storyCharacterRelations, storyCharacterScenes, storyGalleryItems,
         storyGalleryRelations, storyItems, storyItemJourneys,
+        storySchemaFieldRows, storyAttributeValues,
       ] = await Promise.all([
         db.query.chapters.findMany({ where: belongsToStory(chapters) }),
         db.query.scenes.findMany({ where: belongsToStory(scenes) }),
@@ -648,6 +653,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.galleryRelations.findMany({ where: belongsToStory(galleryRelations) }),
         db.query.items.findMany({ where: belongsToStory(items) }),
         db.query.itemJourneys.findMany({ where: belongsToStory(itemJourneys) }),
+        db.query.storySchemaFields.findMany({ where: belongsToStory(storySchemaFields) }),
+        db.query.attributeValues.findMany({ where: belongsToStory(attributeValues) }),
       ]);
 
       return FullStoryExportSchema.parse({
@@ -677,6 +684,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         galleryRelations: storyGalleryRelations,
         items: storyItems,
         itemJourneys: storyItemJourneys,
+        storySchemaFields: storySchemaFieldRows,
+        attributeValues: storyAttributeValues,
         // O importador usa este número como ponto de partida da sincronização. Preservar o
         // marcador local mantém o pacote útil para uma história já ligada a um servidor.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
@@ -1015,6 +1024,43 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               deletedAt: null,
             };
             await tx.insert(noteRelations).values(noteRelationToInsert).run();
+          }
+        }
+
+        // 18. Process StorySchemaFields (Optional)
+        if (fullStoryData.storySchemaFields) {
+          for (const field of fullStoryData.storySchemaFields) {
+            const fieldToInsert: StorySchemaFieldInsert = {
+              ...field,
+              storyId: field.storyId,
+              createdAt: new Date(field.createdAt),
+              updatedAt: new Date(),
+              version: field.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(storySchemaFields).values(fieldToInsert).run();
+          }
+        }
+
+        // 19. Process AttributeValues (Optional) - por último de propósito: entityId pode
+        // apontar pra qualquer um dos 7 tipos de entidade suportados, todos já inseridos acima,
+        // e fieldId depende do bloco de StorySchemaFields logo acima. IDs preservados como
+        // vieram do arquivo (sem idMap, mesmo tratamento de todo bloco anterior neste método).
+        if (fullStoryData.attributeValues) {
+          for (const attributeValue of fullStoryData.attributeValues) {
+            const attributeValueToInsert: AttributeValueInsert = {
+              ...attributeValue,
+              storyId: attributeValue.storyId,
+              fieldId: attributeValue.fieldId,
+              entityId: attributeValue.entityId,
+              createdAt: new Date(attributeValue.createdAt),
+              updatedAt: new Date(),
+              version: attributeValue.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(attributeValues).values(attributeValueToInsert).run();
           }
         }
 

@@ -1,10 +1,13 @@
+import { StorySchemaEntityType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { entityFieldMetadata, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import { SuggestionType } from '../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../theme';
+import { buildCustomAttributeFieldMetadata } from '../../../utils/customAttributeFieldMetadata';
 import Button from '../Button/Button';
 import ColorPickerInput from '../ColorPickerInput/ColorPickerInput';
 import SuggestionTextInput from '../SuggestionTextInput/SuggestionTextInput';
@@ -33,9 +36,20 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   const [searchCriteria, setSearchCriteria] = useState<{ [key: string]: any }>(initialCriteria);
 
   // Get metadata for the specified entity
-  const fieldsMetadata = useMemo(() => {
+  const nativeFieldsMetadata = useMemo(() => {
     return entityFieldMetadata[entityName]?.filter(field => field.isSearchable) || [];
   }, [entityName]);
+
+  // Campos customizados de Story Schema para este tipo de entidade - vazio (sem custo extra
+  // além da própria query, que só encontra 0 linhas) para tipos de entidade fora do escopo
+  // suportado, sem precisar de um type guard aqui.
+  const customFields = useStorySchemaFields(storyId, entityName as StorySchemaEntityType);
+  const customFieldsMetadata = useMemo(() => buildCustomAttributeFieldMetadata(customFields), [customFields]);
+
+  const fieldsMetadata = useMemo(
+    () => [...nativeFieldsMetadata, ...customFieldsMetadata],
+    [nativeFieldsMetadata, customFieldsMetadata]
+  );
 
 
   useEffect(() => {
@@ -62,12 +76,15 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
 
   const renderFieldInput = useCallback((field: EntityFieldMetadata, styleOverrides?: any) => {
     const value = searchCriteria[field.name];
+    // Campos customizados de Story Schema já vêm com o texto de exibição pronto (`rawLabel`,
+    // definido pelo usuário) - não é uma chave de tradução, então não passa por `t()`.
+    const fieldLabel = field.rawLabel ?? t(field.label);
 
     if (field.isSuggestion) {
       return (
         <View key={field.name} style={[styles.inputContainer, styles.inputContainerSuggestion, styleOverrides]}>
           <SuggestionTextInput
-            placeholder={t(field.label)}
+            placeholder={fieldLabel}
             value={value || ''}
             onChangeText={(text) => handleInputChange(field.name, text)}
             type={field.suggestionsSource as SuggestionType}
@@ -85,7 +102,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             <TextInput // Custom TextInput
               value={value || ''}
               onChangeText={(text) => handleInputChange(field.name, text)}
-              placeholder={t(field.label)}
+              placeholder={fieldLabel}
               placeholderTextColor={colors.textSecondary}
               style={{ width: '100%' }} // Explicitly override internal 80% width
             />
@@ -96,9 +113,9 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         return (
           <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
             <View style={styles.booleanRow}>
-              <Text style={[styles.label, { color: colors.text, flex: 1, marginBottom: 0 }]}>{t(field.label)}:</Text>
+              <Text style={[styles.label, { color: colors.text, flex: 1, marginBottom: 0 }]}>{fieldLabel}:</Text>
               <TriStateToggleButton
-                label={t(field.label)}
+                label={fieldLabel}
                 value={value}
                 onChange={(newValue) => handleInputChange(field.name, newValue)}
                 // style is not needed as size is fixed internally now
@@ -114,7 +131,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               value={value !== undefined && value !== null ? String(value) : ''}
               onChangeText={(text) => handleInputChange(field.name, text ? Number(text) : undefined)}
               keyboardType="numeric"
-              placeholder={t(field.label)}
+              placeholder={fieldLabel}
               placeholderTextColor={colors.textSecondary}
               style={{ width: '100%' }} // Explicitly override internal 80% width
             />
@@ -127,7 +144,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             <TextInput // Custom TextInput
               value={value ? String(value) : ''} // Needs date formatting
               onChangeText={(text) => handleInputChange(field.name, text)} // Needs date parsing
-              placeholder={t(field.label)}
+              placeholder={fieldLabel}
               placeholderTextColor={colors.textSecondary}
               style={{ width: '100%' }} // Explicitly override internal 80% width
             />
@@ -139,7 +156,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             <ColorPickerInput
               currentColor={value || ''}
               onSelectColor={(newColor: string) => handleInputChange(field.name, newColor)}
-              placeholder={t(field.label)}
+              placeholder={fieldLabel}
             />
           </View>
         );

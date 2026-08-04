@@ -7,6 +7,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 
 export type LocationWithTags = LocationSelect & { tags: TagSelect[] };
 
@@ -72,7 +73,12 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
             const fieldMetadata = locationMetadata.find(meta => meta.name === key);
 
             if (!fieldMetadata) {
-              console.warn(`No metadata found for advanced search field: ${key}`);
+              const customCondition = await buildCustomAttributeSearchCondition(db, locations.id, key, value);
+              if (customCondition) {
+                whereConditions.push(customCondition);
+              } else {
+                console.warn(`No metadata found for advanced search field: ${key}`);
+              }
               continue;
             }
 

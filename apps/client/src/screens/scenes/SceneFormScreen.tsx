@@ -11,12 +11,15 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import Button from '../../components/common/Button/Button';
+import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { SceneStackParamList } from '../../navigation/MainSystemStack';
+import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '../../services/storymanagement/SceneService';
@@ -123,6 +126,10 @@ const SceneFormScreen = () => {
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Scene', entityId: currentSceneId });
 
+  const customFields = useStorySchemaFields(selectedStory?.id, 'Scene');
+  const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
+  const customDefaultsAppliedRef = useRef(false);
+
   const [loading, setLoading] = useState(true);
 
   const isEditing = !!currentSceneId;
@@ -175,6 +182,9 @@ const SceneFormScreen = () => {
             setDurationType(fetchedScene.durationType);
             setIsStart(fetchedScene.isStart);
             setIsFinish(fetchedScene.isFinish);
+
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentSceneId!);
+            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Scene not found:', currentSceneId);
           }
@@ -189,9 +199,21 @@ const SceneFormScreen = () => {
     loadSceneAndData();
   }, [currentSceneId, isEditing, selectedStory?.id, t, fetchCharacterSceneRelations]);
 
+  useEffect(() => {
+    if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
+      setCustomValues(getDefaultCustomAttributeValues(customFields));
+      customDefaultsAppliedRef.current = true;
+    }
+  }, [isEditing, customFields]);
+
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert(t('error'), t('name_required'));
+      return;
+    }
+    const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
+    if (missingRequiredField) {
+      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!chapterId) {
@@ -288,6 +310,7 @@ const SceneFormScreen = () => {
 
         if (savedSceneId) {
             await persistTagRelations(savedSceneId);
+            await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Scene', savedSceneId, customValues);
             entityEventEmitter.emit('scene_changed', selectedStory.id, savedSceneId);
         }
 
@@ -596,6 +619,13 @@ const SceneFormScreen = () => {
             />
           </View>
           {/* End New Scene Fields */}
+
+          <CustomAttributeFields
+            storyId={selectedStory?.id || ''}
+            fields={customFields}
+            values={customValues}
+            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+          />
 
           {currentSceneId && selectedStory?.id && (
             <View style={styles.noteSection}>

@@ -9,6 +9,7 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 import i18n from '../utils/i18n';
 import { createKeresAxiosInstance, isOfflineError, KeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
+import { AttributeValueClientSyncHandler } from './entity-sync-handlers/AttributeValueClientSyncHandler';
 import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
 import { CharacterRelationClientSyncHandler } from './entity-sync-handlers/CharacterRelationClientSyncHandler';
@@ -24,6 +25,7 @@ import { NoteClientSyncHandler } from './entity-sync-handlers/NoteClientSyncHand
 import { NoteRelationClientSyncHandler } from './entity-sync-handlers/NoteRelationClientSyncHandler';
 import { SceneClientSyncHandler } from './entity-sync-handlers/SceneClientSyncHandler';
 import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHandler';
+import { StorySchemaFieldClientSyncHandler } from './entity-sync-handlers/StorySchemaFieldClientSyncHandler';
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
 import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
@@ -88,6 +90,8 @@ export class SyncEngineService {
     this.registerEntityHandler(new SceneClientSyncHandler())
     this.registerEntityHandler(new GalleryClientSyncHandler())
     this.registerEntityHandler(new GalleryRelationClientSyncHandler())
+    this.registerEntityHandler(new StorySchemaFieldClientSyncHandler())
+    this.registerEntityHandler(new AttributeValueClientSyncHandler())
     // TODO: Register other entity handlers here
   }
 

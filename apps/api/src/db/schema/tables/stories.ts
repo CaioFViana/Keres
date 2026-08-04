@@ -16,6 +16,8 @@ import { items } from './items';
 import { itemJourneys } from './itemJourneys';
 import { tagRelations } from './tagRelations';
 import { suggestions } from './suggestions';
+import { storySchemaFields } from './storySchemaFields';
+import { attributeValues } from './attributeValues';
 import { storyTypeEnum } from '../enums';
 
 
@@ -58,4 +60,6 @@ export const storiesRelations = relations(stories, ({ one, many }) => ({
   itemJourneys: many(itemJourneys),
   tagRelations: many(tagRelations),
   suggestions: many(suggestions),
+  storySchemaFields: many(storySchemaFields),
+  attributeValues: many(attributeValues),
 }));

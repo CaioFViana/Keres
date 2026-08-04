@@ -7,6 +7,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 
 export type { FavoriteFilterState };
 
@@ -69,6 +70,11 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
                 conditions.push(eq(items[key as keyof ItemSelect], Number(value)) as SQL<boolean>);
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(items[key as keyof ItemSelect], value === 'true') as SQL<boolean>);
+              }
+            } else if (value !== undefined && value !== '') {
+              const customCondition = await buildCustomAttributeSearchCondition(db, items.id, key, value);
+              if (customCondition) {
+                conditions.push(customCondition);
               }
             }
           }

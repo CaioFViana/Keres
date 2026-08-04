@@ -81,11 +81,8 @@ export type MainSystemDrawerParamList = {
   CharacterRelationsStack: NavigatorScreenParams<CharacterRelationsStackParamList> | undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
-  // Não aparecem no menu lateral (drawerItemStyle: {height:0} no registro abaixo) - só
-  // alcançáveis a partir do botão "Gerenciar Atributos" em StorySettingsScreen.
-  StorySchemaList: { storyId: string };
-  StorySchemaFieldForm: { storyId: string; entityType: StorySchemaEntityType; fieldId?: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
+  StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
   StorySelection: undefined;
 };
 
@@ -376,6 +373,25 @@ const OperationLogStackNavigator = () => {
   );
 };
 //#endregion
+//#region Story Schema
+
+const StorySchemaStack = createNativeStackNavigator<StorySchemaStackParamList>();
+
+export type StorySchemaStackParamList = {
+  StorySchemaList: undefined;
+  StorySchemaFieldForm: { entityType: StorySchemaEntityType; fieldId?: string };
+};
+
+const StorySchemaStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <StorySchemaStack.Navigator screenOptions={{ headerShown: false }}>
+      <StorySchemaStack.Screen name="StorySchemaList" component={StorySchemaListScreen} />
+      <StorySchemaStack.Screen name="StorySchemaFieldForm" component={StorySchemaFieldFormScreen} />
+    </StorySchemaStack.Navigator>
+  );
+};
+//#endregion
 
 /// Main Drawer
 type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList>;
@@ -616,6 +632,20 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen
+        name="StorySchemaStack"
+        component={StorySchemaStackNavigator}
+        options={{
+          title: t('story_schema_management_title'),
+          drawerLabel: t('story_schema_management_title'),
+        }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('StorySchemaStack', { screen: 'StorySchemaList' });
+          },
+        })}
+      />
+      <Drawer.Screen
         name="OperationLogStack"
         component={OperationLogStackNavigator}
         options={{
@@ -630,18 +660,6 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
-      {/* Não são destinos do menu lateral, só alcançáveis via StorySettingsScreen - height:0
-          some do DrawerItemList sem precisar de um drawerContent customizado. */}
-      <Drawer.Screen
-        name="StorySchemaList"
-        component={StorySchemaListScreen}
-        options={{ title: t('story_schema_management_title'), drawerItemStyle: { height: 0 } }}
-      />
-      <Drawer.Screen
-        name="StorySchemaFieldForm"
-        component={StorySchemaFieldFormScreen}
-        options={{ title: t('create_attribute_title'), drawerItemStyle: { height: 0 } }}
-      />
       <Drawer.Screen
         name="StorySelection"
         component={() => <View />} // A dummy component, as it won't be displayed

@@ -13,14 +13,15 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
+import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 
-type StorySchemaFieldFormScreenRouteProp = RouteProp<MainSystemDrawerParamList, 'StorySchemaFieldForm'>;
-type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<MainSystemDrawerParamList, 'StorySchemaFieldForm'>;
+type StorySchemaFieldFormScreenRouteProp = RouteProp<StorySchemaStackParamList, 'StorySchemaFieldForm'>;
+type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<StorySchemaStackParamList, 'StorySchemaFieldForm'>;
 
 const ATTRIBUTE_TYPE_OPTIONS = Object.values(AttributeType);
 
@@ -30,7 +31,9 @@ const StorySchemaFieldFormScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<StorySchemaFieldFormScreenNavigationProp>();
   const route = useRoute<StorySchemaFieldFormScreenRouteProp>();
-  const { storyId, entityType, fieldId } = route.params;
+  const { entityType, fieldId } = route.params;
+  const { selectedStory } = useStoryStore();
+  const storyId = selectedStory?.id;
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
@@ -109,6 +112,10 @@ const StorySchemaFieldFormScreen = () => {
     }
     if (!userId) {
       Alert.alert(t('error'), t('user_not_identified'));
+      return;
+    }
+    if (!storyId) {
+      Alert.alert(t('error'), t('no_story_selected'));
       return;
     }
 

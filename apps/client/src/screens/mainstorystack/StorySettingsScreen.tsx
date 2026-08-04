@@ -1,4 +1,5 @@
 import { Story } from '@keres/shared/entities/Story';
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -13,12 +14,11 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Impo
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { isOfflineError } from '../../services/apiClient';
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
-import { SyncEngineService } from '../../services/SyncEngineService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
-import { storyPermissionApi, StoryCollaborator } from '../../services/StoryPermissionService';
+import { StoryCollaborator, storyPermissionApi } from '../../services/StoryPermissionService';
+import { SyncEngineService } from '../../services/SyncEngineService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -724,9 +724,6 @@ const StorySettingsScreen = () => {
 
           <Text style={[styles.label, { color: colors.text }]}>{t('story_schema_management_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>{t('story_schema_management_description')}</Text>
-          <Button onPress={() => navigation.navigate('StorySchemaList', { storyId })}>
-            {t('manage_custom_attributes')}
-          </Button>
 
           <Button onPress={handleSave} style={styles.saveButton}>
             {t('update_story')}

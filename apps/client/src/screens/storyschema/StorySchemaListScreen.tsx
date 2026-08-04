@@ -1,6 +1,6 @@
-import { STORY_SCHEMA_ENTITY_TYPES, StorySchemaEntityType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { STORY_SCHEMA_ENTITY_TYPES, StorySchemaEntityType } from '@keres/shared';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,8 +9,9 @@ import { useDrizzle } from '../../db';
 import { StorySchemaFieldSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
+import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -25,16 +26,15 @@ const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   WorldRule: 'world_rules_title',
 };
 
-type StorySchemaListScreenRouteProp = RouteProp<MainSystemDrawerParamList, 'StorySchemaList'>;
-type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<MainSystemDrawerParamList, 'StorySchemaList'>;
+type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<StorySchemaStackParamList, 'StorySchemaList'>;
 
 const StorySchemaListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StorySchemaListScreenNavigationProp>();
-  const route = useRoute<StorySchemaListScreenRouteProp>();
-  const { storyId } = route.params;
+  const { selectedStory } = useStoryStore();
+  const storyId = selectedStory?.id;
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();
 
@@ -140,6 +140,14 @@ const StorySchemaListScreen = () => {
     );
   }, [drizzleDb, userId, t]);
 
+  if (!storyId) {
+    return (
+      <View style={[commonContainerStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.error }}>{t('no_story_selected')}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={commonContainerStyles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsContainer}>
@@ -167,7 +175,7 @@ const StorySchemaListScreen = () => {
             </View>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigation.navigate('StorySchemaFieldForm', { storyId, entityType: activeEntityType, fieldId: item.id })}
+              onPress={() => navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType, fieldId: item.id })}
             >
               <Ionicons name="pencil-outline" size={22} color={colors.primary} />
             </TouchableOpacity>
@@ -181,7 +189,7 @@ const StorySchemaListScreen = () => {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate('StorySchemaFieldForm', { storyId, entityType: activeEntityType })}
+        onPress={() => navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType })}
       >
         <Ionicons name="add" size={30} color={colors.onPrimary} />
       </TouchableOpacity>

@@ -50,6 +50,16 @@ const StorySchemaListScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
 
   const styles = StyleSheet.create({
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 5,
+    },
+    description: {
+      color: colors.textSecondary,
+      marginBottom: 20,
+    },
     tabsContainer: {
       flexGrow: 0,
       marginBottom: 10,
@@ -150,6 +160,9 @@ const StorySchemaListScreen = () => {
 
   return (
     <View style={commonContainerStyles.container}>
+      <Text style={styles.title}>{t('story_schema_management_title')}</Text>
+      <Text style={styles.description}>{t('story_schema_management_description')}</Text>
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsContainer}>
         {STORY_SCHEMA_ENTITY_TYPES.map((entityType) => (
           <TouchableOpacity

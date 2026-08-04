@@ -42,4 +42,8 @@ export const AdminUserApiService = {
     const { data } = await apiClient.post(`/admin/api/users/${id}/restore`);
     return data;
   },
+  async resetPassword(id: string): Promise<{ user: AdminUserInfo; newPassword: string }> {
+    const { data } = await apiClient.post(`/admin/api/users/${id}/reset-password`);
+    return data;
+  },
 };

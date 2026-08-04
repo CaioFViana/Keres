@@ -19,6 +19,8 @@ export function UserFormPage() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [resetPasswordMessage, setResetPasswordMessage] = useState<string | null>(null);
 
   useEffect(() => {
     TierApiService.list().then(setTiers).catch(() => {});
@@ -64,6 +66,24 @@ export function UserFormPage() {
       setError(err instanceof Error ? err.message : 'Save failed.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const onResetPassword = async () => {
+    if (!id) return;
+    if (!confirm(`Reset ${username}'s password to the server's configured default value?`)) {
+      return;
+    }
+    setResettingPassword(true);
+    setResetPasswordMessage(null);
+    setError(null);
+    try {
+      const { newPassword } = await AdminUserApiService.resetPassword(id);
+      setResetPasswordMessage(`Password reset. The user can now log in with: ${newPassword}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Password reset failed.');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -114,6 +134,17 @@ export function UserFormPage() {
           <button type="button" onClick={() => navigate('/users')}>Cancel</button>
         </div>
       </form>
+
+      {!isNew && (
+        <div className="form-card">
+          <h3>Password</h3>
+          <p className="hint">Resets the password to this server's configured default value. The user is not notified - share the new password with them yourself.</p>
+          <button type="button" onClick={onResetPassword} disabled={resettingPassword}>
+            {resettingPassword ? 'Resetting...' : 'Reset password'}
+          </button>
+          {resetPasswordMessage && <p className="success-text">{resetPasswordMessage}</p>}
+        </div>
+      )}
     </div>
   );
 }

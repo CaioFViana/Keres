@@ -13,3 +13,11 @@ export const UpdateUserProfileSchema = z.object({
 });
 
 export type UpdateUserProfileType = z.infer<typeof UpdateUserProfileSchema>;
+
+/** Payload for `PUT /user/password` - self-service change, requires the current password. */
+export const UpdateUserPasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters long'),
+});
+
+export type UpdateUserPasswordType = z.infer<typeof UpdateUserPasswordSchema>;

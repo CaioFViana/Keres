@@ -1,4 +1,5 @@
 import { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
+import * as bcrypt from 'bcrypt';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../db'; // Assuming 'db' is exported from '../db/index.ts'
 import { users } from '../db/schema/tables/users'; // Import the users schema
@@ -7,6 +8,13 @@ export class TagAlreadyTakenError extends Error {
   constructor() {
     super('Tag is already taken.');
     this.name = 'TagAlreadyTakenError';
+  }
+}
+
+export class InvalidCurrentPasswordError extends Error {
+  constructor() {
+    super('Current password is incorrect.');
+    this.name = 'InvalidCurrentPasswordError';
   }
 }
 
@@ -78,6 +86,28 @@ export class UserService {
       throw new Error('User not found.');
     }
     return updated;
+  }
+
+  /** Auto-serviço: exige a senha atual, diferente do reset do painel admin que a ignora. */
+  async changeOwnPassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { password: true },
+    });
+    if (!user) {
+      throw new Error('User not found.');
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new InvalidCurrentPasswordError();
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db
+      .update(users)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 }
 

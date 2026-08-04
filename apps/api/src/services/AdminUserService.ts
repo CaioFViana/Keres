@@ -192,6 +192,29 @@ export class AdminUserService {
       .returning(ADMIN_USER_RETURNING);
     return updated;
   }
+
+  /**
+   * Reseta a senha para o valor fixo configurado via `DEFAULT_PASSWORD_RESET_VALUE` - ao
+   * contrário de `UserService.changeOwnPassword`, não exige (nem tem como pedir) a senha
+   * atual, já que é o admin agindo em nome de outra pessoa, não o próprio usuário.
+   */
+  async resetPassword(id: string) {
+    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!existing) {
+      throw new AdminUserNotFoundError();
+    }
+    if (this.isRootUsername(existing.username)) {
+      throw new RootAdminProtectedError();
+    }
+
+    const hashedPassword = await bcrypt.hash(env.DEFAULT_PASSWORD_RESET_VALUE, 10);
+    const [updated] = await db
+      .update(users)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning(ADMIN_USER_RETURNING);
+    return updated;
+  }
 }
 
 export const adminUserService = new AdminUserService();

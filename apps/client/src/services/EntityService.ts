@@ -1,8 +1,9 @@
-import { OperationLogEntityType } from '@keres/shared';
+import { AttributeType, decodeAttributeValue, OperationLogEntityType, StorySchemaEntityType } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { TFunction } from 'i18next';
 import { AppDrizzleClient } from '../db';
 import {
+  attributeValues,
   chapters,
   characterRelations,
   characters,
@@ -18,11 +19,24 @@ import {
   operationLogs,
   scenes,
   stories,
+  storySchemaFields,
   tagRelations,
   tags,
   users,
   worldRules
 } from '../db/schemas';
+
+/** Chave de tradução singular já usada neste arquivo para cada tipo de entidade que pode
+ *  receber Story Schema - reaproveitada em vez de uma segunda lista de rótulos. */
+const STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS: Record<StorySchemaEntityType, string> = {
+  Character: 'character',
+  Location: 'location',
+  Item: 'item',
+  Scene: 'scene',
+  Chapter: 'chapter',
+  Note: 'note',
+  WorldRule: 'world_rule',
+};
 
 const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   chapter: OperationLogEntityType.Chapter,
@@ -307,6 +321,44 @@ export class EntityService {
           });
         }
         translatedEntityType = t('character_scene_relation');
+        break;
+      case OperationLogEntityType.StorySchemaField:
+        const schemaField = await db.query.storySchemaFields.findFirst({
+          where: and(eq(storySchemaFields.id, entityId), eq(storySchemaFields.storyId, storyId)),
+          columns: { name: true, entityType: true },
+        });
+        if (schemaField) {
+          const entityTypeLabelKey = STORY_SCHEMA_ENTITY_TYPE_SINGULAR_KEYS[schemaField.entityType as StorySchemaEntityType];
+          entitySpecificName = `${schemaField.name} (${entityTypeLabelKey ? t(entityTypeLabelKey) : schemaField.entityType})`;
+        }
+        translatedEntityType = t('custom_attribute');
+        break;
+      case OperationLogEntityType.AttributeValue:
+        const attributeValue = await db.query.attributeValues.findFirst({
+          where: and(eq(attributeValues.id, entityId), eq(attributeValues.storyId, storyId)),
+          columns: { fieldId: true, entityId: true, entityType: true, value: true },
+        });
+        if (attributeValue) {
+          const field = await db.query.storySchemaFields.findFirst({
+            where: eq(storySchemaFields.id, attributeValue.fieldId),
+            columns: { name: true, type: true },
+          });
+          const owner = await EntityService._resolveRelationEntityName(
+            db,
+            attributeValue.entityType as OperationLogEntityType,
+            attributeValue.entityId,
+            storyId,
+            t
+          );
+          const decodedValue = field ? decodeAttributeValue(field.type as AttributeType, attributeValue.value) : attributeValue.value;
+          entitySpecificName = t('attribute_value_attributed_to_entity', {
+            fieldname: field?.name || t('unknown_attribute'),
+            value: decodedValue === null || decodedValue === undefined ? t('common_na') : String(decodedValue),
+            entityname: owner.name || t('unknown_entity'),
+            entitytype: owner.type || t('unknown_entity_type'),
+          });
+        }
+        translatedEntityType = t('custom_attribute_value');
         break;
       }
     if (entitySpecificName) {

@@ -7,6 +7,7 @@ import {
   RootAdminProtectedError,
   UsernameAlreadyTakenError,
 } from '../../services/AdminUserService';
+import { env } from '../../config/env';
 import { requireAdmin } from '../../utils/adminAuth';
 
 export const adminUserRoutes = new Elysia()
@@ -143,4 +144,34 @@ export const adminUserRoutes = new Elysia()
   }, {
     params: t.Object({ id: t.String() }),
     detail: { summary: 'Restore a soft-deleted user', tags: ['Admin'], security: [{ bearerAuth: [] }] },
+  })
+
+  .post('/:id/reset-password', async ({ params, user, set }) => {
+    await requireAdmin(user);
+
+    try {
+      const updated = await adminUserService.resetPassword(params.id);
+      // Devolve o valor usado (não é segredo - só um admin já autenticado chega aqui, e
+      // quem configurou DEFAULT_PASSWORD_RESET_VALUE já o conhece) para a tela poder
+      // mostrar diretamente "senha resetada para X" em vez do admin ter que ir checar o .env.
+      return { user: updated, newPassword: env.DEFAULT_PASSWORD_RESET_VALUE };
+    } catch (error) {
+      if (error instanceof AdminUserNotFoundError) {
+        set.status = 404;
+        return { message: error.message };
+      }
+      if (error instanceof RootAdminProtectedError) {
+        set.status = 409;
+        return { message: error.message };
+      }
+      throw error;
+    }
+  }, {
+    params: t.Object({ id: t.String() }),
+    detail: {
+      summary: "Reset a user's password to the configured default value",
+      description: 'Sets the password to DEFAULT_PASSWORD_RESET_VALUE, no confirmation of the old password needed (admin action, not self-service).',
+      tags: ['Admin'],
+      security: [{ bearerAuth: [] }],
+    },
   });

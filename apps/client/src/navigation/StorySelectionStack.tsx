@@ -6,6 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
+import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
 import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
@@ -27,6 +28,7 @@ export type ServerManagementStackParamList = {
   ServerManagement: undefined;
   ServerRegistration: { serverId?: string };
   MyProfile: { serverId: string };
+  ChangePassword: { serverId: string };
 };
 
 export type FriendshipStackParamList = {
@@ -102,6 +104,11 @@ const ServerManagementStackNavigator = () => {
         name="MyProfile"
         component={MyProfileScreen}
         options={{ headerTitle: t('my_profile_title') }}
+      />
+      <ServerManagementStack.Screen
+        name="ChangePassword"
+        component={ChangePasswordScreen}
+        options={{ headerTitle: t('change_password_title') }}
       />
     </ServerManagementStack.Navigator>
   );

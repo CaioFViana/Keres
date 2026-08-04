@@ -1,7 +1,7 @@
-import { UpdateUserProfileSchema, UpdateUserTagSchema } from '@keres/shared';
+import { UpdateUserPasswordSchema, UpdateUserProfileSchema, UpdateUserTagSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { JWTPayload } from '../../index';
-import { TagAlreadyTakenError, userService } from '../../services/UserService';
+import { InvalidCurrentPasswordError, TagAlreadyTakenError, userService } from '../../services/UserService';
 
 const userResponseSchema = t.Object({
   id: t.String(),
@@ -156,6 +156,45 @@ export const userRoutes = new Elysia()
     detail: {
       summary: 'Update your own avatar/bio',
       description: 'Updates the current user\'s avatar color, avatar icon, and/or bio. Omitted fields are left unchanged; explicit `null` clears a field.',
+      tags: ['User'],
+      security: [{ bearerAuth: [] }],
+    },
+  })
+  .put('/password', async ({ body, set, user }) => {
+    if (!user) {
+      set.status = 401;
+      return { message: 'Unauthorized' };
+    }
+
+    const parsed = UpdateUserPasswordSchema.safeParse(body);
+    if (!parsed.success) {
+      set.status = 400;
+      return { message: parsed.error.issues[0]?.message || 'Invalid password data' };
+    }
+
+    try {
+      await userService.changeOwnPassword(user.userId, parsed.data.currentPassword, parsed.data.newPassword);
+      return { message: 'Password updated successfully.' };
+    } catch (error) {
+      if (error instanceof InvalidCurrentPasswordError) {
+        set.status = 401;
+        return { message: error.message };
+      }
+      throw error;
+    }
+  }, {
+    body: t.Object({
+      currentPassword: t.String(),
+      newPassword: t.String(),
+    }),
+    response: {
+      200: t.Object({ message: t.String() }),
+      400: t.Object({ message: t.String() }),
+      401: t.Object({ message: t.String() }),
+    },
+    detail: {
+      summary: 'Change your own password',
+      description: 'Requires the current password. Self-service - distinct from the admin panel\'s password reset, which does not require it.',
       tags: ['User'],
       security: [{ bearerAuth: [] }],
     },

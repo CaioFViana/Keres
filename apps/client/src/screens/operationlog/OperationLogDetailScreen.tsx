@@ -15,6 +15,7 @@ import { OperationLogStackParamList } from '../../navigation/MainSystemStack'; /
 import { EntityService } from '../../services/EntityService';
 import { createOperationLogService } from '../../services/OperationLogService';
 import { useTheme } from '../../theme';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ISO_DATE_PATTERN } from '../../utils/reviveDates';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
@@ -102,6 +103,23 @@ const OperationLogDetailScreen: React.FC = () => {
   useEffect(() => {
     fetchOperationLogDetails();
   }, [fetchOperationLogDetails]);
+
+  // Sem isto, o Status de Sincronização mostrado é só a foto do momento em que a tela abriu -
+  // se o push/pull terminar de sincronizar esta operação segundos depois (o caso comum, já que
+  // a tela costuma ser aberta antes do próximo ciclo de sync rodar), "Pending (v0)" fica preso
+  // ali para sempre até a pessoa sair e voltar. Mesmo evento que OperationLogListScreen já usa
+  // para se atualizar sozinha.
+  useEffect(() => {
+    const handleOperationLogUpdated = (updatedStoryId: string) => {
+      if (!operationLog || operationLog.storyId === updatedStoryId) {
+        fetchOperationLogDetails();
+      }
+    };
+    entityEventEmitter.on('operation_log_updated', handleOperationLogUpdated);
+    return () => {
+      entityEventEmitter.off('operation_log_updated', handleOperationLogUpdated);
+    };
+  }, [operationLog, fetchOperationLogDetails]);
 
   useFocusEffect(
     useCallback(() => {

@@ -36,6 +36,11 @@ export class UserApiService {
     return response.data;
   }
 
+  /** Self-service password change on `server` - requires the current password, unlike the admin panel's reset. */
+  async changeOwnPassword(server: ServerSelect, currentPassword: string, newPassword: string): Promise<void> {
+    await this.clientFor(server).put('/user/password', { currentPassword, newPassword });
+  }
+
   /** The current user's own profile on `server`, including avatar/bio - `server.idUser` is
    *  this account's own id on that server. */
   async getOwnProfile(server: ServerSelect): Promise<UserPublicInfo | undefined> {

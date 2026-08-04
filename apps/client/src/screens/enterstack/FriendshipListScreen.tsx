@@ -166,13 +166,15 @@ const FriendshipListScreen = () => {
         />
         <View style={styles.friendshipInfo}>
           <Text style={[styles.friendshipText, { color: colors.text }]}>
-            {item.senderId === currentUsersServerId
-              ? t('sent_to', { friendUsername: item.friendUsername })
-              : t('received_from', { friendUsername: item.friendUsername })
+            {item.status === FriendStatus.PENDING
+              ? (item.senderId === currentUsersServerId
+                ? t('sent_to', { friendUsername: item.friendUsername })
+                : t('received_from', { friendUsername: item.friendUsername }))
+              : item.friendUsername
             }
           </Text>
           <Text style={[styles.friendshipText, { color: colors.textSecondary }]}>
-            {server?.tag && `@${server.tag} · `}{t('server')}: {item.serverName || item.serverId} {item.serverUrl && `(${item.serverUrl})`}
+            {item.otherUserTag && `@${item.otherUserTag} · `}{t('server')}: {item.serverName || item.serverId} {item.serverUrl && `(${item.serverUrl})`}
           </Text>
         </View>
         <View style={styles.friendshipActions}>

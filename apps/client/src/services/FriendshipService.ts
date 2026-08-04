@@ -16,6 +16,7 @@ export type FriendshipWithServer = FriendshipSelect & {
   serverUrl: string | null;
   /** The "other side" of the friendship - senderId or receiverId, whichever isn't this device's own user id on that server. */
   otherUserId: string;
+  otherUserTag: string | null;
   otherUserAvatarColor: string | null;
   otherUserAvatarIcon: string | null;
   otherUserBio: string | null;
@@ -52,6 +53,7 @@ export class FriendshipService {
     const profileRows = uniqueOtherUserIds.length > 0
       ? await this.db.select({
           idUser: users.idUser,
+          tag: users.tag,
           avatarColor: users.avatarColor,
           avatarIcon: users.avatarIcon,
           bio: users.bio,
@@ -66,6 +68,7 @@ export class FriendshipService {
       return {
         ...friendship,
         otherUserId,
+        otherUserTag: profile?.tag ?? null,
         otherUserAvatarColor: profile?.avatarColor ?? null,
         otherUserAvatarIcon: profile?.avatarIcon ?? null,
         otherUserBio: profile?.bio ?? null,
@@ -253,6 +256,7 @@ export class FriendshipService {
         idUser: sf.otherUserId,
         idServer: serverId,
         displayName: sf.friendUsername,
+        tag: sf.otherUserTag,
         avatarColor: sf.otherUserAvatarColor,
         avatarIcon: sf.otherUserAvatarIcon,
         bio: sf.otherUserBio,
@@ -269,6 +273,7 @@ export class FriendshipService {
         target: users.idUser,
         set: {
           displayName: sql`excluded.display_name`,
+          tag: sql`excluded.tag`,
           avatarColor: sql`excluded.avatar_color`,
           avatarIcon: sql`excluded.avatar_icon`,
           bio: sql`excluded.bio`,

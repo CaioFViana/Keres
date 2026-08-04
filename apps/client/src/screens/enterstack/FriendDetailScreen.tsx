@@ -169,7 +169,7 @@ const FriendDetailScreen = () => {
       <Text style={styles.username}>{friendship.friendUsername}</Text>
       <Text style={styles.statusBadge}>{t(statusLabelKey(friendship.status))}</Text>
       <Text style={styles.serverInfo}>
-        {server?.tag && `@${server.tag} · `}{friendship.serverName || friendship.serverId}
+        {friendship.otherUserTag && `@${friendship.otherUserTag} · `}{friendship.serverName || friendship.serverId}
       </Text>
 
       {friendship.otherUserBio && (

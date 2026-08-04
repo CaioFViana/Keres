@@ -282,6 +282,7 @@ export class FriendshipService {
         updatedAt: friendships.updatedAt,
         // Corrected: friendUserAlias.username correctly identifies the other user's username due to the join condition.
         friendUsername: friendUserAlias.username,
+        otherUserTag: friendUserAlias.tag,
         otherUserAvatarColor: friendUserAlias.avatarColor,
         otherUserAvatarIcon: friendUserAlias.avatarIcon,
         otherUserBio: friendUserAlias.bio,
@@ -311,6 +312,7 @@ export class FriendshipService {
         updatedAt: f.updatedAt.toISOString(),
         friendUsername: f.friendUsername || '',
         otherUserId: f.otherUserId || '', // Ensure otherUserId is included now that EnrichedFriendship type includes it
+        otherUserTag: f.otherUserTag || '',
         otherUserAvatarColor: f.otherUserAvatarColor,
         otherUserAvatarIcon: f.otherUserAvatarIcon,
         otherUserBio: f.otherUserBio,

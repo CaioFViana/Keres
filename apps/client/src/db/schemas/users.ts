@@ -6,6 +6,7 @@ export const users = sqliteTable('users', {
   idServer: text('id_server').notNull(),
   displayName: text('display_name'),
   /** Denormalized from the server, same reasoning as `displayName` - see FriendshipService.ts. */
+  tag: text('tag'),
   avatarColor: text('avatar_color'),
   avatarIcon: text('avatar_icon'),
   bio: text('bio'),

@@ -7,6 +7,12 @@ COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/package.json
 COPY apps/api/package.json apps/api/package.json
 COPY apps/admin/package.json apps/admin/package.json
+# patchedDependencies (root package.json) applies repo-wide during install, regardless of
+# whether this particular image ends up using the patched package - bun still needs the
+# .patch file on disk to apply it. Neither patch here (expo-sqlite, drizzle-orm/expo-sqlite)
+# affects the API at runtime (it uses drizzle-orm/node-postgres, not the expo-sqlite driver;
+# expo-sqlite itself isn't even a dependency of apps/api) - only `bun install` needs this.
+COPY patches patches
 # Not --frozen-lockfile: bun.lock was generated across the whole workspace (including
 # apps/client, deliberately not copied here to keep this image free of the RN/Expo
 # toolchain), so a strict frozen check on this partial workspace always fails.

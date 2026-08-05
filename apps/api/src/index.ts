@@ -198,16 +198,6 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
       tags: ['Health Check'],
     },
   })
-  .get('/test-client', async () => {
-    const htmlFilePath = path.join(process.cwd(), 'test_client.html');
-    return Bun.file(htmlFilePath);
-  }, {
-    detail: {
-      summary: 'Serve Test Client HTML',
-      description: 'Serves a simple HTML page for testing API authentication and WebSocket connectivity.',
-      tags: ['Test'],
-    },
-  })
   .group('/admin/api', (app) => app.use(adminRoutes))
   .use(adminUiAvailable ? await staticPlugin({ assets: adminDistPath, prefix: '/admin', alwaysStatic: true }) : new Elysia())
   .get('/admin/*', ({ set }) => {
@@ -237,7 +227,6 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
   .listen(env.PORT, ({ hostname, port }) => { // Corrected parameters
     logger.info(`Elysia is running at http://${hostname}:${port}`);
     logger.info(`Swagger UI at http://${hostname}:${port}/swagger`);
-    logger.info(`Test Client at http://${hostname}:${port}/test-client`);
     if (adminUiAvailable) {
       logger.info(`Admin panel at http://${hostname}:${port}/admin`);
     }

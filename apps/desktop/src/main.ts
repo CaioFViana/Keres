@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, net, session } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, net, protocol, session } from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -27,7 +27,18 @@ app.setName('Keres');
 const CLIENT_DIST = app.isPackaged
   ? path.join(process.resourcesPath, 'client-dist')
   : path.join(__dirname, '..', '..', 'client', 'dist');
+
+// Same reasoning as CLIENT_DIST above. This is only for the *runtime* window/dock icon
+// (dev mode and title bar) - the packaged .exe/.app icon itself is handled separately by
+// electron-builder.yml's win/mac/linux.icon, which converts this same source PNG to
+// .ico/.icns automatically at package time.
+const APP_ICON = app.isPackaged
+  ? path.join(process.resourcesPath, 'icon.png')
+  : path.join(__dirname, '..', '..', 'client', 'assets', 'images', 'icon.png');
+
 const SCHEME = 'app';
+
+const APP_NAME = "Keres"
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -99,14 +110,23 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
+    title: APP_NAME,
+    icon: APP_ICON, // Windows/Linux taskbar + title bar. No-op on macOS - see app.dock.setIcon below.
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js'),
-    },
+    }
   });
   win.webContents.on('render-process-gone', (_e, details) => {
     console.error('[desktop] renderer process gone:', details.reason);
+  });
+
+  // apps/client's web export ships its own <title>Keres-Client</title> (from app.json).
+  // Electron applies that to the native window title as soon as the page reports it
+  // (page-title-updated), silently overriding the `title` option above. Keep our own title.
+  win.on('page-title-updated', (event) => {
+    event.preventDefault();
   });
 
   await win.loadURL(`${SCHEME}://app/`);
@@ -121,6 +141,8 @@ async function createWindow() {
  * of native capability a browser tab can't offer but Electron can.
  */
 const MEDIA_ROOT = path.join(app.getPath('userData'), 'media-storage');
+
+Menu.setApplicationMenu(null)
 
 /** Resolves a "media/<storyId>/<hash>.<ext>"-shaped relative path, rejecting any escape from MEDIA_ROOT. */
 function resolveMediaPath(relativePath: string): string {
@@ -186,6 +208,13 @@ app.whenReady().then(async () => {
 
   protocol.handle(SCHEME, handleAppRequest);
   registerMediaIpcHandlers();
+  // BrowserWindow's `icon` option (set in createWindow) is a Windows/Linux-only concept -
+  // macOS has one dock icon per app, not per window, and packaged .app icons come from
+  // mac.icon in electron-builder.yml regardless. This only matters for `bun run start`'s
+  // unpackaged dev run, which would otherwise show the generic Electron dock icon.
+  if (process.platform === 'darwin') {
+    app.dock?.setIcon(APP_ICON);
+  }
   createWindow();
 
   app.on('activate', () => {

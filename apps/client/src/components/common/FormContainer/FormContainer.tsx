@@ -1,5 +1,5 @@
 import React from 'react';
-import { Keyboard, ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native'; // Re-import Keyboard and add StyleProp, ViewStyle
+import { Keyboard, Platform, ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native'; // Re-import Keyboard and add StyleProp, ViewStyle
 import { useTheme } from '../../../theme';
 
 interface FormContainerProps {
@@ -28,7 +28,12 @@ const FormContainer: React.FC<FormContainerProps> = ({ children, style }) => {
       style={styles.scrollView}
       contentContainerStyle={[styles.innerContainer, style]}
       keyboardShouldPersistTaps="handled"
-      onResponderRelease={Keyboard.dismiss}
+      // Web has no on-screen keyboard to dismiss, and react-native-web's responder-release
+      // polyfill doesn't replicate native's "only if the touch didn't land on a nested
+      // responder" negotiation - it fires for a release on the ScrollView's own child inputs
+      // too, blurring a field the instant it's clicked (see the same fix on each *FormScreen's
+      // TouchableWithoutFeedback, onPress={Keyboard.dismiss}).
+      onResponderRelease={Platform.OS === 'web' ? undefined : Keyboard.dismiss}
     >
       {children}
     </ScrollView>

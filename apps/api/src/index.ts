@@ -1,5 +1,6 @@
 import { bearer } from '@elysiajs/bearer';
 import { cookie } from '@elysiajs/cookie';
+import { cors } from '@elysiajs/cors';
 import { jwt } from '@elysiajs/jwt';
 import { staticPlugin } from '@elysiajs/static';
 import { swagger } from '@elysiajs/swagger';

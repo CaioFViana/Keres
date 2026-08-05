@@ -250,7 +250,7 @@ const NoteFormScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
         <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_note_title') : t('create_note_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>

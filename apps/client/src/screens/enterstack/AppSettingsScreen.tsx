@@ -92,7 +92,7 @@ const SettingsScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust this value as needed
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
         <View style={commonContainerStyles.container}>
           <View style={styles.settingItem}>
             <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>

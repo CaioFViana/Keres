@@ -18,6 +18,7 @@
   "dependencies": {
     "@elysiajs/bearer": "^1.4.1",
     "@elysiajs/cookie": "^0.8.0",
+    "@elysiajs/cors": "^1.4.2",
     "@elysiajs/jwt": "^1.4.0",
     "@elysiajs/openapi": "^1.4.11",
     "@elysiajs/static": "^1.4.10",

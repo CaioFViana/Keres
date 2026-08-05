@@ -86,6 +86,10 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Must run on every render regardless of `loading`/`error` - the early returns below would
+  // otherwise skip this hook on some renders and not others ("Rendered more hooks than during
+  // the previous render", React error #310).
+  const resolvedUri = useResolvedMediaUri(media?.localPath);
 
   const load = useCallback(async () => {
     if (!storyId) {
@@ -292,7 +296,6 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
   }
 
   const mediaType = media.mediaType as MediaType;
-  const resolvedUri = useResolvedMediaUri(media.localPath);
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasLocalVideo = mediaType === 'video' && !!resolvedUri;
   const hasLocalAudio = mediaType === 'audio' && !!resolvedUri;

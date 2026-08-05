@@ -13,6 +13,11 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d keres_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     container_name: keres_api
@@ -26,13 +31,19 @@ services:
       - ../../apps/api/.env
     environment:
       PORT: 3000
+      # apps/api/.env is shared with local (non-Docker) dev and points DATABASE_URL at
+      # localhost, which inside this container is the API container itself, not Postgres.
+      # `environment:` is applied after `env_file:` by Compose, so this wins and reaches
+      # the `db` service by its Compose network name instead.
+      DATABASE_URL: postgresql://user:password@db:5432/keres_db
     depends_on:
-      - db
-    # Optional: Mount the local code for development, so changes are reflected without rebuilding
+      db:
+        condition: service_healthy
     volumes:
-      - ../../apps/api:/app/apps/api # Mount API specific code
-      - ../../packages:/app/packages # Mount shared packages
-      - /app/node_modules # Exclude node_modules from host mount to prevent issues
+      # MEDIA_STORAGE_PATH defaults to ./media-storage, relative to apps/api - without this
+      # volume, every uploaded gallery file is lost on container recreation/rebuild.
+      - media_storage:/app/apps/api/media-storage
 
 volumes:
   db_data:
+  media_storage:

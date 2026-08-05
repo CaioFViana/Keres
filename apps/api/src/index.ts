@@ -35,8 +35,12 @@ await reconcileRootAdmin();
  * usada por ele mora em `/admin/api/*`, para as duas coisas não brigarem pelo mesmo espaço
  * de URL. Se o build ainda não existir (dev sem `bun run build`, ou API rodando sozinha),
  * isso não derruba o servidor - só o painel fica indisponível, a API continua normal.
+ *
+ * Resolvido a partir de `import.meta.dir` (não `process.cwd()`): precisa continuar
+ * encontrando `apps/admin/dist` não importa de onde o processo foi iniciado (ex: dentro do
+ * container Docker o WORKDIR final é `apps/api`, mas nada garante isso em todo cenário).
  */
-const adminDistPath = path.join(process.cwd(), '..', 'admin', 'dist');
+const adminDistPath = path.join(import.meta.dir, '..', '..', 'admin', 'dist');
 const adminDistIndexPath = path.join(adminDistPath, 'index.html');
 const adminUiAvailable = existsSync(adminDistIndexPath);
 

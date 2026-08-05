@@ -1,0 +1,19 @@
+{
+  "name": "@keres/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "build:client": "cd ../client && bun run export:web",
+    "build:main": "tsc -p tsconfig.json",
+    "build": "bun run build:client && bun run build:main",
+    "start": "bun run build && electron .",
+    "package": "bun run build && electron-builder"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.5.3"
+  }
+}

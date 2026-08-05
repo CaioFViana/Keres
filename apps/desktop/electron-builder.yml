@@ -1,0 +1,18 @@
+appId: com.keres.desktop
+productName: Keres
+directories:
+  output: release
+files:
+  - dist-electron/**/*
+extraResources:
+  - from: ../client/dist
+    to: client-dist
+# Placeholder icon - apps/client/assets/images/icon.png is a single-size PNG. Before a real
+# release, generate proper multi-resolution icons (.ico for win, .icns for mac) from it.
+win:
+  icon: ../client/assets/images/icon.png
+mac:
+  icon: ../client/assets/images/icon.png
+linux:
+  icon: ../client/assets/images/icon.png
+  target: AppImage

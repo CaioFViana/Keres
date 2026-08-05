@@ -11,6 +11,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "export:web": "node scripts/generate-migrations-index.js && node scripts/generate-example-stories-index.js && expo export -p web",
     "lint": "expo lint",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "locales:audit": "tsx scripts/verify-translations.ts",
@@ -71,8 +72,8 @@
     "drizzle-kit": "^0.31.6",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "typescript": "~5.9.2",
-    "tsx": "^4.16.2"
+    "tsx": "^4.16.2",
+    "typescript": "~5.9.2"
   },
   "private": true
 }

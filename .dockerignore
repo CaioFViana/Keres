@@ -1,0 +1,20 @@
+# Reinstalled inside the image by `bun install` - never send host node_modules as build context.
+**/node_modules
+
+.git
+.vscode
+.claude
+docs
+
+# Build artifacts - regenerated in-container (apps/admin/dist is built by the admin-build stage).
+**/dist
+apps/admin/dist
+apps/client/android
+apps/client/ios
+apps/client/.expo
+
+# Runtime data / local secrets - never bake these into an image.
+apps/api/.env
+media-storage
+
+*.md

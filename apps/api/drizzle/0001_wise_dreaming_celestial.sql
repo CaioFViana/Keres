@@ -1,1 +1,0 @@
-ALTER TABLE "choices" DROP COLUMN "is_implicit";

@@ -2,6 +2,21 @@ CREATE TYPE "public"."operation_type" AS ENUM('create', 'update', 'delete', 'reo
 CREATE TYPE "public"."story_permission_type" AS ENUM('reader', 'writer');--> statement-breakpoint
 CREATE TYPE "public"."story_type" AS ENUM('linear', 'branching');--> statement-breakpoint
 CREATE TYPE "public"."friend_status" AS ENUM('pending', 'friend', 'blacklisted');--> statement-breakpoint
+CREATE TABLE "attribute_values" (
+	"id" text PRIMARY KEY NOT NULL,
+	"story_id" text NOT NULL,
+	"entity_type" text NOT NULL,
+	"entity_id" text NOT NULL,
+	"field_id" text NOT NULL,
+	"value" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL,
+	"deleted_at" timestamp,
+	CONSTRAINT "entity_field_unq" UNIQUE("entity_id","field_id")
+);
+--> statement-breakpoint
 CREATE TABLE "chapters" (
 	"id" text PRIMARY KEY NOT NULL,
 	"story_id" text NOT NULL,
@@ -73,7 +88,6 @@ CREATE TABLE "choices" (
 	"scene_id" text NOT NULL,
 	"next_scene_id" text NOT NULL,
 	"text" text NOT NULL,
-	"is_implicit" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
@@ -179,6 +193,20 @@ CREATE TABLE "locations" (
 	"deleted_at" timestamp
 );
 --> statement-breakpoint
+CREATE TABLE "location_relations" (
+	"id" text PRIMARY KEY NOT NULL,
+	"story_id" text NOT NULL,
+	"location_a_id" text NOT NULL,
+	"location_b_id" text NOT NULL,
+	"relation_type" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL,
+	"deleted_at" timestamp,
+	CONSTRAINT "story_loca_locb_type_unq" UNIQUE("story_id","location_a_id","location_b_id","relation_type")
+);
+--> statement-breakpoint
 CREATE TABLE "notes" (
 	"id" text PRIMARY KEY NOT NULL,
 	"story_id" text NOT NULL,
@@ -217,6 +245,15 @@ CREATE TABLE "operation_log" (
 	"payload" jsonb NOT NULL,
 	"entity_version" integer,
 	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "registration_settings" (
+	"id" text PRIMARY KEY NOT NULL,
+	"is_registration_open" boolean DEFAULT true NOT NULL,
+	"max_users" integer,
+	"auto_manage" boolean DEFAULT false NOT NULL,
+	"default_tier_id" text,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "scenes" (
@@ -273,6 +310,25 @@ CREATE TABLE "story_permissions" (
 	"deleted_at" timestamp
 );
 --> statement-breakpoint
+CREATE TABLE "story_schema_fields" (
+	"id" text PRIMARY KEY NOT NULL,
+	"story_id" text NOT NULL,
+	"entity_type" text NOT NULL,
+	"name" text NOT NULL,
+	"key" text NOT NULL,
+	"description" text,
+	"type" text NOT NULL,
+	"is_required" boolean DEFAULT false NOT NULL,
+	"default_value" text,
+	"order" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL,
+	"deleted_at" timestamp,
+	CONSTRAINT "story_entitytype_key_unq" UNIQUE("story_id","entity_type","key")
+);
+--> statement-breakpoint
 CREATE TABLE "suggestions" (
 	"id" text PRIMARY KEY NOT NULL,
 	"story_id" text NOT NULL,
@@ -317,11 +373,32 @@ CREATE TABLE "tags" (
 	CONSTRAINT "story_name_unq" UNIQUE("story_id","name")
 );
 --> statement-breakpoint
+CREATE TABLE "tiers" (
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"is_default" boolean DEFAULT false NOT NULL,
+	"max_stories" integer,
+	"max_entities_per_story" integer,
+	"max_entities_total" integer,
+	"max_storage_bytes_per_story" integer,
+	"max_storage_bytes_total" integer,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL,
+	"deleted_at" timestamp,
+	CONSTRAINT "tiers_name_unique" UNIQUE("name")
+);
+--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" text PRIMARY KEY NOT NULL,
 	"username" text NOT NULL,
 	"tag" text NOT NULL,
 	"password" text NOT NULL,
+	"avatar_color" text,
+	"avatar_icon" text,
+	"bio" text,
+	"is_admin" boolean DEFAULT false NOT NULL,
+	"tier_id" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"is_deleted" boolean DEFAULT false NOT NULL,
@@ -343,6 +420,8 @@ CREATE TABLE "world_rules" (
 	"deleted_at" timestamp
 );
 --> statement-breakpoint
+ALTER TABLE "attribute_values" ADD CONSTRAINT "attribute_values_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "attribute_values" ADD CONSTRAINT "attribute_values_field_id_story_schema_fields_id_fk" FOREIGN KEY ("field_id") REFERENCES "public"."story_schema_fields"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "chapters" ADD CONSTRAINT "chapters_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "character_relations" ADD CONSTRAINT "character_relations_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "character_relations" ADD CONSTRAINT "character_relations_character1_id_characters_id_fk" FOREIGN KEY ("character1_id") REFERENCES "public"."characters"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -366,21 +445,27 @@ ALTER TABLE "item_journeys" ADD CONSTRAINT "item_journeys_new_character_owner_id
 ALTER TABLE "items" ADD CONSTRAINT "items_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "items" ADD CONSTRAINT "items_character_owner_id_characters_id_fk" FOREIGN KEY ("character_owner_id") REFERENCES "public"."characters"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "locations" ADD CONSTRAINT "locations_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "location_relations" ADD CONSTRAINT "location_relations_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "location_relations" ADD CONSTRAINT "location_relations_location_a_id_locations_id_fk" FOREIGN KEY ("location_a_id") REFERENCES "public"."locations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "location_relations" ADD CONSTRAINT "location_relations_location_b_id_locations_id_fk" FOREIGN KEY ("location_b_id") REFERENCES "public"."locations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notes" ADD CONSTRAINT "notes_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "note_relations" ADD CONSTRAINT "note_relations_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "note_relations" ADD CONSTRAINT "note_relations_note_id_notes_id_fk" FOREIGN KEY ("note_id") REFERENCES "public"."notes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "operation_log" ADD CONSTRAINT "operation_log_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "operation_log" ADD CONSTRAINT "operation_log_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "registration_settings" ADD CONSTRAINT "registration_settings_default_tier_id_tiers_id_fk" FOREIGN KEY ("default_tier_id") REFERENCES "public"."tiers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "scenes" ADD CONSTRAINT "scenes_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "scenes" ADD CONSTRAINT "scenes_chapter_id_chapters_id_fk" FOREIGN KEY ("chapter_id") REFERENCES "public"."chapters"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "scenes" ADD CONSTRAINT "scenes_location_id_locations_id_fk" FOREIGN KEY ("location_id") REFERENCES "public"."locations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stories" ADD CONSTRAINT "stories_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "story_permissions" ADD CONSTRAINT "story_permissions_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "story_permissions" ADD CONSTRAINT "story_permissions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "story_schema_fields" ADD CONSTRAINT "story_schema_fields_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "suggestions" ADD CONSTRAINT "suggestions_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tag_relations" ADD CONSTRAINT "tag_relations_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tag_relations" ADD CONSTRAINT "tag_relations_tag_id_tags_id_fk" FOREIGN KEY ("tag_id") REFERENCES "public"."tags"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tags" ADD CONSTRAINT "tags_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_tier_id_tiers_id_fk" FOREIGN KEY ("tier_id") REFERENCES "public"."tiers"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "world_rules" ADD CONSTRAINT "world_rules_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "galleries_story_hash_idx" ON "galleries" USING btree ("story_id","hash");--> statement-breakpoint
 CREATE INDEX "gallery_relations_owner_idx" ON "gallery_relations" USING btree ("story_id","owner_type","owner_id");--> statement-breakpoint

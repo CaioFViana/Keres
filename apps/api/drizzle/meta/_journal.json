@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1785539629180,
-      "tag": "0000_perfect_celestials",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1785795083168,
-      "tag": "0001_wise_dreaming_celestial",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1785850312403,
-      "tag": "0002_yellow_madrox",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1785859208701,
-      "tag": "0003_open_forgotten_one",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1785872368473,
-      "tag": "0004_steady_bushwacker",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1785888803458,
-      "tag": "0005_small_rattler",
+      "when": 1785963811640,
+      "tag": "0000_fresh_living_tribunal",
       "breakpoints": true
     }
   ]

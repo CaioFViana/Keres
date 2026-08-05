@@ -5,7 +5,7 @@ import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item 
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
@@ -15,8 +15,9 @@ import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryM
 import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
 import LocationItemManager from '../../components/LocationManager/LocationItemManager'; // Import LocationItemManager
 import LocationSceneManager from '../../components/LocationManager/LocationSceneManager'; // Import LocationSceneManager
+import LocationRelationManager from '../../components/LocationRelationManager/LocationRelationManager';
 import { useDrizzle } from '../../db';
-import { LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
+import { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
@@ -28,8 +29,10 @@ import { CharacterService, createCharacterService } from '../../services/storyma
 import { createItemJourneyService, ItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
 import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
 import { createLocationService } from '../../services/storymanagement/LocationService';
+import { createLocationRelationService, LocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
 import { useStoryStore } from '../../state/storyStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -50,11 +53,13 @@ const LocationDetailsScreen = () => {
   const { locationId } = route.params;
   const { t } = useTranslation();
   const { selectedStory } = useStoryStore();
+  const { userId } = useUserSettingsStore();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const drizzleDb = useDrizzle();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
+  const locationRelationServiceRef = useRef<LocationRelationService | null>(null);
   const characterServiceRef = useRef<CharacterService | null>(null); // Ref for CharacterService
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
   const itemServiceRef = useRef<ItemService | null>(null); // Ref for ItemService
@@ -69,6 +74,8 @@ const LocationDetailsScreen = () => {
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character scene relations
   const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in story
   const [allItemJourneys, setAllItemJourneys] = useState<ItemJourney[]>([]); // State for all item journeys in story
+  const [allLocations, setAllLocations] = useState<LocationSelect[]>([]); // State for all locations in story
+  const [allLocationRelations, setAllLocationRelations] = useState<LocationRelationSelect[]>([]); // State for all Location relations in story
 
   const {
     selectedTags: locationTags,
@@ -83,6 +90,9 @@ const LocationDetailsScreen = () => {
     if (drizzleDb) {
       if (!locationServiceRef.current) {
         locationServiceRef.current = createLocationService(drizzleDb);
+      }
+      if (!locationRelationServiceRef.current) {
+        locationRelationServiceRef.current = createLocationRelationService(drizzleDb);
       }
       if (!characterServiceRef.current) {
         characterServiceRef.current = createCharacterService(drizzleDb);
@@ -210,6 +220,32 @@ const LocationDetailsScreen = () => {
     }
   }, [selectedStory?.id]);
 
+  const fetchAllLocationsInStory = useCallback(async () => {
+    if (!locationServiceRef.current || !selectedStory?.id) {
+      setAllLocations([]);
+      return;
+    }
+    try {
+      const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
+      setAllLocations(fetchedLocations.filter(l => !l.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all locations:', err);
+    }
+  }, [selectedStory?.id]);
+
+  const fetchAllLocationRelationsInStory = useCallback(async () => {
+    if (!locationRelationServiceRef.current || !selectedStory?.id) {
+      setAllLocationRelations([]);
+      return;
+    }
+    try {
+      const fetchedRelations = await locationRelationServiceRef.current.getAllRelationsForStory(selectedStory.id);
+      setAllLocationRelations(fetchedRelations);
+    } catch (err) {
+      console.error('Failed to fetch all location relations:', err);
+    }
+  }, [selectedStory?.id]);
+
   const handleLocationChange = useCallback(async (changedStoryId: string, changedLocationId: string) => {
     if (changedLocationId === locationId) {
       if (locationServiceRef.current) {
@@ -221,7 +257,16 @@ const LocationDetailsScreen = () => {
         }
       }
     }
-  }, [locationId, navigation, setLocation]);
+    if (selectedStory?.id === changedStoryId) {
+      fetchAllLocationsInStory();
+    }
+  }, [locationId, navigation, setLocation, selectedStory?.id, fetchAllLocationsInStory]);
+
+  const handleLocationRelationChange = useCallback((changedStoryId: string) => {
+    if (selectedStory?.id === changedStoryId) {
+      fetchAllLocationRelationsInStory();
+    }
+  }, [selectedStory?.id, fetchAllLocationRelationsInStory]);
 
   const handleCharacterChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
     if (selectedStory?.id === changedStoryId) {
@@ -253,6 +298,42 @@ const LocationDetailsScreen = () => {
     }
   }, [selectedStory?.id, fetchAllItemJourneysInStory]);
 
+  const handleSetParent = useCallback(async (newParentId: string | null) => {
+    if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+    try {
+      await locationRelationServiceRef.current.setParent(userId, selectedStory.id, locationId, newParentId);
+    } catch (err) {
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
+    }
+  }, [selectedStory?.id, userId, locationId, t]);
+
+  const handleAddChild = useCallback(async (childId: string) => {
+    if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+    try {
+      await locationRelationServiceRef.current.setParent(userId, selectedStory.id, childId, locationId);
+    } catch (err) {
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
+    }
+  }, [selectedStory?.id, userId, locationId, t]);
+
+  const handleAddConnection = useCallback(async (otherLocationId: string) => {
+    if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+    try {
+      await locationRelationServiceRef.current.addConnection(userId, selectedStory.id, locationId, otherLocationId);
+    } catch (err) {
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
+    }
+  }, [selectedStory?.id, userId, locationId, t]);
+
+  const handleRemoveLocationRelation = useCallback(async (relationId: string) => {
+    if (!locationRelationServiceRef.current || !userId) return;
+    try {
+      await locationRelationServiceRef.current.removeRelation(userId, relationId);
+    } catch (err) {
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_remove_relation'));
+    }
+  }, [userId, t]);
+
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
     if (locationServiceRef.current) {
@@ -263,6 +344,7 @@ const LocationDetailsScreen = () => {
       entityEventEmitter.on('scene_changed', handleSceneChange);
       entityEventEmitter.on('item_changed', handleItemChange);
       entityEventEmitter.on('item_journey_changed', handleItemJourneyChange);
+      entityEventEmitter.on('location_relation_changed', handleLocationRelationChange);
 
       return () => {
         entityEventEmitter.off('location_changed', handleLocationChange);
@@ -271,10 +353,11 @@ const LocationDetailsScreen = () => {
         entityEventEmitter.off('scene_changed', handleSceneChange);
         entityEventEmitter.off('item_changed', handleItemChange);
         entityEventEmitter.off('item_journey_changed', handleItemJourneyChange);
+        entityEventEmitter.off('location_relation_changed', handleLocationRelationChange);
       };
     }
   }, [locationId, fetchLocationDetails, handleLocationChange, handleCharacterChange,
-    handleCharacterSceneChange, handleSceneChange, handleItemChange, handleItemJourneyChange]);
+    handleCharacterSceneChange, handleSceneChange, handleItemChange, handleItemJourneyChange, handleLocationRelationChange]);
 
   useEffect(() => {
     if (location) {
@@ -283,8 +366,10 @@ const LocationDetailsScreen = () => {
       fetchAllCharacterSceneRelations(); // Fetch all character scene relations
       fetchAllItemsInStory(); // Fetch all items
       fetchAllItemJourneysInStory(); // Fetch all item journeys
+      fetchAllLocationsInStory(); // Fetch all locations
+      fetchAllLocationRelationsInStory(); // Fetch all Location relations
     }
-  }, [location, fetchAllCharactersInStory, fetchAllScenesInStory, fetchAllCharacterSceneRelations, fetchAllItemsInStory, fetchAllItemJourneysInStory]);
+  }, [location, fetchAllCharactersInStory, fetchAllScenesInStory, fetchAllCharacterSceneRelations, fetchAllItemsInStory, fetchAllItemJourneysInStory, fetchAllLocationsInStory, fetchAllLocationRelationsInStory]);
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -334,6 +419,17 @@ const LocationDetailsScreen = () => {
       <CustomAttributeDetailFields storyId={location.storyId} entityType="Location" entityId={locationId} />
 
       <DetailField label={t('extra_notes')} value={location.extraNotes || t('common_na')} />
+
+      <LocationRelationManager
+        currentLocationId={locationId}
+        allLocations={allLocations}
+        allLocationRelations={allLocationRelations}
+        onSetParent={handleSetParent}
+        onAddChild={handleAddChild}
+        onAddConnection={handleAddConnection}
+        onRemoveRelation={handleRemoveLocationRelation}
+        editable={true}
+      />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager

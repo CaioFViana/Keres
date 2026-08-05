@@ -1,7 +1,7 @@
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, count, desc, eq, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
-import { LocationInsert, locations, LocationSelect, tagRelations, tags, TagSelect } from '../../db/schema'; // Import LocationInsert and locations
+import { LocationInsert, locationRelations, locations, LocationSelect, tagRelations, tags, TagSelect } from '../../db/schema'; // Import LocationInsert and locations
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
@@ -240,6 +240,40 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
       const userIdToLog = await getUserIdForOperation(db, serverService, updatedLocation.storyId, currentUserId);
       await recordLocalOperation(db, updatedLocation.storyId, userIdToLog, 'delete', 'Location', locationId, changedFields);
       entityEventEmitter.emit('location_changed', updatedLocation.storyId, updatedLocation.id);
+
+      // Cascata: uma LocationRelation apontando pra uma Location apagada não tem pra onde
+      // navegar - diferente das outras relações reversas deste arquivo (LocationCharacterManager
+      // etc.), que ficam órfãs inertemente sem problema. Cada relação precisa da sua PRÓPRIA
+      // operação registrada (não uma mutação SQL direta) pra que o pull de outros dispositivos
+      // saiba da exclusão - mesmo motivo do cascade de AttributeValue em StorySchemaFieldService.
+      const liveRelations = await db.select({ id: locationRelations.id, version: locationRelations.version })
+        .from(locationRelations)
+        .where(and(
+          eq(locationRelations.isDeleted, false),
+          or(eq(locationRelations.locationAId, locationId), eq(locationRelations.locationBId, locationId))
+        ))
+        .all();
+
+      for (const relation of liveRelations) {
+        const [updatedRelation] = await db.update(locationRelations)
+          .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${locationRelations.version} + 1` })
+          .where(eq(locationRelations.id, relation.id))
+          .returning({ id: locationRelations.id, version: locationRelations.version });
+
+        if (!updatedRelation) {
+          continue;
+        }
+
+        await recordLocalOperation(db, updatedLocation.storyId, userIdToLog, 'delete', 'LocationRelation', relation.id, {
+          id: relation.id,
+          isDeleted: true,
+          version: updatedRelation.version,
+        });
+      }
+
+      if (liveRelations.length > 0) {
+        entityEventEmitter.emit('location_relation_changed', updatedLocation.storyId, locationId);
+      }
     },
 
     async getById(locationId: string): Promise<LocationSelect | undefined> {

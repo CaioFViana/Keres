@@ -20,6 +20,7 @@ export const ENTITY_TABLES = {
   Item: schema.items,
   ItemJourney: schema.itemJourneys,
   Location: schema.locations,
+  LocationRelation: schema.locationRelations,
   Note: schema.notes,
   NoteRelation: schema.noteRelations,
   Scene: schema.scenes,

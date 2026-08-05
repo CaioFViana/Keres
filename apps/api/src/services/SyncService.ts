@@ -18,6 +18,7 @@ import { GalleryRelationSyncHandler } from './entity-sync-handlers/GalleryRelati
 import { GallerySyncHandler } from './entity-sync-handlers/GallerySyncHandler';
 import { ItemJourneySyncHandler } from './entity-sync-handlers/ItemJourneySyncHandler';
 import { ItemSyncHandler } from './entity-sync-handlers/ItemSyncHandler';
+import { LocationRelationSyncHandler } from './entity-sync-handlers/LocationRelationSyncHandler';
 import { LocationSyncHandler } from './entity-sync-handlers/LocationSyncHandler';
 import { NoteRelationSyncHandler } from './entity-sync-handlers/NoteRelationSyncHandler';
 import { NoteSyncHandler } from './entity-sync-handlers/NoteSyncHandler';
@@ -55,6 +56,7 @@ export class SyncService {
     this.registerEntityHandler(new NoteRelationSyncHandler());
     this.registerEntityHandler(new StorySchemaFieldSyncHandler());
     this.registerEntityHandler(new AttributeValueSyncHandler());
+    this.registerEntityHandler(new LocationRelationSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {

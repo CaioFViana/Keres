@@ -14,6 +14,7 @@ import {
   itemJourneys,
   items,
   locations,
+  locationRelations,
   noteRelations,
   notes,
   operationLogs,
@@ -53,6 +54,7 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   user: OperationLogEntityType.User,
   worldrule: OperationLogEntityType.WorldRule,
   characterrelation: OperationLogEntityType.CharacterRelation,
+  locationrelation: OperationLogEntityType.LocationRelation,
   noterelation: OperationLogEntityType.NoteRelation,
   tagrelation: OperationLogEntityType.TagRelation,
   characterscene: OperationLogEntityType.CharacterScene,
@@ -238,6 +240,29 @@ export class EntityService {
           entitySpecificName = `${char1?.name || t('unknown_character')} - ${char2?.name || t('unknown_character')} ${t('relation')}`;
         }
         translatedEntityType = t('character_relation')
+        break;
+      case OperationLogEntityType.LocationRelation:
+        const locationRelation = await db.query.locationRelations.findFirst({
+          where: and(eq(locationRelations.id, entityId), eq(locationRelations.storyId, storyId), eq(locationRelations.isDeleted, false)),
+          columns: { locationAId: true, locationBId: true, relationType: true },
+        });
+
+        if (locationRelation) {
+          const locationA = await db.query.locations.findFirst({
+            where: and(eq(locations.id, locationRelation.locationAId), eq(locations.isDeleted, false)),
+            columns: { name: true },
+          });
+          const locationB = await db.query.locations.findFirst({
+            where: and(eq(locations.id, locationRelation.locationBId), eq(locations.isDeleted, false)),
+            columns: { name: true },
+          });
+          const nameA = locationA?.name || t('unknown_location');
+          const nameB = locationB?.name || t('unknown_location');
+          entitySpecificName = locationRelation.relationType === 'contains'
+            ? t('location_contains_location', { parentName: nameA, childName: nameB })
+            : t('location_connected_to_location', { locationAName: nameA, locationBName: nameB });
+        }
+        translatedEntityType = t('location_relation');
         break;
       case OperationLogEntityType.TagRelation:
         const tagRel = await db.query.tagRelations.findFirst({

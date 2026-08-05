@@ -20,5 +20,6 @@ export enum OperationLogEntityType {
   CharacterScene = 'CharacterScene',
   StorySchemaField = 'StorySchemaField',
   AttributeValue = 'AttributeValue',
+  LocationRelation = 'LocationRelation',
   // Add other relevant entities as they are introduced to the system
 }

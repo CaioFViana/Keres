@@ -1,7 +1,7 @@
 /**
  * Tipos de entidade que podem receber atributos customizados via Story Schemas - as entidades
  * com Form + Detail screen dedicadas, excluindo tabelas de relação/junção (CharacterRelation,
- * TagRelation, NoteRelation, CharacterScene, GalleryRelation), Choice/Gallery (forms
+ * TagRelation, NoteRelation, CharacterScene, GalleryRelation, LocationRelation), Choice/Gallery (forms
  * estruturalmente diferentes) e a própria Story.
  *
  * Um array de constantes em vez de um enum para ficar trivial adicionar um tipo novo depois

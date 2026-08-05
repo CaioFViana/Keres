@@ -33,6 +33,9 @@ export class StoryExportImportService {
         const locations = await db.query.locations.findMany({
             where: (locations, { eq, and }) => and(eq(locations.storyId, storyId), eq(locations.isDeleted, false)),
         });
+        const locationRelations = await db.query.locationRelations.findMany({
+            where: (locationRelations, { eq, and }) => and(eq(locationRelations.storyId, storyId), eq(locationRelations.isDeleted, false)),
+        });
         const worldRules = await db.query.worldRules.findMany({
             where: (worldRules, { eq, and }) => and(eq(worldRules.storyId, storyId), eq(worldRules.isDeleted, false)),
         });
@@ -95,6 +98,7 @@ export class StoryExportImportService {
             choices,
             characters,
             locations,
+            locationRelations,
             worldRules,
             notes,
             tags,
@@ -208,6 +212,32 @@ export class StoryExportImportService {
             });
             if (newLocationsData.length > 0) {
                 await tx.insert(dbSchema.locations).values(newLocationsData);
+            }
+
+            // --- LocationRelations (Optional) ---
+            // Depois de Locations de propósito: locationAId/locationBId precisam já estar no idMap.
+            if (validatedFullStory.locationRelations && validatedFullStory.locationRelations.length > 0) {
+                const newLocationRelationsData = validatedFullStory.locationRelations.map(original => {
+                    const newId = ulid();
+                    idMap.set(original.id, newId);
+                    const mappedLocationAId = idMap.get(original.locationAId);
+                    if (!mappedLocationAId) {
+                        throw new Error(`Import Error: Location A ID ${original.locationAId} not found in ID map for location relation ${original.id}.`);
+                    }
+                    const mappedLocationBId = idMap.get(original.locationBId);
+                    if (!mappedLocationBId) {
+                        throw new Error(`Import Error: Location B ID ${original.locationBId} not found in ID map for location relation ${original.id}.`);
+                    }
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        locationAId: mappedLocationAId,
+                        locationBId: mappedLocationBId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.locationRelations).values(newLocationRelationsData);
             }
 
             // --- Scenes ---

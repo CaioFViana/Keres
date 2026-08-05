@@ -21,6 +21,7 @@ import { GalleryRelationClientSyncHandler } from './entity-sync-handlers/Gallery
 import { ItemClientSyncHandler } from './entity-sync-handlers/ItemClientSyncHandler';
 import { ItemJourneyClientSyncHandler } from './entity-sync-handlers/ItemJourneyClientSyncHandler';
 import { LocationClientSyncHandler } from './entity-sync-handlers/LocationClientSyncHandler';
+import { LocationRelationClientSyncHandler } from './entity-sync-handlers/LocationRelationClientSyncHandler';
 import { NoteClientSyncHandler } from './entity-sync-handlers/NoteClientSyncHandler';
 import { NoteRelationClientSyncHandler } from './entity-sync-handlers/NoteRelationClientSyncHandler';
 import { SceneClientSyncHandler } from './entity-sync-handlers/SceneClientSyncHandler';
@@ -82,6 +83,7 @@ export class SyncEngineService {
     this.registerEntityHandler(new WorldRuleClientSyncHandler());
     this.registerEntityHandler(new CharacterRelationClientSyncHandler());
     this.registerEntityHandler(new LocationClientSyncHandler());
+    this.registerEntityHandler(new LocationRelationClientSyncHandler());
     this.registerEntityHandler(new ChapterClientSyncHandler());
     this.registerEntityHandler(new CharacterSceneClientSyncHandler());
     this.registerEntityHandler(new ChoiceClientSyncHandler())

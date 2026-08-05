@@ -62,6 +62,8 @@ const LocationsScreen = () => {
       flex: 1,
       backgroundColor: colors.background,
     },
+    headerRightContainer: { flexDirection: 'row', marginRight: 15 },
+    headerButton: { marginLeft: 15 },
   });
 
   // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
@@ -87,15 +89,24 @@ const LocationsScreen = () => {
       navigation.getParent()?.setOptions({
         title: t('locations_title'),
         headerRight: () => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('LocationForm', { locationId: undefined })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="add" size={30} color={colors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerRightContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('LocationView')}
+              style={styles.headerButton}
+              accessibilityLabel={t('location_graph_title')}
+            >
+              <Ionicons name="git-network-outline" size={28} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('LocationForm', { locationId: undefined })}
+              style={styles.headerButton}
+            >
+              <Ionicons name="add" size={30} color={colors.text} />
+            </TouchableOpacity>
+          </View>
         ),
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, colors.text, t, styles.headerRightContainer, styles.headerButton])
   );
 
   const handleToggleFavorite = useCallback(async (locationId: string, isFavorite: boolean) => {

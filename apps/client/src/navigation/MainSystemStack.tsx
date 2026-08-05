@@ -20,6 +20,7 @@ import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
 import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
+import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
 import GalleryMediaViewerOverlay from '../components/GalleryManager/GalleryMediaViewerOverlay';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
@@ -241,6 +242,7 @@ export type LocationStackParamList = {
   Locations: undefined;
   LocationDetail: LocationDetailScreenParamList['LocationDetail'];
   LocationForm: { locationId?: string };
+  LocationView: undefined;
 };
 
 const LocationStackNavigator = () => {
@@ -250,6 +252,7 @@ const LocationStackNavigator = () => {
       <LocationStack.Screen name="Locations" component={LocationListScreen} />
       <LocationStack.Screen name="LocationDetail" component={LocationDetailsScreen} />
       <LocationStack.Screen name="LocationForm" component={LocationFormScreen} />
+      <LocationStack.Screen name="LocationView" component={LocationGraphScreen} />
     </LocationStack.Navigator>
   );
 };

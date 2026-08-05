@@ -8,6 +8,7 @@ import { GalleryRelationSchema, GallerySchema } from './GallerySchemas'; // Adju
 import { ItemJourneySchema } from './ItemJourneySchemas'; // Adjusted path
 import { ItemSchema } from './ItemSchemas'; // Adjusted path
 import { LocationSchema } from './LocationSchemas'; // Adjusted path
+import { LocationRelationSchema } from './LocationRelationSchemas';
 import { NoteSchema } from './NoteSchemas'; // Adjusted path
 import { SceneSchema } from './SceneSchemas'; // Adjusted path
 import { StorySchema } from './StorySchemas'; // Adjusted path
@@ -47,6 +48,8 @@ export const FullStoryExportSchema = z.object({
     // essa adição é puramente aditiva, não muda a forma de nenhum campo existente.
     storySchemaFields: z.array(StorySchemaFieldSchema).optional(),
     attributeValues: z.array(AttributeValueSchema).optional(),
+    // Mesmo motivo: exports gerados antes desta feature existir continuam importáveis.
+    locationRelations: z.array(LocationRelationSchema).optional(),
     serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
     // Ausente em exports de antes deste campo existir - `migrateStoryExport` normaliza para
     // `CURRENT_STORY_FORMAT_VERSION` antes desta validação rodar, então o default aqui é só

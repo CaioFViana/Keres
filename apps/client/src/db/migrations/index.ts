@@ -6,6 +6,7 @@ import migration_2 from './0001_lush_pandemic';
 import migration_3 from './0002_amazing_dragon_man';
 import migration_4 from './0003_strong_may_parker';
 import migration_5 from './0004_familiar_richard_fisk';
+import migration_6 from './0005_omniscient_dreadnoughts';
 
 
 const migrations = [
@@ -14,6 +15,7 @@ const migrations = [
   { id: 3, name: '0002_amazing_dragon_man', run: migration_3 },
   { id: 4, name: '0003_strong_may_parker', run: migration_4 },
   { id: 5, name: '0004_familiar_richard_fisk', run: migration_5 },
+  { id: 6, name: '0005_omniscient_dreadnoughts', run: migration_6 },
 ];
 
 export default migrations;

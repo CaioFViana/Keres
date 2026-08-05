@@ -11,6 +11,7 @@ export * from './galleryRelations';
 export * from './itemJourneys';
 export * from './items';
 export * from './locations';
+export * from './locationRelations';
 export * from './notes';
 export * from './noteRelations';
 export * from './operationLogs';

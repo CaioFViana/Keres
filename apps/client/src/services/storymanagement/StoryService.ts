@@ -27,6 +27,8 @@ import {
   items,
   LocationInsert,
   locations,
+  LocationRelationInsert,
+  locationRelations,
   LocationSelect,
   NoteInsert,
   NoteRelationInsert,
@@ -631,6 +633,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
       const [
         storyChapters, storyScenes, storyChoices, storyCharacters, storyLocations,
+        storyLocationRelations,
         storyWorldRules, storyNotes, storyNoteRelations, storyTags, storyTagRelations,
         storySuggestions, storyCharacterRelations, storyCharacterScenes, storyGalleryItems,
         storyGalleryRelations, storyItems, storyItemJourneys,
@@ -641,6 +644,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.choices.findMany({ where: belongsToStory(choices) }),
         db.query.characters.findMany({ where: belongsToStory(characters) }),
         db.query.locations.findMany({ where: belongsToStory(locations) }),
+        db.query.locationRelations.findMany({ where: belongsToStory(locationRelations) }),
         db.query.worldRules.findMany({ where: belongsToStory(worldRules) }),
         db.query.notes.findMany({ where: belongsToStory(notes) }),
         db.query.noteRelations.findMany({ where: belongsToStory(noteRelations) }),
@@ -664,6 +668,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         choices: storyChoices,
         characters: storyCharacters,
         locations: storyLocations,
+        locationRelations: storyLocationRelations,
         worldRules: storyWorldRules,
         notes: storyNotes,
         noteRelations: storyNoteRelations,
@@ -818,6 +823,23 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             deletedAt: null,
           };
           await tx.insert(locations).values(locationToInsert).run();
+        }
+
+        // 6.1 Process LocationRelations (Optional) - depois de Locations de propósito, ver
+        // comentário equivalente em StoryExportImportService.ts (API).
+        if (fullStoryData.locationRelations) {
+          for (const locationRelation of fullStoryData.locationRelations) {
+            const locationRelationToInsert: LocationRelationInsert = {
+              ...locationRelation,
+              storyId: locationRelation.storyId,
+              createdAt: new Date(locationRelation.createdAt),
+              updatedAt: new Date(),
+              version: locationRelation.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(locationRelations).values(locationRelationToInsert).run();
+          }
         }
 
         // 7. Process WorldRules

@@ -1,6 +1,6 @@
 import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient } from '../../db';
+import { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import {
   AttributeValueInsert,
   attributeValues,
@@ -81,28 +81,43 @@ import {
  * a tombstone around only lets its (often fixed, e.g. example-story) ID collide with a
  * future re-creation. See deleteStory for the server-notification step this follows.
  */
+/**
+ * Deletes every child-table row for a story, without touching the `stories` row itself.
+ * Shared by `purgeStoryLocally` (real deletion, which deletes the story row right after this)
+ * and `importFullStory` (defensive: a story ID about to be imported was just confirmed to have
+ * no `stories` row, but earlier partial/failed imports or deletions - see the bug this fixed,
+ * `locationRelations`/`attributeValues`/`storySchemaFields` were missing from this list until
+ * now - could still have left orphaned child rows behind under the same ID).
+ */
+async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string): Promise<void> {
+  await tx.delete(attributeValues).where(eq(attributeValues.storyId, storyId)).run();
+  await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
+  await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
+  await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
+  await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
+  await tx.delete(choices).where(eq(choices.storyId, storyId)).run();
+  await tx.delete(galleryRelations).where(eq(galleryRelations.storyId, storyId)).run();
+  await tx.delete(galleries).where(eq(galleries.storyId, storyId)).run();
+  await tx.delete(itemJourneys).where(eq(itemJourneys.storyId, storyId)).run();
+  await tx.delete(items).where(eq(items.storyId, storyId)).run();
+  await tx.delete(locationRelations).where(eq(locationRelations.storyId, storyId)).run();
+  await tx.delete(locations).where(eq(locations.storyId, storyId)).run();
+  await tx.delete(noteRelations).where(eq(noteRelations.storyId, storyId)).run();
+  await tx.delete(notes).where(eq(notes.storyId, storyId)).run();
+  await tx.delete(operationLogs).where(eq(operationLogs.storyId, storyId)).run();
+  await tx.delete(scenes).where(eq(scenes.storyId, storyId)).run();
+  await tx.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
+  await tx.delete(storySchemaFields).where(eq(storySchemaFields.storyId, storyId)).run();
+  await tx.delete(suggestions).where(eq(suggestions.storyId, storyId)).run();
+  await tx.delete(syncConflicts).where(eq(syncConflicts.storyId, storyId)).run();
+  await tx.delete(tagRelations).where(eq(tagRelations.storyId, storyId)).run();
+  await tx.delete(tags).where(eq(tags.storyId, storyId)).run();
+  await tx.delete(worldRules).where(eq(worldRules.storyId, storyId)).run();
+}
+
 async function purgeStoryLocally(db: AppDrizzleClient, storyId: string): Promise<void> {
   await db.transaction(async (tx) => {
-    await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
-    await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
-    await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
-    await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
-    await tx.delete(choices).where(eq(choices.storyId, storyId)).run();
-    await tx.delete(galleryRelations).where(eq(galleryRelations.storyId, storyId)).run();
-    await tx.delete(galleries).where(eq(galleries.storyId, storyId)).run();
-    await tx.delete(itemJourneys).where(eq(itemJourneys.storyId, storyId)).run();
-    await tx.delete(items).where(eq(items.storyId, storyId)).run();
-    await tx.delete(locations).where(eq(locations.storyId, storyId)).run();
-    await tx.delete(noteRelations).where(eq(noteRelations.storyId, storyId)).run();
-    await tx.delete(notes).where(eq(notes.storyId, storyId)).run();
-    await tx.delete(operationLogs).where(eq(operationLogs.storyId, storyId)).run();
-    await tx.delete(scenes).where(eq(scenes.storyId, storyId)).run();
-    await tx.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
-    await tx.delete(suggestions).where(eq(suggestions.storyId, storyId)).run();
-    await tx.delete(syncConflicts).where(eq(syncConflicts.storyId, storyId)).run();
-    await tx.delete(tagRelations).where(eq(tagRelations.storyId, storyId)).run();
-    await tx.delete(tags).where(eq(tags.storyId, storyId)).run();
-    await tx.delete(worldRules).where(eq(worldRules.storyId, storyId)).run();
+    await deleteStoryChildRows(tx, storyId);
     await tx.delete(stories).where(eq(stories.id, storyId)).run();
   });
 }
@@ -700,6 +715,14 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
     async importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, localMediaPaths?: Map<string, string>): Promise<string> {
       return db.transaction(async (tx) => {
+        // Defensive: the caller already confirmed there's no `stories` row for this id (the
+        // "already imported" check in ImportExportScreen/ExampleStoryService), but that alone
+        // doesn't guarantee a clean slate - orphaned child rows from an interrupted import or
+        // a deletion made before deleteStoryChildRows covered every table would collide with
+        // the fresh inserts below (e.g. a stale locationRelations row hitting its UNIQUE
+        // constraint on id). Clearing first makes a retry self-healing either way.
+        await deleteStoryChildRows(tx, fullStoryData.story.id);
+
         // 1. Process Story
         const originalStory = fullStoryData.story;
         const storyToInsert: StoryInsert = {
@@ -1032,7 +1055,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // 17. Process NoteRelations
         if (fullStoryData.noteRelations) {
           for (const noteRelation of fullStoryData.noteRelations) {
-            console.log(noteRelation)
             const noteRelationToInsert: NoteRelationInsert = {
               ...noteRelation,
               storyId: noteRelation.storyId,

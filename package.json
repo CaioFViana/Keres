@@ -21,6 +21,7 @@
     "packages/*"
   ],
   "patchedDependencies": {
-    "expo-sqlite@16.0.10": "patches/expo-sqlite@16.0.10.patch"
+    "expo-sqlite@16.0.10": "patches/expo-sqlite@16.0.10.patch",
+    "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch"
   }
 }

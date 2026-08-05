@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol, net, session } from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -46,6 +46,11 @@ function withIsolationHeaders(response: Response): Response {
   const headers = new Headers(response.headers);
   headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+  // Every rebuild of apps/client changes CLIENT_DIST's contents on disk under the same
+  // app:// URLs (only the hashed JS filenames referenced *from* index.html change - index.html
+  // itself doesn't). Without this, Chromium's HTTP cache can keep serving a stale index.html
+  // (and whatever entry-<hash>.js it references) across reloads, silently hiding new builds.
+  headers.set('Cache-Control', 'no-store');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -170,7 +175,15 @@ function registerMediaIpcHandlers() {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // `Cache-Control: no-store` (withIsolationHeaders above) stops *new* responses from being
+  // cached, but doesn't touch whatever Chromium already cached in a previous run under this
+  // same userData profile (HTTP cache and, separately, the V8 code cache) - during active
+  // development that's exactly the "why am I still seeing the old build" trap. Only the
+  // cache, not the profile itself: story data/settings (OPFS-backed SQLite) survive this.
+  await session.defaultSession.clearCache();
+  await session.defaultSession.clearCodeCaches({});
+
   protocol.handle(SCHEME, handleAppRequest);
   registerMediaIpcHandlers();
   createWindow();

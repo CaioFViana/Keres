@@ -1,5 +1,27 @@
+diff --git a/node_modules/expo-sqlite/.bun-tag-d6a2018e22d41a2 b/.bun-tag-d6a2018e22d41a2
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/web/SyncSerializer.ts b/web/SyncSerializer.ts
+index c756b409eae1684be38347bb970e48383e133dbf..ec22bc16c0d5daa0801dd3d84d7a52a110cf53ab 100644
+--- a/web/SyncSerializer.ts
++++ b/web/SyncSerializer.ts
+@@ -27,6 +27,14 @@ export function serialize(value: any): string {
+         data: Array.from(v),
+       };
+     }
++    // Error.prototype.message/.stack are non-enumerable own properties in V8, so a plain
++    // JSON.stringify(someError) silently produces "{}" - the real SQL error text never made
++    // it across this sync channel, and the reading side's `new Error(error)` on that empty
++    // object coerced to the literal string "[object Object]" (via `new Error({}).message`
++    // running `String({})`). Surface the fields JSON.stringify would otherwise drop.
++    if (v instanceof Error) {
++      return { name: v.name, message: v.message, stack: v.stack };
++    }
+     return v;
+   });
+ }
 diff --git a/web/WorkerChannel.ts b/web/WorkerChannel.ts
-index 7fba380845e3338b7d8d253013fbf73896070cde..751b576fcc698cfebff451b70a3c1eb3150074fb 100644
+index 7fba380845e3338b7d8d253013fbf73896070cde..e1d2fd3b3741b82aaf21955bd90f00021c71d175 100644
 --- a/web/WorkerChannel.ts
 +++ b/web/WorkerChannel.ts
 @@ -40,7 +40,13 @@ export function sendWorkerResult({
@@ -17,3 +39,27 @@ index 7fba380845e3338b7d8d253013fbf73896070cde..751b576fcc698cfebff451b70a3c1eb3
      resultArray.set(resultBytes, 4);
      Atomics.store(lock, 0, RESOLVED);
    } else {
+@@ -141,7 +147,21 @@ export function invokeWorkerSync<T extends SQLiteWorkerMessageType & keyof Resul
+   const resultCopy = new Uint8Array(length);
+   resultCopy.set(new Uint8Array(resultArray.buffer, 4, length));
+   const resultJson = new TextDecoder().decode(resultCopy);
+-  const { result, error } = deserialize<{ result: ResultTypeMap[T]; error?: string }>(resultJson);
+-  if (error) throw new Error(error);
++  const { result, error } = deserialize<{
++    result: ResultTypeMap[T];
++    error?: string | { name?: string; message?: string; stack?: string };
++  }>(resultJson);
++  if (error) {
++    // See SyncSerializer.ts's serialize() - `error` is now the {name, message, stack} shape
++    // it puts on the wire for a thrown Error, not the Error itself (structured clone doesn't
++    // apply here, only JSON). Passing that object straight to `new Error(error)` would just
++    // re-produce "[object Object]" as the message; use the real message it's carrying instead.
++    const message = typeof error === 'string' ? error : error.message || JSON.stringify(error);
++    const reconstructed = new Error(message);
++    if (typeof error === 'object' && error.stack) {
++      reconstructed.stack = error.stack;
++    }
++    throw reconstructed;
++  }
+   return result;
+ }

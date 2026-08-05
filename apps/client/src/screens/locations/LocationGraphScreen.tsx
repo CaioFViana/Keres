@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import LocationNodeSheet, { LocationNodeConnection } from '../../components/LocationGraph/LocationNodeSheet';
 import LocationGraphCanvas, { LocationGraphCanvasHandle } from '../../components/LocationGraph/LocationGraphCanvas';
@@ -11,9 +11,12 @@ import { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
+import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { buildLocationGraphLayout, GraphLocationRelation, LocationGraphNode, LocationRelationKind } from '../../utils/locationGraphLayout';
+import { renderLocationGraphMapSvg } from '../../utils/locationGraphSvg';
+import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
 import { LocationsScreenNavigationProp } from './LocationListScreen';
 
 /**
@@ -32,6 +35,7 @@ const LocationGraphScreen = () => {
   const navigation = useNavigation<LocationsScreenNavigationProp>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
+  const { showNotification } = useNotificationStore();
 
   const canvasRef = useRef<LocationGraphCanvasHandle>(null);
 
@@ -40,6 +44,7 @@ const LocationGraphScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const storyId = selectedStory?.id;
 
@@ -143,6 +148,46 @@ const LocationGraphScreen = () => {
     }),
     [layout.edges.length, layout.isolatedCount, layout.nodes.length, t]
   );
+
+  const handleExport = useCallback(async () => {
+    if (!selectedStory || layout.nodes.length === 0) return;
+
+    setExporting(true);
+    try {
+      const svg = renderLocationGraphMapSvg(layout, {
+        title: selectedStory.title,
+        subtitle: graphSubtitle,
+        labels: {
+          isolated: t('location_graph_badge_isolated'),
+          contains: t('location_relation_type_contains'),
+          connectedTo: t('location_relation_type_connected_to'),
+        },
+        colors: {
+          background: colors.background,
+          surface: colors.surface,
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          border: colors.border,
+          primaryContainer: colors.primaryContainer,
+          primary: colors.primary,
+        },
+      });
+
+      const result = await deliverSvgMap(svg, buildLocationGraphMapFileName(selectedStory.title));
+      if (result.delivered) {
+        showNotification(t('location_graph_export_success', { fileName: result.fileName }), 'success');
+      } else {
+        // Sem share sheet o arquivo existe, mas o usuário não tem como alcançá-lo; dizer onde
+        // ele está é mais útil do que alegar sucesso.
+        showNotification(t('location_graph_export_no_share_target', { path: result.uri || result.fileName }), 'warning');
+      }
+    } catch (exportError) {
+      console.log('LocationGraphScreen: failed to export location graph.', exportError);
+      showNotification(t('location_graph_export_failed'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  }, [colors, layout, graphSubtitle, selectedStory, showNotification, t]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -254,6 +299,16 @@ const LocationGraphScreen = () => {
           accessibilityLabel={t('location_graph_fit')}
         >
           <Ionicons name="scan-outline" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={handleExport}
+          disabled={exporting}
+          accessibilityLabel={t('location_graph_export')}
+        >
+          {exporting
+            ? <ActivityIndicator size="small" color={colors.primary} />
+            : <Ionicons name="image-outline" size={20} color={colors.text} />}
         </TouchableOpacity>
       </View>
 

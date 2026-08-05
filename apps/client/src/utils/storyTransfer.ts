@@ -65,6 +65,11 @@ export function buildCharacterRelationMapFileName(storyTitle: string, now: Date 
   return `${slugify(storyTitle)}-relacoes-${now.toISOString().slice(0, 10)}.svg`;
 }
 
+/** Nome do arquivo de imagem do grafo de estrutura de Locations, no mesmo padrão da exportação de dados. */
+export function buildLocationGraphMapFileName(storyTitle: string, now: Date = new Date()): string {
+  return `${slugify(storyTitle)}-locations-${now.toISOString().slice(0, 10)}.svg`;
+}
+
 /** Resultado da tentativa de entregar o arquivo ao usuário. */
 export interface ExportDeliveryResult {
   /** `false` quando a plataforma não oferece nenhuma forma de compartilhar arquivo. */

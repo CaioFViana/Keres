@@ -35,6 +35,7 @@ import LocationFormScreen from '../screens/locations/LocationFormScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
+import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import NoteDetailScreen, { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
 import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
@@ -82,6 +83,7 @@ export type MainSystemDrawerParamList = {
   CharacterRelationsStack: NavigatorScreenParams<CharacterRelationsStackParamList> | undefined;
   Settings: undefined;
   StorySettings: { storyId: string };
+  StoryAnalysis: { storyId: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
   StorySelection: undefined;
@@ -663,6 +665,7 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
+      <Drawer.Screen name="StoryAnalysis" component={StoryAnalysisScreen} options={{ title: t('story_analysis_title') }} />
       <Drawer.Screen
         name="StorySelection"
         component={() => <View />} // A dummy component, as it won't be displayed

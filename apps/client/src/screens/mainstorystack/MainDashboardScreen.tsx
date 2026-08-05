@@ -11,6 +11,7 @@ import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import * as schema from '../../db/schema';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
+import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -35,6 +36,7 @@ const MainDashboardScreen = () => {
   const [galleryCount, setGalleryCount] = useState<number | undefined>(undefined);
   const [tagCount, setTagCount] = useState<number | undefined>(undefined);
   const [forkCount, setForkCount] = useState<number | undefined>(undefined); // New state for fork count
+  const [analysisIssueCount, setAnalysisIssueCount] = useState<number | undefined>(undefined);
 
   const backPressTimer = useRef<number | null>(null);
 
@@ -147,6 +149,24 @@ const MainDashboardScreen = () => {
     }
   }, [selectedStory?.id, db]);
 
+  const runAnalysis = useCallback(async () => {
+    if (!selectedStory?.id || !db) {
+      setAnalysisIssueCount(undefined);
+      return;
+    }
+    try {
+      const report = await createStoryAnalysisService(db).analyzeStory(selectedStory.id);
+      setAnalysisIssueCount(report.findings.length);
+    } catch (error) {
+      console.error('Error running story analysis:', error);
+      setAnalysisIssueCount(undefined);
+    }
+  }, [selectedStory?.id, db]);
+
+  useEffect(() => {
+    runAnalysis();
+  }, [runAnalysis]);
+
   useEffect(() => {
     fetchCounts();
   }, [fetchCounts]); // Re-run fetchCounts if selectedStory or db changes
@@ -242,6 +262,11 @@ const MainDashboardScreen = () => {
         tagCount={tagCount}
         isBranchingStory={selectedStory?.type === 'branching'}
         branchingStoryForkCount={forkCount}
+        analysisSummary={
+          selectedStory?.id && analysisIssueCount !== undefined
+            ? { issueCount: analysisIssueCount, onPress: () => navigation.navigate('StoryAnalysis', { storyId: selectedStory.id }) }
+            : undefined
+        }
       />
 
       {selectedStory?.id && (

@@ -1,0 +1,92 @@
+import { and, eq } from 'drizzle-orm';
+import { AppDrizzleClient } from '../../db';
+import * as schema from '../../db/schema';
+import { buildStoryAnalysisReport, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
+
+export interface StoryAnalysisReport {
+  findings: StoryAnalysisFinding[];
+  generatedAt: Date;
+}
+
+export interface StoryAnalysisService {
+  analyzeStory(storyId: string): Promise<StoryAnalysisReport>;
+}
+
+/**
+ * Busca tudo que as checagens de `storyAnalysisChecks.ts` precisam de uma vez só, na mesma
+ * linha do `MainDashboardScreen.fetchCounts` (consultas diretas no schema, sem passar pela
+ * camada de serviço por entidade) - é uma leitura agregada de só-contagem/cross-referência,
+ * não uma operação de escrita que precise das checagens de cada serviço individual.
+ */
+export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisService => {
+  return {
+    async analyzeStory(storyId: string): Promise<StoryAnalysisReport> {
+      const belongsToStory = (table: { storyId: any; isDeleted: any }) =>
+        and(eq(table.storyId, storyId), eq(table.isDeleted, false));
+
+      const [
+        story,
+        characters,
+        characterScenes,
+        characterRelations,
+        locations,
+        locationRelations,
+        scenes,
+        choices,
+        items,
+        itemJourneys,
+        tags,
+        tagRelations,
+        chapters,
+        notes,
+        worldRules,
+        storySchemaFields,
+        attributeValues,
+      ] = await Promise.all([
+        db.query.stories.findFirst({ where: eq(schema.stories.id, storyId) }),
+        db.select({ id: schema.characters.id, name: schema.characters.name }).from(schema.characters).where(belongsToStory(schema.characters)),
+        db.select({ characterId: schema.characterScenes.characterId }).from(schema.characterScenes).where(belongsToStory(schema.characterScenes)),
+        db.select({ charId1: schema.characterRelations.charId1, charId2: schema.characterRelations.charId2 }).from(schema.characterRelations).where(belongsToStory(schema.characterRelations)),
+        db.select({ id: schema.locations.id, name: schema.locations.name }).from(schema.locations).where(belongsToStory(schema.locations)),
+        db.select({ locationAId: schema.locationRelations.locationAId, locationBId: schema.locationRelations.locationBId }).from(schema.locationRelations).where(belongsToStory(schema.locationRelations)),
+        db.select({ id: schema.scenes.id, name: schema.scenes.name, locationId: schema.scenes.locationId, isStart: schema.scenes.isStart, isFinish: schema.scenes.isFinish }).from(schema.scenes).where(belongsToStory(schema.scenes)),
+        db.select({ id: schema.choices.id, sceneId: schema.choices.sceneId, nextSceneId: schema.choices.nextSceneId, text: schema.choices.text }).from(schema.choices).where(belongsToStory(schema.choices)),
+        db.select({ id: schema.items.id, name: schema.items.name }).from(schema.items).where(belongsToStory(schema.items)),
+        db.select({ itemId: schema.itemJourneys.itemId }).from(schema.itemJourneys).where(belongsToStory(schema.itemJourneys)),
+        db.select({ id: schema.tags.id, name: schema.tags.name }).from(schema.tags).where(belongsToStory(schema.tags)),
+        db.select({ tagId: schema.tagRelations.tagId }).from(schema.tagRelations).where(belongsToStory(schema.tagRelations)),
+        db.select({ id: schema.chapters.id, name: schema.chapters.name }).from(schema.chapters).where(belongsToStory(schema.chapters)),
+        db.select({ id: schema.notes.id, name: schema.notes.title }).from(schema.notes).where(belongsToStory(schema.notes)),
+        db.select({ id: schema.worldRules.id, name: schema.worldRules.title }).from(schema.worldRules).where(belongsToStory(schema.worldRules)),
+        db.select({ id: schema.storySchemaFields.id, entityType: schema.storySchemaFields.entityType, name: schema.storySchemaFields.name, type: schema.storySchemaFields.type, isRequired: schema.storySchemaFields.isRequired }).from(schema.storySchemaFields).where(belongsToStory(schema.storySchemaFields)),
+        db.select({ fieldId: schema.attributeValues.fieldId, entityId: schema.attributeValues.entityId, value: schema.attributeValues.value }).from(schema.attributeValues).where(belongsToStory(schema.attributeValues)),
+      ]);
+
+      if (!story) {
+        throw new Error(`Story with ID ${storyId} not found for analysis.`);
+      }
+
+      const findings = buildStoryAnalysisReport({
+        storyType: story.type,
+        characters,
+        characterScenes,
+        characterRelations,
+        locations,
+        locationRelations,
+        scenes,
+        choices,
+        items,
+        itemJourneys,
+        tags,
+        tagRelations,
+        chapters,
+        notes,
+        worldRules,
+        storySchemaFields,
+        attributeValues,
+      });
+
+      return { findings, generatedAt: new Date() };
+    },
+  };
+};

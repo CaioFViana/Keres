@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 // erases at compile time and never touches the runtime require graph.
 import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
 
-export type NavigableEntityType = 'Character' | 'Scene' | 'Location' | 'Item' | 'ItemJourney';
+export type NavigableEntityType = 'Character' | 'Scene' | 'Location' | 'Item' | 'ItemJourney' | 'Tag' | 'Choice' | 'Chapter' | 'Note' | 'WorldRule';
 
 interface EntityRoute {
   stack: keyof MainSystemDrawerParamList;
@@ -19,6 +19,11 @@ const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   Location: { stack: 'LocationsStack', screen: 'LocationDetail', paramKey: 'locationId' },
   Item: { stack: 'ItemsStack', screen: 'ItemDetail', paramKey: 'itemId' },
   ItemJourney: { stack: 'ItemJourneysStack', screen: 'ItemJourneyDetail', paramKey: 'itemJourneyId' },
+  Tag: { stack: 'TagsStack', screen: 'TagDetail', paramKey: 'tagId' },
+  Choice: { stack: 'ChoicesStack', screen: 'ChoiceDetail', paramKey: 'choiceId' },
+  Chapter: { stack: 'ChaptersStack', screen: 'ChapterDetail', paramKey: 'chapterId' },
+  Note: { stack: 'NotesStack', screen: 'NoteDetail', paramKey: 'noteId' },
+  WorldRule: { stack: 'WorldRulesStack', screen: 'WorldRuleDetail', paramKey: 'worldRuleId' },
 };
 
 /**

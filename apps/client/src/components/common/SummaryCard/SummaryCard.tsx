@@ -1,9 +1,50 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import CollapsibleCard from '../CollapsibleCard/CollapsibleCard'; // Import CollapsibleCard
+
+interface AnalysisSummaryBannerProps {
+  issueCount: number;
+  onPress: () => void;
+}
+
+/** Linha tocável no topo do card, resumindo o relatório de análise estrutural (ver
+ *  `StoryAnalysisService`) - mesma convenção de cores de `NotificationItem` (error/primary). */
+const AnalysisSummaryBanner: React.FC<AnalysisSummaryBannerProps> = ({ issueCount, onPress }) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const hasIssues = issueCount > 0;
+
+  const styles = StyleSheet.create({
+    banner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 10,
+      backgroundColor: hasIssues ? colors.error : colors.primary,
+    },
+    text: {
+      flex: 1,
+      marginLeft: 10,
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: colors.onPrimary,
+    },
+  });
+
+  return (
+    <TouchableOpacity style={styles.banner} onPress={onPress} activeOpacity={0.8}>
+      <Ionicons name={hasIssues ? 'warning-outline' : 'checkmark-circle-outline'} size={22} color={colors.onPrimary} />
+      <Text style={styles.text}>
+        {hasIssues ? t('story_analysis_issues_found', { count: issueCount }) : t('story_analysis_no_issues')}
+      </Text>
+      <Ionicons name="chevron-forward" size={20} color={colors.onPrimary} />
+    </TouchableOpacity>
+  );
+};
 
 interface SummaryTileProps {
   iconName: keyof typeof Ionicons.glyphMap; // Type for icon names
@@ -67,6 +108,8 @@ interface SummaryCardProps {
   branchingStoryForkCount?: number; // New prop for the count of forks in branching stories
   isBranchingStory?: boolean; // New prop to indicate if the summary is for a single branching story
   title?: string; // Optional title for the card, e.g., "Global Summary" or "Story Summary"
+  /** Quando presente, mostra o resumo do relatório de análise estrutural acima da grade. */
+  analysisSummary?: { issueCount: number; onPress: () => void };
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({
@@ -85,6 +128,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   branchingStoryForkCount,
   isBranchingStory, // Destructure new prop
   title,
+  analysisSummary,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -118,32 +162,37 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   }
 
   return (
-    <CollapsibleCard
-      title={
-        totalStories !== undefined
-          ? `${t('total_stories_summary', { totalStories })} - ${t('branching_summary', { count: branchingStories || 0 })}`
-          : title || t('summary')
-      }
-      initialExpanded={false}
-    >
-      <View style={styles.summaryGrid}>
-        {tilesData.map((data, index) => {
-          if (data.count !== undefined) {
-            return (
-              <SummaryTile
-                key={index}
-                iconName={data.icon as keyof typeof Ionicons.glyphMap}
-                label={data.label}
-                count={data.count}
-                backgroundColor={data.color}
-                textColor={colors.onPrimary}
-              />
-            );
-          }
-          return null;
-        })}
-      </View>
-    </CollapsibleCard>
+    <View>
+      {analysisSummary && (
+        <AnalysisSummaryBanner issueCount={analysisSummary.issueCount} onPress={analysisSummary.onPress} />
+      )}
+      <CollapsibleCard
+        title={
+          totalStories !== undefined
+            ? `${t('total_stories_summary', { totalStories })} - ${t('branching_summary', { count: branchingStories || 0 })}`
+            : title || t('summary')
+        }
+        initialExpanded={false}
+      >
+        <View style={styles.summaryGrid}>
+          {tilesData.map((data, index) => {
+            if (data.count !== undefined) {
+              return (
+                <SummaryTile
+                  key={index}
+                  iconName={data.icon as keyof typeof Ionicons.glyphMap}
+                  label={data.label}
+                  count={data.count}
+                  backgroundColor={data.color}
+                  textColor={colors.onPrimary}
+                />
+              );
+            }
+            return null;
+          })}
+        </View>
+      </CollapsibleCard>
+    </View>
   );
 };
 

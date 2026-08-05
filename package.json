@@ -19,5 +19,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "patchedDependencies": {
+    "expo-sqlite@16.0.10": "patches/expo-sqlite@16.0.10.patch"
+  }
 }

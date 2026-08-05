@@ -14,6 +14,7 @@ import VideoPreviewPlayer from '../../components/MediaPlayer/VideoPreviewPlayer'
 import { useDrizzle } from '../../db';
 import { GallerySelect } from '../../db/schemas/galleries';
 import { decodeOwnerValue, encodeOwnerValue, useGalleryOwnerOptions } from '../../hooks/useGalleryOwnerOptions';
+import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryRelationService, GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -290,9 +291,10 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
   }
 
   const mediaType = media.mediaType as MediaType;
-  const hasLocalImage = mediaType === 'image' && !!media.localPath;
-  const hasLocalVideo = mediaType === 'video' && !!media.localPath;
-  const hasLocalAudio = mediaType === 'audio' && !!media.localPath;
+  const resolvedUri = useResolvedMediaUri(media.localPath);
+  const hasLocalImage = mediaType === 'image' && !!resolvedUri;
+  const hasLocalVideo = mediaType === 'video' && !!resolvedUri;
+  const hasLocalAudio = mediaType === 'audio' && !!resolvedUri;
 
   return (
     <>
@@ -300,12 +302,12 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
         <View style={styles.preview}>
           {hasLocalImage ? (
             <TouchableOpacity activeOpacity={0.9} onPress={() => setZoomVisible(true)} style={styles.image}>
-              <Image source={{ uri: media.localPath as string }} style={styles.image} contentFit="contain" />
+              <Image source={{ uri: resolvedUri as string }} style={styles.image} contentFit="contain" />
             </TouchableOpacity>
           ) : hasLocalVideo ? (
-            <VideoPreviewPlayer key={media.hash} uri={media.localPath as string} />
+            <VideoPreviewPlayer key={media.hash} uri={resolvedUri as string} />
           ) : hasLocalAudio ? (
-            <AudioPreviewPlayer key={media.hash} uri={media.localPath as string} />
+            <AudioPreviewPlayer key={media.hash} uri={resolvedUri as string} />
           ) : (
             <View style={{ alignItems: 'center' }}>
               <Ionicons
@@ -398,7 +400,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
       {hasLocalImage && (
         <ImageZoomViewer
           visible={zoomVisible}
-          uri={media.localPath as string}
+          uri={resolvedUri as string}
           onClose={() => setZoomVisible(false)}
         />
       )}

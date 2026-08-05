@@ -64,11 +64,13 @@
     "react-native-svg": "15.12.1",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
+    "spark-md5": "^3.0.2",
     "ulid": "^3.0.1",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "@types/spark-md5": "^3.0.5",
     "drizzle-kit": "^0.31.6",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",

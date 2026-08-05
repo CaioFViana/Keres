@@ -1,0 +1,19 @@
+diff --git a/web/WorkerChannel.ts b/web/WorkerChannel.ts
+index 7fba380845e3338b7d8d253013fbf73896070cde..751b576fcc698cfebff451b70a3c1eb3150074fb 100644
+--- a/web/WorkerChannel.ts
++++ b/web/WorkerChannel.ts
+@@ -40,7 +40,13 @@ export function sendWorkerResult({
+     const resultJson = error != null ? serialize({ error }) : serialize({ result });
+     const resultBytes = new TextEncoder().encode(resultJson);
+     const length = resultBytes.length;
+-    resultArray.set(new Uint32Array([length]), 0);
++    // `resultArray` is a Uint8Array - `.set(new Uint32Array([length]), 0)` copies it as ONE
++    // element (a per-element typed copy, not a byte reinterpretation), which ToUint8-clamps
++    // to `length & 0xFF` and leaves the other 3 length bytes as zero. Any result >= 256 bytes
++    // then gets a wrong (much smaller) length back on the reading side, truncating the JSON
++    // mid-string - "Unterminated string in JSON" for anything but a tiny result. Write the
++    // length through a same-buffer Uint32Array view instead, so all 4 bytes are set correctly.
++    new Uint32Array(resultBuffer, 0, 1)[0] = length;
+     resultArray.set(resultBytes, 4);
+     Atomics.store(lock, 0, RESOLVED);
+   } else {

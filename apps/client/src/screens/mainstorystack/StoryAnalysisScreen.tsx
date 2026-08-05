@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -9,6 +9,7 @@ import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/
 import { useDrizzle } from '../../db';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createStoryAnalysisService, StoryAnalysisReport } from '../../services/storymanagement/StoryAnalysisService';
+import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
@@ -20,7 +21,6 @@ import { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAn
  * corrige um problema, volta e quer ver o relatório atualizado sem precisar recarregar à mão.
  */
 
-type StoryAnalysisScreenRouteProp = RouteProp<MainSystemDrawerParamList, 'StoryAnalysis'>;
 type StoryAnalysisNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'StoryAnalysis'>;
 
 const CATEGORY_ORDER: StoryAnalysisCategory[] = ['scenes', 'choices', 'characters', 'locations', 'items', 'tags', 'storySchema'];
@@ -39,8 +39,11 @@ const StoryAnalysisScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StoryAnalysisNavigationProp>();
-  const route = useRoute<StoryAnalysisScreenRouteProp>();
-  const { storyId } = route.params;
+  // Não usa route.params: chegar aqui direto pelo drawer (em vez de vindo do
+  // MainDashboard, que passa storyId explicitamente) navega sem nenhum param - a mesma
+  // história de selectedStory já corrigida em StorySettingsScreen.
+  const { selectedStory } = useStoryStore();
+  const storyId = selectedStory?.id;
   const drizzleDb = useDrizzle();
   const commonContainerStyles = getCommonContainerStyles(colors);
 

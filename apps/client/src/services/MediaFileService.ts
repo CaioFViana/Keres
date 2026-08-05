@@ -8,6 +8,19 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as VideoThumbnails from 'expo-video-thumbnails';
+import { Platform } from 'react-native';
+import * as webMediaStore from './webMediaStore';
+
+const isWeb = Platform.OS === 'web';
+
+/** Path em disco (sem o prefixo `desktop-media:`) onde esta mídia mora, na convenção do webMediaStore. */
+function webMediaRelativePath(storyId: string, hash: string, mimeType: string): string {
+  return `media/${storyId}/${hash}.${extensionForMimeType(mimeType)}`;
+}
+
+function webThumbnailRelativePath(storyId: string, hash: string): string {
+  return `media/${storyId}/${hash}_thumb.jpg`;
+}
 
 /**
  * Arquivos de mídia no aparelho.
@@ -103,11 +116,17 @@ async function generateVideoThumbnail(storyId: string, hash: string, videoUri: s
 export const mediaFileService = {
   /** Caminho onde o arquivo desta mídia mora (ou moraria) neste aparelho. */
   localPathFor(storyId: string, hash: string, mimeType: string): string {
+    if (isWeb) {
+      return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + webMediaRelativePath(storyId, hash, mimeType);
+    }
     return new File(storyMediaDirectory(storyId), `${hash}.${extensionForMimeType(mimeType)}`).uri;
   },
 
   /** Caminho onde a miniatura deste vídeo moraria neste aparelho. */
   thumbnailPathFor(storyId: string, hash: string): string {
+    if (isWeb) {
+      return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + webThumbnailRelativePath(storyId, hash);
+    }
     return new File(storyMediaDirectory(storyId), `${hash}_thumb.jpg`).uri;
   },
 
@@ -124,6 +143,10 @@ export const mediaFileService = {
   exists(localPath: string | null | undefined): boolean {
     if (!localPath) {
       return false;
+    }
+    if (isWeb) {
+      return localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)
+        && webMediaStore.existsSync(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length));
     }
     try {
       return new File(localPath).exists;
@@ -168,6 +191,38 @@ export const mediaFileService = {
       throw new UnsupportedMediaError(asset.mimeType, asset.name || 'unknown');
     }
 
+    if (isWeb) {
+      // O seletor web (expo-document-picker) entrega o próprio Blob escolhido em
+      // `asset.file` - não há um caminho de sistema de arquivos nativo para copiar de.
+      if (!asset.file) {
+        throw new Error(`No file data available for "${asset.name}".`);
+      }
+      const bytes = new Uint8Array(await asset.file.arrayBuffer());
+      const hash = webMediaStore.md5Hex(bytes);
+      const relativePath = webMediaRelativePath(storyId, hash, mimeType);
+
+      // Se já existe, os bytes são os mesmos por definição do endereçamento: regravar só
+      // gastaria tempo e I/O.
+      if (!webMediaStore.existsSync(relativePath)) {
+        await webMediaStore.writeBytes(relativePath, bytes);
+      }
+
+      const localPath = webMediaStore.DESKTOP_MEDIA_URI_PREFIX + relativePath;
+      const thumbnailPath = mediaType === 'video'
+        ? await generateVideoThumbnail(storyId, hash, localPath)
+        : undefined;
+
+      return {
+        mediaType,
+        mimeType,
+        fileName: asset.name || `${hash}.${extensionForMimeType(mimeType)}`,
+        hash,
+        sizeBytes: asset.size ?? bytes.byteLength,
+        localPath,
+        thumbnailPath,
+      };
+    }
+
     const source = new File(asset.uri);
     const hash = source.md5;
     if (!hash) {
@@ -200,6 +255,12 @@ export const mediaFileService = {
 
   /** Grava bytes vindos do servidor no endereço local correspondente ao hash. */
   async writeDownloaded(storyId: string, hash: string, mimeType: string, bytes: Uint8Array): Promise<string> {
+    if (isWeb) {
+      const relativePath = webMediaRelativePath(storyId, hash, mimeType);
+      await webMediaStore.writeBytes(relativePath, bytes);
+      return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + relativePath;
+    }
+
     const directory = ensureDirectory(storyMediaDirectory(storyId));
     const destination = new File(directory, `${hash}.${extensionForMimeType(mimeType)}`);
 
@@ -212,7 +273,18 @@ export const mediaFileService = {
     return destination.uri;
   },
 
-  /** Destino a passar para um download direto (`File.downloadFileAsync`). */
+  /** Lê de volta os bytes de um arquivo já local (usado ao subir para o servidor). */
+  async readBytes(localPath: string): Promise<Uint8Array> {
+    if (isWeb) {
+      if (!localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
+        throw new Error(`Not a web media path: "${localPath}".`);
+      }
+      return webMediaStore.readBytes(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length));
+    }
+    return new File(localPath).bytes();
+  },
+
+  /** Destino a passar para um download direto (`File.downloadFileAsync`) - só nativo, ver MediaSyncService. */
   destinationFor(storyId: string, hash: string, mimeType: string): File {
     const directory = ensureDirectory(storyMediaDirectory(storyId));
     return new File(directory, `${hash}.${extensionForMimeType(mimeType)}`);
@@ -220,6 +292,13 @@ export const mediaFileService = {
 
   deleteLocal(localPath: string | null | undefined): void {
     if (!localPath) {
+      return;
+    }
+    if (isWeb) {
+      if (localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
+        webMediaStore.deleteFile(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length))
+          .catch((error) => console.warn('Could not delete local media file:', localPath, error));
+      }
       return;
     }
     try {
@@ -236,6 +315,11 @@ export const mediaFileService = {
 
   /** Remove todos os arquivos de mídia de uma história (usado ao excluir a história). */
   deleteStoryMedia(storyId: string): void {
+    if (isWeb) {
+      webMediaStore.deleteDirectory(`media/${storyId}`)
+        .catch((error) => console.warn('Could not delete media directory for story:', storyId, error));
+      return;
+    }
     try {
       const directory = storyMediaDirectory(storyId);
       if (directory.exists) {

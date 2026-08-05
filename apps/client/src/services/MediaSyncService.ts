@@ -1,5 +1,6 @@
 import { MediaBlobStatusResponseType } from '@keres/shared';
 import { File } from 'expo-file-system';
+import { Platform } from 'react-native';
 import { AppDrizzleClient } from '../db';
 import { GallerySelect, ServerSelect } from '../db/schema';
 import { getServerAccessToken, isOfflineError, KeresAxiosInstance } from './apiClient';
@@ -96,13 +97,20 @@ export class MediaSyncService {
 
       try {
         const form = new FormData();
-        // O React Native aceita este formato de "arquivo" em FormData; é como ele expõe
-        // um arquivo local para multipart sem carregar tudo em memória.
-        form.append('file', {
-          uri: media.localPath as string,
-          name: media.fileName,
-          type: media.mimeType,
-        } as unknown as Blob);
+        if (Platform.OS === 'web') {
+          // Sem equivalente web para o "arquivo" `{uri, name, type}` do React Native -
+          // FormData na web só aceita um Blob de verdade.
+          const bytes = await mediaFileService.readBytes(media.localPath as string);
+          form.append('file', new Blob([bytes as BlobPart], { type: media.mimeType }), media.fileName);
+        } else {
+          // O React Native aceita este formato de "arquivo" em FormData; é como ele expõe
+          // um arquivo local para multipart sem carregar tudo em memória.
+          form.append('file', {
+            uri: media.localPath as string,
+            name: media.fileName,
+            type: media.mimeType,
+          } as unknown as Blob);
+        }
         form.append('mimeType', media.mimeType);
 
         await client.post(`/media/${storyId}/blobs/${media.hash}`, form, {
@@ -148,19 +156,34 @@ export class MediaSyncService {
           return;
         }
 
-        // Download direto para disco em vez de passar pelo axios: trazer um vídeo para a
-        // memória do JS como base64 estoura o heap em aparelhos modestos.
-        const destination = mediaFileService.destinationFor(storyId, media.hash, media.mimeType);
-        const downloaded = await File.downloadFileAsync(
-          `${baseUrl}/media/${storyId}/blobs/${media.hash}`,
-          destination,
-          { headers: this.authHeaders(server), idempotent: true }
-        );
+        let downloadedUri: string;
+        if (Platform.OS === 'web') {
+          // Sem `File.downloadFileAsync` na web (só nativo) - passa pelo axios e grava no
+          // OPFS via mediaFileService. Um vídeo inteiro passa pela memória do JS aqui, mas
+          // não há alternativa de streaming-para-disco disponível no navegador.
+          const response = await client.get(`/media/${storyId}/blobs/${media.hash}`, {
+            headers: this.authHeaders(server),
+            responseType: 'arraybuffer',
+          });
+          downloadedUri = await mediaFileService.writeDownloaded(
+            storyId, media.hash, media.mimeType, new Uint8Array(response.data)
+          );
+        } else {
+          // Download direto para disco em vez de passar pelo axios: trazer um vídeo para a
+          // memória do JS como base64 estoura o heap em aparelhos modestos.
+          const destination = mediaFileService.destinationFor(storyId, media.hash, media.mimeType);
+          const downloaded = await File.downloadFileAsync(
+            `${baseUrl}/media/${storyId}/blobs/${media.hash}`,
+            destination,
+            { headers: this.authHeaders(server), idempotent: true }
+          );
+          downloadedUri = downloaded.uri;
+        }
 
         await this.galleryService.setLocalFileState(media.id, {
-          localPath: downloaded.uri,
+          localPath: downloadedUri,
           downloadState: 'downloaded',
-          thumbnailPath: await this.ensureThumbnail(storyId, media, downloaded.uri),
+          thumbnailPath: await this.ensureThumbnail(storyId, media, downloadedUri),
         });
         summary.downloaded += 1;
       } catch (error) {

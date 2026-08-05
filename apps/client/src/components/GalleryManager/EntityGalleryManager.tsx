@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GallerySelect } from '../../db/schema';
 import { useEntityGalleryMedia } from '../../hooks/useEntityGalleryMedia';
+import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { MEDIA_TYPE_ICONS } from '../listitem/GalleryGridItem';
@@ -18,6 +19,63 @@ interface EntityGalleryManagerProps {
 }
 
 const THUMB_SIZE = 88;
+
+interface GalleryThumbnailProps {
+  item: GallerySelect;
+  styles: {
+    thumbWrapper: object;
+    thumbImage: object;
+    thumbFallback: object;
+    playOverlay: object;
+    removeBadge: object;
+  };
+  errorColor: string;
+  textSecondaryColor: string;
+  onPress: (galleryId: string) => void;
+  onRemove: (galleryId: string) => void;
+}
+
+/**
+ * Extraído do `.map()` de `renderThumb` porque resolver a URI (`useResolvedMediaUri`) é um
+ * hook - precisa de um componente próprio por item, não pode ser chamado dentro de um loop.
+ */
+const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ item, styles, errorColor, textSecondaryColor, onPress, onRemove }) => {
+  const mediaType = item.mediaType as MediaType;
+  const resolvedUri = useResolvedMediaUri(mediaType === 'video' ? item.thumbnailPath : item.localPath);
+  const hasLocalImage = mediaType === 'image' && !!resolvedUri;
+  const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
+
+  return (
+    <TouchableOpacity style={styles.thumbWrapper} onPress={() => onPress(item.id)}>
+      {hasLocalImage || hasVideoThumbnail ? (
+        <Image
+          source={{ uri: resolvedUri as string }}
+          style={styles.thumbImage}
+          contentFit="cover"
+          transition={150}
+        />
+      ) : (
+        <View style={styles.thumbFallback}>
+          <Ionicons name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'} size={28} color={textSecondaryColor} />
+        </View>
+      )}
+      {mediaType === 'video' && (
+        <View style={styles.playOverlay} pointerEvents="none">
+          <Ionicons name="play-circle" size={24} color="#ffffff" />
+        </View>
+      )}
+      <TouchableOpacity
+        style={styles.removeBadge}
+        onPress={(event) => {
+          event.stopPropagation();
+          onRemove(item.id);
+        }}
+      >
+        <Ionicons name="close-circle" size={20} color={errorColor} />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+};
 
 /**
  * Tira de mídias vinculadas a uma entidade, com um botão de adicionar.
@@ -126,42 +184,17 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ow
     },
   });
 
-  const renderThumb = (item: GallerySelect) => {
-    const mediaType = item.mediaType as MediaType;
-    const hasLocalImage = mediaType === 'image' && !!item.localPath;
-    const hasVideoThumbnail = mediaType === 'video' && !!item.thumbnailPath;
-
-    return (
-      <TouchableOpacity key={item.id} style={styles.thumbWrapper} onPress={() => onPressMedia(item.id)}>
-        {hasLocalImage || hasVideoThumbnail ? (
-          <Image
-            source={{ uri: (hasLocalImage ? item.localPath : item.thumbnailPath) as string }}
-            style={styles.thumbImage}
-            contentFit="cover"
-            transition={150}
-          />
-        ) : (
-          <View style={styles.thumbFallback}>
-            <Ionicons name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'} size={28} color={colors.textSecondary} />
-          </View>
-        )}
-        {mediaType === 'video' && (
-          <View style={styles.playOverlay} pointerEvents="none">
-            <Ionicons name="play-circle" size={24} color="#ffffff" />
-          </View>
-        )}
-        <TouchableOpacity
-          style={styles.removeBadge}
-          onPress={(event) => {
-            event.stopPropagation();
-            handleRemove(item.id);
-          }}
-        >
-          <Ionicons name="close-circle" size={20} color={colors.error} />
-        </TouchableOpacity>
-      </TouchableOpacity>
-    );
-  };
+  const renderThumb = (item: GallerySelect) => (
+    <GalleryThumbnail
+      key={item.id}
+      item={item}
+      styles={styles}
+      errorColor={colors.error}
+      textSecondaryColor={colors.textSecondary}
+      onPress={onPressMedia}
+      onRemove={handleRemove}
+    />
+  );
 
   return (
     <View style={styles.container}>

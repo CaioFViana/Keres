@@ -2,12 +2,13 @@ import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { ActivityIndicator, LogBox, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NotificationPopup from './components/common/NotificationPopup/NotificationPopup';
 import SyncConflictModal from './components/SyncConflictModal/SyncConflictModal';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
+import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
 import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
@@ -69,6 +70,11 @@ const DatabaseInitializer = () => {
     const initialize = async () => {
       console.log('DatabaseInitializer: Starting database initialization...');
       try {
+        if (Platform.OS === 'web') {
+          // Popula o cache síncrono de "o que já existe" do mediaFileService (ver
+          // webMediaStore.ts) antes de qualquer tela/sync que dependa de `exists()` rodar.
+          await hydrateWebMediaStore();
+        }
         await migrate(db);
         const initializedDrizzle = initializeDrizzle(db);
         setDrizzleClient(initializedDrizzle);

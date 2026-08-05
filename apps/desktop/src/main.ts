@@ -1,7 +1,15 @@
-import { app, BrowserWindow, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol, net } from 'electron';
 import { existsSync } from 'fs';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
+
+// package.json's "name" is "@keres/desktop" (the workspace naming convention, "@keres/*"
+// everywhere) - Electron otherwise derives the userData path directly from it, and the "/"
+// splits it into two real directories on disk. That confused Chromium's OPFS/File System
+// Access storage backend badly enough to corrupt its lock file (SandboxOriginDatabase
+// "Access denied" on .../File System/Origins/LOCK). Must be set before app.whenReady().
+app.setName('Keres');
 
 /**
  * apps/client's data layer (drizzle-orm/expo-sqlite) uses expo-sqlite's *sync* driver
@@ -99,8 +107,72 @@ async function createWindow() {
   await win.loadURL(`${SCHEME}://app/`);
 }
 
+/**
+ * Real files on disk for imported media (photos/videos), reached from the renderer through
+ * preload.ts's contextBridge - the renderer itself has no filesystem access. Unlike SQLite
+ * (which stays on OPFS via expo-sqlite's own web implementation, already working), media
+ * has no reason to live inside Chromium's sandboxed virtual filesystem on desktop: real
+ * files are visible in Explorer/Finder and trivially backed up, which is exactly the kind
+ * of native capability a browser tab can't offer but Electron can.
+ */
+const MEDIA_ROOT = path.join(app.getPath('userData'), 'media-storage');
+
+/** Resolves a "media/<storyId>/<hash>.<ext>"-shaped relative path, rejecting any escape from MEDIA_ROOT. */
+function resolveMediaPath(relativePath: string): string {
+  const resolved = path.join(MEDIA_ROOT, relativePath);
+  if (resolved !== MEDIA_ROOT && !resolved.startsWith(MEDIA_ROOT + path.sep)) {
+    throw new Error(`Refusing to access path outside media storage: "${relativePath}".`);
+  }
+  return resolved;
+}
+
+function registerMediaIpcHandlers() {
+  ipcMain.handle('media:write', async (_event, relativePath: string, bytes: Uint8Array) => {
+    const filePath = resolveMediaPath(relativePath);
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, bytes);
+  });
+
+  ipcMain.handle('media:read', async (_event, relativePath: string) => {
+    const filePath = resolveMediaPath(relativePath);
+    return fs.readFile(filePath);
+  });
+
+  ipcMain.handle('media:delete-file', async (_event, relativePath: string) => {
+    await fs.rm(resolveMediaPath(relativePath), { force: true });
+  });
+
+  ipcMain.handle('media:delete-directory', async (_event, relativePath: string) => {
+    await fs.rm(resolveMediaPath(relativePath), { recursive: true, force: true });
+  });
+
+  // Lists every file as a "media/<storyId>/<file>" relative path (matching the layout
+  // webMediaRelativePath in MediaFileService.ts writes), for webMediaStore's boot-time
+  // existence cache (see hydrate() in apps/client/src/services/webMediaStore.ts).
+  ipcMain.handle('media:list-all', async () => {
+    const results: string[] = [];
+    const mediaDir = path.join(MEDIA_ROOT, 'media');
+    let storyDirs: string[];
+    try {
+      storyDirs = await fs.readdir(mediaDir);
+    } catch {
+      return results;
+    }
+    for (const storyId of storyDirs) {
+      const entries = await fs.readdir(path.join(mediaDir, storyId), { withFileTypes: true }).catch(() => []);
+      for (const entry of entries) {
+        if (entry.isFile()) {
+          results.push(`media/${storyId}/${entry.name}`);
+        }
+      }
+    }
+    return results;
+  });
+}
+
 app.whenReady().then(() => {
   protocol.handle(SCHEME, handleAppRequest);
+  registerMediaIpcHandlers();
   createWindow();
 
   app.on('activate', () => {

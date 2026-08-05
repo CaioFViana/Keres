@@ -5,6 +5,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GallerySelect } from '../../db/schemas/galleries';
+import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useTheme } from '../../theme';
 
 interface GalleryGridItemProps {
@@ -40,8 +41,9 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
   const { t } = useTranslation();
 
   const mediaType = media.mediaType as MediaType;
-  const hasLocalImage = mediaType === 'image' && !!media.localPath;
-  const hasVideoThumbnail = mediaType === 'video' && !!media.thumbnailPath;
+  const resolvedUri = useResolvedMediaUri(mediaType === 'video' ? media.thumbnailPath : media.localPath);
+  const hasLocalImage = mediaType === 'image' && !!resolvedUri;
+  const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
   const isDownloading = media.downloadState === 'pending';
   const transferFailed = media.uploadState === 'failed' || media.downloadState === 'failed';
   const pendingUpload = media.uploadState === 'pending';
@@ -117,7 +119,7 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
       <View style={styles.preview}>
         {hasLocalImage || hasVideoThumbnail ? (
           <Image
-            source={{ uri: (hasLocalImage ? media.localPath : media.thumbnailPath) as string }}
+            source={{ uri: resolvedUri as string }}
             style={styles.image}
             contentFit="cover"
             transition={150}

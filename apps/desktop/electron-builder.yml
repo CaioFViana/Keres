@@ -1,5 +1,14 @@
 appId: com.keres.desktop
 productName: Keres
+# electron-builder normally detects this from node_modules/electron/package.json relative to
+# this app, but the bun workspace hoists it to the repo root instead - apps/desktop has no
+# node_modules of its own. Keep this in sync with package.json's electron devDependency.
+electronVersion: 33.4.11
+# apps/desktop's package.json has no runtime "dependencies" (dist-electron/**/* below is
+# plain compiled JS, no native modules) - this step would otherwise shell out to npm to
+# install/rebuild production deps, which breaks in this bun workspace (npm can't resolve the
+# "workspace:*" specifiers used elsewhere in the monorepo) and isn't needed regardless.
+npmRebuild: false
 directories:
   output: release
 files:
@@ -17,8 +26,17 @@ extraResources:
 # pre-generated multi-resolution icon files are needed.
 win:
   icon: ../client/assets/images/icon.png
+  target:
+    - nsis # installer
+    - portable # single .exe, no installation
 mac:
   icon: ../client/assets/images/icon.png
+  category: public.app-category.productivity
+  target:
+    - dmg
 linux:
   icon: ../client/assets/images/icon.png
-  target: AppImage
+  category: Office
+  target:
+    - AppImage
+    - flatpak

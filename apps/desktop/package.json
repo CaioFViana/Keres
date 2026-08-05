@@ -8,7 +8,10 @@
     "build:main": "tsc -p tsconfig.json",
     "build": "bun run build:client && bun run build:main",
     "start": "bun run build && electron .",
-    "package": "bun run build && electron-builder"
+    "package": "bun run build && electron-builder",
+    "package:win": "bun run build && electron-builder --win",
+    "package:mac": "bun run build && electron-builder --mac",
+    "package:linux": "bun run build && electron-builder --linux"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

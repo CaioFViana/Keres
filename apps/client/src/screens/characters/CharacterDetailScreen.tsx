@@ -14,17 +14,17 @@ import CustomAttributeDetailFields from '../../components/common/CustomAttribute
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
+import TagChipList from '../../components/common/TagChipList/TagChipList';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import ItemCharacterManager from '../../components/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
 import NoteManager from '../../components/NoteManager'; // Import NoteManager
-import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema'; // For available scenes
 import { CharacterSelect } from '../../db/schemas/characters';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
@@ -465,10 +465,11 @@ const CharacterDetailScreen = () => {
       <DetailField label={t('weaknesses')} value={character.weaknesses || t('common_na')} />
       <DetailField label={t('biography')} value={character.biography || t('common_na')} />
       <DetailField label={t('planned_timeline')} value={character.plannedTimeline || t('common_na')} />
-      <DetailField label={t('is_favorite')} value={character.isFavorite ? t('common_yes') : t('common_no')} />
-      <DetailField label={t('extra_notes')} value={character.extraNotes || t('common_na')} />
 
       <CustomAttributeDetailFields storyId={character.storyId} entityType="Character" entityId={characterId} />
+
+      <DetailField label={t('is_favorite')} value={character.isFavorite ? t('common_yes') : t('common_no')} />
+      <DetailField label={t('extra_notes')} value={character.extraNotes || t('common_na')} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager

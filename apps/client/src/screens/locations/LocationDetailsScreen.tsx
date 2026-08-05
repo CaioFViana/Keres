@@ -10,18 +10,18 @@ import CustomAttributeDetailFields from '../../components/common/CustomAttribute
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
+import TagChipList from '../../components/common/TagChipList/TagChipList';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
 import LocationItemManager from '../../components/LocationManager/LocationItemManager'; // Import LocationItemManager
 import LocationSceneManager from '../../components/LocationManager/LocationSceneManager'; // Import LocationSceneManager
-import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { CharacterService, createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
@@ -330,9 +330,10 @@ const LocationDetailsScreen = () => {
       <DetailField label={t('field_climate')} value={location.climate || t('common_na')} />
       <DetailField label={t('field_culture')} value={location.culture || t('common_na')} />
       <DetailField label={t('field_politics')} value={location.politics || t('common_na')} />
-      <DetailField label={t('extra_notes')} value={location.extraNotes || t('common_na')} />
 
       <CustomAttributeDetailFields storyId={location.storyId} entityType="Location" entityId={locationId} />
+
+      <DetailField label={t('extra_notes')} value={location.extraNotes || t('common_na')} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager

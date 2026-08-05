@@ -7,16 +7,16 @@ import CustomAttributeDetailFields from '../../components/common/CustomAttribute
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
+import TagChipList from '../../components/common/TagChipList/TagChipList';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import ItemJourneyTimeline from '../../components/ItemJourney/ItemJourneyTimeline';
 import NoteManager from '../../components/NoteManager';
-import TagChipList from '../../components/common/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { CharacterSelect, ItemSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createItemService } from '../../services/storymanagement/ItemService';
 import { useStoryStore } from '../../state/storyStore';
@@ -169,10 +169,11 @@ const ItemDetailScreen = () => {
       <DetailField label={t('category')} value={item.category || t('common_na')} />
       <DetailField label={t('initial_state')} value={item.initialState || t('common_na')} />
       <DetailField label={t('character_owner')} value={owner?.name || t('common_na')} />
-      <DetailField label={t('extra_notes')} value={item.extraNotes || t('common_na')} />
-      <DetailField label={t('is_favorite')} value={item.isFavorite ? t('common_yes') : t('common_no')} />
 
       <CustomAttributeDetailFields storyId={item.storyId} entityType="Item" entityId={itemId} />
+
+      <DetailField label={t('extra_notes')} value={item.extraNotes || t('common_na')} />
+      <DetailField label={t('is_favorite')} value={item.isFavorite ? t('common_yes') : t('common_no')} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager

@@ -16,7 +16,6 @@ import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadat
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TagChipList from '../../components/common/TagChipList/TagChipList'; // Import TagChipList
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import ItemSceneManager from '../../components/ItemManager/ItemSceneManager'; // Import ItemSceneManager
 import NoteRelationManager from '../../components/NoteManager/NoteRelationManager'; // Import NoteRelationManager
 import SceneNavigationControls from '../../components/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
@@ -25,6 +24,7 @@ import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { ChapterService, createChapterService } from '../../services/storymanagement/ChapterService'; // Import ChapterService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
@@ -37,8 +37,8 @@ import { useCharacterStore } from '../../state/characterStore'; // Import useCha
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ScenesScreenNavigationProp } from './SceneListScreen';
 
 // Define the parameter list for this screen
@@ -405,10 +405,11 @@ const SceneDetailScreen = () => {
       )}
       <TagChipList tags={sceneTags} />
       <DetailField label={t('summary')} value={scene.summary || t('common_na')} />
-      <DetailField label={t('is_favorite')} value={scene.isFavorite ? t('common_yes') : t('common_no')} />
-      <DetailField label={t('extra_notes')} value={scene.extraNotes || t('common_na')} />
 
       <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
+
+      <DetailField label={t('is_favorite')} value={scene.isFavorite ? t('common_yes') : t('common_no')} />
+      <DetailField label={t('extra_notes')} value={scene.extraNotes || t('common_na')} />
 
       {location && (
         <>

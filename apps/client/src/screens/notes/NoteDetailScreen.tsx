@@ -12,12 +12,12 @@ import RelatedEntitiesList from '../../components/common/RelatedEntitiesList/Rel
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TagChipList from '../../components/common/TagChipList/TagChipList';
 import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
 import { createNoteService } from '../../services/storymanagement/NoteService';
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
@@ -281,9 +281,10 @@ const NoteDetailScreen = () => {
       <TagChipList tags={noteTags} />
 
       <DetailField label={t('body')} value={note.body || t('common_na')} />
-      <DetailField label={t('extra_notes')} value={note.extraNotes || t('common_na')} />
 
       <CustomAttributeDetailFields storyId={note.storyId} entityType="Note" entityId={noteId} />
+
+      <DetailField label={t('extra_notes')} value={note.extraNotes || t('common_na')} />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager

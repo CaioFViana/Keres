@@ -3,13 +3,13 @@ import CustomAttributeDetailFields from '@/src/components/common/CustomAttribute
 import DetailField from '@/src/components/common/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '@/src/components/common/ScreenState/ScreenState';
-import NoteManager from '@/src/components/NoteManager';
 import TagChipList from '@/src/components/common/TagChipList/TagChipList'; // Import TagChipList
+import NoteManager from '@/src/components/NoteManager';
 import { useDrizzle } from '@/src/db';
 import { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createLocationService, LocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService, SceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
@@ -22,7 +22,7 @@ import { Location } from '@keres/shared/entities/Location'; // Import Location e
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ChaptersScreenNavigationProp } from './ChapterListScreen';
 
 // Define the parameter list for this screen
@@ -239,10 +239,12 @@ const ChapterDetailScreen = () => {
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={chapterTags} />
       <DetailField label={t('summary')} value={chapter.summary || t('common_na')} />
+
+      <CustomAttributeDetailFields storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} />
+
       <DetailField label={t('is_favorite')} value={chapter.isFavorite ? t('common_yes') : t('common_no')} />
       <DetailField label={t('extra_notes')} value={chapter.extraNotes || t('common_na')} />
 
-      <CustomAttributeDetailFields storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} />
 
       <ChapterSceneManager
         currentChapterId={chapterId}

@@ -4,8 +4,8 @@ import { cors } from '@elysiajs/cors';
 import { jwt } from '@elysiajs/jwt';
 import { staticPlugin } from '@elysiajs/static';
 import { swagger } from '@elysiajs/swagger';
-import { existsSync } from 'fs';
 import { Elysia, t } from 'elysia';
+import { existsSync } from 'fs';
 import * as path from 'path';
 import { env } from './config/env';
 import { adminRoutes } from './modules/admin/admin.route';
@@ -118,7 +118,7 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
         username: t.String(),
       })
     }),
-  )
+  ).use(cors())
   .derive(async ({ jwt, headers, set, cookie }) => {
     let token: string | null | undefined = headers['authorization']?.startsWith('Bearer ') ? headers['authorization'].slice(7) : null;
 

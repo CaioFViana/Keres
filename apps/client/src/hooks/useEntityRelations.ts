@@ -2,7 +2,6 @@ import { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities
 import { TagRelationEntities } from '@keres/shared/entities/Tag';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schema';
 import { createNoteRelationService, SaveNoteRelation } from '../services/storymanagement/NoteRelationService';
@@ -12,6 +11,7 @@ import { createTagService } from '../services/storymanagement/TagService';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { AppAlert } from '../utils/AppAlert';
 
 export interface UseEntityRelationsOptions {
   /** The entity these relations hang off, e.g. `'WorldRule'`. */
@@ -190,7 +190,7 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
   const saveNoteRelation = useCallback(
     async (relation: SaveNoteRelation) => {
       if (!services || !storyId || !userId) {
-        Alert.alert(t('error'), t('service_not_initialized'));
+        AppAlert.alert(t('error'), t('service_not_initialized'));
         return;
       }
       try {
@@ -202,10 +202,10 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
             : [...prev, saved];
         });
         entityEventEmitter.emit('note_relation_changed', storyId, entityId);
-        Alert.alert(t('success'), t('note_relation_saved_successfully'));
+        AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
       } catch (err) {
         console.error('Failed to save note relation:', err);
-        Alert.alert(t('error'), t('failed_to_save_note_relation'));
+        AppAlert.alert(t('error'), t('failed_to_save_note_relation'));
       }
     },
     [services, storyId, userId, entityId, t],
@@ -214,21 +214,21 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
   const deleteNoteRelation = useCallback(
     async (relationId: string) => {
       if (!services || !storyId || !userId) {
-        Alert.alert(t('error'), t('service_not_initialized'));
+        AppAlert.alert(t('error'), t('service_not_initialized'));
         return;
       }
       try {
         const success = await services.noteRelation.deleteNoteRelation(userId, relationId);
         if (!success) {
-          Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+          AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
           return;
         }
         setNoteRelations((prev) => prev.filter((r) => r.id !== relationId));
         entityEventEmitter.emit('note_relation_changed', storyId, entityId);
-        Alert.alert(t('success'), t('note_relation_deleted_successfully'));
+        AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
       } catch (err) {
         console.error('Failed to delete note relation:', err);
-        Alert.alert(t('error'), t('failed_to_delete_note_relation'));
+        AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
       }
     },
     [services, storyId, userId, entityId, t],

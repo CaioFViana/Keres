@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AppAlertHost from './components/common/AppAlertHost/AppAlertHost';
 import NotificationPopup from './components/common/NotificationPopup/NotificationPopup';
 import SyncConflictModal from './components/SyncConflictModal/SyncConflictModal';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
@@ -42,6 +43,9 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
         usuário estiver, não numa aba que ele talvez nunca abra.
       */}
       <SyncConflictModal />
+      {/* Mesmo motivo do SyncConflictModal acima: AppAlert.alert() precisa poder ser chamado
+          de qualquer tela, então o Modal que o renderiza mora aqui, não em cada tela. */}
+      <AppAlertHost />
     </View>
   );
 };

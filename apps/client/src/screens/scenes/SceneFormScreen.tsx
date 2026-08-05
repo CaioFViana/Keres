@@ -8,7 +8,7 @@ import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import Button from '../../components/common/Button/Button';
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
@@ -31,6 +31,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { AppAlert } from '../../utils/AppAlert';
 
 type SceneFormScreenRouteProp = RouteProp<SceneStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<SceneStackParamList, 'SceneForm'>;
@@ -208,28 +209,28 @@ const SceneFormScreen = () => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert(t('error'), t('name_required'));
+      AppAlert.alert(t('error'), t('name_required'));
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
     if (missingRequiredField) {
-      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!chapterId) {
-      Alert.alert(t('error'), t('chapter_required'));
+      AppAlert.alert(t('error'), t('chapter_required'));
       return;
     }
     if (!locationId) { // Validate locationId
-        Alert.alert(t('error'), t('location_required'));
+        AppAlert.alert(t('error'), t('location_required'));
         return;
     }
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!selectedStory?.id) {
-      Alert.alert(t('error'), t('no_story_selected'));
+      AppAlert.alert(t('error'), t('no_story_selected'));
       return;
     }
 
@@ -289,13 +290,13 @@ const SceneFormScreen = () => {
 
                 // 4. Execute batch update
                 await sceneServiceRef.current!.batchUpdateScenes(userId, selectedStory.id, batchUpdates);
-                Alert.alert(t('success'), t('scene_updated_successfully'));
+                AppAlert.alert(t('success'), t('scene_updated_successfully'));
 
             } else {
                 // --- SINGLE UPDATE LOGIC ---
                 const savedScene = await sceneServiceRef.current!.updateScene(userId, currentSceneId, sceneData);
                 savedSceneId = savedScene.id;
-                Alert.alert(t('success'), t('scene_updated_successfully'));
+                AppAlert.alert(t('success'), t('scene_updated_successfully'));
             }
         } else {
             // --- CREATE NEW SCENE LOGIC ---
@@ -305,7 +306,7 @@ const SceneFormScreen = () => {
             const savedScene = await sceneServiceRef.current!.createScene(userId, { ...sceneData, storyId: selectedStory.id, index: nextIndex });
             savedSceneId = savedScene.id;
             setCurrentSceneId(savedScene.id);
-            Alert.alert(t('success'), t('scene_created_successfully'));
+            AppAlert.alert(t('success'), t('scene_created_successfully'));
         }
 
         if (savedSceneId) {
@@ -322,7 +323,7 @@ const SceneFormScreen = () => {
 
     } catch (err) {
         console.error('Failed to save scene:', err);
-        Alert.alert(t('error'), t('failed_to_save_scene'));
+        AppAlert.alert(t('error'), t('failed_to_save_scene'));
     } finally {
         setLoading(false);
     }
@@ -330,7 +331,7 @@ const SceneFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 
@@ -358,7 +359,7 @@ const SceneFormScreen = () => {
 
   const handleSaveCharacterSceneRelation = async (relation: CharacterScene) => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !currentSceneId || !userId) {
-        Alert.alert(t('error'), t('service_not_initialized'));
+        AppAlert.alert(t('error'), t('service_not_initialized'));
         return;
     }
     try {
@@ -372,16 +373,16 @@ const SceneFormScreen = () => {
             }
         });
         entityEventEmitter.emit('character_scene_changed', selectedStory.id, currentSceneId);
-        Alert.alert(t('success'), t('character_scene_saved_successfully'));
+        AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
     } catch (error) {
-        Alert.alert(t('error'), t('failed_to_save_character_scene'));
+        AppAlert.alert(t('error'), t('failed_to_save_character_scene'));
         console.error('Failed to save character-scene relation:', error);
     }
   };
 
   const handleDeleteCharacterSceneRelation = async (relationId: string) => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !currentSceneId || !userId) {
-        Alert.alert(t('error'), t('service_not_initialized'));
+        AppAlert.alert(t('error'), t('service_not_initialized'));
         return;
     }
     try {
@@ -389,12 +390,12 @@ const SceneFormScreen = () => {
         if (success) {
             setCharacterSceneRelations(prev => prev.filter(r => r.id !== relationId));
             entityEventEmitter.emit('character_scene_changed', selectedStory.id, currentSceneId);
-            Alert.alert(t('success'), t('character_scene_deleted_successfully'));
+            AppAlert.alert(t('success'), t('character_scene_deleted_successfully'));
         } else {
-            Alert.alert(t('error'), t('failed_to_delete_character_scene'));
+            AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
         }
     } catch (error) {
-        Alert.alert(t('error'), t('failed_to_delete_character_scene'));
+        AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
         console.error('Failed to delete character-scene relation:', error);
     }
   };

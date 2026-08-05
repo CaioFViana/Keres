@@ -3,7 +3,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TextInput from '../../components/common/TextInput/TextInput';
@@ -16,6 +16,7 @@ import { createServerService } from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 const MIN_NEW_PASSWORD_LENGTH = 8;
 
@@ -77,27 +78,27 @@ const ChangePasswordScreen = () => {
     if (!server) return;
 
     if (newPassword.length < MIN_NEW_PASSWORD_LENGTH) {
-      Alert.alert(t('error'), t('new_password_too_short'));
+      AppAlert.alert(t('error'), t('new_password_too_short'));
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      Alert.alert(t('error'), t('passwords_do_not_match'));
+      AppAlert.alert(t('error'), t('passwords_do_not_match'));
       return;
     }
 
     setSaving(true);
     try {
       await userApiService.changeOwnPassword(server, currentPassword, newPassword);
-      Alert.alert(t('success'), t('password_changed_successfully'));
+      AppAlert.alert(t('success'), t('password_changed_successfully'));
       navigation.goBack();
     } catch (err: any) {
       console.error('Failed to change password:', err);
       if (isOfflineError(err)) {
-        Alert.alert(t('error'), t('server_unreachable'));
+        AppAlert.alert(t('error'), t('server_unreachable'));
       } else if (err?.response?.status === 401) {
-        Alert.alert(t('error'), t('incorrect_current_password'));
+        AppAlert.alert(t('error'), t('incorrect_current_password'));
       } else {
-        Alert.alert(t('error'), t('failed_to_change_password'));
+        AppAlert.alert(t('error'), t('failed_to_change_password'));
       }
     } finally {
       setSaving(false);

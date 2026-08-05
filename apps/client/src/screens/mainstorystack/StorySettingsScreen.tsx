@@ -4,7 +4,7 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
 import Button from '../../components/common/Button/Button';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
@@ -25,6 +25,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { themeDisplayOptions } from '../../theme/palettes'; // Import themeDisplayOptions
 import { getLanguageOptions } from '../../utils/i18n';
+import { AppAlert } from '../../utils/AppAlert';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
 
@@ -107,7 +108,7 @@ const StorySettingsScreen = () => {
             // Server not found, set story.serverId to null in DB
             await storyService().updateStory(userId!, storyId, { serverId: null });
             setServerId(null);
-            Alert.alert(t('warning'), t('server_not_found_for_story'));
+            AppAlert.alert(t('warning'), t('server_not_found_for_story'));
           }
         } else {
           setServerId(null);
@@ -189,12 +190,12 @@ const StorySettingsScreen = () => {
     if (!storyId) return;
 
     if (!title.trim()) {
-      Alert.alert(t('error'), t('title_required'));
+      AppAlert.alert(t('error'), t('title_required'));
       return;
     }
 
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 
@@ -220,12 +221,12 @@ const StorySettingsScreen = () => {
       };
 
       await storyService().updateStory(userId, storyId, storyData);
-      Alert.alert(t('success'), t('story_updated_successfully'));
+      AppAlert.alert(t('success'), t('story_updated_successfully'));
       navigation.goBack();
     } catch (err) {
       console.error('Failed to save story settings:', err);
       setError(t('failed_to_save_story_settings'));
-      Alert.alert(t('error'), t('failed_to_save_story_settings'));
+      AppAlert.alert(t('error'), t('failed_to_save_story_settings'));
     } finally {
       setLoading(false);
     }
@@ -235,7 +236,7 @@ const StorySettingsScreen = () => {
     if (!storyId || !userId || newType === type) return;
 
     if (newType === 'branching') {
-      Alert.alert(
+      AppAlert.alert(
         t('convert_to_branching_title'),
         t('convert_to_branching_message'),
         [
@@ -247,10 +248,10 @@ const StorySettingsScreen = () => {
                 setLoading(true);
                 await storyService().convertStoryType(userId, storyId, 'branching');
                 setType('branching');
-                Alert.alert(t('success'), t('story_type_converted_successfully'));
+                AppAlert.alert(t('success'), t('story_type_converted_successfully'));
               } catch (err) {
                 console.error('Failed to convert story to branching:', err);
-                Alert.alert(t('error'), t('failed_to_convert_story_type'));
+                AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
               } finally {
                 setLoading(false);
               }
@@ -274,11 +275,11 @@ const StorySettingsScreen = () => {
           const reasonLines = compatibility.reasons
             .map((r) => `• ${r.chapterName}: ${t(`linear_incompatibility_${r.kind}`)}`)
             .join('\n');
-          Alert.alert(t('cannot_convert_to_linear_title'), `${t('cannot_convert_to_linear_message')}\n\n${reasonLines}`);
+          AppAlert.alert(t('cannot_convert_to_linear_title'), `${t('cannot_convert_to_linear_message')}\n\n${reasonLines}`);
           return;
         }
 
-        Alert.alert(
+        AppAlert.alert(
           t('convert_to_linear_title'),
           t('convert_to_linear_message'),
           [
@@ -291,10 +292,10 @@ const StorySettingsScreen = () => {
                   setLoading(true);
                   await storyService().convertStoryType(userId, storyId, 'linear');
                   setType('linear');
-                  Alert.alert(t('success'), t('story_type_converted_successfully'));
+                  AppAlert.alert(t('success'), t('story_type_converted_successfully'));
                 } catch (err) {
                   console.error('Failed to convert story to linear:', err);
-                  Alert.alert(t('error'), t('failed_to_convert_story_type'));
+                  AppAlert.alert(t('error'), t('failed_to_convert_story_type'));
                 } finally {
                   setLoading(false);
                 }
@@ -306,7 +307,7 @@ const StorySettingsScreen = () => {
       } catch (err) {
         setLoading(false);
         console.error('Failed to check linear compatibility:', err);
-        Alert.alert(t('error'), t('failed_to_check_story_compatibility'));
+        AppAlert.alert(t('error'), t('failed_to_check_story_compatibility'));
       }
     })();
   };
@@ -328,15 +329,15 @@ const StorySettingsScreen = () => {
         if (selectedStory) {
           setSelectedStory({ ...selectedStory, serverId: targetServer.id });
         }
-        Alert.alert(t('success'), t('send_to_server_success'));
+        AppAlert.alert(t('success'), t('send_to_server_success'));
       } else if (result.reason === 'already_exists') {
-        Alert.alert(t('error'), t('send_to_server_already_exists'));
+        AppAlert.alert(t('error'), t('send_to_server_already_exists'));
       } else {
-        Alert.alert(t('error'), t('send_to_server_failed'));
+        AppAlert.alert(t('error'), t('send_to_server_failed'));
       }
     } catch (err) {
       console.error('Failed to send story to server:', err);
-      Alert.alert(t('error'), t('send_to_server_failed'));
+      AppAlert.alert(t('error'), t('send_to_server_failed'));
     } finally {
       setServerActionLoading(false);
     }
@@ -353,7 +354,7 @@ const StorySettingsScreen = () => {
       setSelectedPermissionType('reader');
     } catch (err) {
       console.error('Failed to add collaborator:', err);
-      Alert.alert(t('error'), t('add_collaborator_failed'));
+      AppAlert.alert(t('error'), t('add_collaborator_failed'));
     } finally {
       setServerActionLoading(false);
     }
@@ -361,7 +362,7 @@ const StorySettingsScreen = () => {
 
   const handleRemoveCollaborator = (collaborator: StoryCollaborator) => {
     if (!storyId || !linkedServer) return;
-    Alert.alert(
+    AppAlert.alert(
       t('remove_collaborator_title'),
       t('remove_collaborator_message', { username: collaborator.user?.username ?? collaborator.userId }),
       [
@@ -376,7 +377,7 @@ const StorySettingsScreen = () => {
               setCollaborators((current) => (current ?? []).filter((c) => c.userId !== collaborator.userId));
             } catch (err) {
               console.error('Failed to remove collaborator:', err);
-              Alert.alert(t('error'), t('remove_collaborator_failed'));
+              AppAlert.alert(t('error'), t('remove_collaborator_failed'));
             } finally {
               setServerActionLoading(false);
             }
@@ -389,7 +390,7 @@ const StorySettingsScreen = () => {
 
   const handleUnlinkFromServer = () => {
     if (!storyId || !userId) return;
-    Alert.alert(
+    AppAlert.alert(
       t('unlink_from_server_title'),
       t('unlink_from_server_message'),
       [
@@ -412,10 +413,10 @@ const StorySettingsScreen = () => {
               if (selectedStory) {
                 setSelectedStory({ ...selectedStory, serverId: null });
               }
-              Alert.alert(t('success'), t('unlink_from_server_success'));
+              AppAlert.alert(t('success'), t('unlink_from_server_success'));
             } catch (err) {
               console.error('Failed to unlink story from server:', err);
-              Alert.alert(t('error'), isOfflineError(err) ? t('unlink_from_server_offline') : t('unlink_from_server_failed'));
+              AppAlert.alert(t('error'), isOfflineError(err) ? t('unlink_from_server_offline') : t('unlink_from_server_failed'));
             } finally {
               setServerActionLoading(false);
             }
@@ -430,11 +431,11 @@ const StorySettingsScreen = () => {
     if (!storyId) return;
 
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 
-    Alert.alert(
+    AppAlert.alert(
       t('delete_story_title'),
       t('delete_story_message'),
       [
@@ -448,7 +449,7 @@ const StorySettingsScreen = () => {
             try {
               setLoading(true);
               await storyService().deleteStory(storyId);
-              Alert.alert(t('success'), t('story_deleted_successfully'));
+              AppAlert.alert(t('success'), t('story_deleted_successfully'));
 
               // 'StorySelection' here is a dummy drawer route that only exists to intercept
               // the drawer sidebar's tap event (see MainSystemStack) - navigating to it
@@ -469,7 +470,7 @@ const StorySettingsScreen = () => {
             } catch (err) {
               console.error('Failed to delete story:', err);
               setError(t('failed_to_delete_story'));
-              Alert.alert(t('error'), t('failed_to_delete_story'));
+              AppAlert.alert(t('error'), t('failed_to_delete_story'));
             } finally {
               setLoading(false);
             }

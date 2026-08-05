@@ -4,7 +4,7 @@ import { StackActions, useNavigation } from '@react-navigation/native'; // Impor
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Import Alert
+import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
@@ -16,6 +16,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
+import { AppAlert } from '../../utils/AppAlert';
 
 type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
 
@@ -47,7 +48,7 @@ const SettingsScreen = () => {
   };
 
   const handleResetApplication = () => {
-    Alert.alert(
+    AppAlert.alert(
       t('reset_application_title'),
       t('reset_application_message'),
       [
@@ -73,7 +74,7 @@ const SettingsScreen = () => {
               console.log('Navigated to ColdInstallScreen.');
             } catch (error) {
               console.error('Error resetting application:', error);
-              Alert.alert(t('error'), t('reset_application_error'));
+              AppAlert.alert(t('error'), t('reset_application_error'));
             }
           },
           style: 'destructive',

@@ -3,7 +3,7 @@ import { MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import GroupedMultiSelectPill from '../../components/common/GroupedMultiSelectPill/GroupedMultiSelectPill';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
@@ -22,6 +22,7 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { AppAlert } from '../../utils/AppAlert';
 
 const MEDIA_TYPE_ICONS: Record<MediaType, keyof typeof Ionicons.glyphMap> = {
   image: 'image-outline',
@@ -167,7 +168,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
       return;
     }
 
-    Alert.alert(
+    AppAlert.alert(
       t('delete_media_title'),
       t('delete_media_message'),
       [

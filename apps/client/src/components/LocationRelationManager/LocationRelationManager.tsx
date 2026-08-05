@@ -3,7 +3,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useTheme } from '../../theme';
@@ -11,6 +11,7 @@ import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { relationSectionStyleDefs } from '../RelationManager/relationSectionStyles';
 import Button from '../common/Button/Button';
 import LocationPickerModal from './LocationPickerModal';
+import { AppAlert } from '../../utils/AppAlert';
 
 interface LocationRelationManagerProps {
   currentLocationId: string;
@@ -129,14 +130,14 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
   };
 
   const handleRemoveParent = () => {
-    Alert.alert(t('remove_parent_location_title'), t('remove_parent_location_message'), [
+    AppAlert.alert(t('remove_parent_location_title'), t('remove_parent_location_message'), [
       { text: t('cancel'), style: 'cancel' },
       { text: t('remove'), style: 'destructive', onPress: () => onSetParent(null) },
     ]);
   };
 
   const handleRemoveRelation = (relationId: string, titleKey: string, messageKey: string) => {
-    Alert.alert(t(titleKey), t(messageKey), [
+    AppAlert.alert(t(titleKey), t(messageKey), [
       { text: t('cancel'), style: 'cancel' },
       { text: t('remove'), style: 'destructive', onPress: () => onRemoveRelation(relationId) },
     ]);

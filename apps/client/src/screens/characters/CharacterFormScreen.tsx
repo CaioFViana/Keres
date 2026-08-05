@@ -5,7 +5,7 @@ import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import Button from '../../components/common/Button/Button';
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
@@ -28,6 +28,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
+import { AppAlert } from '../../utils/AppAlert';
 
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;
@@ -194,20 +195,20 @@ const CharacterFormScreen = () => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert(t('error'), t('name_required'));
+      AppAlert.alert(t('error'), t('name_required'));
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
     if (missingRequiredField) {
-      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!selectedStory?.id) {
-      Alert.alert(t('error'), t('no_story_selected'));
+      AppAlert.alert(t('error'), t('no_story_selected'));
       return;
     }
 
@@ -235,10 +236,10 @@ const CharacterFormScreen = () => {
 
       if (isEditing) {
         savedCharacter = await characterServiceRef.current!.updateCharacter(userId, currentCharacterId!, characterData);
-        Alert.alert(t('success'), t('character_updated_successfully'));
+        AppAlert.alert(t('success'), t('character_updated_successfully'));
       } else {
         savedCharacter = await characterServiceRef.current!.createCharacter(userId, { ...characterData, storyId: selectedStory.id });
-        Alert.alert(t('success'), t('character_created_successfully'));
+        AppAlert.alert(t('success'), t('character_created_successfully'));
         setCurrentCharacterId(savedCharacter.id); // Set the ID for the newly created character
       }
 
@@ -262,7 +263,7 @@ const CharacterFormScreen = () => {
 
     } catch (err) {
       console.error('Failed to save character:', err);
-      Alert.alert(t('error'), t('failed_to_save_character'));
+      AppAlert.alert(t('error'), t('failed_to_save_character'));
     } finally {
       setLoading(false);
     }
@@ -270,7 +271,7 @@ const CharacterFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 
@@ -298,7 +299,7 @@ const CharacterFormScreen = () => {
 
   const handleSaveRelation = async (relation: CharacterRelation) => {
     if (!characterRelationServiceRef.current || !selectedStory?.id || !currentCharacterId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
+      AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
@@ -312,16 +313,16 @@ const CharacterFormScreen = () => {
         }
       });
       entityEventEmitter.emit('character_relation_changed', selectedStory.id, currentCharacterId);
-      Alert.alert(t('success'), t('relation_saved_successfully'));
+      AppAlert.alert(t('success'), t('relation_saved_successfully'));
     } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_relation'));
+      AppAlert.alert(t('error'), t('failed_to_save_relation'));
       console.error('Failed to save character relation:', error);
     }
   };
 
   const handleDeleteRelation = async (relationId: string) => {
     if (!characterRelationServiceRef.current || !selectedStory?.id || !currentCharacterId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
+      AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
@@ -329,12 +330,12 @@ const CharacterFormScreen = () => {
       if (success) {
         setCharacterRelations(prev => prev.filter(r => r.id !== relationId));
         entityEventEmitter.emit('character_relation_changed', selectedStory.id, currentCharacterId);
-        Alert.alert(t('success'), t('relation_deleted_successfully'));
+        AppAlert.alert(t('success'), t('relation_deleted_successfully'));
       } else {
-        Alert.alert(t('error'), t('failed_to_delete_relation'));
+        AppAlert.alert(t('error'), t('failed_to_delete_relation'));
       }
     } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_relation'));
+      AppAlert.alert(t('error'), t('failed_to_delete_relation'));
       console.error('Failed to delete character relation:', error);
     }
   };

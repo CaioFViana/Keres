@@ -5,7 +5,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db';
 import { createServerService } from '../../services/ServerService';
@@ -17,6 +17,7 @@ import { useSummaryStore } from '../../state/summaryStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles, useThemeColors } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -187,7 +188,7 @@ const StorySelectionScreen = () => {
       });
     } catch (error) {
       console.error(t('error_fetching_summary'), error);
-      Alert.alert(t('error'), t('failed_to_load_summary_data'));
+      AppAlert.alert(t('error'), t('failed_to_load_summary_data'));
     }
   }, [storyService, updateSummary, t]);
 
@@ -224,7 +225,7 @@ const StorySelectionScreen = () => {
       updateStoryFavoriteStatus(storyId, !currentFavoriteStatus);
     } catch (error) {
       console.error('Error toggling favorite status:', error);
-      Alert.alert(t('error'), t('failed_to_update_favorite_status'));
+      AppAlert.alert(t('error'), t('failed_to_update_favorite_status'));
     }
   };
 

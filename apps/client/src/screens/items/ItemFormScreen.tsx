@@ -7,7 +7,7 @@ import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import NoteManager from '../../components/NoteManager';
@@ -26,6 +26,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { AppAlert } from '../../utils/AppAlert';
 
 type ItemFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemForm'>;
 type ItemFormScreenNavigationProp = NativeStackNavigationProp<ItemStackParamList, 'ItemForm'>;
@@ -143,16 +144,16 @@ const ItemFormScreen = () => {
 
   const handleSave = async () => {
     if (!name.trim()) { // Changed from text.trim()
-      Alert.alert(t('error'), t('item_name_required')); // Changed
+      AppAlert.alert(t('error'), t('item_name_required')); // Changed
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
     if (missingRequiredField) {
-      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId || !selectedStory?.id) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 
@@ -174,12 +175,12 @@ const ItemFormScreen = () => {
       if (isEditing && currentItemId) { // Changed
         const savedItem = await itemServiceRef.current!.updateItem(userId, currentItemId, itemData); // Changed
         savedItemId = savedItem.id;
-        Alert.alert(t('success'), t('item_updated_successfully')); // Changed
+        AppAlert.alert(t('success'), t('item_updated_successfully')); // Changed
       } else {
         const savedItem = await itemServiceRef.current!.createItem(userId, { ...itemData, storyId: selectedStory.id }); // Changed
         savedItemId = savedItem.id;
         setCurrentItemId(savedItem.id);
-        Alert.alert(t('success'), t('item_created_successfully')); // Changed
+        AppAlert.alert(t('success'), t('item_created_successfully')); // Changed
       }
 
       if (savedItemId) {
@@ -195,7 +196,7 @@ const ItemFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save item:', err); // Changed
-      Alert.alert(t('error'), t('failed_to_save_item')); // Changed
+      AppAlert.alert(t('error'), t('failed_to_save_item')); // Changed
     } finally {
       setLoading(false);
     }
@@ -203,7 +204,7 @@ const ItemFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!currentItemId || !itemServiceRef.current) {

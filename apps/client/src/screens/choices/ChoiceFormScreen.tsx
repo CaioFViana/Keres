@@ -6,7 +6,7 @@ import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
@@ -22,6 +22,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { AppAlert } from '../../utils/AppAlert';
 
 type ChoiceFormScreenRouteProp = RouteProp<ChoiceStackParamList, 'ChoiceForm'>;
 type ChoiceFormScreenNavigationProp = NativeStackNavigationProp<ChoiceStackParamList, 'ChoiceForm'>;
@@ -117,19 +118,19 @@ const ChoiceFormScreen = () => {
 
   const handleSave = async () => {
     if (!text.trim()) {
-      Alert.alert(t('error'), t('text_required')); // Use text_required
+      AppAlert.alert(t('error'), t('text_required')); // Use text_required
       return;
     }
     if (!sceneId) {
-      Alert.alert(t('error'), t('scene_required'));
+      AppAlert.alert(t('error'), t('scene_required'));
       return;
     }
     if (!nextSceneId) {
-      Alert.alert(t('error'), t('next_scene_required'));
+      AppAlert.alert(t('error'), t('next_scene_required'));
       return;
     }
     if (!userId || !selectedStory?.id) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 
@@ -147,12 +148,12 @@ const ChoiceFormScreen = () => {
       if (isEditing && currentChoiceId) {
         const savedChoice = await choiceServiceRef.current!.updateChoice(userId, currentChoiceId, choiceData);
         savedChoiceId = savedChoice.id;
-        Alert.alert(t('success'), t('choice_updated_successfully'));
+        AppAlert.alert(t('success'), t('choice_updated_successfully'));
       } else {
         const savedChoice = await choiceServiceRef.current!.createChoice(userId, { ...choiceData, storyId: selectedStory.id });
         savedChoiceId = savedChoice.id;
         setCurrentChoiceId(savedChoice.id);
-        Alert.alert(t('success'), t('choice_created_successfully'));
+        AppAlert.alert(t('success'), t('choice_created_successfully'));
       }
 
       if (savedChoiceId) {
@@ -167,7 +168,7 @@ const ChoiceFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save choice:', err);
-      Alert.alert(t('error'), t('failed_to_save_choice'));
+      AppAlert.alert(t('error'), t('failed_to_save_choice'));
     } finally {
       setLoading(false);
     }
@@ -175,7 +176,7 @@ const ChoiceFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!currentChoiceId || !choiceServiceRef.current) {

@@ -5,7 +5,7 @@ import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item 
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '../../components/common/DetailField/DetailField';
 import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
@@ -37,6 +37,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { LocationsScreenNavigationProp } from './LocationListScreen';
+import { AppAlert } from '../../utils/AppAlert';
 
 export type LocationDetailScreenParamList = {
   LocationDetail: { locationId: string };
@@ -303,7 +304,7 @@ const LocationDetailsScreen = () => {
     try {
       await locationRelationServiceRef.current.setParent(userId, selectedStory.id, locationId, newParentId);
     } catch (err) {
-      Alert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
+      AppAlert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
     }
   }, [selectedStory?.id, userId, locationId, t]);
 
@@ -312,7 +313,7 @@ const LocationDetailsScreen = () => {
     try {
       await locationRelationServiceRef.current.setParent(userId, selectedStory.id, childId, locationId);
     } catch (err) {
-      Alert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
+      AppAlert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
     }
   }, [selectedStory?.id, userId, locationId, t]);
 
@@ -321,7 +322,7 @@ const LocationDetailsScreen = () => {
     try {
       await locationRelationServiceRef.current.addConnection(userId, selectedStory.id, locationId, otherLocationId);
     } catch (err) {
-      Alert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
+      AppAlert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
     }
   }, [selectedStory?.id, userId, locationId, t]);
 
@@ -330,7 +331,7 @@ const LocationDetailsScreen = () => {
     try {
       await locationRelationServiceRef.current.removeRelation(userId, relationId);
     } catch (err) {
-      Alert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_remove_relation'));
+      AppAlert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_remove_relation'));
     }
   }, [userId, t]);
 

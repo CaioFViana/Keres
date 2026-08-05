@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native'; // Import ActivityIndicator
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Import ActivityIndicator
 import Button from '../../components/common/Button/Button'; // Custom Button
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
@@ -17,6 +17,7 @@ import { userApiService } from '../../services/UserApiService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
 
@@ -58,7 +59,7 @@ const FriendshipFormScreen = () => {
         }
       } catch (error) {
         console.error('Error fetching servers for friendship form:', error);
-        Alert.alert(t('error'), t('failed_to_load_form_data'));
+        AppAlert.alert(t('error'), t('failed_to_load_form_data'));
       }
     };
     fetchServers();
@@ -68,14 +69,14 @@ const FriendshipFormScreen = () => {
 
   const handleCheckFriendTag = useCallback(async () => {
     if (!friendTag || friendTag.trim().length < 3) {
-      Alert.alert(t('error'), t('invalid_friend_id_format'));
+      AppAlert.alert(t('error'), t('invalid_friend_id_format'));
       setFriendUsername(null);
       setFriendFound(null);
       return;
     }
 
     if (!selectedServer) {
-      Alert.alert(t('error'), t('selected_server_invalid'));
+      AppAlert.alert(t('error'), t('selected_server_invalid'));
       return;
     }
 
@@ -89,14 +90,14 @@ const FriendshipFormScreen = () => {
         setFriendUsername(userDetails.username);
         setResolvedFriendUserId(userDetails.id);
         setFriendFound(true);
-        Alert.alert(t('success'), t('user_found_with_username', { username: userDetails.username }));
+        AppAlert.alert(t('success'), t('user_found_with_username', { username: userDetails.username }));
       } else {
         setFriendFound(false);
-        Alert.alert(t('error'), t('user_not_found_on_server'));
+        AppAlert.alert(t('error'), t('user_not_found_on_server'));
       }
     } catch (error) {
       console.error('Error checking friend tag:', error);
-      Alert.alert(t('error'), t('failed_to_check_user_id'));
+      AppAlert.alert(t('error'), t('failed_to_check_user_id'));
       setFriendFound(false);
     } finally {
       setIsCheckingFriend(false);
@@ -105,23 +106,23 @@ const FriendshipFormScreen = () => {
 
   const handleSaveFriendship = useCallback(async () => {
     if (!currentUserId) {
-      Alert.alert(t('error'), t('not_logged_in'));
+      AppAlert.alert(t('error'), t('not_logged_in'));
       return;
     }
     if (!resolvedFriendUserId || !selectedServerId) {
-      Alert.alert(t('error'), t('all_fields_required'));
+      AppAlert.alert(t('error'), t('all_fields_required'));
       return;
     }
     if (friendFound === false) { // Prevent saving if friend tag is explicitly not found
-      Alert.alert(t('error'), t('friend_not_found_on_server'));
+      AppAlert.alert(t('error'), t('friend_not_found_on_server'));
       return;
     }
     if (!friendUsername) { // Ensure username is available after check
-      Alert.alert(t('error'), t('please_check_friend_id'));
+      AppAlert.alert(t('error'), t('please_check_friend_id'));
       return;
     }
     if (!selectedServer || !selectedServer.idUser) {
-      Alert.alert(t('error'), t('selected_server_invalid'));
+      AppAlert.alert(t('error'), t('selected_server_invalid'));
       return;
     }
 
@@ -131,7 +132,7 @@ const FriendshipFormScreen = () => {
       // Compare per-server IDs, not the local app-installation currentUserId (a
       // different ID namespace entirely) - otherwise this check can never fire.
       if (resolvedFriendUserId === currentUserServerId) {
-        Alert.alert(t('error'), t('cannot_friend_self'));
+        AppAlert.alert(t('error'), t('cannot_friend_self'));
         return;
       }
 
@@ -147,11 +148,11 @@ const FriendshipFormScreen = () => {
         friendUsername: friendUsername, // Use the fetched username
       });
 
-      Alert.alert(t('success'), t('friendship_added_successfully'));
+      AppAlert.alert(t('success'), t('friendship_added_successfully'));
       navigation.goBack();
     } catch (error) {
       console.error('Error saving friendship:', error);
-      Alert.alert(t('error'), t('failed_to_save_friendship'));
+      AppAlert.alert(t('error'), t('failed_to_save_friendship'));
     }
   }, [currentUserId, resolvedFriendUserId, selectedServerId, selectedServer, friendshipService, navigation, t, friendUsername, friendFound]);
 

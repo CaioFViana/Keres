@@ -3,7 +3,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
 import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPickerInput';
@@ -19,6 +19,7 @@ import { isOfflineError } from '../../services/apiClient';
 import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 const BIO_MAX_LENGTH = 200;
 
@@ -93,11 +94,11 @@ const MyProfileScreen = () => {
         avatarIcon,
         bio: bio.trim() || null,
       });
-      Alert.alert(t('success'), t('profile_updated_successfully'));
+      AppAlert.alert(t('success'), t('profile_updated_successfully'));
       navigation.goBack();
     } catch (err) {
       console.error('Failed to update profile:', err);
-      Alert.alert(t('error'), isOfflineError(err) ? t('server_unreachable') : t('failed_to_update_profile'));
+      AppAlert.alert(t('error'), isOfflineError(err) ? t('server_unreachable') : t('failed_to_update_profile'));
     } finally {
       setSaving(false);
     }

@@ -3,7 +3,7 @@ import { WorldRule } from '@keres/shared/entities/WorldRule';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import TextInput from '../../components/common/TextInput/TextInput';
@@ -22,6 +22,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { AppAlert } from '../../utils/AppAlert';
 
 type WorldRuleFormScreenRouteProp = RouteProp<WorldRulesStackParamList, 'WorldRuleForm'>;
 
@@ -124,20 +125,20 @@ const WorldRuleFormScreen = () => {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert(t('error'), t('world_rule_title_required'));
+      AppAlert.alert(t('error'), t('world_rule_title_required'));
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
     if (missingRequiredField) {
-      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!selectedStory?.id) {
-      Alert.alert(t('error'), t('no_story_selected'));
+      AppAlert.alert(t('error'), t('no_story_selected'));
       return;
     }
 
@@ -154,10 +155,10 @@ const WorldRuleFormScreen = () => {
 
       if (isEditing) {
         savedWorldRule = await worldRuleServiceRef.current!.updateWorldRule(userId, currentWorldRuleId!, worldRuleData);
-        Alert.alert(t('success'), t('world_rule_updated_successfully'));
+        AppAlert.alert(t('success'), t('world_rule_updated_successfully'));
       } else {
         savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, { ...worldRuleData, storyId: selectedStory.id });
-        Alert.alert(t('success'), t('world_rule_created_successfully'));
+        AppAlert.alert(t('success'), t('world_rule_created_successfully'));
         setCurrentWorldRuleId(savedWorldRule.id);
       }
 
@@ -177,7 +178,7 @@ const WorldRuleFormScreen = () => {
 
     } catch (err) {
       console.error('Failed to save world rule:', err);
-      Alert.alert(t('error'), t('failed_to_save_world_rule'));
+      AppAlert.alert(t('error'), t('failed_to_save_world_rule'));
     } finally {
       setLoading(false);
     }
@@ -185,7 +186,7 @@ const WorldRuleFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!currentWorldRuleId || !worldRuleServiceRef.current) {

@@ -2,7 +2,7 @@ import { Tag } from '@keres/shared/entities/Tag';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPickerInput';
 import TextInput from '../../components/common/TextInput/TextInput';
@@ -16,6 +16,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 type TagFormScreenRouteProp = RouteProp<TagsStackParamList, 'TagForm'>;
 
@@ -83,15 +84,15 @@ const TagFormScreen = () => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert(t('error'), t('tag_name_required'));
+      AppAlert.alert(t('error'), t('tag_name_required'));
       return;
     }
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!selectedStory?.id) {
-      Alert.alert(t('error'), t('no_story_selected'));
+      AppAlert.alert(t('error'), t('no_story_selected'));
       return;
     }
 
@@ -107,15 +108,15 @@ const TagFormScreen = () => {
 
       if (isEditing) {
         await tagService().updateTag(userId, tagId!, tagData);
-        Alert.alert(t('success'), t('tag_updated_successfully'));
+        AppAlert.alert(t('success'), t('tag_updated_successfully'));
       } else {
         await tagService().createTag(userId, { ...tagData, storyId: selectedStory.id });
-        Alert.alert(t('success'), t('tag_created_successfully'));
+        AppAlert.alert(t('success'), t('tag_created_successfully'));
       }
       navigation.goBack();
     } catch (err) {
       console.error('Failed to save tag:', err);
-      Alert.alert(t('error'), t('failed_to_save_tag'));
+      AppAlert.alert(t('error'), t('failed_to_save_tag'));
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,7 @@ const TagFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!tagId) {

@@ -3,7 +3,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import AttributeValueInput from '../../components/common/CustomAttributeFields/AttributeValueInput';
 import Button from '../../components/common/Button/Button';
 import Select from '../../components/common/Select/Select';
@@ -19,6 +19,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 type StorySchemaFieldFormScreenRouteProp = RouteProp<StorySchemaStackParamList, 'StorySchemaFieldForm'>;
 type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<StorySchemaStackParamList, 'StorySchemaFieldForm'>;
@@ -77,12 +78,12 @@ const StorySchemaFieldFormScreen = () => {
           setIsRequired(field.isRequired);
           setDefaultValue(field.defaultValue);
         } else {
-          Alert.alert(t('error'), t('attribute_not_found'));
+          AppAlert.alert(t('error'), t('attribute_not_found'));
           navigation.goBack();
         }
       } catch (err) {
         console.error('Failed to load attribute field:', err);
-        Alert.alert(t('error'), t('failed_to_load_attribute'));
+        AppAlert.alert(t('error'), t('failed_to_load_attribute'));
       } finally {
         setLoading(false);
       }
@@ -103,19 +104,19 @@ const StorySchemaFieldFormScreen = () => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert(t('error'), t('display_name_required'));
+      AppAlert.alert(t('error'), t('display_name_required'));
       return;
     }
     if (!AttributeKeyRegex.test(key)) {
-      Alert.alert(t('error'), t('invalid_attribute_key'));
+      AppAlert.alert(t('error'), t('invalid_attribute_key'));
       return;
     }
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!storyId) {
-      Alert.alert(t('error'), t('no_story_selected'));
+      AppAlert.alert(t('error'), t('no_story_selected'));
       return;
     }
 
@@ -145,7 +146,7 @@ const StorySchemaFieldFormScreen = () => {
       navigation.goBack();
     } catch (err: any) {
       console.error('Failed to save attribute field:', err);
-      Alert.alert(t('error'), err?.message || t('failed_to_save_attribute'));
+      AppAlert.alert(t('error'), err?.message || t('failed_to_save_attribute'));
     } finally {
       setSaving(false);
     }

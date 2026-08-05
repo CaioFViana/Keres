@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../theme';
 import Select from '../common/Select/Select';
 import TextInput from '../common/TextInput/TextInput'; // Import TextInput
 import { relationSectionStyleDefs } from './relationSectionStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 // Generic types for items and relations
 export type BaseItem = { id: string; isDeleted: boolean; };
@@ -125,14 +126,14 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
 
   const handleAddRelation = useCallback(async () => {
     if (!selectedItemIdToAdd) {
-      Alert.alert(t('error'), selectItemToAddMessage);
+      AppAlert.alert(t('error'), selectItemToAddMessage);
       return;
     }
 
     // Check for duplicates using the generic getRelationItemId
     const itemExists = relations.some(rel => getRelationItemId(rel) === selectedItemIdToAdd);
     if (itemExists) {
-      Alert.alert(t('error'), itemAlreadyAddedMessage);
+      AppAlert.alert(t('error'), itemAlreadyAddedMessage);
       return;
     }
 
@@ -144,7 +145,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
   }, [selectedItemIdToAdd, relations, currentStoryId, currentEntityId, createRelationObject, getRelationItemId, onSave, t, selectItemToAddMessage, itemAlreadyAddedMessage]);
 
   const handleDeleteRelation = useCallback(async (relationId: string) => {
-    Alert.alert(
+    AppAlert.alert(
       deleteConfirmationTitle,
       deleteConfirmationMessage,
       [

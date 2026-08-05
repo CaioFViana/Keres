@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
 import { ServerSelect } from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
+import { AppAlert } from '../utils/AppAlert';
 
 /**
  * Shared "confirm, call the API, refresh" wrapper behind every friendship status transition
@@ -24,7 +24,7 @@ export function useFriendshipActionHandler(
     successMessage: string,
     errorMessage: string
   ) => (friendshipId: string, serverId: string) => {
-    Alert.alert(
+    AppAlert.alert(
       confirmationTitle,
       confirmationMessage,
       [

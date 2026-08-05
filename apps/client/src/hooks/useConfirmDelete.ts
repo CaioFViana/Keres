@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
+import { AppAlert } from '../utils/AppAlert';
+
 
 export interface ConfirmDeleteOptions {
   /** Translation key for the confirmation dialog title, e.g. `'delete_tag_title'`. */
@@ -29,7 +30,7 @@ export function useConfirmDelete() {
 
   return useCallback(
     ({ titleKey, messageKey, onConfirm, successKey, failureKey, onLoadingChange }: ConfirmDeleteOptions) => {
-      Alert.alert(
+      AppAlert.alert(
         t(titleKey),
         t(messageKey),
         [
@@ -42,11 +43,11 @@ export function useConfirmDelete() {
                 onLoadingChange?.(true);
                 await onConfirm();
                 if (successKey) {
-                  Alert.alert(t('success'), t(successKey));
+                  AppAlert.alert(t('success'), t(successKey));
                 }
               } catch (err) {
                 console.error(`Delete failed (${titleKey}):`, err);
-                Alert.alert(t('error'), t(failureKey));
+                AppAlert.alert(t('error'), t(failureKey));
               } finally {
                 onLoadingChange?.(false);
               }

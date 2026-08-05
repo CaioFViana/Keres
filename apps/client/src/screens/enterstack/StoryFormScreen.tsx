@@ -4,7 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
@@ -16,6 +16,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { themeDisplayOptions } from '../../theme/palettes';
 import { getLanguageOptions } from '../../utils/i18n';
+import { AppAlert } from '../../utils/AppAlert';
 
 type RootStackParamList = {
   StoryForm: { storyId?: string };
@@ -97,12 +98,12 @@ const StoryFormScreen = () => {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert(t('error'), t('title_required'));
+      AppAlert.alert(t('error'), t('title_required'));
       return;
     }
 
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified')); // New translation key needed
+      AppAlert.alert(t('error'), t('user_not_identified')); // New translation key needed
       return;
     }
 
@@ -127,16 +128,16 @@ const StoryFormScreen = () => {
 
       if (storyId) {
         await storyService().updateStory(userId, storyId, storyData);
-        Alert.alert(t('success'), t('story_updated_successfully'));
+        AppAlert.alert(t('success'), t('story_updated_successfully'));
       } else {
         await storyService().createStory(userId, storyData);
-        Alert.alert(t('success'), t('story_created_successfully'));
+        AppAlert.alert(t('success'), t('story_created_successfully'));
       }
       navigation.goBack(); // Go back to the previous screen (StorySelection)
     } catch (err) {
       console.error('Failed to save story:', err);
       setError(t('failed_to_save_story'));
-      Alert.alert(t('error'), t('failed_to_save_story'));
+      AppAlert.alert(t('error'), t('failed_to_save_story'));
     } finally {
       setLoading(false);
     }
@@ -144,11 +145,11 @@ const StoryFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 
-    Alert.alert(
+    AppAlert.alert(
       t('delete_story_title'),
       t('delete_story_message'),
       [
@@ -163,12 +164,12 @@ const StoryFormScreen = () => {
               try {
                 setLoading(true);
                 await storyService().deleteStory(storyId);
-                Alert.alert(t('success'), t('story_deleted_successfully'));
+                AppAlert.alert(t('success'), t('story_deleted_successfully'));
                 navigation.goBack();
               } catch (err) {
                 console.error('Failed to delete story:', err);
                 setError(t('failed_to_delete_story'));
-                Alert.alert(t('error'), t('failed_to_delete_story'));
+                AppAlert.alert(t('error'), t('failed_to_delete_story'));
               } finally {
                 setLoading(false);
               }

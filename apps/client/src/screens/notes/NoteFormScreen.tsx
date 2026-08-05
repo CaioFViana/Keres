@@ -2,7 +2,7 @@ import { Note } from '@keres/shared/entities/Note';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
@@ -20,6 +20,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 type NoteFormScreenRouteProp = RouteProp<NotesStackParamList, 'NoteForm'>;
 
@@ -108,20 +109,20 @@ const NoteFormScreen = () => {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert(t('error'), t('note_title_required'));
+      AppAlert.alert(t('error'), t('note_title_required'));
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
     if (missingRequiredField) {
-      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!selectedStory?.id) {
-      Alert.alert(t('error'), t('no_story_selected'));
+      AppAlert.alert(t('error'), t('no_story_selected'));
       return;
     }
 
@@ -139,10 +140,10 @@ const NoteFormScreen = () => {
 
       if (isEditing) {
         await noteService().updateNote(userId, noteId!, noteData);
-        Alert.alert(t('success'), t('note_updated_successfully'));
+        AppAlert.alert(t('success'), t('note_updated_successfully'));
       } else {
         const newNote = await noteService().createNote(userId, { ...noteData, storyId: selectedStory.id });
-        Alert.alert(t('success'), t('note_created_successfully'));
+        AppAlert.alert(t('success'), t('note_created_successfully'));
         currentNoteId = newNote.id; // Get the ID of the newly created note
       }
 
@@ -154,7 +155,7 @@ const NoteFormScreen = () => {
       navigation.goBack();
     } catch (err) {
       console.error('Failed to save note:', err);
-      Alert.alert(t('error'), t('failed_to_save_note'));
+      AppAlert.alert(t('error'), t('failed_to_save_note'));
     } finally {
       setLoading(false);
     }
@@ -162,7 +163,7 @@ const NoteFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!noteId) {

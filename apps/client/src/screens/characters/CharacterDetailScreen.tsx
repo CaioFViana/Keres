@@ -6,7 +6,7 @@ import { Location } from '@keres/shared/entities/Location'; // Import Location e
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Added Alert
+import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CharacterLocationManager from '../../components/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
 import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
@@ -37,6 +37,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharacterListScreen';
+import { AppAlert } from '../../utils/AppAlert';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
@@ -334,7 +335,7 @@ const CharacterDetailScreen = () => {
 
   const handleSaveRelation = async (relation: CharacterRelation) => {
     if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
+      AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
@@ -349,16 +350,16 @@ const CharacterDetailScreen = () => {
         }
       });
       entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
-      Alert.alert(t('success'), t('relation_saved_successfully'));
+      AppAlert.alert(t('success'), t('relation_saved_successfully'));
     } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_relation'));
+      AppAlert.alert(t('error'), t('failed_to_save_relation'));
       console.error('Failed to save character relation:', error);
     }
   };
 
   const handleDeleteRelation = async (relationId: string) => {
     if (!characterRelationServiceRef.current || !character?.storyId || !userId) { // Added !userId check
-      Alert.alert(t('error'), t('service_not_initialized'));
+      AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
@@ -366,19 +367,19 @@ const CharacterDetailScreen = () => {
       if (success) {
         setCharacterRelations(prev => prev.filter(r => r.id !== relationId));
         entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
-        Alert.alert(t('success'), t('relation_deleted_successfully'));
+        AppAlert.alert(t('success'), t('relation_deleted_successfully'));
       } else {
-        Alert.alert(t('error'), t('failed_to_delete_relation'));
+        AppAlert.alert(t('error'), t('failed_to_delete_relation'));
       }
     } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_relation'));
+      AppAlert.alert(t('error'), t('failed_to_delete_relation'));
       console.error('Failed to delete character relation:', error);
     }
   };
 
   const handleSaveCharacterScene = async (characterScene: CharacterScene) => {
     if (!characterSceneServiceRef.current || !character?.storyId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
+      AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
@@ -392,16 +393,16 @@ const CharacterDetailScreen = () => {
         }
       });
       entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
-      Alert.alert(t('success'), t('character_scene_saved_successfully'));
+      AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
     } catch (error) {
-      Alert.alert(t('error'), t('failed_to_save_character_scene'));
+      AppAlert.alert(t('error'), t('failed_to_save_character_scene'));
       console.error('Failed to save character scene:', error);
     }
   };
 
   const handleDeleteCharacterScene = async (characterSceneId: string) => {
     if (!characterSceneServiceRef.current || !character?.storyId || !userId) {
-      Alert.alert(t('error'), t('service_not_initialized'));
+      AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
@@ -409,12 +410,12 @@ const CharacterDetailScreen = () => {
       if (success) {
         setCharacterSceneRelations(prev => prev.filter(cs => cs.id !== characterSceneId));
         entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
-        Alert.alert(t('success'), t('character_scene_deleted_successfully'));
+        AppAlert.alert(t('success'), t('character_scene_deleted_successfully'));
       } else {
-        Alert.alert(t('error'), t('failed_to_delete_character_scene'));
+        AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
       }
     } catch (error) {
-      Alert.alert(t('error'), t('failed_to_delete_character_scene'));
+      AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
       console.error('Failed to delete character scene:', error);
     }
   };

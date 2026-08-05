@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Avatar from '../../components/common/Avatar/Avatar';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
@@ -17,6 +17,7 @@ import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
+import { AppAlert } from '../../utils/AppAlert';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
 
@@ -50,7 +51,7 @@ const FriendshipListScreen = () => {
       setServersMap(newServersMap);
     } catch (error) {
       console.error('Error fetching servers:', error);
-      Alert.alert(t('error'), t('failed_to_load_servers'));
+      AppAlert.alert(t('error'), t('failed_to_load_servers'));
       return;
     }
 
@@ -65,7 +66,7 @@ const FriendshipListScreen = () => {
       setFriendships(allFetched);
     } catch (error) {
       console.error('Error fetching friendships:', error);
-      Alert.alert(t('error'), t('failed_to_load_friendships'));
+      AppAlert.alert(t('error'), t('failed_to_load_friendships'));
     }
   }, [friendshipService, serverService, showNotification, t, localUserId]);
 

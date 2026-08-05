@@ -3,7 +3,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
@@ -13,6 +13,7 @@ import { createServerService } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };
@@ -72,12 +73,12 @@ const ServerRegistrationScreen = () => {
   
     const handleSave = useCallback(async () => {
       if (!serverAddress.trim() || !username.trim()) {
-        Alert.alert(t('error'), t('all_fields_required_except_password_for_edit')); // New translation key
+        AppAlert.alert(t('error'), t('all_fields_required_except_password_for_edit')); // New translation key
         return;
       }
   
       if (!serverId && !password.trim()) { // Password is required only for new registration
-        Alert.alert(t('error'), t('password_required_for_registration')); // New translation key
+        AppAlert.alert(t('error'), t('password_required_for_registration')); // New translation key
         return;
       }
   
@@ -111,7 +112,7 @@ const ServerRegistrationScreen = () => {
         });
   
         if (checkResponse.status !== 200 || !checkResponse.data || typeof checkResponse.data.version !== 'string') {
-          Alert.alert(t('error'), t('invalid_keres_server'));
+          AppAlert.alert(t('error'), t('invalid_keres_server'));
           setLoading(false); // Ensure loading is reset on error
           return;
         }
@@ -122,7 +123,7 @@ const ServerRegistrationScreen = () => {
 
         if (isNewServer || isPasswordProvided || isUrlChanged) {
           if (isUrlChanged && !isPasswordProvided) {
-            Alert.alert(t('error'), t('password_required_for_url_change'));
+            AppAlert.alert(t('error'), t('password_required_for_url_change'));
             setLoading(false);
             return;
           }
@@ -135,15 +136,15 @@ const ServerRegistrationScreen = () => {
   
           if (loginResponse.status !== 200 || !loginResponse.data || !loginResponse.data.accessToken || !loginResponse.data.refreshToken || !loginResponse.data.userId) { // Added check for userId
             if (loginResponse.status === 401) {
-              Alert.alert(t('error'), t('invalid_credentials'));
+              AppAlert.alert(t('error'), t('invalid_credentials'));
               setLoading(false); // Make sure loading is set to false here as well
               return;
             } else if (loginResponse.status === 409) {
-              Alert.alert(t('error'), t('user_already_exists'));
+              AppAlert.alert(t('error'), t('user_already_exists'));
               setLoading(false); // Make sure loading is set to false here as well
               return;
             } else {
-              Alert.alert(t('error'), `${t('server_error')}: ${loginResponse.status}`);
+              AppAlert.alert(t('error'), `${t('server_error')}: ${loginResponse.status}`);
               setLoading(false); // Make sure loading is set to false here as well
               return;
             }
@@ -158,7 +159,7 @@ const ServerRegistrationScreen = () => {
         }
 
         if (!serverUserId) { // Ensure serverUserId is available
-          Alert.alert(t('error'), t('user_not_identified_on_server')); // New translation key
+          AppAlert.alert(t('error'), t('user_not_identified_on_server')); // New translation key
           setLoading(false);
           return;
         }
@@ -177,10 +178,10 @@ const ServerRegistrationScreen = () => {
         if (serverId) {
           await serverService.updateServer(serverId, serverData);
           savedServer = await serverService.getServerById(serverId); // Retrieve updated server
-          Alert.alert(t('success'), t('server_updated_successfully'));
+          AppAlert.alert(t('success'), t('server_updated_successfully'));
         } else {
           savedServer = await serverService.createServer({ ...serverData, lastSyncDate: new Date() }); // Create and get the new server
-          Alert.alert(t('success'), t('server_registered_successfully'));
+          AppAlert.alert(t('success'), t('server_registered_successfully'));
         }
         
         if (savedServer) {
@@ -196,14 +197,14 @@ const ServerRegistrationScreen = () => {
         }
   
         setError(errorMessage);
-        Alert.alert(t('error'), errorMessage);
+        AppAlert.alert(t('error'), errorMessage);
       } finally {
         setLoading(false);
       }
     }, [serverAddress, username, password, serverName, serverService, navigation, t, serverId, setActiveServer]);
   
     const handleDeleteServer = useCallback(() => {
-      Alert.alert(
+      AppAlert.alert(
         t('delete_server_title'),
         t('delete_server_message'),
         [
@@ -218,12 +219,12 @@ const ServerRegistrationScreen = () => {
                 try {
                   setLoading(true);
                   await serverService.deleteServer(serverId);
-                  Alert.alert(t('success'), t('server_deleted_successfully'));
+                  AppAlert.alert(t('success'), t('server_deleted_successfully'));
                   navigation.goBack();
                 } catch (err) {
                   console.error('Failed to delete server:', err);
                   setError(t('failed_to_delete_server'));
-                  Alert.alert(t('error'), t('failed_to_delete_server'));
+                  AppAlert.alert(t('error'), t('failed_to_delete_server'));
                 } finally {
                   setLoading(false);
                 }

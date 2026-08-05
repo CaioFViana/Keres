@@ -5,7 +5,7 @@ import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import NoteManager from '../../components/NoteManager';
@@ -24,6 +24,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { AppAlert } from '../../utils/AppAlert';
 
 type ChapterFormScreenRouteProp = RouteProp<ChapterStackParamList, 'ChapterForm'>;
 type ChapterFormScreenNavigationProp = NativeStackNavigationProp<ChapterStackParamList, 'ChapterForm'>;
@@ -128,20 +129,20 @@ const ChapterFormScreen = () => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert(t('error'), t('name_required'));
+      AppAlert.alert(t('error'), t('name_required'));
       return;
     }
     const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
     if (missingRequiredField) {
-      Alert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
+      AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
       return;
     }
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!selectedStory?.id) {
-      Alert.alert(t('error'), t('no_story_selected'));
+      AppAlert.alert(t('error'), t('no_story_selected'));
       return;
     }
 
@@ -159,13 +160,13 @@ const ChapterFormScreen = () => {
 
       if (isEditing) {
         savedChapter = await chapterServiceRef.current!.updateChapter(userId, currentChapterId!, chapterData);
-        Alert.alert(t('success'), t('chapter_updated_successfully'));
+        AppAlert.alert(t('success'), t('chapter_updated_successfully'));
       } else {
         // For new chapters, determine the next index
         const allChapters = await chapterServiceRef.current!.getAllByStoryId(selectedStory.id);
         const nextIndex = allChapters.length > 0 ? Math.max(...allChapters.map(c => c.index || 0)) + 1 : 1;
         savedChapter = await chapterServiceRef.current!.createChapter(userId, { ...chapterData, storyId: selectedStory.id, index: nextIndex });
-        Alert.alert(t('success'), t('chapter_created_successfully'));
+        AppAlert.alert(t('success'), t('chapter_created_successfully'));
         setCurrentChapterId(savedChapter.id);
       }
       
@@ -185,7 +186,7 @@ const ChapterFormScreen = () => {
 
     } catch (err) {
       console.error('Failed to save chapter:', err);
-      Alert.alert(t('error'), t('failed_to_save_chapter'));
+      AppAlert.alert(t('error'), t('failed_to_save_chapter'));
     } finally {
       setLoading(false);
     }
@@ -193,7 +194,7 @@ const ChapterFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 

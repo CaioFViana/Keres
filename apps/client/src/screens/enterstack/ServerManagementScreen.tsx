@@ -4,7 +4,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
@@ -14,6 +14,7 @@ import { createServerService } from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 interface ServerWithStatus extends ServerSelect {
   pingStatus: 'idle' | 'pending' | 'online' | 'offline';
@@ -106,7 +107,7 @@ const ServerManagementScreen = () => {
   }, [isFocused, loadAndPingServers]);
 
   const handleDeleteServer = (serverId: string) => {
-    Alert.alert(
+    AppAlert.alert(
       t('delete_server_title'),
       t('delete_server_message'),
       [
@@ -120,10 +121,10 @@ const ServerManagementScreen = () => {
             try {
               await serverService.deleteServer(serverId); // Delete from the database
               setServers(prev => prev.filter(server => server.id !== serverId)); // Update servers state directly
-              Alert.alert(t('success'), t('server_deleted_successfully'));
+              AppAlert.alert(t('success'), t('server_deleted_successfully'));
             } catch (err) {
               console.error('Failed to delete server:', err);
-              Alert.alert(t('error'), t('failed_to_delete_server'));
+              AppAlert.alert(t('error'), t('failed_to_delete_server'));
             }
           },
           style: 'destructive',
@@ -158,13 +159,13 @@ const ServerManagementScreen = () => {
       handleCancelEditTag();
     } catch (err: any) {
       if (isOfflineError(err)) {
-        Alert.alert(t('error'), t('server_unreachable'));
+        AppAlert.alert(t('error'), t('server_unreachable'));
       } else if (err?.response?.status === 409) {
-        Alert.alert(t('error'), t('tag_already_taken'));
+        AppAlert.alert(t('error'), t('tag_already_taken'));
       } else if (err?.response?.status === 400) {
-        Alert.alert(t('error'), t('invalid_tag_format'));
+        AppAlert.alert(t('error'), t('invalid_tag_format'));
       } else {
-        Alert.alert(t('error'), t('failed_to_update_tag'));
+        AppAlert.alert(t('error'), t('failed_to_update_tag'));
       }
     } finally {
       setSavingTag(false);

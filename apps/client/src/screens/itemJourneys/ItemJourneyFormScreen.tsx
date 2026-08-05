@@ -7,7 +7,7 @@ import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import NoteManager from '../../components/NoteManager';
 import { useDrizzle } from '../../db';
@@ -25,6 +25,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { AppAlert } from '../../utils/AppAlert';
 
 type ItemJourneyFormScreenRouteProp = RouteProp<ItemJourneyStackParamList, 'ItemJourneyForm'>;
 type ItemJourneyFormScreenNavigationProp = NativeStackNavigationProp<ItemJourneyStackParamList, 'ItemJourneyForm'>;
@@ -142,19 +143,19 @@ const ItemJourneyFormScreen = () => {
 
   const handleSave = async () => {
     if (!itemId) {
-      Alert.alert(t('error'), t('item_required'));
+      AppAlert.alert(t('error'), t('item_required'));
       return;
     }
     if (!sceneId) {
-      Alert.alert(t('error'), t('scene_required'));
+      AppAlert.alert(t('error'), t('scene_required'));
       return;
     }
     if (!newState.trim()) {
-      Alert.alert(t('error'), t('new_state_required'));
+      AppAlert.alert(t('error'), t('new_state_required'));
       return;
     }
     if (!userId || !selectedStory?.id) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
 
@@ -175,12 +176,12 @@ const ItemJourneyFormScreen = () => {
       if (isEditing && currentItemJourneyId) {
         const savedItemJourney = await itemJourneyServiceRef.current!.updateItemJourney(userId, currentItemJourneyId, itemJourneyData);
         savedItemJourneyId = savedItemJourney.id;
-        Alert.alert(t('success'), t('item_journey_updated_successfully'));
+        AppAlert.alert(t('success'), t('item_journey_updated_successfully'));
       } else {
         const savedItemJourney = await itemJourneyServiceRef.current!.createItemJourney(userId, itemJourneyData);
         savedItemJourneyId = savedItemJourney.id;
         setCurrentItemJourneyId(savedItemJourney.id);
-        Alert.alert(t('success'), t('item_journey_created_successfully'));
+        AppAlert.alert(t('success'), t('item_journey_created_successfully'));
       }
 
       if (savedItemJourneyId) {
@@ -195,7 +196,7 @@ const ItemJourneyFormScreen = () => {
       }
     } catch (err) {
       console.error('Failed to save item journey:', err);
-      Alert.alert(t('error'), t('failed_to_save_item_journey'));
+      AppAlert.alert(t('error'), t('failed_to_save_item_journey'));
     } finally {
       setLoading(false);
     }
@@ -203,7 +204,7 @@ const ItemJourneyFormScreen = () => {
 
   const handleDelete = () => {
     if (!userId) {
-      Alert.alert(t('error'), t('user_not_identified'));
+      AppAlert.alert(t('error'), t('user_not_identified'));
       return;
     }
     if (!currentItemJourneyId || !itemJourneyServiceRef.current) {

@@ -5,7 +5,7 @@ import { Character } from '@keres/shared/entities/Character';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useTheme } from '../../theme';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
@@ -13,6 +13,7 @@ import { createULID } from '../../utils/entityUtils';
 import { relationSectionStyleDefs } from '../RelationManager/relationSectionStyles';
 import Button from '../common/Button/Button';
 import CharacterRelationModal from './CharacterRelationModal';
+import { AppAlert } from '../../utils/AppAlert';
 
 interface CharacterRelationManagerProps {
   characterRelations: CharacterRelation[];
@@ -68,7 +69,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
   };
 
   const handleDeleteRelation = (relationId: string) => {
-    Alert.alert(
+    AppAlert.alert(
       t('delete_character_relation_title'),
       t('delete_character_relation_message'),
       [

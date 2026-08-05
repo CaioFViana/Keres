@@ -4,7 +4,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { StorySchemaFieldSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -15,6 +15,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'characters_title',
@@ -127,7 +128,7 @@ const StorySchemaListScreen = () => {
   });
 
   const handleDelete = useCallback((field: StorySchemaFieldSelect) => {
-    Alert.alert(
+    AppAlert.alert(
       t('delete_attribute_title'),
       t('delete_attribute_message', { name: field.name }),
       [
@@ -141,7 +142,7 @@ const StorySchemaListScreen = () => {
               await createStorySchemaFieldService(drizzleDb).deleteField(userId, field.id);
             } catch (err) {
               console.error('Failed to delete attribute field:', err);
-              Alert.alert(t('error'), t('failed_to_delete_attribute'));
+              AppAlert.alert(t('error'), t('failed_to_delete_attribute'));
             }
           },
         },

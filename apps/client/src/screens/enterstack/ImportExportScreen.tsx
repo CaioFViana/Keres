@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -13,6 +13,7 @@ import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { buildStoryZipBytes } from '../../utils/storyMediaBundle';
+import { AppAlert } from '../../utils/AppAlert';
 import {
   buildExportFileName,
   buildExportZipFileName,
@@ -111,7 +112,7 @@ const ImportExportScreen = () => {
   }, [drizzleDb, showNotification, t]);
 
   const handleExportPress = useCallback((story: StorySelect) => {
-    Alert.alert(
+    AppAlert.alert(
       t('export_story_choose_title'),
       t('export_story_choose_message'),
       [

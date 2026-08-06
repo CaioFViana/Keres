@@ -3,7 +3,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
@@ -22,6 +22,10 @@ type RootStackParamList = {
 
 type ServerRegistrationScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ServerRegistration'>;
 
+/** Matches ChangePasswordScreen's own constant - the server doesn't enforce a minimum on
+ *  /auth/register today, this is purely client-side UX guidance. */
+const MIN_PASSWORD_LENGTH = 8;
+
 const ServerRegistrationScreen = () => {
     useBackButtonHandler()
     const { t } = useTranslation();
@@ -37,9 +41,11 @@ const ServerRegistrationScreen = () => {
     const serverService = useRef(createServerService(drizzleDb)).current;
     const { setActiveServer } = useUserSettingsStore();
   
+    const [mode, setMode] = useState<'login' | 'register'>('login');
     const [serverAddress, setServerAddress] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState(''); // Password will only be used for registration, not for editing
+    const [confirmPassword, setConfirmPassword] = useState(''); // Only used when mode === 'register'
     const [serverName, setServerName] = useState('');
     const [loading, setLoading] = useState(true); // Changed to true to indicate loading initially
     const [error, setError] = useState<string | null>(null);
@@ -81,7 +87,21 @@ const ServerRegistrationScreen = () => {
         AppAlert.alert(t('error'), t('password_required_for_registration')); // New translation key
         return;
       }
-  
+
+      // Creating a brand-new account (as opposed to logging into an existing one) needs its
+      // own, stricter checks - a typo'd password here would lock the user out of an account
+      // they just made, with nothing yet synced anywhere to recover from.
+      if (!serverId && mode === 'register') {
+        if (password.length < MIN_PASSWORD_LENGTH) {
+          AppAlert.alert(t('error'), t('new_password_too_short'));
+          return;
+        }
+        if (password !== confirmPassword) {
+          AppAlert.alert(t('error'), t('passwords_do_not_match'));
+          return;
+        }
+      }
+
       // The userId from useUserSettingsStore is the local client ID, not the server-specific ID.
       // We will get the server-specific userId from the login/registration response.
   
@@ -116,10 +136,14 @@ const ServerRegistrationScreen = () => {
           setLoading(false); // Ensure loading is reset on error
           return;
         }
-        // 2. Login (/auth/login) - only for new registration or if password is provided for update
+        // 2. Auth (/auth/login or /auth/register) - only for new registration or if password is provided for update.
+        // `mode` only ever matters for a brand-new server (`!serverId`) - the toggle isn't even
+        // shown otherwise - but the `!serverId` guard here is kept anyway so a stale `mode`
+        // value can never send an edit-existing-connection save through /auth/register.
         const isNewServer = !serverId;
         const isPasswordProvided = password.trim().length > 0;
         const isUrlChanged = existingServer && existingServer.url !== serverAddress;
+        const isRegistering = isNewServer && mode === 'register';
 
         if (isNewServer || isPasswordProvided || isUrlChanged) {
           if (isUrlChanged && !isPasswordProvided) {
@@ -128,31 +152,35 @@ const ServerRegistrationScreen = () => {
             return;
           }
 
-          const loginUrl = `${serverAddress}/auth/login`;
-          const loginResponse = await apiClient.post(loginUrl, { username, password }, {
+          const authUrl = `${serverAddress}${isRegistering ? '/auth/register' : '/auth/login'}`;
+          const authResponse = await apiClient.post(authUrl, { username, password }, {
             timeout: 5000,
             validateStatus: () => true,
           });
-  
-          if (loginResponse.status !== 200 || !loginResponse.data || !loginResponse.data.accessToken || !loginResponse.data.refreshToken || !loginResponse.data.userId) { // Added check for userId
-            if (loginResponse.status === 401) {
+
+          if (authResponse.status !== 200 || !authResponse.data || !authResponse.data.accessToken || !authResponse.data.refreshToken || !authResponse.data.userId) { // Added check for userId
+            if (authResponse.status === 401) {
               AppAlert.alert(t('error'), t('invalid_credentials'));
               setLoading(false); // Make sure loading is set to false here as well
               return;
-            } else if (loginResponse.status === 409) {
+            } else if (authResponse.status === 409) {
               AppAlert.alert(t('error'), t('user_already_exists'));
               setLoading(false); // Make sure loading is set to false here as well
               return;
+            } else if (authResponse.status === 403) {
+              AppAlert.alert(t('error'), t('registration_closed'));
+              setLoading(false);
+              return;
             } else {
-              AppAlert.alert(t('error'), `${t('server_error')}: ${loginResponse.status}`);
+              AppAlert.alert(t('error'), `${t('server_error')}: ${authResponse.status}`);
               setLoading(false); // Make sure loading is set to false here as well
               return;
             }
           }
-          newAccessToken = loginResponse.data.accessToken;
-          newRefreshToken = loginResponse.data.refreshToken;
-          serverUserId = loginResponse.data.userId; // Extract the server-provided userId
-          serverUserTag = loginResponse.data.tag ?? serverUserTag;
+          newAccessToken = authResponse.data.accessToken;
+          newRefreshToken = authResponse.data.refreshToken;
+          serverUserId = authResponse.data.userId; // Extract the server-provided userId
+          serverUserTag = authResponse.data.tag ?? serverUserTag;
         } else {
           // If not re-authenticating, use the existing server's idUser
           serverUserId = existingServer?.idUser || null;
@@ -201,7 +229,7 @@ const ServerRegistrationScreen = () => {
       } finally {
         setLoading(false);
       }
-    }, [serverAddress, username, password, serverName, serverService, navigation, t, serverId, setActiveServer]);
+    }, [serverAddress, username, password, confirmPassword, serverName, serverService, navigation, t, serverId, mode, setActiveServer]);
   
     const handleDeleteServer = useCallback(() => {
       AppAlert.alert(
@@ -270,7 +298,28 @@ const ServerRegistrationScreen = () => {
             <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
               {serverId ? t('edit_server_description') : t('register_new_server_description')}
             </Text>
-  
+
+            {!serverId && (
+              <View style={[styles.modeToggleRow, { borderColor: colors.border }]}>
+                <TouchableOpacity
+                  style={[styles.modeToggleButton, mode === 'login' && { backgroundColor: colors.primary }]}
+                  onPress={() => setMode('login')}
+                >
+                  <Text style={[styles.modeToggleText, { color: mode === 'login' ? colors.onPrimary : colors.text }]}>
+                    {t('log_in')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modeToggleButton, mode === 'register' && { backgroundColor: colors.primary }]}
+                  onPress={() => setMode('register')}
+                >
+                  <Text style={[styles.modeToggleText, { color: mode === 'register' ? colors.onPrimary : colors.text }]}>
+                    {t('create_account')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <Text style={[styles.label, { color: colors.text }]}>{t('server_address')}</Text>
             <TextInput
               placeholder={t('server_address_placeholder')}
@@ -310,6 +359,19 @@ const ServerRegistrationScreen = () => {
                 />
               </>
             )}
+
+            {!serverId && mode === 'register' && (
+              <>
+                <Text style={[styles.label, { color: colors.text }]}>{t('confirm_new_password')}</Text>
+                <TextInput
+                  placeholder={t('confirm_new_password_placeholder')}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  style={commonInputStyles.input}
+                  secureTextEntry
+                />
+              </>
+            )}
   
             {serverId && ( // Option to change password for existing server
               <>
@@ -328,7 +390,9 @@ const ServerRegistrationScreen = () => {
             )}
   
             <Button onPress={handleSave} style={styles.registerButton} disabled={loading}>
-              {loading ? <ActivityIndicator color={colors.onPrimary} /> : (serverId ? t('update_server') : t('register_server'))}
+              {loading ? <ActivityIndicator color={colors.onPrimary} /> : (
+                serverId ? t('update_server') : mode === 'register' ? t('create_account') : t('register_server')
+              )}
             </Button>
   
             {serverId && (
@@ -358,6 +422,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 15,
     marginBottom: 5,
+  },
+  modeToggleRow: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  modeToggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  modeToggleText: {
+    fontSize: 15,
+    fontWeight: 'bold',
   },
   registerButton: {
     marginTop: 30,

@@ -12,6 +12,7 @@ import { createStoryAnalysisService, StoryAnalysisReport } from '../../services/
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
 
@@ -72,6 +73,7 @@ const StoryAnalysisScreen = () => {
 
   useFocusEffect(useCallback(() => {
     navigation.setOptions({ title: t('story_analysis_title') });
+    setDocumentTitle(t('story_analysis_title'));
   }, [navigation, t]));
 
   const findingsByCategory = useMemo(() => {

@@ -21,6 +21,7 @@ import { useGalleryStore } from '../../state/galleryStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'GalleryStack'>,
@@ -109,6 +110,7 @@ const GalleryListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('gallery_title'));
       navigation.getParent()?.setOptions({
         title: t('gallery_title'),
         headerRight: () => (

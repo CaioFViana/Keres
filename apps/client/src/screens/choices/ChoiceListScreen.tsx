@@ -18,6 +18,7 @@ import { useChapterStore } from '../../state/chapterStore';
 import { useChoiceStore } from '../../state/choiceStore';
 import { useSceneStore } from '../../state/sceneStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type ChoicesScreenNavigationProp = CompositeNavigationProp<
@@ -131,6 +132,7 @@ const ChoiceListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('choices_title'));
       navigation.getParent()?.setOptions({
         title: t('choices_title'),
         headerRight: () => (

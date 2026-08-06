@@ -14,6 +14,7 @@ import { createLocationRelationService } from '../../services/storymanagement/Lo
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildLocationGraphLayout, GraphLocationRelation, LocationGraphNode, LocationRelationKind } from '../../utils/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '../../utils/locationGraphSvg';
 import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -73,6 +74,7 @@ const LocationGraphScreen = () => {
   }, [loadGraph]));
 
   useFocusEffect(useCallback(() => {
+    setDocumentTitle(t('location_graph_title'));
     navigation.getParent()?.setOptions({ title: t('location_graph_title'), headerRight: undefined });
   }, [navigation, t]));
 

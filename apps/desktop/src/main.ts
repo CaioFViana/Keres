@@ -122,13 +122,11 @@ async function createWindow() {
     console.error('[desktop] renderer process gone:', details.reason);
   });
 
-  // apps/client's web export ships its own <title>Keres-Client</title> (from app.json).
-  // Electron applies that to the native window title as soon as the page reports it
-  // (page-title-updated), silently overriding the `title` option above. Keep our own title.
-  win.on('page-title-updated', (event) => {
-    event.preventDefault();
-  });
-
+  // apps/client's DocumentTitleSync now keeps document.title in sync with whatever screen is
+  // focused ("Keres: Character - Aragorn", "Keres: Story Settings", ...). Electron's default
+  // behavior - mirroring the window title to page-title-updated - is exactly what's wanted
+  // here, so nothing needs to be done beyond the `title` option above, which only covers the
+  // brief window before that first render.
   await win.loadURL(`${SCHEME}://app/`);
 }
 

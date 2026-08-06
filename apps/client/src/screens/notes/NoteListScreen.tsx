@@ -17,6 +17,7 @@ import { NoteWithTags } from '../../services/storymanagement/NoteService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useNoteStore } from '../../state/noteStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NotesStack'>,
@@ -78,6 +79,7 @@ const NotesScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('notes_title'));
       navigation.getParent()?.setOptions({
         title: t('notes_title'),
         headerRight: () => (

@@ -20,6 +20,7 @@ import { createWorldRuleService } from '../../services/storymanagement/WorldRule
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
@@ -76,6 +77,7 @@ const WorldRuleFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'),
         headerRight: () => <View/>

@@ -1,7 +1,7 @@
 import { Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CommonActions, useNavigation } from '@react-navigation/native';
+import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
@@ -24,6 +24,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { themeDisplayOptions } from '../../theme/palettes'; // Import themeDisplayOptions
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { getLanguageOptions } from '../../utils/i18n';
 import { AppAlert } from '../../utils/AppAlert';
 
@@ -44,6 +45,15 @@ const StorySettingsScreen = () => {
   const storyService = useCallback(() => createStoryService(drizzleDb), [drizzleDb]);
   const serverService = useCallback(() => createServerService(drizzleDb), [drizzleDb]);
   const { userId } = useUserSettingsStore();
+
+  useFocusEffect(
+    useCallback(() => {
+      // Direct Drawer screen (no nested Stack), so this is its own leaf-level title -
+      // navigation.setOptions() here is correct, not navigation.getParent()?.setOptions().
+      navigation.setOptions({ title: t('story_settings_title') });
+      setDocumentTitle(t('story_settings_title'));
+    }, [navigation, t])
+  );
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState<'linear' | 'branching'>('linear');

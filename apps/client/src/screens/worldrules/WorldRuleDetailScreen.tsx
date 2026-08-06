@@ -18,6 +18,7 @@ import { createWorldRuleService } from '../../services/storymanagement/WorldRule
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
 
@@ -160,6 +161,7 @@ const WorldRuleDetailScreen = () => {
         title: headerTitle,
         headerRight: renderHeaderRight,
       });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

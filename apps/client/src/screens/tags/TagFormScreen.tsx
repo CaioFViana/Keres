@@ -15,6 +15,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 
@@ -49,6 +50,7 @@ const TagFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(isEditing ? t('edit_tag_title') : t('create_tag_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_tag_title') : t('create_tag_title'),
         headerRight: () => <View/>

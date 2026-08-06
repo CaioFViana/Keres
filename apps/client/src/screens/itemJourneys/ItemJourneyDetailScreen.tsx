@@ -22,6 +22,7 @@ import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { ItemJourneysScreenNavigationProp } from './ItemJourneyListScreen';
@@ -184,6 +185,7 @@ const ItemJourneyDetailScreen = () => {
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

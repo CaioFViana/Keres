@@ -14,6 +14,7 @@ import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { MainSystemDrawerParamList, TagsStackParamList } from '../../navigation/MainSystemStack';
 import { useTagStore } from '../../state/tagStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type TagsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'TagsStack'>, // Corrected to TagsStack
@@ -51,6 +52,7 @@ const TagsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('tags_title'));
       navigation.getParent()?.setOptions({
         title: t('tags_title'),
         headerRight: () => (

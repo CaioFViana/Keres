@@ -15,6 +15,7 @@ import { createSceneService } from '../../services/storymanagement/SceneService'
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
 import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -82,6 +83,7 @@ const ChoiceViewScreen = () => {
   }, [loadGraph]));
 
   useFocusEffect(useCallback(() => {
+    setDocumentTitle(t('story_map_title'));
     navigation.getParent()?.setOptions({ title: t('story_map_title'), headerRight: undefined });
   }, [navigation, t]));
 

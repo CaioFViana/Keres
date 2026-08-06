@@ -15,6 +15,7 @@ import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { ChapterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useChapterStore } from '../../state/chapterStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type ChaptersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ChaptersStack'>,
@@ -101,6 +102,7 @@ const ChapterListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('chapters_title'));
       navigation.getParent()?.setOptions({
         title: t('chapters_title'),
         headerRight: () => (

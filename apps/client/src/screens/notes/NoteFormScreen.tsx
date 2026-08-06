@@ -19,6 +19,7 @@ import { createNoteService } from '../../services/storymanagement/NoteService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 
@@ -64,6 +65,7 @@ const NoteFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(isEditing ? t('edit_note_title') : t('create_note_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_note_title') : t('create_note_title'),
         headerRight: () => <View/>

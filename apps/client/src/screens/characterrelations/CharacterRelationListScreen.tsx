@@ -14,6 +14,7 @@ import { CharacterRelationsStackParamList, MainSystemDrawerParamList } from '../
 import { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterRelationStore } from '../../state/characterRelationStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type CharacterRelationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharacterRelationsStack'>,
@@ -58,6 +59,7 @@ const CharacterRelationsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('character_relations_title'));
       navigation.getParent()?.setOptions({
         title: t('character_relations_title'),
         headerRight: () => (

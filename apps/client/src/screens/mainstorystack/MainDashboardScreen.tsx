@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer'; // Import DrawerNavigationProp
-import { CommonActions, useNavigation } from '@react-navigation/native';
+import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { eq, gt, sql } from 'drizzle-orm'; // Added sql for subquery
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import { createStoryAnalysisService } from '../../services/storymanagement/Story
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 const MainDashboardScreen = () => {
   const { colors } = useTheme();
@@ -39,6 +40,12 @@ const MainDashboardScreen = () => {
   const [analysisIssueCount, setAnalysisIssueCount] = useState<number | undefined>(undefined);
 
   const backPressTimer = useRef<number | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      setDocumentTitle(selectedStory?.title || t('dashboard_title'));
+    }, [selectedStory?.title, t])
+  );
 
   useEffect(() => {
     const backAction = () => {

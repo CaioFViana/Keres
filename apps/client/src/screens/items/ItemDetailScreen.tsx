@@ -22,6 +22,7 @@ import { createItemService } from '../../services/storymanagement/ItemService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ItemsScreenNavigationProp } from './ItemListScreen';
 
@@ -147,6 +148,7 @@ const ItemDetailScreen = () => {
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

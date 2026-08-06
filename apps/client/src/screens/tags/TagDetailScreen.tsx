@@ -18,6 +18,7 @@ import { createTagService } from '../../services/storymanagement/TagService'; //
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { TagsScreenNavigationProp } from './TagListScreen';
 
@@ -246,6 +247,7 @@ const TagDetailScreen = () => {
         title: headerTitle,
         headerRight: renderHeaderRight, // Pass the memoized component
       });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

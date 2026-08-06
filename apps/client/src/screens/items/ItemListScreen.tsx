@@ -14,6 +14,7 @@ import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { ItemStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useItemStore } from '../../state/itemStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ItemsStack'>,
@@ -71,6 +72,7 @@ const ItemListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('items_title'));
       navigation.getParent()?.setOptions({
         title: t('items_title'),
         headerRight: () => (

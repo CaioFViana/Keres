@@ -16,6 +16,7 @@ import { createSceneService, SceneService } from '@/src/services/storymanagement
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { Ionicons } from '@expo/vector-icons';
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
@@ -220,6 +221,7 @@ const ChapterDetailScreen = () => {
         title: headerTitle,
         headerRight: renderHeaderRight,
       });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

@@ -14,6 +14,7 @@ import { createCharacterRelationService, CharacterRelationWithNames } from '../.
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildCharacterRelationGraphLayout, RelationGraphNode } from '../../utils/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -77,6 +78,7 @@ const CharacterRelationGraphScreen = () => {
   }, [loadGraph]));
 
   useFocusEffect(useCallback(() => {
+    setDocumentTitle(t('character_relation_map_title'));
     navigation.getParent()?.setOptions({ title: t('character_relation_map_title'), headerRight: undefined });
   }, [navigation, t]));
 

@@ -38,6 +38,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ScenesScreenNavigationProp } from './SceneListScreen';
 
@@ -380,6 +381,7 @@ const SceneDetailScreen = () => {
         title: headerTitle,
         headerRight: renderHeaderRight,
       });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

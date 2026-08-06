@@ -17,6 +17,7 @@ import { LocationWithTags } from '../../services/storymanagement/LocationService
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -87,6 +88,7 @@ const LocationsScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('locations_title'));
       navigation.getParent()?.setOptions({
         title: t('locations_title'),
         headerRight: () => (

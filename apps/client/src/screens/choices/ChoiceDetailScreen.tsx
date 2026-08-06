@@ -16,6 +16,7 @@ import { createChoiceService } from '../../services/storymanagement/ChoiceServic
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
@@ -121,6 +122,7 @@ const ChoiceDetailScreen = () => {
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

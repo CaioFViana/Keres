@@ -17,6 +17,7 @@ import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack'; // Will create/update this later
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'WorldRulesStack'>,
@@ -78,6 +79,7 @@ const WorldRulesScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('world_rules_title'));
       navigation.getParent()?.setOptions({
         title: t('world_rules_title'),
         headerRight: () => (

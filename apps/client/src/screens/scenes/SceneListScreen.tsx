@@ -16,6 +16,7 @@ import { MainSystemDrawerParamList, SceneStackParamList } from '../../navigation
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type ScenesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ScenesStack'>,
@@ -108,6 +109,7 @@ const SceneListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('scenes_title'));
       navigation.getParent()?.setOptions({
         title: t('scenes_title'),
         headerRight: () => (

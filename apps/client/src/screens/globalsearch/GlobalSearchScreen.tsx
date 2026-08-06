@@ -13,6 +13,7 @@ import { createGlobalSearchService, GlobalSearchResult } from '../../services/st
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { debounce } from '../../utils/debounce';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'GlobalSearch'>;
@@ -98,7 +99,11 @@ const GlobalSearchScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('global_search_title') });
+      // GlobalSearch is a direct Drawer.Screen (no nested Stack in between, unlike the entity
+      // list/detail/form screens), so `navigation` here already IS the Drawer's own nav object -
+      // `.getParent()` would target the Root Stack above it instead, one level too far up.
+      navigation.setOptions({ title: t('global_search_title') });
+      setDocumentTitle(t('global_search_title'));
     }, [navigation, t])
   );
 

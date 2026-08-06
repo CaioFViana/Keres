@@ -29,6 +29,7 @@ import { useLocationStore } from '../../state/locationStore'; // Import useLocat
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
@@ -137,6 +138,7 @@ const SceneFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(isEditing ? t('edit_scene_title') : t('create_scene_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_scene_title') : t('create_scene_title'),
         headerRight: () => <View/>

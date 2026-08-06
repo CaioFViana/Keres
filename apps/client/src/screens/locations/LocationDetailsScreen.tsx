@@ -35,6 +35,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { LocationsScreenNavigationProp } from './LocationListScreen';
 import { AppAlert } from '../../utils/AppAlert';
@@ -122,6 +123,7 @@ const LocationDetailsScreen = () => {
           ) : null
         ),
       });
+      setDocumentTitle(headerTitle);
     }, [navigation, location, headerTitle, colors])
   );
 

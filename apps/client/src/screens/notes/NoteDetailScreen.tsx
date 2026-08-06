@@ -25,6 +25,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { NotesScreenNavigationProp } from './NoteListScreen';
 
@@ -261,6 +262,7 @@ const NoteDetailScreen = () => {
         title: headerTitle,
         headerRight: renderHeaderRight,
       });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

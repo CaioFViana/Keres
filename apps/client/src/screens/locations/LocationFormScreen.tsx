@@ -21,6 +21,7 @@ import { createLocationService } from '../../services/storymanagement/LocationSe
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
@@ -83,6 +84,7 @@ const LocationFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(isEditing ? t('edit_location_title') : t('create_location_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_location_title') : t('create_location_title'),
         headerRight: () => <View/>

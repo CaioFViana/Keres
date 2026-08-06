@@ -17,6 +17,7 @@ import { CharacterWithTags } from '../../services/storymanagement/CharacterServi
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type CharactersScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'CharactersStack'>,
@@ -86,6 +87,7 @@ const CharactersScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('characters_title'));
       navigation.getParent()?.setOptions({
         title: t('characters_title'),
         headerRight: () => (

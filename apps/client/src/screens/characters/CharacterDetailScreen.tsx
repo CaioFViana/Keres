@@ -35,6 +35,7 @@ import { createSceneService } from '../../services/storymanagement/SceneService'
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharacterListScreen';
 import { AppAlert } from '../../utils/AppAlert';
@@ -436,6 +437,7 @@ const CharacterDetailScreen = () => {
         title: headerTitle,
         headerRight: renderHeaderRight,
       });
+      setDocumentTitle(headerTitle);
     }, [navigation, headerTitle, renderHeaderRight])
   );
 

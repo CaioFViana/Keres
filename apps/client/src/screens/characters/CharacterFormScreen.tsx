@@ -26,6 +26,7 @@ import { createCharacterService } from '../../services/storymanagement/Character
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
 import { AppAlert } from '../../utils/AppAlert';
@@ -106,6 +107,7 @@ const CharacterFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(isEditing ? t('edit_character_title') : t('create_character_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_character_title') : t('create_character_title'),
         headerRight: () => <View/>

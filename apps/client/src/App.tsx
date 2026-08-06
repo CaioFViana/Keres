@@ -6,6 +6,7 @@ import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppAlertHost from './components/common/AppAlertHost/AppAlertHost';
 import NotificationPopup from './components/common/NotificationPopup/NotificationPopup';
+import DocumentTitleSync from './components/DocumentTitleSync';
 import SyncConflictModal from './components/SyncConflictModal/SyncConflictModal';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
@@ -36,6 +37,7 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: colors.background }}>
       <StatusBar style={statusBarStyle} />
       {children}
+      <DocumentTitleSync />
       <NotificationPopup />
       {/*
         Montado aqui, junto das notificações, para poder aparecer sobre qualquer tela: um

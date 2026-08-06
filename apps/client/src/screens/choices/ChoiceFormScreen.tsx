@@ -20,6 +20,7 @@ import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
@@ -82,6 +83,7 @@ const ChoiceFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(isEditing ? t('edit_choice_title') : t('create_choice_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_choice_title') : t('create_choice_title'),
         headerRight: () => <View />,

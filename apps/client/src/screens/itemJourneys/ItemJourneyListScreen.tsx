@@ -20,6 +20,7 @@ import { createItemService } from '../../services/storymanagement/ItemService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
@@ -180,6 +181,7 @@ const ItemJourneyListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      setDocumentTitle(t('item_journeys_title'));
       navigation.getParent()?.setOptions({
         title: t('item_journeys_title'),
         headerRight: () => (

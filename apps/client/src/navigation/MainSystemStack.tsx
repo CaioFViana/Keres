@@ -24,6 +24,7 @@ import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
 import GalleryMediaViewerOverlay from '../components/GalleryManager/GalleryMediaViewerOverlay';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
+import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
 import ItemJourneyDetailScreen from '../screens/itemJourneys/ItemJourneyDetailScreen';
 import ItemJourneyFormScreen from '../screens/itemJourneys/ItemJourneyFormScreen';
 import ItemJourneyListScreen from '../screens/itemJourneys/ItemJourneyListScreen';
@@ -57,6 +58,7 @@ import { useTheme } from '../theme';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
+  GlobalSearch: undefined;
   // Tipado com os parâmetros da pilha interna porque o mapa de relações abre um personagem
   // específico a partir de outra aba do drawer.
   CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
@@ -455,6 +457,14 @@ const MainSystemNavigator = () => {
               {selectedStory?.title || t('dashboard_title')}
             </Text>
           ),
+        }}
+      />
+      <Drawer.Screen
+        name="GlobalSearch"
+        component={GlobalSearchScreen}
+        options={{
+          title: t('global_search_title'),
+          drawerLabel: t('global_search_title'),
         }}
       />
       <Drawer.Screen

@@ -1,0 +1,136 @@
+import { globalSearchFieldConfig, GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import { and, eq, inArray, or, sql, SQL } from 'drizzle-orm';
+import { AppDrizzleClient } from '../../db';
+import { attributeValues, storySchemaFields } from '../../db/schema';
+import { getEntityTable } from '../entityTableRegistry';
+import { truncate } from '../../utils/stringUtils';
+
+export interface GlobalSearchResult {
+  entityType: GlobalSearchEntityType;
+  id: string;
+  title: string;
+  snippet: string;
+}
+
+export interface GlobalSearchService {
+  searchAllEntities(storyId: string, term: string): Promise<GlobalSearchResult[]>;
+}
+
+const NATIVE_RESULT_LIMIT_PER_ENTITY = 15;
+const ATTRIBUTE_RESULT_LIMIT = 50;
+const SNIPPET_MAX_LENGTH = 120;
+
+const MIN_SEARCH_TERM_LENGTH = 2;
+
+const ENTITY_TYPES = Object.keys(globalSearchFieldConfig) as GlobalSearchEntityType[];
+
+function buildSnippet(fieldLabel: string, value: unknown): string {
+  return truncate(`${fieldLabel}: ${String(value)}`, SNIPPET_MAX_LENGTH);
+}
+
+/** First configured search field whose value actually contains `term` (case-insensitive) - used to pick which field to show in the snippet. */
+function findMatchingField(row: Record<string, any>, searchFields: string[], term: string): { field: string; value: any } | null {
+  const lowerTerm = term.toLowerCase();
+  for (const field of searchFields) {
+    const value = row[field];
+    if (typeof value === 'string' && value.toLowerCase().includes(lowerTerm)) {
+      return { field, value };
+    }
+  }
+  return null;
+}
+
+export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchService => {
+  return {
+    async searchAllEntities(storyId: string, term: string): Promise<GlobalSearchResult[]> {
+      const trimmedTerm = term.trim();
+      if (trimmedTerm.length < MIN_SEARCH_TERM_LENGTH) {
+        return [];
+      }
+
+      const results = new Map<string, GlobalSearchResult>();
+
+      // Native fields - one query per entity type, run in parallel.
+      const nativeQueries = ENTITY_TYPES.map(async (entityType) => {
+        const { titleField, searchFields } = globalSearchFieldConfig[entityType];
+        const table = getEntityTable(entityType);
+        if (!table) return;
+
+        const rows = await db.select().from(table)
+          .where(and(
+            eq((table as any).storyId, storyId),
+            eq((table as any).isDeleted, false),
+            or(...searchFields.map(field => sql`${(table as any)[field]} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>))
+          ))
+          .limit(NATIVE_RESULT_LIMIT_PER_ENTITY)
+          .all();
+
+        for (const row of rows as Record<string, any>[]) {
+          const match = findMatchingField(row, searchFields, trimmedTerm);
+          const key = `${entityType}:${row.id}`;
+          results.set(key, {
+            entityType,
+            id: row.id,
+            title: String(row[titleField] ?? ''),
+            snippet: match ? buildSnippet(match.field, match.value) : '',
+          });
+        }
+      });
+
+      // Custom Story Schema attributes - one query across every entity type at once.
+      const attributeQuery = (async () => {
+        const rows = await db.select({ attribute: attributeValues, field: storySchemaFields })
+          .from(attributeValues)
+          .innerJoin(storySchemaFields, eq(attributeValues.fieldId, storySchemaFields.id))
+          .where(and(
+            eq(attributeValues.storyId, storyId),
+            eq(attributeValues.isDeleted, false),
+            sql`${attributeValues.value} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>
+          ))
+          .limit(ATTRIBUTE_RESULT_LIMIT)
+          .all();
+
+        const idsByEntityType = new Map<GlobalSearchEntityType, Set<string>>();
+        for (const row of rows) {
+          const entityType = row.attribute.entityType as GlobalSearchEntityType;
+          if (!globalSearchFieldConfig[entityType]) continue;
+          if (!idsByEntityType.has(entityType)) idsByEntityType.set(entityType, new Set());
+          idsByEntityType.get(entityType)!.add(row.attribute.entityId);
+        }
+
+        const titlesByEntityKey = new Map<string, string>();
+        await Promise.all(Array.from(idsByEntityType.entries()).map(async ([entityType, idSet]) => {
+          const table = getEntityTable(entityType);
+          if (!table) return;
+          const { titleField } = globalSearchFieldConfig[entityType];
+          const titleRows = await db.select({ id: (table as any).id, title: (table as any)[titleField] })
+            .from(table)
+            .where(and(inArray((table as any).id, Array.from(idSet)), eq((table as any).isDeleted, false)))
+            .all();
+          for (const titleRow of titleRows as { id: string; title: unknown }[]) {
+            titlesByEntityKey.set(`${entityType}:${titleRow.id}`, String(titleRow.title ?? ''));
+          }
+        }));
+
+        for (const row of rows) {
+          const entityType = row.attribute.entityType as GlobalSearchEntityType;
+          if (!globalSearchFieldConfig[entityType]) continue;
+          const key = `${entityType}:${row.attribute.entityId}`;
+          if (results.has(key)) continue; // Native field match already covers this entity.
+          const title = titlesByEntityKey.get(key);
+          if (title === undefined) continue; // Entity was deleted/not found.
+          results.set(key, {
+            entityType,
+            id: row.attribute.entityId,
+            title,
+            snippet: buildSnippet(row.field.name, row.attribute.value),
+          });
+        }
+      })();
+
+      await Promise.all([...nativeQueries, attributeQuery]);
+
+      return Array.from(results.values());
+    },
+  };
+};

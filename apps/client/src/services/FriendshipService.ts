@@ -37,6 +37,7 @@ export class FriendshipService {
       receiverId: friendships.receiverId,
       friendUsername: friendships.friendUsername,
       status: friendships.status,
+      blockedById: friendships.blockedById,
       createdAt: friendships.createdAt,
       updatedAt: friendships.updatedAt,
       // Add server details
@@ -106,6 +107,7 @@ export class FriendshipService {
             receiverId: sql`excluded.receiver_id`,
             friendUsername: sql`excluded.friend_username`,
             status: sql`excluded.status`,
+            blockedById: sql`excluded.blocked_by_id`,
             createdAt: sql`excluded.created_at`,
             updatedAt: sql`excluded.updated_at`,
             serverId: sql`excluded.server_id`,
@@ -156,8 +158,11 @@ export class FriendshipService {
     const server = await this.getServerOrThrow(friendship.serverId);
 
     await friendshipApiService.acceptFriendRequest(server, targetUserId);
+    // `updateFriendship` already emits 'friendship_changed' - a second emit here just made
+    // every listener (FriendDetailScreen's `load`, in particular) run redundantly for every
+    // single action, which is how a single tap could trigger multiple concurrent `goBack()`
+    // calls (see unblacklistUser below for where that actually crashed).
     await this.updateFriendship(friendshipId, { status: FriendStatus.FRIEND });
-    entityEventEmitter.emit('friendship_changed');
   }
 
   async declineFriendRequest(friendshipId: string, currentUserId: string): Promise<void> {
@@ -171,8 +176,7 @@ export class FriendshipService {
     const server = await this.getServerOrThrow(friendship.serverId);
 
     await friendshipApiService.declineFriendRequest(server, targetUserId);
-    await this.deleteFriendship(friendshipId);
-    entityEventEmitter.emit('friendship_changed');
+    await this.deleteFriendship(friendshipId); // Already emits 'friendship_changed'.
   }
 
   async cancelSentFriendRequest(friendshipId: string, currentUserId: string): Promise<void> {
@@ -186,8 +190,7 @@ export class FriendshipService {
     const server = await this.getServerOrThrow(friendship.serverId);
 
     await friendshipApiService.cancelSentFriendRequest(server, targetUserId);
-    await this.deleteFriendship(friendshipId);
-    entityEventEmitter.emit('friendship_changed');
+    await this.deleteFriendship(friendshipId); // Already emits 'friendship_changed'.
   }
 
   async unfriendUser(friendshipId: string, currentUserId: string): Promise<void> {
@@ -201,8 +204,7 @@ export class FriendshipService {
     const server = await this.getServerOrThrow(friendship.serverId);
 
     await friendshipApiService.unfriendUser(server, targetUserId);
-    await this.deleteFriendship(friendshipId);
-    entityEventEmitter.emit('friendship_changed');
+    await this.deleteFriendship(friendshipId); // Already emits 'friendship_changed'.
   }
 
   async blacklistUser(friendshipId: string, currentUserId: string): Promise<void> {
@@ -211,11 +213,12 @@ export class FriendshipService {
     const targetUserId = await this.getTargetUserId(friendshipId, currentUserId);
     const server = await this.getServerOrThrow(friendship.serverId);
 
-    await friendshipApiService.blacklistUser(server, targetUserId);
     // If the friendship exists, update its status. If not, the API will create a new blacklisted entry.
     // The sync process will reconcile if a new entry is created on the server.
-    await this.updateFriendship(friendshipId, { status: FriendStatus.BLACKLISTED });
-    entityEventEmitter.emit('friendship_changed');
+    const updated = await friendshipApiService.blacklistUser(server, targetUserId);
+    // `blockedById` comes from the server's response, not assumed to be `currentUserId` -
+    // the server is the source of truth for who it recorded as the blocker.
+    await this.updateFriendship(friendshipId, { status: FriendStatus.BLACKLISTED, blockedById: updated.blockedById });
   }
 
   async unblacklistUser(friendshipId: string, currentUserId: string): Promise<void> {
@@ -225,12 +228,18 @@ export class FriendshipService {
     if (friendship.status !== FriendStatus.BLACKLISTED) {
       throw new Error('User is not blacklisted.');
     }
+    // Mirrors the server-side check in FriendshipService.unblacklistUser: only whoever
+    // issued the blacklist can undo it. Caught here too (not just hidden in the UI) so a
+    // stale/out-of-sync local copy can't let the blocked user slip a request through -
+    // the server still has the final say, this just fails fast without a round-trip.
+    if (friendship.blockedById && friendship.blockedById !== currentUserId) {
+      throw new Error('Only the user who blacklisted this relationship can remove it.');
+    }
     const targetUserId = await this.getTargetUserId(friendshipId, currentUserId);
     const server = await this.getServerOrThrow(friendship.serverId);
 
     await friendshipApiService.unblacklistUser(server, targetUserId);
-    await this.deleteFriendship(friendshipId); // Blacklisted friendships are deleted upon unblacklist locally
-    entityEventEmitter.emit('friendship_changed');
+    await this.deleteFriendship(friendshipId); // Blacklisted friendships are deleted upon unblacklist locally; already emits 'friendship_changed'.
   }
 
   /**
@@ -337,6 +346,7 @@ export class FriendshipService {
             receiverId: sf.receiverId,
             friendUsername: sf.friendUsername,
             status: sf.status,
+            blockedById: sf.blockedById,
             createdAt: new Date(sf.createdAt),
             updatedAt: new Date(sf.updatedAt),
             serverId: serverId,

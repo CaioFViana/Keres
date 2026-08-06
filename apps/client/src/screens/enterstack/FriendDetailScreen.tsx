@@ -52,7 +52,19 @@ const FriendDetailScreen = () => {
   const [server, setServer] = useState<ServerSelect | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // `load` is wired to three independent triggers below (mount, the `focus` listener, and
+  // the `friendship_changed` event), so a single action that deletes this friendship (e.g.
+  // unblacklisting) can fire `load` more than once while the screen is still mounted. Every
+  // one of those calls would find `found === null` and call `goBack()` - the first pops the
+  // screen correctly, but every call after that has nothing left to pop and no navigator to
+  // bubble to, crashing with "GO_BACK was not handled by any navigator". This ref makes the
+  // "not found, navigate away" branch run at most once per screen instance.
+  const hasNavigatedAwayRef = useRef(false);
+
   const load = useCallback(async () => {
+    if (hasNavigatedAwayRef.current) {
+      return;
+    }
     try {
       const [allFriendships, allServers] = await Promise.all([
         friendshipService.getAllFriendships(),
@@ -61,7 +73,10 @@ const FriendDetailScreen = () => {
       const found = allFriendships.find((f) => f.id === friendshipId) ?? null;
       if (!found) {
         // Friendship no longer exists (e.g. removed from another device mid-sync) - nothing left to show here.
-        navigation.goBack();
+        hasNavigatedAwayRef.current = true;
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        }
         return;
       }
       setFriendship(found);
@@ -158,6 +173,13 @@ const FriendDetailScreen = () => {
   const isPendingSent = friendship.status === FriendStatus.PENDING && friendship.senderId === currentUsersServerId;
   const isFriend = friendship.status === FriendStatus.FRIEND;
   const isBlacklisted = friendship.status === FriendStatus.BLACKLISTED;
+  // Only whoever issued the blacklist can undo it - the server enforces this too (see
+  // FriendshipService.unblacklistUser on the API), this just keeps the button from being
+  // offered to the blocked side in the first place. Legacy rows with no recorded blocker
+  // (`blockedById: null`) are shown to both sides, matching the server's permissive fallback
+  // for data that predates this column - there's no way to recover who actually blocked whom.
+  const isBlockedByMe = isBlacklisted
+    && (friendship.blockedById === null || friendship.blockedById === currentUsersServerId);
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
@@ -214,10 +236,14 @@ const FriendDetailScreen = () => {
           </>
         )}
 
-        {isBlacklisted && (
+        {isBlacklisted && isBlockedByMe && (
           <Button onPress={() => handleUnblacklist(friendship.id, friendship.serverId)} style={styles.actionButton}>
             {t('unblacklist_confirmation_title')}
           </Button>
+        )}
+
+        {isBlacklisted && !isBlockedByMe && (
+          <Text style={styles.serverInfo}>{t('blocked_by_other_user')}</Text>
         )}
       </View>
     </ScrollView>

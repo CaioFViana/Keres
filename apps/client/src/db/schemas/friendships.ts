@@ -23,6 +23,8 @@ export const friendships = sqliteTable(
     })
       .notNull()
       .default(FriendStatus.PENDING),
+    /** Who issued the blacklist - null unless `status` is BLACKLISTED. Mirrors the server's `blockedById` (see apps/api/src/db/schema/tables/friendships.ts for why this exists). */
+    blockedById: text('blocked_by_id').references(() => users.idUser),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .$defaultFn(() => new Date()),

@@ -212,7 +212,12 @@ const FriendshipListScreen = () => {
             </>
           )}
 
-          {item.status === FriendStatus.BLACKLISTED && (
+          {item.status === FriendStatus.BLACKLISTED
+            // Only the side that issued the blacklist can undo it (server-enforced too, see
+            // FriendshipService.unblacklistUser) - null `blockedById` is a legacy row from
+            // before this column existed, shown to both sides since who blocked whom can't
+            // be recovered for it.
+            && (item.blockedById === null || item.blockedById === currentUsersServerId) && (
             <TouchableOpacity onPress={() => handleUnblacklistUser(item.id, item.serverId)} style={styles.actionButton}>
               <Ionicons name="person-add-outline" size={24} color={colors.primary} />
             </TouchableOpacity>

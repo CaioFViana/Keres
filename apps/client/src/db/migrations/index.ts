@@ -2,10 +2,12 @@
 // Do not modify this file directly.
 
 import migration_1 from './0000_curly_mockingbird';
+import migration_2 from './0001_lethal_landau';
 
 
 const migrations = [
 { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
+  { id: 2, name: '0001_lethal_landau', run: migration_2 },
 ];
 
 export default migrations;

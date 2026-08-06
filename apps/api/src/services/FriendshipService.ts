@@ -5,6 +5,7 @@ import { ulid } from 'ulid';
 import { db } from '../db';
 import { friendships } from '../db/schema/tables/friendships';
 import { users } from '../db/schema/tables/users';
+import { AppError } from '../utils/errors';
 import { storyPermissionService } from './StoryPermissionService';
 
 export class FriendshipService {
@@ -197,7 +198,7 @@ export class FriendshipService {
 
       // Update existing friendship to blacklisted
       const updatedFriendship = await db.update(friendships)
-        .set({ status: FriendStatus.BLACKLISTED, updatedAt: new Date() })
+        .set({ status: FriendStatus.BLACKLISTED, blockedById: blisterId, updatedAt: new Date() })
         .where(eq(friendships.id, existingFriendship.id))
         .returning();
 
@@ -213,6 +214,7 @@ export class FriendshipService {
         senderId: blisterId,
         receiverId: blacklistedUserId,
         status: FriendStatus.BLACKLISTED,
+        blockedById: blisterId,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -241,6 +243,14 @@ export class FriendshipService {
 
     if (!existingFriendship) {
       throw new Error('User is not blacklisted by you.');
+    }
+
+    // Only the user who actually issued the blacklist can undo it - being blocked isn't a
+    // privilege to unblock yourself. Rows blacklisted before `blockedById` existed have it
+    // `null`; treat those as unblockable by either side (there's no way to recover who
+    // blocked whom for them) rather than leaving them permanently stuck.
+    if (existingFriendship.blockedById && existingFriendship.blockedById !== unblisterId) {
+      throw new AppError(403, 'Only the user who blacklisted this relationship can remove it.');
     }
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
@@ -278,6 +288,7 @@ export class FriendshipService {
         senderId: friendships.senderId,
         receiverId: friendships.receiverId,
         status: friendships.status,
+        blockedById: friendships.blockedById,
         createdAt: friendships.createdAt,
         updatedAt: friendships.updatedAt,
         // Corrected: friendUserAlias.username correctly identifies the other user's username due to the join condition.
@@ -308,6 +319,7 @@ export class FriendshipService {
         senderId: f.senderId,
         receiverId: f.receiverId,
         status: f.status,
+        blockedById: f.blockedById,
         createdAt: f.createdAt.toISOString(),
         updatedAt: f.updatedAt.toISOString(),
         friendUsername: f.friendUsername || '',

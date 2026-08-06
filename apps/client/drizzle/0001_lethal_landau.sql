@@ -1,0 +1,1 @@
+ALTER TABLE `friendships` ADD `blocked_by_id` text REFERENCES users(id_user);

@@ -1,84 +1,79 @@
-Explicação da Estrutura de Arquivos:
+# Estrutura do Projeto
 
-   * `apps/client/src/App.tsx`:
-       * Propósito: É o componente raiz da aplicação React Native. Ele será responsável por configurar provedores globais (como o ThemeProvider e o NavigationContainer),
-         gerenciar estados de carregamento iniciais e renderizar o navegador principal da aplicação.
-       * Escolha: Manter o App.tsx o mais limpo possível, delegando responsabilidades específicas a outros componentes e provedores, é uma boa prática para escalabilidade e
-         manutenção.
+> O texto abaixo reflete a estrutura real do repositório.
 
-   * `apps/client/src/navigation/`: Este diretório agrupa toda a lógica de navegação da aplicação.
-       * `AppNavigator.tsx`:
-           * Propósito: O navegador de nível superior que orquestra a transição entre os principais "stacks" da aplicação (Cold Install, Seleção de Histórias, Sistema Principal).
-           * Escolha: Centraliza a lógica de navegação principal, tornando mais fácil entender o fluxo geral e adicionar novas seções.
-       * `ColdInstallStack.tsx`:
-           * Propósito: Um navegador de pilha dedicado para a experiência de onboarding inicial do usuário.
-           * Escolha: Garante um fluxo isolado e linear para novos usuários, sem distrações das funcionalidades principais.
-       * `StorySelectionStack.tsx`:
-           * Propósito: Um navegador de pilha para gerenciar as telas relacionadas à seleção, criação e gerenciamento de histórias.
-           * Escolha: Agrupa funcionalidades relacionadas à gestão de histórias, facilitando a navegação dentro desse contexto.
-       * `MainSystemStack.tsx`:
-           * Propósito: Um navegador de pilha para a funcionalidade central da aplicação, que provavelmente incluirá um navegador de gaveta (drawer navigator) para a barra
-             lateral, conforme descrito no screen_flow.md.
-           * Escolha: Organiza as telas do sistema principal, permitindo uma navegação complexa (como a barra lateral) sem sobrecarregar o navegador principal.
+## Visão geral do monorepo
 
-   * `apps/client/src/screens/`: Este diretório contém os componentes das telas principais da aplicação.
-       * `ColdInstallScreen.tsx`:
-           * Propósito: A tela de boas-vindas e configuração inicial do usuário.
-           * Escolha: Componente específico para a primeira interação do usuário.
-       * `StorySelectionScreen.tsx`:
-           * Propósito: A tela onde os usuários visualizam e selecionam suas histórias.
-           * Escolha: Componente central para a gestão de histórias.
-       * `MainDashboardScreen.tsx`:
-           * Propósito: A tela principal do dashboard para uma história selecionada, fornecendo uma visão geral e estatísticas.
-           * Escolha: Ponto de entrada visual para uma história ativa.
-       * `GalleryScreen.tsx`:
-           * Propósito: Tela dedicada à exibição de imagens e itens da galeria.
-           * Escolha: Funcionalidade específica que se beneficia de uma tela dedicada.
-       * `SettingsScreen.tsx`:
-           * Propósito: Tela para configurações da aplicação e configurações específicas da história.
-           * Escolha: Centraliza as opções de configuração.
-       * `ImportExportScreen.tsx`:
-           * Propósito: Tela para lidar com a funcionalidade de importação/exportação de JSON.
-           * Escolha: Funcionalidade distinta que requer uma interface de usuário própria.
-       * `CharacterRelationsScreen.tsx`:
-           * Propósito: Tela para gerenciar e exibir relacionamentos entre personagens.
-           * Escolha: Funcionalidade específica que pode ter uma UI complexa.
-       * `ChoicesScreen.tsx`:
-           * Propósito: Tela para gerenciar as escolhas da história, potencialmente incluindo uma visualização em grafo.
-           * Escolha: Funcionalidade central para histórias ramificadas.
-       * `common/`: Um subdiretório para padrões de tela genéricos e reutilizáveis.
-           * `ListingScreen.tsx`:
-               * Propósito: Um componente de tela genérico que pode ser reutilizado para exibir listas de várias entidades (Personagens, Locais, Capítulos, etc.).
-               * Escolha: Reduz a duplicação de código e promove a consistência na exibição de listas.
-           * `DetailScreen.tsx`:
-               * Propósito: Um componente de tela genérico para exibir os detalhes de uma única entidade e fornecer opções de edição.
-               * Escolha: Promove a reutilização e a consistência na exibição de detalhes de entidades.
-   * `apps/client/src/theme/`: Este diretório centraliza toda a lógica e definições relacionadas a temas.
-       * `colors.ts`:
-           * Propósito: Define as paletas de cores para os modos claro e escuro, garantindo consistência em toda a aplicação.
-           * Escolha: Centraliza as definições de cores, facilitando a manutenção e a troca de temas.
-       * `ThemeProvider.tsx`:
-           * Propósito: Um Provedor de Contexto React que disponibiliza o tema atual (incluindo cores) para todos os componentes filhos.
-           * Escolha: Permite que os componentes acessem as cores e outras propriedades do tema sem a necessidade de passá-las manualmente via props.
-       * `index.ts`:
-           * Propósito: Um arquivo "barrel" para exportar todas as utilidades e componentes relacionados ao tema deste diretório.
-           * Escolha: Simplifica as importações de módulos relacionados ao tema.
+```
+Keres/
+├── apps/
+│   ├── api/       # Backend - Elysia (Bun) + Drizzle (Postgres)
+│   ├── admin/     # Painel administrativo interno - React + Vite
+│   ├── client/    # App principal - React Native + Expo (mobile e web)
+│   └── desktop/   # Empacotador Electron do client, para Windows/Mac/Linux
+├── packages/
+│   └── shared/    # Entidades, schemas Zod e metadados compartilhados entre api/admin/client
+└── docs/          # Esta pasta
+```
 
-   * `apps/client/src/state/`: Este diretório contém os "stores" do Zustand para gerenciamento de estado global.
-       * `themeStore.ts`:
-           * Propósito: Um store Zustand para gerenciar o estado atual do tema (por exemplo, isDarkMode), permitindo que os componentes reajam às mudanças de tema.
-           * Escolha: Centraliza o estado do tema, tornando-o acessível globalmente.
-       * `authStore.ts`:
-           * Propósito: Um store Zustand para gerenciar o estado de autenticação do usuário (por exemplo, JWT, informações do usuário).
-           * Escolha: Centraliza o estado de autenticação, essencial para proteger rotas e funcionalidades.
-       * `storyStore.ts`:
-           * Propósito: Um store Zustand para gerenciar a história atualmente selecionada e outros dados globais relacionados à história.
-           * Escolha: Centraliza o estado da história ativa, facilitando o acesso e a modificação em toda a aplicação.
+Não existe um `packages/db` separado: cada app com persistência própria tem seu próprio schema Drizzle (`apps/api/src/db/`, do lado do servidor/Postgres; `apps/client/src/db/`, do lado do cliente/SQLite local) - ambos mapeando as mesmas entidades de `packages/shared/entities`, mas como bancos fisicamente distintos (ver estratégia offline-first em `project_plan.md`).
 
-   * `apps/client/src/utils/`: Este diretório contém funções e serviços utilitários.
-       * `db.ts`:
-           * Propósito: Conterá funções para inicializar e interagir com o banco de dados SQLite local.
-           * Escolha: Separa a lógica de persistência de dados local do restante da aplicação.
-       * `syncEngine.ts`:
-           * Propósito: Abrigará a lógica para a engine de sincronização customizada, lidando com rastreamento de mudanças, comunicação com o backend e resolução de conflitos.
-           * Escolha: Centraliza a complexa lógica de sincronização, mantendo-a modular e reutilizável.
+---
+
+## `packages/shared`
+
+Consumido por `apps/api`, `apps/admin` e `apps/client` via `@keres/shared` (e via caminhos profundos tipo `@keres/shared/metadata/entityFields` para metadados específicos).
+
+- **`entities/`** - uma interface TypeScript por entidade (23 arquivos). É o "vocabulário" comum do sistema: `Story`, `Character`, `CharacterRelation`, `CharacterScene`, `Chapter`, `Scene`, `Choice`, `Location`, `LocationRelation`, `Item` (contém também `ItemJourney`), `Note`, `Tag`, `WorldRule`, `Gallery`, `GalleryRelation`, `Suggestion`, `StorySchemaField`, `AttributeValue`, `ClientSettings`, `EnrichedFriendship`, `UserPublicInfo`, `AdminUserInfo`, `Tier`, `RegistrationSettings`.
+- **`schemas/`** - validação Zod para request/response de cada recurso da API, espelhando as entidades acima.
+- **`metadata/`** - enums e configurações estáticas usadas em vários lugares do sistema:
+  - `StorySchemaEntityType` - as 7 entidades que aceitam atributos customizados (`Character`, `Location`, `Item`, `Scene`, `Chapter`, `Note`, `WorldRule`) - exclui tabelas de relação/junção, `Choice`, `Gallery` e a própria `Story`.
+  - `AttributeType` - tipos de campo customizado (`TEXT`, `LONG_TEXT`, `NUMBER`, `BOOLEAN`, `DATE`, `SUGGESTION`).
+  - `OperationLogEntityType` - as entidades cobertas pelo log de operações de sincronização.
+  - `LocationRelationType` - `'contains'` (direcional, pai/filho) e `'connected_to'` (par não-ordenado).
+  - `FriendStatus` - `PENDING` / `FRIEND` / `BLACKLISTED`.
+  - `entityFields.ts` - `entityFieldMetadata`: lista de campos pesquisáveis por entidade, usada pelo modal de Busca Avançada (`AdvancedSearchModal`).
+  - `globalSearchFields.ts` - `globalSearchFieldConfig`: campo de título + campos pesquisáveis por entidade, usada pela Busca Global (ver `screen_flow.md`).
+- **`utils/`** - `attributeKey.ts` (deriva uma chave segura a partir do nome de exibição de um atributo customizado) e `attributeValueCodec.ts` (codifica/decodifica valores tipados de atributo customizado para a única coluna de texto onde são armazenados).
+
+---
+
+## `apps/api`
+
+Backend em **Elysia** (framework HTTP para **Bun**), **Drizzle ORM** sobre **PostgreSQL**, validação com **Zod** (schemas de `packages/shared`), autenticação **JWT** (`@elysiajs/jwt`), IDs **ULID**.
+
+- **`src/db/`** - `schema/tables/*.ts`: 24 tabelas Drizzle do lado do servidor, uma por entidade sincronizável.
+- **`src/modules/`** - um subdiretório por recurso, cada um com seu `*.route.ts`: `auth`, `sync`, `story`, `storyPermission`, `friend`, `user`, `media`, `websocket`, `admin` (que por sua vez agrupa `adminUser`, `adminTier`, `adminRegistration`, `adminRecovery`).
+- **`src/services/`** - lógica de negócio (`SyncService`, `StoryPermissionService`, `FriendshipService`, `TierService`/`TierEnforcementService`, `MediaStorageService`, `StoryExportImportService`, etc.) e **`entity-sync-handlers/`** - um handler por entidade sincronizável (estende `BaseSyncEntityHandler`), responsável por aplicar operações de sync recebidas do cliente com a resolução de conflito baseada em `version`/tombstone descrita em `project_plan.md`.
+- A API também serve o SPA compilado de `apps/admin` sob `/admin/*`, além de expor Swagger em `/swagger`.
+
+---
+
+## `apps/client`
+
+**React Native + Expo**, com **React Native Web** - o mesmo código roda nativo (Android/iOS) e como app web (essa build web é exatamente o que `apps/desktop` empacota dentro do Electron; ver abaixo). Offline-first: todo o estado da história vive num banco SQLite local.
+
+- **`src/db/`** - banco local via **Drizzle ORM + expo-sqlite**. `schemas/` tem 27 tabelas: as mesmas entidades de `packages/shared` mais tabelas exclusivas do cliente sem equivalente no servidor (`clientSettings`, `servers`, `syncConflicts`).
+- **`src/screens/`** - uma pasta por entidade/feature, cada uma com suas próprias telas de Lista/Detalhe/Formulário dedicadas (não existe uma tela genérica compartilhada; ver `screen_flow.md` para o fluxo completo de navegação):
+  `characters/`, `locations/`, `chapters/`, `scenes/`, `choices/`, `items/`, `itemJourneys/`, `tags/`, `worldrules/`, `notes/`, `gallery/`, `characterrelations/`, `operationlog/`, `storyschema/`, `globalsearch/`, `mainstorystack/` (Dashboard, Configurações da História, Análise da História), `enterstack/` (Cold Install, seleção/CRUD de história, servidores, amizades, perfil), `examplestories/`.
+- **`src/state/`** - stores **Zustand**, um por entidade (`characterStore`, `locationStore`, `tagStore`, ...) construídos pela factory compartilhada **`createEntityStore.ts`**, que centraliza o que antes era duplicado (~140 linhas) em cada store: estado de filtro/busca/ordenação, favoritar com atualização otimista + rollback, inicialização do serviço a partir do db + storyId, e o ciclo de fetch. Cada store só informa `collectionKey`, `createService` e `fetchEntities` (e opcionalmente `updateFavorite`/`extraActions`/`persistKey`); a API pública continua com nomes por entidade (`tags`/`fetchTags`) via mapped types. Stores de nível de app (`themeStore`, `storyStore`, `userSettingsStore`, `syncConflictStore`, `connectivityStore`, `notificationStore`, `appAlertStore`) vivem no mesmo diretório.
+- **`src/services/`** - `storymanagement/` (um serviço de CRUD por entidade, ex: `CharacterService`, `GlobalSearchService`), `entity-sync-handlers/` (contraparte no cliente dos handlers da API, aplicando operações recebidas no banco local), `SyncEngineService`, `SyncConflictService`, `apiClient`/`AuthTokenManager`, `MediaFileService`/`webMediaStore`.
+- **`src/navigation/`** - `AppNavigator.tsx` (raiz) alterna entre `ColdInstallStack`, `StorySelectionStack` e `MainSystemStack` (o drawer principal, descrito em `screen_flow.md`).
+- **`src/components/`** - `common/` (componentes genéricos reutilizados entre entidades: `GenericFilterSortList`, `AdvancedSearchModal`, `GenericExpandedListItemWithActions`, etc.), `listitem/` (um item de lista por entidade), gerenciadores de relação (`CharacterRelationManager`, `NoteManager`, ...) e renderizadores de grafo (`StoryGraph`, `LocationGraph`, `CharacterRelationGraph`).
+- **`src/hooks/`, `src/utils/`, `src/theme/`, `src/locales/`** (`en.json`/`pt.json`) - hooks compartilhados (`useEntityListScreen`, `useEntityRelations`, `useStorySchemaFields`, ...), utilitários (layout/SVG de grafos, i18n, `documentTitle.ts`, `entityNavigation.ts`), tema e traduções.
+
+---
+
+## `apps/desktop`
+
+Wrapper **Electron** em torno do export web de `apps/client`. `main.ts`:
+
+- Aponta `CLIENT_DIST` para o build web do client (`../../client/dist` em dev, `resourcesPath/client-dist` empacotado) e o serve através de um protocolo customizado `app://`, com headers COOP/COEP - exigidos pelo driver WASM/OPFS do `expo-sqlite` no navegador (SharedArrayBuffer só é permitido numa página "cross-origin isolated").
+- Cria a `BrowserWindow` e mantém o título da janela sincronizado com o título dinâmico que o próprio client já define por tela (`DocumentTitleSync`/`setDocumentTitle`, ver `apps/client/src/utils/documentTitle.ts`).
+- Expõe IPC de mídia (`media:write/read/delete-file/delete-directory/list-all`) para gravar/ler arquivos de mídia importados no sistema de arquivos real (fora do sandbox do Chromium), diferente do SQLite, que permanece em OPFS.
+
+---
+
+## `apps/admin`
+
+SPA em **React + Vite + react-router-dom**, servido pela própria API sob `/admin/*`. É um painel **interno**, não voltado ao usuário final (o escritor): gerencia usuários, tiers/planos de assinatura, configurações de abertura de cadastro e recuperação de conta.

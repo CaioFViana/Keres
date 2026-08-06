@@ -34,7 +34,9 @@ const CELL_MARGIN = 4;
  * margin/padding), clipping the last column of icons.
  */
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const ICON_GRID_SIZE = SCREEN_WIDTH * 0.7;
+// Same cap as ColorPickerModal, for the same reason: uncapped, this rendered at 70% of the
+// whole desktop window on web/Electron instead of 70% of a phone screen. No-op on real phones.
+const ICON_GRID_SIZE = Math.min(SCREEN_WIDTH * 0.7, 320);
 const ICON_CELL_SIZE = ICON_GRID_SIZE / NUM_COLUMNS - CELL_MARGIN * 2;
 
 const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelectIcon, onClose, title }) => {

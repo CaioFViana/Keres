@@ -6,7 +6,11 @@ import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, useTheme } from '../../../theme
 import Button from '../Button/Button';
 
 const { width } = Dimensions.get('window');
-const COLOR_PICKER_SIZE = width * 0.7; // 70% of screen width
+// Capped, not just 70% of window width: on Android/iOS `window` is the device screen (a few
+// hundred px), so 70% is already a sane modal size. On web/Electron `window` is the whole
+// desktop window, which can be 1000px+ - uncapped, this rendered a picker the size of half
+// the screen. The cap is a no-op on any real phone width (70% only exceeds it above ~460px).
+const COLOR_PICKER_SIZE = Math.min(width * 0.7, 320);
 const SLIDER_HEIGHT = 20;
 const COLOR_CIRCLE_SIZE = (COLOR_PICKER_SIZE / 8) - 5; // Adjusted size for 8 columns with some margin
 

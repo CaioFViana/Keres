@@ -2,12 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Avatar from '../../components/common/Avatar/Avatar';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
+import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
@@ -15,9 +16,8 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import { AppAlert } from '../../utils/AppAlert';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
 
@@ -31,8 +31,10 @@ const FriendshipListScreen = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const drizzleClient = useDrizzle();
-  const friendshipService = createFriendshipService(drizzleClient);
-  const serverService = createServerService(drizzleClient); // Initialize ServerService
+  // Stable references: recreating these every render would change their identity, which sits
+  // in fetchFriendshipsAndServers' dependency array and would re-subscribe/re-run on every render.
+  const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
+  const serverService = useRef(createServerService(drizzleClient)).current;
   const { userId: localUserId } = useUserSettingsStore(); // Renamed userId to localUserId
   const { showNotification } = useNotificationStore();
 

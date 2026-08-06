@@ -1,11 +1,11 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { Picker } from '@react-native-picker/picker'; // For dropdown selection
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Import ActivityIndicator
 import Button from '../../components/common/Button/Button'; // Custom Button
+import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schemas/servers';
@@ -34,8 +34,10 @@ const FriendshipFormScreen = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const drizzleClient = useDrizzle();
-  const friendshipService = createFriendshipService(drizzleClient);
-  const serverService = createServerService(drizzleClient); // Initialize ServerService
+  // Stable references: recreating these every render would change their identity, which sits
+  // in the effect/callback dependency arrays below and would otherwise re-trigger them forever.
+  const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
+  const serverService = useRef(createServerService(drizzleClient)).current;
   const { userId: currentUserId } = useUserSettingsStore();
 
   const [friendTag, setFriendTag] = useState('');
@@ -162,28 +164,22 @@ const FriendshipFormScreen = () => {
       <Text style={[styles.title, { color: colors.text }]}>{t('add_new_friendship')}</Text>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
-      <View style={commonInputStyles.input}>
-        <Picker
-          selectedValue={selectedServerId}
-          onValueChange={(itemValue) => {
-            setSelectedServerId(itemValue);
-            // Changing the server invalidates any tag already checked against the previous one.
-            setFriendUsername(null);
-            setFriendFound(null);
-            setResolvedFriendUserId(null);
-          }}
-          style={{ color: colors.text }}
-        >
-          {servers.length === 0 && <Picker.Item label={t('no_servers_available')} value="" />}
-          {servers.map((server) => (
-            <Picker.Item
-              key={server.id}
-              label={server.tag ? `@${server.tag} — ${server.name}` : server.name}
-              value={server.id}
-            />
-          ))}
-        </Picker>
-      </View>
+      <Select
+        options={servers.map((server) => ({
+          label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
+          value: server.id,
+        }))}
+        value={selectedServerId || null}
+        onValueChange={(itemValue) => {
+          setSelectedServerId(itemValue || '');
+          // Changing the server invalidates any tag already checked against the previous one.
+          setFriendUsername(null);
+          setFriendFound(null);
+          setResolvedFriendUserId(null);
+        }}
+        placeholder={servers.length === 0 ? t('no_servers_available') : t('select_server')}
+        multiple={false}
+      />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('friend_id')}</Text>
       <View style={styles.inputWithButton}>

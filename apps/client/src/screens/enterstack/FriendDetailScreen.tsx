@@ -1,7 +1,7 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Avatar from '../../components/common/Avatar/Avatar';
@@ -39,8 +39,11 @@ const FriendDetailScreen = () => {
   const route = useRoute<FriendDetailScreenRouteProp>();
   const { friendshipId } = route.params;
   const drizzleClient = useDrizzle();
-  const friendshipService = createFriendshipService(drizzleClient);
-  const serverService = createServerService(drizzleClient);
+  // Stable references: recreating these every render would change `load`'s identity (it
+  // depends on both), and `load` runs unconditionally inside the effect below - an unstable
+  // dependency there is an infinite render loop, not just wasted work.
+  const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
+  const serverService = useRef(createServerService(drizzleClient)).current;
   const { showNotification } = useNotificationStore();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const scrollBottomPadding = useFormScrollBottomPadding();

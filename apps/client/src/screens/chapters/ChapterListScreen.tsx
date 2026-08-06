@@ -38,6 +38,7 @@ const ChapterListScreen = () => {
     favoriteFilterState,
     advancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     handleFavoriteFilterChange,
@@ -122,7 +123,7 @@ const ChapterListScreen = () => {
     }, [navigation, colors.text, t, handleReorderPress, styles.headerButton, styles.headerRightContainer])
   );
 
-  if (loading) {
+  if (loading && chapters.length === 0) {
     return <ScreenLoading message={t('loading_chapters')} />;
   }
 
@@ -137,6 +138,7 @@ const ChapterListScreen = () => {
         renderItem={memoizedChapterListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_chapters')}
         currentSearchTerm={searchQuery}
         filterOptions={[]} // Chapters don't have tags themselves
@@ -154,6 +156,7 @@ const ChapterListScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
+        isLoading={loading}
       />
       <ChapterReorderModal
         isVisible={isReorderModalVisible}

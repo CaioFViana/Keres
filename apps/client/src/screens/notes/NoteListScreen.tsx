@@ -45,6 +45,7 @@ const NotesScreen = () => {
     favoriteFilterState,
     advancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     handleFilterTagsChange,
@@ -122,7 +123,7 @@ const NotesScreen = () => {
     },
   });
 
-  if (loading) {
+  if (loading && notes.length === 0) {
     return <ScreenLoading message={t('loading_notes')} />;
   }
 
@@ -137,6 +138,7 @@ const NotesScreen = () => {
         renderItem={memoizedNoteListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_notes')}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
@@ -154,6 +156,7 @@ const NotesScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
+        isLoading={loading}
       />
     </View>
   );

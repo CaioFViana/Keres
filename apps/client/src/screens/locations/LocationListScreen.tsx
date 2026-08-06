@@ -42,6 +42,7 @@ const LocationsScreen = () => {
     sortDirection,
     advancedSearchCriteria: storeAdvancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     handleFilterTagsChange,
@@ -137,7 +138,7 @@ const LocationsScreen = () => {
     ];
   }, [t]);
 
-  if (loading) {
+  if (loading && locations.length === 0) {
     return <ScreenLoading message={t('loading_locations')} />;
   }
 
@@ -152,6 +153,7 @@ const LocationsScreen = () => {
         renderItem={memoizedRenderItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_locations')}
         currentSearchTerm={searchQuery}
         filterOptions={memoizedTagFilterOptions}
@@ -168,6 +170,7 @@ const LocationsScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setStoreAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
+        isLoading={loading}
       />
     </View>
   );

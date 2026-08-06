@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
 import { EntityStoreCore } from '../state/createEntityStore';
 import { useStoryStore } from '../state/storyStore';
@@ -83,6 +83,12 @@ export function useEntityListScreen<TStore extends AnyEntityStore, TKey extends 
     };
   }, [searchQuery, debouncedSetStoreSearchTerm]);
 
+  /** Commits the pending search immediately, skipping the debounce wait - for Enter/submit. */
+  const handleSearchSubmit = useCallback(() => {
+    debouncedSetStoreSearchTerm.cancel?.();
+    setStoreSearchTerm(searchQuery);
+  }, [debouncedSetStoreSearchTerm, setStoreSearchTerm, searchQuery]);
+
   useEffect(() => {
     if (drizzleDb && storyId) {
       setDbAndStoryId(drizzleDb, storyId);
@@ -121,6 +127,7 @@ export function useEntityListScreen<TStore extends AnyEntityStore, TKey extends 
     advancedSearchCriteria,
 
     handleSearch: setSearchQuery,
+    handleSearchSubmit,
     handleSortChange: (sortBy: string | null) => setSort(sortBy, sortDirection),
     handleSortDirectionChange: (direction: SortDirection) => setSort(activeSort, direction),
     handleFilterTagsChange: setFilterTags,

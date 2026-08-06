@@ -42,6 +42,7 @@ const ChoiceListScreen = () => {
     sortDirection,
     advancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     setAdvancedSearchCriteria,
@@ -191,6 +192,7 @@ const ChoiceListScreen = () => {
         renderItem={memoizedChoiceListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_choices')}
         currentSearchTerm={searchQuery}
         filterComponent={filterComponent}

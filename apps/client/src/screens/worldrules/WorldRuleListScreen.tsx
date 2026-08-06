@@ -45,6 +45,7 @@ const WorldRulesScreen = () => {
     favoriteFilterState,
     advancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     handleFilterTagsChange,
@@ -122,7 +123,7 @@ const WorldRulesScreen = () => {
     },
   });
 
-  if (loading) {
+  if (loading && worldRules.length === 0) {
     return <ScreenLoading message={t('loading_world_rules')} />;
   }
 
@@ -137,6 +138,7 @@ const WorldRulesScreen = () => {
         renderItem={memoizedWorldRuleListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_world_rules')}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
@@ -154,6 +156,7 @@ const WorldRulesScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
+        isLoading={loading}
       />
     </View>
   );

@@ -36,6 +36,7 @@ const ItemListScreen = () => {
     sortDirection,
     advancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     setAdvancedSearchCriteria,
@@ -105,6 +106,7 @@ const ItemListScreen = () => {
         renderItem={memoizedItemListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_items')}
         currentSearchTerm={searchQuery}
         filterComponent={filterComponent}

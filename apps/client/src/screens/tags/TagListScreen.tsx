@@ -37,6 +37,7 @@ const TagsScreen = () => {
     favoriteFilterState,
     advancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     handleFavoriteFilterChange,
@@ -91,7 +92,7 @@ const TagsScreen = () => {
     },
   });
 
-  if (loading) {
+  if (loading && tags.length === 0) {
     return <ScreenLoading message={t('loading_tags')} />;
   }
 
@@ -106,6 +107,7 @@ const TagsScreen = () => {
         renderItem={memoizedTagListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_tags')}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={[]} // No tag filtering by other tags for TagsScreen
@@ -123,6 +125,7 @@ const TagsScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria} // Pass the setter
         currentAdvancedSearchCriteria={advancedSearchCriteria} // Pass the criteria
+        isLoading={loading}
       />
     </View>
   );

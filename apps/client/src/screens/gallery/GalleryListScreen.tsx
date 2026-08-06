@@ -50,6 +50,7 @@ const GalleryListScreen = () => {
     favoriteFilterState,
     activeFilterTags,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     handleFavoriteFilterChange,
@@ -169,6 +170,7 @@ const GalleryListScreen = () => {
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_media')}
         currentSearchTerm={searchQuery}
         filterOptions={mediaTypeOptions}

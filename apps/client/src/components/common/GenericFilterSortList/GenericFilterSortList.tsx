@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { ActivityIndicator, FlatList, Keyboard, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useTheme } from '../../../theme';
 import AdvancedSearchModal from '../AdvancedSearchModal/AdvancedSearchModal';
 import Select from '../Select/Select';
@@ -17,6 +17,8 @@ interface GenericFilterSortListProps<T> {
   keyExtractor: (item: T) => string;
   // Search Props
   onSearch: (searchText: string) => void;
+  /** Enter (web) / the mobile keyboard's return key: commits the search immediately and blurs. */
+  onSearchSubmit?: () => void;
   searchPlaceholder?: string;
   currentSearchTerm?: string;
   // Filter Props
@@ -55,6 +57,7 @@ const GenericFilterSortList = <T,>({
   renderItem,
   keyExtractor,
   onSearch,
+  onSearchSubmit,
   searchPlaceholder,
   currentSearchTerm,
   filterComponent,
@@ -115,6 +118,17 @@ const GenericFilterSortList = <T,>({
   const handleSearchTextChange = (text: string) => {
     onSearch(text);
   };
+
+  /**
+   * The search input still updates on every keystroke (kept live via `onSearch`), but the
+   * committed search that drives the fetch is debounced upstream so a paused fetch doesn't
+   * fire on every character. Enter/the mobile return key skips that wait and blurs, rather
+   * than leaving the keyboard open until the debounce catches up.
+   */
+  const handleSearchSubmitEditing = useCallback(() => {
+    Keyboard.dismiss();
+    onSearchSubmit?.();
+  }, [onSearchSubmit]);
 
   const handleFilterSelection = (values: string | string[] | null) => {
     const newValues = Array.isArray(values) ? values : (values ? [values] : []);
@@ -182,6 +196,8 @@ const GenericFilterSortList = <T,>({
           placeholder={searchPlaceholder || t('search')}
           value={currentSearchTerm || ''}
           onChangeText={handleSearchTextChange}
+          onSubmitEditing={handleSearchSubmitEditing}
+          returnKeyType="search"
           style={styles(colors).searchBar}
         />
       </View>
@@ -242,9 +258,14 @@ const GenericFilterSortList = <T,>({
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={styles(colors).resultsCountText}>
-        {t('total_results_found', { count: data.length })}
-      </Text>
+      <View style={styles(colors).resultsRow}>
+        {isLoading && (
+          <ActivityIndicator size="small" color={colors.primary} style={styles(colors).resultsLoadingIndicator} />
+        )}
+        <Text style={styles(colors).resultsCountText}>
+          {t('total_results_found', { count: data.length })}
+        </Text>
+      </View>
       <FlatList
         data={data}
         renderItem={renderItem}
@@ -327,11 +348,18 @@ const styles = (colors: any) => StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
     },
+    resultsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+      paddingLeft: 10,
+    },
+    resultsLoadingIndicator: {
+      marginRight: 8,
+    },
     resultsCountText: {
       color: colors.textSecondary,
       textAlign: 'left',
-      marginBottom: 10,
-      paddingLeft: 10,
       fontSize: 16,
     },
   });

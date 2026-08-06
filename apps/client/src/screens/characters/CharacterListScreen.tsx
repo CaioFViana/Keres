@@ -42,6 +42,7 @@ const CharactersScreen = () => {
     sortDirection,
     advancedSearchCriteria: storeAdvancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     handleFilterTagsChange,
@@ -127,7 +128,7 @@ const CharactersScreen = () => {
     ];
   }, [t]);
 
-  if (loading) {
+  if (loading && characters.length === 0) {
     return <ScreenLoading message={t('loading_characters')} />;
   }
 
@@ -142,6 +143,7 @@ const CharactersScreen = () => {
         renderItem={memoizedRenderItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_characters')}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={memoizedTagFilterOptions}
@@ -158,6 +160,7 @@ const CharactersScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setStoreAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
+        isLoading={loading}
       />
     </View>
   );

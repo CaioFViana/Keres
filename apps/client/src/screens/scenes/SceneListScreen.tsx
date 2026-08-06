@@ -40,6 +40,7 @@ const SceneListScreen = () => {
     favoriteFilterState,
     advancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     handleFavoriteFilterChange,
@@ -131,7 +132,7 @@ const SceneListScreen = () => {
     }, [navigation, colors.text, t, handleReorderPress, selectedStory?.type, styles.headerButton, styles.headerRightContainer])
   );
 
-  if (loading) {
+  if (loading && scenes.length === 0) {
     return <ScreenLoading message={t('loading_scenes')} />;
   }
 
@@ -146,6 +147,7 @@ const SceneListScreen = () => {
         renderItem={memoizedSceneListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_scenes')}
         currentSearchTerm={searchQuery}
         filterOptions={[]}
@@ -163,6 +165,7 @@ const SceneListScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
+        isLoading={loading}
       />
       <SceneReorderModal
         isVisible={isReorderModalVisible}

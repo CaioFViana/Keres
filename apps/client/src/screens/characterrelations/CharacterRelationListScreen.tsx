@@ -36,6 +36,7 @@ const CharacterRelationsScreen = () => {
     sortDirection,
     advancedSearchCriteria,
     handleSearch,
+    handleSearchSubmit,
     handleSortChange,
     handleSortDirectionChange,
     setAdvancedSearchCriteria,
@@ -86,7 +87,7 @@ const CharacterRelationsScreen = () => {
     ];
   }, [t]);
 
-  if (loading) {
+  if (loading && characterRelations.length === 0) {
     return <ScreenLoading message={t('loading_relations')} />;
   }
 
@@ -101,6 +102,7 @@ const CharacterRelationsScreen = () => {
         renderItem={memoizedListItem}
         keyExtractor={(item) => item.id}
         onSearch={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_relations')}
         currentSearchTerm={searchQuery} // Display local state for responsive input
         filterOptions={[]} // No tag filtering
@@ -119,6 +121,7 @@ const CharacterRelationsScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={advancedSearchCriteria}
+        isLoading={loading}
       />
     </View>
   );

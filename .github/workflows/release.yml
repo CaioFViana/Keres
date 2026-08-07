@@ -1,0 +1,217 @@
+name: Release
+
+# Tagged releases only - a normal push to any branch never triggers this. Cut a release with:
+#   git tag v1.2.3 && git push origin v1.2.3
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+# If someone pushes two tags close together, don't let their release-creation steps race each
+# other (each would try to attach artifacts to a GitHub Release keyed by the same tag ref).
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Bun has no version pinned anywhere else in this repo (no engines field, no .bun-version) -
+  # pinned here to the exact version bun.lock was generated with, so every job installs from
+  # the same lockfile format/resolution behavior instead of whatever "latest" happens to be
+  # the day a release ships.
+  BUN_VERSION: '1.2.19'
+
+jobs:
+  # Turns the pushed tag (e.g. "v1.2.3") into the plain version string every other job needs
+  # (both for `node scripts/ci/set-version.mjs` and for tagging the Docker image) - computed
+  # once here instead of repeating the same `${GITHUB_REF_NAME#v}` strip in every job.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.compute.outputs.version }}
+    steps:
+      - id: compute
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+  # ---- Server: build + publish the API's Docker image to GHCR ----
+  docker:
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # GHCR requires a lowercase image path; this repo's owner/name aren't guaranteed to be
+      # (GitHub usernames/repo names can contain uppercase letters, and `github.repository`
+      # preserves whatever casing they were created with).
+      - name: Compute lowercase image name
+        run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          # No separate secret to configure - GITHUB_TOKEN is minted per-run and already has
+          # `packages: write` via the `permissions:` block above.
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.version.outputs.version }}
+            ghcr.io/${{ env.IMAGE_NAME }}:latest
+
+  # ---- Desktop: Windows (nsis installer + portable exe) ----
+  desktop-windows:
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      # Root install, not just apps/desktop: packaging first runs `build:client`
+      # (cd ../client && bun run export:web), so the client's own dependency tree is needed too.
+      - run: bun install --frozen-lockfile
+      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - name: Build Windows installer + portable exe
+        working-directory: apps/desktop
+        run: bun run package:win
+        env:
+          # No signing certificate configured yet (see electron-builder.yml) - without this,
+          # electron-builder still tries to auto-discover a local dev certificate and fails the
+          # build on a runner that has none. Explicitly unsigned build until a cert is added.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows
+          path: apps/desktop/release/*.exe
+          if-no-files-found: error
+
+  # ---- Desktop: macOS (dmg) ----
+  desktop-mac:
+    needs: version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - name: Build macOS dmg
+        working-directory: apps/desktop
+        run: bun run package:mac
+        env:
+          # Same reasoning as desktop-windows - no Apple Developer certificate configured yet.
+          # An unsigned/unnotarized .dmg still opens locally via right-click > Open; it just
+          # can't be double-clicked past Gatekeeper without that first step.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-mac
+          path: apps/desktop/release/*.dmg
+          if-no-files-found: error
+
+  # ---- Desktop: Linux (AppImage + Flatpak) ----
+  desktop-linux:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      # electron-builder's flatpak target shells out to `flatpak-builder`, which needs the
+      # Freedesktop Platform/SDK runtime already installed on the runner - it does not fetch
+      # this itself. Version pinned here must match `flatpak.runtimeVersion` in
+      # electron-builder.yml.
+      - name: Install Flatpak tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+      - name: Build AppImage + Flatpak
+        working-directory: apps/desktop
+        run: bun run package:linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux
+          path: |
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.flatpak
+          if-no-files-found: error
+
+  # ---- Mobile: Android (signed APK + AAB) ----
+  # iOS is deliberately out of scope: it needs a paid Apple Developer account, a real bundle
+  # identifier (apps/client/app.json has none set today), and a macOS runner just to produce an
+  # unsigned build that still can't be sideloaded onto a real device without that same account.
+  mobile-android:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      # Belt-and-suspenders: GitHub's ubuntu-latest runners ship an Android SDK already, but
+      # pin/verify it explicitly rather than relying on whatever happens to be preinstalled.
+      - uses: android-actions/setup-android@v3
+      - run: bun install --frozen-lockfile
+      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      # `android/` is gitignored (generated, not source) - this recreates it fresh from
+      # apps/client/app.json on every release build.
+      - name: Generate native Android project
+        working-directory: apps/client
+        run: bunx expo prebuild --platform android --non-interactive
+      - name: Set Android versionCode/versionName
+        working-directory: apps/client
+        run: node scripts/ci/set-android-version.mjs ${{ needs.version.outputs.version }}
+      - name: Wire up release signing
+        working-directory: apps/client
+        run: node scripts/ci/patch-android-release-signing.mjs
+      - name: Decode release keystore
+        working-directory: apps/client/android/app
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore.jks
+      - name: Build signed release APK + AAB
+        working-directory: apps/client/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease \
+            -PRELEASE_STORE_FILE=release.keystore.jks \
+            -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android
+          path: |
+            apps/client/android/app/build/outputs/apk/release/*.apk
+            apps/client/android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+  # ---- Collect every platform's artifacts onto one GitHub Release ----
+  create-release:
+    needs: [version, docker, desktop-windows, desktop-mac, desktop-linux, mobile-android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/**/*
+          generate_release_notes: true

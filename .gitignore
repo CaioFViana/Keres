@@ -1,6 +1,5 @@
 node_modules
 bun.lockb
-bun.lock
 
 # Build output do painel admin (apps/admin) - gerado por `bun run build`, servido pela API
 # em runtime (ver apps/api/src/index.ts). Não é código-fonte.

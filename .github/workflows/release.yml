@@ -93,10 +93,19 @@ jobs:
           # electron-builder still tries to auto-discover a local dev certificate and fails the
           # build on a runner that has none. Explicitly unsigned build until a cert is added.
           CSC_IDENTITY_AUTO_DISCOVERY: false
+      # Two separate artifacts (not one "desktop-windows" bundle) so each shows up as its own
+      # download both in the run's Artifacts tab and, via create-release below, as its own
+      # asset on the GitHub Release - matching electron-builder.yml's nsis/portable
+      # artifactName overrides.
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-windows
-          path: apps/desktop/release/*.exe
+          name: desktop-windows-installer
+          path: apps/desktop/release/Keres-Setup-*.exe
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows-portable
+          path: apps/desktop/release/Keres-Portable-*.exe
           if-no-files-found: error
 
   # ---- Desktop: macOS (dmg) ----
@@ -148,12 +157,16 @@ jobs:
       - name: Build AppImage + Flatpak
         working-directory: apps/desktop
         run: bun run package:linux
+      # Two separate artifacts, same reasoning as desktop-windows above.
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-linux
-          path: |
-            apps/desktop/release/*.AppImage
-            apps/desktop/release/*.flatpak
+          name: desktop-linux-appimage
+          path: apps/desktop/release/*.AppImage
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux-flatpak
+          path: apps/desktop/release/*.flatpak
           if-no-files-found: error
 
   # ---- Mobile: Android (signed APK + AAB) ----
@@ -200,12 +213,16 @@ jobs:
             -PRELEASE_STORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
             -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
+      # Two separate artifacts, same reasoning as desktop-windows above.
       - uses: actions/upload-artifact@v4
         with:
-          name: mobile-android
-          path: |
-            apps/client/android/app/build/outputs/apk/release/*.apk
-            apps/client/android/app/build/outputs/bundle/release/*.aab
+          name: mobile-android-apk
+          path: apps/client/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-aab
+          path: apps/client/android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
 
   # ---- Collect every platform's artifacts onto one GitHub Release ----

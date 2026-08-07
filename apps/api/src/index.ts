@@ -8,6 +8,7 @@ import { Elysia, t } from 'elysia';
 import { existsSync } from 'fs';
 import * as path from 'path';
 import { env } from './config/env';
+import { runMigrations } from './db/migrate';
 import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
 import { friendRoutes } from './modules/friend/friend.route';
@@ -20,6 +21,10 @@ import { wsRoutes } from './modules/websocket/webSocket.route';
 import { reconcileRootAdmin } from './services/RootAdminService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';
+
+// Precisa rodar antes de tudo: um banco novo não tem nenhuma tabela, e a própria consulta de
+// reconcileRootAdmin logo abaixo já falharia sem isto.
+await runMigrations();
 
 // Roda antes de qualquer coisa aceitar tráfego: garante que a conta admin "root"
 // configurada via env exista e esteja com isAdmin=true antes que qualquer login seja

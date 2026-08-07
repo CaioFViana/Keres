@@ -57,6 +57,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: docker/build-push-action@v6
+        env:
+          # build-push-action v6 auto-uploads a GitHub Actions artifact with the build's summary
+          # (a proprietary `.dockerbuild` file, not a real zip) for Docker Desktop's dashboard
+          # integration - `create-release` below downloads every artifact from the run with no
+          # filter, and `actions/download-artifact` chokes on that one ("não é um zip válido").
+          # Not needed here, so turned off at the source instead of trying to filter it out.
+          DOCKER_BUILD_SUMMARY: false
         with:
           context: .
           file: apps/api/Dockerfile

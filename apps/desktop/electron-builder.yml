@@ -41,6 +41,14 @@ win:
   target:
     - nsis # installer
     - portable # single .exe, no installation
+# Distinct, predictable filenames for the two Windows targets - the default naming for both
+# is close enough ("Keres Setup 1.0.0.exe" vs "Keres 1.0.0.exe") that a CI glob picking one
+# without the other is fragile. release.yml's desktop-windows job uploads these as two
+# separate artifacts using these exact patterns.
+nsis:
+  artifactName: 'Keres-Setup-${version}.${ext}'
+portable:
+  artifactName: 'Keres-Portable-${version}.${ext}'
 mac:
   icon: ../client/assets/images/icon.png
   category: public.app-category.productivity

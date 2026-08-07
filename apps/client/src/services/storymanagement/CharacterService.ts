@@ -4,7 +4,7 @@ import { AppDrizzleClient } from '../../db';
 import { CharacterInsert, characters, CharacterSelect, tagRelations, tags, TagSelect } from '../../db/schema'; // Import CharacterInsert and stories
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import characterEventEmitter
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -173,6 +173,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
     },
 
     async createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect> {
+      await assertStoryIsWritable(db, characterData.storyId);
       const newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
       const result = await db.insert(characters).values(newCharacter).returning().get();
 
@@ -188,6 +189,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       if (!oldCharacter) {
         throw new Error(`Character with ID ${characterId} not found for update.`);
       }
+      await assertStoryIsWritable(db, oldCharacter.storyId);
 
       // Create a potential new state for diffing, including only fields that might change
       const potentialNewState = { ...oldCharacter, ...updatedFields };
@@ -227,6 +229,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         console.warn(`Attempted to delete non-existent character ${characterId}.`);
         return;
       }
+      await assertStoryIsWritable(db, characterToDelete.storyId);
 
       const [updatedCharacter] = await db.update(characters)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${characters.version} + 1` })

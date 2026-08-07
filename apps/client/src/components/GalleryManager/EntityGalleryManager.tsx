@@ -16,6 +16,8 @@ interface EntityGalleryManagerProps {
   ownerType: GalleryOwnerEntity;
   /** Geralmente abre a mídia na tela de detalhe da galeria. */
   onPressMedia: (galleryId: string) => void;
+  /** false esconde o tile de adicionar e o badge de remover (ex: leitor sem permissão de escrita). */
+  editable?: boolean;
 }
 
 const THUMB_SIZE = 88;
@@ -33,13 +35,14 @@ interface GalleryThumbnailProps {
   textSecondaryColor: string;
   onPress: (galleryId: string) => void;
   onRemove: (galleryId: string) => void;
+  editable: boolean;
 }
 
 /**
  * Extraído do `.map()` de `renderThumb` porque resolver a URI (`useResolvedMediaUri`) é um
  * hook - precisa de um componente próprio por item, não pode ser chamado dentro de um loop.
  */
-const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ item, styles, errorColor, textSecondaryColor, onPress, onRemove }) => {
+const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ item, styles, errorColor, textSecondaryColor, onPress, onRemove, editable }) => {
   const mediaType = item.mediaType as MediaType;
   const resolvedUri = useResolvedMediaUri(mediaType === 'video' ? item.thumbnailPath : item.localPath);
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
@@ -64,15 +67,17 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ item, styles, error
           <Ionicons name="play-circle" size={24} color="#ffffff" />
         </View>
       )}
-      <TouchableOpacity
-        style={styles.removeBadge}
-        onPress={(event) => {
-          event.stopPropagation();
-          onRemove(item.id);
-        }}
-      >
-        <Ionicons name="close-circle" size={20} color={errorColor} />
-      </TouchableOpacity>
+      {editable && (
+        <TouchableOpacity
+          style={styles.removeBadge}
+          onPress={(event) => {
+            event.stopPropagation();
+            onRemove(item.id);
+          }}
+        >
+          <Ionicons name="close-circle" size={20} color={errorColor} />
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 };
@@ -86,7 +91,7 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ item, styles, error
  * mais sentido escolher de uma lista já existente). Remover aqui só desfaz o vínculo - a
  * mídia continua na galeria e pode ser vinculada de novo a qualquer momento por lá.
  */
-const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ownerType, onPressMedia }) => {
+const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ownerType, onPressMedia, editable = true }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
@@ -193,22 +198,25 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ow
       textSecondaryColor={colors.textSecondary}
       onPress={onPressMedia}
       onRemove={handleRemove}
+      editable={editable}
     />
   );
 
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        <TouchableOpacity style={styles.addTile} onPress={handleAdd} disabled={importing || !ownerId}>
-          {importing ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <>
-              <Ionicons name="add" size={28} color={colors.primary} />
-              <Text style={styles.addLabel}>{t('media_add_button')}</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {editable && (
+          <TouchableOpacity style={styles.addTile} onPress={handleAdd} disabled={importing || !ownerId}>
+            {importing ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="add" size={28} color={colors.primary} />
+                <Text style={styles.addLabel}>{t('media_add_button')}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
         {media.map(renderThumb)}
       </ScrollView>
       {media.length === 0 && <Text style={styles.emptyText}>{t('no_media_linked')}</Text>}

@@ -4,7 +4,7 @@ import { AppDrizzleClient } from '../../db';
 import { LocationInsert, locationRelations, locations, LocationSelect, tagRelations, tags, TagSelect } from '../../db/schema'; // Import LocationInsert and locations
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -170,6 +170,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
     },
 
     async createLocation(currentUserId: string, locationData: Create<LocationInsert>): Promise<LocationSelect> {
+      await assertStoryIsWritable(db, locationData.storyId);
       const newLocation = prepareNewEntityData<LocationInsert>(locationData);
       const result = await db.insert(locations).values(newLocation).returning().get();
 
@@ -185,6 +186,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
       if (!oldLocation) {
         throw new Error(`Location with ID ${locationId} not found for update.`);
       }
+      await assertStoryIsWritable(db, oldLocation.storyId);
 
       const potentialNewState = { ...oldLocation, ...updatedFields };
       const changes = getChangedFields(oldLocation, potentialNewState);
@@ -221,6 +223,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         console.warn(`Attempted to delete non-existent location ${locationId}.`);
         return;
       }
+      await assertStoryIsWritable(db, locationToDelete.storyId);
 
       const [updatedLocation] = await db.update(locations)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${locations.version} + 1` })

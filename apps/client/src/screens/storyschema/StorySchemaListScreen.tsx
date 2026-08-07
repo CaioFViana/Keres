@@ -9,6 +9,7 @@ import { useDrizzle } from '../../db';
 import { StorySchemaFieldSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '../../state/storyStore';
@@ -41,6 +42,7 @@ const StorySchemaListScreen = () => {
 
   const [activeEntityType, setActiveEntityType] = useState<StorySchemaEntityType>('Character');
   const fields = useStorySchemaFields(storyId, activeEntityType);
+  const { canEdit } = useStoryRole(storyId);
 
   useFocusEffect(
     useCallback(() => {
@@ -187,26 +189,32 @@ const StorySchemaListScreen = () => {
               <Text style={styles.fieldName}>{item.name}{item.isRequired ? ' *' : ''}</Text>
               <Text style={styles.fieldMeta}>{item.key} · {t(`attribute_type_${item.type}`)}</Text>
             </View>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType, fieldId: item.id })}
-            >
-              <Ionicons name="pencil-outline" size={22} color={colors.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
-              <Ionicons name="trash-outline" size={22} color={colors.error} />
-            </TouchableOpacity>
+            {canEdit && (
+              <>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType, fieldId: item.id })}
+                >
+                  <Ionicons name="pencil-outline" size={22} color={colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
+                  <Ionicons name="trash-outline" size={22} color={colors.error} />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         )}
         ListEmptyComponent={<Text style={styles.emptyText}>{t('no_custom_attributes')}</Text>}
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType })}
-      >
-        <Ionicons name="add" size={30} color={colors.onPrimary} />
-      </TouchableOpacity>
+      {canEdit && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType })}
+        >
+          <Ionicons name="add" size={30} color={colors.onPrimary} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

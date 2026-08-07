@@ -1,4 +1,4 @@
-import { CURRENT_STORY_FORMAT_VERSION, FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
+import { CURRENT_STORY_FORMAT_VERSION, EffectiveStoryRole, FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import {
@@ -57,7 +57,7 @@ import {
   WorldRuleSelect
 } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
 import { mediaFileService } from '../MediaFileService';
@@ -154,7 +154,7 @@ export interface StoryService {
   convertStoryType(currentUserId: string, storyId: string, targetType: 'linear' | 'branching'): Promise<void>;
   unlinkFromServer(currentUserId: string, storyId: string): Promise<void>;
   getBranchingStoryForkCount(): Promise<number>;
-  importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, localMediaPaths?: Map<string, string>): Promise<string>;
+  importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, role?: EffectiveStoryRole | null, localMediaPaths?: Map<string, string>): Promise<string>;
   exportFullStory(storyId: string): Promise<FullStoryExportType>;
 }
 
@@ -185,6 +185,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       if (!originalStory) {
         throw new Error(`Story with ID ${storyId} not found.`);
       }
+      await assertStoryIsWritable(db, storyId);
 
       // Pre-check against a merged copy, not `storyData` alone - `storyData` is a bare partial,
       // so diffing it directly against `originalStory` would flag every field the caller didn't
@@ -481,6 +482,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         console.log(`Story ${storyId} favorite status is already ${isFavorite}. Skipping update and operation log.`);
         return;
       }
+      await assertStoryIsWritable(db, storyId);
 
       const [updatedStory] = await db.update(stories)
         .set({ isFavorite, updatedAt: new Date(), version: sql`${stories.version} + 1` })
@@ -507,6 +509,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         console.warn(`Attempted to delete non-existent story ${storyId}.`);
         return;
       }
+      await assertStoryIsWritable(db, storyId);
 
       // Story deletion is always permanent and always local-first (see purgeStoryLocally).
       // If the story is attached to a server, make a best-effort attempt to tell it first
@@ -713,7 +716,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       });
     },
 
-    async importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, localMediaPaths?: Map<string, string>): Promise<string> {
+    async importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, role: EffectiveStoryRole | null = null, localMediaPaths?: Map<string, string>): Promise<string> {
       return db.transaction(async (tx) => {
         // Defensive: the caller already confirmed there's no `stories` row for this id (the
         // "already imported" check in ImportExportScreen/ExampleStoryService), but that alone
@@ -736,6 +739,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           lastOperationLog: fullStoryData.serverLastOperationVersion, // Use the server's current operation version
           lastServerSyncedLog: fullStoryData.serverLastOperationVersion,
           serverId: queriedServerId,
+          // Known synchronously here (from the caller's already-fetched pullpreviews role) so
+          // this row never exists server-linked with an unknown role - see useStoryRole/
+          // assertStoryIsWritable, which fail closed on an unknown role for a server-linked story.
+          myRole: queriedServerId ? role : null,
         };
         await tx.insert(stories).values(storyToInsert).run();
 

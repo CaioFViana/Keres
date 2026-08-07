@@ -12,6 +12,7 @@ import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ChapterSelect, ChoiceSelect, ItemJourneySelect, ItemSelect, SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import type { ItemJourneyStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
@@ -50,6 +51,7 @@ const ItemJourneyListScreen = () => {
   const navigation = useNavigation<ItemJourneysScreenNavigationProp>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
+  const { canEdit } = useStoryRole(selectedStory?.id);
 
   const [items, setItems] = useState<ItemSelect[]>([]);
   const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
@@ -184,13 +186,13 @@ const ItemJourneyListScreen = () => {
       setDocumentTitle(t('item_journeys_title'));
       navigation.getParent()?.setOptions({
         title: t('item_journeys_title'),
-        headerRight: () => (
+        headerRight: canEdit ? () => (
           <TouchableOpacity onPress={() => navigation.navigate('ItemJourneyForm', {})} style={styles.headerButton}>
             <Ionicons name="add" size={30} color={colors.text} />
           </TouchableOpacity>
-        ),
+        ) : undefined,
       });
-    }, [navigation, colors.text, t, styles.headerButton])
+    }, [navigation, colors.text, t, styles.headerButton, canEdit])
   );
 
   const renderHeaderContent = useCallback((entry: ItemWithJourneys) => (

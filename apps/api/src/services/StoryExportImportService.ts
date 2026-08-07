@@ -169,6 +169,23 @@ export class StoryExportImportService {
             const idMap: Map<string, string> = new Map();
             idMap.set(validatedFullStory.story.id, targetStoryId); // Map old story ID to new story ID
 
+            /**
+             * `newStoryId` only ever comes from `uploadNewStoryToServer` (see the client's
+             * `/stories/import?storyId=` call, and this route's own doc comment) - the client's
+             * one-time "link a story I built fully offline to a server" flow. From that moment
+             * on the client keeps referencing every entity in that story by its *local* ID
+             * forever. Previously only the story row itself preserved its ID here; every child
+             * entity below got a fresh server-generated ULID that the client never learned
+             * about, so any later operation referencing that entity by its original local ID
+             * (e.g. a GalleryRelation pointing at a Character) would permanently fail with
+             * "not found" - not a transient race, a structural ID mismatch with no retry that
+             * could ever fix it. When `newStoryId` is absent (download/duplicate from another
+             * server), fresh IDs are still generated as before - that path has no client
+             * expecting IDs to match.
+             */
+            const preserveIds = !!newStoryId;
+            const nextId = (originalId: string): string => (preserveIds ? originalId : ulid());
+
             // --- Story ---
             const newStoryData = {
                 ...validatedFullStory.story,
@@ -184,7 +201,7 @@ export class StoryExportImportService {
 
             // --- Chapters ---
             const newChaptersData = validatedFullStory.chapters.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 return {
                     ...original,
@@ -201,7 +218,7 @@ export class StoryExportImportService {
             // Antes de Scenes de propósito: toda Scene tem um locationId obrigatório, que
             // precisa já estar no idMap quando o bloco de Scenes rodar logo abaixo.
             const newLocationsData = validatedFullStory.locations.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 return {
                     ...original,
@@ -218,7 +235,7 @@ export class StoryExportImportService {
             // Depois de Locations de propósito: locationAId/locationBId precisam já estar no idMap.
             if (validatedFullStory.locationRelations && validatedFullStory.locationRelations.length > 0) {
                 const newLocationRelationsData = validatedFullStory.locationRelations.map(original => {
-                    const newId = ulid();
+                    const newId = nextId(original.id);
                     idMap.set(original.id, newId);
                     const mappedLocationAId = idMap.get(original.locationAId);
                     if (!mappedLocationAId) {
@@ -242,7 +259,7 @@ export class StoryExportImportService {
 
             // --- Scenes ---
             const newScenesData = validatedFullStory.scenes.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 const mappedChapterId = idMap.get(original.chapterId);
                 if (!mappedChapterId) {
@@ -300,7 +317,7 @@ export class StoryExportImportService {
 
             // --- Choices ---
             const newChoicesData = validatedFullStory.choices.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 const mappedSceneId = idMap.get(original.sceneId);
                 if (!mappedSceneId) {
@@ -325,7 +342,7 @@ export class StoryExportImportService {
 
             // --- Characters ---
             const newCharactersData = validatedFullStory.characters.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 return {
                     ...original,
@@ -340,7 +357,7 @@ export class StoryExportImportService {
 
             // --- WorldRules ---
             const newWorldRulesData = validatedFullStory.worldRules.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 return {
                     ...original,
@@ -355,7 +372,7 @@ export class StoryExportImportService {
 
             // --- Notes ---
             const newNotesData = validatedFullStory.notes.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 return {
                     ...original,
@@ -370,7 +387,7 @@ export class StoryExportImportService {
 
             // --- NoteRelations ---
             const newNoteRelationsData = validatedFullStory.noteRelations.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 const mappedNoteId = idMap.get(original.noteId);
                 if (!mappedNoteId) {
@@ -396,7 +413,7 @@ export class StoryExportImportService {
 
             // --- Tags ---
             const newTagsData = validatedFullStory.tags.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 return {
                     ...original,
@@ -411,7 +428,7 @@ export class StoryExportImportService {
 
             // --- Suggestions ---
             const newSuggestionsData = validatedFullStory.suggestions.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 return {
                     ...original,
@@ -426,7 +443,7 @@ export class StoryExportImportService {
 
             // --- CharacterRelations ---
             const newCharacterRelationsData = validatedFullStory.characterRelations.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 const mappedCharacterId1 = idMap.get(original.character1Id);
                 if (!mappedCharacterId1) {
@@ -451,7 +468,7 @@ export class StoryExportImportService {
 
             // --- CharacterScenes ---
             const newCharacterScenesData = validatedFullStory.characterScenes.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 const mappedCharacterId = idMap.get(original.characterId);
                 if (!mappedCharacterId) {
@@ -476,7 +493,7 @@ export class StoryExportImportService {
 
             // --- GalleryItems ---
             const newGalleryItemsData = validatedFullStory.galleryItems.map(original => {
-                const newId = ulid();
+                const newId = nextId(original.id);
                 idMap.set(original.id, newId);
                 return {
                     ...original,
@@ -492,7 +509,7 @@ export class StoryExportImportService {
             // --- Items (Optional) ---
             if (validatedFullStory.items && validatedFullStory.items.length > 0) {
                 const newItemsData = validatedFullStory.items.map(original => {
-                    const newId = ulid();
+                    const newId = nextId(original.id);
                     idMap.set(original.id, newId);
                     return {
                         ...original,
@@ -507,7 +524,7 @@ export class StoryExportImportService {
             // --- ItemJourneys (Optional, map item ID, scene ID, and optional new owner character ID) ---
             if (validatedFullStory.itemJourneys && validatedFullStory.itemJourneys.length > 0) {
                 const newItemJourneysData = validatedFullStory.itemJourneys.map(original => {
-                    const newId = ulid();
+                    const newId = nextId(original.id);
                     idMap.set(original.id, newId);
                     const mappedItemId = idMap.get(original.itemId);
                     if (!mappedItemId) {
@@ -540,7 +557,7 @@ export class StoryExportImportService {
             // --- TagRelations (Optional, map relation ID and tag ID) ---
             if (validatedFullStory.tagRelations && validatedFullStory.tagRelations.length > 0) {
                 const newTagRelationsData = validatedFullStory.tagRelations.map(original => {
-                    const newId = ulid();
+                    const newId = nextId(original.id);
                     idMap.set(original.id, newId);
                     const mappedTagId = idMap.get(original.tagId);
                     if (!mappedTagId) {
@@ -568,7 +585,7 @@ export class StoryExportImportService {
             // mapa de IDs no bloco acima.
             if (validatedFullStory.galleryRelations && validatedFullStory.galleryRelations.length > 0) {
                 const newGalleryRelationsData = validatedFullStory.galleryRelations.map(original => {
-                    const newId = ulid();
+                    const newId = nextId(original.id);
                     idMap.set(original.id, newId);
                     const mappedGalleryId = idMap.get(original.galleryId);
                     if (!mappedGalleryId) {
@@ -596,7 +613,7 @@ export class StoryExportImportService {
             // AttributeValues (que dependem dela) por clareza de leitura.
             if (validatedFullStory.storySchemaFields && validatedFullStory.storySchemaFields.length > 0) {
                 const newStorySchemaFieldsData = validatedFullStory.storySchemaFields.map(original => {
-                    const newId = ulid();
+                    const newId = nextId(original.id);
                     idMap.set(original.id, newId);
                     return {
                         ...original,
@@ -614,7 +631,7 @@ export class StoryExportImportService {
             // já precisam estar no idMap, e fieldId depende do bloco de StorySchemaFields acima.
             if (validatedFullStory.attributeValues && validatedFullStory.attributeValues.length > 0) {
                 const newAttributeValuesData = validatedFullStory.attributeValues.map(original => {
-                    const newId = ulid();
+                    const newId = nextId(original.id);
                     idMap.set(original.id, newId);
                     const mappedFieldId = idMap.get(original.fieldId);
                     if (!mappedFieldId) {

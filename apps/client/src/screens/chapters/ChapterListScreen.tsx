@@ -12,6 +12,7 @@ import ChapterListItem from '../../components/listitem/ChapterListItem';
 import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { ChapterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useChapterStore } from '../../state/chapterStore';
 import { useTheme } from '../../theme';
@@ -50,6 +51,8 @@ const ChapterListScreen = () => {
     collectionKey: 'chapters',
     changeEvent: 'chapter_changed',
   });
+
+  const { canEdit } = useStoryRole(storyId);
 
   // Reordering isn't part of the shared list wiring, so it comes straight from the store.
   const reorderChapters = useChapterStore((state) => state.reorderChapters);
@@ -107,22 +110,26 @@ const ChapterListScreen = () => {
         title: t('chapters_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
-            <TouchableOpacity
-              onPress={handleReorderPress}
-              style={styles.headerButton}
-            >
-              <Ionicons name="swap-vertical" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('ChapterForm', { chapterId: undefined })}
-              style={styles.headerButton}
-            >
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity
+                onPress={handleReorderPress}
+                style={styles.headerButton}
+              >
+                <Ionicons name="swap-vertical" size={24} color={colors.text} />
+              </TouchableOpacity>
+            )}
+            {canEdit && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ChapterForm', { chapterId: undefined })}
+                style={styles.headerButton}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )}
           </View>
         ),
       });
-    }, [navigation, colors.text, t, handleReorderPress, styles.headerButton, styles.headerRightContainer])
+    }, [navigation, colors.text, t, handleReorderPress, styles.headerButton, styles.headerRightContainer, canEdit])
   );
 
   if (loading && chapters.length === 0) {

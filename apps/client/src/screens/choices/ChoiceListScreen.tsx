@@ -13,6 +13,7 @@ import { useDrizzle } from '../../db';
 import { ChoiceSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { ChoiceStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useChapterStore } from '../../state/chapterStore';
 import { useChoiceStore } from '../../state/choiceStore';
@@ -53,6 +54,8 @@ const ChoiceListScreen = () => {
     collectionKey: 'choices',
     changeEvent: 'choice_changed',
   });
+
+  const { canEdit } = useStoryRole(storyId);
 
   // Chapters and scenes feed this screen's own filter dropdowns, so they stay wired here.
   const { chapters, fetchChapters: fetchAllChapters, setDbAndStoryId: setChapterDb, initializeService: initializeChapterService } = useChapterStore();
@@ -144,13 +147,15 @@ const ChoiceListScreen = () => {
             >
               <Ionicons name="git-network-outline" size={28} color={colors.text} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', {})} style={styles.headerButton}>
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', {})} style={styles.headerButton}>
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )}
           </View>
         ),
       });
-    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer])
+    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit])
   );
 
   const filterComponent = (

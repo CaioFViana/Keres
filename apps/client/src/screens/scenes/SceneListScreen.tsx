@@ -12,6 +12,7 @@ import SceneReorderModal from '../../components/SceneReorderModal/SceneReorderMo
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { MainSystemDrawerParamList, SceneStackParamList } from '../../navigation/MainSystemStack';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -52,6 +53,8 @@ const SceneListScreen = () => {
     collectionKey: 'scenes',
     changeEvent: 'scene_changed',
   });
+
+  const { canEdit } = useStoryRole(storyId);
 
   // Reordering isn't part of the shared list wiring, so it comes straight from the store.
   const reorderScenes = useSceneStore((state) => state.reorderScenes);
@@ -114,7 +117,7 @@ const SceneListScreen = () => {
         title: t('scenes_title'),
         headerRight: () => (
           <View style={styles.headerRightContainer}>
-            {selectedStory?.type === 'linear' && (
+            {selectedStory?.type === 'linear' && canEdit && (
               <TouchableOpacity
                 onPress={handleReorderPress}
                 style={styles.headerButton}
@@ -122,16 +125,18 @@ const SceneListScreen = () => {
                 <Ionicons name="swap-vertical" size={24} color={colors.text} />
               </TouchableOpacity>
             )}
-            <TouchableOpacity
-              onPress={() => navigation.navigate('SceneForm', { sceneId: undefined })}
-              style={styles.headerButton}
-            >
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SceneForm', { sceneId: undefined })}
+                style={styles.headerButton}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )}
           </View>
         ),
       });
-    }, [navigation, colors.text, t, handleReorderPress, selectedStory?.type, styles.headerButton, styles.headerRightContainer])
+    }, [navigation, colors.text, t, handleReorderPress, selectedStory?.type, styles.headerButton, styles.headerRightContainer, canEdit])
   );
 
   if (loading && scenes.length === 0) {

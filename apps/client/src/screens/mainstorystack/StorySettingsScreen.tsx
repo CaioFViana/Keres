@@ -12,6 +12,7 @@ import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { isOfflineError } from '../../services/apiClient';
 import { createFriendshipService } from '../../services/FriendshipService';
@@ -38,6 +39,7 @@ const StorySettingsScreen = () => {
   // Removed useRoute and route.params
   const { selectedStory, setSelectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
+  const { canEdit } = useStoryRole(storyId);
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
@@ -559,12 +561,17 @@ const StorySettingsScreen = () => {
             {t('story_settings_screen_description')}
           </Text>
 
+          {!canEdit && (
+            <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>{t('story_read_only_error')}</Text>
+          )}
+
           <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
           <TextInput
             placeholder={t('title_placeholder')}
             value={title}
             onChangeText={setTitle}
             style={commonInputStyles.input}
+            editable={canEdit}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('type')}</Text>
@@ -573,6 +580,7 @@ const StorySettingsScreen = () => {
             value={type}
             onValueChange={(value) => handleTypeChange(value as 'linear' | 'branching')}
             placeholder={t('select_story_type')}
+            disabled={!canEdit}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
@@ -582,6 +590,7 @@ const StorySettingsScreen = () => {
             onChangeText={setDescription}
             style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
             multiline
+            editable={canEdit}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('genre')}</Text>
@@ -590,6 +599,7 @@ const StorySettingsScreen = () => {
             value={genre || ""}
             onChangeText={setGenre}
             style={commonInputStyles.input}
+            editable={canEdit}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('author')}</Text>
@@ -598,6 +608,7 @@ const StorySettingsScreen = () => {
             value={author || ""}
             onChangeText={setAuthor}
             style={commonInputStyles.input}
+            editable={canEdit}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('language')}</Text>
@@ -606,6 +617,7 @@ const StorySettingsScreen = () => {
             value={language}
             onValueChange={setLanguage}
             placeholder={t('select_language')}
+            disabled={!canEdit}
           />
 
           <View style={styles.switchContainer}>
@@ -616,6 +628,7 @@ const StorySettingsScreen = () => {
               trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+              disabled={!canEdit}
             />
           </View>
 
@@ -626,6 +639,7 @@ const StorySettingsScreen = () => {
             onChangeText={setExtraNotes}
             style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
             multiline
+            editable={canEdit}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('theme')}</Text>
@@ -637,6 +651,7 @@ const StorySettingsScreen = () => {
               applyTheme(value || 'default');
             }}
             placeholder={t('select_theme')}
+            disabled={!canEdit}
           />
 
           <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
@@ -733,11 +748,11 @@ const StorySettingsScreen = () => {
             </>
           )}
 
-          <Button onPress={handleSave} style={styles.saveButton}>
+          <Button onPress={handleSave} style={styles.saveButton} disabled={!canEdit}>
             {t('update_story')}
           </Button>
 
-          <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]} disabled={!canEdit}>
             {t('delete_story_title')}
           </Button>
         </ScrollView>

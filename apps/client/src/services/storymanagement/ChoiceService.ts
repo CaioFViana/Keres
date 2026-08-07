@@ -5,7 +5,7 @@ import { ChoiceInsert, choices, ChoiceSelect } from '../../db/schemas/choices';
 import { scenes } from '../../db/schemas/scenes';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 
@@ -105,6 +105,7 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
     },
 
     async createChoice(currentUserId: string, choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect> {
+      await assertStoryIsWritable(db, choiceData.storyId);
       const newChoice = prepareNewEntityData<ChoiceInsert>(choiceData);
       const result = await db.insert(choices).values(newChoice).returning().get();
       const userIdToLog = await getUserIdForOperation(db, serverService, newChoice.storyId, currentUserId);
@@ -116,6 +117,7 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
     async updateChoice(currentUserId: string, choiceId: string, choiceData: Partial<Omit<ChoiceInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<ChoiceSelect> {
       const originalChoice = await db.query.choices.findFirst({ where: eq(choices.id, choiceId) });
       if (!originalChoice) throw new Error(`Choice with ID ${choiceId} not found for update.`);
+      await assertStoryIsWritable(db, originalChoice.storyId);
       const potentialNewState = { ...originalChoice, ...choiceData };
       const changes = getChangedFields(originalChoice, potentialNewState);
       delete changes.version;
@@ -135,6 +137,7 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
     async deleteChoice(currentUserId: string, choiceId: string): Promise<void> {
       const choiceToDelete = await db.query.choices.findFirst({ where: eq(choices.id, choiceId) });
       if (!choiceToDelete) return;
+      await assertStoryIsWritable(db, choiceToDelete.storyId);
       const [updatedChoice] = await db.update(choices)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${choices.version} + 1` })
         .where(eq(choices.id, choiceId))

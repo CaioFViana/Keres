@@ -14,6 +14,7 @@ import { TagSelect } from '../../db/schema';
 import { WorldRuleWithTags } from '../../db/schemas/worldRules';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { MainSystemDrawerParamList, WorldRulesStackParamList } from '../../navigation/MainSystemStack'; // Will create/update this later
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useTheme } from '../../theme';
@@ -59,6 +60,8 @@ const WorldRulesScreen = () => {
     changeEvent: 'worldrule_changed',
   });
 
+  const { canEdit } = useStoryRole(storyId);
+
   // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
   const fetchTags = useCallback(async () => {
     if (!storyId) {
@@ -82,16 +85,16 @@ const WorldRulesScreen = () => {
       setDocumentTitle(t('world_rules_title'));
       navigation.getParent()?.setOptions({
         title: t('world_rules_title'),
-        headerRight: () => (
+        headerRight: canEdit ? () => (
           <TouchableOpacity
             onPress={() => navigation.navigate('WorldRuleForm', { worldRuleId: undefined })}
             style={{ marginRight: 15 }}
           >
             <Ionicons name="add" size={30} color={colors.text} />
           </TouchableOpacity>
-        ),
+        ) : undefined,
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, colors.text, t, canEdit])
   );
 
   const handleToggleFavorite = useCallback(async (worldRuleId: string, isFavorite: boolean) => {

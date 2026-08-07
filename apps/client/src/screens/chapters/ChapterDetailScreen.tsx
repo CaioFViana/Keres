@@ -10,6 +10,7 @@ import { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSel
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createLocationService, LocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService, SceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
@@ -64,6 +65,7 @@ const ChapterDetailScreen = () => {
   }, [drizzleDb]);
 
   const [chapter, setChapter] = useState<ChapterSelect | null>(null);
+  const { canEdit } = useStoryRole(chapter?.storyId);
 
   const {
     selectedTags: chapterTags,
@@ -207,13 +209,15 @@ const ChapterDetailScreen = () => {
   }, [chapter, fetchAllScenesInStory, fetchAllLocationsInStory]);
 
   const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
-      style={{ marginRight: 15 }}
-    >
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, chapterId, colors.text]);
+    canEdit ? (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
+        style={{ marginRight: 15 }}
+      >
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ) : null
+  ), [navigation, chapterId, colors.text, canEdit]);
 
   useFocusEffect(
     useCallback(() => {

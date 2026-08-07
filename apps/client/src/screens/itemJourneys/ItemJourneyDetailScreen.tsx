@@ -14,6 +14,7 @@ import { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '../../state/characterStore';
@@ -77,6 +78,7 @@ const ItemJourneyDetailScreen = () => {
   ]);
 
   const [itemJourney, setItemJourney] = useState<ItemJourneySelect | null>(null);
+  const { canEdit } = useStoryRole(itemJourney?.storyId);
 
   const {
     selectedTags: itemJourneyTags,
@@ -177,10 +179,12 @@ const ItemJourneyDetailScreen = () => {
   }, [navigation, newCharacterOwner]);
 
   const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity onPress={() => navigation.navigate('ItemJourneyForm', { itemJourneyId })} style={{ marginRight: 15 }}>
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, itemJourneyId, colors.text]);
+    canEdit ? (
+      <TouchableOpacity onPress={() => navigation.navigate('ItemJourneyForm', { itemJourneyId })} style={{ marginRight: 15 }}>
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ) : null
+  ), [navigation, itemJourneyId, colors.text, canEdit]);
 
   useFocusEffect(
     useCallback(() => {

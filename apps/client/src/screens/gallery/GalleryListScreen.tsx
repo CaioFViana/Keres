@@ -13,6 +13,7 @@ import { useDrizzle } from '../../db';
 import { GallerySelect } from '../../db/schemas/galleries';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { GalleryStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { importPickedMediaAssets } from '../../services/galleryMediaImport';
 import { mediaFileService } from '../../services/MediaFileService';
@@ -64,6 +65,8 @@ const GalleryListScreen = () => {
     changeEvent: 'gallery_changed',
   });
 
+  const { canEdit } = useStoryRole(storyId);
+
   /**
    * Importa os arquivos escolhidos.
    *
@@ -113,15 +116,15 @@ const GalleryListScreen = () => {
       setDocumentTitle(t('gallery_title'));
       navigation.getParent()?.setOptions({
         title: t('gallery_title'),
-        headerRight: () => (
+        headerRight: canEdit ? () => (
           <TouchableOpacity onPress={handleAddMedia} style={{ marginRight: 15 }} disabled={importing}>
             {importing
               ? <ActivityIndicator size="small" color={colors.text} />
               : <Ionicons name="add" size={30} color={colors.text} />}
           </TouchableOpacity>
-        ),
+        ) : undefined,
       });
-    }, [navigation, colors.text, t, handleAddMedia, importing])
+    }, [navigation, colors.text, t, handleAddMedia, importing, canEdit])
   );
 
   const handleViewDetails = useCallback((galleryId: string) => {

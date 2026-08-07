@@ -4,7 +4,7 @@ import { AppDrizzleClient } from '../../db';
 import { attributeValues, StorySchemaFieldInsert, storySchemaFields, StorySchemaFieldSelect } from '../../db/schema';
 import { Create, createULID, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export interface StorySchemaFieldService {
@@ -40,6 +40,7 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
     },
 
     async createField(currentUserId: string, fieldData: Create<StorySchemaFieldInsert>): Promise<StorySchemaFieldSelect> {
+      await assertStoryIsWritable(db, fieldData.storyId);
       // Checagem local antes de gravar: sem isto, uma chave duplicada só falharia lá na frente,
       // como um erro de sync opaco em vez de um erro de formulário imediato - Tag/Suggestion não
       // fazem essa checagem hoje, mas aqui uma colisão de chave (frequentemente auto-derivada do
@@ -71,6 +72,7 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       if (!original) {
         throw new Error(`Attribute field with ID ${fieldId} not found for update.`);
       }
+      await assertStoryIsWritable(db, original.storyId);
 
       const [updated] = await db.update(storySchemaFields)
         .set({ ...fieldData, updatedAt: new Date(), version: sql`${storySchemaFields.version} + 1` })
@@ -99,6 +101,7 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         // Já apagado (reenvio idempotente) - a mutação de key e a cascata já rodaram.
         return;
       }
+      await assertStoryIsWritable(db, field.storyId);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, field.storyId, currentUserId);
       const now = new Date();

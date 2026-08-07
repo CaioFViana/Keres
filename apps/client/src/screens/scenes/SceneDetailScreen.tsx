@@ -25,6 +25,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { ChapterService, createChapterService } from '../../services/storymanagement/ChapterService'; // Import ChapterService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
@@ -108,6 +109,7 @@ const SceneDetailScreen = () => {
   }, [drizzleDb, selectedStory?.id, setCharacterDbAndStoryId, initializeCharacterService, fetchCharacters]);
 
   const [scene, setScene] = useState<SceneSelect | null>(null);
+  const { canEdit } = useStoryRole(scene?.storyId);
   const [chapter, setChapter] = useState<Chapter | null>(null); // State for chapter details
   const [location, setLocation] = useState<Location | null>(null); // State for location details
   const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined); // State for previous scene
@@ -367,13 +369,15 @@ const SceneDetailScreen = () => {
   }, [navigation, location]);
 
   const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('SceneForm', { sceneId: sceneId })}
-      style={{ marginRight: 15 }}
-    >
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, sceneId, colors.text]);
+    canEdit ? (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('SceneForm', { sceneId: sceneId })}
+        style={{ marginRight: 15 }}
+      >
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ) : null
+  ), [navigation, sceneId, colors.text, canEdit]);
 
   useFocusEffect(
     useCallback(() => {
@@ -431,6 +435,7 @@ const SceneDetailScreen = () => {
         ownerId={sceneId}
         ownerType="Scene"
         onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
       />
 
       <CharacterRelationManager

@@ -12,6 +12,7 @@ import { ChoiceSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -46,6 +47,7 @@ const ChoiceDetailScreen = () => {
   }, [drizzleDb]);
 
   const [choice, setChoice] = useState<ChoiceSelect | null>(null);
+  const { canEdit } = useStoryRole(choice?.storyId);
 
   const {
     selectedTags: choiceTags,
@@ -114,10 +116,12 @@ const ChoiceDetailScreen = () => {
 
 
   const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', { choiceId })} style={{ marginRight: 15 }}>
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, choiceId, colors.text]);
+    canEdit ? (
+      <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', { choiceId })} style={{ marginRight: 15 }}>
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ) : null
+  ), [navigation, choiceId, colors.text, canEdit]);
 
   useFocusEffect(
     useCallback(() => {

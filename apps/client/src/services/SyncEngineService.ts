@@ -1,4 +1,4 @@
-import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, StoryReorderingStoryUpdate, StoryUpdate, SyncConflict as SharedSyncConflict, SyncPushResult, UpdateStoryUpdate } from '@keres/shared';
+import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, EffectiveStoryRole, StoryReorderingStoryUpdate, StoryUpdate, SyncConflict as SharedSyncConflict, SyncPushResult, UpdateStoryUpdate } from '@keres/shared';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
@@ -37,6 +37,7 @@ import { createSyncConflictService, findContestedFields, mergeLocalOperationPayl
 export interface ServerStoryPreview {
   storyId: string;
   lastOperationVersion: number;
+  role: EffectiveStoryRole;
 }
 
 /** Normal cadence while the server is responding. */
@@ -235,7 +236,7 @@ export class SyncEngineService {
     }
   }
 
-  public async downloadAndImportStory(queriedServerId: string, storyId: string, userId: string): Promise<void> {
+  public async downloadAndImportStory(queriedServerId: string, storyId: string, userId: string, role: EffectiveStoryRole): Promise<void> {
     const { showNotification } = useNotificationStore.getState();
     if (!this._db) {
       showNotification(`Failed to download story '${storyId}': Database not set.`, 'error');
@@ -281,7 +282,7 @@ export class SyncEngineService {
       const fullStoryData = response.data;
 
       const storyService = createStoryService(this._db);
-      await storyService.importFullStory(userId, fullStoryData, queriedServerId);
+      await storyService.importFullStory(userId, fullStoryData, queriedServerId, role);
       console.log(`Successfully downloaded and imported story ${storyId}`);
       showNotification(`Story '${storyId}' downloaded and imported!`, 'success');
 
@@ -347,6 +348,9 @@ export class SyncEngineService {
     await storyService.updateStory(userId, storyId, {
       serverId: server.id,
       lastServerSyncedLog: story.lastOperationLog,
+      // Known synchronously: the caller is the one linking their own local story to the
+      // server, so there's no ambiguity to wait on a later sync pull to resolve.
+      myRole: 'owner',
     });
 
     return { success: true };
@@ -411,6 +415,7 @@ export class SyncEngineService {
           id: true,
           version: true,
           lastServerSyncedLog: true,
+          myRole: true,
         },
       });
 
@@ -424,8 +429,8 @@ export class SyncEngineService {
 
       // 2. Pull remote updates first (since the latest known server version)
       console.log(`Pulling remote updates for story ${this.storyId} since version ${lastSyncedLog}...`);
-      const pullResponse = await this.client.get<{ updates: StoryUpdate[]; serverMaxOperationVersion: number }>(`/sync/${this.storyId}/pull?lastOperationVersion=${lastSyncedLog}`);
-      const { updates: remoteUpdates } = pullResponse.data;
+      const pullResponse = await this.client.get<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: 'owner' | 'writer' | 'reader' }>(`/sync/${this.storyId}/pull?lastOperationVersion=${lastSyncedLog}`);
+      const { updates: remoteUpdates, role: myRole } = pullResponse.data;
 
       /**
        * Avançamos o marcador apenas até a operação mais alta que realmente chegou, e não
@@ -652,10 +657,14 @@ export class SyncEngineService {
         }
       }
 
-      // 5. Update local story's lastServerSyncedLog
+      // 5. Update local story's lastServerSyncedLog and cached role
+      const roleChanged = myRole && myRole !== localStory.myRole;
       await this._db.update(schema.stories)
-        .set({ lastServerSyncedLog: highestAppliedRemoteVersion })
+        .set({ lastServerSyncedLog: highestAppliedRemoteVersion, myRole })
         .where(eq(schema.stories.id, this.storyId));
+      if (roleChanged) {
+        entityEventEmitter.emit('story_role_changed', this.storyId);
+      }
 
       // Reaching here means the pull round-trip against the server succeeded, so this is
       // a real "last synced" timestamp - not just when the server was registered (which is
@@ -724,7 +733,11 @@ export class SyncEngineService {
         eq(schema.operationLogs.isSynced, false),
         isNull(schema.operationLogs.conflictState)
       ),
-      orderBy: ({ createdAt }) => [asc(createdAt)], // Order by creation time
+      // Ordered by operationVersion (strictly monotonic per story), not createdAt: the SQLite
+      // timestamp column only has second precision, so two writes in the same second (e.g. a
+      // Gallery create immediately followed by its GalleryRelation create) could tie under
+      // createdAt and push in the wrong order, making the server reject the dependent create.
+      orderBy: ({ operationVersion }) => [asc(operationVersion)],
     });
   }
 

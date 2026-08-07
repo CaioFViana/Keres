@@ -6,7 +6,7 @@ import { tagRelations } from '../../db/schemas/tagRelations';
 import { tags, TagSelect } from '../../db/schemas/tags'; // Import tags schema
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -200,6 +200,7 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
     },
 
     async createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect> {
+      await assertStoryIsWritable(db, noteData.storyId);
       const newNote = prepareNewEntityData<NoteInsert>(noteData);
       const result = await db.insert(notes).values(newNote).returning().get();
 
@@ -215,6 +216,7 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       if (!originalNote) {
         throw new Error(`Note with ID ${noteId} not found for update.`);
       }
+      await assertStoryIsWritable(db, originalNote.storyId);
 
       // Create a potential new state for diffing, including only fields that might change
       const potentialNewState = { ...originalNote, ...noteData };
@@ -254,6 +256,7 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         console.warn(`Attempted to delete non-existent note ${noteId}.`);
         return;
       }
+      await assertStoryIsWritable(db, noteToDelete.storyId);
 
       const [updatedNote] = await db.update(notes)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${notes.version} + 1` })

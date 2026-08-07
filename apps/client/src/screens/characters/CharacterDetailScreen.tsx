@@ -25,6 +25,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
@@ -91,6 +92,7 @@ const CharacterDetailScreen = () => {
   }, [drizzleDb]);
 
   const [character, setCharacter] = useState<CharacterSelect | null>(null);
+  const { canEdit } = useStoryRole(character?.storyId);
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
 
@@ -423,13 +425,15 @@ const CharacterDetailScreen = () => {
 
 
   const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
-      style={{ marginRight: 15 }}
-    >
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, characterId, colors.text]);
+    canEdit ? (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
+        style={{ marginRight: 15 }}
+      >
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ) : null
+  ), [navigation, characterId, colors.text, canEdit]);
 
   useFocusEffect(
     useCallback(() => {
@@ -479,6 +483,7 @@ const CharacterDetailScreen = () => {
         ownerId={characterId}
         ownerType="Character"
         onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
       />
 
       <CharacterRelationManager

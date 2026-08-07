@@ -904,6 +904,7 @@
   "story_not_found": "História não encontrada.",
   "story_overview": "Visão Geral da História",
   "story_plural": "Histórias",
+  "story_read_only_error": "Você só tem acesso de leitura a esta história e não pode fazer alterações.",
   "story_schema_management_description": "Defina atributos customizados compartilhados por todo Personagem, Local, Item e outros tipos de entidade nesta história.",
   "story_schema_management_title": "Atributos Customizados",
   "story_selection_title": "Seleção de Histórias",

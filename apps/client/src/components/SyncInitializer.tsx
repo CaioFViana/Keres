@@ -86,7 +86,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           for (const storyPreview of newStoriesOnServer) {
             console.log(`  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`);
             try {
-              await SyncEngineService.getInstance().downloadAndImportStory(server.id, storyPreview.storyId, server.idUser);
+              await SyncEngineService.getInstance().downloadAndImportStory(server.id, storyPreview.storyId, server.idUser, storyPreview.role);
               console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
               fetchStoryList(storyService); // Refresh the story list after import
             } catch (downloadError) {

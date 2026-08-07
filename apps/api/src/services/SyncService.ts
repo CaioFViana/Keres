@@ -1,4 +1,4 @@
-import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, StoryReorderingStoryUpdate, StoryUpdate, SyncAppliedOperation, SyncConflict, UpdateStoryUpdate } from '@keres/shared';
+import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, EffectiveStoryRole, StoryReorderingStoryUpdate, StoryUpdate, SyncAppliedOperation, SyncConflict, UpdateStoryUpdate } from '@keres/shared';
 import { and, eq, gt, max, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
@@ -6,6 +6,7 @@ import { db } from '../db';
 import { operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { logger } from '../utils/logger';
+import { AppError } from '../utils/errors';
 import { SyncConflictError, SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { AttributeValueSyncHandler } from './entity-sync-handlers/AttributeValueSyncHandler';
@@ -103,7 +104,7 @@ export class SyncService {
     }
 
     if (!hasWritePermission) {
-      throw new Error('Unauthorized: User does not have write permission for this story.');
+      throw new AppError(403, 'Unauthorized: User does not have write permission for this story.');
     }
 
     const applied: SyncAppliedOperation[] = [];
@@ -347,7 +348,7 @@ export class SyncService {
     return serialized;
   }
 
-  async getUpdatesForStory(userId: string, storyId: string, lastOperationVersion: number): Promise<{ updates: StoryUpdate[]; serverMaxOperationVersion: number }> {
+  async getUpdatesForStory(userId: string, storyId: string, lastOperationVersion: number): Promise<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: EffectiveStoryRole }> {
     // Authorization check
     const story = await db.query.stories.findFirst({
       where: eq(stories.id, storyId),
@@ -357,18 +358,18 @@ export class SyncService {
       throw new Error('Story not found.');
     }
 
-    let hasReadPermission = false;
+    let role: EffectiveStoryRole | undefined;
     if (story.userId === userId) {
-      hasReadPermission = true; // User is the owner
+      role = 'owner';
     } else {
       const permission = await storyPermissionService.getUserPermissionForStory(userId, storyId);
       if (permission && (permission.permissionType === 'reader' || permission.permissionType === 'writer')) {
-        hasReadPermission = true;
+        role = permission.permissionType;
       }
     }
 
-    if (!hasReadPermission) {
-      throw new Error('Unauthorized: User does not have read permission for this story.');
+    if (!role) {
+      throw new AppError(403, 'Unauthorized: User does not have read permission for this story.');
     }
 
     const fetchedOperations = await db.query.operationLog.findMany({
@@ -524,10 +525,10 @@ export class SyncService {
       .where(eq(operationLog.storyId, storyId))
     ).at(0)?.maxVersion || 0;
 
-    return { updates, serverMaxOperationVersion };
+    return { updates, serverMaxOperationVersion, role };
   }
 
-  async getStoriesWithLastOperationVersionForUser(userId: string): Promise<{ storyId: string; lastOperationVersion: number }[]> {
+  async getStoriesWithLastOperationVersionForUser(userId: string): Promise<{ storyId: string; lastOperationVersion: number; role: EffectiveStoryRole }[]> {
     const ownedStories = await db.query.stories.findMany({
       where: and(eq(stories.userId, userId), eq(stories.isDeleted, false)),
       columns: {
@@ -553,21 +554,28 @@ export class SyncService {
       },
     });
 
-    const storyMap = new Map<string, number>();
+    /**
+     * Carries role alongside version, not just version: the client persists this role into its
+     * local `stories.myRole` column the moment it creates the row for a story it just learned
+     * about (see `StoryService.importFullStory`), so there's never a window where the row exists
+     * server-linked but with an unknown role that a permissive default could mistake for owner.
+     */
+    const storyMap = new Map<string, { lastOperationVersion: number; role: EffectiveStoryRole }>();
 
     ownedStories.forEach(story => {
-      storyMap.set(story.id, story.version);
+      storyMap.set(story.id, { lastOperationVersion: story.version, role: 'owner' });
     });
 
     permittedStories.forEach(permission => {
       if (permission.story && !permission.story.isDeleted) {
-        storyMap.set(permission.story.id, permission.story.version);
+        storyMap.set(permission.story.id, { lastOperationVersion: permission.story.version, role: permission.permissionType });
       }
     });
 
-    return Array.from(storyMap.entries()).map(([storyId, lastOperationVersion]) => ({
+    return Array.from(storyMap.entries()).map(([storyId, { lastOperationVersion, role }]) => ({
       storyId,
       lastOperationVersion,
+      role,
     }));
   }
 }

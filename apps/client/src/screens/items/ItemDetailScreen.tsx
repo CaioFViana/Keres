@@ -17,6 +17,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createItemService } from '../../services/storymanagement/ItemService';
 import { useStoryStore } from '../../state/storyStore';
@@ -55,6 +56,7 @@ const ItemDetailScreen = () => {
   }, [drizzleDb]);
 
   const [item, setItem] = useState<ItemSelect | null>(null);
+  const { canEdit } = useStoryRole(item?.storyId);
 
   const {
     selectedTags: itemTags,
@@ -140,10 +142,12 @@ const ItemDetailScreen = () => {
   }, [item, fetchAllCharacters]);
 
   const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity onPress={() => navigation.navigate('ItemForm', { itemId })} style={{ marginRight: 15 }}>
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, itemId, colors.text]);
+    canEdit ? (
+      <TouchableOpacity onPress={() => navigation.navigate('ItemForm', { itemId })} style={{ marginRight: 15 }}>
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ) : null
+  ), [navigation, itemId, colors.text, canEdit]);
 
   useFocusEffect(
     useCallback(() => {
@@ -182,6 +186,7 @@ const ItemDetailScreen = () => {
         ownerId={itemId}
         ownerType="Item"
         onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
       />
 
       {selectedStory && (

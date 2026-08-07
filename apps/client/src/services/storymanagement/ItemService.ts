@@ -4,7 +4,7 @@ import { AppDrizzleClient } from '../../db';
 import { ItemInsert, items, ItemSelect } from '../../db/schemas/items';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -106,6 +106,7 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
     },
 
     async createItem(currentUserId: string, itemData: Create<ItemInsert>): Promise<ItemSelect> {
+      await assertStoryIsWritable(db, itemData.storyId);
       const newItem = prepareNewEntityData<ItemInsert>(itemData);
       const result = await db.insert(items).values(newItem).returning().get();
       const userIdToLog = await getUserIdForOperation(db, serverService, newItem.storyId, currentUserId);
@@ -117,6 +118,7 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
     async updateItem(currentUserId: string, itemId: string, itemData: Partial<Omit<ItemInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<ItemSelect> {
       const originalItem = await db.query.items.findFirst({ where: eq(items.id, itemId) });
       if (!originalItem) throw new Error(`Item with ID ${itemId} not found for update.`);
+      await assertStoryIsWritable(db, originalItem.storyId);
       const potentialNewState = { ...originalItem, ...itemData };
       const changes = getChangedFields(originalItem, potentialNewState);
       delete changes.version;
@@ -136,6 +138,7 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
     async deleteItem(currentUserId: string, itemId: string): Promise<void> {
       const itemToDelete = await db.query.items.findFirst({ where: eq(items.id, itemId) });
       if (!itemToDelete) return;
+      await assertStoryIsWritable(db, itemToDelete.storyId);
       const [updatedItem] = await db.update(items)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${items.version} + 1` })
         .where(eq(items.id, itemId))

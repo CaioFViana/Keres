@@ -3,7 +3,7 @@ import { OperationLogEntityType } from '@keres/shared/metadata/OperationLogEntit
 import { and, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient, itemJourneys } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export interface ItemJourneyService {
@@ -58,6 +58,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
       userId: string,
       itemJourneyData: Omit<ItemJourney, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
     ): Promise<ItemJourney> {
+      await assertStoryIsWritable(db, itemJourneyData.storyId);
       const newItemJourney: ItemJourney = {
         ...itemJourneyData,
         id: createULID(),
@@ -85,6 +86,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
       if (!originalItemJourney) {
         throw new Error(`ItemJourney with ID ${id} not found for update.`);
       }
+      await assertStoryIsWritable(db, originalItemJourney.storyId);
 
       const updatedItemJourney = await db
         .update(itemJourneys)
@@ -116,6 +118,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
         console.warn(`Attempted to delete non-existent ItemJourney ${id}.`);
         return;
       }
+      await assertStoryIsWritable(db, itemJourneyToDelete.storyId);
 
       await db
         .update(itemJourneys)

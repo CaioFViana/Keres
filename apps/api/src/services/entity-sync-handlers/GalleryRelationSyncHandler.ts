@@ -2,7 +2,7 @@ import { CreateGalleryRelationDataSchema, CreateGalleryRelationDataType, CreateS
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, galleries, galleryRelations, items, locations, notes, scenes } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /**
  * Sincroniza o vínculo entre uma mídia e uma entidade da história.
@@ -33,7 +33,10 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<typeof Cre
       where: and(eq(galleries.id, galleryId), eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)),
     });
     if (!galleryExists) {
-      throw new Error(`Validation Error: Gallery with ID ${galleryId} not found, is deleted, or does not belong to story ${storyId}.`);
+      // A create-then-link pair (Gallery, then this relation) can arrive with the relation
+      // ahead of its gallery if the client's push batch ever reorders them - report this as
+      // a diagnosable 'not_found' conflict rather than an opaque 'unknown' one.
+      throw new SyncConflictError('not_found', `Gallery with ID ${galleryId} not found, is deleted, or does not belong to story ${storyId}.`);
     }
 
     let ownerExists = false;
@@ -78,7 +81,9 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<typeof Cre
     }
 
     if (!ownerExists) {
-      throw new Error(`Validation Error: ${ownerType} with ID ${ownerId} not found, is deleted, or does not belong to story ${storyId}.`);
+      // Same reasoning as the gallery-existence check above: a diagnosable 'not_found'
+      // conflict instead of an opaque 'unknown' one.
+      throw new SyncConflictError('not_found', `${ownerType} with ID ${ownerId} not found, is deleted, or does not belong to story ${storyId}.`);
     }
   }
 

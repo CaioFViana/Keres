@@ -12,6 +12,7 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { LocationStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { LocationWithTags } from '../../services/storymanagement/LocationService';
 import { createTagService } from '../../services/storymanagement/TagService';
@@ -58,6 +59,7 @@ const LocationsScreen = () => {
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const tagService = useRef(createTagService(drizzleDb)).current;
+  const { canEdit } = useStoryRole(storyId);
 
   const styles = StyleSheet.create({
     container: {
@@ -100,16 +102,18 @@ const LocationsScreen = () => {
             >
               <Ionicons name="git-network-outline" size={28} color={colors.text} />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('LocationForm', { locationId: undefined })}
-              style={styles.headerButton}
-            >
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('LocationForm', { locationId: undefined })}
+                style={styles.headerButton}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )}
           </View>
         ),
       });
-    }, [navigation, colors.text, t, styles.headerRightContainer, styles.headerButton])
+    }, [navigation, colors.text, t, styles.headerRightContainer, styles.headerButton, canEdit])
   );
 
   const handleToggleFavorite = useCallback(async (locationId: string, isFavorite: boolean) => {

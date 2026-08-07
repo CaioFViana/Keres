@@ -12,6 +12,7 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { CharacterStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { CharacterWithTags } from '../../services/storymanagement/CharacterService';
 import { createTagService } from '../../services/storymanagement/TagService';
@@ -58,6 +59,7 @@ const CharactersScreen = () => {
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const tagService = useRef(createTagService(drizzleDb)).current;
+  const { canEdit } = useStoryRole(storyId);
 
   // Styles are always defined at the top
   const styles = StyleSheet.create({
@@ -90,16 +92,16 @@ const CharactersScreen = () => {
       setDocumentTitle(t('characters_title'));
       navigation.getParent()?.setOptions({
         title: t('characters_title'),
-        headerRight: () => (
+        headerRight: canEdit ? () => (
           <TouchableOpacity
             onPress={() => navigation.navigate('CharacterForm', { characterId: undefined })}
             style={{ marginRight: 15 }}
           >
             <Ionicons name="add" size={30} color={colors.text} />
           </TouchableOpacity>
-        ),
+        ) : undefined,
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, colors.text, t, canEdit])
   );
 
   const handleToggleFavorite = useCallback(async (characterId: string, isFavorite: boolean) => {

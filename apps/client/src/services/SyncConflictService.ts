@@ -349,13 +349,16 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // versão atual do servidor.
         await writeEntity(conflict.entityType, conflict.entityId, { isDeleted: true, deletedAt: new Date() }, baseVersion + 1);
         await recordRebasedOperation(conflict, 'delete', { id: conflict.entityId, isDeleted: true }, baseVersion);
-      } else if (conflict.reason === 'not_found' || conflict.reason === 'limit_exceeded') {
-        // A entidade não existe no servidor - por ter sido removida (`not_found`) ou por a
-        // criação original ter sido recusada pelo teto do plano (`limit_exceeded`, que só
-        // acontece em operações de criação - ver TierEnforcementService no servidor). Nos
-        // dois casos "manter a minha versão" tem que reenviar como `create`, não `update`:
-        // um `update` contra uma entidade que o servidor nunca teve voltaria como um novo
-        // conflito `not_found` em vez de dar à tentativa uma chance real de passar.
+      } else if (conflict.localOperationType === 'create' || conflict.reason === 'not_found' || conflict.reason === 'limit_exceeded') {
+        // A entidade não existe no servidor - por a operação local original já ser um
+        // `create` (qualquer que seja o motivo recusado - `not_found` de uma dependência
+        // ausente, `limit_exceeded` do teto do plano, ou até `unknown` de uma falha de
+        // validação no servidor), ou por ter sido removida lá depois (`not_found` numa
+        // operação que era `update`/`reorder`). Em todos esses casos "manter a minha versão"
+        // tem que reenviar como `create`, não `update`: um `update` contra uma entidade que
+        // o servidor nunca teve voltaria como um novo conflito `not_found` em vez de dar à
+        // tentativa uma chance real de passar - exatamente o loop que deixava uma
+        // GalleryRelation presa pra sempre quando seu dono ainda não existia no servidor.
         const local = await readLocalEntity(conflict.entityType, conflict.entityId);
         await recordRebasedOperation(conflict, 'create', { ...(local ?? {}), ...values, isDeleted: false }, 0);
         await writeEntity(conflict.entityType, conflict.entityId, { ...values, isDeleted: false, deletedAt: null }, 1);
@@ -406,6 +409,13 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
 
     async dismissConflict(conflictId: string): Promise<void> {
       const conflict = await getConflict(conflictId);
+      // Without this, dismissing just hides the conflict from the pending list while its
+      // operations stay `conflictState: 'conflicted'` forever - excluded from every future
+      // push batch (see `getPushableOperations`'s `isNull(conflictState)` filter) with no way
+      // left to resolve or retry them.
+      if (conflict) {
+        await abandonOperations(conflict.localOperationIds);
+      }
       await db.update(schema.syncConflicts)
         .set({ status: 'dismissed', resolvedAt: new Date() })
         .where(eq(schema.syncConflicts.id, conflictId));

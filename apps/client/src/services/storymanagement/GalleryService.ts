@@ -4,7 +4,7 @@ import { AppDrizzleClient } from '../../db';
 import { galleries, GalleryInsert, galleryRelations, GallerySelect, MediaTransferState } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 
@@ -173,6 +173,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
     },
 
     async createGallery(currentUserId, media): Promise<GallerySelect> {
+      await assertStoryIsWritable(db, media.storyId);
       const newGallery = prepareNewEntityData<GalleryInsert>({
         storyId: media.storyId,
         mediaType: media.mediaType,
@@ -204,6 +205,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       if (!original) {
         throw new Error(`Gallery with ID ${galleryId} not found for update.`);
       }
+      await assertStoryIsWritable(db, original.storyId);
 
       const changes = getChangedFields(original, { ...original, ...data });
       delete changes.version;
@@ -242,6 +244,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         console.warn(`Attempted to delete non-existent gallery ${galleryId}.`);
         return;
       }
+      await assertStoryIsWritable(db, toDelete.storyId);
 
       const [updated] = await db.update(galleries)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${galleries.version} + 1` })

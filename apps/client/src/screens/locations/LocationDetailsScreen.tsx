@@ -23,6 +23,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { CharacterService, createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
@@ -68,6 +69,7 @@ const LocationDetailsScreen = () => {
   const itemJourneyServiceRef = useRef<ItemJourneyService | null>(null); // Ref for ItemJourneyService
 
   const [location, setLocation] = useState<LocationSelect | null>(null);
+  const { canEdit } = useStoryRole(location?.storyId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -116,7 +118,7 @@ const LocationDetailsScreen = () => {
       navigation.getParent()?.setOptions({
         title: headerTitle,
         headerRight: () => (
-          location ? (
+          location && canEdit ? (
             <TouchableOpacity onPress={() => navigation.navigate('LocationForm', { locationId: location.id })}>
               <Ionicons name="pencil-outline" size={24} color={colors.primary} style={{ marginRight: 15 }} />
             </TouchableOpacity>
@@ -124,7 +126,7 @@ const LocationDetailsScreen = () => {
         ),
       });
       setDocumentTitle(headerTitle);
-    }, [navigation, location, headerTitle, colors])
+    }, [navigation, location, headerTitle, colors, canEdit])
   );
 
   const fetchLocationDetails = useCallback(async () => {
@@ -431,7 +433,7 @@ const LocationDetailsScreen = () => {
         onAddChild={handleAddChild}
         onAddConnection={handleAddConnection}
         onRemoveRelation={handleRemoveLocationRelation}
-        editable={true}
+        editable={canEdit}
       />
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
@@ -439,6 +441,7 @@ const LocationDetailsScreen = () => {
         ownerId={locationId}
         ownerType="Location"
         onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
       />
 
       <LocationCharacterManager

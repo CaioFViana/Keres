@@ -18,6 +18,7 @@ import { NoteSelect } from '../../db/schemas/notes';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { EntityService } from '../../services/EntityService'; // Import EntityService
 import { createNoteService } from '../../services/storymanagement/NoteService';
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
@@ -72,6 +73,7 @@ const NoteDetailScreen = () => {
   }, [drizzleDb]);
 
   const [note, setNote] = useState<NoteSelect | null>(null);
+  const { canEdit } = useStoryRole(note?.storyId);
   const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
   const [allNoteRelations, setAllNoteRelations] = useState<NoteRelation[]>([]);
   const [groupedEntities, setGroupedEntities] = useState<Record<string, string[]>>({
@@ -248,13 +250,15 @@ const NoteDetailScreen = () => {
 
 
   const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('NoteForm', { noteId: noteId })}
-      style={{ marginRight: 15 }}
-    >
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, noteId, colors.text]);
+    canEdit ? (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('NoteForm', { noteId: noteId })}
+        style={{ marginRight: 15 }}
+      >
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ) : null
+  ), [navigation, noteId, colors.text, canEdit]);
 
   useFocusEffect(
     useCallback(() => {
@@ -293,6 +297,7 @@ const NoteDetailScreen = () => {
         ownerId={noteId}
         ownerType="Note"
         onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
       />
 
       <RelatedEntitiesList

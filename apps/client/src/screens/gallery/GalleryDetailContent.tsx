@@ -15,6 +15,7 @@ import { useDrizzle } from '../../db';
 import { GallerySelect } from '../../db/schemas/galleries';
 import { decodeOwnerValue, encodeOwnerValue, useGalleryOwnerOptions } from '../../hooks/useGalleryOwnerOptions';
 import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryRelationService, GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -73,6 +74,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
   const storyId = selectedStory?.id;
+  const { canEdit } = useStoryRole(storyId);
 
   const galleryService = useMemo(() => createGalleryService(db), [db]);
   const relationService = useMemo(() => createGalleryRelationService(db), [db]);
@@ -332,13 +334,15 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
 
         <View style={styles.headerRow}>
           <Text style={styles.fileName} numberOfLines={2}>{media.fileName}</Text>
-          <TouchableOpacity onPress={handleToggleFavorite}>
-            <Ionicons
-              name={media.isFavorite ? 'star' : 'star-outline'}
-              size={28}
-              color={media.isFavorite ? colors.star : colors.textSecondary}
-            />
-          </TouchableOpacity>
+          {canEdit && (
+            <TouchableOpacity onPress={handleToggleFavorite}>
+              <Ionicons
+                name={media.isFavorite ? 'star' : 'star-outline'}
+                size={28}
+                color={media.isFavorite ? colors.star : colors.textSecondary}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.metaRow}>
@@ -372,6 +376,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
           value={title}
           onChangeText={setTitle}
           placeholder={t('media_title_placeholder')}
+          editable={canEdit}
         />
 
         <Text style={styles.sectionTitle}>{t('extra_notes')}</Text>
@@ -381,25 +386,28 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
           onChangeText={setExtraNotes}
           placeholder={t('media_notes_placeholder')}
           multiline
+          editable={canEdit}
         />
 
         <Text style={styles.sectionTitle}>{t('media_linked_entities')}</Text>
         <GroupedMultiSelectPill
           groups={ownerGroups}
           selectedValues={selectedOwners}
-          onSelectionChange={setSelectedOwners}
+          onSelectionChange={canEdit ? setSelectedOwners : () => {}}
           placeholder={t('media_select_entities')}
           noOptionsText={t('media_no_entities_available')}
         />
 
-        <View style={styles.actions}>
-          <Button onPress={handleSave} disabled={saving}>
-            {saving ? t('saving') : t('save_changes')}
-          </Button>
-          <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
-            {t('delete')}
-          </Button>
-        </View>
+        {canEdit && (
+          <View style={styles.actions}>
+            <Button onPress={handleSave} disabled={saving}>
+              {saving ? t('saving') : t('save_changes')}
+            </Button>
+            <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
+              {t('delete')}
+            </Button>
+          </View>
+        )}
       </ScrollView>
       {hasLocalImage && (
         <ImageZoomViewer

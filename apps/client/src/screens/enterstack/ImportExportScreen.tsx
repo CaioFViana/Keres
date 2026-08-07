@@ -158,7 +158,7 @@ const ImportExportScreen = () => {
 
       // `serverId` nulo: o arquivo é uma cópia local. Vincular a um servidor é uma decisão
       // separada, feita na tela de seleção de histórias.
-      await storyService.importFullStory(userId, storyExport, null, localMediaPaths);
+      await storyService.importFullStory(userId, storyExport, null, null, localMediaPaths);
 
       showNotification(t('import_story_success', { title: storyExport.story.title }), 'success');
       await loadStories();

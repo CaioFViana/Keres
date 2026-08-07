@@ -11,6 +11,7 @@ import ItemListItem from '../../components/listitem/ItemListItem';
 import { ItemSelect } from '../../db/schemas/items';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { ItemStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { useItemStore } from '../../state/itemStore';
 import { useTheme } from '../../theme';
@@ -47,6 +48,8 @@ const ItemListScreen = () => {
     changeEvent: 'item_changed',
   });
 
+  const { canEdit } = useStoryRole(storyId);
+
   const handleViewDetails = useCallback((itemId: string) => {
     navigation.navigate('ItemDetail', { itemId });
   }, [navigation]);
@@ -75,15 +78,15 @@ const ItemListScreen = () => {
       setDocumentTitle(t('items_title'));
       navigation.getParent()?.setOptions({
         title: t('items_title'),
-        headerRight: () => (
+        headerRight: canEdit ? () => (
           <View style={styles.headerRightContainer}>
             <TouchableOpacity onPress={() => navigation.navigate('ItemForm', {})} style={styles.headerButton}>
               <Ionicons name="add" size={30} color={colors.text} />
             </TouchableOpacity>
           </View>
-        ),
+        ) : undefined,
       });
-    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer])
+    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit])
   );
 
   // Temporarily simplified filter component for Items

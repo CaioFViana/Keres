@@ -4,7 +4,7 @@ import { AppDrizzleClient } from '../../db';
 import { galleryRelations, GalleryRelationInsert, GalleryRelationSelect } from '../../db/schema';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 /** Uma entidade à qual uma mídia está (ou pode ser) vinculada. */
@@ -54,6 +54,7 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
     },
 
     async linkGalleryToOwner(currentUserId, storyId, galleryId, owner): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
       const existing = await db.query.galleryRelations.findFirst({
         where: and(
           eq(galleryRelations.storyId, storyId),
@@ -115,6 +116,7 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
     },
 
     async unlinkGalleryFromOwner(currentUserId, storyId, galleryId, owner): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
       const relation = await db.query.galleryRelations.findFirst({
         where: and(
           eq(galleryRelations.storyId, storyId),

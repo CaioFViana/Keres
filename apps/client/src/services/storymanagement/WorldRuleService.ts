@@ -6,7 +6,7 @@ import { tags } from '../../db/schemas/tags'; // Import tags schema
 import { WorldRuleWithTags } from '../../db/schemas/worldRules'; // Import WorldRuleWithTags from schemas
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -196,6 +196,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
     },
 
     async createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect> {
+      await assertStoryIsWritable(db, worldRuleData.storyId);
       const newWorldRule = prepareNewEntityData<WorldRuleInsert>(worldRuleData);
       const result = await db.insert(worldRules).values(newWorldRule).returning().get();
 
@@ -211,6 +212,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
       if (!originalWorldRule) {
         throw new Error(`World Rule with ID ${worldRuleId} not found for update.`);
       }
+      await assertStoryIsWritable(db, originalWorldRule.storyId);
 
       const potentialNewState = { ...originalWorldRule, ...worldRuleData };
 
@@ -245,6 +247,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         console.warn(`Attempted to delete non-existent world rule ${worldRuleId}.`);
         return;
       }
+      await assertStoryIsWritable(db, worldRuleToDelete.storyId);
 
       const [updatedWorldRule] = await db.update(worldRules)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${worldRules.version} + 1` })

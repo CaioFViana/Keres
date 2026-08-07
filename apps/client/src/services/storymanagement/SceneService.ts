@@ -5,7 +5,7 @@ import { AppDrizzleClient } from '../../db';
 import { SceneInsert, scenes, SceneSelect } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -121,6 +121,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     },
 
     async createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect> {
+      await assertStoryIsWritable(db, sceneData.storyId);
       const newScene = prepareNewEntityData<SceneInsert>(sceneData);
       const result = await db.insert(scenes).values(newScene).returning().get();
 
@@ -136,6 +137,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       if (!originalScene) {
         throw new Error(`Scene with ID ${sceneId} not found for update.`);
       }
+      await assertStoryIsWritable(db, originalScene.storyId);
 
       const potentialNewState = { ...originalScene, ...sceneData };
 
@@ -170,6 +172,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         console.warn(`Attempted to delete non-existent scene ${sceneId}.`);
         return;
       }
+      await assertStoryIsWritable(db, sceneToDelete.storyId);
 
       const [updatedScene] = await db.update(scenes)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${scenes.version} + 1` })
@@ -208,6 +211,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     },
 
     async reorderScenes(currentUserId: string, storyId: string, chapterId: string, newOrder: { id: string, newIndex: number }[]): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
       const reorderPayload = { reorderItems: newOrder.map(item => ({ ...item })) };
 
@@ -239,6 +243,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     },
 
     async batchUpdateScenes(currentUserId: string, storyId: string, updates: { sceneId: string, changes: Partial<Omit<Scene, 'id' | 'storyId'>> }[]): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
 
       await db.transaction(async (tx) => {

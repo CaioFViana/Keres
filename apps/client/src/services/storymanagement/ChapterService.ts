@@ -4,7 +4,7 @@ import { AppDrizzleClient } from '../../db';
 import { ChapterInsert, chapters, ChapterSelect } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -118,6 +118,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
     },
 
     async createChapter(currentUserId: string, chapterData: Create<ChapterInsert>): Promise<ChapterSelect> {
+      await assertStoryIsWritable(db, chapterData.storyId);
       const newChapter = prepareNewEntityData<ChapterInsert>(chapterData);
       const result = await db.insert(chapters).values(newChapter).returning().get();
 
@@ -133,6 +134,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       if (!originalChapter) {
         throw new Error(`Chapter with ID ${chapterId} not found for update.`);
       }
+      await assertStoryIsWritable(db, originalChapter.storyId);
 
       const potentialNewState = { ...originalChapter, ...chapterData };
 
@@ -167,6 +169,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         console.warn(`Attempted to delete non-existent chapter ${chapterId}.`);
         return;
       }
+      await assertStoryIsWritable(db, chapterToDelete.storyId);
 
       const [updatedChapter] = await db.update(chapters)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${chapters.version} + 1` })
@@ -205,6 +208,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
     },
 
     async reorderChapters(currentUserId: string, storyId: string, newOrder: { id: string, newIndex: number }[]): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
       const reorderPayload = { reorderItems: newOrder.map(item => ({ id: item.id, newIndex: item.newIndex })) };
 

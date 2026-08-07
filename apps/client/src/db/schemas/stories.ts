@@ -21,6 +21,9 @@ export const stories = sqliteTable('stories', {
   serverId: text('server_id'),
   lastOperationLog: integer('last_operation_log').notNull().default(0),
   lastServerSyncedLog: integer('last_server_synced_log').notNull().default(0),
+  // Caller's effective access level on the server for this story ('owner'/'writer'/'reader'),
+  // refreshed on every pull. Null means never synced yet (a purely local story).
+  myRole: text('my_role', { enum: ['owner', 'writer', 'reader'] }),
 });
 
 export type StoryInsert = InferInsertModel<typeof stories>;

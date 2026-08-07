@@ -12,6 +12,7 @@ import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { MainSystemDrawerParamList, NotesStackParamList } from '../../navigation/MainSystemStack';
 import { NoteWithTags } from '../../services/storymanagement/NoteService';
 import { createTagService } from '../../services/storymanagement/TagService';
@@ -59,6 +60,8 @@ const NotesScreen = () => {
     changeEvent: 'note_changed',
   });
 
+  const { canEdit } = useStoryRole(storyId);
+
   // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
   const fetchTags = useCallback(async () => {
     if (!storyId) {
@@ -82,16 +85,16 @@ const NotesScreen = () => {
       setDocumentTitle(t('notes_title'));
       navigation.getParent()?.setOptions({
         title: t('notes_title'),
-        headerRight: () => (
+        headerRight: canEdit ? () => (
           <TouchableOpacity
             onPress={() => navigation.navigate('NoteForm', { noteId: undefined })}
             style={{ marginRight: 15 }}
           >
             <Ionicons name="add" size={30} color={colors.text} />
           </TouchableOpacity>
-        ),
+        ) : undefined,
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, colors.text, t, canEdit])
   );
 
   const handleToggleFavorite = useCallback(async (noteId: string, isFavorite: boolean) => {

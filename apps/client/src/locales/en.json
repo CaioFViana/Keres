@@ -904,6 +904,7 @@
   "story_not_found": "Story not found.",
   "story_overview": "Story Overview",
   "story_plural": "Stories",
+  "story_read_only_error": "You only have read access to this story and can't make changes.",
   "story_schema_management_description": "Define custom attributes shared by every Character, Location, Item, and other entity of a given type in this story.",
   "story_schema_management_title": "Custom Attributes",
   "story_selection_title": "Story Selection",

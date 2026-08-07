@@ -14,6 +14,7 @@ import { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -50,6 +51,7 @@ const WorldRuleDetailScreen = () => {
   }, [drizzleDb]);
 
   const [worldRule, setWorldRule] = useState<WorldRuleWithTags | null>(null);
+  const { canEdit } = useStoryRole(worldRule?.storyId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -147,13 +149,15 @@ const WorldRuleDetailScreen = () => {
   }, [worldRuleId, fetchWorldRule, handleWorldRuleChange, handleTagRelationChange]);
 
   const renderHeaderRight = useCallback(() => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('WorldRuleForm', { worldRuleId: worldRuleId })}
-      style={{ marginRight: 15 }}
-    >
-      <Ionicons name="pencil-outline" size={24} color={colors.text} />
-    </TouchableOpacity>
-  ), [navigation, worldRuleId, colors.text]);
+    canEdit ? (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('WorldRuleForm', { worldRuleId: worldRuleId })}
+        style={{ marginRight: 15 }}
+      >
+        <Ionicons name="pencil-outline" size={24} color={colors.text} />
+      </TouchableOpacity>
+    ) : null
+  ), [navigation, worldRuleId, colors.text, canEdit]);
 
   useFocusEffect(
     useCallback(() => {

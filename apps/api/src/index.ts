@@ -17,7 +17,7 @@ import { storyRoutes } from './modules/story/story.route';
 import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route';
 import { syncRoute } from './modules/sync/sync.route';
 import { userRoutes } from './modules/user/user.route'; // Import userRoutes
-import { wsRoutes } from './modules/websocket/webSocket.route';
+import { wsRoutes } from './modules/webSocket/webSocket.route';
 import { reconcileRootAdmin } from './services/RootAdminService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';

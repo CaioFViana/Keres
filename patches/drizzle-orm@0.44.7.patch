@@ -1,0 +1,75 @@
+diff --git a/expo-sqlite/session.cjs b/expo-sqlite/session.cjs
+index 1556d939bfbdf0001d7ae5680ad32bccb40a90b2..1e20874ccf08bfe43bbdf1caacb3d275d2a2cdcb 100644
+--- a/expo-sqlite/session.cjs
++++ b/expo-sqlite/session.cjs
+@@ -50,11 +50,14 @@ class ExpoSQLiteSession extends import_session.SQLiteSession {
+       customResultMapper
+     );
+   }
+-  transaction(transaction, config = {}) {
++  async transaction(transaction, config = {}) {
+     const tx = new ExpoSQLiteTransaction("sync", this.dialect, this, this.schema);
+     this.run(import_sql.sql.raw(`begin${config?.behavior ? " " + config.behavior : ""}`));
+     try {
+-      const result = transaction(tx);
++      // See session.js for why this needs to be awaited - without it, an async callback
++      // only runs up to its first `await` before commit fires, and everything after runs
++      // un-atomically post-commit.
++      const result = await transaction(tx);
+       this.run(import_sql.sql`commit`);
+       return result;
+     } catch (err) {
+@@ -65,12 +68,12 @@ class ExpoSQLiteSession extends import_session.SQLiteSession {
+ }
+ class ExpoSQLiteTransaction extends import_sqlite_core.SQLiteTransaction {
+   static [import_entity.entityKind] = "ExpoSQLiteTransaction";
+-  transaction(transaction) {
++  async transaction(transaction) {
+     const savepointName = `sp${this.nestedIndex}`;
+     const tx = new ExpoSQLiteTransaction("sync", this.dialect, this.session, this.schema, this.nestedIndex + 1);
+     this.session.run(import_sql.sql.raw(`savepoint ${savepointName}`));
+     try {
+-      const result = transaction(tx);
++      const result = await transaction(tx);
+       this.session.run(import_sql.sql.raw(`release savepoint ${savepointName}`));
+       return result;
+     } catch (err) {
+diff --git a/expo-sqlite/session.js b/expo-sqlite/session.js
+index 23dcc2a7448137b64d7e54887ce5a003a413aff4..9f0668c1b269486c2af80734863d2eab1454a8a2 100644
+--- a/expo-sqlite/session.js
++++ b/expo-sqlite/session.js
+@@ -28,11 +28,17 @@ class ExpoSQLiteSession extends SQLiteSession {
+       customResultMapper
+     );
+   }
+-  transaction(transaction, config = {}) {
++  async transaction(transaction, config = {}) {
+     const tx = new ExpoSQLiteTransaction("sync", this.dialect, this, this.schema);
+     this.run(sql.raw(`begin${config?.behavior ? " " + config.behavior : ""}`));
+     try {
+-      const result = transaction(tx);
++      // `transaction` is user code, and drizzle's own transaction() type signature (matching
++      // every other driver) allows it to be async - but this "sync" driver used to call it
++      // without awaiting, then commit immediately. For an async callback that just kicks off
++      // the callback up to its first `await` and commits after only its first statement ran;
++      // everything after executes post-commit, un-atomically, and a later throw hits `catch`
++      // trying to roll back a transaction that's already committed.
++      const result = await transaction(tx);
+       this.run(sql`commit`);
+       return result;
+     } catch (err) {
+@@ -43,12 +49,12 @@ class ExpoSQLiteSession extends SQLiteSession {
+ }
+ class ExpoSQLiteTransaction extends SQLiteTransaction {
+   static [entityKind] = "ExpoSQLiteTransaction";
+-  transaction(transaction) {
++  async transaction(transaction) {
+     const savepointName = `sp${this.nestedIndex}`;
+     const tx = new ExpoSQLiteTransaction("sync", this.dialect, this.session, this.schema, this.nestedIndex + 1);
+     this.session.run(sql.raw(`savepoint ${savepointName}`));
+     try {
+-      const result = transaction(tx);
++      const result = await transaction(tx);
+       this.session.run(sql.raw(`release savepoint ${savepointName}`));
+       return result;
+     } catch (err) {

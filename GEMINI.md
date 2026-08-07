@@ -1,44 +1,108 @@
-# Keres - Project Context for Gemini CLI
+# Gemini's Project Context for Keres
 
-This document provides essential context for the Keres project, a Story Organizer application, to facilitate effective interaction with the Gemini CLI.
+This document summarizes the current understanding of the Keres project, including its goals, architecture, and specific implementation details, as learned by Gemini.
 
-## Project Overview
+## 1. Project Overview
 
-Keres is a self-hosted and/or offline application designed for organizing stories, catering to both solo and collaborative writing efforts. Its primary goal is to offer a robust and intuitive tool for writers, enabling them to manage all aspects of their narratives, from characters and locations to scene structures and world-building rules. The system prioritizes efficient content organization and ease of use.
+Keres is an offline-first story organizer designed for solo or collaborative writing. It aims to provide a robust and intuitive tool for writers to organize all aspects of their narratives, from characters and locations to scene structure and world rules. Key features include intelligent synchronization between local devices and a remote server.
 
-**Key Technologies:**
-- **Backend:** Hono (for routes/validation), Zod (for validation), Drizzle ORM (for persistence), ULID (for identifiers).
-- **Frontend:** React Native, Expo, and React Native Web for a unified codebase across web and mobile.
+The project supports both linear and branching (Interactive Fiction/CYOA) story structures, managed by a `type` field on the `Story` entity and a dedicated `Choice` entity.
 
-## Building and Running
+## 2. Monorepo Structure
 
-As of now, specific build and run commands are not yet defined for all components. However, testing commands are now available:
+The project is organized as a monorepo with the following structure:
 
-- **`bun run test`**: Runs all tests using Vitest.
-- **`bun run coverage`**: Runs all tests and generates a test coverage report using Vitest.
+```
+keres-monorepo/
+├── apps/
+│   ├── api/        # Backend API (Elysia/Bun)
+│   └── client/     # Frontend (React Native/Expo)
+├── packages/
+│   ├── shared/     # Shared types, utilities, Zod contracts, and entities
+│   ├── db/         # Drizzle ORM schema and migrations
+│   └── config/     # Common configurations
+├── docker-compose.yml
+├── package.json
+└── README.md
+```
 
-The project structure outlined in `docs/project_plan.md` suggests a monorepo setup with `apps/api`, `apps/client`, and `packages/` directories, implying that build and run commands will likely be defined within these sub-projects or at the monorepo root once development progresses.
+## 3. Key Entities & Concepts
 
-**TODO:** Define and document the primary build and run commands for the project components (API, Client, etc.) once they are established.
+All persistent entities include a `version: number;` field crucial for conflict detection and resolution during synchronization.
 
-## Development Conventions
+*   **Story:** Main entity, includes `type: 'linear' | 'branching'`. Convertible either way by the user (`StoryService.convertStoryType`); linear stories never have any `Choice` rows.
+*   **Choice:** Represents user-defined transitions between scenes. Only exist for `branching` stories.
+*   **Chapter & Scene:** `index` field maintained for linear story ordering; serves as an organizational tool for branching stories.
+*   **User:** Supports multiple logins, each user can have multiple stories.
+*   **Characters, Gallery, Locations, World Rules, Notes, Tags, Suggestions:** Other core entities for story organization.
+*   **Relational Tables:** Character X Scene, Character X Character.
 
-Based on the `docs/project_plan.md`, the project adheres to the following conventions and architectural patterns:
+## 4. Client Architecture (Offline-First)
 
-- **Monorepo Structure:** Organized into `apps/` (for distinct applications like API, client) and `packages/` (for shared code, database schemas, and configurations).
-- **API Development:** Utilizes Hono for REST/JSON routes, Zod for input/output validation, Drizzle ORM for database interactions, and ULID for unique identifiers.
-- **Frontend Development:** Utilizes React Native, Expo, and React Native Web for a unified codebase across web and mobile platforms, with a focus on offline capabilities via local SQLite and future synchronization with the online API.
+The client is built with React Native/Expo for a unified codebase across mobile and web, operating offline-first with a local SQLite database and synchronizing with a remote API.
 
-## Data Modeling
+### Proposed Architecture Layers:
 
-- **Dynamic Story Structures:** The project plans to support both linear and branching (interactive fiction/CYOA) narrative structures. This involves introducing a `Choice` entity and a `type` flag for `Story` entities, allowing for flexible story representation without disrupting the existing linear flow. More details can be found in `docs/dynamic_story_structure.md`.
-- Employs a detailed data schema with ULID primary keys, including fields for `is_favorite`, `extra_notes`, `created_at`, and `updated_at` across most entities to support user preferences and tracking.
-- Customizable Lists (Enumerators): A flexible system for managing predefined and user-customizable lists (e.g., genres, races, genders) with support for both global and story-specific scopes.
-- **Testing:** Uses Vitest as the testing framework, with test files typically located in a `tests/` directory at the root, or within individual app/package directories.
+*   **Presentation Layer (UI/Views):** React Native Components & Screens, React Navigation.
+*   **Application Layer (State Management & Business Logic):** Zustand for global state, Use Cases/Services for business logic.
+*   **Data Layer:**
+    *   **Local Database:** SQLite (via `expo-sqlite`) for primary data persistence, managed by a custom synchronization engine.
+    *   **API Client:** Axios for remote API communication.
+    *   **Synchronization Engine:** A critical component for:
+        *   Tracking local changes.
+        *   Queueing operations for sync.
+        *   Handling network status.
+        *   Optimistic UI updates.
+        *   Conflict resolution (using `version` field).
+        *   Fetching and applying remote updates.
+*   **Shared Layer (`@keres/shared`):** Entities, Zod Schemas, common utilities.
 
-## Next Steps (from `docs/project_plan.md`)
+### Current Client Setup:
 
-- Define migrations in `packages/db` (Drizzle).
-- Create Zod contracts in `packages/shared`.
-- Implement base CRUD routes (users, stories, characters).
-- Add support for JSON export/import.
+*   Expo project scaffolded in `apps/client`.
+*   Dependencies installed: `zustand`, `axios`, `expo-sqlite`.
+*   `@keres/shared` linked as a workspace dependency.
+*   `apps/client/src` directory created with subdirectories: `navigation`, `screens`, `components`, `state`, `data/local`, `data/remote`, `sync`, `services`, `utils`.
+*   Existing `components` and `hooks` from Expo's default scaffold moved into `apps/client/src/components` and `apps/client/src/hooks` respectively.
+*   `apps/client/tsconfig.json` updated with path aliases:
+    *   `@/*`: `./src/*`
+    *   `@keres/shared`: `../../packages/shared`
+
+## 5. Backend (API) Overview
+
+The backend (`apps/api`) will use:
+*   **Elysia (Bun):** For REST/JSON routes.
+*   **Zod:** For input/output validation.
+*   **Drizzle ORM:** For database persistence.
+*   **ULID:** For unique identifiers.
+*   **Synchronization Engine:** An operation-based replication engine.
+
+## 6. Synchronization Strategy
+
+*   **Offline-First:** All user interactions and changes are first persisted to the local database.
+*   **Change Tracking:** The sync engine monitors local DB for pending operations.
+*   **Online Sync:** When online, pending operations are uploaded to the backend, and then updates are downloaded from the server.
+*   **Conflict Resolution:** The `updated_at` timestamp will be the primary field for Last-Write-Wins (LWW) conflict resolution. The `version` field, managed by the server, will be used to ensure sequential updates and detect outdated client data.
+
+### Detailed Synchronization Mechanism
+
+1.  **Format of Operations (`StoryUpdates`):** Operations will be defined as JSON objects describing the change.
+    *   `{"type": "create", "entity": "EntityName", "data": {...}}`
+    *   `{"type": "update", "entity": "EntityName", "id": "ulid", "changes": {"field": "new_value"}}`
+    *   `{"type": "delete", "entity": "EntityName", "id": "ulid"}`
+2.  **Mechanism for Change Tracking:** The client-side ORM (or custom database layer) will intercept all create, update, and delete operations. For each operation, it will generate a `StoryUpdate` record (as defined above) and store it in a local "operations log" table. This log will be the source for synchronization.
+3.  **Communication Protocol:** WebSockets will be used for real-time notifications of changes. A REST API will be used for pulling and pushing information, allowing for manual requests for changes.
+4.  **Authentication and Authorization:** JWT (JSON Web Tokens) will be used for authentication. The server administrator will register clients, and clients will receive either an API key or use login/password to obtain a JWT and a refresh token.
+5.  **Initial Synchronization (Bootstrapping):** The system will support an import/export function for stories as JSON. The server can send an entire story at once. Story tables are agnostic to user IDs and use ULIDs for universal uniqueness.
+6.  **Logic for Merging Different Fields:** For changes to different fields within the same entity, all non-conflicting changes from both sides will be applied. If a conflict occurs on the *same* field, the Last-Write-Wins (LWW) strategy (based on the `updated_at` timestamp) will be applied.
+7.  **Management of "Last 500 Updates":** A dedicated "operations log" table will store updates. For offline stories, when the number of entries exceeds 500, the oldest entries will be deleted. This can be determined using `ROW_NUMBER()` ordered by `updated_at` in descending order.
+8.  **Error Handling and Retries:** Each synchronization operation sent will be treated as a transaction. If not all operations from the server are successfully processed, no changes will be applied (all or nothing).
+9.  **Integration of Custom Local Database:** The `packages/shared/entities` directory contains the initial, idealized mapping of tables. The custom local database implementation will adhere to these entity definitions.
+10. **Complex Conflict Detection:** If a field has been updated recently (e.g., within a few hours), a notification will be displayed on the screen to inform the user of the recent change.
+
+## 7. Development Environment & Tools
+
+*   **Package Manager:** Bun (used for both client and backend).
+*   **Database:** PostgreSQL for the server, SQLite for the client.
+*   **Environment Variables:** `.env` files for `DATABASE_URL` and `JWT_SECRET` (different values for server and client).
+*   **Docker:** `docker-compose.yml` for setting up a PostgreSQL database.

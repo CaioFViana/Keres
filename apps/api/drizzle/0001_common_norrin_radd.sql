@@ -1,0 +1,2 @@
+ALTER TABLE "friendships" ADD COLUMN "blocked_by_id" text;--> statement-breakpoint
+ALTER TABLE "friendships" ADD CONSTRAINT "friendships_blocked_by_id_users_id_fk" FOREIGN KEY ("blocked_by_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

@@ -1,0 +1,59 @@
+appId: com.keres.desktop
+productName: Keres
+# electron-builder normally detects this from node_modules/electron/package.json relative to
+# this app, but the bun workspace hoists it to the repo root instead - apps/desktop has no
+# node_modules of its own. Keep this in sync with package.json's electron devDependency.
+electronVersion: 33.4.11
+# apps/desktop's package.json has no runtime "dependencies" (dist-electron/**/* below is
+# plain compiled JS, no native modules) - this step would otherwise shell out to npm to
+# install/rebuild production deps, which breaks in this bun workspace (npm can't resolve the
+# "workspace:*" specifiers used elsewhere in the monorepo) and isn't needed regardless.
+npmRebuild: false
+directories:
+  output: release
+files:
+  - dist-electron/**/*
+extraResources:
+  - from: ../client/dist
+    to: client-dist
+  # For main.ts's runtime window/dock icon (APP_ICON) in the packaged app - the source tree
+  # isn't shipped, so it needs its own copy alongside client-dist rather than reaching into
+  # ../client/assets directly.
+  - from: ../client/assets/images/icon.png
+    to: icon.png
+# win/mac/linux icon below is a single 1024x1024 PNG - electron-builder converts it to
+# .ico/.icns automatically at package time (via app-builder-bin's "icon" command), so no
+# pre-generated multi-resolution icon files are needed.
+# No code signing is configured below - Windows/Mac builds today are unsigned (Windows shows
+# a SmartScreen "unknown publisher" warning, Mac needs Gatekeeper right-click-to-open). To sign:
+#   Windows: buy/obtain a code-signing certificate (.pfx), add it as the GitHub secrets
+#     WINDOWS_CSC_LINK (base64 of the .pfx) and WINDOWS_CSC_KEY_PASSWORD, then in
+#     .github/workflows/release.yml's desktop-windows job replace the
+#     `CSC_IDENTITY_AUTO_DISCOVERY: false` env with `CSC_LINK`/`CSC_KEY_PASSWORD` set from those
+#     secrets - electron-builder picks them up automatically, no other config needed here.
+#   macOS: enroll in the Apple Developer Program, export a "Developer ID Application"
+#     certificate (.p12), add it as APPLE_CSC_LINK/APPLE_CSC_KEY_PASSWORD secrets the same way as
+#     Windows above, AND add a `mac.notarize: true` key here plus the
+#     APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID secrets electron-builder's notarization
+#     step reads - see https://www.electron.build/code-signing for the exact env var names.
+win:
+  icon: ../client/assets/images/icon.png
+  target:
+    - nsis # installer
+    - portable # single .exe, no installation
+mac:
+  icon: ../client/assets/images/icon.png
+  category: public.app-category.productivity
+  target:
+    - dmg
+linux:
+  icon: ../client/assets/images/icon.png
+  category: Office
+  target:
+    - AppImage
+    - flatpak
+# Pinned so the CI runner installs the exact matching Freedesktop Platform/SDK before building
+# (see .github/workflows/release.yml's desktop-linux job) - left to electron-builder's own
+# default, a runtime mismatch between what's installed and what it expects fails the build.
+flatpak:
+  runtimeVersion: '23.08'

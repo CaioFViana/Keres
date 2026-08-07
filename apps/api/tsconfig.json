@@ -1,27 +1,19 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
-    "module": "ESNext",
-    "target": "ESNext",
-    "moduleResolution": "Bundler",
-    
+    "target": "es2022",
+    "module": "esnext",
+    "lib": ["es2022", "dom"],
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "noEmit": false,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
     "baseUrl": ".",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    // Path aliases for Clean Architecture layers
     "paths": {
-      "@keres/shared": ["../../packages/shared/dist"],
-      "@domain/*": ["../../packages/shared/dist/domain/*"],
-      "@application/*": ["../../packages/shared/dist/application/*"],
-      "@infrastructure/*": ["./src/infrastructure/*"],
-      "@presentation/*": ["./src/presentation/*"],
+      "@/*": ["./src/*"],
+      "@keres/shared": ["../../packages/shared/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules"]
 }

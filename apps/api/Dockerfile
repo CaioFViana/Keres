@@ -33,7 +33,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY packages/shared packages/shared
 COPY apps/api/package.json apps/api/tsconfig.json ./apps/api/
 COPY apps/api/src ./apps/api/src
-COPY apps/api/test_client.html ./apps/api/test_client.html
 
 # apps/api/src/index.ts looks for this at apps/admin/dist relative to its own
 # location (import.meta.dir), regardless of process.cwd() - see the comment there.

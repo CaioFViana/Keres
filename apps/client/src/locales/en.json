@@ -6,6 +6,7 @@
   "add_character_relation_title": "Add Character Relation",
   "add_child_location": "Add Child Location",
   "add_collaborator_failed": "Failed to add collaborator",
+  "update_collaborator_permission_failed": "Failed to update collaborator permission",
   "add_connection": "Add Connection",
   "add_friendship": "Add Friendship",
   "add_item_journey": "Add Journey",

@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { useThemeStore } from '../state/themeStore';
 import { themes } from './palettes';
 import { ThemeColors } from './ThemeColors';
@@ -144,7 +144,10 @@ export const getCommonContainerStyles = (colors: ThemeColors) => StyleSheet.crea
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    padding: 20
+    width: '100%',
+    maxWidth: 1280,
+    alignSelf: 'center',
+    padding: 20,
   },
   // Add other common container styles here if needed
 });
@@ -160,6 +163,10 @@ export const getCommonInputStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text,
     backgroundColor: colors.surface,
     width: '100%',
+    // React Native Web otherwise adds a browser outline on focus, which looks
+    // like a second border on inputs and controls. Focus is still represented
+    // by the component's own themed border/state.
+    ...(Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {}),
   },
   customComponentInput: {
     paddingHorizontal: 0, 

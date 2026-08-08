@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Dimensions, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
 import { createSuggestionService, SuggestionServiceInterface, SuggestionType } from '../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
 import Button from '../Button/Button'; // Reusing existing Button
 import TextInput from '../TextInput/TextInput'; // Reusing existing TextInput
+import ResponsiveModal from '../../layout/ResponsiveModal/ResponsiveModal';
 
 interface SuggestionTextInputProps {
   value: string;
@@ -106,17 +107,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       justifyContent: 'center',
       alignItems: 'center',
     },
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
     modalContent: {
-      backgroundColor: colors.background,
-      borderRadius: 10,
-      width: Dimensions.get('window').width * 0.8,
-      maxHeight: Dimensions.get('window').height * 0.7,
       padding: 10,
     },
     suggestionItem: {
@@ -144,7 +135,10 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     closeButton: {
       marginTop: 20,
       alignSelf: 'flex-end',
-    }
+    },
+    suggestionsList: {
+      maxHeight: 420,
+    },
   });
 
   return (
@@ -166,31 +160,28 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
         </TouchableOpacity>
       </View>
 
-      <Modal
+      <ResponsiveModal
         visible={showSuggestions}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowSuggestions(false)}
+        onClose={() => setShowSuggestions(false)}
+        contentStyle={styles.modalContent}
       >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowSuggestions(false)}>
-          <View style={styles.modalContent}>
-            <FlatList
-              data={suggestions}
-              keyExtractor={(item) => item[0]}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSelectSuggestion(item)}>
-                  <Text style={styles.suggestionText}>{item[0]}</Text>
-                  {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={<Text style={styles.noSuggestionsText}>{t('no_suggestions_available')}</Text>}
-            />
-            <Button onPress={() => setShowSuggestions(false)} style={styles.closeButton}>
-              {t('close')}
-            </Button>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        <FlatList
+          style={styles.suggestionsList}
+          data={suggestions}
+          keyExtractor={(item) => item[0]}
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSelectSuggestion(item)}>
+              <Text style={styles.suggestionText}>{item[0]}</Text>
+              {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={<Text style={styles.noSuggestionsText}>{t('no_suggestions_available')}</Text>}
+        />
+        <Button onPress={() => setShowSuggestions(false)} style={styles.closeButton}>
+          {t('close')}
+        </Button>
+      </ResponsiveModal>
     </View>
   );
 };

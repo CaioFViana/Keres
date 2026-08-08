@@ -21,7 +21,7 @@ export interface LocationNodeConnection {
 interface LocationNodeSheetProps {
   node: LocationGraphNode | null;
   parent: LocationNodeConnection | null;
-  children: LocationNodeConnection[];
+  childLocations: LocationNodeConnection[];
   connections: LocationNodeConnection[];
   onClose: () => void;
   onOpenLocation: (locationId: string) => void;
@@ -31,7 +31,7 @@ interface LocationNodeSheetProps {
 const LocationNodeSheet: React.FC<LocationNodeSheetProps> = ({
   node,
   parent,
-  children,
+  childLocations,
   connections,
   onClose,
   onOpenLocation,
@@ -198,10 +198,10 @@ const LocationNodeSheet: React.FC<LocationNodeSheetProps> = ({
                 )}
 
                 <Text style={styles.sectionTitle}>{t('child_locations')}</Text>
-                {children.length === 0 ? (
+                {childLocations.length === 0 ? (
                   <Text style={styles.emptyText}>{t('no_child_locations')}</Text>
                 ) : (
-                  children.map(child => renderConnectionRow(child, 'arrow-down-outline'))
+                  childLocations.map(child => renderConnectionRow(child, 'arrow-down-outline'))
                 )}
 
                 <Text style={styles.sectionTitle}>{t('connected_locations')}</Text>

@@ -44,6 +44,7 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
         position: 'absolute',
         borderRadius: 8,
         overflow: 'hidden',
+        outlineWidth: 0,
       },
       nodeInner: {
         flex: 1,

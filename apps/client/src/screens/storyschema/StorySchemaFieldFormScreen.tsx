@@ -170,7 +170,7 @@ const StorySchemaFieldFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
       <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
         <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={styles.label}>{t('attribute_display_name')}</Text>

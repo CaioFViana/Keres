@@ -5,9 +5,7 @@ import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
-import Button from '../../components/common/Button/Button';
-import Select from '../../components/common/Select/Select';
-import TextInput from '../../components/common/TextInput/TextInput';
+import { Button, Select, TextInput } from '../../components/ui';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
@@ -372,6 +370,30 @@ const StorySettingsScreen = () => {
     }
   };
 
+  const handleUpdateCollaboratorPermission = async (
+    collaborator: StoryCollaborator,
+    permissionType: 'reader' | 'writer'
+  ) => {
+    if (!storyId || !linkedServer || permissionType === collaborator.permissionType) return;
+
+    setServerActionLoading(true);
+    try {
+      await storyPermissionApi.updateCollaboratorPermission(
+        linkedServer,
+        storyId,
+        collaborator.userId,
+        permissionType
+      );
+      const refreshedCollaborators = await storyPermissionApi.getCollaborators(linkedServer, storyId);
+      setCollaborators(refreshedCollaborators);
+    } catch (err) {
+      console.error('Failed to update collaborator permission:', err);
+      AppAlert.alert(t('error'), t('update_collaborator_permission_failed'));
+    } finally {
+      setServerActionLoading(false);
+    }
+  };
+
   const handleRemoveCollaborator = (collaborator: StoryCollaborator) => {
     if (!storyId || !linkedServer) return;
     AppAlert.alert(
@@ -551,7 +573,7 @@ const StorySettingsScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
@@ -719,9 +741,21 @@ const StorySettingsScreen = () => {
                   )}
                   {(collaborators ?? []).map((collaborator) => (
                     <View key={collaborator.id} style={styles.collaboratorRow}>
-                      <Text style={{ color: colors.text, flex: 1 }}>
-                        {collaborator.user?.username ?? collaborator.userId} ({t(`permission_${collaborator.permissionType}`)})
+                      <Text style={[styles.collaboratorName, { color: colors.text }]} numberOfLines={2}>
+                        {collaborator.user?.username ?? collaborator.userId}
                       </Text>
+                      <View style={styles.collaboratorPermissionSelect}>
+                        <Select
+                          options={permissionTypeOptions}
+                          value={collaborator.permissionType}
+                          onValueChange={(value) => {
+                            if (value === 'reader' || value === 'writer') {
+                              void handleUpdateCollaboratorPermission(collaborator, value);
+                            }
+                          }}
+                          disabled={serverActionLoading}
+                        />
+                      </View>
                       <Button
                         onPress={() => handleRemoveCollaborator(collaborator)}
                         disabled={serverActionLoading}
@@ -814,6 +848,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  collaboratorName: {
+    flex: 1,
+    minWidth: 120,
+  },
+  collaboratorPermissionSelect: {
+    width: 140,
+    marginLeft: 8,
   },
   removeCollaboratorButton: {
     marginLeft: 10,

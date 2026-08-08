@@ -3,15 +3,17 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
-  Dimensions,
   Easing,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useTheme } from '../../../theme';
 import { getContrastTextColor } from '../../../utils/colorUtils';
@@ -38,8 +40,6 @@ interface GroupedMultiSelectPillProps {
   noOptionsText?: string;
 }
 
-const { height: screenHeight } = Dimensions.get('window');
-
 /**
  * Seletor múltiplo em dois passos: primeiro o tipo de entidade, depois a entidade em si.
  *
@@ -59,6 +59,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
   const [activeGroupKey, setActiveGroupKey] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -178,8 +179,9 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
     modalContent: {
       backgroundColor: colors.background,
       borderRadius: 10,
-      width: '90%',
-      maxHeight: screenHeight * 0.7,
+      width: screenWidth < 768 ? '94%' : '88%',
+      maxWidth: 720,
+      maxHeight: Math.min(screenHeight * 0.78, 720),
       overflow: 'hidden',
     },
     modalHeader: {
@@ -288,12 +290,12 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
         <Ionicons name="add-circle" size={24} color={colors.primary} style={{ marginLeft: 'auto' }} />
       </TouchableOpacity>
 
-      <Modal transparent visible={modalVisible} onRequestClose={closeModal} animationType="fade">
+      <Modal transparent visible={modalVisible} onRequestClose={closeModal} animationType="fade" statusBarTranslucent>
         <TouchableOpacity style={styles.modalOverlay} onPress={closeModal} activeOpacity={1}>
-          <Animated.View
-            style={[
-              styles.modalContent,
-              {
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContent}>
+            <Animated.View
+              style={{
+                flex: 1,
                 transform: [
                   {
                     translateY: dropdownAnim.interpolate({
@@ -302,9 +304,8 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                     }),
                   },
                 ],
-              },
-            ]}
-          >
+              }}
+            >
             <>
               <View style={styles.modalHeader}>
                 <View style={styles.modalHeaderTitleRow}>
@@ -333,7 +334,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                 />
               )}
 
-              <ScrollView>
+              <ScrollView keyboardShouldPersistTaps="handled">
                 {!activeGroup ? (
                   groups.map((group) => {
                     const selectedCount = group.options.filter((option) => selectedValues.includes(option.value)).length;
@@ -380,7 +381,8 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                 )}
               </ScrollView>
             </>
-          </Animated.View>
+            </Animated.View>
+          </KeyboardAvoidingView>
         </TouchableOpacity>
       </Modal>
     </View>

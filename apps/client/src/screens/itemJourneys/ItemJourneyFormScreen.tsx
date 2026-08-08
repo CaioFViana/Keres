@@ -270,7 +270,7 @@ const ItemJourneyFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
       <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
         <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_item_journey_title') : t('create_item_journey_title')}</Text>

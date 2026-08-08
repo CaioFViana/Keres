@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleProp, StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native';
+import { Platform, StyleProp, StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native';
 import { useTheme } from '../../../theme';
 
 interface ButtonProps {
@@ -20,6 +20,7 @@ const Button: React.FC<ButtonProps> = ({ onPress, children, style, disabled }) =
       borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
+      ...(Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {}),
     },
     disabledButton: {
       opacity: 0.6,

@@ -51,6 +51,7 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
         position: 'absolute',
         borderRadius: 10,
         overflow: 'hidden',
+        outlineWidth: 0,
       },
       nodeInner: {
         flex: 1,

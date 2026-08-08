@@ -40,6 +40,35 @@ export interface ServerStoryPreview {
   role: EffectiveStoryRole;
 }
 
+/**
+ * Local writes already notify the UI with these events. Remote pulls use the
+ * same event names so lists and detail screens do not need a second refresh
+ * mechanism. The generic event below is kept for screens that aggregate more
+ * than one entity type (dashboard and graph views).
+ */
+const SYNC_ENTITY_EVENTS: Record<string, string> = {
+  Story: 'story_changed',
+  Character: 'character_changed',
+  CharacterRelation: 'character_relation_changed',
+  CharacterScene: 'character_scene_changed',
+  Tag: 'tag_changed',
+  TagRelation: 'tag_relation_changed',
+  Note: 'note_changed',
+  NoteRelation: 'note_relation_changed',
+  WorldRule: 'worldrule_changed',
+  Location: 'location_changed',
+  LocationRelation: 'location_relation_changed',
+  Chapter: 'chapter_changed',
+  Scene: 'scene_changed',
+  Choice: 'choice_changed',
+  Item: 'item_changed',
+  ItemJourney: 'item_journey_changed',
+  Gallery: 'gallery_changed',
+  GalleryRelation: 'gallery_relation_changed',
+  StorySchemaField: 'story_schema_field_changed',
+  AttributeValue: 'attribute_value_changed',
+};
+
 /** Normal cadence while the server is responding. */
 export const SYNC_INTERVAL_MS = 30000;
 /**
@@ -444,6 +473,18 @@ export class SyncEngineService {
         let totalUpdates = remoteUpdates.length;
         let entitiesUpdated: string[] = [];
         let failedEntities: string[] = [];
+        const changedEntityIds = new Map<string, Set<string>>();
+
+        const markEntityUpdated = (entity: string, entityId?: string) => {
+          if (!entitiesUpdated.includes(entity)) {
+            entitiesUpdated.push(entity);
+          }
+          if (entityId) {
+            const ids = changedEntityIds.get(entity) ?? new Set<string>();
+            ids.add(entityId);
+            changedEntityIds.set(entity, ids);
+          }
+        };
 
         console.log(`Received ${totalUpdates} remote updates. Applying to local DB...`);
 
@@ -475,9 +516,7 @@ export class SyncEngineService {
               if (outcome.conflicted) {
                 conflictsDetected += 1;
               }
-              if (!entitiesUpdated.includes(update.entity)) {
-                entitiesUpdated.push(update.entity);
-              }
+              markEntityUpdated(update.entity, update.id);
               await this.recordRemoteOperationLocally(update);
               highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
               continue;
@@ -521,9 +560,7 @@ export class SyncEngineService {
                 }
               });
             }
-            if (!entitiesUpdated.includes(update.entity)) {
-              entitiesUpdated.push(update.entity);
-            }
+            markEntityUpdated(update.entity, update.id);
 
             await this.recordRemoteOperationLocally(update);
             highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
@@ -548,6 +585,24 @@ export class SyncEngineService {
         if (conflictsDetected > 0) {
           showNotification(i18n.t('sync_conflicts_detected', { count: conflictsDetected }), 'warning');
         }
+        // Emit events after the whole pull so a batch causes one refresh per
+        // affected entity type instead of one query per operation.
+        for (const [entity, ids] of changedEntityIds) {
+          const eventName = SYNC_ENTITY_EVENTS[entity];
+          if (!eventName) continue;
+          for (const entityId of ids) {
+            entityEventEmitter.emit(eventName, this.storyId, entityId);
+          }
+        }
+        entityEventEmitter.emit('story_data_changed', {
+          storyId: this.storyId,
+          entityTypes: Array.from(changedEntityIds.keys()),
+          entityIds: Object.fromEntries(
+            Array.from(changedEntityIds.entries()).map(([entity, ids]) => [entity, Array.from(ids)])
+          ),
+          source: 'sync',
+        });
+
         // Emit event to signal operation log update after applying remote updates
         entityEventEmitter.emit('operation_log_updated', this.storyId);
       } else {

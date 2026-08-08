@@ -12,14 +12,17 @@ import { useDrizzle } from '../../db'; // Import useDrizzle
 import * as schema from '../../db/schema';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 const MainDashboardScreen = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
+  const { isWide } = useResponsiveLayout();
   const db = useDrizzle(); // Get the Drizzle client
   const navigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
   const { showNotification } = useNotificationStore();
@@ -179,6 +182,17 @@ const MainDashboardScreen = () => {
   }, [fetchCounts]); // Re-run fetchCounts if selectedStory or db changes
 
   useEffect(() => {
+    const handleRemoteChange = (change: { storyId?: string }) => {
+      if (change?.storyId === selectedStory?.id) {
+        fetchCounts();
+        runAnalysis();
+      }
+    };
+    entityEventEmitter.on('story_data_changed', handleRemoteChange);
+    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
+  }, [selectedStory?.id, fetchCounts, runAnalysis]);
+
+  useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity
@@ -201,6 +215,11 @@ const MainDashboardScreen = () => {
     container: {
       flex: 1,
       backgroundColor: colors.background,
+    },
+    content: {
+      width: '100%',
+      maxWidth: isWide ? 1280 : undefined,
+      alignSelf: 'center',
       padding: 20,
     },
     title: {
@@ -246,7 +265,7 @@ const MainDashboardScreen = () => {
   });
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{selectedStory?.title || t('no_story_selected')}</Text>
       {selectedStory?.serverId && (
         <Text style={styles.text}>

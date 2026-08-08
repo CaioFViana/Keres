@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
@@ -18,6 +18,7 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildLocationGraphLayout, GraphLocationRelation, LocationGraphNode, LocationRelationKind } from '../../utils/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '../../utils/locationGraphSvg';
 import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { LocationsScreenNavigationProp } from './LocationListScreen';
 
 /**
@@ -72,6 +73,16 @@ const LocationGraphScreen = () => {
   useFocusEffect(useCallback(() => {
     loadGraph();
   }, [loadGraph]));
+
+  useEffect(() => {
+    const handleRemoteChange = (change: { storyId?: string }) => {
+      if (change?.storyId === storyId) {
+        loadGraph();
+      }
+    };
+    entityEventEmitter.on('story_data_changed', handleRemoteChange);
+    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
+  }, [storyId, loadGraph]);
 
   useFocusEffect(useCallback(() => {
     setDocumentTitle(t('location_graph_title'));
@@ -229,6 +240,7 @@ const LocationGraphScreen = () => {
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
+      outlineWidth: 0,
     },
     emptyContainer: {
       flex: 1,
@@ -317,7 +329,7 @@ const LocationGraphScreen = () => {
       <LocationNodeSheet
         node={selectedNode}
         parent={selectedParent}
-        children={selectedChildren}
+        childLocations={selectedChildren}
         connections={selectedConnections}
         onClose={() => setSelectedNodeId(null)}
         onOpenLocation={handleOpenLocation}

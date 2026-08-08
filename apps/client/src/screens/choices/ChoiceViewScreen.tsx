@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
@@ -19,6 +19,7 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
 import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
 /**
@@ -81,6 +82,16 @@ const ChoiceViewScreen = () => {
   useFocusEffect(useCallback(() => {
     loadGraph();
   }, [loadGraph]));
+
+  useEffect(() => {
+    const handleRemoteChange = (change: { storyId?: string }) => {
+      if (change?.storyId === storyId) {
+        loadGraph();
+      }
+    };
+    entityEventEmitter.on('story_data_changed', handleRemoteChange);
+    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
+  }, [storyId, loadGraph]);
 
   useFocusEffect(useCallback(() => {
     setDocumentTitle(t('story_map_title'));
@@ -277,6 +288,7 @@ const ChoiceViewScreen = () => {
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
+      outlineWidth: 0,
     },
     emptyContainer: {
       flex: 1,

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
 import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
 import ChapterListScreen from '../screens/chapters/ChapterListScreen';
@@ -416,11 +417,12 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
+  const { isWide } = useResponsiveLayout();
 
   return (
     <>
     <Drawer.Navigator
-      defaultStatus="closed"
+      defaultStatus={isWide ? 'open' : 'closed'}
       backBehavior="history"
       screenOptions={({ navigation }) => ({
         headerShown: true,
@@ -429,11 +431,14 @@ const MainSystemNavigator = () => {
           backgroundColor: colors.surface,
         },
         headerTintColor: colors.text,
-        headerLeft: () => <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />,
+        headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />,
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
+        drawerType: isWide ? 'permanent' : 'front',
+        swipeEnabled: !isWide,
         drawerStyle: {
           backgroundColor: colors.surface,
+          width: isWide ? 280 : undefined,
         },
       })}
     >

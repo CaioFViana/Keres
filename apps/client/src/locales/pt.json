@@ -6,6 +6,7 @@
   "add_character_relation_title": "Adicionar Relação de Personagem",
   "add_child_location": "Adicionar Location Filha",
   "add_collaborator_failed": "Falha ao adicionar colaborador",
+  "update_collaborator_permission_failed": "Falha ao atualizar a permissão do colaborador",
   "add_connection": "Adicionar Conexão",
   "add_friendship": "Adicionar Amizade",
   "add_item_journey": "Adicionar Jornada",

@@ -3,11 +3,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import FormContainer from '../../components/common/FormContainer/FormContainer'; // Import FormContainer
-import Select from '../../components/common/Select/Select'; // Import our new Select component
-import TextInput from '../../components/common/TextInput/TextInput';
+import { BackHandler, StyleSheet, Text, View } from 'react-native';
+import { Button, FormContainer, Select, TextInput } from '../../components/ui';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { migrate } from '../../db/migrate'; // Import migrate
 import { createClientSettings } from '../../services/ClientSettingsService'; // Import createClientSettings
@@ -134,13 +131,7 @@ const ColdInstallScreen = () => {
   const languageOptions = getLanguageOptions(t);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <FormContainer style={commonContainerStyles.container}>
+    <FormContainer style={commonContainerStyles.container}>
           <Text style={styles.title}>{t('welcome')}</Text>
           <TextInput
             placeholder={t('enter_username')}
@@ -159,9 +150,7 @@ const ColdInstallScreen = () => {
           </View>
           {languageError && <Text style={styles.errorText}>{languageError}</Text>}
           <Button onPress={handleProceed} disabled={isProceedDisabled}>{t('proceed')}</Button>
-        </FormContainer>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </FormContainer>
   );
 };
 

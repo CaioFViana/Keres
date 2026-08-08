@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import CollapsibleCard from '../CollapsibleCard/CollapsibleCard'; // Import CollapsibleCard
+import ResponsiveGrid from '../../layout/ResponsiveGrid/ResponsiveGrid';
 
 interface AnalysisSummaryBannerProps {
   issueCount: number;
@@ -60,10 +61,8 @@ const SummaryTile: React.FC<SummaryTileProps> = ({
   const { t } = useTranslation(); // Add useTranslation here
   const styles = StyleSheet.create({
     tile: {
-      width: '48%', // Roughly half width for two columns
       padding: 10,
       marginVertical: 5,
-      marginHorizontal: '1%',
       borderRadius: 8,
       backgroundColor,
       alignItems: 'center',
@@ -133,15 +132,6 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const styles = StyleSheet.create({
-    summaryGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'flex-start', // Align items to the start
-      marginHorizontal: '-1%', // Counteract tile margin
-    },
-  });
-
   const tilesData = [
     { label: t('chapters'), count: chapterCount, icon: 'bookmarks', color: '#F44336' }, // red
     { label: t('scenes'), count: sceneCount, icon: 'easel', color: '#a13fb3ff' }, // purple
@@ -174,7 +164,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
         }
         initialExpanded={false}
       >
-        <View style={styles.summaryGrid}>
+        <ResponsiveGrid compactColumns={2} mediumColumns={3} wideColumns={5} gap={10}>
           {tilesData.map((data, index) => {
             if (data.count !== undefined) {
               return (
@@ -190,7 +180,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
             }
             return null;
           })}
-        </View>
+        </ResponsiveGrid>
       </CollapsibleCard>
     </View>
   );

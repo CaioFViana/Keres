@@ -146,6 +146,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
     cursor: disabled ? 'default' : 'pointer',
     opacity: disabled ? 0.4 : 1,
     userSelect: 'none',
+    outline: 'none',
   };
 
   const contentStyle: React.CSSProperties = {

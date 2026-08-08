@@ -39,4 +39,14 @@ export const storyPermissionApi = {
   async grantCollaborator(server: ServerSelect, storyId: string, targetUserId: string, permissionType: 'reader' | 'writer'): Promise<void> {
     await clientFor(server).post('/story-permissions/', { storyId, targetUserId, permissionType });
   },
+
+  /** Same upsert endpoint, named explicitly for the edit-permission UI. */
+  async updateCollaboratorPermission(
+    server: ServerSelect,
+    storyId: string,
+    targetUserId: string,
+    permissionType: 'reader' | 'writer'
+  ): Promise<void> {
+    await this.grantCollaborator(server, storyId, targetUserId, permissionType);
+  },
 };

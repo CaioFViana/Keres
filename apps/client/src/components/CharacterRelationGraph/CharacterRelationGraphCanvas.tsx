@@ -43,6 +43,7 @@ const CharacterRelationGraphCanvas = forwardRef<CharacterRelationGraphCanvasHand
         position: 'absolute',
         borderRadius: 22,
         overflow: 'hidden',
+        outlineWidth: 0,
       },
       nodeInner: {
         flex: 1,

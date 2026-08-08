@@ -18,6 +18,7 @@ import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationSc
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import { useTheme } from '../theme';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -143,10 +144,11 @@ const FriendshipStackNavigator = () => {
 const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { isWide } = useResponsiveLayout();
 
   return (
     <Drawer.Navigator
-      defaultStatus="closed"
+      defaultStatus={isWide ? 'open' : 'closed'}
       screenOptions={({ navigation }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,
@@ -154,11 +156,14 @@ const StorySelectionNavigator = () => {
           backgroundColor: colors.surface,
         },
         headerTintColor: colors.text,
-        headerLeft: () => <DrawerToggleButton navigation={navigation} />,
+        headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation} />,
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
+        drawerType: isWide ? 'permanent' : 'front',
+        swipeEnabled: !isWide,
         drawerStyle: {
           backgroundColor: colors.surface,
+          width: isWide ? 280 : undefined,
         },
       })}
     >

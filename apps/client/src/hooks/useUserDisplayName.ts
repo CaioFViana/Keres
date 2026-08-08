@@ -12,12 +12,25 @@ export const useUserDisplayName = (
 ): string => {
   const { t } = useTranslation();
   const drizzle = useDrizzle();
-  const { username: currentUsername, activeServer } = useUserSettingsStore();
+  const { userId: localUserId, username: currentUsername, activeServer } = useUserSettingsStore();
   const [displayName, setDisplayName] = useState<string>(t('user_not_found'));
 
   useEffect(() => {
     const resolveUserName = async () => {
-      if (!drizzle || !logUserId) {
+      if (!logUserId) {
+        setDisplayName(t('user_not_found'));
+        return;
+      }
+
+      // Offline-only stories record the local installation id (see
+      // `getUserIdForOperation`). That id does not exist in the server user table,
+      // so resolve it from the settings store before looking at server data.
+      if (localUserId && logUserId === localUserId && currentUsername) {
+        setDisplayName(`${currentUsername} ${t('you_suffix')}`);
+        return;
+      }
+
+      if (!drizzle) {
         setDisplayName(t('user_not_found'));
         return;
       }
@@ -73,7 +86,7 @@ export const useUserDisplayName = (
     };
 
     resolveUserName();
-  }, [logUserId, storyId, currentUsername, activeServer, drizzle, t]);
+  }, [logUserId, storyId, localUserId, currentUsername, activeServer, drizzle, t]);
 
   return displayName;
 };

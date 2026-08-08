@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput as RNTextInput, StyleSheet, TextInputProps } from 'react-native';
+import { Platform, TextInput as RNTextInput, StyleSheet, TextInputProps } from 'react-native';
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
 
@@ -20,7 +20,8 @@ const TextInput: React.FC<CustomTextInputProps> = ({ style, ...rest }) => {
       marginBottom: 20,
       color: colors.text,
       backgroundColor: colors.surface,
-      fontSize: 16
+      fontSize: 16,
+      ...(Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {}),
     },
   });
 

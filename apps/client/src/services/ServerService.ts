@@ -6,6 +6,7 @@ import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added
 import { isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
+import { tokenVault } from './TokenVault';
 
 export interface ServerService {
   getAllServers(): Promise<ServerSelect[]>;
@@ -47,6 +48,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
     },
 
     async deleteServer(serverId: string): Promise<void> {
+      await tokenVault.remove(serverId);
       await db.update(servers)
         .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
         .where(eq(servers.id, serverId))
@@ -54,7 +56,8 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
     },
 
     async refreshServerToken(server: ServerSelect): Promise<ServerSelect> {
-      if (!server.jwtToken || !server.refreshToken) {
+      const tokens = await authTokenManager.getTokens(server.id);
+      if (!tokens) {
         // Persistent state (the server was never authenticated), re-evaluated on every
         // sync cycle - log it, but don't notify the user every interval.
         console.log(`Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`);
@@ -62,7 +65,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       }
 
       // Check if the JWT is actually expired before trying to refresh
-      if (!isJwtExpired(server.jwtToken)) {
+      if (!isJwtExpired(tokens.accessToken)) {
         console.log(`JWT for server ${server.name} is not expired. No refresh needed.`);
         return server; // Return current server if not expired
       }
@@ -71,7 +74,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       try {
         // Trigger the token refresh via the AuthTokenManager
         // This will update the tokens in the database and the user settings store
-        const refreshedTokens = await authTokenManager.refreshAccessToken(server.id, server.refreshToken);
+        const refreshedTokens = await authTokenManager.refreshAccessToken(server.id, tokens.refreshToken);
 
         if (!refreshedTokens) {
           const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;
@@ -80,21 +83,9 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
           return server; // Return original server if refresh failed
         }
 
-        // Fetch the updated server object from the database to ensure consistency
-        const updatedServer = await db.query.servers.findFirst({
-          where: and(eq(servers.id, server.id), eq(servers.isDeleted, false)),
-        });
-
-        if (!updatedServer) {
-            const message = `Could not find updated server with ID ${server.id} after token refresh or server is deleted. Please check server status.`;
-            console.log(message);
-            showNotification(message, 'error');
-            return server;
-        }
-
         console.log(`Successfully refreshed tokens for server ${server.name}.`);
         showNotification(`Tokens for ${server.name} refreshed successfully.`, 'success');
-        return updatedServer;
+        return server;
 
       } catch (error) {
         if (isOfflineError(error)) {

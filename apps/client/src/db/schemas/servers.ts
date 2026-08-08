@@ -10,8 +10,6 @@ export const servers = sqliteTable('servers', {
   name: text('name').notNull(),
   url: text('url').notNull(),
   lastSyncDate: integer('last_sync_date', { mode: 'timestamp' }), // Nullable
-  jwtToken: text('jwt_token'),
-  refreshToken: text('refresh_token'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

@@ -10,6 +10,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import apiClient from '../../services/apiClient';
+import { authTokenManager } from '../../services/AuthTokenManager';
 import { createServerService } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -121,8 +122,10 @@ const ServerRegistrationScreen = () => {
 
       let serverUserId: string | null = null; // Variable to hold the server-provided userId
       let serverUserTag: string | null = existingServer?.tag ?? null;
-      let newAccessToken = existingServer ? existingServer.jwtToken : '';
-      let newRefreshToken = existingServer ? existingServer.refreshToken : '';
+      const existingTokens = existingServer ? await authTokenManager.getTokens(existingServer.id) : null;
+      let newAccessToken = existingTokens?.accessToken || '';
+      let newRefreshToken = existingTokens?.refreshToken || '';
+      let tokensChanged = false;
       
       try {
         // 1. Server Check (/kerescheck) - always check if server is reachable
@@ -180,6 +183,7 @@ const ServerRegistrationScreen = () => {
           }
           newAccessToken = authResponse.data.accessToken;
           newRefreshToken = authResponse.data.refreshToken;
+          tokensChanged = true;
           serverUserId = authResponse.data.userId; // Extract the server-provided userId
           serverUserTag = authResponse.data.tag ?? serverUserTag;
         } else {
@@ -199,8 +203,6 @@ const ServerRegistrationScreen = () => {
           tag: serverUserTag,
           name: serverName || serverAddress,
           url: serverAddress,
-          jwtToken: newAccessToken,
-          refreshToken: newRefreshToken,
         };
   
         let savedServer;
@@ -214,6 +216,9 @@ const ServerRegistrationScreen = () => {
         }
         
         if (savedServer) {
+          if (tokensChanged) {
+            await authTokenManager.updateTokens(savedServer.id, newAccessToken, newRefreshToken);
+          }
           setActiveServer(savedServer); // Set the active server in Zustand store
         }
         navigation.goBack();

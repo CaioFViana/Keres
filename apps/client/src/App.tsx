@@ -89,6 +89,7 @@ const DatabaseInitializer = () => {
 
         // Initialize AuthTokenManager with the Drizzle DB instance
         setAuthDb(initializedDrizzle);
+        await authTokenManager.hydrateTokens();
         // Set the authTokenManager as the token provider for the API client
         apiClient.setTokenProvider(authTokenManager);
 

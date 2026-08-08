@@ -18,3 +18,11 @@ contextBridge.exposeInMainWorld('keresMedia', {
   listAllFiles: (): Promise<string[]> =>
     ipcRenderer.invoke('media:list-all'),
 });
+
+contextBridge.exposeInMainWorld('keresAuth', {
+  status: (): Promise<{ available: boolean }> => ipcRenderer.invoke('auth:status'),
+  read: (serverId: string): Promise<{ accessToken: string; refreshToken: string } | null> => ipcRenderer.invoke('auth:read', serverId),
+  write: (serverId: string, tokens: { accessToken: string; refreshToken: string }): Promise<void> =>
+    ipcRenderer.invoke('auth:write', serverId, tokens),
+  remove: (serverId: string): Promise<void> => ipcRenderer.invoke('auth:remove', serverId),
+});

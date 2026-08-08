@@ -41,6 +41,7 @@
         }
       ],
       "expo-sqlite",
+      "expo-secure-store",
       "expo-font",
       "expo-video",
       "expo-audio"

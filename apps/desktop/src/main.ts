@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, net, protocol, session } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, net, protocol, safeStorage, session } from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -10,6 +10,10 @@ import { pathToFileURL } from 'url';
 // Access storage backend badly enough to corrupt its lock file (SandboxOriginDatabase
 // "Access denied" on .../File System/Origins/LOCK). Must be set before app.whenReady().
 app.setName('Keres');
+
+// AppImages don't have Flatpak's Secret portal. Prefer the cross-desktop Secret
+// Service there instead of Chromium silently selecting its plaintext backend.
+app.commandLine.appendSwitch('password-store', 'gnome-libsecret');
 
 /**
  * apps/client's data layer (drizzle-orm/expo-sqlite) uses expo-sqlite's *sync* driver
@@ -139,6 +143,91 @@ async function createWindow() {
  * of native capability a browser tab can't offer but Electron can.
  */
 const MEDIA_ROOT = path.join(app.getPath('userData'), 'media-storage');
+const AUTH_VAULT_FILE = path.join(app.getPath('userData'), 'auth-vault.json');
+
+type TokenPair = { accessToken: string; refreshToken: string };
+type EncryptedTokenVault = Record<string, string>;
+
+function isTrustedRenderer(event: Electron.IpcMainInvokeEvent): boolean {
+  return event.senderFrame?.url.startsWith(`${SCHEME}://app/`) ?? false;
+}
+
+function assertTrustedRenderer(event: Electron.IpcMainInvokeEvent): void {
+  if (!isTrustedRenderer(event)) throw new Error('Unauthorized IPC sender.');
+}
+
+async function secureStorageAvailable(): Promise<boolean> {
+  if (!await safeStorage.isAsyncEncryptionAvailable()) return false;
+  // Electron exposes the synchronous backend name for AppImage-style environments.
+  // Flatpak uses the Secret portal through the asynchronous API instead.
+  return process.platform !== 'linux'
+    || Boolean(process.env.FLATPAK_ID)
+    || safeStorage.getSelectedStorageBackend() !== 'basic_text';
+}
+
+async function readAuthVault(): Promise<EncryptedTokenVault> {
+  try {
+    return JSON.parse(await fs.readFile(AUTH_VAULT_FILE, 'utf8')) as EncryptedTokenVault;
+  } catch (error: unknown) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {};
+    throw error;
+  }
+}
+
+async function writeAuthVault(vault: EncryptedTokenVault): Promise<void> {
+  const tempPath = `${AUTH_VAULT_FILE}.tmp`;
+  await fs.writeFile(tempPath, JSON.stringify(vault), { mode: 0o600 });
+  await fs.rename(tempPath, AUTH_VAULT_FILE);
+}
+
+function assertServerId(serverId: string): void {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(serverId)) throw new Error('Invalid server identifier.');
+}
+
+function registerAuthIpcHandlers() {
+  ipcMain.handle('auth:status', async (event) => {
+    assertTrustedRenderer(event);
+    return { available: await secureStorageAvailable() };
+  });
+
+  ipcMain.handle('auth:read', async (event, serverId: string): Promise<TokenPair | null> => {
+    assertTrustedRenderer(event);
+    assertServerId(serverId);
+    if (!await secureStorageAvailable()) return null;
+    const encrypted = (await readAuthVault())[serverId];
+    if (!encrypted) return null;
+    const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(Buffer.from(encrypted, 'base64'));
+    const tokens = JSON.parse(result) as TokenPair;
+    if (shouldReEncrypt) await saveTokens(serverId, tokens);
+    return tokens;
+  });
+
+  ipcMain.handle('auth:write', async (event, serverId: string, tokens: TokenPair) => {
+    assertTrustedRenderer(event);
+    assertServerId(serverId);
+    if (!tokens?.accessToken || !tokens?.refreshToken) throw new Error('Invalid token payload.');
+    await saveTokens(serverId, tokens);
+  });
+
+  ipcMain.handle('auth:remove', async (event, serverId: string) => {
+    assertTrustedRenderer(event);
+    assertServerId(serverId);
+    const vault = await readAuthVault();
+    if (serverId in vault) {
+      delete vault[serverId];
+      await writeAuthVault(vault);
+    }
+  });
+}
+
+async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
+  if (!await secureStorageAvailable()) {
+    throw new Error('Secure credential storage is unavailable on this device.');
+  }
+  const vault = await readAuthVault();
+  vault[serverId] = (await safeStorage.encryptStringAsync(JSON.stringify(tokens))).toString('base64');
+  await writeAuthVault(vault);
+}
 
 Menu.setApplicationMenu(null)
 
@@ -206,6 +295,7 @@ app.whenReady().then(async () => {
 
   protocol.handle(SCHEME, handleAppRequest);
   registerMediaIpcHandlers();
+  registerAuthIpcHandlers();
   // BrowserWindow's `icon` option (set in createWindow) is a Windows/Linux-only concept -
   // macOS has one dock icon per app, not per window, and packaged .app icons come from
   // mac.icon in electron-builder.yml regardless. This only matters for `bun run start`'s

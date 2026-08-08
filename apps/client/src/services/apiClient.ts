@@ -112,9 +112,6 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
 
   instance.setActiveServer = (server: ServerSelect | null) => {
     currentServer = server;
-    if (server) {
-      updateServerTokenCache(server.id, server.jwtToken || null, server.refreshToken || null);
-    }
   };
 
   /**

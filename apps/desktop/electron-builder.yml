@@ -3,7 +3,7 @@ productName: Keres
 # electron-builder normally detects this from node_modules/electron/package.json relative to
 # this app, but the bun workspace hoists it to the repo root instead - apps/desktop has no
 # node_modules of its own. Keep this in sync with package.json's electron devDependency.
-electronVersion: 33.4.11
+electronVersion: 43.3.0
 # apps/desktop's package.json has no runtime "dependencies" (dist-electron/**/* below is
 # plain compiled JS, no native modules) - this step would otherwise shell out to npm to
 # install/rebuild production deps, which breaks in this bun workspace (npm can't resolve the

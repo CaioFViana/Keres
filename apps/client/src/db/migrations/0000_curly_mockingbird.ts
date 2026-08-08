@@ -295,8 +295,6 @@ CREATE TABLE "servers" (
 	"name" text NOT NULL,
 	"url" text NOT NULL,
 	"last_sync_date" integer,
-	"jwt_token" text,
-	"refresh_token" text,
 	"created_at" integer NOT NULL,
 	"updated_at" integer NOT NULL,
 	"version" integer NOT NULL,

@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, PanResponder, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { PanResponder, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, useTheme } from '../../../theme';
 import Button from '../Button/Button';
 
@@ -24,6 +25,13 @@ const STANDARD_COLORS = [
   { h: 180, s: 80, v: 60 }, { h: 225, s: 80, v: 60 }, { h: 270, s: 80, v: 60 }, { h: 315, s: 80, v: 60 },
 ].map(color => rgbToHex(hsvToRgb(color.h, color.s, color.v).r, hsvToRgb(color.h, color.s, color.v).g, hsvToRgb(color.h, color.s, color.v).b));
 
+// The original palette is four rows of eight hues. Transposing it produces
+// eight rows of four variations for the side-by-side layout without changing
+// the relationship between each hue and its variants.
+const TRANSPOSED_STANDARD_COLORS = Array.from({ length: 8 }, (_, rowIndex) =>
+  Array.from({ length: 4 }, (_, columnIndex) => STANDARD_COLORS[columnIndex * 8 + rowIndex])
+).flat();
+
 
 interface ColorPickerModalProps {
   currentColor: string;
@@ -43,9 +51,25 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   const [value, setValue] = useState(100); // Also known as brightness
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const { width: screenWidth } = useWindowDimensions();
-  const colorPickerSize = Math.min(screenWidth * 0.7, 320);
-  const colorCircleSize = (colorPickerSize / 8) - 5;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { breakpoint } = useResponsiveLayout();
+  const widthBasedPickerSize = breakpoint === 'wide'
+    ? Math.min(Math.max(screenWidth * 0.32, 360), 440)
+    : breakpoint === 'medium'
+      ? Math.min(Math.max(screenWidth * 0.45, 320), 380)
+      : Math.min(screenWidth * 0.7, 320);
+  const colorPickerSize = Math.min(
+    widthBasedPickerSize,
+    Math.max(220, screenHeight - (breakpoint === 'compact' ? 390 : 420))
+  );
+  const sideBySideLayout = breakpoint !== 'compact';
+  const standardColorColumns = sideBySideLayout ? 4 : 8;
+  const displayedStandardColors = sideBySideLayout ? TRANSPOSED_STANDARD_COLORS : STANDARD_COLORS;
+  const standardColorsWidth = sideBySideLayout
+    ? Math.max(200, Math.min(220, colorPickerSize * 0.55))
+    : colorPickerSize;
+  const colorPickerContentWidth = colorPickerSize + (sideBySideLayout ? standardColorsWidth + 16 : 0);
+  const colorCircleSize = (standardColorsWidth / standardColorColumns) - 5;
 
   const saturationValueRef = useRef<View>(null);
   const hueRef = useRef<View>(null);
@@ -153,10 +177,13 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
 
   const styles = StyleSheet.create({
     colorPickerContainer: {
-      width: colorPickerSize + 40, // Add some padding
+      width: colorPickerContentWidth + 40, // Add some padding
+      backgroundColor: colors.background, // Use background color
+      flexShrink: 1,
+    },
+    scrollContent: {
       alignItems: 'center',
       padding: 20,
-      backgroundColor: colors.background, // Use background color
     },
     title: {
       fontSize: 20,
@@ -191,6 +218,15 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       borderRadius: SLIDER_HEIGHT / 2,
       overflow: 'hidden',
       marginBottom: 20,
+    },
+    pickerWorkspace: {
+      width: colorPickerContentWidth,
+      flexDirection: sideBySideLayout ? 'row' : 'column',
+      alignItems: sideBySideLayout ? 'flex-start' : 'center',
+    },
+    pickerControls: {
+      width: colorPickerSize,
+      alignItems: 'center',
     },
     sliderHandle: {
       position: 'absolute',
@@ -248,9 +284,10 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       width: '47%',
     },
     standardColorsContainer: {
-      width: colorPickerSize,
-      marginTop: 10,
+      width: standardColorsWidth,
+      marginTop: sideBySideLayout ? 0 : 10,
       marginBottom: 20,
+      marginLeft: sideBySideLayout ? 16 : 0,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -270,60 +307,64 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   });
 
   return (
-    <View style={styles.colorPickerContainer}>
+    <ScrollView
+      style={styles.colorPickerContainer}
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
+    >
       {title && <Text style={styles.title}>{title}</Text>}
 
-      {/* Saturation and Value Picker */}
-      <View
-        ref={saturationValueRef}
-        style={[styles.saturationValuePicker, { backgroundColor: getBackgroundColorForSatValPicker() }]}
-        {...saturationValuePanResponder.panHandlers}
-      >
-        <LinearGradient
-          colors={['#FFFFFF', 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <LinearGradient
-          colors={['#000000', 'transparent']}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 0, y: 0 }}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={[styles.pickerHandle, satValPickerHandlePosition(), { backgroundColor: currentPickedColorHex() }]} />
-      </View>
+      <View style={styles.pickerWorkspace}>
+        <View style={styles.pickerControls}>
+          {/* Saturation and Value Picker */}
+          <View
+            ref={saturationValueRef}
+            style={[styles.saturationValuePicker, { backgroundColor: getBackgroundColorForSatValPicker() }]}
+            {...saturationValuePanResponder.panHandlers}
+          >
+            <LinearGradient
+              colors={['#FFFFFF', 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <LinearGradient
+              colors={['#000000', 'transparent']}
+              start={{ x: 0, y: 1 }}
+              end={{ x: 0, y: 0 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={[styles.pickerHandle, satValPickerHandlePosition(), { backgroundColor: currentPickedColorHex() }]} />
+          </View>
 
-      {/* Hue Slider */}
-      <View
-        ref={hueRef}
-        style={styles.hueSlider}
-        {...huePanResponder.panHandlers}
-      >
-        <LinearGradient
-          colors={[
-            '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000',
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={[styles.sliderHandle, hueSliderHandlePosition(), { backgroundColor: `hsl(${hue}, 100%, 50%)` }]} />
-      </View>
+          {/* Hue Slider */}
+          <View
+            ref={hueRef}
+            style={styles.hueSlider}
+            {...huePanResponder.panHandlers}
+          >
+            <LinearGradient
+              colors={[
+                '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000',
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={[styles.sliderHandle, hueSliderHandlePosition(), { backgroundColor: `hsl(${hue}, 100%, 50%)` }]} />
+          </View>
+        </View>
 
-      {/* Standard Colors Palette */}
-      <View style={styles.standardColorsContainer}>
-        <FlatList
-          data={STANDARD_COLORS}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleStandardColorSelect(item)}>
-              <View style={[styles.colorCircle, { backgroundColor: item }]} />
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item}
-          numColumns={8}
-          contentContainerStyle={styles.colorGrid}
-        />
+        {/* Standard Colors Palette */}
+        <View style={styles.standardColorsContainer}>
+          <View style={styles.colorGrid}>
+            {displayedStandardColors.map((item) => (
+              <TouchableOpacity key={item} onPress={() => handleStandardColorSelect(item)}>
+                <View style={[styles.colorCircle, { backgroundColor: item }]} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </View>
 
       {/* Current Color Preview */}
@@ -339,7 +380,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
           <Button onPress={() => onSelectColor(currentPickedColorHex())} style={{ backgroundColor: colors.primary }}>{t('select')}</Button>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

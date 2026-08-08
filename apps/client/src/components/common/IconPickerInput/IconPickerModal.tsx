@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../theme';
 import Button from '../Button/Button';
 
@@ -24,21 +25,26 @@ interface IconPickerModalProps {
   title?: string;
 }
 
-const NUM_COLUMNS = 4;
 const CELL_MARGIN = 4;
 
 /**
- * Sized from the screen width (same 70% factor `ColorPickerModal` uses for its own grid) instead
- * of a fixed pixel count - a fixed `ICON_CELL_SIZE * 4 + 40` container used to overflow the
- * modal's available width on narrow phones (the outer `modalView` alone eats ~110dp of
- * margin/padding), clipping the last column of icons.
+ * The grid changes both its size and column count with the available window. Mobile keeps four
+ * columns for comfortable touch targets; wider windows use five or six columns so the picker
+ * does not remain a narrow phone-sized strip in the middle of a desktop modal.
  */
 const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelectIcon, onClose, title }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const { width: screenWidth } = useWindowDimensions();
-  const iconGridSize = Math.min(screenWidth * 0.7, 320);
-  const iconCellSize = iconGridSize / NUM_COLUMNS - CELL_MARGIN * 2;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { breakpoint } = useResponsiveLayout();
+  const numColumns = breakpoint === 'wide' ? 6 : breakpoint === 'medium' ? 5 : 4;
+  const iconGridSize = breakpoint === 'wide'
+    ? Math.min(Math.max(screenWidth * 0.42, 360), 520)
+    : breakpoint === 'medium'
+      ? Math.min(Math.max(screenWidth * 0.5, 320), 420)
+      : Math.min(screenWidth * 0.7, 320);
+  const iconCellSize = iconGridSize / numColumns - CELL_MARGIN * 2;
+  const iconSize = breakpoint === 'wide' ? 32 : breakpoint === 'medium' ? 29 : 26;
 
   const styles = StyleSheet.create({
     container: {
@@ -75,22 +81,27 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelect
       marginTop: 20,
       width: '60%',
     },
+    iconList: {
+      maxHeight: Math.max(220, screenHeight * 0.62),
+    },
   });
 
   return (
     <View style={styles.container}>
       {title && <Text style={styles.title}>{title}</Text>}
       <FlatList
+        key={`icon-grid-${numColumns}`}
         data={AVATAR_ICON_OPTIONS}
         keyExtractor={(item) => item}
-        numColumns={NUM_COLUMNS}
+        numColumns={numColumns}
+        style={styles.iconList}
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.cell, item === currentIcon && styles.cellSelected]}
             onPress={() => onSelectIcon(item)}
           >
-            <Ionicons name={item} size={26} color={colors.text} />
+            <Ionicons name={item} size={iconSize} color={colors.text} />
           </TouchableOpacity>
         )}
       />

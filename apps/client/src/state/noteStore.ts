@@ -5,6 +5,7 @@ export type { FavoriteFilterState } from '../types/entityFilters';
 
 export const useNoteStore = createEntityStore<'notes', NoteWithTags, NoteService>({
   collectionKey: 'notes',
+  favoriteEntityType: 'Note',
   createService: createNoteService,
   fetchEntities: (service, p) =>
     service.getNotesByStoryId(

@@ -4,6 +4,7 @@ import { createEntityStore } from './createEntityStore';
 
 export const worldRuleStore = createEntityStore<'worldRules', WorldRuleWithTags, WorldRuleService>({
   collectionKey: 'worldRules',
+  favoriteEntityType: 'WorldRule',
   createService: createWorldRuleService,
   fetchEntities: (service, p) =>
     service.getWorldRulesByStoryId(

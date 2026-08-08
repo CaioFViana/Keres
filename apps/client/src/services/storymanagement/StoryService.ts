@@ -19,6 +19,7 @@ import {
   ChoiceSelect,
   galleries,
   GalleryInsert,
+  favorites,
   galleryRelations,
   GalleryRelationInsert,
   ItemInsert,
@@ -64,6 +65,7 @@ import { mediaFileService } from '../MediaFileService';
 import { createServerService } from '../ServerService';
 import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
+import { createFavoriteService } from './FavoriteService';
 import {
   checkLinearCompatibility as checkLinearCompatibilityGraph,
   classifyEdges,
@@ -91,6 +93,7 @@ import {
  */
 async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string): Promise<void> {
   await tx.delete(attributeValues).where(eq(attributeValues.storyId, storyId)).run();
+  await tx.delete(favorites).where(eq(favorites.storyId, storyId)).run();
   await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
   await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
   await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
@@ -123,8 +126,8 @@ async function purgeStoryLocally(db: AppDrizzleClient, storyId: string): Promise
 }
 
 export interface StoryService {
-  getAllStories(): Promise<StorySelect[]>;
-  getStoryById(storyId: string): Promise<StorySelect | undefined>;
+  getAllStories(currentLocalUserId?: string): Promise<StorySelect[]>;
+  getStoryById(storyId: string, currentLocalUserId?: string): Promise<StorySelect | undefined>;
   createStory(currentUserId: string, storyData: Create<StoryInsert>): Promise<StorySelect>;
   updateStory(currentUserId: string, storyId: string, storyData: Partial<Omit<StoryInsert, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
   getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }>;
@@ -161,13 +164,24 @@ export interface StoryService {
 
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
   const serverService = createServerService(db);
+  const favoriteService = createFavoriteService(db);
   return {
-    async getAllStories(): Promise<StorySelect[]> {
-      return db.select().from(stories).where(eq(stories.isDeleted, false)).all();
+    async getAllStories(currentLocalUserId?: string): Promise<StorySelect[]> {
+      const rows = await db.select().from(stories).where(eq(stories.isDeleted, false)).all();
+      if (!currentLocalUserId) return rows;
+      return Promise.all(rows.map(async (story) => ({
+        ...story,
+        isFavorite: await favoriteService.isFavorite(story.id, story.id, 'Story', currentLocalUserId, story.isFavorite),
+      })));
     },
 
-    async getStoryById(storyId: string): Promise<StorySelect | undefined> {
-      return db.select().from(stories).where(and(eq(stories.id, storyId), eq(stories.isDeleted, false))).get();
+    async getStoryById(storyId: string, currentLocalUserId?: string): Promise<StorySelect | undefined> {
+      const story = await db.select().from(stories).where(and(eq(stories.id, storyId), eq(stories.isDeleted, false))).get();
+      if (!story || !currentLocalUserId) return story;
+      return {
+        ...story,
+        isFavorite: await favoriteService.isFavorite(story.id, story.id, 'Story', currentLocalUserId, story.isFavorite),
+      };
     },
 
     async createStory(currentUserId: string, storyData: Create<StoryInsert>): Promise<StorySelect> {
@@ -188,10 +202,17 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
       await assertStoryIsWritable(db, storyId);
 
+      const dataToPersist = { ...storyData };
+      const targetFavoriteBehavior = dataToPersist.favoriteBehavior ?? originalStory.favoriteBehavior;
+      if (targetFavoriteBehavior === 'individual' && dataToPersist.isFavorite !== undefined) {
+        await favoriteService.setFavorite(storyId, storyId, 'Story', currentUserId, dataToPersist.isFavorite);
+        delete dataToPersist.isFavorite;
+      }
+
       // Pre-check against a merged copy, not `storyData` alone - `storyData` is a bare partial,
       // so diffing it directly against `originalStory` would flag every field the caller didn't
       // include (id, userId, serverId, ...) as "removed" and never actually skip a no-op save.
-      const potentialNewState = { ...originalStory, ...storyData };
+      const potentialNewState = { ...originalStory, ...dataToPersist };
       const preCheckChanges = getChangedFields(originalStory, potentialNewState);
       delete preCheckChanges.version;
       delete preCheckChanges.updatedAt;
@@ -202,7 +223,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
 
       const [updatedStory] = await db.update(stories)
-        .set({ ...storyData, updatedAt: new Date(), version: sql`${stories.version} + 1` })
+        .set({ ...dataToPersist, updatedAt: new Date(), version: sql`${stories.version} + 1` })
         .where(eq(stories.id, storyId))
         .returning();
 
@@ -484,7 +505,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     },
 
     async updateStoryFavoriteStatus(currentUserId: string, storyId: string, isFavorite: boolean): Promise<void> {
-      const originalStory = await this.getStoryById(storyId);
+      const originalStory = await this.getStoryById(storyId, currentUserId);
 
       if (!originalStory) {
         throw new Error(`Story with ID ${storyId} not found.`);
@@ -493,6 +514,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // If the favorite status hasn't actually changed, skip the update and logging
       if (originalStory.isFavorite === isFavorite) {
         console.log(`Story ${storyId} favorite status is already ${isFavorite}. Skipping update and operation log.`);
+        return;
+      }
+      if (originalStory.favoriteBehavior === 'individual') {
+        await favoriteService.setFavorite(storyId, storyId, 'Story', currentUserId, isFavorite);
         return;
       }
       await assertStoryIsWritable(db, storyId);
@@ -584,6 +609,19 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const server = await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) });
       if (!server?.url) {
         // The server row itself is gone locally - nothing to notify, just drop the stale link.
+        if (server?.idUser) {
+          await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
+        } else {
+          // A história baixada guarda apenas os favoritos da própria conta. Se o cadastro do
+          // servidor sumiu, essas linhas são a única fonte restante para recuperar a identidade.
+          const formerUserIds = await db.selectDistinct({ userId: favorites.userId })
+            .from(favorites)
+            .where(eq(favorites.storyId, storyId))
+            .all();
+          for (const { userId } of formerUserIds) {
+            await favoriteService.migrateUserIdentity(storyId, userId, currentUserId);
+          }
+        }
         await this.updateStory(currentUserId, storyId, { serverId: null });
         return;
       }
@@ -626,6 +664,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         throw new Error(`Server rejected the delete: ${conflict.message || conflict.reason || 'unknown reason'}`);
       }
 
+      await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
       await this.updateStory(currentUserId, storyId, { serverId: null });
     },
 
@@ -670,7 +709,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyWorldRules, storyNotes, storyNoteRelations, storyTags, storyTagRelations,
         storySuggestions, storyCharacterRelations, storyCharacterScenes, storyGalleryItems,
         storyGalleryRelations, storyItems, storyItemJourneys,
-        storySchemaFieldRows, storyAttributeValues,
+        storySchemaFieldRows, storyAttributeValues, storyFavorites,
       ] = await Promise.all([
         db.query.chapters.findMany({ where: belongsToStory(chapters) }),
         db.query.scenes.findMany({ where: belongsToStory(scenes) }),
@@ -692,6 +731,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.itemJourneys.findMany({ where: belongsToStory(itemJourneys) }),
         db.query.storySchemaFields.findMany({ where: belongsToStory(storySchemaFields) }),
         db.query.attributeValues.findMany({ where: belongsToStory(attributeValues) }),
+        db.query.favorites.findMany({ where: belongsToStory(favorites) }),
       ]);
 
       return FullStoryExportSchema.parse({
@@ -724,6 +764,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         itemJourneys: storyItemJourneys,
         storySchemaFields: storySchemaFieldRows,
         attributeValues: storyAttributeValues,
+        favorites: storyFavorites,
         // O importador usa este número como ponto de partida da sincronização. Preservar o
         // marcador local mantém o pacote útil para uma história já ligada a um servidor.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
@@ -1127,6 +1168,20 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               deletedAt: null,
             };
             await tx.insert(attributeValues).values(attributeValueToInsert).run();
+          }
+        }
+
+        if (fullStoryData.favorites) {
+          for (const favorite of fullStoryData.favorites) {
+            await tx.insert(favorites).values({
+              ...favorite,
+              storyId: originalStory.id,
+              userId: queriedServerId ? favorite.userId : userId,
+              createdAt: new Date(favorite.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            }).onConflictDoNothing().run();
           }
         }
 

@@ -15,6 +15,13 @@
       "when": 1786054652955,
       "tag": "0001_common_norrin_radd",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786226224578,
+      "tag": "0002_moaning_toxin",
+      "breakpoints": true
     }
   ]
 }

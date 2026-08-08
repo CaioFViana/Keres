@@ -8,6 +8,7 @@ import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } fr
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 
 export type { FavoriteFilterState };
 
@@ -100,15 +101,19 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
     },
 
     async getById(itemId: string): Promise<ItemSelect | undefined> {
-      return db.query.items.findFirst({
+      const item = await db.query.items.findFirst({
         where: and(eq(items.id, itemId), eq(items.isDeleted, false)),
       });
+      return decorateFavorite(db, 'Item', item);
     },
 
     async createItem(currentUserId: string, itemData: Create<ItemInsert>): Promise<ItemSelect> {
       await assertStoryIsWritable(db, itemData.storyId);
-      const newItem = prepareNewEntityData<ItemInsert>(itemData);
+      let newItem = prepareNewEntityData<ItemInsert>(itemData);
+      const favorite = await normalizeFavoriteCreate(db, newItem.storyId, 'Item', newItem);
+      newItem = favorite.data;
       const result = await db.insert(items).values(newItem).returning().get();
+      await persistInitialFavorite(db, newItem.storyId, newItem.id, 'Item', currentUserId, favorite.individualFavorite);
       const userIdToLog = await getUserIdForOperation(db, serverService, newItem.storyId, currentUserId);
       await recordLocalOperation(db, newItem.storyId, userIdToLog, 'create', 'Item', newItem.id, { ...result });
       entityEventEmitter.emit('item_changed', newItem.storyId, newItem.id);
@@ -119,6 +124,7 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       const originalItem = await db.query.items.findFirst({ where: eq(items.id, itemId) });
       if (!originalItem) throw new Error(`Item with ID ${itemId} not found for update.`);
       await assertStoryIsWritable(db, originalItem.storyId);
+      itemData = await normalizeFavoriteUpdate(db, originalItem.storyId, itemId, 'Item', currentUserId, itemData);
       const potentialNewState = { ...originalItem, ...itemData };
       const changes = getChangedFields(originalItem, potentialNewState);
       delete changes.version;

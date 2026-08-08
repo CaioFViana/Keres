@@ -10,6 +10,7 @@ import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } fr
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 
 export type { FavoriteFilterState };
 
@@ -192,13 +193,16 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         }
       }
 
-      return worldRuleMap.get(worldRuleId);
+      return decorateFavorite(db, 'WorldRule', worldRuleMap.get(worldRuleId));
     },
 
     async createWorldRule(currentUserId: string, worldRuleData: Create<WorldRuleInsert>): Promise<WorldRuleSelect> {
       await assertStoryIsWritable(db, worldRuleData.storyId);
-      const newWorldRule = prepareNewEntityData<WorldRuleInsert>(worldRuleData);
+      let newWorldRule = prepareNewEntityData<WorldRuleInsert>(worldRuleData);
+      const favorite = await normalizeFavoriteCreate(db, newWorldRule.storyId, 'WorldRule', newWorldRule);
+      newWorldRule = favorite.data;
       const result = await db.insert(worldRules).values(newWorldRule).returning().get();
+      await persistInitialFavorite(db, newWorldRule.storyId, newWorldRule.id, 'WorldRule', currentUserId, favorite.individualFavorite);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newWorldRule.storyId, currentUserId);
       await recordLocalOperation(db, newWorldRule.storyId, userIdToLog, 'create', 'WorldRule', newWorldRule.id, { ...result });
@@ -213,6 +217,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         throw new Error(`World Rule with ID ${worldRuleId} not found for update.`);
       }
       await assertStoryIsWritable(db, originalWorldRule.storyId);
+      worldRuleData = await normalizeFavoriteUpdate(db, originalWorldRule.storyId, worldRuleId, 'WorldRule', currentUserId, worldRuleData);
 
       const potentialNewState = { ...originalWorldRule, ...worldRuleData };
 

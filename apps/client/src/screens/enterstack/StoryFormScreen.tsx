@@ -48,6 +48,7 @@ const StoryFormScreen = () => {
   const [language, setLanguage] = useState<string | null>(null);
   const [author, setAuthor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteBehavior, setFavoriteBehavior] = useState<'global' | 'individual'>('global');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
 
@@ -68,7 +69,7 @@ const StoryFormScreen = () => {
       if (storyId) {
         try {
           setLoading(true);
-          const fetchedStory = await storyService().getStoryById(storyId);
+          const fetchedStory = await storyService().getStoryById(storyId, userId ?? undefined);
           if (fetchedStory) {
             setTitle(fetchedStory.title);
             setType(fetchedStory.type);
@@ -77,6 +78,7 @@ const StoryFormScreen = () => {
             setLanguage(fetchedStory.language);
             setAuthor(fetchedStory.author);
             setIsFavorite(fetchedStory.isFavorite);
+            setFavoriteBehavior(fetchedStory.favoriteBehavior);
             setExtraNotes(fetchedStory.extraNotes);
             setTheme(fetchedStory.theme);
             applyTheme(fetchedStory.theme || 'default');
@@ -95,7 +97,7 @@ const StoryFormScreen = () => {
       }
     };
     loadStory();
-  }, [storyId, storyService, t, applyTheme]);
+  }, [storyId, storyService, userId, t, applyTheme]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -121,6 +123,7 @@ const StoryFormScreen = () => {
         language,
         author,
         isFavorite,
+        favoriteBehavior,
         extraNotes,
         theme,
         lastOperationLog: 0,

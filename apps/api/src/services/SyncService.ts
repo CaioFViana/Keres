@@ -30,6 +30,7 @@ import { SuggestionSyncHandler } from './entity-sync-handlers/SuggestionSyncHand
 import { TagRelationSyncHandler } from './entity-sync-handlers/TagRelationSyncHandler';
 import { TagSyncHandler } from './entity-sync-handlers/TagSyncHandler';
 import { WorldRuleSyncHandler } from './entity-sync-handlers/WorldRuleSyncHandler';
+import { FavoriteSyncHandler } from './entity-sync-handlers/FavoriteSyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
 
 export class SyncService {
@@ -58,6 +59,7 @@ export class SyncService {
     this.registerEntityHandler(new StorySchemaFieldSyncHandler());
     this.registerEntityHandler(new AttributeValueSyncHandler());
     this.registerEntityHandler(new LocationRelationSyncHandler());
+    this.registerEntityHandler(new FavoriteSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {
@@ -93,18 +95,18 @@ export class SyncService {
       throw new Error('Story not found.');
     }
 
-    let hasWritePermission = false;
+    let role: EffectiveStoryRole | undefined;
     if (story.userId === userId) {
-      hasWritePermission = true; // User is the owner
+      role = 'owner';
     } else {
       const permission = await storyPermissionService.getUserPermissionForStory(userId, storyId);
-      if (permission && permission.permissionType === 'writer') {
-        hasWritePermission = true;
+      if (permission && (permission.permissionType === 'writer' || permission.permissionType === 'reader')) {
+        role = permission.permissionType;
       }
     }
 
-    if (!hasWritePermission) {
-      throw new AppError(403, 'Unauthorized: User does not have write permission for this story.');
+    if (!role) {
+      throw new AppError(403, 'Unauthorized: User does not have access to this story.');
     }
 
     const applied: SyncAppliedOperation[] = [];
@@ -143,6 +145,13 @@ export class SyncService {
       const handler = this.entityHandlers.get(update.entity);
       if (!handler) {
         recordConflict('unknown', `No sync handler registered for entity type: ${update.entity}`);
+        continue;
+      }
+
+      // Personal favorites are user-owned metadata, so readers may change their own rows
+      // without gaining permission to edit the story itself.
+      if (role === 'reader' && update.entity !== 'Favorite') {
+        recordConflict('unauthorized', 'Reader access only permits personal favorite changes.');
         continue;
       }
 
@@ -189,7 +198,7 @@ export class SyncService {
           } else {
             if (update.entity === 'Story') {
               await tierEnforcementService.assertCanCreateStory(userId);
-            } else {
+            } else if (update.entity !== 'Favorite') {
               await tierEnforcementService.assertCanCreateEntity(userId, storyId);
             }
             await handler.create(userId, storyId, update as CreateStoryUpdate);
@@ -373,13 +382,13 @@ export class SyncService {
       throw new AppError(403, 'Unauthorized: User does not have read permission for this story.');
     }
 
-    const fetchedOperations = await db.query.operationLog.findMany({
+    const fetchedOperations = (await db.query.operationLog.findMany({
       where: and(
         eq(operationLog.storyId, storyId),
         gt(operationLog.operationVersion, lastOperationVersion)
       ),
       orderBy: [operationLog.operationVersion],
-    });
+    })).filter((op) => op.entityType !== 'Favorite' || op.userId === userId);
 
     const updates: StoryUpdate[] = await Promise.all(fetchedOperations.map(async op => {
       const payloadAsRecord = op.payload as Record<string, any>; // Client's original payload

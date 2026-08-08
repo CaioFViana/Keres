@@ -10,6 +10,7 @@ interface SceneExtraActions {
 
 export const useSceneStore = createEntityStore<'scenes', SceneSelect, SceneService, SceneExtraActions>({
   collectionKey: 'scenes',
+  favoriteEntityType: 'Scene',
   createService: createSceneService,
   fetchEntities: (service, p) =>
     service.getScenesByStoryId(

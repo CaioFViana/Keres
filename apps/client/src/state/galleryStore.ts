@@ -13,6 +13,7 @@ export type { FavoriteFilterState } from '../types/entityFilters';
  */
 export const useGalleryStore = createEntityStore<'galleries', GallerySelect, GalleryService>({
   collectionKey: 'galleries',
+  favoriteEntityType: 'Gallery',
   createService: createGalleryService,
   fetchEntities: (service, p) =>
     service.getGalleriesByStoryId(p.storyId, {

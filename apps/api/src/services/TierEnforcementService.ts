@@ -70,7 +70,8 @@ export class TierEnforcementService {
       return;
     }
 
-    const handlers = [...syncService.getEntityHandlers().values()].filter((h) => h.entityName !== 'Story');
+    const handlers = [...syncService.getEntityHandlers().values()]
+      .filter((h) => h.entityName !== 'Story' && h.entityName !== 'Favorite');
 
     if (tier.maxEntitiesPerStory !== null) {
       const counts = await Promise.all(handlers.map((h) => h.countForStoryIds([storyId])));

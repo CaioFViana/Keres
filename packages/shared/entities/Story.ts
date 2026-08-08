@@ -10,6 +10,7 @@ export interface Story {
   // owns/manages it in the app) - e.g. the original author for an imported public-domain tale.
   author: string | null
   isFavorite: boolean
+  favoriteBehavior: 'global' | 'individual'
   extraNotes: string | null
   theme: string | null
   // Optional: ID of the server this story is synchronized with.

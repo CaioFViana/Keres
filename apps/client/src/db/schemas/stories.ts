@@ -11,6 +11,7 @@ export const stories = sqliteTable('stories', {
   language: text('language'),
   author: text('author'),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
+  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual'] }).notNull().default('global'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),

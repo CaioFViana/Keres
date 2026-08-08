@@ -1,50 +1,134 @@
-# Welcome to your Expo app 👋
+# Cliente Keres
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Português** · [English](README.en.md)
 
-## Get started
+Aplicação offline-first do Keres, construída com React Native e Expo. A mesma base atende Android, iOS e web; o export web também é empacotado pelo Electron em `apps/desktop`.
 
-1. Install dependencies
+## Como o cliente funciona
 
-   ```bash
-   npm install
-   ```
+- Cada história é armazenada localmente com Drizzle ORM sobre `expo-sqlite`.
+- No navegador e no Electron, o SQLite usa WASM/OPFS; no mobile, usa o banco nativo do dispositivo.
+- O uso local não depende da API.
+- Ao cadastrar um servidor, o cliente autentica o usuário e sincroniza operações, mídias e conflitos.
+- Migrations e índices de histórias de exemplo são preparados automaticamente antes de `bun run start`.
 
-2. Start the app
+## Preparação
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Execute a instalação uma vez, preferencialmente na raiz do monorepo para respeitar workspaces, patches e o lockfile:
 
 ```bash
-npm run reset-project
+bun install --frozen-lockfile
+cd apps/client
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Requisitos por destino:
 
-## Learn more
+| Destino | Requisitos adicionais |
+| --- | --- |
+| Web | Navegador moderno com suporte a OPFS |
+| Android | Android Studio, Android SDK, JDK 17 e emulador ou aparelho com depuração USB |
+| iOS | macOS, Xcode e CocoaPods |
+| Expo Go | Aplicativo Expo Go compatível com SDK 54; alguns módulos nativos podem exigir development build |
 
-To learn more about developing your project with Expo, look at the following resources:
+## Executar em desenvolvimento
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Inicie o Metro/Expo:
 
-## Join the community
+```bash
+bun run start
+```
 
-Join our community of developers creating universal apps.
+Atalhos úteis:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+bun run start-clear  # limpa o cache do Metro
+bun run web          # abre a versão web
+bun run android      # compila e executa o projeto Android nativo
+bun run ios          # compila e executa o projeto iOS nativo (somente macOS)
+```
+
+`android` e `ios` usam development builds nativos (`expo run:*`), não apenas o sandbox do Expo Go.
+
+## Conectar a uma API
+
+O endereço do servidor é cadastrado dentro do próprio Keres. Informe apenas a origem da API, sem `/swagger`, `/admin` ou outra rota:
+
+| Ambiente do cliente | Servidor local |
+| --- | --- |
+| Web ou iOS Simulator | `http://localhost:3000` |
+| Android Emulator padrão | `http://10.0.2.2:3000` |
+| Aparelho físico | `http://IP-DA-MAQUINA:3000` |
+| Produção | `https://keres.example.com` |
+
+Em aparelho físico, a API precisa escutar em uma interface acessível pela rede e o firewall deve permitir a conexão. Em produção, use sempre HTTPS.
+
+Veja o [README principal](../../README.md) para iniciar a API, o PostgreSQL e o painel administrativo.
+
+## Banco local e conteúdo gerado
+
+O comando de início executa dois preparos antes do Expo:
+
+1. gera o índice das migrations SQLite;
+2. gera o índice das histórias de exemplo.
+
+Comandos manuais disponíveis:
+
+```bash
+bun run db:generate
+bun run example-stories:generate
+```
+
+Depois de alterar o schema local, gere a migration, revise o SQL produzido e reinicie o Expo. Não use `reset-project`: esse script pertence ao scaffold original do Expo e não faz parte do fluxo normal de desenvolvimento do Keres.
+
+## Qualidade
+
+Antes de abrir uma alteração no cliente:
+
+```bash
+bun run lint
+bun run locales:audit
+```
+
+O auditor de traduções verifica a paridade entre os catálogos `en` e `pt`. A variante `bun run locales:audit:force` força a verificação completa quando necessário.
+
+## Builds
+
+### Export web
+
+```bash
+bun run export:web
+```
+
+O resultado é gravado em `apps/client/dist`. Ele é estático, mas o suporte SQLite/OPFS requer cabeçalhos de isolamento entre origens (`Cross-Origin-Opener-Policy` e `Cross-Origin-Embedder-Policy`) no servidor web. O wrapper Electron já configura esse ambiente.
+
+### Desktop
+
+A partir da raiz do monorepo:
+
+```bash
+bun run desktop:start
+bun run desktop:package
+```
+
+O primeiro comando gera o cliente web e abre o Electron; o segundo produz o pacote para a plataforma atual. Builds de release por sistema operacional são gerados pelo workflow de tags.
+
+### Android e iOS para distribuição
+
+O repositório gera APK e AAB Android assinados no workflow `.github/workflows/release.yml`. O projeto nativo `android/` é recriado por `expo prebuild`, recebe a versão da tag e usa os segredos de assinatura configurados no GitHub Actions.
+
+Não há build iOS de release automatizado no momento: ele exige identificador definitivo, conta Apple Developer, certificados e provisioning profiles.
+
+## Solução de problemas
+
+- **Alterações de schema não aparecem:** execute `bun run start-clear` e confirme que o índice de migrations foi regenerado.
+- **Android não alcança `localhost`:** use `10.0.2.2` no emulador ou o IP da máquina em um aparelho real.
+- **SQLite web falha ao iniciar:** confirme suporte a OPFS e os cabeçalhos COOP/COEP no host; teste também sem modo privado.
+- **Dependências ou patches inconsistentes:** remova apenas artefatos gerados necessários e execute novamente `bun install --frozen-lockfile` na raiz. Não regenere o lockfile sem intenção.
+- **Módulo nativo indisponível no Expo Go:** use `bun run android`/`bun run ios` para criar um development build.
+
+## Referências internas
+
+- [Fluxo de telas](../../docs/screen_flow.md)
+- [Estrutura do projeto](../../docs/file_structure.md)
+- [Estratégia de resolução de conflitos](../../docs/conflict_resolution_client_strategy.md)
+- [Mecânicas de escolhas](../../docs/choice_mechanics.md)

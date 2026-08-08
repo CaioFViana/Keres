@@ -9,6 +9,7 @@ import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } fr
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 
 export type { FavoriteFilterState };
 
@@ -115,15 +116,19 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     },
 
     async getById(sceneId: string): Promise<SceneSelect | undefined> {
-      return db.query.scenes.findFirst({
+      const scene = await db.query.scenes.findFirst({
         where: and(eq(scenes.id, sceneId), eq(scenes.isDeleted, false)),
       });
+      return decorateFavorite(db, 'Scene', scene);
     },
 
     async createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect> {
       await assertStoryIsWritable(db, sceneData.storyId);
-      const newScene = prepareNewEntityData<SceneInsert>(sceneData);
+      let newScene = prepareNewEntityData<SceneInsert>(sceneData);
+      const favorite = await normalizeFavoriteCreate(db, newScene.storyId, 'Scene', newScene);
+      newScene = favorite.data;
       const result = await db.insert(scenes).values(newScene).returning().get();
+      await persistInitialFavorite(db, newScene.storyId, newScene.id, 'Scene', currentUserId, favorite.individualFavorite);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newScene.storyId, currentUserId);
       await recordLocalOperation(db, newScene.storyId, userIdToLog, 'create', 'Scene', newScene.id, { ...result });
@@ -138,6 +143,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         throw new Error(`Scene with ID ${sceneId} not found for update.`);
       }
       await assertStoryIsWritable(db, originalScene.storyId);
+      sceneData = await normalizeFavoriteUpdate(db, originalScene.storyId, sceneId, 'Scene', currentUserId, sceneData);
 
       const potentialNewState = { ...originalScene, ...sceneData };
 

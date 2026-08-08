@@ -63,6 +63,7 @@ const StorySettingsScreen = () => {
   const [language, setLanguage] = useState<string | null>(null);
   const [author, setAuthor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteBehavior, setFavoriteBehavior] = useState<'global' | 'individual'>('global');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
@@ -88,7 +89,7 @@ const StorySettingsScreen = () => {
       try {
         setLoading(true);
         // Fetch story
-        const fetchedStory = await storyService().getStoryById(storyId);
+        const fetchedStory = await storyService().getStoryById(storyId, userId ?? undefined);
 
         if (!fetchedStory) {
           setError(t('story_not_found'));
@@ -102,6 +103,7 @@ const StorySettingsScreen = () => {
         setLanguage(fetchedStory.language);
         setAuthor(fetchedStory.author);
         setIsFavorite(fetchedStory.isFavorite);
+        setFavoriteBehavior(fetchedStory.favoriteBehavior);
         setExtraNotes(fetchedStory.extraNotes);
         setTheme(fetchedStory.theme);
         applyTheme(fetchedStory.theme || 'default');
@@ -224,6 +226,7 @@ const StorySettingsScreen = () => {
         language,
         author,
         isFavorite,
+        favoriteBehavior,
         extraNotes,
         theme,
         // `serverId` não entra aqui - vincular/desvincular tem efeitos colaterais de rede
@@ -648,6 +651,21 @@ const StorySettingsScreen = () => {
               disabled={!canEdit}
             />
           </View>
+
+          <Text style={[styles.label, { color: colors.text }]}>{t('favorite_behavior')}</Text>
+          <Select
+            options={[
+              { label: t('favorite_behavior_global'), value: 'global' },
+              { label: t('favorite_behavior_individual'), value: 'individual' },
+            ]}
+            value={favoriteBehavior}
+            onValueChange={(value) => setFavoriteBehavior(value as 'global' | 'individual')}
+            placeholder={t('favorite_behavior')}
+            disabled={!canEdit}
+          />
+          <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
+            {t(`favorite_behavior_${favoriteBehavior}_description`)}
+          </Text>
 
           <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
           <TextInput

@@ -88,7 +88,14 @@ const OperationLogScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <OperationLogList storyId={selectedStory.id} paginated={true} pageSize={20} onPressItem={handlePressLogItem} shouldRefetch={shouldRefetch} />
+      <OperationLogList
+        storyId={selectedStory.id}
+        paginated={true}
+        pageSize={20}
+        onPressItem={handlePressLogItem}
+        shouldRefetch={shouldRefetch}
+        showPrivateGaps
+      />
     </View>
   );
 };

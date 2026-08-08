@@ -2,6 +2,7 @@ import { UlidSchema } from '../schemas/SyncSchemas'; // Adjusted path
 import { z } from 'zod';
 
 export const StoryTypeSchema = z.enum(['linear', 'branching']);
+export const FavoriteBehaviorSchema = z.enum(['global', 'individual']);
 
 // Schema for client-provided input during story creation
 export const StoryCreateInputSchema = z.object({
@@ -13,6 +14,7 @@ export const StoryCreateInputSchema = z.object({
   language: z.string().nullable().optional(),
   author: z.string().nullable().optional(),
   isFavorite: z.boolean().default(false),
+  favoriteBehavior: FavoriteBehaviorSchema.default('global'),
   extraNotes: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
 });
@@ -26,6 +28,7 @@ export const CreateStoryDataSchema = z.object({
   language: z.string().nullable().optional(),
   author: z.string().nullable().optional(),
   isFavorite: z.boolean().default(false),
+  favoriteBehavior: FavoriteBehaviorSchema.default('global'),
   extraNotes: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
 });

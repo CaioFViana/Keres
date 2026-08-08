@@ -20,6 +20,7 @@ import { NoteRelationSchema } from './NoteRelationSchemas';
 import { CURRENT_STORY_FORMAT_VERSION } from './StoryExportVersion';
 import { StorySchemaFieldSchema } from './StorySchemaFieldSchemas';
 import { AttributeValueSchema } from './AttributeValueSchemas';
+import { FavoriteSchema } from './FavoriteSchemas';
 
 // This schema defines the structure for a full story export/import.
 // It includes the main story object and all its related entities as arrays.
@@ -48,6 +49,7 @@ export const FullStoryExportSchema = z.object({
     // essa adição é puramente aditiva, não muda a forma de nenhum campo existente.
     storySchemaFields: z.array(StorySchemaFieldSchema).optional(),
     attributeValues: z.array(AttributeValueSchema).optional(),
+    favorites: z.array(FavoriteSchema).optional(),
     // Mesmo motivo: exports gerados antes desta feature existir continuam importáveis.
     locationRelations: z.array(LocationRelationSchema).optional(),
     serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version

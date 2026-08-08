@@ -6,6 +6,7 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 
 export type { FavoriteFilterState };
@@ -134,9 +135,10 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
     },
 
     async getById(galleryId): Promise<GallerySelect | undefined> {
-      return db.query.galleries.findFirst({
+      const gallery = await db.query.galleries.findFirst({
         where: and(eq(galleries.id, galleryId), eq(galleries.isDeleted, false)),
       });
+      return decorateFavorite(db, 'Gallery', gallery);
     },
 
     async getByHash(storyId, hash): Promise<GallerySelect | undefined> {
@@ -174,7 +176,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
 
     async createGallery(currentUserId, media): Promise<GallerySelect> {
       await assertStoryIsWritable(db, media.storyId);
-      const newGallery = prepareNewEntityData<GalleryInsert>({
+      let newGallery = prepareNewEntityData<GalleryInsert>({
         storyId: media.storyId,
         mediaType: media.mediaType,
         mimeType: media.mimeType,
@@ -191,7 +193,11 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         downloadState: 'downloaded',
       } as Create<GalleryInsert>);
 
+      const favorite = await normalizeFavoriteCreate(db, newGallery.storyId, 'Gallery', newGallery);
+      newGallery = favorite.data;
+
       const result = await db.insert(galleries).values(newGallery).returning().get();
+      await persistInitialFavorite(db, newGallery.storyId, newGallery.id, 'Gallery', currentUserId, favorite.individualFavorite);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, media.storyId, currentUserId);
       await recordLocalOperation(db, media.storyId, userIdToLog, 'create', 'Gallery', result.id, syncablePayload(result));
@@ -206,6 +212,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         throw new Error(`Gallery with ID ${galleryId} not found for update.`);
       }
       await assertStoryIsWritable(db, original.storyId);
+      data = await normalizeFavoriteUpdate(db, original.storyId, galleryId, 'Gallery', currentUserId, data);
 
       const changes = getChangedFields(original, { ...original, ...data });
       delete changes.version;

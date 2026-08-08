@@ -1,5 +1,5 @@
 import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, EffectiveStoryRole, StoryReorderingStoryUpdate, StoryUpdate, SyncConflict as SharedSyncConflict, SyncPushResult, UpdateStoryUpdate } from '@keres/shared';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, lte, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import { OperationLogSelect, ServerSelect } from '../db/schema';
@@ -29,9 +29,11 @@ import { StoryClientSyncHandler } from './entity-sync-handlers/StoryClientSyncHa
 import { StorySchemaFieldClientSyncHandler } from './entity-sync-handlers/StorySchemaFieldClientSyncHandler';
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
+import { FavoriteClientSyncHandler } from './entity-sync-handlers/FavoriteClientSyncHandler';
 import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
 import { createServerService } from './ServerService';
 import { createStoryService } from './storymanagement/StoryService';
+import { createFavoriteService } from './storymanagement/FavoriteService';
 import { createSyncConflictService, findContestedFields, mergeLocalOperationPayloads, SyncConflictService } from './SyncConflictService';
 
 export interface ServerStoryPreview {
@@ -67,6 +69,20 @@ const SYNC_ENTITY_EVENTS: Record<string, string> = {
   GalleryRelation: 'gallery_relation_changed',
   StorySchemaField: 'story_schema_field_changed',
   AttributeValue: 'attribute_value_changed',
+  Favorite: 'favorite_changed',
+};
+
+const FAVORITE_TARGET_EVENTS: Record<string, string> = {
+  Story: 'story_changed',
+  Character: 'character_changed',
+  Chapter: 'chapter_changed',
+  Location: 'location_changed',
+  Scene: 'scene_changed',
+  Note: 'note_changed',
+  WorldRule: 'worldrule_changed',
+  Item: 'item_changed',
+  Gallery: 'gallery_changed',
+  Tag: 'tag_changed',
 };
 
 /** Normal cadence while the server is responding. */
@@ -126,6 +142,7 @@ export class SyncEngineService {
     this.registerEntityHandler(new GalleryRelationClientSyncHandler())
     this.registerEntityHandler(new StorySchemaFieldClientSyncHandler())
     this.registerEntityHandler(new AttributeValueClientSyncHandler())
+    this.registerEntityHandler(new FavoriteClientSyncHandler())
     // TODO: Register other entity handlers here
   }
 
@@ -397,6 +414,16 @@ export class SyncEngineService {
     // O servidor agora tem exatamente o que o op-log local tinha no momento do export - é essa
     // a base correta pro próximo ciclo de sync, não o `serverLastOperationVersion` do pacote
     // exportado (que reflete um vínculo anterior, sempre 0 pra uma história nunca vinculada).
+    await createFavoriteService(this._db).migrateUserIdentity(storyId, userId, server.idUser);
+    // These favorite operations are already represented by the imported snapshot. Sending
+    // them again would carry the former local-only user id, which has no meaning on the server.
+    await this._db.update(schema.operationLogs)
+      .set({ isSynced: true })
+      .where(and(
+        eq(schema.operationLogs.storyId, storyId),
+        eq(schema.operationLogs.entityType, 'Favorite'),
+        lte(schema.operationLogs.operationVersion, story.lastOperationLog),
+      ));
     await storyService.updateStory(userId, storyId, {
       serverId: server.id,
       lastServerSyncedLog: story.lastOperationLog,
@@ -615,6 +642,14 @@ export class SyncEngineService {
           if (!eventName) continue;
           for (const entityId of ids) {
             entityEventEmitter.emit(eventName, this.storyId, entityId);
+            if (entity === 'Favorite') {
+              const favorite = await this._db.query.favorites.findFirst({
+                where: eq(schema.favorites.id, entityId),
+                columns: { entityId: true, entityType: true },
+              });
+              const targetEvent = favorite && FAVORITE_TARGET_EVENTS[favorite.entityType];
+              if (targetEvent) entityEventEmitter.emit(targetEvent, this.storyId, favorite.entityId);
+            }
           }
         }
         entityEventEmitter.emit('story_data_changed', {

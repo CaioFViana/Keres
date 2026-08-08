@@ -10,6 +10,7 @@ export * from './schema/tables/characterScenes';
 export * from './schema/tables/choices';
 export * from './schema/tables/friendships';
 export * from './schema/tables/galleries';
+export * from './schema/tables/favorites';
 export * from './schema/tables/itemJourneys';
 export * from './schema/tables/items';
 export * from './schema/tables/locations';

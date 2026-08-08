@@ -8,6 +8,7 @@ import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } fr
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
@@ -174,8 +175,11 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
 
     async createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect> {
       await assertStoryIsWritable(db, characterData.storyId);
-      const newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
+      let newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
+      const favorite = await normalizeFavoriteCreate(db, newCharacter.storyId, 'Character', newCharacter);
+      newCharacter = favorite.data;
       const result = await db.insert(characters).values(newCharacter).returning().get();
+      await persistInitialFavorite(db, newCharacter.storyId, newCharacter.id, 'Character', currentUserId, favorite.individualFavorite);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newCharacter.storyId, currentUserId);
       await recordLocalOperation(db, newCharacter.storyId, userIdToLog, 'create', 'Character', newCharacter.id, { ...result });
@@ -190,6 +194,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         throw new Error(`Character with ID ${characterId} not found for update.`);
       }
       await assertStoryIsWritable(db, oldCharacter.storyId);
+      updatedFields = await normalizeFavoriteUpdate(db, oldCharacter.storyId, characterId, 'Character', currentUserId, updatedFields);
 
       // Create a potential new state for diffing, including only fields that might change
       const potentialNewState = { ...oldCharacter, ...updatedFields };
@@ -255,7 +260,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         const character = await db.query.characters.findFirst({
             where: and(eq(characters.id, characterId), eq(characters.isDeleted, false)),
         });
-        return character;
+        return decorateFavorite(db, 'Character', character);
     },
 
     async getAllByStoryId(storyId: string): Promise<CharacterSelect[]> {

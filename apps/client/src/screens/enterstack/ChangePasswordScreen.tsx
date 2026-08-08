@@ -3,8 +3,9 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
@@ -120,9 +121,7 @@ const ChangePasswordScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={styles.label}>{t('current_password')}</Text>
           <TextInput
             placeholder={t('current_password_placeholder')}
@@ -150,9 +149,7 @@ const ChangePasswordScreen = () => {
           <Button onPress={handleSave} style={styles.saveButton} disabled={saving || !currentPassword || !newPassword || !confirmNewPassword}>
             {saving ? t('saving') : t('save')}
           </Button>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

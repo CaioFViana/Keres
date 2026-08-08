@@ -4,8 +4,9 @@ import { StackActions, useNavigation } from '@react-navigation/native'; // Impor
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
@@ -87,13 +88,8 @@ const SettingsScreen = () => {
   const languageOptions = getLanguageOptions(t);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust this value as needed
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <View style={commonContainerStyles.container}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={{ flexGrow: 1 }}>
+        <View>
           <View style={styles.settingItem}>
             <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
             <View style={styles.inputWrapper}>
@@ -132,8 +128,7 @@ const SettingsScreen = () => {
             {t('reset_application')}
           </Button>
         </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

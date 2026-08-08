@@ -145,8 +145,6 @@ export const getCommonContainerStyles = (colors: ThemeColors) => StyleSheet.crea
     flex: 1,
     backgroundColor: colors.background,
     width: '100%',
-    maxWidth: 1280,
-    alignSelf: 'center',
     padding: 20,
   },
   // Add other common container styles here if needed

@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Platform, TextInput as RNTextInput, StyleSheet, TextInputProps } from 'react-native';
+import { KeyboardAwareContext } from '../../layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
 
 type CustomTextInputProps = TextInputProps;
 
-const TextInput: React.FC<CustomTextInputProps> = ({ style, ...rest }) => {
+const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({ style, onFocus, ...rest }, ref) => {
   const { colors } = useTheme();
+  const requestFocusScroll = useContext(KeyboardAwareContext);
   const commonInputStyles = getCommonInputStyles(colors);
 
   const styles = StyleSheet.create({
@@ -39,11 +41,18 @@ const TextInput: React.FC<CustomTextInputProps> = ({ style, ...rest }) => {
 
   return (
     <RNTextInput
+      ref={ref}
       style={[commonInputStyles.input, styles.input, style, heightOverride]}
       placeholderTextColor={colors.textSecondary}
+      onFocus={(event) => {
+        onFocus?.(event);
+        requestFocusScroll?.();
+      }}
       {...rest}
     />
   );
-};
+});
+
+TextInput.displayName = 'TextInput';
 
 export default TextInput;

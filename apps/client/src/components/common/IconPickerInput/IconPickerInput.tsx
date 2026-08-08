@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
+import ResponsiveModal from '../../layout/ResponsiveModal/ResponsiveModal';
 import IconPickerModal from './IconPickerModal';
 
 interface IconPickerInputProps {
@@ -49,23 +50,11 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({ onSelectIcon, current
       flex: 1,
       color: currentIcon ? colors.text : colors.textSecondary,
     },
-    centeredView: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
     modalView: {
-      margin: 20,
       backgroundColor: colors.background,
       borderRadius: 20,
-      padding: 35,
+      padding: 20,
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      elevation: 5,
     },
   });
 
@@ -78,23 +67,19 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({ onSelectIcon, current
         <Text style={styles.label}>{currentIcon || placeholder}</Text>
       </Pressable>
 
-      <Modal
-        animationType="fade"
-        transparent
+      <ResponsiveModal
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onClose={() => setModalVisible(false)}
+        contentStyle={styles.modalView}
+        maxHeight="92%"
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <IconPickerModal
-              currentIcon={currentIcon}
-              onSelectIcon={handleSelectIcon}
-              onClose={() => setModalVisible(false)}
-              title={placeholder}
-            />
-          </View>
-        </View>
-      </Modal>
+        <IconPickerModal
+          currentIcon={currentIcon}
+          onSelectIcon={handleSelectIcon}
+          onClose={() => setModalVisible(false)}
+          title={placeholder}
+        />
+      </ResponsiveModal>
     </View>
   );
 };

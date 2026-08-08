@@ -5,8 +5,9 @@ import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import Button from '../../components/common/Button/Button';
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '../../components/common/MultiSelectPill/MultiSelectPill';
@@ -399,13 +400,7 @@ const CharacterFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_character_title') : t('create_character_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('character_form_description')}
@@ -590,9 +585,7 @@ const CharacterFormScreen = () => {
               {t('delete_character_title')}
             </Button>
           )}
-        </ScrollView>
-      </TouchableWithoutFeedback>    
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

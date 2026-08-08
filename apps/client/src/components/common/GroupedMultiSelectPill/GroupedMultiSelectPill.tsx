@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Easing,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -181,7 +179,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
       borderRadius: 10,
       width: screenWidth < 768 ? '94%' : '88%',
       maxWidth: 720,
-      maxHeight: Math.min(screenHeight * 0.78, 720),
+      maxHeight: Math.min(screenHeight * 0.7, 720),
       overflow: 'hidden',
     },
     modalHeader: {
@@ -290,12 +288,12 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
         <Ionicons name="add-circle" size={24} color={colors.primary} style={{ marginLeft: 'auto' }} />
       </TouchableOpacity>
 
-      <Modal transparent visible={modalVisible} onRequestClose={closeModal} animationType="fade" statusBarTranslucent>
+      <Modal transparent visible={modalVisible} onRequestClose={closeModal} animationType="fade">
         <TouchableOpacity style={styles.modalOverlay} onPress={closeModal} activeOpacity={1}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContent}>
-            <Animated.View
-              style={{
-                flex: 1,
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
                 transform: [
                   {
                     translateY: dropdownAnim.interpolate({
@@ -304,8 +302,9 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                     }),
                   },
                 ],
-              }}
-            >
+              },
+            ]}
+          >
             <>
               <View style={styles.modalHeader}>
                 <View style={styles.modalHeaderTitleRow}>
@@ -381,8 +380,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                 )}
               </ScrollView>
             </>
-            </Animated.View>
-          </KeyboardAvoidingView>
+          </Animated.View>
         </TouchableOpacity>
       </Modal>
     </View>

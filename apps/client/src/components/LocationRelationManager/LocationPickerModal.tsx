@@ -1,9 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { LocationSelect } from '../../db/schema';
 import { useTheme } from '../../theme';
 import Button from '../common/Button/Button';
+import ResponsiveModal from '../layout/ResponsiveModal/ResponsiveModal';
 
 interface LocationPickerModalProps {
   isVisible: boolean;
@@ -23,17 +24,9 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ isVisible, on
   const sortedCandidates = [...candidates].sort((a, b) => a.name.localeCompare(b.name));
 
   const styles = StyleSheet.create({
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
     modalContent: {
       backgroundColor: colors.background,
       borderRadius: 10,
-      width: Dimensions.get('window').width * 0.85,
-      maxHeight: Dimensions.get('window').height * 0.7,
       padding: 15,
     },
     title: {
@@ -65,13 +58,12 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ isVisible, on
   });
 
   return (
-    <Modal visible={isVisible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+    <ResponsiveModal visible={isVisible} onClose={onClose} contentStyle={styles.modalContent} maxHeight="78%">
           <Text style={styles.title}>{title}</Text>
           <FlatList
             data={sortedCandidates}
             keyExtractor={(item) => item.id}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.item} onPress={() => onSelect(item.id)}>
                 <Text style={styles.itemText}>{item.name}</Text>
@@ -82,9 +74,7 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ isVisible, on
           <Button onPress={onClose} style={styles.closeButton}>
             {t('close')}
           </Button>
-        </View>
-      </TouchableOpacity>
-    </Modal>
+    </ResponsiveModal>
   );
 };
 

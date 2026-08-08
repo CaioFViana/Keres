@@ -2,9 +2,10 @@ import { Tag } from '@keres/shared/entities/Tag';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
 import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPickerInput';
+import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -194,13 +195,7 @@ const TagFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_tag_title') : t('create_tag_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('tag_form_description')}
@@ -250,9 +245,7 @@ const TagFormScreen = () => {
               {t('delete_tag_title')}
             </Button>
           )}
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

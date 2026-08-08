@@ -3,7 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { entityFieldMetadata, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ResponsiveModal from '../../layout/ResponsiveModal/ResponsiveModal';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import { SuggestionType } from '../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../theme';
@@ -166,21 +167,19 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   }, [searchCriteria, handleInputChange, colors, t, storyId]);
 
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
+    <ResponsiveModal
       visible={isVisible}
-      onRequestClose={onClose}
+      onClose={onClose}
+      contentStyle={[styles.modalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      maxHeight="86%"
     >
-      <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
-        <View style={[styles.modalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('advanced_search_title')}</Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.scrollView}>
+          <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
             {fieldsMetadata.map(renderFieldInput)}
           </ScrollView>
           <View style={styles.modalFooter}>
@@ -191,21 +190,12 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               <Button onPress={handleSubmit} style={{ backgroundColor: colors.primary }}>{t('common_search')}</Button>
             </View>
           </View>
-        </View>
-      </View>
-    </Modal>
+    </ResponsiveModal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   modalContent: {
-    width: '90%',
-    maxHeight: '80%',
     borderRadius: 10,
     borderWidth: 1,
     padding: 20,

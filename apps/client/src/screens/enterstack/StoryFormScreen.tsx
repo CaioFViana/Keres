@@ -4,8 +4,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, BackHandler, StyleSheet, Switch, Text, View } from 'react-native';
 import Button from '../../components/common/Button/Button';
+import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
@@ -213,13 +214,7 @@ const StoryFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
           <Text style={[styles.title, { color: colors.text }]}>{storyId ? t('edit_story') : t('create_new_story_screen_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {storyId ? t('edit_story_description') : t('create_new_story_screen_description')}
@@ -315,9 +310,7 @@ const StoryFormScreen = () => {
               {t('delete_story_title')}
             </Button>
           )}
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

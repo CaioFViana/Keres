@@ -3,9 +3,10 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import AttributeValueInput from '../../components/common/CustomAttributeFields/AttributeValueInput';
 import Button from '../../components/common/Button/Button';
+import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { ScreenLoading } from '../../components/common/ScreenState/ScreenState';
@@ -170,9 +171,7 @@ const StorySchemaFieldFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={styles.label}>{t('attribute_display_name')}</Text>
           <TextInput
             placeholder={t('attribute_display_name_placeholder')}
@@ -234,9 +233,7 @@ const StorySchemaFieldFormScreen = () => {
           <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
             {saving ? t('saving') : t('save')}
           </Button>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

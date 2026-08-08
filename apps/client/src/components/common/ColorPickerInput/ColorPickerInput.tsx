@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
+import ResponsiveModal from '../../layout/ResponsiveModal/ResponsiveModal';
 import ColorPickerModal from './ColorPickerModal';
 
 
@@ -64,26 +65,11 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
       borderWidth: 0,
       backgroundColor: 'transparent',
     },
-    centeredView: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
     modalView: {
-      margin: 20,
       backgroundColor: colors.background, // Use background for modal content
       borderRadius: 20,
-      padding: 35,
+      padding: 20,
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      elevation: 5,
     },
   });
 
@@ -103,25 +89,19 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
         />
       </View>
 
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <ResponsiveModal
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
+        onClose={() => setModalVisible(false)}
+        contentStyle={styles.modalView}
+        maxHeight="92%"
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <ColorPickerModal
-              currentColor={currentColor}
-              onSelectColor={handleSelectColor}
-              onClose={() => setModalVisible(false)}
-              title={placeholder}
-            />
-          </View>
-        </View>
-      </Modal>
+        <ColorPickerModal
+          currentColor={currentColor}
+          onSelectColor={handleSelectColor}
+          onClose={() => setModalVisible(false)}
+          title={placeholder}
+        />
+      </ResponsiveModal>
     </View>
   );
 };

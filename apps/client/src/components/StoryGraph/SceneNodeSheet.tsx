@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ResponsiveModal from '../layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../theme';
 import { GraphNode } from '../../utils/storyGraphLayout';
 
@@ -42,11 +43,6 @@ const SceneNodeSheet: React.FC<SceneNodeSheetProps> = ({
   const { colors } = useTheme();
 
   const styles = useMemo(() => StyleSheet.create({
-    overlay: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
     sheet: {
       backgroundColor: colors.surface,
       borderTopLeftRadius: 16,
@@ -190,12 +186,7 @@ const SceneNodeSheet: React.FC<SceneNodeSheetProps> = ({
   };
 
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          {/* Impede que o toque dentro do painel feche o painel. */}
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={styles.sheet}>
+    <ResponsiveModal visible onClose={onClose} placement="bottom" contentStyle={styles.sheet} maxHeight="78%">
               <View style={styles.handle} />
 
               <View style={styles.header}>
@@ -249,11 +240,7 @@ const SceneNodeSheet: React.FC<SceneNodeSheetProps> = ({
                   <Text style={styles.openButtonText}>{t('story_map_open_scene')}</Text>
                 </TouchableOpacity>
               </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+    </ResponsiveModal>
   );
 };
 

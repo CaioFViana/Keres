@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Dimensions, Easing, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import ResponsiveModal from '../../layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
 import { getContrastTextColor } from '../../../utils/colorUtils';
 
@@ -14,8 +15,6 @@ interface MultiSelectPillProps {
   noOptionsText?: string;
 }
 
-const { height: screenHeight } = Dimensions.get('window');
-
 const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   options,
   selectedValues,
@@ -26,6 +25,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { height: screenHeight } = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
 
@@ -107,17 +107,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       padding: 5,
       marginLeft: 'auto',
     },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     modalContent: {
       backgroundColor: colors.background,
       borderRadius: 10,
-      width: '90%',
-      maxHeight: screenHeight * 0.7,
       overflow: 'hidden',
     },
     modalHeader: {
@@ -175,55 +167,50 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         <Ionicons name="add-circle" size={24} color={colors.primary} style={{ marginLeft: 'auto' }} />
       </TouchableOpacity>
 
-      <Modal
-        transparent={true}
+      <ResponsiveModal
         visible={modalVisible}
-        onRequestClose={closeModal}
-        animationType="fade"
+        onClose={closeModal}
+        contentStyle={styles.modalContent}
+        maxHeight={Math.min(screenHeight * 0.78, 720)}
       >
-        <TouchableOpacity style={styles.modalOverlay} onPress={closeModal} activeOpacity={1}>
-          <Animated.View
-            style={[
-              styles.modalContent,
+        <Animated.View
+          style={{
+            transform: [
               {
-                transform: [
-                  {
-                    translateY: dropdownAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [screenHeight, 0],
-                    }),
-                  },
-                ],
+                translateY: dropdownAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [screenHeight, 0],
+                }),
               },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{label || t('select_tags')}</Text>
-              <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            <ScrollView>
-              {options.length > 0 ? (
-                options.map(option => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={styles.optionContainer}
-                    onPress={() => toggleOption(option.value)}
-                  >
-                    <Text style={styles.optionText}>{option.label}</Text>
-                    {selectedValues.includes(option.value) && (
-                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
-              )}
-            </ScrollView>
-          </Animated.View>
-        </TouchableOpacity>
-      </Modal>
+            ],
+          }}
+        >
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{label || t('select_tags')}</Text>
+            <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView keyboardShouldPersistTaps="handled">
+            {options.length > 0 ? (
+              options.map(option => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={styles.optionContainer}
+                  onPress={() => toggleOption(option.value)}
+                >
+                  <Text style={styles.optionText}>{option.label}</Text>
+                  {selectedValues.includes(option.value) && (
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
+            )}
+          </ScrollView>
+        </Animated.View>
+      </ResponsiveModal>
     </View>
   );
 };

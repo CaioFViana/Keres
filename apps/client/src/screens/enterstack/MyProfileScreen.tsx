@@ -3,11 +3,12 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
 import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPickerInput';
 import IconPickerInput from '../../components/common/IconPickerInput/IconPickerInput';
+import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
@@ -121,9 +122,7 @@ const MyProfileScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.previewContainer}>
             <Avatar color={avatarColor} icon={avatarIcon} seed={server.idUser} size={96} />
           </View>
@@ -158,9 +157,7 @@ const MyProfileScreen = () => {
           <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
             {saving ? t('saving') : t('save')}
           </Button>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

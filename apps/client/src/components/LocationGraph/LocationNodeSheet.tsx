@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ResponsiveModal from '../layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../theme';
 import { LocationGraphNode } from '../../utils/locationGraphLayout';
 
@@ -41,11 +42,6 @@ const LocationNodeSheet: React.FC<LocationNodeSheetProps> = ({
   const { colors } = useTheme();
 
   const styles = useMemo(() => StyleSheet.create({
-    overlay: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
     sheet: {
       backgroundColor: colors.surface,
       borderTopLeftRadius: 16,
@@ -163,11 +159,7 @@ const LocationNodeSheet: React.FC<LocationNodeSheetProps> = ({
   );
 
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={styles.sheet}>
+    <ResponsiveModal visible onClose={onClose} placement="bottom" contentStyle={styles.sheet} maxHeight="78%">
               <View style={styles.handle} />
 
               <View style={styles.header}>
@@ -216,11 +208,7 @@ const LocationNodeSheet: React.FC<LocationNodeSheetProps> = ({
                   <Text style={styles.openButtonText}>{t('location_graph_open_location')}</Text>
                 </TouchableOpacity>
               </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+    </ResponsiveModal>
   );
 };
 

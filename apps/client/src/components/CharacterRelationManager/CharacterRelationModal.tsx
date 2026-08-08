@@ -3,10 +3,11 @@ import { Character } from '@keres/shared/entities/Character';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../theme';
 import Button from '../common/Button/Button';
 import SuggestionTextInput from '../common/SuggestionTextInput/SuggestionTextInput';
+import ResponsiveModal from '../layout/ResponsiveModal/ResponsiveModal';
 
 interface CharacterRelationModalProps {
   isVisible: boolean;
@@ -80,17 +81,9 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   };
 
   const styles = StyleSheet.create({
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
     modalContent: {
       backgroundColor: colors.background,
       borderRadius: 10,
-      width: '90%',
-      maxHeight: '80%',
       padding: 20,
     },
     modalTitle: {
@@ -141,8 +134,6 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
     characterPickerModalContent: {
       backgroundColor: colors.background,
       borderRadius: 10,
-      width: Dimensions.get('window').width * 0.8,
-      maxHeight: Dimensions.get('window').height * 0.7,
       padding: 10,
     },
     characterPickerItem: {
@@ -167,18 +158,16 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   });
 
   return (
-    <Modal
+    <ResponsiveModal
       visible={isVisible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
+      onClose={onClose}
+      contentStyle={styles.modalContent}
+      maxHeight="86%"
     >
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
           <Text style={styles.modalTitle}>
             {initialRelation ? t('edit_character_relation') : t('add_character_relation_title')}
           </Text>
-          <ScrollView>
+          <ScrollView keyboardShouldPersistTaps="handled">
             <View style={styles.formGroup}>
               <Text style={styles.label}>{t('related_character')}</Text>
               <TouchableOpacity
@@ -216,34 +205,28 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
               {t('save_changes')}
             </Button>
           </View>
-        </View>
-      </TouchableOpacity>
-
-      <Modal
+      <ResponsiveModal
         visible={showCharacterPicker}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowCharacterPicker(false)}
+        onClose={() => setShowCharacterPicker(false)}
+        contentStyle={styles.characterPickerModalContent}
+        maxHeight="78%"
       >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCharacterPicker(false)}>
-          <View style={styles.characterPickerModalContent}>
-            <FlatList
-              data={selectableCharacters}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.characterPickerItem} onPress={() => handleSelectCharacter(item.id)}>
-                  <Text style={styles.characterPickerText}>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={<Text style={styles.noCharactersText}>{t('no_characters_found')}</Text>}
-            />
-            <Button onPress={() => setShowCharacterPicker(false)} style={styles.closeButton}>
-              {t('close')}
-            </Button>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </Modal>
+        <FlatList
+          data={selectableCharacters}
+          keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.characterPickerItem} onPress={() => handleSelectCharacter(item.id)}>
+              <Text style={styles.characterPickerText}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={<Text style={styles.noCharactersText}>{t('no_characters_found')}</Text>}
+        />
+        <Button onPress={() => setShowCharacterPicker(false)} style={styles.closeButton}>
+          {t('close')}
+        </Button>
+      </ResponsiveModal>
+    </ResponsiveModal>
   );
 };
 

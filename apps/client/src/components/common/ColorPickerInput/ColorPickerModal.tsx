@@ -1,18 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, FlatList, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, PanResponder, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, useTheme } from '../../../theme';
 import Button from '../Button/Button';
 
-const { width } = Dimensions.get('window');
-// Capped, not just 70% of window width: on Android/iOS `window` is the device screen (a few
-// hundred px), so 70% is already a sane modal size. On web/Electron `window` is the whole
-// desktop window, which can be 1000px+ - uncapped, this rendered a picker the size of half
-// the screen. The cap is a no-op on any real phone width (70% only exceeds it above ~460px).
-const COLOR_PICKER_SIZE = Math.min(width * 0.7, 320);
 const SLIDER_HEIGHT = 20;
-const COLOR_CIRCLE_SIZE = (COLOR_PICKER_SIZE / 8) - 5; // Adjusted size for 8 columns with some margin
 
 // Define a list of 32 standard colors (8 HUES x 4 variations)
 // HUES: 0 (Red), 45 (Orange), 90 (Yellow-Green), 135 (Green), 180 (Cyan), 225 (Blue), 270 (Purple), 315 (Magenta).
@@ -50,6 +43,9 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   const [value, setValue] = useState(100); // Also known as brightness
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { width: screenWidth } = useWindowDimensions();
+  const colorPickerSize = Math.min(screenWidth * 0.7, 320);
+  const colorCircleSize = (colorPickerSize / 8) - 5;
 
   const saturationValueRef = useRef<View>(null);
   const hueRef = useRef<View>(null);
@@ -137,15 +133,15 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   }, [hue]);
 
   const satValPickerHandlePosition = useCallback(() => {
-    const x = (saturation / 100) * COLOR_PICKER_SIZE;
-    const y = (1 - (value / 100)) * COLOR_PICKER_SIZE; // Invert for UI
+    const x = (saturation / 100) * colorPickerSize;
+    const y = (1 - (value / 100)) * colorPickerSize; // Invert for UI
     return { left: x - 10, top: y - 10 }; // Adjust for handle size
-  }, [saturation, value]);
+  }, [colorPickerSize, saturation, value]);
 
   const hueSliderHandlePosition = useCallback(() => {
-    const x = (hue / 360) * COLOR_PICKER_SIZE;
+    const x = (hue / 360) * colorPickerSize;
     return { left: x - 10 }; // Adjust for handle size
-  }, [hue]);
+  }, [colorPickerSize, hue]);
 
   const handleStandardColorSelect = useCallback((hexColor: string) => {
     const { r, g, b } = hexToRgb(hexColor);
@@ -157,7 +153,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
 
   const styles = StyleSheet.create({
     colorPickerContainer: {
-      width: COLOR_PICKER_SIZE + 40, // Add some padding
+      width: colorPickerSize + 40, // Add some padding
       alignItems: 'center',
       padding: 20,
       backgroundColor: colors.background, // Use background color
@@ -170,8 +166,8 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       textAlign: 'center',
     },
     saturationValuePicker: {
-      width: COLOR_PICKER_SIZE,
-      height: COLOR_PICKER_SIZE,
+      width: colorPickerSize,
+      height: colorPickerSize,
       borderRadius: 5,
       overflow: 'hidden',
       marginBottom: 20,
@@ -190,7 +186,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       shadowRadius: 1,
     },
     hueSlider: {
-      width: COLOR_PICKER_SIZE,
+      width: colorPickerSize,
       height: SLIDER_HEIGHT,
       borderRadius: SLIDER_HEIGHT / 2,
       overflow: 'hidden',
@@ -252,7 +248,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       width: '47%',
     },
     standardColorsContainer: {
-      width: COLOR_PICKER_SIZE,
+      width: colorPickerSize,
       marginTop: 10,
       marginBottom: 20,
       justifyContent: 'center',
@@ -264,9 +260,9 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       justifyContent: 'space-between', // Distribute items evenly
     },
     colorCircle: {
-      width: COLOR_CIRCLE_SIZE,
-      height: COLOR_CIRCLE_SIZE,
-      borderRadius: COLOR_CIRCLE_SIZE / 2,
+      width: colorCircleSize,
+      height: colorCircleSize,
+      borderRadius: colorCircleSize / 2,
       margin: 2.5, // Small margin between circles
       borderWidth: 1,
       borderColor: colors.border,

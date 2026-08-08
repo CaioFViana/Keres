@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useTheme } from '../../../theme';
 import Button from '../Button/Button';
 
@@ -33,19 +33,16 @@ const CELL_MARGIN = 4;
  * modal's available width on narrow phones (the outer `modalView` alone eats ~110dp of
  * margin/padding), clipping the last column of icons.
  */
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Same cap as ColorPickerModal, for the same reason: uncapped, this rendered at 70% of the
-// whole desktop window on web/Electron instead of 70% of a phone screen. No-op on real phones.
-const ICON_GRID_SIZE = Math.min(SCREEN_WIDTH * 0.7, 320);
-const ICON_CELL_SIZE = ICON_GRID_SIZE / NUM_COLUMNS - CELL_MARGIN * 2;
-
 const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelectIcon, onClose, title }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { width: screenWidth } = useWindowDimensions();
+  const iconGridSize = Math.min(screenWidth * 0.7, 320);
+  const iconCellSize = iconGridSize / NUM_COLUMNS - CELL_MARGIN * 2;
 
   const styles = StyleSheet.create({
     container: {
-      width: ICON_GRID_SIZE + 40,
+      width: iconGridSize + 40,
       alignItems: 'center',
       padding: 20,
       backgroundColor: colors.background,
@@ -61,10 +58,10 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({ currentIcon, onSelect
       justifyContent: 'center',
     },
     cell: {
-      width: ICON_CELL_SIZE,
-      height: ICON_CELL_SIZE,
+      width: iconCellSize,
+      height: iconCellSize,
       margin: CELL_MARGIN,
-      borderRadius: ICON_CELL_SIZE / 2,
+      borderRadius: iconCellSize / 2,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surface,

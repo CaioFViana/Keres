@@ -4,8 +4,9 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
+import { ActivityIndicator, StyleSheet, Switch, Text, View } from 'react-native'; // Removed BackHandler
 import { Button, Select, TextInput } from '../../components/ui';
+import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
@@ -571,13 +572,7 @@ const StorySettingsScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
           <Text style={[styles.title, { color: colors.text }]}>{t('story_settings_screen_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('story_settings_screen_description')}
@@ -789,9 +784,7 @@ const StorySettingsScreen = () => {
           <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]} disabled={!canEdit}>
             {t('delete_story_title')}
           </Button>
-        </ScrollView>
-      </TouchableWithoutFeedback>    
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useDrizzle } from '../../../db';
 import { createSuggestionService, SuggestionServiceInterface, SuggestionType } from '../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../theme';
@@ -31,11 +31,13 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const drizzleDb = useDrizzle();
+  const { height: screenHeight } = useWindowDimensions();
   const commonInputStyles = getCommonInputStyles(colors);
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<[string, number][]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Initialize SuggestionService
   const suggestionService: SuggestionServiceInterface | null = useMemo(() => {
@@ -67,16 +69,29 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     fetchSuggestions();
   }, [fetchSuggestions, storyId]);
 
+  const filteredSuggestions = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    if (!query) return suggestions;
+    return suggestions.filter(([suggestion]) => suggestion.toLocaleLowerCase().includes(query));
+  }, [searchQuery, suggestions]);
+
+  const closeSuggestions = useCallback(() => {
+    setShowSuggestions(false);
+    setSearchQuery('');
+  }, []);
+
   const handleToggleSuggestions = () => {
-    setShowSuggestions(prev => !prev);
-    if (!showSuggestions) { // If opening, fetch suggestions
+    if (showSuggestions) {
+      closeSuggestions();
+    } else {
+      setShowSuggestions(true);
       fetchSuggestions();
     }
   };
 
   const handleSelectSuggestion = (suggestion: [string, number]) => {
-    onChangeText(suggestion[0]); // Extract the string value
-    setShowSuggestions(false);
+    onChangeText(suggestion[0]);
+    closeSuggestions();
   };
 
   const styles = StyleSheet.create({
@@ -110,6 +125,10 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     modalContent: {
       padding: 10,
     },
+    searchInput: {
+      width: '100%',
+      marginBottom: 10,
+    },
     suggestionItem: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -137,7 +156,12 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       alignSelf: 'flex-end',
     },
     suggestionsList: {
-      maxHeight: 420,
+      maxHeight: Math.min(screenHeight * 0.56, 520),
+    },
+    loadingContainer: {
+      minHeight: 90,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   });
 
@@ -162,23 +186,36 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
 
       <ResponsiveModal
         visible={showSuggestions}
-        onClose={() => setShowSuggestions(false)}
+        onClose={closeSuggestions}
         contentStyle={styles.modalContent}
+        maxHeight={Math.min(screenHeight * 0.78, 680)}
       >
-        <FlatList
-          style={styles.suggestionsList}
-          data={suggestions}
-          keyExtractor={(item) => item[0]}
-          keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSelectSuggestion(item)}>
-              <Text style={styles.suggestionText}>{item[0]}</Text>
-              {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={<Text style={styles.noSuggestionsText}>{t('no_suggestions_available')}</Text>}
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t('search')}
+          style={styles.searchInput}
         />
-        <Button onPress={() => setShowSuggestions(false)} style={styles.closeButton}>
+        {loadingSuggestions ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            style={styles.suggestionsList}
+            data={filteredSuggestions}
+            keyExtractor={(item) => item[0]}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSelectSuggestion(item)}>
+                <Text style={styles.suggestionText}>{item[0]}</Text>
+                {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={<Text style={styles.noSuggestionsText}>{t('no_suggestions_available')}</Text>}
+          />
+        )}
+        <Button onPress={closeSuggestions} style={styles.closeButton}>
           {t('close')}
         </Button>
       </ResponsiveModal>

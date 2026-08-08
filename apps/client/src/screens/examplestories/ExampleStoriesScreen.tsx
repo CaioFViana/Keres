@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Select from '../../components/common/Select/Select';
+import Select from '@/src/components/common/inputs/Select/Select';
 import { useDrizzle } from '../../db';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { ExampleStoryEntry, ExampleStoryLanguage } from '../../exampleStories/types';

@@ -1,17 +1,17 @@
-import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/Select/Select';
-import SuggestionTextInput from '@/src/components/common/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '@/src/components/common/TextInput/TextInput';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import Select from '@/src/components/common/inputs/Select/Select';
+import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { Item } from '@keres/shared/entities/Item'; // Import Item entity
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
-import NoteManager from '../../components/NoteManager';
+import Button from '@/src/components/common/controls/Button/Button';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';

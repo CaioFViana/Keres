@@ -1,4 +1,4 @@
-import NoteManager from '@/src/components/NoteManager';
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
@@ -6,16 +6,16 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '../../components/common/DetailField/DetailField';
-import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import TagChipList from '../../components/common/TagChipList/TagChipList';
-import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
-import LocationItemManager from '../../components/LocationManager/LocationItemManager'; // Import LocationItemManager
-import LocationSceneManager from '../../components/LocationManager/LocationSceneManager'; // Import LocationSceneManager
-import LocationRelationManager from '../../components/LocationRelationManager/LocationRelationManager';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
+import LocationCharacterManager from '@/src/components/features/locations/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
+import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager'; // Import LocationItemManager
+import LocationSceneManager from '@/src/components/features/locations/LocationManager/LocationSceneManager'; // Import LocationSceneManager
+import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import { useDrizzle } from '../../db';
 import { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect

@@ -4,7 +4,7 @@ import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, StyleSheet, Text, View } from 'react-native';
-import { Button, FormContainer, Select, TextInput } from '../../components/ui';
+import { Button, FormContainer, Select, TextInput } from '@/src/components/common';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { migrate } from '../../db/migrate'; // Import migrate
 import { createClientSettings } from '../../services/ClientSettingsService'; // Import createClientSettings

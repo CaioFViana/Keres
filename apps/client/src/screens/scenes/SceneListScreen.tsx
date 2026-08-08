@@ -5,10 +5,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import SceneListItem from '../../components/listitem/SceneListItem';
-import SceneReorderModal from '../../components/SceneReorderModal/SceneReorderModal'; // Import the modal
+import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import SceneListItem from '@/src/components/features/list-items/SceneListItem';
+import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal'; // Import the modal
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';

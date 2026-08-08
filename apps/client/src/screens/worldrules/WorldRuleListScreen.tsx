@@ -6,9 +6,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import WorldRuleListItem from '../../components/listitem/WorldRuleListItem'; // Will create this later
+import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import WorldRuleListItem from '@/src/components/features/list-items/WorldRuleListItem'; // Will create this later
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { WorldRuleWithTags } from '../../db/schemas/worldRules';

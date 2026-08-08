@@ -1,10 +1,10 @@
-import ChapterSceneManager from '@/src/components/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
-import CustomAttributeDetailFields from '@/src/components/common/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '@/src/components/common/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '@/src/components/common/ScreenState/ScreenState';
-import TagChipList from '@/src/components/common/TagChipList/TagChipList'; // Import TagChipList
-import NoteManager from '@/src/components/NoteManager';
+import ChapterSceneManager from '@/src/components/features/chapters/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import { useDrizzle } from '@/src/db';
 import { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';

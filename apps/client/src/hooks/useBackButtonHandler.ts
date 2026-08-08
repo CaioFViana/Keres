@@ -1,8 +1,8 @@
 import { createElement, useCallback, useEffect } from 'react';
 import { NavigationProp, ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BackHandler, Platform } from 'react-native';
-import NavigationBackButton from '../components/common/NavigationBackButton/NavigationBackButton';
-import NavigationDrawerButton from '../components/common/NavigationDrawerButton/NavigationDrawerButton';
+import NavigationBackButton from '@/src/components/common/navigation/NavigationBackButton/NavigationBackButton';
+import NavigationDrawerButton from '@/src/components/common/navigation/NavigationDrawerButton/NavigationDrawerButton';
 import { useResponsiveLayout } from './useResponsiveLayout';
 
 const findDrawerNavigation = (navigation: NavigationProp<ParamListBase>) => {

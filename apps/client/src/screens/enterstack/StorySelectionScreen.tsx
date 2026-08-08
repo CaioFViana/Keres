@@ -6,7 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
+import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db';
 import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';

@@ -6,8 +6,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import OperationLogList from '../../components/OperationLogList/OperationLogList'; // Import OperationLogList
-import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
+import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList'; // Import OperationLogList
+import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import * as schema from '../../db/schema';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList

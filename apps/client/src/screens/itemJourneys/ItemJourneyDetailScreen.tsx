@@ -4,11 +4,11 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import DetailField from '../../components/common/DetailField/DetailField';
-import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import NoteManager from '../../components/NoteManager';
-import TagChipList from '../../components/common/TagChipList/TagChipList';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

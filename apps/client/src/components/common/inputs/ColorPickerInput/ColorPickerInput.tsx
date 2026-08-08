@@ -1,0 +1,109 @@
+import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useTheme } from '../../../../theme';
+import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/ColorPickerModal';
+
+
+interface ColorPickerInputProps {
+  onSelectColor: (color: string) => void;
+  currentColor: string;
+  placeholder?: string;
+  style?: any;
+}
+
+const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
+  onSelectColor,
+  currentColor,
+  placeholder,
+  style,
+}) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const { colors } = useTheme();
+  const commonInputStyles = getCommonInputStyles(colors);
+
+  const handleSelectColor = (color: string) => {
+    onSelectColor(color);
+    setModalVisible(false);
+  };
+
+  const styles = StyleSheet.create({
+    container: {
+      marginBottom: 10,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 5,
+      backgroundColor: colors.surface,
+      minHeight: 50
+    },
+    colorSwatchButton: {
+      width: 50,
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 5,
+      backgroundColor: currentColor || colors.border,
+    },
+    colorSwatchInner: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.text,
+    },
+    textInput: {
+      flex: 1,
+      color: colors.text, // Ensure text is visible
+      paddingHorizontal: 10, // Apply padding here instead of inputWrapper
+      // Remove border, background, and padding from here, as inputWrapper handles it
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+    },
+    modalView: {
+      backgroundColor: colors.background, // Use background for modal content
+      borderRadius: 20,
+      padding: 20,
+      alignItems: 'center',
+    },
+  });
+
+  return (
+    <View style={[styles.container, style, commonInputStyles.input, commonInputStyles.customComponentInput]}>
+      <View style={[styles.inputWrapper]}>
+        <Pressable style={styles.colorSwatchButton} onPress={() => setModalVisible(true)}>
+            {/* Display color palette icon */}
+            <Ionicons name={currentColor ? "color-palette" : "color-palette-outline"} size={20} color={colors.text} />
+        </Pressable>
+        <TextInput
+          style={[commonInputStyles.input, styles.textInput]}
+          value={currentColor}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textSecondary}
+          editable={false}
+        />
+      </View>
+
+      <ResponsiveModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        contentStyle={styles.modalView}
+        maxHeight="92%"
+      >
+        <ColorPickerModal
+          currentColor={currentColor}
+          onSelectColor={handleSelectColor}
+          onClose={() => setModalVisible(false)}
+          title={placeholder}
+        />
+      </ResponsiveModal>
+    </View>
+  );
+};
+
+export default ColorPickerInput;

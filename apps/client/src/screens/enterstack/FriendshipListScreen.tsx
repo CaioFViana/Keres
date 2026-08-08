@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Avatar from '../../components/common/Avatar/Avatar';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';

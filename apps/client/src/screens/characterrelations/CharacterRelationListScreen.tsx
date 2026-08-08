@@ -5,9 +5,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import CharacterRelationListItem from '../../components/listitem/CharacterRelationListItem';
+import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import CharacterRelationListItem from '@/src/components/features/list-items/CharacterRelationListItem';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { CharacterRelationsStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Assuming CharacterRelationsStackParamList exists

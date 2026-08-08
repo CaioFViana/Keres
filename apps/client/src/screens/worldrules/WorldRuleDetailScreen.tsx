@@ -3,12 +3,12 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '../../components/common/DetailField/DetailField';
-import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import TagChipList from '../../components/common/TagChipList/TagChipList';
-import NoteManager from '../../components/NoteManager';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import { useDrizzle } from '../../db';
 import { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

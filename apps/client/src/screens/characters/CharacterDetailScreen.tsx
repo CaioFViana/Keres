@@ -7,17 +7,17 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CharacterLocationManager from '../../components/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
-import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
-import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
-import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '../../components/common/DetailField/DetailField';
-import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import TagChipList from '../../components/common/TagChipList/TagChipList';
-import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import ItemCharacterManager from '../../components/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
-import NoteManager from '../../components/NoteManager'; // Import NoteManager
+import CharacterLocationManager from '@/src/components/features/characters/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
+import CharacterSceneManager from '@/src/components/features/characters/CharacterManager/CharacterSceneManager'; // The manager component
+import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
+import ItemCharacterManager from '@/src/components/features/items/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
+import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema'; // For available scenes
 import { CharacterSelect } from '../../db/schemas/characters';

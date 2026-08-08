@@ -3,7 +3,7 @@ import { GALLERY_OWNER_ENTITIES, GalleryOwnerEntity } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GroupedMultiSelectGroup } from '../components/common/GroupedMultiSelectPill/GroupedMultiSelectPill';
+import { GroupedMultiSelectGroup } from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
 import { useDrizzle } from '../db';
 import * as schema from '../db/schema';
 

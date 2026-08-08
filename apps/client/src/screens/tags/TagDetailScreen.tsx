@@ -4,10 +4,10 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import DetailField from '../../components/common/DetailField/DetailField';
-import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
-import RelatedEntitiesList from '../../components/common/RelatedEntitiesList/RelatedEntitiesList';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

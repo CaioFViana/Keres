@@ -5,8 +5,8 @@ import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Switch, Text, View } from 'react-native'; // Removed BackHandler
-import { Button, Select, TextInput } from '../../components/ui';
-import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import { Button, Select, TextInput } from '@/src/components/common';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler

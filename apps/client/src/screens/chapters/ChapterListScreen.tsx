@@ -5,10 +5,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import ChapterReorderModal from '../../components/ChapterReorderModal/ChapterReorderModal'; // Import the modal
-import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import ChapterListItem from '../../components/listitem/ChapterListItem';
+import ChapterReorderModal from '@/src/components/features/chapters/ChapterReorderModal/ChapterReorderModal'; // Import the modal
+import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import ChapterListItem from '@/src/components/features/list-items/ChapterListItem';
 import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';

@@ -4,12 +4,14 @@
 import migration_1 from './0000_curly_mockingbird';
 import migration_2 from './0001_lethal_landau';
 import migration_3 from './0002_purple_bloodscream';
+import migration_4 from './0003_loose_omega_red';
 
 
 const migrations = [
 { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
   { id: 2, name: '0001_lethal_landau', run: migration_2 },
   { id: 3, name: '0002_purple_bloodscream', run: migration_3 },
+  { id: 4, name: '0003_loose_omega_red', run: migration_4 },
 ];
 
 export default migrations;

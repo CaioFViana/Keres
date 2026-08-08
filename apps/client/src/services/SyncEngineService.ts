@@ -1,4 +1,4 @@
-import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, EffectiveStoryRole, StoryReorderingStoryUpdate, StoryUpdate, SyncConflict as SharedSyncConflict, SyncPushResult, UpdateStoryUpdate } from '@keres/shared';
+import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, EffectiveStoryRole, Favorite, StoryReorderingStoryUpdate, StoryUpdate, SyncConflict as SharedSyncConflict, SyncPushResult, UpdateStoryUpdate } from '@keres/shared';
 import { and, asc, eq, isNull, lte, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
@@ -511,10 +511,10 @@ export class SyncEngineService {
 
       // 2. Pull remote updates first (since the latest known server version)
       console.log(`Pulling remote updates for story ${this.storyId} since version ${lastSyncedLog}...`);
-      const pullResponse = await this.client.get<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: 'owner' | 'writer' | 'reader' }>(
+      const pullResponse = await this.client.get<{ updates: StoryUpdate[]; publicFavorites?: Favorite[]; serverMaxOperationVersion: number; role: 'owner' | 'writer' | 'reader' }>(
         `/sync/${this.storyId}/pull?lastOperationVersion=${lastSyncedLog}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}`,
       );
-      const { updates: remoteUpdates, role: myRole } = pullResponse.data;
+      const { updates: remoteUpdates, publicFavorites = [], role: myRole } = pullResponse.data;
 
       /**
        * Avançamos o marcador apenas até a operação mais alta que realmente chegou, e não
@@ -691,6 +691,47 @@ export class SyncEngineService {
         entityEventEmitter.emit('operation_log_updated', this.storyId);
       } else {
         console.log(`No new remote updates for story ${this.storyId} since version ${lastSyncedLog}`);
+      }
+
+      // O snapshot público é a fonte autoritativa para favoritos dos colaboradores.
+      // Ele fecha lacunas deixadas por histórias importadas sem logs antigos e por cursores
+      // de clientes que já tinham avançado antes de a visibilidade pública ser ativada.
+      // O servidor exclui as linhas do usuário atual para não sobrescrever uma alteração
+      // local dele que ainda será enviada na etapa seguinte deste mesmo ciclo.
+      if (publicFavorites.length > 0) {
+        const favoriteHandler = this.entityHandlers.get('Favorite');
+        if (!favoriteHandler) {
+          throw new Error('Favorite sync handler is not registered.');
+        }
+
+        for (const favorite of publicFavorites) {
+          const localFavorite = await favoriteHandler.getById(favorite.id) as Favorite | undefined;
+          const changed = !localFavorite
+            || localFavorite.version !== favorite.version
+            || localFavorite.isDeleted !== favorite.isDeleted
+            || localFavorite.entityId !== favorite.entityId
+            || localFavorite.entityType !== favorite.entityType
+            || localFavorite.userId !== favorite.userId;
+          if (!changed) continue;
+
+          await this.applyRemoteCreate({
+            type: 'create',
+            entity: 'Favorite',
+            id: favorite.id,
+            data: favorite,
+            version: favorite.version,
+          } as CreateStoryUpdate, favoriteHandler);
+
+          entityEventEmitter.emit(
+            'favorite_changed',
+            this.storyId,
+            favorite.entityType,
+            favorite.entityId,
+            favorite.userId,
+          );
+          const targetEvent = FAVORITE_TARGET_EVENTS[favorite.entityType];
+          if (targetEvent) entityEventEmitter.emit(targetEvent, this.storyId, favorite.entityId);
+        }
       }
 
       // 3. Fetch pending local operations (after applying remote updates to bring local DB up to date)

@@ -1,5 +1,5 @@
 import { EnrichedFriendship, Friendship, FriendStatus } from '@keres/shared';
-import { and, eq, or, sql } from 'drizzle-orm';
+import { and, eq, ne, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { ulid } from 'ulid';
 import { db } from '../db';
@@ -12,6 +12,25 @@ import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 export class FriendshipService {
   private notifyChanged(...userIds: string[]): void {
     for (const userId of new Set(userIds)) emitUserEvent(userId, { type: 'friendships.changed' });
+  }
+
+  /**
+   * Profile data is embedded in the enriched friendship payload consumed by clients.
+   * Notify both sides whenever one profile changes so every connected device refreshes
+   * that payload and its local user/avatar cache immediately.
+   */
+  async notifyProfileChanged(userId: string): Promise<void> {
+    const related = await db.select({
+      senderId: friendships.senderId,
+      receiverId: friendships.receiverId,
+    }).from(friendships).where(and(
+      or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)),
+      ne(friendships.status, FriendStatus.BLACKLISTED),
+    ));
+    const affectedUserIds = related.map((friendship) => (
+      friendship.senderId === userId ? friendship.receiverId : friendship.senderId
+    ));
+    this.notifyChanged(userId, ...affectedUserIds);
   }
   private async checkUserExistence(userId: string): Promise<void> {
     const userExists = await db.query.users.findFirst({

@@ -37,8 +37,8 @@ const CLIENT_DIST = app.isPackaged
 // electron-builder.yml's win/mac/linux.icon, which converts this same source PNG to
 // .ico/.icns automatically at package time.
 const APP_ICON = app.isPackaged
-  ? path.join(process.resourcesPath, 'icon.png')
-  : path.join(__dirname, '..', '..', 'client', 'assets', 'images', 'icon.png');
+  ? path.join(process.resourcesPath, 'desktop_icon.png')
+  : path.join(__dirname, '..', '..', 'client', 'assets', 'images', 'desktop_icon.png');
 
 const SCHEME = 'app';
 

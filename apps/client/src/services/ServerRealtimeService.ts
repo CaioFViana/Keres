@@ -55,6 +55,12 @@ export class ServerRealtimeService {
       socket.onopen = () => {
         console.log(`Realtime connected: ${this.server.name}`);
         if (this.storyId) socket.send(JSON.stringify({ type: 'subscribe', storyId: this.storyId }));
+        // WebSocket events are intentionally ephemeral. Refresh once on every connection so
+        // profile/friendship changes made while this device was offline are not left stale
+        // merely because their notification was missed.
+        void createFriendshipService(this.db)
+          .syncFriendshipsWithServer(this.userId, this.server)
+          .catch((error) => console.log('Realtime friendship refresh failed:', (error as Error)?.message || error));
       };
       socket.onmessage = (event) => this.handleEvent(event.data as string);
       socket.onerror = () => socket.close();

@@ -1,9 +1,9 @@
 import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, EffectiveStoryRole, StoryReorderingStoryUpdate, StoryUpdate, SyncAppliedOperation, SyncConflict, UpdateStoryUpdate } from '@keres/shared';
-import { and, eq, gt, max, or, sql } from 'drizzle-orm';
+import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
 import { db } from '../db';
-import { operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
+import { favorites, operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/errors';
@@ -302,6 +302,62 @@ export class SyncService {
   }
 
   /**
+   * Histórias enviadas ao servidor como snapshot podem já conter favoritos. Essas linhas
+   * não passaram pelo SyncService e, portanto, não possuem uma operação que os outros
+   * colaboradores possam receber. Ao tornar os favoritos públicos, materializamos uma
+   * operação de criação para cada linha ainda sem histórico.
+   *
+   * O bloqueio da Story serializa dois pulls que tentem fazer a reparação ao mesmo tempo.
+   * O id do log continua sendo um ULID normal; a detecção é feita pelo id da entidade.
+   */
+  private async ensurePublicFavoriteOperationLogs(storyId: string): Promise<{ count: number; maxOperationVersion: number }> {
+    return await db.transaction(async (tx) => {
+      await tx.execute(sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`);
+
+      const [favoriteRows, loggedFavoriteRows, maxVersionRows] = await Promise.all([
+        tx.select().from(favorites).where(and(
+          eq(favorites.storyId, storyId),
+          eq(favorites.isDeleted, false),
+        )),
+        tx.select({ entityId: operationLog.entityId }).from(operationLog).where(and(
+          eq(operationLog.storyId, storyId),
+          eq(operationLog.entityType, 'Favorite'),
+          eq(operationLog.operationType, 'create'),
+        )),
+        tx.select({ maxVersion: max(operationLog.operationVersion) })
+          .from(operationLog)
+          .where(eq(operationLog.storyId, storyId)),
+      ]);
+
+      const loggedIds = new Set(loggedFavoriteRows.map((row) => row.entityId));
+      const missingFavorites = favoriteRows.filter((favorite) => !loggedIds.has(favorite.id));
+      let nextOperationVersion = maxVersionRows.at(0)?.maxVersion || 0;
+
+      for (const favorite of missingFavorites) {
+        nextOperationVersion += 1;
+        await tx.insert(operationLog).values({
+          id: ulid(),
+          storyId,
+          userId: favorite.userId,
+          operationVersion: nextOperationVersion,
+          operationType: 'create',
+          entityType: 'Favorite',
+          entityId: favorite.id,
+          payload: {
+            entityId: favorite.entityId,
+            entityType: favorite.entityType,
+            userId: favorite.userId,
+          },
+          entityVersion: favorite.version,
+          createdAt: favorite.createdAt,
+        });
+      }
+
+      return { count: missingFavorites.length, maxOperationVersion: nextOperationVersion };
+    });
+  }
+
+  /**
    * Grava uma operação no log já com o próximo `operationVersion` da história.
    *
    * A numeração é calculada dentro do próprio INSERT em vez de lida antes em JavaScript,
@@ -363,7 +419,7 @@ export class SyncService {
     storyId: string,
     lastOperationVersion: number,
     lastPublicFavoriteVersion: number = 0,
-  ): Promise<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: EffectiveStoryRole }> {
+  ): Promise<{ updates: StoryUpdate[]; publicFavorites: typeof favorites.$inferSelect[]; serverMaxOperationVersion: number; role: EffectiveStoryRole }> {
     // Authorization check
     const story = await db.query.stories.findFirst({
       where: eq(stories.id, storyId),
@@ -385,6 +441,22 @@ export class SyncService {
 
     if (!role) {
       throw new AppError(403, 'Unauthorized: User does not have read permission for this story.');
+    }
+
+    if (story.favoriteBehavior === 'individual_public') {
+      const repairedFavorites = await this.ensurePublicFavoriteOperationLogs(storyId);
+      if (repairedFavorites.count > 0) {
+        logger.info('Created missing operation logs for public favorites', {
+          storyId,
+          count: repairedFavorites.count,
+        });
+        eventManager.emit(`storyUpdate:${storyId}`, {
+          type: 'story_update',
+          storyId,
+          updates: repairedFavorites.count,
+          maxOperationVersion: repairedFavorites.maxOperationVersion,
+        });
+      }
     }
 
     const operationsAfterMainCursor = await db.query.operationLog.findMany({
@@ -563,7 +635,20 @@ export class SyncService {
       .where(eq(operationLog.storyId, storyId))
     ).at(0)?.maxVersion || 0;
 
-    return { updates, serverMaxOperationVersion, role };
+    // O log continua sendo usado para realtime e para a tela de operações, mas não é
+    // uma fonte confiável para reconstruir snapshots importados antes da existência dos
+    // favoritos públicos. Enviar o estado autoritativo dos *outros* usuários faz cada
+    // cliente convergir sem tocar em um favorito próprio que ainda esteja pendente de push.
+    const publicFavorites = story.favoriteBehavior === 'individual_public'
+      ? await db.query.favorites.findMany({
+          where: and(
+            eq(favorites.storyId, storyId),
+            ne(favorites.userId, userId),
+          ),
+        })
+      : [];
+
+    return { updates, publicFavorites, serverMaxOperationVersion, role };
   }
 
   async getStoriesWithLastOperationVersionForUser(userId: string): Promise<{ storyId: string; lastOperationVersion: number; role: EffectiveStoryRole }[]> {

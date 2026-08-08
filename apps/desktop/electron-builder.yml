@@ -19,8 +19,8 @@ extraResources:
   # For main.ts's runtime window/dock icon (APP_ICON) in the packaged app - the source tree
   # isn't shipped, so it needs its own copy alongside client-dist rather than reaching into
   # ../client/assets directly.
-  - from: ../client/assets/images/icon.png
-    to: icon.png
+  - from: ../client/assets/images/desktop_icon.png
+    to: desktop_icon.png
 # win/mac/linux icon below is a single 1024x1024 PNG - electron-builder converts it to
 # .ico/.icns automatically at package time (via app-builder-bin's "icon" command), so no
 # pre-generated multi-resolution icon files are needed.
@@ -37,7 +37,7 @@ extraResources:
 #     APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID secrets electron-builder's notarization
 #     step reads - see https://www.electron.build/code-signing for the exact env var names.
 win:
-  icon: ../client/assets/images/icon.png
+  icon: ../client/assets/images/desktop_icon.png
   target:
     - nsis # installer
     - portable # single .exe, no installation
@@ -50,12 +50,12 @@ nsis:
 portable:
   artifactName: 'Keres-Portable-${version}.${ext}'
 mac:
-  icon: ../client/assets/images/icon.png
+  icon: ../client/assets/images/desktop_icon.png
   category: public.app-category.productivity
   target:
     - dmg
 linux:
-  icon: ../client/assets/images/icon.png
+  icon: ../client/assets/images/desktop_icon.png
   category: Office
   target:
     - AppImage

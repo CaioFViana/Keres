@@ -1,10 +1,10 @@
 import { FavoriteEntityType } from '@keres/shared';
-import { and, eq, or } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
-import { friendships, servers, stories } from '../../../../db/schema';
+import { servers, stories, users } from '../../../../db/schema';
 import { friendshipApiService } from '../../../../services/FriendshipApiService';
 import { createFavoriteService } from '../../../../services/storymanagement/FavoriteService';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
@@ -42,26 +42,29 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
     userId: string,
     storyServer: typeof servers.$inferSelect | undefined,
   ): Promise<FavoriterProfile> => {
-    if ((!storyServer && userId === localUserId) || storyServer?.idUser === userId) {
+    const isCurrentUser = (!storyServer && userId === localUserId) || storyServer?.idUser === userId;
+    // Friendship sync keeps this local user row enriched with the friend's current name,
+    // icon and color. Prefer it over the network cache so a realtime refresh is immediately
+    // reflected by every FavoritedByList already mounted.
+    const localProfile = await db.query.users.findFirst({
+      where: eq(users.idUser, userId),
+      columns: { displayName: true, avatarColor: true, avatarIcon: true },
+    });
+    if (localProfile) {
       return {
         id: userId,
-        name: storyServer?.userName || localUsername || t('user_not_found'),
-        isCurrentUser: true,
+        name: localProfile.displayName || (isCurrentUser ? storyServer?.userName || localUsername : undefined) || t('user_not_found'),
+        avatarColor: localProfile.avatarColor,
+        avatarIcon: localProfile.avatarIcon,
+        isCurrentUser,
       };
     }
 
-    if (storyServer) {
-      const friendship = await db.query.friendships.findFirst({
-        where: and(
-          eq(friendships.serverId, storyServer.id),
-          or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)),
-        ),
-        columns: { friendUsername: true },
-      });
-      if (friendship) {
-        return { id: userId, name: friendship.friendUsername, isCurrentUser: false };
-      }
+    if (!storyServer && isCurrentUser) {
+      return { id: userId, name: localUsername || t('user_not_found'), isCurrentUser: true };
+    }
 
+    if (storyServer) {
       const cacheKey = `${storyServer.id}:${userId}`;
       let request = remoteProfileCache.get(cacheKey);
       if (!request) {
@@ -80,10 +83,10 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
         remoteProfileCache.set(cacheKey, request);
       }
       const remoteProfile = await request;
-      if (remoteProfile) return remoteProfile;
+      if (remoteProfile) return { ...remoteProfile, isCurrentUser };
     }
 
-    return { id: userId, name: userId, isCurrentUser: false };
+    return { id: userId, name: userId, isCurrentUser };
   }, [db, localUserId, localUsername, t]);
 
   const fetchFavoriters = useCallback(async () => {
@@ -127,11 +130,17 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
     const handleStoryChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) fetchFavoriters();
     };
+    const handleFriendshipChange = () => {
+      remoteProfileCache.clear();
+      fetchFavoriters();
+    };
     entityEventEmitter.on('favorite_changed', handleFavoriteChange);
     entityEventEmitter.on('story_changed', handleStoryChange);
+    entityEventEmitter.on('friendship_changed', handleFriendshipChange);
     return () => {
       entityEventEmitter.off('favorite_changed', handleFavoriteChange);
       entityEventEmitter.off('story_changed', handleStoryChange);
+      entityEventEmitter.off('friendship_changed', handleFriendshipChange);
     };
   }, [entityId, entityType, fetchFavoriters, storyId]);
 

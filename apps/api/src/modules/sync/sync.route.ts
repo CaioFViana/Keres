@@ -48,7 +48,7 @@ export const syncRoute = new Elysia()
     const { storyId } = params;
     const { lastOperationVersion, lastPublicFavoriteVersion } = query;
 
-    const { updates, serverMaxOperationVersion, role } = await syncService.getUpdatesForStory(
+    const { updates, publicFavorites, serverMaxOperationVersion, role } = await syncService.getUpdatesForStory(
       user.userId,
       storyId,
       lastOperationVersion,
@@ -60,6 +60,7 @@ export const syncRoute = new Elysia()
     return {
       message: `Pull request received for story ${storyId}`,
       updates: updates,
+      publicFavorites,
       serverMaxOperationVersion: serverMaxOperationVersion, // Include the server's max operation version
       role,
     };
@@ -79,6 +80,7 @@ export const syncRoute = new Elysia()
     response: t.Object({ // Update the response schema
       message: t.String(),
       updates: t.Array(t.Any()), // updates are StoryUpdate objects, using t.Any() for simplicity, can be more specific
+      publicFavorites: t.Array(t.Any()),
       serverMaxOperationVersion: t.Number(),
       role: t.Union([t.Literal('owner'), t.Literal('writer'), t.Literal('reader')]),
     }),

@@ -169,6 +169,7 @@ const StorySelectionScreen = () => {
       const itemCount = await storyService.getItemCount();
       const galleryCount = await storyService.getGalleryCount();
       const tagCount = await storyService.getTagCount();
+      const customAttributeCount = await storyService.getCustomAttributeCount();
       const branchingStoryForkCount = await storyService.getBranchingStoryForkCount();
 
       updateSummary({
@@ -184,6 +185,7 @@ const StorySelectionScreen = () => {
         itemCount,
         galleryCount,
         tagCount,
+        customAttributeCount,
         branchingStoryForkCount,
       });
     } catch (error) {

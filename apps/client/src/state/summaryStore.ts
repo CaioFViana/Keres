@@ -14,6 +14,7 @@ interface StorySummary {
   itemCount: number;
   galleryCount: number;
   tagCount: number;
+  customAttributeCount: number;
 }
 
 interface SummaryState {

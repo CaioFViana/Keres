@@ -138,6 +138,7 @@ export interface StoryService {
   getItemCount(storyId?: string): Promise<number>;
   getGalleryCount(storyId?: string): Promise<number>;
   getTagCount(storyId?: string): Promise<number>;
+  getCustomAttributeCount(storyId?: string): Promise<number>;
 
   // New creation methods using Create<T>
   createCharacter(currentUserId: string, characterData: Create<CharacterInsert>): Promise<CharacterSelect>;
@@ -153,7 +154,7 @@ export interface StoryService {
   checkLinearCompatibility(storyId: string): Promise<LinearCompatibilityResult>;
   convertStoryType(currentUserId: string, storyId: string, targetType: 'linear' | 'branching'): Promise<void>;
   unlinkFromServer(currentUserId: string, storyId: string): Promise<void>;
-  getBranchingStoryForkCount(): Promise<number>;
+  getBranchingStoryForkCount(storyId?: string): Promise<number>;
   importFullStory(userId: string, fullStoryData: FullStoryExportType, queriedServerId: string | null, role?: EffectiveStoryRole | null, localMediaPaths?: Map<string, string>): Promise<string>;
   exportFullStory(storyId: string): Promise<FullStoryExportType>;
 }
@@ -240,7 +241,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const result = await db.select({ count: count() }).from(choices)
         .innerJoin(scenes, eq(choices.sceneId, scenes.id))
         .innerJoin(stories, eq(scenes.storyId, stories.id))
-        .where(storyId ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(choices.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(choices.isDeleted, false)))
+        .where(storyId
+          ? and(eq(stories.id, storyId), eq(stories.isDeleted, false), eq(scenes.isDeleted, false), eq(choices.isDeleted, false))
+          : and(eq(stories.isDeleted, false), eq(scenes.isDeleted, false), eq(choices.isDeleted, false)))
         .get();
       return result?.count || 0;
     },
@@ -305,6 +308,16 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const result = await db.select({ count: count() }).from(tags)
         .innerJoin(stories, eq(tags.storyId, stories.id))
         .where(storyId ? and(eq(tags.storyId, storyId), eq(stories.isDeleted, false), eq(tags.isDeleted, false)) : and(eq(stories.isDeleted, false), eq(tags.isDeleted, false)))
+        .get();
+      return result?.count || 0;
+    },
+
+    async getCustomAttributeCount(storyId?: string): Promise<number> {
+      const result = await db.select({ count: count() }).from(storySchemaFields)
+        .innerJoin(stories, eq(storySchemaFields.storyId, stories.id))
+        .where(storyId
+          ? and(eq(storySchemaFields.storyId, storyId), eq(stories.isDeleted, false), eq(storySchemaFields.isDeleted, false))
+          : and(eq(stories.isDeleted, false), eq(storySchemaFields.isDeleted, false)))
         .get();
       return result?.count || 0;
     },
@@ -616,14 +629,16 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       await this.updateStory(currentUserId, storyId, { serverId: null });
     },
 
-    async getBranchingStoryForkCount(): Promise<number> {
+    async getBranchingStoryForkCount(storyId?: string): Promise<number> {
       const result = await db.select({
         count: count(scenes.id)
       })
         .from(scenes)
         .innerJoin(stories, eq(scenes.storyId, stories.id))
-        .leftJoin(choices, eq(scenes.id, choices.sceneId))
-        .where(and(eq(stories.type, 'branching'), eq(stories.isDeleted, false)))
+        .leftJoin(choices, and(eq(scenes.id, choices.sceneId), eq(choices.isDeleted, false)))
+        .where(storyId
+          ? and(eq(stories.id, storyId), eq(stories.type, 'branching'), eq(stories.isDeleted, false), eq(scenes.isDeleted, false))
+          : and(eq(stories.type, 'branching'), eq(stories.isDeleted, false), eq(scenes.isDeleted, false)))
         .groupBy(scenes.id)
         .having(sql`count(${choices.id}) > 1`)
         .all();

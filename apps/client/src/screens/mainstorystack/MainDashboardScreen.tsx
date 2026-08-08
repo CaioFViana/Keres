@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer'; // Import DrawerNavigationProp
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { eq, gt, sql } from 'drizzle-orm'; // Added sql for subquery
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
@@ -9,9 +8,9 @@ import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'rea
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList'; // Import OperationLogList
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db'; // Import useDrizzle
-import * as schema from '../../db/schema';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
+import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
@@ -39,6 +38,7 @@ const MainDashboardScreen = () => {
   const [itemCount, setItemCount] = useState<number | undefined>(undefined);
   const [galleryCount, setGalleryCount] = useState<number | undefined>(undefined);
   const [tagCount, setTagCount] = useState<number | undefined>(undefined);
+  const [customAttributeCount, setCustomAttributeCount] = useState<number | undefined>(undefined);
   const [forkCount, setForkCount] = useState<number | undefined>(undefined); // New state for fork count
   const [analysisIssueCount, setAnalysisIssueCount] = useState<number | undefined>(undefined);
 
@@ -92,54 +92,48 @@ const MainDashboardScreen = () => {
   const fetchCounts = useCallback(async () => {
     if (selectedStory?.id && db) {
       try {
-        const characters = await db.select().from(schema.characters).where(eq(schema.characters.storyId, selectedStory.id)).execute();
-        setCharacterCount(characters.length);
+        const storyService = createStoryService(db);
+        const storyId = selectedStory.id;
+        const [
+          characters,
+          locations,
+          chapters,
+          scenes,
+          choices,
+          notes,
+          worldRules,
+          items,
+          galleryItems,
+          tags,
+          customAttributes,
+          forks,
+        ] = await Promise.all([
+          storyService.getCharacterCount(storyId),
+          storyService.getLocationCount(storyId),
+          storyService.getChapterCount(storyId),
+          storyService.getSceneCount(storyId),
+          storyService.getChoiceCount(storyId),
+          storyService.getNoteCount(storyId),
+          storyService.getWorldRuleCount(storyId),
+          storyService.getItemCount(storyId),
+          storyService.getGalleryCount(storyId),
+          storyService.getTagCount(storyId),
+          storyService.getCustomAttributeCount(storyId),
+          storyService.getBranchingStoryForkCount(storyId),
+        ]);
 
-        const locations = await db.select().from(schema.locations).where(eq(schema.locations.storyId, selectedStory.id)).execute();
-        setLocationCount(locations.length);
-
-        const chapters = await db.select().from(schema.chapters).where(eq(schema.chapters.storyId, selectedStory.id)).execute();
-        setChapterCount(chapters.length);
-
-        const scenes = await db.select().from(schema.scenes).where(eq(schema.scenes.storyId, selectedStory.id)).execute();
-        setSceneCount(scenes.length);
-
-        const choices = await db.select().from(schema.choices).where(eq(schema.choices.storyId, selectedStory.id)).execute();
-        setChoiceCount(choices.length);
-
-        const notes = await db.select().from(schema.notes).where(eq(schema.notes.storyId, selectedStory.id)).execute();
-        setNoteCount(notes.length);
-
-        const worldRules = await db.select().from(schema.worldRules).where(eq(schema.worldRules.storyId, selectedStory.id)).execute();
-        setWorldRuleCount(worldRules.length);
-
-        const items = await db.select().from(schema.items).where(eq(schema.items.storyId, selectedStory.id)).execute();
-        setItemCount(items.length);
-
-        const galleryItems = await db.select().from(schema.galleries).where(eq(schema.galleries.storyId, selectedStory.id)).execute();
-        setGalleryCount(galleryItems.length);
-
-        const tags = await db.select().from(schema.tags).where(eq(schema.tags.storyId, selectedStory.id)).execute();
-        setTagCount(tags.length);
-
-        // Calculate forkCount: scenes with more than one choice using a subquery
-        const subquery = db
-          .select({
-            sceneId: schema.choices.sceneId,
-            choiceCount: sql<number>`count(${schema.choices.id})`.as('choice_count'), // Use sql.raw for count and .as()
-          })
-          .from(schema.choices)
-          .where(eq(schema.choices.storyId, selectedStory.id))
-          .groupBy(schema.choices.sceneId)
-          .as('subquery_scene_choices'); // Give the subquery an alias
-
-        const scenesWithMultipleChoices = await db
-          .select({ sceneId: subquery.sceneId })
-          .from(subquery)
-          .where(gt(subquery.choiceCount, 1)) // Filter on the aliased count
-          .execute();
-
-        setForkCount(scenesWithMultipleChoices.length);
+        setCharacterCount(characters);
+        setLocationCount(locations);
+        setChapterCount(chapters);
+        setSceneCount(scenes);
+        setChoiceCount(choices);
+        setNoteCount(notes);
+        setWorldRuleCount(worldRules);
+        setItemCount(items);
+        setGalleryCount(galleryItems);
+        setTagCount(tags);
+        setCustomAttributeCount(customAttributes);
+        setForkCount(forks);
 
       } catch (error) {
         console.error('Error fetching entity counts:', error);
@@ -155,6 +149,7 @@ const MainDashboardScreen = () => {
       setItemCount(undefined);
       setGalleryCount(undefined);
       setTagCount(undefined);
+      setCustomAttributeCount(undefined);
       setForkCount(undefined); // Reset forkCount if no story selected
     }
   }, [selectedStory?.id, db]);
@@ -173,13 +168,12 @@ const MainDashboardScreen = () => {
     }
   }, [selectedStory?.id, db]);
 
-  useEffect(() => {
-    runAnalysis();
-  }, [runAnalysis]);
-
-  useEffect(() => {
-    fetchCounts();
-  }, [fetchCounts]); // Re-run fetchCounts if selectedStory or db changes
+  useFocusEffect(
+    useCallback(() => {
+      fetchCounts();
+      runAnalysis();
+    }, [fetchCounts, runAnalysis])
+  );
 
   useEffect(() => {
     const handleRemoteChange = (change: { storyId?: string }) => {
@@ -286,6 +280,7 @@ const MainDashboardScreen = () => {
         itemCount={itemCount}
         galleryCount={galleryCount}
         tagCount={tagCount}
+        customAttributeCount={customAttributeCount}
         isBranchingStory={selectedStory?.type === 'branching'}
         branchingStoryForkCount={forkCount}
         analysisSummary={

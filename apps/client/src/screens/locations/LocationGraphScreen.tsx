@@ -31,7 +31,7 @@ import { LocationsScreenNavigationProp } from './LocationListScreen';
  */
 
 const LocationGraphScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>();

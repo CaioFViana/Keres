@@ -13,7 +13,7 @@ type GalleryDetailRouteProp = RouteProp<GalleryStackParamList, 'GalleryDetail'>;
  * navegação - ver o comentário em `GalleryDetailContent.tsx` para o porquê.
  */
 const GalleryDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const navigation = useNavigation();
   const route = useRoute<GalleryDetailRouteProp>();
 

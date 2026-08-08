@@ -32,7 +32,7 @@ type ChapterFormScreenRouteProp = RouteProp<ChapterStackParamList, 'ChapterForm'
 type ChapterFormScreenNavigationProp = NativeStackNavigationProp<ChapterStackParamList, 'ChapterForm'>;
 
 const ChapterFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ChapterFormScreenNavigationProp>();
   const route = useRoute<ChapterFormScreenRouteProp>();

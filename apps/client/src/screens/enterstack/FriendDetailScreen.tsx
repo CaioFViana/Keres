@@ -32,7 +32,7 @@ const statusLabelKey = (status: string) => {
 };
 
 const FriendDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<FriendDetailScreenNavigationProp>();

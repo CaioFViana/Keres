@@ -29,7 +29,7 @@ import { AppAlert } from '../../utils/AppAlert';
 type WorldRuleFormScreenRouteProp = RouteProp<WorldRulesStackParamList, 'WorldRuleForm'>;
 
 const WorldRuleFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<WorldRuleFormScreenRouteProp>();

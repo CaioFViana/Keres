@@ -28,7 +28,7 @@ type ServerRegistrationScreenNavigationProp = NativeStackNavigationProp<RootStac
 const MIN_PASSWORD_LENGTH = 8;
 
 const ServerRegistrationScreen = () => {
-    useBackButtonHandler()
+    useBackButtonHandler({ showWebBackButton: true })
     const { t } = useTranslation();
     const { colors } = useTheme();
     const navigation = useNavigation<ServerRegistrationScreenNavigationProp>();

@@ -32,7 +32,7 @@ type LocationFormScreenRouteProp = RouteProp<LocationStackParamList, 'LocationFo
 type LocationFormScreenNavigationProp = NativeStackNavigationProp<LocationStackParamList, 'LocationForm'>;
 
 const LocationFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<LocationFormScreenNavigationProp>();
   const route = useRoute<LocationFormScreenRouteProp>();

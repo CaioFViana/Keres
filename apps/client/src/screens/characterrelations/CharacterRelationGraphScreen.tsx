@@ -34,7 +34,7 @@ import { CharacterRelationsScreenNavigationProp } from './CharacterRelationListS
 const EDGE_LABEL_AUTO_LIMIT = 40;
 
 const CharacterRelationGraphScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<CharacterRelationsScreenNavigationProp>();

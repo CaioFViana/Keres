@@ -25,7 +25,7 @@ type ChangePasswordScreenRouteProp = RouteProp<ServerManagementStackParamList, '
 type ChangePasswordScreenNavigationProp = NativeStackNavigationProp<ServerManagementStackParamList, 'ChangePassword'>;
 
 const ChangePasswordScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ChangePasswordScreenNavigationProp>();

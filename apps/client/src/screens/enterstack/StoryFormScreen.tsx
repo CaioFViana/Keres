@@ -28,7 +28,7 @@ type StoryFormScreenRouteProp = NativeStackScreenProps<RootStackParamList, 'Stor
 type StoryFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StoryForm'>;
 
 const StoryFormScreen = () => {
-  useBackButtonHandler()
+  useBackButtonHandler({ showWebBackButton: true })
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StoryFormScreenNavigationProp>();

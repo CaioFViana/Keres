@@ -34,7 +34,7 @@ export type ItemDetailScreenParamList = {
 type ItemDetailScreenRouteProp = RouteProp<ItemDetailScreenParamList, 'ItemDetail'>;
 
 const ItemDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ItemsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();

@@ -35,7 +35,7 @@ export type ChapterDetailScreenParamList = {
 type ChapterDetailScreenRouteProp = RouteProp<ChapterDetailScreenParamList, 'ChapterDetail'>;
 
 const ChapterDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ChaptersScreenNavigationProp>();
   const route = useRoute<ChapterDetailScreenRouteProp>();

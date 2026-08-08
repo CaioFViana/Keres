@@ -36,7 +36,7 @@ import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 const EDGE_LABEL_AUTO_LIMIT = 40;
 
 const ChoiceViewScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ChoicesScreenNavigationProp>();

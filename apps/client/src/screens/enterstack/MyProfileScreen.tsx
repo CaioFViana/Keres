@@ -28,7 +28,7 @@ type MyProfileScreenRouteProp = RouteProp<ServerManagementStackParamList, 'MyPro
 type MyProfileScreenNavigationProp = NativeStackNavigationProp<ServerManagementStackParamList, 'MyProfile'>;
 
 const MyProfileScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<MyProfileScreenNavigationProp>();

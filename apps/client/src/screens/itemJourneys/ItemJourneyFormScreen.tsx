@@ -33,7 +33,7 @@ type ItemJourneyFormScreenRouteProp = RouteProp<ItemJourneyStackParamList, 'Item
 type ItemJourneyFormScreenNavigationProp = NativeStackNavigationProp<ItemJourneyStackParamList, 'ItemJourneyForm'>;
 
 const ItemJourneyFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ItemJourneyFormScreenNavigationProp>();
   const route = useRoute<ItemJourneyFormScreenRouteProp>();

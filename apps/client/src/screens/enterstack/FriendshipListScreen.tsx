@@ -9,6 +9,7 @@ import Avatar from '../../components/common/Avatar/Avatar';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
@@ -28,6 +29,7 @@ type FriendshipSection = {
 
 const FriendshipListScreen = () => {
   const navigation = useNavigation<FriendshipListScreenNavigationProp>();
+  useBackButtonHandler();
   const { colors } = useTheme();
   const { t } = useTranslation();
   const drizzleClient = useDrizzle();

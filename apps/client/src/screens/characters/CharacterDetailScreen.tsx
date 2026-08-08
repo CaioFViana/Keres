@@ -49,7 +49,7 @@ export type CharacterDetailScreenParamList = {
 type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 'CharacterDetail'>;
 
 const CharacterDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();

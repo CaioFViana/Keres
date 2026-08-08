@@ -48,7 +48,7 @@ export type LocationDetailScreenParamList = {
 type LocationDetailScreenRouteProp = RouteProp<LocationStackParamList, 'LocationDetail'>;
 
 const LocationDetailsScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>(); // Use the imported navigation type
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();

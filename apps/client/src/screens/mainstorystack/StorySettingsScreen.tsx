@@ -31,7 +31,7 @@ import { AppAlert } from '../../utils/AppAlert';
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
 
 const StorySettingsScreen = () => {
-  useBackButtonHandler(); // Call the hook here
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StorySettingsScreenNavigationProp>();

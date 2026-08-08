@@ -28,7 +28,7 @@ type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<StoryS
 const ATTRIBUTE_TYPE_OPTIONS = Object.values(AttributeType);
 
 const StorySchemaFieldFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StorySchemaFieldFormScreenNavigationProp>();

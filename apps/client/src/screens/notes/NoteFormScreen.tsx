@@ -27,7 +27,7 @@ import { AppAlert } from '../../utils/AppAlert';
 type NoteFormScreenRouteProp = RouteProp<NotesStackParamList, 'NoteForm'>;
 
 const NoteFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<NoteFormScreenRouteProp>();

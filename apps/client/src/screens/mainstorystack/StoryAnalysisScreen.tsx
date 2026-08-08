@@ -7,6 +7,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import CollapsibleCard from '../../components/common/CollapsibleCard/CollapsibleCard';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createStoryAnalysisService, StoryAnalysisReport } from '../../services/storymanagement/StoryAnalysisService';
 import { useStoryStore } from '../../state/storyStore';
@@ -40,6 +41,7 @@ const StoryAnalysisScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StoryAnalysisNavigationProp>();
+  useBackButtonHandler({ showWebBackButton: true });
   // Não usa route.params: chegar aqui direto pelo drawer (em vez de vindo do
   // MainDashboard, que passa storyId explicitamente) navega sem nenhum param - a mesma
   // história de selectedStory já corrigida em StorySettingsScreen.

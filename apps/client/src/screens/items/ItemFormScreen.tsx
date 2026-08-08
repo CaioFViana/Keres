@@ -34,7 +34,7 @@ type ItemFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemForm'>;
 type ItemFormScreenNavigationProp = NativeStackNavigationProp<ItemStackParamList, 'ItemForm'>;
 
 const ItemFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ItemFormScreenNavigationProp>();
   const route = useRoute<ItemFormScreenRouteProp>();

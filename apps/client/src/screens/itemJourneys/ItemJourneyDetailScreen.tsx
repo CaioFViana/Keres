@@ -35,7 +35,7 @@ export type ItemJourneyDetailScreenParamList = {
 type ItemJourneyDetailScreenRouteProp = RouteProp<ItemJourneyDetailScreenParamList, 'ItemJourneyDetail'>;
 
 const ItemJourneyDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ItemJourneysScreenNavigationProp>();
   const route = useRoute<ItemJourneyDetailScreenRouteProp>();

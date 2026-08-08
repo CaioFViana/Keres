@@ -30,7 +30,7 @@ export type TagDetailScreenParamList = {
 type TagDetailScreenRouteProp = RouteProp<TagDetailScreenParamList, 'TagDetail'>;
 
 const TagDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<TagsScreenNavigationProp>();
   const route = useRoute<TagDetailScreenRouteProp>();

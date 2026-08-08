@@ -23,7 +23,7 @@ import { AppAlert } from '../../utils/AppAlert';
 type TagFormScreenRouteProp = RouteProp<TagsStackParamList, 'TagForm'>;
 
 const TagFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<TagFormScreenRouteProp>();

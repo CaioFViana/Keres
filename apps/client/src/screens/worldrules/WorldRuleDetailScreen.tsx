@@ -31,7 +31,7 @@ export type WorldRuleDetailScreenParamList = {
 type WorldRuleDetailScreenRouteProp = RouteProp<WorldRuleDetailScreenParamList, 'WorldRuleDetail'>;
 
 const WorldRuleDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
   const route = useRoute<WorldRuleDetailScreenRouteProp>();

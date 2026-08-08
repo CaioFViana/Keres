@@ -37,7 +37,7 @@ type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'Characte
 type CharacterFormScreenNavigationProp = NativeStackNavigationProp<CharacterStackParamList, 'CharacterForm'>; // Corrected type alias
 
 const CharacterFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<CharacterFormScreenNavigationProp>(); // Use the specific navigation type
   const route = useRoute<CharacterFormScreenRouteProp>();

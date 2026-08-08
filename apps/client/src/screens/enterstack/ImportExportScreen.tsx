@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { StorySelect } from '../../db/schema';
 import { mediaFileService } from '../../services/MediaFileService';
@@ -26,6 +27,7 @@ import {
 const ImportExportScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  useBackButtonHandler();
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();

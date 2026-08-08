@@ -8,6 +8,7 @@ import Button from '../../components/common/Button/Button'; // Custom Button
 import Select from '../../components/common/Select/Select';
 import TextInput from '../../components/common/TextInput/TextInput';
 import { useDrizzle } from '../../db';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ServerSelect } from '../../db/schemas/servers';
 import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { friendshipApiService } from '../../services/FriendshipApiService'; // Import friendshipApiService
@@ -30,6 +31,7 @@ type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<FriendshipSt
  */
 const FriendshipFormScreen = () => {
   const navigation = useNavigation<FriendshipFormScreenNavigationProp>();
+  useBackButtonHandler({ showWebBackButton: true });
 
   const { colors } = useTheme();
   const { t } = useTranslation();

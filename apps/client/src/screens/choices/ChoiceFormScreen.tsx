@@ -30,7 +30,7 @@ type ChoiceFormScreenRouteProp = RouteProp<ChoiceStackParamList, 'ChoiceForm'>;
 type ChoiceFormScreenNavigationProp = NativeStackNavigationProp<ChoiceStackParamList, 'ChoiceForm'>;
 
 const ChoiceFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ChoiceFormScreenNavigationProp>();
   const route = useRoute<ChoiceFormScreenRouteProp>();

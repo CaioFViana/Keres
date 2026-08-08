@@ -39,7 +39,7 @@ type SceneFormScreenRouteProp = RouteProp<SceneStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<SceneStackParamList, 'SceneForm'>;
 
 const SceneFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<SceneFormScreenNavigationProp>();
   const route = useRoute<SceneFormScreenRouteProp>();

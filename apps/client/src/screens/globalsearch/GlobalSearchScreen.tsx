@@ -42,7 +42,7 @@ interface ResultSection {
 }
 
 const GlobalSearchScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<GlobalSearchScreenNavigationProp>();

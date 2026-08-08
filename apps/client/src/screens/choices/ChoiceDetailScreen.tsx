@@ -28,7 +28,7 @@ export type ChoiceDetailScreenParamList = {
 type ChoiceDetailScreenRouteProp = RouteProp<ChoiceDetailScreenParamList, 'ChoiceDetail'>;
 
 const ChoiceDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ChoicesScreenNavigationProp>();
   const route = useRoute<ChoiceDetailScreenRouteProp>();

@@ -61,7 +61,7 @@ type OperationLogDetailScreenRouteProp = RouteProp<OperationLogStackParamList, '
 type OperationLogDetailScreenNavigationProp = NativeStackNavigationProp<OperationLogStackParamList, 'OperationLogDetail'>;
 
 const OperationLogDetailScreen: React.FC = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<OperationLogDetailScreenNavigationProp>();

@@ -38,7 +38,7 @@ export type NoteDetailScreenParamList = {
 type NoteDetailScreenRouteProp = RouteProp<NoteDetailScreenParamList, 'NoteDetail'>;
 
 const NoteDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<NotesScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();

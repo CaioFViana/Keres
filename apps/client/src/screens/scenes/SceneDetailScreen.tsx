@@ -51,7 +51,7 @@ export type SceneDetailScreenParamList = {
 type SceneDetailScreenRouteProp = RouteProp<SceneDetailScreenParamList, 'SceneDetail'>;
 
 const SceneDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ScenesScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();

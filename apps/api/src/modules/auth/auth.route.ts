@@ -9,8 +9,11 @@ import { jwtRefresh } from '../../config/jwt';
 import { db } from '../../db';
 import { users } from '../../db/schema';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
+import type { JWTPayload } from '../../index';
+import { createWebSocketTicket } from '../webSocket/webSocket.route';
 
 export const authRoutes = new Elysia()
+  .decorate('user', null as JWTPayload | null)
   .use(
     jwt({
       name: 'jwt',
@@ -24,6 +27,13 @@ export const authRoutes = new Elysia()
   )
   .use(jwtRefresh) // Register jwtRefresh plugin
   .use(bearer())
+  .post('/ws-ticket', ({ user, set }) => {
+    if (!user) {
+      set.status = 401;
+      return { message: 'Unauthorized' };
+    }
+    return { ticket: createWebSocketTicket(user), expiresInSeconds: 30 };
+  })
   .post(
     '/login',
     async ({ jwt, jwtRefresh, body, set, cookie }) => { // Destructure jwtRefresh and cookie

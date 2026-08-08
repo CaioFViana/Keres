@@ -5,8 +5,9 @@ import apiClient, { isOfflineError } from '../../../services/apiClient';
 import { authTokenManager, setAuthDb } from '../../../services/AuthTokenManager';
 import { createFriendshipService } from '../../../services/FriendshipService';
 import { createServerService } from '../../../services/ServerService';
+import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
 import { createStoryService } from '../../../services/storymanagement/StoryService';
-import { OFFLINE_RETRY_MS, ServerStoryPreview, SYNC_INTERVAL_MS, SyncEngineService } from '../../../services/SyncEngineService';
+import { ServerStoryPreview, SyncEngineService } from '../../../services/SyncEngineService';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryListStore } from '../../../state/storyListStore';
 import { useStoryStore } from '../../../state/storyStore'; // Import useStoryStore
@@ -27,6 +28,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const { fetchStories: fetchStoryList } = useStoryListStore();
   const { selectedStory } = useStoryStore(); // Get selectedStory from useStoryStore
   const { t } = useTranslation();
+  const realtimeByServerRef = useRef(new Map<string, ServerRealtimeService>());
 
   useEffect(() => {
     // Set token provider for apiClient once on mount
@@ -118,43 +120,44 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   }, [drizzleClient, userId, storyService, showNotification, t, fetchStoryList, friendshipService]);
 
   useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    // Self-scheduling instead of setInterval: an unreachable server is retried within
-    // seconds (so reconnecting is noticed and announced promptly) while a healthy one
-    // keeps the slow cadence. Cycles also can't overlap, which setInterval allows.
-    const runCycle = async () => {
-      let wasOffline = false;
-      try {
-        // syncDataWithServers handles its own errors, but guard the call site too: an
-        // async call left uncaught turns any escaped error into an unhandled rejection.
-        wasOffline = await syncDataWithServers();
-      } catch (error) {
-        if (isOfflineError(error)) {
-          console.log('SyncInitializer: server sync cycle skipped, server unreachable.');
-          wasOffline = true;
-        } else {
-          console.error('SyncInitializer: Unexpected error during server sync cycle.', error);
-        }
-      }
-
-      if (cancelled) {
-        return;
-      }
-      timer = setTimeout(runCycle, wasOffline ? OFFLINE_RETRY_MS : SYNC_INTERVAL_MS);
-    };
-
-    // First cycle runs immediately on mount - no waiting for the interval to elapse.
-    runCycle();
-
-    return () => {
-      cancelled = true;
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
+    // One initial reconciliation covers data that changed while the app was closed.
+    // Continuous 30-second polling is replaced by ServerRealtimeService notifications.
+    syncDataWithServers().catch((error) => console.log('SyncInitializer: initial reconciliation failed.', error));
   }, [syncDataWithServers]); // Dependency on syncDataWithServers ensures the latest version is used
+
+  // Friendship and permission events matter even when no story is open. Keep one
+  // WebSocket per configured server for the lifetime of the signed-in client.
+  useEffect(() => {
+    if (!drizzleClient) return;
+    let disposed = false;
+    const connectServers = async () => {
+      const servers = await createServerService(drizzleClient).getAllServers();
+      if (disposed) return;
+      for (const server of servers) {
+        const realtime = new ServerRealtimeService(drizzleClient, server, server.idUser);
+        realtimeByServerRef.current.set(server.id, realtime);
+        realtime.start(server.id === selectedStory?.serverId ? selectedStory.id : undefined);
+      }
+    };
+    connectServers().catch((error) => console.log('SyncInitializer: failed to start realtime connections.', error));
+    return () => {
+      disposed = true;
+      for (const realtime of realtimeByServerRef.current.values()) realtime.stop();
+      realtimeByServerRef.current.clear();
+    };
+  }, [drizzleClient, selectedStory?.id, selectedStory?.serverId]);
+
+  // A local operation is ready to push immediately. Remote application also emits
+  // this event, but requestSync coalesces it into at most one follow-up pull.
+  useEffect(() => {
+    const pushLocalChange = (storyId: string) => {
+      if (storyId === selectedStory?.id) {
+        SyncEngineService.getInstance().requestSync('local-change');
+      }
+    };
+    entityEventEmitter.on('operation_log_updated', pushLocalChange);
+    return () => entityEventEmitter.off('operation_log_updated', pushLocalChange);
+  }, [selectedStory?.id]);
 
   // Mantém a lista de conflitos pendentes em sincronia com o banco. O motor de
   // sincronização emite o evento quando um push é recusado ou quando um pull colide com
@@ -199,7 +202,8 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           if (server?.url) {
             console.log(`SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`);
             SyncEngineService.getInstance().configure(selectedStory.id, server);
-            SyncEngineService.getInstance().startSync();
+            SyncEngineService.getInstance().requestSync('initial');
+            realtimeByServerRef.current.get(server.id)?.subscribeToStory(selectedStory.id);
             useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store
           } else {
             console.warn(`SyncInitializer: Selected story ${selectedStory.id} has serverId ${selectedStory.serverId}, but server URL not found. Stopping sync.`);

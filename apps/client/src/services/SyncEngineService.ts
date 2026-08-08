@@ -82,6 +82,8 @@ export class SyncEngineService {
   private static instance: SyncEngineService;
   private syncTimer: ReturnType<typeof setTimeout> | null = null;
   private isRunning: boolean = false;
+  private syncInFlight = false;
+  private syncQueued = false;
   /**
    * Incremented by every start/stop. A cycle captures the value it started under and
    * refuses to schedule its successor once it changes, so a cycle still in flight when
@@ -220,6 +222,27 @@ export class SyncEngineService {
 
     // First cycle runs immediately - no waiting for the interval to elapse.
     runCycle();
+  }
+
+  /** Coalesced on-demand sync used by realtime notifications and local writes. */
+  public requestSync(_reason: 'websocket' | 'initial' | 'local-change' = 'websocket'): void {
+    if (!this.storyId || !this._db || !this.client.defaults.baseURL) return;
+    if (this.syncInFlight) {
+      this.syncQueued = true;
+      return;
+    }
+    this.syncInFlight = true;
+    const run = async () => {
+      do {
+        this.syncQueued = false;
+        await this.performSync();
+      } while (this.syncQueued);
+      this.syncInFlight = false;
+    };
+    run().catch((error) => {
+      this.syncInFlight = false;
+      console.log('SyncEngineService: on-demand sync failed.', error);
+    });
   }
 
   public stopSync() {

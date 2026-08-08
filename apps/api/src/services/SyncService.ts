@@ -276,6 +276,7 @@ export class SyncService {
         type: 'story_update',
         storyId: storyId,
         updates: applied.length,
+        maxOperationVersion: lastOperationVersion,
         originatingUser: userId,
       });
     }

@@ -32,7 +32,7 @@ export const stories = pgTable('stories', {
   language: text('language'),
   author: text('author'),
   isFavorite: boolean('is_favorite').notNull().default(false),
-  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual'] }).notNull().default('global'),
+  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual', 'individual_public'] }).notNull().default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
   createdAt: timestamp('created_at').notNull().defaultNow(),

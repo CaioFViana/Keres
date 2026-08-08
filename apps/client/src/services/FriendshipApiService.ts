@@ -56,7 +56,14 @@ export class FriendshipApiService {
     return response.data;
   }
 
-  async getUserDetails(server: ServerSelect, userId: string): Promise<{ id: string; username: string } | undefined> {
+  async getUserDetails(server: ServerSelect, userId: string): Promise<{
+    id: string;
+    username: string;
+    tag: string;
+    avatarColor: string | null;
+    avatarIcon: string | null;
+    bio: string | null;
+  } | undefined> {
     try {
       const response = await this.clientFor(server).get(`/user/details/${userId}`);
       return response.data;

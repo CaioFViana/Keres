@@ -5,13 +5,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList'; // Import OperationLogList
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
+//import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList'; // Import OperationLogList
 import { useDrizzle } from '../../db'; // Import useDrizzle
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -290,6 +291,8 @@ const MainDashboardScreen = () => {
         }
       />
 
+      
+
       {selectedStory?.id && (
         <>
           <Text style={styles.subtitle}>{t('recent_operations')}</Text>
@@ -299,5 +302,11 @@ const MainDashboardScreen = () => {
     </ScrollView>
   );
 };
+// Commented out code. While i do like the idea of having a "how many did favorited this story" for story itself. didnt fit the project.
+// Code is still here isolated to prove it exist along with its import at the top in case i change my mind.
+// In the end, dashboard screen doesnt need it.
+//{selectedStory?.id && (
+//  <FavoritedByList storyId={selectedStory.id} entityId={selectedStory.id} entityType="Story" />
+//)}
 
 export default MainDashboardScreen;

@@ -2,6 +2,7 @@ import ChapterSceneManager from '@/src/components/features/chapters/ChapterManag
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
 import NoteManager from '@/src/components/features/notes/NoteManager';
@@ -270,6 +271,7 @@ const ChapterDetailScreen = () => {
       />
 
       <EntityMetadata version={chapter.version} createdAt={chapter.createdAt} updatedAt={chapter.updatedAt} />
+      <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

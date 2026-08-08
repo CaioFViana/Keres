@@ -9,6 +9,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
@@ -476,6 +477,7 @@ const LocationDetailsScreen = () => {
       />
 
       <EntityMetadata version={location.version} createdAt={location.createdAt} updatedAt={location.updatedAt} />
+      <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />
     </ScrollView>
   );
 };

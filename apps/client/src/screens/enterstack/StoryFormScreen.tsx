@@ -1,5 +1,5 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { Story } from '@keres/shared/entities/Story';
+import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -48,7 +48,7 @@ const StoryFormScreen = () => {
   const [language, setLanguage] = useState<string | null>(null);
   const [author, setAuthor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [favoriteBehavior, setFavoriteBehavior] = useState<'global' | 'individual'>('global');
+  const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
 

@@ -43,5 +43,12 @@ export function migrateStoryExport(raw: any): any {
     data = migration.migrate(data);
   }
 
+  // `individual` is the default only for stories created from now on. Exports written
+  // before favorite behavior existed represented the former global behavior, so importing
+  // one must not silently change its semantics merely because the schema now has a new default.
+  if (data?.story && data.story.favoriteBehavior === undefined) {
+    data = { ...data, story: { ...data.story, favoriteBehavior: 'global' } };
+  }
+
   return { ...data, formatVersion: CURRENT_STORY_FORMAT_VERSION };
 }

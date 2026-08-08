@@ -6,6 +6,7 @@ import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-na
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import NoteManager from '@/src/components/features/notes/NoteManager';
@@ -203,6 +204,7 @@ const WorldRuleDetailScreen = () => {
       />
 
       <EntityMetadata version={worldRule.version} createdAt={worldRule.createdAt} updatedAt={worldRule.updatedAt} />
+      <FavoritedByList storyId={worldRule.storyId} entityId={worldRuleId} entityType="WorldRule" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

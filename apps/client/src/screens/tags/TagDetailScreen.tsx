@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
@@ -281,6 +282,7 @@ const TagDetailScreen = () => {
       />
 
       <EntityMetadata version={tag.version} createdAt={tag.createdAt} updatedAt={tag.updatedAt} />
+      <FavoritedByList storyId={tag.storyId} entityId={tagId} entityType="Tag" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

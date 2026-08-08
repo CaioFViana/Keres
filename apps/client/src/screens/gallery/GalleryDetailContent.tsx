@@ -8,6 +8,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import GroupedMultiSelectPill from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import AudioPreviewPlayer from '@/src/components/features/media/MediaPlayer/AudioPreviewPlayer';
 import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
 import VideoPreviewPlayer from '@/src/components/features/media/MediaPlayer/VideoPreviewPlayer';
@@ -397,6 +398,8 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
           placeholder={t('media_select_entities')}
           noOptionsText={t('media_no_entities_available')}
         />
+
+        <FavoritedByList storyId={media.storyId} entityId={galleryId} entityType="Gallery" />
 
         {canEdit && (
           <View style={styles.actions}>

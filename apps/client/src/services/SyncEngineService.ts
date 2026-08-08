@@ -427,6 +427,7 @@ export class SyncEngineService {
     await storyService.updateStory(userId, storyId, {
       serverId: server.id,
       lastServerSyncedLog: story.lastOperationLog,
+      lastPublicFavoriteLog: 0,
       // Known synchronously: the caller is the one linking their own local story to the
       // server, so there's no ambiguity to wait on a later sync pull to resolve.
       myRole: 'owner',
@@ -494,6 +495,7 @@ export class SyncEngineService {
           id: true,
           version: true,
           lastServerSyncedLog: true,
+          lastPublicFavoriteLog: true,
           myRole: true,
         },
       });
@@ -505,10 +507,13 @@ export class SyncEngineService {
       }
 
       const lastSyncedLog = localStory.lastServerSyncedLog || 0;
+      const lastPublicFavoriteLog = localStory.lastPublicFavoriteLog || 0;
 
       // 2. Pull remote updates first (since the latest known server version)
       console.log(`Pulling remote updates for story ${this.storyId} since version ${lastSyncedLog}...`);
-      const pullResponse = await this.client.get<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: 'owner' | 'writer' | 'reader' }>(`/sync/${this.storyId}/pull?lastOperationVersion=${lastSyncedLog}`);
+      const pullResponse = await this.client.get<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: 'owner' | 'writer' | 'reader' }>(
+        `/sync/${this.storyId}/pull?lastOperationVersion=${lastSyncedLog}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}`,
+      );
       const { updates: remoteUpdates, role: myRole } = pullResponse.data;
 
       /**
@@ -518,6 +523,14 @@ export class SyncEngineService {
        * lista, e confiar no máximo a puliria para sempre.
        */
       let highestAppliedRemoteVersion = lastSyncedLog;
+      let highestAppliedPublicFavoriteVersion = lastPublicFavoriteLog;
+      let publicFavoriteCursorBlocked = false;
+      const markRemoteOperationApplied = (update: StoryUpdate) => {
+        highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
+        if (update.entity === 'Favorite' && !publicFavoriteCursorBlocked) {
+          highestAppliedPublicFavoriteVersion = Math.max(highestAppliedPublicFavoriteVersion, update.operationVersion || 0);
+        }
+      };
 
       if (remoteUpdates && remoteUpdates.length > 0) {
         let totalUpdates = remoteUpdates.length;
@@ -554,7 +567,7 @@ export class SyncEngineService {
           // Operação que este próprio cliente enviou e o servidor está devolvendo. Já está
           // aplicada aqui; reaplicá-la só duplicaria a linha no log local.
           if (await this.isOwnEchoedOperation(update)) {
-            highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
+            markRemoteOperationApplied(update);
             continue;
           }
 
@@ -568,7 +581,7 @@ export class SyncEngineService {
               }
               markEntityUpdated(update.entity, update.id);
               await this.recordRemoteOperationLocally(update);
-              highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
+              markRemoteOperationApplied(update);
               continue;
             }
 
@@ -613,9 +626,12 @@ export class SyncEngineService {
             markEntityUpdated(update.entity, update.id);
 
             await this.recordRemoteOperationLocally(update);
-            highestAppliedRemoteVersion = Math.max(highestAppliedRemoteVersion, update.operationVersion || 0);
+            markRemoteOperationApplied(update);
 
           } catch (handlerError) {
+            if (update.entity === 'Favorite' && (update.operationVersion || 0) > lastPublicFavoriteLog) {
+              publicFavoriteCursorBlocked = true;
+            }
             console.log(`Error applying ${update.type} for entity ${update.entity} ID ${update.id}:`, handlerError);
             if (!failedEntities.includes(update.entity)) {
               failedEntities.push(update.entity);
@@ -641,14 +657,24 @@ export class SyncEngineService {
           const eventName = SYNC_ENTITY_EVENTS[entity];
           if (!eventName) continue;
           for (const entityId of ids) {
-            entityEventEmitter.emit(eventName, this.storyId, entityId);
             if (entity === 'Favorite') {
               const favorite = await this._db.query.favorites.findFirst({
                 where: eq(schema.favorites.id, entityId),
-                columns: { entityId: true, entityType: true },
+                columns: { entityId: true, entityType: true, userId: true },
               });
+              if (favorite) {
+                entityEventEmitter.emit(
+                  'favorite_changed',
+                  this.storyId,
+                  favorite.entityType,
+                  favorite.entityId,
+                  favorite.userId,
+                );
+              }
               const targetEvent = favorite && FAVORITE_TARGET_EVENTS[favorite.entityType];
               if (targetEvent) entityEventEmitter.emit(targetEvent, this.storyId, favorite.entityId);
+            } else {
+              entityEventEmitter.emit(eventName, this.storyId, entityId);
             }
           }
         }
@@ -773,7 +799,11 @@ export class SyncEngineService {
       // 5. Update local story's lastServerSyncedLog and cached role
       const roleChanged = myRole && myRole !== localStory.myRole;
       await this._db.update(schema.stories)
-        .set({ lastServerSyncedLog: highestAppliedRemoteVersion, myRole })
+        .set({
+          lastServerSyncedLog: highestAppliedRemoteVersion,
+          lastPublicFavoriteLog: highestAppliedPublicFavoriteVersion,
+          myRole,
+        })
         .where(eq(schema.stories.id, this.storyId));
       if (roleChanged) {
         entityEventEmitter.emit('story_role_changed', this.storyId);

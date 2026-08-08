@@ -358,7 +358,12 @@ export class SyncService {
     return serialized;
   }
 
-  async getUpdatesForStory(userId: string, storyId: string, lastOperationVersion: number): Promise<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: EffectiveStoryRole }> {
+  async getUpdatesForStory(
+    userId: string,
+    storyId: string,
+    lastOperationVersion: number,
+    lastPublicFavoriteVersion: number = 0,
+  ): Promise<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: EffectiveStoryRole }> {
     // Authorization check
     const story = await db.query.stories.findFirst({
       where: eq(stories.id, storyId),
@@ -382,13 +387,36 @@ export class SyncService {
       throw new AppError(403, 'Unauthorized: User does not have read permission for this story.');
     }
 
-    const fetchedOperations = (await db.query.operationLog.findMany({
+    const operationsAfterMainCursor = await db.query.operationLog.findMany({
       where: and(
         eq(operationLog.storyId, storyId),
         gt(operationLog.operationVersion, lastOperationVersion)
       ),
       orderBy: [operationLog.operationVersion],
-    })).filter((op) => op.entityType !== 'Favorite' || op.userId === userId);
+    });
+
+    const visibleOperations = operationsAfterMainCursor.filter((op) => (
+      op.entityType !== 'Favorite'
+      || story.favoriteBehavior === 'individual_public'
+      || op.userId === userId
+    ));
+
+    // Um cursor próprio permite publicar também favoritos anteriores à troca de comportamento.
+    // O Map remove a sobreposição natural com a consulta principal quando ambos os cursores
+    // ainda estão próximos.
+    const historicalPublicFavorites = story.favoriteBehavior === 'individual_public'
+      ? await db.query.operationLog.findMany({
+          where: and(
+            eq(operationLog.storyId, storyId),
+            eq(operationLog.entityType, 'Favorite'),
+            gt(operationLog.operationVersion, lastPublicFavoriteVersion),
+          ),
+          orderBy: [operationLog.operationVersion],
+        })
+      : [];
+    const fetchedOperations = Array.from(
+      new Map([...visibleOperations, ...historicalPublicFavorites].map((operation) => [operation.id, operation])).values(),
+    ).sort((a, b) => a.operationVersion - b.operationVersion);
 
     const updates: StoryUpdate[] = await Promise.all(fetchedOperations.map(async op => {
       const payloadAsRecord = op.payload as Record<string, any>; // Client's original payload

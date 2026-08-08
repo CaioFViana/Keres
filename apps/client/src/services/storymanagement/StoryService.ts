@@ -58,6 +58,7 @@ import {
   WorldRuleSelect
 } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
@@ -204,7 +205,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
       const dataToPersist = { ...storyData };
       const targetFavoriteBehavior = dataToPersist.favoriteBehavior ?? originalStory.favoriteBehavior;
-      if (targetFavoriteBehavior === 'individual' && dataToPersist.isFavorite !== undefined) {
+      if (targetFavoriteBehavior !== 'global' && dataToPersist.isFavorite !== undefined) {
         await favoriteService.setFavorite(storyId, storyId, 'Story', currentUserId, dataToPersist.isFavorite);
         delete dataToPersist.isFavorite;
       }
@@ -239,6 +240,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       delete changes.version;
       delete changes.updatedAt;
       await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, changes);
+      entityEventEmitter.emit('story_changed', storyId, storyId);
     },
 
     async getStoryCounts(): Promise<{ totalStories: number; branchingStories: number }> {
@@ -516,7 +518,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         console.log(`Story ${storyId} favorite status is already ${isFavorite}. Skipping update and operation log.`);
         return;
       }
-      if (originalStory.favoriteBehavior === 'individual') {
+      if (originalStory.favoriteBehavior !== 'global') {
         await favoriteService.setFavorite(storyId, storyId, 'Story', currentUserId, isFavorite);
         return;
       }
@@ -622,7 +624,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             await favoriteService.migrateUserIdentity(storyId, userId, currentUserId);
           }
         }
-        await this.updateStory(currentUserId, storyId, { serverId: null });
+        await this.updateStory(currentUserId, storyId, { serverId: null, lastPublicFavoriteLog: 0 });
         return;
       }
 
@@ -665,7 +667,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
 
       await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
-      await this.updateStory(currentUserId, storyId, { serverId: null });
+      await this.updateStory(currentUserId, storyId, { serverId: null, lastPublicFavoriteLog: 0 });
     },
 
     async getBranchingStoryForkCount(storyId?: string): Promise<number> {

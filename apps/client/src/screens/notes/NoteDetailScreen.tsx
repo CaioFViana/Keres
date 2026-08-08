@@ -8,6 +8,7 @@ import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 're
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
@@ -307,6 +308,7 @@ const NoteDetailScreen = () => {
       />
 
       <EntityMetadata version={note.version} createdAt={note.createdAt} updatedAt={note.updatedAt} />
+      <FavoritedByList storyId={note.storyId} entityId={noteId} entityType="Note" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

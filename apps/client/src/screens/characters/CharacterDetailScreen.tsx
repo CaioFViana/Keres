@@ -13,6 +13,7 @@ import CharacterRelationManager from '@/src/components/features/relations/Charac
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
@@ -532,6 +533,7 @@ const CharacterDetailScreen = () => {
       />
 
       <EntityMetadata version={character.version} createdAt={character.createdAt} updatedAt={character.updatedAt} />
+      <FavoritedByList storyId={character.storyId} entityId={characterId} entityType="Character" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

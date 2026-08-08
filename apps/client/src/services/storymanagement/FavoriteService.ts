@@ -1,4 +1,4 @@
-import { FavoriteEntityType } from '@keres/shared';
+import { FavoriteBehavior, FavoriteEntityType } from '@keres/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import { favorites, stories } from '../../db/schema';
@@ -6,8 +6,6 @@ import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
-
-export type FavoriteBehavior = 'global' | 'individual';
 
 const FAVORITE_ENTITY_EVENTS: Partial<Record<FavoriteEntityType, string>> = {
   Story: 'story_changed',
@@ -32,6 +30,7 @@ export interface FavoriteService {
     entities: T[],
   ): Promise<T[]>;
   isFavorite(storyId: string, entityId: string, entityType: FavoriteEntityType, localUserId: string, globalValue: boolean): Promise<boolean>;
+  getFavoriterIds(storyId: string, entityId: string, entityType: FavoriteEntityType): Promise<string[]>;
   setFavorite(storyId: string, entityId: string, entityType: FavoriteEntityType, localUserId: string, value: boolean): Promise<void>;
   migrateUserIdentity(storyId: string, fromUserId: string, toUserId: string): Promise<void>;
 }
@@ -44,7 +43,7 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
       where: eq(stories.id, storyId),
       columns: { favoriteBehavior: true },
     });
-    return story?.favoriteBehavior ?? 'global';
+    return story?.favoriteBehavior ?? 'individual';
   };
 
   const resolveUserId = async (storyId: string, localUserId: string): Promise<string> => {
@@ -92,6 +91,20 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
         columns: { id: true },
       });
       return !!row;
+    },
+
+    async getFavoriterIds(storyId, entityId, entityType) {
+      if (await getBehavior(storyId) !== 'individual_public') return [];
+      const rows = await db.select({ userId: favorites.userId })
+        .from(favorites)
+        .where(and(
+          eq(favorites.storyId, storyId),
+          eq(favorites.entityId, entityId),
+          eq(favorites.entityType, entityType),
+          eq(favorites.isDeleted, false),
+        ))
+        .all();
+      return rows.map((row) => row.userId);
     },
 
     async setFavorite(storyId, entityId, entityType, localUserId, value) {

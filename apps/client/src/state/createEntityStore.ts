@@ -149,7 +149,7 @@ export function createEntityStore<
         const favoriteService = state.db ? createFavoriteService(state.db) : null;
         const individualFavorites = !!(
           config.favoriteEntityType && localUserId && favoriteService
-          && await favoriteService.getBehavior(storyId) === 'individual'
+          && await favoriteService.getBehavior(storyId) !== 'global'
         );
         let entities = await config.fetchEntities(service, {
           storyId,
@@ -216,7 +216,7 @@ export function createEntityStore<
 
       try {
         const favoriteService = createFavoriteService((get() as Store).db!);
-        if (await favoriteService.getBehavior(storyId) === 'individual') {
+        if (await favoriteService.getBehavior(storyId) !== 'global') {
           await favoriteService.setFavorite(storyId, id, config.favoriteEntityType, userId, isFavorite);
         } else {
           await config.updateFavorite(service, userId, id, isFavorite);

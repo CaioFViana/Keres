@@ -81,7 +81,7 @@ export class StoryExportImportService {
         const favorites = userId ? await db.query.favorites.findMany({
             where: (favorites, { eq, and }) => and(
                 eq(favorites.storyId, storyId),
-                eq(favorites.userId, userId),
+                ...(story.favoriteBehavior === 'individual_public' ? [] : [eq(favorites.userId, userId)]),
                 eq(favorites.isDeleted, false),
             ),
         }) : [];

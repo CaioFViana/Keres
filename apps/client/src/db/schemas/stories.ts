@@ -11,7 +11,7 @@ export const stories = sqliteTable('stories', {
   language: text('language'),
   author: text('author'),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
-  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual'] }).notNull().default('global'),
+  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual', 'individual_public'] }).notNull().default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
@@ -22,6 +22,9 @@ export const stories = sqliteTable('stories', {
   serverId: text('server_id'),
   lastOperationLog: integer('last_operation_log').notNull().default(0),
   lastServerSyncedLog: integer('last_server_synced_log').notNull().default(0),
+  // Cursor independente para permitir que, ao tornar favoritos públicos, o cliente busque
+  // o histórico relacional anterior sem retroceder ou reproduzir o restante da história.
+  lastPublicFavoriteLog: integer('last_public_favorite_log').notNull().default(0),
   // Caller's effective access level on the server for this story ('owner'/'writer'/'reader'),
   // refreshed on every pull. Null means never synced yet (a purely local story).
   myRole: text('my_role', { enum: ['owner', 'writer', 'reader'] }),

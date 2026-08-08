@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
 import { friendships, servers } from '../db/schema';
 import { createStoryService } from '../services/storymanagement/StoryService';
+import { friendshipApiService } from '../services/FriendshipApiService';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+
+const remoteUserNameCache = new Map<string, Promise<string | undefined>>();
 
 export const useUserDisplayName = (
   logUserId: string,
@@ -52,6 +55,14 @@ export const useUserDisplayName = (
         }
       }
 
+      const storyServer = storyServerId
+        ? await drizzle.query.servers.findFirst({ where: eq(servers.id, storyServerId) })
+        : undefined;
+      if (storyServer?.idUser === logUserId) {
+        setDisplayName(`${storyServer.userName} ${t('you_suffix')}`);
+        return;
+      }
+
       let friendshipQuery;
       if (storyServerId) {
         friendshipQuery = and(
@@ -69,6 +80,32 @@ export const useUserDisplayName = (
       if (friend) {
         setDisplayName(friend.friendUsername);
         return;
+      }
+
+      // Public individual favorites can belong to a collaborator who is not the current
+      // user's friend. Resolve that profile against the story's own server rather than
+      // leaving an otherwise valid public operation as "user not found".
+      if (storyServer) {
+        try {
+          const cacheKey = `${storyServer.id}:${logUserId}`;
+          let request = remoteUserNameCache.get(cacheKey);
+          if (!request) {
+            request = friendshipApiService.getUserDetails(storyServer, logUserId)
+              .then((user) => user?.username)
+              .catch((error) => {
+                remoteUserNameCache.delete(cacheKey);
+                throw error;
+              });
+            remoteUserNameCache.set(cacheKey, request);
+          }
+          const remoteUsername = await request;
+          if (remoteUsername) {
+            setDisplayName(remoteUsername);
+            return;
+          }
+        } catch {
+          // Offline is a valid state; continue through the local fallbacks below.
+        }
       }
 
       // 3. Check in *all* registered servers for users that match the logUserId

@@ -1,4 +1,4 @@
-import { Story } from '@keres/shared/entities/Story';
+import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -63,7 +63,7 @@ const StorySettingsScreen = () => {
   const [language, setLanguage] = useState<string | null>(null);
   const [author, setAuthor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [favoriteBehavior, setFavoriteBehavior] = useState<'global' | 'individual'>('global');
+  const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
@@ -657,9 +657,10 @@ const StorySettingsScreen = () => {
             options={[
               { label: t('favorite_behavior_global'), value: 'global' },
               { label: t('favorite_behavior_individual'), value: 'individual' },
+              { label: t('favorite_behavior_individual_public'), value: 'individual_public' },
             ]}
             value={favoriteBehavior}
-            onValueChange={(value) => setFavoriteBehavior(value as 'global' | 'individual')}
+            onValueChange={(value) => setFavoriteBehavior(value as FavoriteBehavior)}
             placeholder={t('favorite_behavior')}
             disabled={!canEdit}
           />

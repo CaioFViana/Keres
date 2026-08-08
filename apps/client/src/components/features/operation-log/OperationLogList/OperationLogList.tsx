@@ -8,6 +8,8 @@ import { createOperationLogService } from '../../../../services/OperationLogServ
 import { useTheme } from '../../../../theme';
 import OperationLogListItem from '@/src/components/features/list-items/OperationLogListItem';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
+import { useUserSettingsStore } from '../../../../state/userSettingsStore';
+import { FavoriteBehavior } from '@keres/shared';
 
 interface OperationLogListProps {
   storyId: string;
@@ -35,11 +37,13 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const drizzleDb = useDrizzle();
+  const { userId } = useUserSettingsStore();
   const [logs, setLogs] = useState<OperationLogSelect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalLogs, setTotalLogs] = useState(0);
+  const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [operationLogService, setOperationLogService] = useState<ReturnType<typeof createOperationLogService> | null>(null);
 
   useEffect(() => {
@@ -58,13 +62,15 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
       let total: number = 0;
 
       if (paginated) {
-        const result = await operationLogService.getPaginatedOperationLogs(storyId, currentPage, pageSize);
+        const result = await operationLogService.getPaginatedOperationLogs(storyId, currentPage, pageSize, userId ?? undefined);
         fetchedLogs = result.logs;
         total = result.total;
       } else if (limit) {
-        fetchedLogs = await operationLogService.getRecentOperationLogs(storyId, limit);
+        fetchedLogs = await operationLogService.getRecentOperationLogs(storyId, limit, userId ?? undefined);
         total = fetchedLogs.length; // For recent, total is just the limit
       }
+
+      setFavoriteBehavior(await operationLogService.getFavoriteBehavior(storyId));
 
       setLogs((currentLogs) => {
         if (!paginated || currentPage === 1) return fetchedLogs;
@@ -78,7 +84,7 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [operationLogService, storyId, limit, paginated, pageSize, t]);
+  }, [operationLogService, storyId, limit, paginated, pageSize, t, userId]);
 
   useEffect(() => {
     setPage(1); // Reset page when storyId or mode changes
@@ -117,6 +123,7 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
 
       if (
         showPrivateGaps
+        && favoriteBehavior === 'individual'
         && previousServerVersion !== undefined
         && currentServerVersion !== undefined
         && currentServerVersion < previousServerVersion - 1
@@ -132,7 +139,7 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     }
 
     return entries;
-  }, [logs, showPrivateGaps]);
+  }, [favoriteBehavior, logs, showPrivateGaps]);
 
   const hasPrivateGaps = listEntries.some((entry) => entry.type === 'privateGap');
 

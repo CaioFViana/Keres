@@ -16,9 +16,41 @@ type StoryExportMigration = {
   migrate: (data: any) => any;
 };
 
-// Nenhuma migração ainda foi necessária - o formato nunca mudou de forma incompatível desde
-// que o versionamento foi introduzido. O registro existe pronto para quando isso acontecer.
-const migrations: StoryExportMigration[] = [];
+/**
+ * V1 -> V2
+ *
+ * As mudanças reais deste formato são favoritos por entidade, os campos novos de Story e a
+ * remoção de `Suggestion.isDefault`, que deixou de ter significado no produto.
+ */
+const migrateV1ToV2: StoryExportMigration = {
+  fromVersion: 1,
+  migrate: (data) => {
+    const story = data?.story
+      ? {
+        ...data.story,
+        // V1 representava favoritos como estado global da história.
+        favoriteBehavior: data.story.favoriteBehavior ?? 'global',
+        normalizeSceneTiming: data.story.normalizeSceneTiming ?? false,
+      }
+      : data?.story;
+    const suggestions = Array.isArray(data?.suggestions)
+      ? data.suggestions.map((rawSuggestion: any) => {
+        const suggestion = { ...rawSuggestion };
+        delete suggestion.isDefault;
+        return suggestion;
+      })
+      : data?.suggestions;
+
+    return {
+      ...data,
+      story,
+      suggestions,
+      favorites: Array.isArray(data?.favorites) ? data.favorites : [],
+    };
+  },
+};
+
+const migrations: StoryExportMigration[] = [migrateV1ToV2];
 
 /**
  * Normaliza um export bruto (JSON já parseado, ainda não validado pelo `FullStoryExportSchema`)

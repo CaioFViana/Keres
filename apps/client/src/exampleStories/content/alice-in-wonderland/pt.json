@@ -980,5 +980,6 @@
       "relationType": "connected_to"
     }
   ],
-  "exampleCatalogEnriched": true
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

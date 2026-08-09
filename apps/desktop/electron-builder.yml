@@ -55,6 +55,10 @@ mac:
   target:
     - dmg
 linux:
+  # `name` é um identificador de workspace (@keres/desktop), não um nome válido de binário
+  # Linux. Mantemos o binário simples e sincronizamos o launcher com o app_id/WM_CLASS.
+  executableName: keres
+  syncDesktopName: true
   icon: ../client/assets/images/desktop_icon.png
   category: Office
   target:

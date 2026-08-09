@@ -1,6 +1,7 @@
 {
   "name": "@keres/desktop",
-  "version": "1.0.0",
+  "desktopName": "com.keres.desktop.desktop",
+  "version": "1.1.0",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {

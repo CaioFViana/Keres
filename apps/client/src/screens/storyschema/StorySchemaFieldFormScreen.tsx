@@ -3,7 +3,8 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -211,11 +212,9 @@ const StorySchemaFieldFormScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { marginTop: 0 }]}>{t('attribute_required')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isRequired}
               onValueChange={setIsRequired}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isRequired ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>

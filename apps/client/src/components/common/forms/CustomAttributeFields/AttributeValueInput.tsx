@@ -1,6 +1,6 @@
 import { AttributeType } from '@keres/shared';
 import React from 'react';
-import { Switch } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
@@ -62,11 +62,9 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
 
     case AttributeType.BOOLEAN:
       return (
-        <Switch
+        <ThemedSwitch
           value={value === 'true'}
           onValueChange={(newValue) => onChange(newValue ? 'true' : 'false')}
-          trackColor={{ false: colors.border, true: colors.primary }}
-          thumbColor={value === 'true' ? colors.onPrimary : colors.textSecondary}
           style={{ alignSelf: 'flex-start', transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
         />
       );

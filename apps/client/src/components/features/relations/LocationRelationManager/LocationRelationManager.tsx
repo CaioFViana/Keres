@@ -9,6 +9,7 @@ import type { MainSystemDrawerParamList } from '../../../../navigation/MainSyste
 import { useTheme } from '../../../../theme';
 import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import Button from '@/src/components/common/controls/Button/Button';
 import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
 import { AppAlert } from '../../../../utils/AppAlert';
@@ -75,7 +76,6 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
   const { t } = useTranslation();
   const navigation = useNavigation();
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
-  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const liveRelations = useMemo(() => allLocationRelations.filter(r => !r.isDeleted), [allLocationRelations]);
 
@@ -167,13 +167,8 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)} style={styles.collapsibleHeader}>
-        <Text style={styles.collapsibleHeaderText}>{t('location_structure_title')}</Text>
-        <Ionicons name={isCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'} size={24} color={colors.text} />
-      </TouchableOpacity>
-
-      {!isCollapsed && (
-        <View style={styles.collapsibleContent}>
+      <CollapsibleCard title={t('location_structure_title')} initialExpanded={false}>
+        <View>
           {/* Parent Location */}
           <Text style={styles.subsectionTitle}>{t('parent_location')}</Text>
           {parentRelation ? (
@@ -250,7 +245,7 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
             </View>
           )}
         </View>
-      )}
+      </CollapsibleCard>
 
       <LocationPickerModal
         isVisible={activePicker !== null}

@@ -2,7 +2,8 @@ import { Tag } from '@keres/shared/entities/Tag';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -219,11 +220,9 @@ const TagFormScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>{t('is_favorite')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isFavorite}
               onValueChange={setIsFavorite}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>

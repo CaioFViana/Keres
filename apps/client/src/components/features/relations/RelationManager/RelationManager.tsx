@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput'; // Import TextInput
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import { AppAlert } from '../../../../utils/AppAlert';
 
@@ -73,7 +74,6 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
 
   const [selectedItemIdToAdd, setSelectedItemIdToAdd] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCollapsed, setIsCollapsed] = useState(true); // Add isCollapsed state, default to true
 
   const styles = StyleSheet.create({
     ...relationSectionStyleDefs(colors),
@@ -219,13 +219,8 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)} style={styles.collapsibleHeader}>
-        <Text style={styles.collapsibleHeaderText}>{title}</Text>
-        <Ionicons name={isCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'} size={24} color={colors.text} />
-      </TouchableOpacity>
-
-      {!isCollapsed && (
-        <View style={styles.collapsibleContent}>
+      <CollapsibleCard title={title} initialExpanded={false}>
+        <View>
           {editable && (
             <View style={styles.addRelationContainer}>
               <TextInput
@@ -260,7 +255,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
             </View>
           )}
         </View>
-      )}
+      </CollapsibleCard>
     </View>
   );
 };

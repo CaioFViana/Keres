@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 
 interface RelatedEntitiesListProps {
   title: string;
@@ -21,8 +21,6 @@ interface RelatedEntitiesListProps {
 const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({ title, noItemsMessage, groupedEntities }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
   const styles = StyleSheet.create({
     ...relationSectionStyleDefs(colors),
     groupTitle: {
@@ -38,13 +36,8 @@ const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({ title, noItem
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)} style={styles.collapsibleHeader}>
-        <Text style={styles.collapsibleHeaderText}>{title}</Text>
-        <Ionicons name={isCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'} size={24} color={colors.text} />
-      </TouchableOpacity>
-
-      {!isCollapsed && (
-        <View style={styles.collapsibleContent}>
+      <CollapsibleCard title={title} initialExpanded={false}>
+        <View>
           {!hasAnyEntity ? (
             <Text style={{ color: colors.textSecondary }}>{noItemsMessage}</Text>
           ) : (
@@ -62,7 +55,7 @@ const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({ title, noItem
             ))
           )}
         </View>
-      )}
+      </CollapsibleCard>
     </View>
   );
 };

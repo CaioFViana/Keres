@@ -11,6 +11,7 @@ import { useTheme } from '../../../../theme';
 import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import { createULID } from '../../../../utils/entityUtils';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import Button from '@/src/components/common/controls/Button/Button';
 import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
 import { AppAlert } from '../../../../utils/AppAlert';
@@ -40,7 +41,6 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRelation, setEditingRelation] = useState<CharacterRelation | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const getCharacterName = (charId: string) => {
     return characters.find(char => char.id === charId)?.name || `Unknown Character (${charId})`;
@@ -136,13 +136,8 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)} style={styles.collapsibleHeader}>
-        <Text style={styles.collapsibleHeaderText}>{t('character_relations_title')}</Text>
-        <Ionicons name={isCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'} size={24} color={colors.text} />
-      </TouchableOpacity>
-
-      {!isCollapsed && (
-        <View style={styles.collapsibleContent}>
+      <CollapsibleCard title={t('character_relations_title')} initialExpanded={false}>
+        <View>
           {editable && (
             <View style={styles.buttonContainer}>
               <Button onPress={handleAddRelation}>
@@ -184,7 +179,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
             </View>
           )}
         </View>
-      )}
+      </CollapsibleCard>
 
       <CharacterRelationModal
         isVisible={isModalVisible}

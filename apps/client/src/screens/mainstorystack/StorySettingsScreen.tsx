@@ -4,7 +4,8 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Switch, Text, View } from 'react-native'; // Removed BackHandler
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Removed BackHandler
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { Button, Select, TextInput } from '@/src/components/common';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '../../db';
@@ -642,11 +643,9 @@ const StorySettingsScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isFavorite}
               onValueChange={setIsFavorite}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
               disabled={!canEdit}
             />

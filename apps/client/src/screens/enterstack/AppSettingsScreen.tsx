@@ -4,7 +4,8 @@ import { StackActions, useNavigation } from '@react-navigation/native'; // Impor
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import Select from '@/src/components/common/inputs/Select/Select';
@@ -137,11 +138,9 @@ const SettingsScreen = () => {
 
           <View style={styles.settingItem}>
             <Text style={[styles.settingLabel, { color: colors.text }]}>{t('dark_mode')}</Text>
-            <Switch
+            <ThemedSwitch
               value={darkMode}
               onValueChange={handleDarkModeToggle}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={darkMode ? colors.onPrimary : colors.textSecondary}
             />
           </View>
 

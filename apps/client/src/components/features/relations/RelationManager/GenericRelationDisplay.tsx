@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 
 
 // Generic types for items and relations, similar to RelationManager
@@ -39,8 +40,6 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const [isCollapsed, setIsCollapsed] = useState(true); // Add isCollapsed state, default to true
-
   const styles = StyleSheet.create({
     ...relationSectionStyleDefs(colors),
   });
@@ -49,13 +48,8 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)} style={styles.collapsibleHeader}>
-        <Text style={styles.collapsibleHeaderText}>{title}</Text>
-        <Ionicons name={isCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'} size={24} color={colors.text} />
-      </TouchableOpacity>
-
-      {!isCollapsed && (
-        <View style={styles.collapsibleContent}>
+      <CollapsibleCard title={title} initialExpanded={false}>
+        <View>
           {filteredRelations.length === 0 ? (
             <Text style={{ color: colors.textSecondary }}>{t(noItemsMessage)}</Text>
           ) : (
@@ -97,7 +91,7 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
             </View>
           )}
         </View>
-      )}
+      </CollapsibleCard>
     </View>
   );
 };

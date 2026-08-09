@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import LocationNodeSheet, { LocationNodeConnection } from '@/src/components/features/graphs/LocationGraph/LocationNodeSheet';
+import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import LocationGraphCanvas, { LocationGraphCanvasHandle } from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import { useDrizzle } from '../../db';
 import { LocationRelationSelect, LocationSelect } from '../../db/schema';
@@ -29,6 +29,12 @@ import { LocationsScreenNavigationProp } from './LocationListScreen';
  *
  * Só visualização/navegação nesta etapa - sem edição visual (arrastar para reparentar etc.).
  */
+
+interface LocationNodeConnection {
+  relationId: string;
+  locationId: string;
+  locationName: string;
+}
 
 const LocationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -326,15 +332,47 @@ const LocationGraphScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <LocationNodeSheet
-        node={selectedNode}
-        parent={selectedParent}
-        childLocations={selectedChildren}
-        connections={selectedConnections}
-        onClose={() => setSelectedNodeId(null)}
-        onOpenLocation={handleOpenLocation}
-        onSelectLocation={setSelectedNodeId}
-      />
+      {selectedNode && (
+        <GraphNodeSheet
+          title={selectedNode.location.name}
+          badges={selectedNode.isIsolated ? [{ label: t('location_graph_badge_isolated'), color: colors.textSecondary }] : undefined}
+          sections={[
+            {
+              title: t('parent_location'),
+              emptyMessage: t('no_parent_location'),
+              items: selectedParent ? [{
+                id: selectedParent.relationId,
+                icon: 'arrow-up-outline',
+                label: selectedParent.locationName,
+                onPress: () => setSelectedNodeId(selectedParent.locationId),
+              }] : [],
+            },
+            {
+              title: t('child_locations'),
+              emptyMessage: t('no_child_locations'),
+              items: selectedChildren.map(connection => ({
+                id: connection.relationId,
+                icon: 'arrow-down-outline' as const,
+                label: connection.locationName,
+                onPress: () => setSelectedNodeId(connection.locationId),
+              })),
+            },
+            {
+              title: t('connected_locations'),
+              emptyMessage: t('no_connected_locations'),
+              items: selectedConnections.map(connection => ({
+                id: connection.relationId,
+                icon: 'git-network-outline' as const,
+                label: connection.locationName,
+                onPress: () => setSelectedNodeId(connection.locationId),
+              })),
+            },
+          ]}
+          actionLabel={t('location_graph_open_location')}
+          onAction={() => handleOpenLocation(selectedNode.id)}
+          onClose={() => setSelectedNodeId(null)}
+        />
+      )}
     </View>
   );
 };

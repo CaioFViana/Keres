@@ -18,7 +18,8 @@ interface ResponsiveModalProps {
   children: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
   maxHeight?: number | `${number}%`;
-  placement?: 'center' | 'bottom';
+  /** `adaptive` uses the bottom sheet on compact screens and a left panel on wide screens. */
+  placement?: 'center' | 'bottom' | 'side' | 'adaptive';
 }
 
 /** Shared modal surface used by selectors, suggestions and advanced filters. */
@@ -31,7 +32,20 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
   placement = 'center',
 }) => {
   const { colors } = useTheme();
-  const { isCompact } = useResponsiveLayout();
+  const { isCompact, isWide } = useResponsiveLayout();
+  const resolvedPlacement = placement === 'adaptive'
+    ? (isWide ? 'side' : 'bottom')
+    : placement;
+  const placementStyle: ViewStyle = resolvedPlacement === 'bottom'
+    ? {
+        width: '100%',
+        maxWidth: 1100,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+      }
+    : resolvedPlacement === 'side'
+      ? { width: '50%', maxWidth: 600 }
+      : { width: isCompact ? '94%' : '88%', maxWidth: 720 };
 
   return (
     <Modal
@@ -41,20 +55,14 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={[styles.overlay, placement === 'bottom' && styles.bottomOverlay]}>
+      <View style={[styles.overlay, resolvedPlacement === 'bottom' && styles.bottomOverlay, resolvedPlacement === 'side' && styles.sideOverlay]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
           style={[styles.content, {
             backgroundColor: colors.background,
-            width: isCompact ? '94%' : '88%',
-            maxWidth: placement === 'bottom' ? 960 : 720,
             maxHeight,
-            ...(placement === 'bottom' ? {
-              width: '100%',
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-            } : {}),
+            ...placementStyle,
           }, contentStyle]}
         >
           {children}
@@ -76,6 +84,11 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'flex-end',
     padding: 0,
+  },
+  sideOverlay: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    padding: 16,
   },
   content: {
     borderRadius: 12,

@@ -12,6 +12,9 @@ CREATE TABLE "favorites" (
 	CONSTRAINT "favorite_story_entity_user_unq" UNIQUE("story_id","entity_id","entity_type","user_id")
 );
 --> statement-breakpoint
-ALTER TABLE "stories" ADD COLUMN "favorite_behavior" text DEFAULT 'global' NOT NULL;--> statement-breakpoint
+ALTER TABLE "stories" ADD COLUMN "favorite_behavior" text DEFAULT 'individual' NOT NULL;--> statement-breakpoint
+ALTER TABLE "stories" ADD COLUMN "normalize_scene_timing" boolean DEFAULT false NOT NULL;--> statement-breakpoint
 ALTER TABLE "favorites" ADD CONSTRAINT "favorites_story_id_stories_id_fk" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "favorites" ADD CONSTRAINT "favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "favorites" ADD CONSTRAINT "favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "suggestions" DROP COLUMN "is_favorite";--> statement-breakpoint
+ALTER TABLE "suggestions" DROP COLUMN "extra_notes";

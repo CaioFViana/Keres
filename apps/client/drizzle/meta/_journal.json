@@ -26,29 +26,8 @@
     {
       "idx": 3,
       "version": "6",
-      "when": 1786219840339,
-      "tag": "0003_loose_omega_red",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1786226202378,
-      "tag": "0004_mixed_bucky",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1786230018660,
-      "tag": "0005_omniscient_gamma_corps",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1786243530808,
-      "tag": "0006_nasty_donald_blake",
+      "when": 1786306117550,
+      "tag": "0003_military_rhino",
       "breakpoints": true
     }
   ]

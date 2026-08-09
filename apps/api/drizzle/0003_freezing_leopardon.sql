@@ -1,1 +1,0 @@
-ALTER TABLE "stories" ALTER COLUMN "favorite_behavior" SET DEFAULT 'individual';

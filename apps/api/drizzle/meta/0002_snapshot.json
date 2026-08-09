@@ -1,5 +1,5 @@
 {
-  "id": "cf10b02c-8815-4dc4-8923-41128fbf76dc",
+  "id": "59ad22d2-d053-4c2b-a63a-cdbc6f10c504",
   "prevId": "5e5061b2-f9ac-4272-aa6e-dd10d4c84edb",
   "version": "7",
   "dialect": "postgresql",
@@ -2445,7 +2445,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'global'"
+          "default": "'individual'"
         },
         "extra_notes": {
           "name": "extra_notes",
@@ -2458,6 +2458,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "normalize_scene_timing": {
+          "name": "normalize_scene_timing",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -2775,19 +2782,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "is_favorite": {
-          "name": "is_favorite",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "extra_notes": {
-          "name": "extra_notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at": {
           "name": "created_at",

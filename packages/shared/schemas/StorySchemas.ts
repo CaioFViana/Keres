@@ -2,6 +2,7 @@ import { UlidSchema } from '../schemas/SyncSchemas'; // Adjusted path
 import { z } from 'zod';
 
 export const StoryTypeSchema = z.enum(['linear', 'branching']);
+export const FavoriteBehaviorSchema = z.enum(['global', 'individual', 'individual_public']);
 
 // Schema for client-provided input during story creation
 export const StoryCreateInputSchema = z.object({
@@ -13,8 +14,10 @@ export const StoryCreateInputSchema = z.object({
   language: z.string().nullable().optional(),
   author: z.string().nullable().optional(),
   isFavorite: z.boolean().default(false),
+  favoriteBehavior: FavoriteBehaviorSchema.default('individual'),
   extraNotes: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
+  normalizeSceneTiming: z.boolean().default(false),
 });
 
 // Schema for the 'data' payload when creating a story via sync
@@ -26,8 +29,10 @@ export const CreateStoryDataSchema = z.object({
   language: z.string().nullable().optional(),
   author: z.string().nullable().optional(),
   isFavorite: z.boolean().default(false),
+  favoriteBehavior: FavoriteBehaviorSchema.default('individual'),
   extraNotes: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
+  normalizeSceneTiming: z.boolean().default(false),
 });
 
 // Full Story Schema, including server-managed fields like userId

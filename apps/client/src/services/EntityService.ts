@@ -9,6 +9,7 @@ import {
   characters,
   characterScenes,
   choices,
+  favorites,
   galleries,
   galleryRelations,
   itemJourneys,
@@ -19,6 +20,7 @@ import {
   notes,
   operationLogs,
   scenes,
+  suggestions,
   stories,
   storySchemaFields,
   tagRelations,
@@ -60,6 +62,7 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   characterscene: OperationLogEntityType.CharacterScene,
   gallery: OperationLogEntityType.Gallery,
   galleryrelation: OperationLogEntityType.GalleryRelation,
+  favorite: OperationLogEntityType.Favorite,
 };
 
 export class EntityService {
@@ -169,6 +172,30 @@ export class EntityService {
         });
         entitySpecificName = gallery?.title || gallery?.fileName;
         translatedEntityType = t('gallery')
+        break;
+      case OperationLogEntityType.Suggestion:
+        const suggestion = await db.query.suggestions.findFirst({
+          where: and(eq(suggestions.id, entityId), eq(suggestions.storyId, storyId)),
+          columns: { value: true },
+        });
+        entitySpecificName = suggestion?.value;
+        translatedEntityType = t('suggestion');
+        break;
+      case OperationLogEntityType.Favorite:
+        const favorite = await db.query.favorites.findFirst({
+          where: and(eq(favorites.id, entityId), eq(favorites.storyId, storyId)),
+          columns: { entityId: true, entityType: true },
+        });
+        if (favorite) {
+          entitySpecificName = await EntityService.getEntityName(
+            db,
+            favorite.entityType as OperationLogEntityType,
+            favorite.entityId,
+            storyId,
+            t,
+          );
+        }
+        translatedEntityType = t('favorite');
         break;
       case OperationLogEntityType.GalleryRelation:
         const galleryRelation = await db.query.galleryRelations.findFirst({

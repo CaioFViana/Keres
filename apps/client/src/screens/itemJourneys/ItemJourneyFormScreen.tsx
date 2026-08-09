@@ -1,15 +1,16 @@
-import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/Select/Select';
-import SuggestionTextInput from '@/src/components/common/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '@/src/components/common/TextInput/TextInput';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import Select from '@/src/components/common/inputs/Select/Select';
+import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { ItemJourney } from '@keres/shared/entities/Item';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import NoteManager from '../../components/NoteManager';
+import { StyleSheet, Text, View } from 'react-native';
+import Button from '@/src/components/common/controls/Button/Button';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -32,7 +33,7 @@ type ItemJourneyFormScreenRouteProp = RouteProp<ItemJourneyStackParamList, 'Item
 type ItemJourneyFormScreenNavigationProp = NativeStackNavigationProp<ItemJourneyStackParamList, 'ItemJourneyForm'>;
 
 const ItemJourneyFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ItemJourneyFormScreenNavigationProp>();
   const route = useRoute<ItemJourneyFormScreenRouteProp>();
@@ -270,9 +271,7 @@ const ItemJourneyFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+      <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_item_journey_title') : t('create_item_journey_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{t('item_journey_form_description')}</Text>
 
@@ -356,9 +355,7 @@ const ItemJourneyFormScreen = () => {
 
           <Button onPress={handleSave} style={styles.saveButton}>{t('save_item_journey')}</Button>
           {isEditing && (<Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>{t('delete_item_journey_title')}</Button>)}
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScreen>
   );
 };
 

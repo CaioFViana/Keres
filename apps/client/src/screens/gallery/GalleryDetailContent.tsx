@@ -4,18 +4,20 @@ import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import GroupedMultiSelectPill from '../../components/common/GroupedMultiSelectPill/GroupedMultiSelectPill';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import TextInput from '../../components/common/TextInput/TextInput';
-import AudioPreviewPlayer from '../../components/MediaPlayer/AudioPreviewPlayer';
-import ImageZoomViewer from '../../components/MediaPlayer/ImageZoomViewer';
-import VideoPreviewPlayer from '../../components/MediaPlayer/VideoPreviewPlayer';
+import Button from '@/src/components/common/controls/Button/Button';
+import GroupedMultiSelectPill from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import AudioPreviewPlayer from '@/src/components/features/media/MediaPlayer/AudioPreviewPlayer';
+import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
+import VideoPreviewPlayer from '@/src/components/features/media/MediaPlayer/VideoPreviewPlayer';
 import { useDrizzle } from '../../db';
 import { GallerySelect } from '../../db/schemas/galleries';
 import { decodeOwnerValue, encodeOwnerValue, useGalleryOwnerOptions } from '../../hooks/useGalleryOwnerOptions';
 import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { mediaFileService } from '../../services/MediaFileService';
 import { createGalleryRelationService, GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -48,6 +50,8 @@ interface GalleryDetailContentProps {
    * chama `navigation.goBack()` diretamente - quem o hospeda decide o que "fechar" significa.
    */
   onClose: () => void;
+  /** Exibe um controle expl\u00edcito para fechar a tela ou o overlay que hospeda o conte\u00fado. */
+  showCloseButton?: boolean;
 }
 
 /**
@@ -65,9 +69,10 @@ interface GalleryDetailContentProps {
  * mostrado uma mídia por cima. Um `Modal` não participa do foco do React Navigation, então
  * não aciona esse reset.
  */
-const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, onClose }) => {
+const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, onClose, showCloseButton = false }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { isCompact } = useResponsiveLayout();
 
   const db = useDrizzle();
   const { selectedStory } = useStoryStore();
@@ -211,6 +216,23 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
     },
     content: {
       padding: 20,
+      width: '100%',
+      maxWidth: 1500,
+      alignSelf: 'center',
+    },
+    layout: {
+      width: '100%',
+    },
+    wideLayout: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 24,
+    },
+    widePreviewColumn: {
+      flex: 1,
+    },
+    wideDetailsColumn: {
+      flex: 1.15,
     },
     preview: {
       width: '100%',
@@ -223,6 +245,9 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
       justifyContent: 'center',
       overflow: 'hidden',
       marginBottom: 15,
+    },
+    widePreview: {
+      marginBottom: 0,
     },
     image: {
       width: '100%',
@@ -240,6 +265,14 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: 15,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    closeButton: {
+      padding: 4,
     },
     fileName: {
       fontSize: 18,
@@ -305,45 +338,62 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={styles.preview}>
-          {hasLocalImage ? (
-            <TouchableOpacity activeOpacity={0.9} onPress={() => setZoomVisible(true)} style={styles.image}>
-              <Image source={{ uri: resolvedUri as string }} style={styles.image} contentFit="contain" />
-            </TouchableOpacity>
-          ) : hasLocalVideo ? (
-            <VideoPreviewPlayer key={media.hash} uri={resolvedUri as string} />
-          ) : hasLocalAudio ? (
-            <AudioPreviewPlayer key={media.hash} uri={resolvedUri as string} />
-          ) : (
-            <View style={{ alignItems: 'center' }}>
-              <Ionicons
-                name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'}
-                size={64}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.placeholderText}>
-                {media.downloadState === 'pending'
-                  ? t('media_downloading')
-                  : mediaType === 'image'
-                    ? t('media_file_unavailable')
-                    : t('media_preview_unavailable')}
-              </Text>
+        <View style={[styles.layout, !isCompact && styles.wideLayout]}>
+          <View style={!isCompact && styles.widePreviewColumn}>
+            <View style={[styles.preview, !isCompact && styles.widePreview]}>
+              {hasLocalImage ? (
+                <TouchableOpacity activeOpacity={0.9} onPress={() => setZoomVisible(true)} style={styles.image}>
+                  <Image source={{ uri: resolvedUri as string }} style={styles.image} contentFit="contain" />
+                </TouchableOpacity>
+              ) : hasLocalVideo ? (
+                <VideoPreviewPlayer key={media.hash} uri={resolvedUri as string} />
+              ) : hasLocalAudio ? (
+                <AudioPreviewPlayer key={media.hash} uri={resolvedUri as string} />
+              ) : (
+                <View style={{ alignItems: 'center' }}>
+                  <Ionicons
+                    name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'}
+                    size={64}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={styles.placeholderText}>
+                    {media.downloadState === 'pending'
+                      ? t('media_downloading')
+                      : mediaType === 'image'
+                        ? t('media_file_unavailable')
+                        : t('media_preview_unavailable')}
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
+          </View>
 
-        <View style={styles.headerRow}>
-          <Text style={styles.fileName} numberOfLines={2}>{media.fileName}</Text>
-          {canEdit && (
-            <TouchableOpacity onPress={handleToggleFavorite}>
-              <Ionicons
-                name={media.isFavorite ? 'star' : 'star-outline'}
-                size={28}
-                color={media.isFavorite ? colors.star : colors.textSecondary}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
+          <View style={!isCompact && styles.wideDetailsColumn}>
+            <View style={styles.headerRow}>
+              <Text style={styles.fileName} numberOfLines={2}>{media.fileName}</Text>
+              <View style={styles.headerActions}>
+                {canEdit && (
+                  <TouchableOpacity onPress={handleToggleFavorite}>
+                    <Ionicons
+                      name={media.isFavorite ? 'star' : 'star-outline'}
+                      size={28}
+                      color={media.isFavorite ? colors.star : colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                )}
+                {showCloseButton && (
+                  <TouchableOpacity
+                    accessibilityLabel={t('close')}
+                    accessibilityRole="button"
+                    hitSlop={8}
+                    onPress={onClose}
+                    style={styles.closeButton}
+                  >
+                    <Ionicons name="close" size={28} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
 
         <View style={styles.metaRow}>
           <Text style={styles.metaLabel}>{t('media_type')}</Text>
@@ -398,6 +448,8 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
           noOptionsText={t('media_no_entities_available')}
         />
 
+        <FavoritedByList storyId={media.storyId} entityId={galleryId} entityType="Gallery" />
+
         {canEdit && (
           <View style={styles.actions}>
             <Button onPress={handleSave} disabled={saving}>
@@ -408,6 +460,8 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({ galleryId, 
             </Button>
           </View>
         )}
+          </View>
+        </View>
       </ScrollView>
       {hasLocalImage && (
         <ImageZoomViewer

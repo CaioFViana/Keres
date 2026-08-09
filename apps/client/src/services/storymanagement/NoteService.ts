@@ -10,6 +10,7 @@ import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } fr
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 
 export type NoteWithTags = NoteSelect & {
   tags: TagSelect[];
@@ -196,13 +197,16 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         }
       }
 
-      return noteMap.get(noteId);
+      return decorateFavorite(db, 'Note', noteMap.get(noteId));
     },
 
     async createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect> {
       await assertStoryIsWritable(db, noteData.storyId);
-      const newNote = prepareNewEntityData<NoteInsert>(noteData);
+      let newNote = prepareNewEntityData<NoteInsert>(noteData);
+      const favorite = await normalizeFavoriteCreate(db, newNote.storyId, 'Note', newNote);
+      newNote = favorite.data;
       const result = await db.insert(notes).values(newNote).returning().get();
+      await persistInitialFavorite(db, newNote.storyId, newNote.id, 'Note', currentUserId, favorite.individualFavorite);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newNote.storyId, currentUserId);
       await recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, { ...result });
@@ -217,6 +221,7 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         throw new Error(`Note with ID ${noteId} not found for update.`);
       }
       await assertStoryIsWritable(db, originalNote.storyId);
+      noteData = await normalizeFavoriteUpdate(db, originalNote.storyId, noteId, 'Note', currentUserId, noteData);
 
       // Create a potential new state for diffing, including only fields that might change
       const potentialNewState = { ...originalNote, ...noteData };

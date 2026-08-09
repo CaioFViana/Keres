@@ -4,10 +4,11 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import DetailField from '../../components/common/DetailField/DetailField';
-import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
-import RelatedEntitiesList from '../../components/common/RelatedEntitiesList/RelatedEntitiesList';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema'; // Import TagSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -30,7 +31,7 @@ export type TagDetailScreenParamList = {
 type TagDetailScreenRouteProp = RouteProp<TagDetailScreenParamList, 'TagDetail'>;
 
 const TagDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<TagsScreenNavigationProp>();
   const route = useRoute<TagDetailScreenRouteProp>();
@@ -281,6 +282,7 @@ const TagDetailScreen = () => {
       />
 
       <EntityMetadata version={tag.version} createdAt={tag.createdAt} updatedAt={tag.updatedAt} />
+      <FavoritedByList storyId={tag.storyId} entityId={tagId} entityType="Tag" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

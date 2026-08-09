@@ -7,7 +7,7 @@ import { TierLimitExceededError, tierEnforcementService } from './TierEnforcemen
 import { AppError } from '../utils/errors';
 
 export class StoryExportImportService {
-    async exportStory(storyId: string): Promise<FullStoryExportType> { // storyId type should be string
+    async exportStory(storyId: string, userId?: string): Promise<FullStoryExportType> { // storyId type should be string
         // Fetch the main story
         const story = await db.query.stories.findFirst({
             where: (stories, { eq }) => eq(stories.id, storyId),
@@ -78,6 +78,13 @@ export class StoryExportImportService {
         const attributeValues = await db.query.attributeValues.findMany({
             where: (attributeValues, { eq, and }) => and(eq(attributeValues.storyId, storyId), eq(attributeValues.isDeleted, false)),
         });
+        const favorites = userId ? await db.query.favorites.findMany({
+            where: (favorites, { eq, and }) => and(
+                eq(favorites.storyId, storyId),
+                ...(story.favoriteBehavior === 'individual_public' ? [] : [eq(favorites.userId, userId)]),
+                eq(favorites.isDeleted, false),
+            ),
+        }) : [];
 
         // Query for the maximum operationVersion for this story
         const latestOperation = await db.select({
@@ -113,6 +120,7 @@ export class StoryExportImportService {
             noteRelations,
             storySchemaFields,
             attributeValues,
+            favorites,
             serverLastOperationVersion: serverLastOperationVersion,
             formatVersion: CURRENT_STORY_FORMAT_VERSION,
         });
@@ -651,6 +659,28 @@ export class StoryExportImportService {
                     };
                 });
                 await tx.insert(dbSchema.attributeValues).values(newAttributeValuesData);
+            }
+
+            if (validatedFullStory.favorites && validatedFullStory.favorites.length > 0) {
+                const newFavoritesData = validatedFullStory.favorites.map(original => {
+                    const mappedEntityId = idMap.get(original.entityId);
+                    if (!mappedEntityId) {
+                        throw new Error(`Import Error: Entity ID ${original.entityId} (${original.entityType}) not found for favorite ${original.id}.`);
+                    }
+                    return {
+                        ...original,
+                        id: nextId(original.id),
+                        storyId: targetStoryId,
+                        entityId: mappedEntityId,
+                        userId,
+                        version: 1,
+                        createdAt: now,
+                        updatedAt: now,
+                        isDeleted: false,
+                        deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.favorites).values(newFavoritesData);
             }
         });
 

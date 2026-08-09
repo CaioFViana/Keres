@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig, isAxiosError } from 'axios';
+import { AxiosError, AxiosInstance, AxiosRequestConfig, create as createAxios, InternalAxiosRequestConfig, isAxiosError } from 'axios';
 import { Platform } from 'react-native';
 import { ServerSelect } from '../db/schema'; // Import ServerSelect
 import { useConnectivityStore } from '../state/connectivityStore';
@@ -84,6 +84,18 @@ interface RefreshState {
 // unrelated servers.
 const refreshStateByServerId = new Map<string, RefreshState>();
 
+/** Clears credentials and rejects refresh requests that belong to an app reset. */
+export function clearAllServerAuthState(serverIds: string[]): void {
+  for (const serverId of serverIds) {
+    serverTokenCache.delete(serverId);
+    const refreshState = refreshStateByServerId.get(serverId);
+    if (refreshState) {
+      processQueue(refreshState, new AxiosError('Authentication cleared by application reset.', 'AUTH_RESET'));
+      refreshStateByServerId.delete(serverId);
+    }
+  }
+}
+
 function getRefreshState(serverId: string): RefreshState {
   let state = refreshStateByServerId.get(serverId);
   if (!state) {
@@ -112,9 +124,6 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
 
   instance.setActiveServer = (server: ServerSelect | null) => {
     currentServer = server;
-    if (server) {
-      updateServerTokenCache(server.id, server.jwtToken || null, server.refreshToken || null);
-    }
   };
 
   /**
@@ -260,7 +269,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
 }
 
 // Global API client instance
-const apiClient: KeresAxiosInstance = axios.create() as KeresAxiosInstance;
+const apiClient: KeresAxiosInstance = createAxios() as KeresAxiosInstance;
 applyInterceptors(apiClient); // Apply interceptors (and setActiveServer) to the global instance
 
 // Method to dynamically set the base URL for the global instance
@@ -277,7 +286,7 @@ apiClient.setTokenProvider = (provider: TokenProvider | null) => {
 
 // Function to create a new Axios instance with interceptors
 export function createKeresAxiosInstance(config?: AxiosRequestConfig): KeresAxiosInstance {
-  const instance = axios.create(config) as KeresAxiosInstance;
+  const instance = createAxios(config) as KeresAxiosInstance;
   applyInterceptors(instance); // Also sets instance.setActiveServer, scoped to this instance
   instance.setBaseUrl = (url: string) => { instance.defaults.baseURL = url; };
   instance.setTokenProvider = (provider: TokenProvider | null) => { tokenProvider = provider; };
@@ -286,7 +295,7 @@ export function createKeresAxiosInstance(config?: AxiosRequestConfig): KeresAxio
 
 // Function to create a new Axios instance WITHOUT interceptors
 export function createPlainAxiosInstance(config?: AxiosRequestConfig): AxiosInstance {
-  return axios.create(config);
+  return createAxios(config);
 }
 
 export default apiClient;

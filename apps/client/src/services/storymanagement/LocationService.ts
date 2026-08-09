@@ -8,6 +8,7 @@ import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } fr
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 
 export type LocationWithTags = LocationSelect & { tags: TagSelect[] };
 
@@ -171,8 +172,11 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
 
     async createLocation(currentUserId: string, locationData: Create<LocationInsert>): Promise<LocationSelect> {
       await assertStoryIsWritable(db, locationData.storyId);
-      const newLocation = prepareNewEntityData<LocationInsert>(locationData);
+      let newLocation = prepareNewEntityData<LocationInsert>(locationData);
+      const favorite = await normalizeFavoriteCreate(db, newLocation.storyId, 'Location', newLocation);
+      newLocation = favorite.data;
       const result = await db.insert(locations).values(newLocation).returning().get();
+      await persistInitialFavorite(db, newLocation.storyId, newLocation.id, 'Location', currentUserId, favorite.individualFavorite);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newLocation.storyId, currentUserId);
       await recordLocalOperation(db, newLocation.storyId, userIdToLog, 'create', 'Location', newLocation.id, { ...result });
@@ -187,6 +191,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         throw new Error(`Location with ID ${locationId} not found for update.`);
       }
       await assertStoryIsWritable(db, oldLocation.storyId);
+      updatedFields = await normalizeFavoriteUpdate(db, oldLocation.storyId, locationId, 'Location', currentUserId, updatedFields);
 
       const potentialNewState = { ...oldLocation, ...updatedFields };
       const changes = getChangedFields(oldLocation, potentialNewState);
@@ -283,7 +288,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         const location = await db.query.locations.findFirst({
             where: and(eq(locations.id, locationId), eq(locations.isDeleted, false)),
         });
-        return location;
+        return decorateFavorite(db, 'Location', location);
     },
 
     async getAllByStoryId(storyId: string): Promise<LocationSelect[]> {

@@ -5,10 +5,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import GenericExpandedListItemWithActions from '../../components/common/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import Select from '../../components/common/Select/Select';
-import TextInput from '../../components/common/TextInput/TextInput';
+import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ChapterSelect, ChoiceSelect, ItemJourneySelect, ItemSelect, SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -161,7 +161,7 @@ const ItemJourneyListScreen = () => {
     filterRow: { flexDirection: 'row', paddingHorizontal: 12, paddingTop: 8, gap: 8, alignItems: 'flex-start' },
     searchInputWrapper: { flex: 1 },
     sortWrapper: { width: 170 },
-    headerButton: { marginLeft: 15 },
+    headerButton: { marginRight: 15 },
     itemHeaderLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     itemName: { fontSize: 16, fontWeight: '600', color: colors.text, flex: 1 },
     journeyCountBadge: {

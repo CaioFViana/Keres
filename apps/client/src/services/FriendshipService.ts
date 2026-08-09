@@ -1,7 +1,7 @@
 import { FriendshipInsert, friendships, FriendshipSelect } from '@/src/db/schemas/friendships'; // Import friendships here
 import { servers, ServerSelect } from '@/src/db/schemas/servers'; // Import servers schema and ServerSelect
 import { UserInsert, users } from '@/src/db/schemas/users'; // Import users schema and UserInsert
-import { EnrichedFriendship } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
+import { EnrichedFriendship, UserPublicInfo } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { AppDrizzleClient, AppDrizzleTransaction } from '../db';
@@ -10,6 +10,12 @@ import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
 import { isOfflineError } from './apiClient';
 import { friendshipApiService } from './FriendshipApiService'; // Import the API service
+import { userApiService } from './UserApiService';
+
+// Initial reconciliation and WebSocket connection/reconnection can request the same
+// server refresh at almost the same time. Expo SQLite must not run those write
+// transactions concurrently, so every caller shares the in-flight refresh per server.
+const friendshipSyncInFlight = new Map<string, Promise<void>>();
 
 export type FriendshipWithServer = FriendshipSelect & {
   serverName: string | null;
@@ -250,11 +256,13 @@ export class FriendshipService {
    * refreshed it - a friend who set a real display name, avatar, or bio later would stay
    * stuck on the placeholder forever. Every sync now keeps the local copy current instead.
    */
-  private async upsertUsersFromFriendships(serverFriendships: EnrichedFriendship[], serverId: string, tx?: AppDrizzleTransaction): Promise<void> {
+  private async upsertUsersFromFriendships(
+    serverFriendships: EnrichedFriendship[],
+    server: ServerSelect,
+    ownProfile: UserPublicInfo | undefined,
+    tx?: AppDrizzleTransaction,
+  ): Promise<void> {
     const dbClient = tx || this.db;
-    if (serverFriendships.length === 0) {
-      return;
-    }
 
     const now = new Date();
     // A user can appear in more than one friendship row in the same batch - key by id so
@@ -263,7 +271,7 @@ export class FriendshipService {
     for (const sf of serverFriendships) {
       usersById.set(sf.otherUserId, {
         idUser: sf.otherUserId,
-        idServer: serverId,
+        idServer: server.id,
         displayName: sf.friendUsername,
         tag: sf.otherUserTag,
         avatarColor: sf.otherUserAvatarColor,
@@ -276,6 +284,24 @@ export class FriendshipService {
         deletedAt: null,
       });
     }
+
+    // Both senderId and receiverId are foreign keys to users. The friendship payload only
+    // enriches the *other* person, so a freshly registered client does not yet have its own
+    // server-side user row and every friendship insert would fail with SQLite error 19.
+    usersById.set(server.idUser, {
+      idUser: server.idUser,
+      idServer: server.id,
+      displayName: ownProfile?.username ?? server.userName,
+      tag: ownProfile?.tag ?? server.tag,
+      avatarColor: ownProfile?.avatarColor ?? null,
+      avatarIcon: ownProfile?.avatarIcon ?? null,
+      bio: ownProfile?.bio ?? null,
+      createdAt: now,
+      updatedAt: now,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    });
 
     await dbClient.insert(users).values(Array.from(usersById.values()))
       .onConflictDoUpdate({
@@ -292,13 +318,34 @@ export class FriendshipService {
       .run();
   }
 
-  async syncFriendshipsWithServer(currentUserId: string, server: ServerSelect): Promise<void> {
+  syncFriendshipsWithServer(_currentUserId: string, server: ServerSelect): Promise<void> {
+    const existing = friendshipSyncInFlight.get(server.id);
+    if (existing) return existing;
+
+    const sync = this.performFriendshipSync(server);
+    friendshipSyncInFlight.set(server.id, sync);
+    void sync.finally(() => {
+      if (friendshipSyncInFlight.get(server.id) === sync) {
+        friendshipSyncInFlight.delete(server.id);
+      }
+    }).catch(() => {
+      // The original promise is returned to, and handled by, each caller. This catch only
+      // handles the promise created by finally() so it cannot become an unhandled rejection.
+    });
+    return sync;
+  }
+
+  private async performFriendshipSync(server: ServerSelect): Promise<void> {
     const serverId = server.id;
     // Fetch before opening the transaction: a network round-trip inside a DB
     // transaction holds it open for the whole request and aborts it on failure.
     let serverFriendships: EnrichedFriendship[];
+    let ownProfile: UserPublicInfo | undefined;
     try {
-      serverFriendships = await friendshipApiService.getFriendships(server);
+      [serverFriendships, ownProfile] = await Promise.all([
+        friendshipApiService.getFriendships(server),
+        userApiService.getOwnProfile(server),
+      ]);
     } catch (error) {
       if (isOfflineError(error)) {
         // Expected while the server is unreachable - keep local friendships as-is.
@@ -333,7 +380,7 @@ export class FriendshipService {
         }
 
         // --- Keep local user profiles (name/avatar/bio) in sync with the server ---
-        await this.upsertUsersFromFriendships(serverFriendships, serverId, tx);
+        await this.upsertUsersFromFriendships(serverFriendships, server, ownProfile, tx);
 
         // --- Insertion/Update Logic (with Notification Detection) ---
         const friendshipsToInsertOrUpdate: FriendshipInsert[] = [];
@@ -354,7 +401,7 @@ export class FriendshipService {
           friendshipsToInsertOrUpdate.push(friendshipInsert);
 
           // Notification logic
-          if (!previousStatus && sf.status === FriendStatus.PENDING && sf.receiverId === currentUserId) { // Only notify receiver
+          if (!previousStatus && sf.status === FriendStatus.PENDING && sf.receiverId === server.idUser) { // Only notify receiver
             showNotification(`New friend request from ${sf.friendUsername}`, 'info');
           } else if (previousStatus === FriendStatus.PENDING && sf.status === FriendStatus.FRIEND) {
             showNotification(`Friend request from ${sf.friendUsername} accepted!`, 'success');

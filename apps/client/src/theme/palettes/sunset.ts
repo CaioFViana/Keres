@@ -1,53 +1,17 @@
 import { ThemeColors } from '../ThemeColors';
 
 const lightColors: ThemeColors = {
-  primary: '#E65100', // Deep Orange
-  primaryVariant: '#BF360C', // Dark Orange
-  primaryContainer: '#FFCCBC', // Light Orange
-  onPrimaryContainer: '#E65100', // On Light Orange
-  secondary: '#FFC107', // Amber
-  secondaryVariant: '#FFA000', // Dark Amber
-  background: '#FFF3E0', // Very light orange/cream
-  surface: '#FFFFFF',
-  error: '#B00020',
-  onPrimary: '#FFFFFF',
-  onSecondary: '#000000',
-  onBackground: '#000000',
-  onSurface: '#000000',
-  onError: '#FFFFFF',
-  text: '#000000',
-  textSecondary: '#666666',
-  card: '#FFECB3', // Pale Yellow for cards
-  border: '#FFD54F', // Light Amber border
-  notification: '#FFC107',
-  accent: '#E91E63', // Pinkish-Red accent
-  star: '#FFD700',
-  shadow: '#000000',
+  primary: '#9B4200', primaryVariant: '#793300', primaryContainer: '#FFDBCA', onPrimaryContainer: '#321200',
+  secondary: '#765845', secondaryVariant: '#5C4030', background: '#FFF9F6', surface: '#FFFBFF',
+  error: '#BA1A1A', onPrimary: '#FFFFFF', onSecondary: '#FFFFFF', onBackground: '#211A17', onSurface: '#211A17', onError: '#FFFFFF',
+  text: '#211A17', textSecondary: '#625B56', card: '#FFF0E8', border: '#EFC1AC', notification: '#805B00', accent: '#B55A00', star: '#8A6500', shadow: '#000000',
 };
 
 const darkColors: ThemeColors = {
-  primary: '#FF8A65', // Lighter Orange for dark mode
-  primaryVariant: '#FF7043', // Orange
-  primaryContainer: '#D84315', // Dark Orange
-  onPrimaryContainer: '#FFCCBC', // On Dark Orange
-  secondary: '#FFD54F', // Light Amber
-  secondaryVariant: '#FFC107', // Amber
-  background: '#3E2723', // Dark Brown background
-  surface: '#2C1D1B', // Slightly lighter dark brown
-  error: '#CF6679',
-  onPrimary: '#000000',
-  onSecondary: '#000000',
-  onBackground: '#FFFFFF',
-  onSurface: '#FFFFFF',
-  onError: '#000000',
-  text: '#FFFFFF',
-  textSecondary: '#AAAAAA',
-  card: '#5D4037', // Medium Brown for cards
-  border: '#8D6E63', // Lighter Brown border
-  notification: '#FFC107',
-  accent: '#F06292', // Lighter Pink accent
-  star: '#FFD700',
-  shadow: 'rgba(255, 255, 255, 0.2)',
+  primary: '#FFB68C', primaryVariant: '#FF9B65', primaryContainer: '#783300', onPrimaryContainer: '#FFDBCA',
+  secondary: '#E7BDA7', secondaryVariant: '#CDA48F', background: '#1D1612', surface: '#251C17',
+  error: '#FFB4AB', onPrimary: '#522100', onSecondary: '#442A1B', onBackground: '#EDE0DA', onSurface: '#EDE0DA', onError: '#690005',
+  text: '#EDE0DA', textSecondary: '#D3C4BC', card: '#30241E', border: '#51443C', notification: '#FFD166', accent: '#FFB77D', star: '#FFD166', shadow: '#000000',
 };
 
 export const sunsetTheme = { lightColors, darkColors };

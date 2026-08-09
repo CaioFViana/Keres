@@ -14,11 +14,14 @@ interface NotificationState {
   queue: Notification[];
   showNotification: (message: string, type?: NotificationType) => void;
   clearNotificationLane: (laneIndex: number) => void; // New action to clear a specific lane
+  clearAll: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   currentNotifications: [null, null, null], // Initialize with 3 empty lanes
   queue: [],
+
+  clearAll: () => set({ currentNotifications: [null, null, null], queue: [] }),
 
   showNotification: (message: string, type: NotificationType = 'info') => {
     const newNotification: Notification = {

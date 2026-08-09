@@ -523,9 +523,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVR3768YDJFSVHDT0YDR",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "name": "Protagonista",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVR3J7WG036CTEFXNK9A",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "name": "Magia",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVR3W77HPFG792959GXQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "name": "Ponto de virada",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVR3XVZJZCWJ6EXZAP88",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "tagId": "01KZKVMVR3768YDJFSVHDT0YDR",
+      "relationId": "01KYXBHD0BESDGG77MG3F2A721",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVR3ASG6CX93W2X4E4CG",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "tagId": "01KZKVMVR3J7WG036CTEFXNK9A",
+      "relationId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVR3BNAYT8XXNF9JG50W",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "tagId": "01KZKVMVR3W77HPFG792959GXQ",
+      "relationId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVR3SAQZP5BQ68R2ED1A",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVR2V9SYA0467H5HS2QJ",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVR3ADCYPY4FDQWF83X1",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVR2V9SYA0467H5HS2QJ",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVR314TTN90RN9MCM5GX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVR2V9SYA0467H5HS2QJ",
+      "value": "Antagonista"
+    },
+    {
+      "id": "01KZKVMVR3BS0NWTKXFAC98WRB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVR2JK86NEPR1D5WQ9JB",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVR3H79DZGMQSZSRS4VS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVR2JK86NEPR1D5WQ9JB",
+      "value": "Tensão"
+    },
+    {
+      "id": "01KZKVMVR302YA9MKY01QQS5Y7",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVR2JK86NEPR1D5WQ9JB",
+      "value": "Esperança"
+    },
+    {
+      "id": "01KZKVMVR3ZBZ6NFN0KAGNMZRB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Novo"
+    },
+    {
+      "id": "01KZKVMVR35Z4Q4JXPSYHMR79D",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Quebrado"
+    },
+    {
+      "id": "01KZKVMVR40ZXGEAKX0FQDE30K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Consumido"
+    },
+    {
+      "id": "01KZKVMVR489SNHCF5GG518AZ3",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Escrito"
+    },
+    {
+      "id": "01KZKVMVR4KES6DGDWBZCYH9XS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Transferido"
+    },
+    {
+      "id": "01KZKVMVR4YARG2F27H6H9FTE6",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Resolvido"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0BDQZCZ54XX052NY9X",
@@ -576,7 +786,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVR38XVA1PAFMQEB24QS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT"
+    },
+    {
+      "id": "01KZKVMVR3QDQ81CM3EKD242D3",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -586,7 +819,7 @@
       "name": "Garrafa com o rótulo \"BEBA-ME\"",
       "category": "Poção",
       "description": "Uma garrafinha encontrada sobre uma mesa de vidro, com uma etiqueta de papel amarrada no gargalo dizendo \"BEBA-ME\".",
-      "initialState": "Cheia, lacrada, sobre a mesa de vidro.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -602,7 +835,7 @@
       "name": "Bolo com o rótulo \"COMA-ME\"",
       "category": "Comida",
       "description": "Um bolinho encontrado debaixo da mesa, com as palavras \"COMA-ME\" formadas em passas de uva.",
-      "initialState": "Inteiro, intocado, debaixo da mesa.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -619,8 +852,8 @@
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "newCharacterOwnerId": null,
-      "newState": "Bebida por Alice - ela encolhe para apenas vinte e cinco centímetros de altura.",
-      "extraNotes": null,
+      "newState": "Consumido",
+      "extraNotes": "Bebida por Alice - ela encolhe para apenas vinte e cinco centímetros de altura.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -633,8 +866,8 @@
       "itemId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "newCharacterOwnerId": null,
-      "newState": "Comido por Alice - ela cresce enormemente, enchendo o corredor.",
-      "extraNotes": null,
+      "newState": "Consumido",
+      "extraNotes": "Comido por Alice - ela cresce enormemente, enchendo o corredor.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -642,5 +875,111 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVR2V9SYA0467H5HS2QJ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Character",
+      "name": "Papel narrativo",
+      "key": "narrative_role",
+      "description": "O papel do personagem nesta releitura.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVR2JK86NEPR1D5WQ9JB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Scene",
+      "name": "Tom emocional",
+      "key": "emotional_tone",
+      "description": "O clima predominante desta cena.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVR32F1Z697EVAJX2CFM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0BESDGG77MG3F2A721",
+      "fieldId": "01KZKVMVR2V9SYA0467H5HS2QJ",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVR3Y4ZSBA4RAHYEK3NX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "fieldId": "01KZKVMVR2V9SYA0467H5HS2QJ",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVR3HX05B9NZQ2K5Z21V",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "fieldId": "01KZKVMVR2JK86NEPR1D5WQ9JB",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVR34FHYB031AV0KC29B",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "fieldId": "01KZKVMVR2JK86NEPR1D5WQ9JB",
+      "value": "Tensão"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVR4KYD04JN0DQH97M4Y",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "locationAId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "locationBId": "01KYXBHD0B6RME43YC69PZR0W2",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

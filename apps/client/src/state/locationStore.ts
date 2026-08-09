@@ -3,6 +3,7 @@ import { createEntityStore } from './createEntityStore';
 
 export const useLocationStore = createEntityStore<'locations', LocationWithTags, LocationService>({
   collectionKey: 'locations',
+  favoriteEntityType: 'Location',
   createService: createLocationService,
   fetchEntities: (service, p) =>
     service.getLocationsByStoryId(

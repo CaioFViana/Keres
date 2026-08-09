@@ -1,14 +1,16 @@
-import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/TextInput/TextInput';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { Chapter } from '@keres/shared/entities/Chapter';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
-import NoteManager from '../../components/NoteManager';
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import Button from '@/src/components/common/controls/Button/Button';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import { useDrizzle } from '../../db';
 import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -31,7 +33,7 @@ type ChapterFormScreenRouteProp = RouteProp<ChapterStackParamList, 'ChapterForm'
 type ChapterFormScreenNavigationProp = NativeStackNavigationProp<ChapterStackParamList, 'ChapterForm'>;
 
 const ChapterFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ChapterFormScreenNavigationProp>();
   const route = useRoute<ChapterFormScreenRouteProp>();
@@ -120,7 +122,7 @@ const ChapterFormScreen = () => {
       }
     };
     loadChapter();
-  }, [currentChapterId, isEditing, selectedStory?.id, t]);
+  }, [currentChapterId, drizzleDb, isEditing, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -284,13 +286,7 @@ const ChapterFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_chapter_title') : t('create_chapter_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('chapter_form_description')}
@@ -315,11 +311,9 @@ const ChapterFormScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isFavorite}
               onValueChange={setIsFavorite}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>
@@ -378,9 +372,7 @@ const ChapterFormScreen = () => {
               {t('delete_chapter_title')}
             </Button>
           )}
-        </ScrollView>
-      </TouchableWithoutFeedback>    
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

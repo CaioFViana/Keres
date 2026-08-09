@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import SceneNodeSheet, { SceneNodeConnection } from '../../components/StoryGraph/SceneNodeSheet';
-import StoryGraphCanvas, { StoryGraphCanvasHandle } from '../../components/StoryGraph/StoryGraphCanvas';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
+import StoryGraphCanvas, { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../db';
 import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -16,9 +16,11 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { formatSceneGap, formatSceneUniverseDuration } from '../../utils/sceneTiming';
 import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
 import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
 /**
@@ -34,8 +36,15 @@ import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 /** Acima disso o texto das escolhas polui mais do que informa; o usuário pode reativar. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
 
+interface SceneNodeConnection {
+  choiceId: string;
+  text: string;
+  sceneId: string;
+  sceneName: string;
+}
+
 const ChoiceViewScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ChoicesScreenNavigationProp>();
@@ -81,6 +90,16 @@ const ChoiceViewScreen = () => {
   useFocusEffect(useCallback(() => {
     loadGraph();
   }, [loadGraph]));
+
+  useEffect(() => {
+    const handleRemoteChange = (change: { storyId?: string }) => {
+      if (change?.storyId === storyId) {
+        loadGraph();
+      }
+    };
+    entityEventEmitter.on('story_data_changed', handleRemoteChange);
+    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
+  }, [storyId, loadGraph]);
 
   useFocusEffect(useCallback(() => {
     setDocumentTitle(t('story_map_title'));
@@ -277,6 +296,7 @@ const ChoiceViewScreen = () => {
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
+      outlineWidth: 0,
     },
     emptyContainer: {
       flex: 1,
@@ -411,14 +431,51 @@ const ChoiceViewScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <SceneNodeSheet
-        node={selectedNode}
-        outgoing={connections.outgoing}
-        incoming={connections.incoming}
-        onClose={() => setSelectedNodeId(null)}
-        onOpenScene={handleOpenScene}
-        onSelectScene={setSelectedNodeId}
-      />
+      {selectedNode && (
+        <GraphNodeSheet
+          title={selectedNode.scene.name}
+          subtitle={selectedNode.chapterName ? { text: selectedNode.chapterName, color: selectedNode.chapterColor } : undefined}
+          badges={[
+            ...(selectedNode.isStart ? [{ label: t('story_map_badge_start'), color: colors.accent }] : []),
+            ...(selectedNode.isFinish ? [{ label: t('story_map_badge_finish'), color: colors.error }] : []),
+            ...(selectedNode.isDetached ? [{ label: t('story_map_badge_detached'), color: colors.textSecondary }] : []),
+          ]}
+          sections={[
+            ...(selectedNode.scene.summary ? [{ title: t('summary'), description: selectedNode.scene.summary }] : []),
+            {
+              title: t('scene_timing'),
+              description: `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}\n${t('in_universe_duration')}: ${formatSceneUniverseDuration(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}`,
+            },
+            {
+              title: t('story_map_outgoing_choices'),
+              emptyMessage: t('story_map_no_outgoing_choices'),
+              items: connections.outgoing.map(connection => ({
+                id: connection.choiceId,
+                icon: 'arrow-forward' as const,
+                label: connection.text || t('story_map_implicit_choice'),
+                detail: connection.sceneName,
+                italicLabel: !connection.text,
+                onPress: () => setSelectedNodeId(connection.sceneId),
+              })),
+            },
+            {
+              title: t('story_map_incoming_choices'),
+              emptyMessage: t('story_map_no_incoming_choices'),
+              items: connections.incoming.map(connection => ({
+                id: connection.choiceId,
+                icon: 'arrow-back' as const,
+                label: connection.text || t('story_map_implicit_choice'),
+                detail: connection.sceneName,
+                italicLabel: !connection.text,
+                onPress: () => setSelectedNodeId(connection.sceneId),
+              })),
+            },
+          ]}
+          actionLabel={t('story_map_open_scene')}
+          onAction={() => handleOpenScene(selectedNode.id)}
+          onClose={() => setSelectedNodeId(null)}
+        />
+      )}
     </View>
   );
 };

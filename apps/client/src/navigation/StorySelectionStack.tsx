@@ -5,6 +5,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
+import ResizableDrawerContent, {
+  DRAWER_MIN_WIDTH,
+  useResizableDrawerWidth,
+} from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
@@ -18,6 +22,7 @@ import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationSc
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import { useTheme } from '../theme';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -143,10 +148,22 @@ const FriendshipStackNavigator = () => {
 const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
+  const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
+  const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
 
   return (
     <Drawer.Navigator
-      defaultStatus="closed"
+      defaultStatus={isWide ? 'open' : 'closed'}
+      drawerContent={(props) => (
+        <ResizableDrawerContent
+          {...props}
+          drawerWidth={drawerWidth}
+          maximumWidth={maximumWidth}
+          onDrawerWidthChange={setDrawerWidth}
+          resizable={!isCompact}
+        />
+      )}
       screenOptions={({ navigation }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,
@@ -154,11 +171,15 @@ const StorySelectionNavigator = () => {
           backgroundColor: colors.surface,
         },
         headerTintColor: colors.text,
-        headerLeft: () => <DrawerToggleButton navigation={navigation} />,
+        headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation} />,
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
+        drawerType: isWide ? 'permanent' : 'front',
+        swipeEnabled: !isWide,
         drawerStyle: {
           backgroundColor: colors.surface,
+          minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
+          width: isCompact ? compactDrawerWidth : drawerWidth,
         },
       })}
     >

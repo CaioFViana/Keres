@@ -6,8 +6,6 @@ export const suggestions = pgTable('suggestions', {
   storyId: text('story_id').notNull().references(() => stories.id),
   type: text('type').notNull(),
   value: text('value').notNull(),
-  isFavorite: boolean('is_favorite').notNull().default(false),
-  extraNotes: text('extra_notes'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   version: integer('version').notNull().default(1),

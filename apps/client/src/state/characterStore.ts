@@ -3,6 +3,7 @@ import { createEntityStore } from './createEntityStore';
 
 export const useCharacterStore = createEntityStore<'characters', CharacterWithTags, CharacterService>({
   collectionKey: 'characters',
+  favoriteEntityType: 'Character',
   createService: createCharacterService,
   fetchEntities: (service, p) =>
     service.getCharactersByStoryId(

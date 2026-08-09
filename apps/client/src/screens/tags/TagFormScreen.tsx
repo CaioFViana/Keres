@@ -2,10 +2,12 @@ import { Tag } from '@keres/shared/entities/Tag';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPickerInput';
-import TextInput from '../../components/common/TextInput/TextInput';
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import Button from '@/src/components/common/controls/Button/Button';
+import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -22,7 +24,7 @@ import { AppAlert } from '../../utils/AppAlert';
 type TagFormScreenRouteProp = RouteProp<TagsStackParamList, 'TagForm'>;
 
 const TagFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<TagFormScreenRouteProp>();
@@ -194,13 +196,7 @@ const TagFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_tag_title') : t('create_tag_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('tag_form_description')}
@@ -224,11 +220,9 @@ const TagFormScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>{t('is_favorite')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isFavorite}
               onValueChange={setIsFavorite}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>
@@ -250,9 +244,7 @@ const TagFormScreen = () => {
               {t('delete_tag_title')}
             </Button>
           )}
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

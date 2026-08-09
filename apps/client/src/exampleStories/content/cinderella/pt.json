@@ -420,9 +420,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVRDBWC2TMQH2DH1MGEA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "name": "Protagonista",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRD465FCCRQ15M7EZAX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "name": "Magia",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRD3KV3EDCMC66TYEKX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "name": "Ponto de virada",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVRDQ0AGK72R0ZQKTPXD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "tagId": "01KZKVMVRDBWC2TMQH2DH1MGEA",
+      "relationId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVRDDCNYWQEMJE2ARDDX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "tagId": "01KZKVMVRD465FCCRQ15M7EZAX",
+      "relationId": "01KYXBHD0JB67SHJWE64QS23PY",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVRD5PTK3ZQH7PWMQBJF",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "tagId": "01KZKVMVRD3KV3EDCMC66TYEKX",
+      "relationId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVRDFDQJDSH0F28KMWP6",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRCK19YA3VPZ2QT4ZJX",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVRDP6WPGA6KP7R39X60",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRCK19YA3VPZ2QT4ZJX",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVREWEXXPRA2RARJHBBC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRCK19YA3VPZ2QT4ZJX",
+      "value": "Antagonista"
+    },
+    {
+      "id": "01KZKVMVREA9QH04KE939MM4T2",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRD5CAPAFS7PQND003H",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVREXNA575QZH5ZRHEV5",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRD5CAPAFS7PQND003H",
+      "value": "Tensão"
+    },
+    {
+      "id": "01KZKVMVREC1XA9WK75S8YSV88",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRD5CAPAFS7PQND003H",
+      "value": "Esperança"
+    },
+    {
+      "id": "01KZKVMVREVTE2WJM6X435AG76",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Novo"
+    },
+    {
+      "id": "01KZKVMVREC0W87PQTHJBD5JKF",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Quebrado"
+    },
+    {
+      "id": "01KZKVMVRES18Y503XWTPV4GH5",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Consumido"
+    },
+    {
+      "id": "01KZKVMVRES5261FS3ZC6JQB0T",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Escrito"
+    },
+    {
+      "id": "01KZKVMVREYV7CPQQPZJG9YQ6J",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Transferido"
+    },
+    {
+      "id": "01KZKVMVRENBYRHE06WA4V6YWX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Resolvido"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0J1X5ZXJRAPM4QDQYT",
@@ -485,7 +695,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVRDM2YSKQ6VP4XD8PVD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "characterId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY"
+    },
+    {
+      "id": "01KZKVMVRDZTZH60WE4T3XXQF7",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -495,7 +728,7 @@
       "name": "Os Sapatinhos de Cristal",
       "category": "Calçado encantado",
       "description": "Um par de sapatinhos de cristal, conjurados pela Fada Madrinha, que não servem em nenhum pé além do de Cinderela.",
-      "initialState": "Ainda não existem - Cinderela usa apenas sapatos de casa gastos.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -511,7 +744,7 @@
       "name": "A Carruagem de Abóbora",
       "category": "Transporte encantado",
       "description": "Uma carruagem conjurada a partir de uma abóbora do jardim, puxada por cavalos que antes eram ratos.",
-      "initialState": "Uma abóbora comum no jardim.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -527,7 +760,7 @@
       "name": "O Vestido de Baile",
       "category": "Roupa encantada",
       "description": "Um vestido magnífico conjurado a partir dos próprios trapos de Cinderela, desfeito à meia-noite.",
-      "initialState": "Trapos velhos e simples de trabalho doméstico.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -544,8 +777,8 @@
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
       "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D",
       "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
-      "newState": "Conjurados pela Fada Madrinha, junto com o resto do traje de baile de Cinderela - ao contrário do resto da magia, os sapatinhos não voltarão ao normal à meia-noite.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Conjurados pela Fada Madrinha, junto com o resto do traje de baile de Cinderela - ao contrário do resto da magia, os sapatinhos não voltarão ao normal à meia-noite.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -558,8 +791,8 @@
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
       "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
       "newCharacterOwnerId": null,
-      "newState": "Um dos sapatinhos fica para trás na escadaria do palácio quando Cinderela foge ao soar da meia-noite.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Um dos sapatinhos fica para trás na escadaria do palácio quando Cinderela foge ao soar da meia-noite.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -572,8 +805,8 @@
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
       "sceneId": "01KYXBHD0JG76K402BJRX50QB4",
       "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
-      "newState": "Serve perfeitamente no pé de Cinderela diante de toda a corte, provando que ela é a moça que dançou com o Príncipe.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Serve perfeitamente no pé de Cinderela diante de toda a corte, provando que ela é a moça que dançou com o Príncipe.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -586,8 +819,8 @@
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
       "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D",
       "newCharacterOwnerId": null,
-      "newState": "Conjurada numa carruagem dourada para levar Cinderela ao baile.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Conjurada numa carruagem dourada para levar Cinderela ao baile.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -600,8 +833,8 @@
       "itemId": "01KYXKHJQYDV5T2P7TT7DR9TVS",
       "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D",
       "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
-      "newState": "Conjurado num magnífico vestido de baile para Cinderela usar.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Conjurado num magnífico vestido de baile para Cinderela usar.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -609,5 +842,111 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVRCK19YA3VPZ2QT4ZJX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Character",
+      "name": "Papel narrativo",
+      "key": "narrative_role",
+      "description": "O papel do personagem nesta releitura.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVRD5CAPAFS7PQND003H",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Scene",
+      "name": "Tom emocional",
+      "key": "emotional_tone",
+      "description": "O clima predominante desta cena.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVRDN4MPSED5XVXJ1ASA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "fieldId": "01KZKVMVRCK19YA3VPZ2QT4ZJX",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVRD9BK7Z740T26CS82R",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "fieldId": "01KZKVMVRCK19YA3VPZ2QT4ZJX",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVRDCD3JD1JRGD8VKTG3",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0JB67SHJWE64QS23PY",
+      "fieldId": "01KZKVMVRD5CAPAFS7PQND003H",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVRD2VQFRVXB8QDK30DQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
+      "fieldId": "01KZKVMVRD5CAPAFS7PQND003H",
+      "value": "Tensão"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVRE0B4PKHX2K6NJ6ACE",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "locationAId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "locationBId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

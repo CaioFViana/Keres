@@ -1,17 +1,19 @@
-import MultiSelectPill from '@/src/components/common/MultiSelectPill/MultiSelectPill';
-import Select from '@/src/components/common/Select/Select'; // Import Select component
-import TextInput from '@/src/components/common/TextInput/TextInput';
-import NoteManager from '@/src/components/NoteManager';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import Select from '@/src/components/common/inputs/Select/Select'; // Import Select component
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import { Scene } from '@keres/shared/entities/Scene';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import CharacterRelationManager from '../../components/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
-import Button from '../../components/common/Button/Button';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '../../components/common/CustomAttributeFields/CustomAttributeFields';
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CharacterRelationManager from '@/src/components/features/characters/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
+import Button from '@/src/components/common/controls/Button/Button';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -38,7 +40,7 @@ type SceneFormScreenRouteProp = RouteProp<SceneStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<SceneStackParamList, 'SceneForm'>;
 
 const SceneFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<SceneFormScreenNavigationProp>();
   const route = useRoute<SceneFormScreenRouteProp>();
@@ -109,9 +111,9 @@ const SceneFormScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [gap, setGap] = useState<number | null>(null);
-  const [gapType, setGapType] = useState<string | null>(null); // e.g., 'minutes', 'hours', 'days'
+  const [gapType, setGapType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
   const [duration, setDuration] = useState<number | null>(null);
-  const [durationType, setDurationType] = useState<string | null>(null); // e.g., 'minutes', 'hours', 'days'
+  const [durationType, setDurationType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
   const [isStart, setIsStart] = useState(false);
   const [isFinish, setIsFinish] = useState(false);
 
@@ -200,7 +202,7 @@ const SceneFormScreen = () => {
       }
     };
     loadSceneAndData();
-  }, [currentSceneId, isEditing, selectedStory?.id, t, fetchCharacterSceneRelations]);
+  }, [currentSceneId, drizzleDb, isEditing, selectedStory?.id, t, fetchCharacterSceneRelations]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
@@ -411,6 +413,7 @@ const SceneFormScreen = () => {
   }, [locations]);
 
   const gapDurationTypeOptions = [
+    { label: t('seconds'), value: 'seconds' },
     { label: t('minutes'), value: 'minutes' },
     { label: t('hours'), value: 'hours' },
     { label: t('days'), value: 'days' },
@@ -492,13 +495,7 @@ const SceneFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_scene_title') : t('create_scene_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('scene_form_description')}
@@ -541,11 +538,9 @@ const SceneFormScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isFavorite}
               onValueChange={setIsFavorite}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>
@@ -602,22 +597,18 @@ const SceneFormScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_start_scene')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isStart}
               onValueChange={setIsStart}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isStart ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_finish_scene')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isFinish}
               onValueChange={setIsFinish}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isFinish ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>
@@ -683,9 +674,7 @@ const SceneFormScreen = () => {
               {t('delete_scene_title')}
             </Button>
           )}
-        </ScrollView>
-      </TouchableWithoutFeedback>    
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

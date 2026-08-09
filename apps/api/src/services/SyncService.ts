@@ -1,9 +1,9 @@
 import { ChapterReorderingStoryUpdate, CreateStoryUpdate, DeleteStoryUpdate, EffectiveStoryRole, StoryReorderingStoryUpdate, StoryUpdate, SyncAppliedOperation, SyncConflict, UpdateStoryUpdate } from '@keres/shared';
-import { and, eq, gt, max, or, sql } from 'drizzle-orm';
+import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
 import { db } from '../db';
-import { operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
+import { favorites, operationLog, operationTypeEnum, stories, storyPermissions } from '../db/schema';
 import { eventManager } from '../utils/EventManager'; // Import eventManager
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/errors';
@@ -30,6 +30,7 @@ import { SuggestionSyncHandler } from './entity-sync-handlers/SuggestionSyncHand
 import { TagRelationSyncHandler } from './entity-sync-handlers/TagRelationSyncHandler';
 import { TagSyncHandler } from './entity-sync-handlers/TagSyncHandler';
 import { WorldRuleSyncHandler } from './entity-sync-handlers/WorldRuleSyncHandler';
+import { FavoriteSyncHandler } from './entity-sync-handlers/FavoriteSyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
 
 export class SyncService {
@@ -58,6 +59,7 @@ export class SyncService {
     this.registerEntityHandler(new StorySchemaFieldSyncHandler());
     this.registerEntityHandler(new AttributeValueSyncHandler());
     this.registerEntityHandler(new LocationRelationSyncHandler());
+    this.registerEntityHandler(new FavoriteSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {
@@ -93,18 +95,18 @@ export class SyncService {
       throw new Error('Story not found.');
     }
 
-    let hasWritePermission = false;
+    let role: EffectiveStoryRole | undefined;
     if (story.userId === userId) {
-      hasWritePermission = true; // User is the owner
+      role = 'owner';
     } else {
       const permission = await storyPermissionService.getUserPermissionForStory(userId, storyId);
-      if (permission && permission.permissionType === 'writer') {
-        hasWritePermission = true;
+      if (permission && (permission.permissionType === 'writer' || permission.permissionType === 'reader')) {
+        role = permission.permissionType;
       }
     }
 
-    if (!hasWritePermission) {
-      throw new AppError(403, 'Unauthorized: User does not have write permission for this story.');
+    if (!role) {
+      throw new AppError(403, 'Unauthorized: User does not have access to this story.');
     }
 
     const applied: SyncAppliedOperation[] = [];
@@ -143,6 +145,13 @@ export class SyncService {
       const handler = this.entityHandlers.get(update.entity);
       if (!handler) {
         recordConflict('unknown', `No sync handler registered for entity type: ${update.entity}`);
+        continue;
+      }
+
+      // Personal favorites are user-owned metadata, so readers may change their own rows
+      // without gaining permission to edit the story itself.
+      if (role === 'reader' && update.entity !== 'Favorite') {
+        recordConflict('unauthorized', 'Reader access only permits personal favorite changes.');
         continue;
       }
 
@@ -189,7 +198,7 @@ export class SyncService {
           } else {
             if (update.entity === 'Story') {
               await tierEnforcementService.assertCanCreateStory(userId);
-            } else {
+            } else if (update.entity !== 'Favorite') {
               await tierEnforcementService.assertCanCreateEntity(userId, storyId);
             }
             await handler.create(userId, storyId, update as CreateStoryUpdate);
@@ -276,6 +285,7 @@ export class SyncService {
         type: 'story_update',
         storyId: storyId,
         updates: applied.length,
+        maxOperationVersion: lastOperationVersion,
         originatingUser: userId,
       });
     }
@@ -289,6 +299,62 @@ export class SyncService {
       .from(operationLog)
       .where(eq(operationLog.storyId, storyId));
     return result.at(0)?.maxVersion || 0;
+  }
+
+  /**
+   * Histórias enviadas ao servidor como snapshot podem já conter favoritos. Essas linhas
+   * não passaram pelo SyncService e, portanto, não possuem uma operação que os outros
+   * colaboradores possam receber. Ao tornar os favoritos públicos, materializamos uma
+   * operação de criação para cada linha ainda sem histórico.
+   *
+   * O bloqueio da Story serializa dois pulls que tentem fazer a reparação ao mesmo tempo.
+   * O id do log continua sendo um ULID normal; a detecção é feita pelo id da entidade.
+   */
+  private async ensurePublicFavoriteOperationLogs(storyId: string): Promise<{ count: number; maxOperationVersion: number }> {
+    return await db.transaction(async (tx) => {
+      await tx.execute(sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`);
+
+      const [favoriteRows, loggedFavoriteRows, maxVersionRows] = await Promise.all([
+        tx.select().from(favorites).where(and(
+          eq(favorites.storyId, storyId),
+          eq(favorites.isDeleted, false),
+        )),
+        tx.select({ entityId: operationLog.entityId }).from(operationLog).where(and(
+          eq(operationLog.storyId, storyId),
+          eq(operationLog.entityType, 'Favorite'),
+          eq(operationLog.operationType, 'create'),
+        )),
+        tx.select({ maxVersion: max(operationLog.operationVersion) })
+          .from(operationLog)
+          .where(eq(operationLog.storyId, storyId)),
+      ]);
+
+      const loggedIds = new Set(loggedFavoriteRows.map((row) => row.entityId));
+      const missingFavorites = favoriteRows.filter((favorite) => !loggedIds.has(favorite.id));
+      let nextOperationVersion = maxVersionRows.at(0)?.maxVersion || 0;
+
+      for (const favorite of missingFavorites) {
+        nextOperationVersion += 1;
+        await tx.insert(operationLog).values({
+          id: ulid(),
+          storyId,
+          userId: favorite.userId,
+          operationVersion: nextOperationVersion,
+          operationType: 'create',
+          entityType: 'Favorite',
+          entityId: favorite.id,
+          payload: {
+            entityId: favorite.entityId,
+            entityType: favorite.entityType,
+            userId: favorite.userId,
+          },
+          entityVersion: favorite.version,
+          createdAt: favorite.createdAt,
+        });
+      }
+
+      return { count: missingFavorites.length, maxOperationVersion: nextOperationVersion };
+    });
   }
 
   /**
@@ -348,7 +414,12 @@ export class SyncService {
     return serialized;
   }
 
-  async getUpdatesForStory(userId: string, storyId: string, lastOperationVersion: number): Promise<{ updates: StoryUpdate[]; serverMaxOperationVersion: number; role: EffectiveStoryRole }> {
+  async getUpdatesForStory(
+    userId: string,
+    storyId: string,
+    lastOperationVersion: number,
+    lastPublicFavoriteVersion: number = 0,
+  ): Promise<{ updates: StoryUpdate[]; publicFavorites: typeof favorites.$inferSelect[]; serverMaxOperationVersion: number; role: EffectiveStoryRole }> {
     // Authorization check
     const story = await db.query.stories.findFirst({
       where: eq(stories.id, storyId),
@@ -372,13 +443,52 @@ export class SyncService {
       throw new AppError(403, 'Unauthorized: User does not have read permission for this story.');
     }
 
-    const fetchedOperations = await db.query.operationLog.findMany({
+    if (story.favoriteBehavior === 'individual_public') {
+      const repairedFavorites = await this.ensurePublicFavoriteOperationLogs(storyId);
+      if (repairedFavorites.count > 0) {
+        logger.info('Created missing operation logs for public favorites', {
+          storyId,
+          count: repairedFavorites.count,
+        });
+        eventManager.emit(`storyUpdate:${storyId}`, {
+          type: 'story_update',
+          storyId,
+          updates: repairedFavorites.count,
+          maxOperationVersion: repairedFavorites.maxOperationVersion,
+        });
+      }
+    }
+
+    const operationsAfterMainCursor = await db.query.operationLog.findMany({
       where: and(
         eq(operationLog.storyId, storyId),
         gt(operationLog.operationVersion, lastOperationVersion)
       ),
       orderBy: [operationLog.operationVersion],
     });
+
+    const visibleOperations = operationsAfterMainCursor.filter((op) => (
+      op.entityType !== 'Favorite'
+      || story.favoriteBehavior === 'individual_public'
+      || op.userId === userId
+    ));
+
+    // Um cursor próprio permite publicar também favoritos anteriores à troca de comportamento.
+    // O Map remove a sobreposição natural com a consulta principal quando ambos os cursores
+    // ainda estão próximos.
+    const historicalPublicFavorites = story.favoriteBehavior === 'individual_public'
+      ? await db.query.operationLog.findMany({
+          where: and(
+            eq(operationLog.storyId, storyId),
+            eq(operationLog.entityType, 'Favorite'),
+            gt(operationLog.operationVersion, lastPublicFavoriteVersion),
+          ),
+          orderBy: [operationLog.operationVersion],
+        })
+      : [];
+    const fetchedOperations = Array.from(
+      new Map([...visibleOperations, ...historicalPublicFavorites].map((operation) => [operation.id, operation])).values(),
+    ).sort((a, b) => a.operationVersion - b.operationVersion);
 
     const updates: StoryUpdate[] = await Promise.all(fetchedOperations.map(async op => {
       const payloadAsRecord = op.payload as Record<string, any>; // Client's original payload
@@ -404,12 +514,6 @@ export class SyncService {
        * o comportamento antigo é mantido, porque não há de onde tirar o valor correto.
        */
       const resultingEntityVersion = op.entityVersion ?? op.operationVersion;
-
-      // If the original payload contains updatedAt/deletedAt (which are dates from the original client payload)
-      // ensure they are converted to Date objects for consistency before making a decision.
-      const payloadUpdatedAt = payloadAsRecord.updatedAt ? new Date(payloadAsRecord.updatedAt) : undefined;
-      const payloadDeletedAt = payloadAsRecord.deletedAt ? new Date(payloadAsRecord.deletedAt) : undefined;
-
 
       // --- Enrich data based on operation type ---
       if (op.operationType === 'create') {
@@ -525,7 +629,20 @@ export class SyncService {
       .where(eq(operationLog.storyId, storyId))
     ).at(0)?.maxVersion || 0;
 
-    return { updates, serverMaxOperationVersion, role };
+    // O log continua sendo usado para realtime e para a tela de operações, mas não é
+    // uma fonte confiável para reconstruir snapshots importados antes da existência dos
+    // favoritos públicos. Enviar o estado autoritativo dos *outros* usuários faz cada
+    // cliente convergir sem tocar em um favorito próprio que ainda esteja pendente de push.
+    const publicFavorites = story.favoriteBehavior === 'individual_public'
+      ? await db.query.favorites.findMany({
+          where: and(
+            eq(favorites.storyId, storyId),
+            ne(favorites.userId, userId),
+          ),
+        })
+      : [];
+
+    return { updates, publicFavorites, serverMaxOperationVersion, role };
   }
 
   async getStoriesWithLastOperationVersionForUser(userId: string): Promise<{ storyId: string; lastOperationVersion: number; role: EffectiveStoryRole }[]> {

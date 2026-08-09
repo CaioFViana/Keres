@@ -3,13 +3,14 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Avatar from '../../components/common/Avatar/Avatar';
-import Button from '../../components/common/Button/Button';
-import ColorPickerInput from '../../components/common/ColorPickerInput/ColorPickerInput';
-import IconPickerInput from '../../components/common/IconPickerInput/IconPickerInput';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import TextInput from '../../components/common/TextInput/TextInput';
+import { StyleSheet, Text, View } from 'react-native';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import Button from '@/src/components/common/controls/Button/Button';
+import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
+import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -27,7 +28,7 @@ type MyProfileScreenRouteProp = RouteProp<ServerManagementStackParamList, 'MyPro
 type MyProfileScreenNavigationProp = NativeStackNavigationProp<ServerManagementStackParamList, 'MyProfile'>;
 
 const MyProfileScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<MyProfileScreenNavigationProp>();
@@ -121,9 +122,7 @@ const MyProfileScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.previewContainer}>
             <Avatar color={avatarColor} icon={avatarIcon} seed={server.idUser} size={96} />
           </View>
@@ -158,9 +157,7 @@ const MyProfileScreen = () => {
           <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
             {saving ? t('saving') : t('save')}
           </Button>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

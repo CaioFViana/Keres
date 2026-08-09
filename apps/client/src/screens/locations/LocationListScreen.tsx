@@ -5,9 +5,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import GenericFilterSortList from '../../components/common/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import LocationListItem from '../../components/listitem/LocationListItem';
+import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import LocationListItem from '@/src/components/features/list-items/LocationListItem';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -19,6 +19,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -88,6 +89,14 @@ const LocationsScreen = () => {
     fetchTags();
   }, [fetchTags]);
 
+  useEffect(() => {
+    const handleTagChange = (changedStoryId: string) => {
+      if (changedStoryId === storyId) fetchTags();
+    };
+    entityEventEmitter.on('tag_changed', handleTagChange);
+    return () => entityEventEmitter.off('tag_changed', handleTagChange);
+  }, [fetchTags, storyId]);
+
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(t('locations_title'));
@@ -133,7 +142,7 @@ const LocationsScreen = () => {
   ), [handleToggleFavorite, handleViewDetails]);
 
   const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id }));
+    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
   }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {

@@ -420,9 +420,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVRAH9CH4W6B605942FY",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "name": "Protagonist",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRAQ2R7MATNFX8JH7JG",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "name": "Magic",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRA4J6SCTG741FV60XD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "name": "Turning point",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVRAZ07120WZ0HTMP4BD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "tagId": "01KZKVMVRAH9CH4W6B605942FY",
+      "relationId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVRA76QM71KCPTKWKXRC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "tagId": "01KZKVMVRAQ2R7MATNFX8JH7JG",
+      "relationId": "01KYXBHD0JB67SHJWE64QS23PY",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVRA5J06Z5M2S7TVG1WC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "tagId": "01KZKVMVRA4J6SCTG741FV60XD",
+      "relationId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVRANY3MB2D0AAKFPHSD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRAAK1D1GHETW0EHBFC",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVRB94VVES4FRWD7FGCS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRAAK1D1GHETW0EHBFC",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVRB1RBDM7M8BF5NNGK0",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRAAK1D1GHETW0EHBFC",
+      "value": "Antagonist"
+    },
+    {
+      "id": "01KZKVMVRBFZG2RNTRPH04K41R",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRAZT7MC59TTWC1F8AA",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVRBAS04M8EX02CDAWNM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRAZT7MC59TTWC1F8AA",
+      "value": "Tension"
+    },
+    {
+      "id": "01KZKVMVRBJV53Q9JXGVSP4Z3C",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "custom:01KZKVMVRAZT7MC59TTWC1F8AA",
+      "value": "Hope"
+    },
+    {
+      "id": "01KZKVMVRBAXM116HCY5H6FEP8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "New"
+    },
+    {
+      "id": "01KZKVMVRB1YFBS9CEVT11TZ9S",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Broken"
+    },
+    {
+      "id": "01KZKVMVRBFPF2K360R30MVYTD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Consumed"
+    },
+    {
+      "id": "01KZKVMVRBHQGE38MN5JW5QN67",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Written"
+    },
+    {
+      "id": "01KZKVMVRB60NRS2ZVDYS937SX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Transferred"
+    },
+    {
+      "id": "01KZKVMVRBWBNDX9MV969ZMB2G",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "type": "item_state",
+      "value": "Resolved"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0J1X5ZXJRAPM4QDQYT",
@@ -485,7 +695,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVRA51G9T85FQH0NAKWW",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "characterId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "sceneId": "01KYXBHD0JB67SHJWE64QS23PY"
+    },
+    {
+      "id": "01KZKVMVRAVZDWVSZPH6FFG36E",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "characterId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "sceneId": "01KYXBHD0JDZ1QN91ZB47TF1TX"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -495,7 +728,7 @@
       "name": "The Glass Slippers",
       "category": "Enchanted footwear",
       "description": "A pair of slippers made of glass, conjured by the Fairy Godmother, that fit no foot but Cinderella's own.",
-      "initialState": "Do not yet exist - Cinderella wears only worn-out house shoes.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -511,7 +744,7 @@
       "name": "The Pumpkin Carriage",
       "category": "Enchanted transport",
       "description": "A carriage conjured from a garden pumpkin, drawn by horses that were once mice.",
-      "initialState": "An ordinary pumpkin in the garden.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -527,7 +760,7 @@
       "name": "The Ball Gown",
       "category": "Enchanted clothing",
       "description": "A magnificent gown conjured from Cinderella's own rags, undone at the stroke of midnight.",
-      "initialState": "Worn, plain housework rags.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -544,8 +777,8 @@
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
       "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D",
       "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
-      "newState": "Conjured by the Fairy Godmother, along with the rest of Cinderella's ball attire - unlike the rest of the magic, the slippers will not revert at midnight.",
-      "extraNotes": null,
+      "newState": "New",
+      "extraNotes": "Conjured by the Fairy Godmother, along with the rest of Cinderella's ball attire - unlike the rest of the magic, the slippers will not revert at midnight.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -558,8 +791,8 @@
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
       "sceneId": "01KYXBHD0JH6PQ34J9A6ZVTD0X",
       "newCharacterOwnerId": null,
-      "newState": "One slipper left behind on the palace staircase as Cinderella flees at the stroke of midnight.",
-      "extraNotes": null,
+      "newState": "Transferred",
+      "extraNotes": "One slipper left behind on the palace staircase as Cinderella flees at the stroke of midnight.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -572,8 +805,8 @@
       "itemId": "01KYXKHJQYQDRD87YKKB9WJXDY",
       "sceneId": "01KYXBHD0JG76K402BJRX50QB4",
       "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
-      "newState": "Fits Cinderella's foot perfectly before the whole court, proving she is the woman the Prince danced with.",
-      "extraNotes": null,
+      "newState": "Resolved",
+      "extraNotes": "Fits Cinderella's foot perfectly before the whole court, proving she is the woman the Prince danced with.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -586,8 +819,8 @@
       "itemId": "01KYXKHJQYTQEFTCHQSDPE0SRC",
       "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D",
       "newCharacterOwnerId": null,
-      "newState": "Conjured into a golden carriage to carry Cinderella to the ball.",
-      "extraNotes": null,
+      "newState": "New",
+      "extraNotes": "Conjured into a golden carriage to carry Cinderella to the ball.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -600,8 +833,8 @@
       "itemId": "01KYXKHJQYDV5T2P7TT7DR9TVS",
       "sceneId": "01KYXBHD0JX39TA6HVMB9D9Z0D",
       "newCharacterOwnerId": "01KYXBHD0JHTF79MKSRY0RB0N7",
-      "newState": "Conjured into a magnificent ball gown for Cinderella to wear.",
-      "extraNotes": null,
+      "newState": "New",
+      "extraNotes": "Conjured into a magnificent ball gown for Cinderella to wear.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -609,5 +842,111 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVRAAK1D1GHETW0EHBFC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Character",
+      "name": "Narrative role",
+      "key": "narrative_role",
+      "description": "The character’s role in this retelling.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVRAZT7MC59TTWC1F8AA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Scene",
+      "name": "Emotional tone",
+      "key": "emotional_tone",
+      "description": "The prevailing mood of this scene.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVRAZPW0N5682PPAREGX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "fieldId": "01KZKVMVRAAK1D1GHETW0EHBFC",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVRADYZWX2RTD3P1CNFD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0J895XZFCMMV9X03V5",
+      "fieldId": "01KZKVMVRAAK1D1GHETW0EHBFC",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVRAZ0AM3MMP2SRZBX6T",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0JB67SHJWE64QS23PY",
+      "fieldId": "01KZKVMVRAZT7MC59TTWC1F8AA",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVRA5ECHKPR5TD5JD3V4",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0JDZ1QN91ZB47TF1TX",
+      "fieldId": "01KZKVMVRAZT7MC59TTWC1F8AA",
+      "value": "Tension"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVRBAEXDTY6KCS4A4XS7",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "locationAId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "locationBId": "01KYXBHD0J0KFKQ2J5PYWHQ58Z",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

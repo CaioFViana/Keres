@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // C
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import OperationLogList from '../../components/OperationLogList/OperationLogList';
+import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import { MainSystemDrawerParamList, OperationLogStackParamList } from '../../navigation/MainSystemStack'; // Use MainSystemDrawerParamList
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -88,7 +88,14 @@ const OperationLogScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <OperationLogList storyId={selectedStory.id} paginated={true} pageSize={20} onPressItem={handlePressLogItem} shouldRefetch={shouldRefetch} />
+      <OperationLogList
+        storyId={selectedStory.id}
+        paginated={true}
+        pageSize={20}
+        onPressItem={handlePressLogItem}
+        shouldRefetch={shouldRefetch}
+        showPrivateGaps
+      />
     </View>
   );
 };

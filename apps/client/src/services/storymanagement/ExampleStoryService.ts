@@ -1,5 +1,6 @@
 import { FullStoryExportSchema } from '@keres/shared';
 import { AppDrizzleClient } from '../../db';
+import { cloneExampleStoryForInstall } from '../../exampleStories/cloneExampleStory';
 import { exampleStoryRegistry } from '../../exampleStories/generated/registry';
 import { ExampleStoryEntry } from '../../exampleStories/types';
 import { reviveDates } from '../../utils/reviveDates';
@@ -17,7 +18,6 @@ import { createStoryService } from './StoryService';
 
 export type InstallExampleStoryResult =
   | { status: 'installed'; storyId: string }
-  | { status: 'already_installed'; storyId: string }
   | { status: 'not_found' }
   | { status: 'invalid_content' };
 
@@ -51,15 +51,10 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
         return { status: 'invalid_content' };
       }
 
-      // Mesmo cuidado do import manual: a história do arquivo já pode ter sido instalada
-      // antes, e o id vem fixo do arquivo empacotado - tentar inserir de novo colidiria na
-      // chave primária em vez de dar um aviso claro.
-      const existing = await storyService.getStoryById(parsed.data.story.id);
-      if (existing) {
-        return { status: 'already_installed', storyId: existing.id };
-      }
-
-      const storyId = await storyService.importFullStory(userId, parsed.data, null);
+      // Somente o catálogo de exemplos ganha novos IDs; importação e sincronização normais
+      // continuam preservando a identidade dos seus dados.
+      const clonedExample = cloneExampleStoryForInstall(parsed.data, userId);
+      const storyId = await storyService.importFullStory(userId, clonedExample, null);
       return { status: 'installed', storyId };
     },
   };

@@ -4,10 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AppAlertHost from './components/common/AppAlertHost/AppAlertHost';
-import NotificationPopup from './components/common/NotificationPopup/NotificationPopup';
-import DocumentTitleSync from './components/DocumentTitleSync';
-import SyncConflictModal from './components/SyncConflictModal/SyncConflictModal';
+import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
+import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
+import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
+import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
+import SyncConflictModal from '@/src/components/features/sync/SyncConflictModal/SyncConflictModal';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
 import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
@@ -36,6 +37,7 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: colors.background }}>
       <StatusBar style={statusBarStyle} />
+      <WebScrollbarTheme />
       {children}
       <DocumentTitleSync />
       <NotificationPopup />
@@ -89,6 +91,7 @@ const DatabaseInitializer = () => {
 
         // Initialize AuthTokenManager with the Drizzle DB instance
         setAuthDb(initializedDrizzle);
+        await authTokenManager.hydrateTokens();
         // Set the authTokenManager as the token provider for the API client
         apiClient.setTokenProvider(authTokenManager);
 

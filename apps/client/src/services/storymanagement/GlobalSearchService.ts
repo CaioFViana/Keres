@@ -1,19 +1,23 @@
+import { FavoriteEntityType } from '@keres/shared';
 import { globalSearchFieldConfig, GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import { and, eq, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import { attributeValues, storySchemaFields } from '../../db/schema';
 import { getEntityTable } from '../entityTableRegistry';
 import { truncate } from '../../utils/stringUtils';
+import { createFavoriteService } from './FavoriteService';
 
 export interface GlobalSearchResult {
   entityType: GlobalSearchEntityType;
   id: string;
   title: string;
   snippet: string;
+  /** `null` marks entity types that do not support favorites. */
+  isFavorite: boolean | null;
 }
 
 export interface GlobalSearchService {
-  searchAllEntities(storyId: string, term: string): Promise<GlobalSearchResult[]>;
+  searchAllEntities(storyId: string, term: string, localUserId: string): Promise<GlobalSearchResult[]>;
 }
 
 const NATIVE_RESULT_LIMIT_PER_ENTITY = 15;
@@ -23,6 +27,16 @@ const SNIPPET_MAX_LENGTH = 120;
 const MIN_SEARCH_TERM_LENGTH = 2;
 
 const ENTITY_TYPES = Object.keys(globalSearchFieldConfig) as GlobalSearchEntityType[];
+const FAVORITABLE_ENTITY_TYPES = new Set<GlobalSearchEntityType>([
+  'Character',
+  'Location',
+  'Chapter',
+  'Scene',
+  'Item',
+  'Tag',
+  'Note',
+  'WorldRule',
+]);
 
 function buildSnippet(fieldLabel: string, value: unknown): string {
   return truncate(`${fieldLabel}: ${String(value)}`, SNIPPET_MAX_LENGTH);
@@ -42,7 +56,7 @@ function findMatchingField(row: Record<string, any>, searchFields: string[], ter
 
 export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchService => {
   return {
-    async searchAllEntities(storyId: string, term: string): Promise<GlobalSearchResult[]> {
+    async searchAllEntities(storyId: string, term: string, localUserId: string): Promise<GlobalSearchResult[]> {
       const trimmedTerm = term.trim();
       if (trimmedTerm.length < MIN_SEARCH_TERM_LENGTH) {
         return [];
@@ -73,6 +87,7 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
             id: row.id,
             title: String(row[titleField] ?? ''),
             snippet: match ? buildSnippet(match.field, match.value) : '',
+            isFavorite: null,
           });
         }
       });
@@ -124,11 +139,38 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
             id: row.attribute.entityId,
             title,
             snippet: buildSnippet(row.field.name, row.attribute.value),
+            isFavorite: null,
           });
         }
       })();
 
       await Promise.all([...nativeQueries, attributeQuery]);
+
+      const favoriteService = createFavoriteService(db);
+      await Promise.all(Array.from(FAVORITABLE_ENTITY_TYPES).map(async (entityType) => {
+        const matchingResults = Array.from(results.values()).filter((result) => result.entityType === entityType);
+        if (matchingResults.length === 0) return;
+
+        const table = getEntityTable(entityType);
+        if (!table || !(table as any).isFavorite) return;
+        const rows = await db.select({
+          id: (table as any).id,
+          isFavorite: (table as any).isFavorite,
+        })
+          .from(table)
+          .where(inArray((table as any).id, matchingResults.map((result) => result.id)))
+          .all() as { id: string; isFavorite: boolean }[];
+        const decorated = await favoriteService.decorateEntities(
+          storyId,
+          entityType as FavoriteEntityType,
+          localUserId,
+          rows,
+        );
+        const favoriteById = new Map(decorated.map((row) => [row.id, row.isFavorite]));
+        for (const result of matchingResults) {
+          result.isFavorite = favoriteById.get(result.id) ?? false;
+        }
+      }));
 
       return Array.from(results.values());
     },

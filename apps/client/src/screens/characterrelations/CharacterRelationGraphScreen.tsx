@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import CharacterRelationNodeSheet, { CharacterRelationNodeConnection } from '../../components/CharacterRelationGraph/CharacterRelationNodeSheet';
-import CharacterRelationGraphCanvas, { CharacterRelationGraphCanvasHandle } from '../../components/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
+import CharacterRelationGraphCanvas, { CharacterRelationGraphCanvasHandle } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import { useDrizzle } from '../../db';
 import { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -18,6 +18,7 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildCharacterRelationGraphLayout, RelationGraphNode } from '../../utils/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '../../utils/characterRelationGraphSvg';
 import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { CharacterRelationsScreenNavigationProp } from './CharacterRelationListScreen';
 
 /**
@@ -32,8 +33,15 @@ import { CharacterRelationsScreenNavigationProp } from './CharacterRelationListS
 /** Acima disso o tipo de relação em cada aresta polui mais do que informa; a pessoa pode reativar. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
 
+interface CharacterRelationNodeConnection {
+  relationId: string;
+  relationType: string;
+  characterId: string;
+  characterName: string;
+}
+
 const CharacterRelationGraphScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<CharacterRelationsScreenNavigationProp>();
@@ -76,6 +84,16 @@ const CharacterRelationGraphScreen = () => {
   useFocusEffect(useCallback(() => {
     loadGraph();
   }, [loadGraph]));
+
+  useEffect(() => {
+    const handleRemoteChange = (change: { storyId?: string }) => {
+      if (change?.storyId === storyId) {
+        loadGraph();
+      }
+    };
+    entityEventEmitter.on('story_data_changed', handleRemoteChange);
+    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
+  }, [storyId, loadGraph]);
 
   useFocusEffect(useCallback(() => {
     setDocumentTitle(t('character_relation_map_title'));
@@ -205,6 +223,7 @@ const CharacterRelationGraphScreen = () => {
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
+      outlineWidth: 0,
     },
     emptyContainer: {
       flex: 1,
@@ -302,13 +321,26 @@ const CharacterRelationGraphScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <CharacterRelationNodeSheet
-        node={selectedNode}
-        connections={connections}
-        onClose={() => setSelectedNodeId(null)}
-        onOpenCharacter={handleOpenCharacter}
-        onSelectCharacter={setSelectedNodeId}
-      />
+      {selectedNode && (
+        <GraphNodeSheet
+          title={selectedNode.character.name}
+          badges={selectedNode.isIsolated ? [{ label: t('character_relation_map_badge_isolated'), color: colors.textSecondary }] : undefined}
+          sections={[{
+            title: t('character_relation_map_relations_title'),
+            emptyMessage: t('character_relation_map_no_relations'),
+            items: connections.map(connection => ({
+              id: connection.relationId,
+              icon: 'people-outline' as const,
+              label: connection.characterName,
+              detail: connection.relationType,
+              onPress: () => setSelectedNodeId(connection.characterId),
+            })),
+          }]}
+          actionLabel={t('character_relation_map_open_character')}
+          onAction={() => handleOpenCharacter(selectedNode.id)}
+          onClose={() => setSelectedNodeId(null)}
+        />
+      )}
     </View>
   );
 };

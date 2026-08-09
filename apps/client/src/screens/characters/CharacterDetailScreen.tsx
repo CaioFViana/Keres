@@ -4,20 +4,21 @@ import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entit
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CharacterLocationManager from '../../components/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
-import CharacterSceneManager from '../../components/CharacterManager/CharacterSceneManager'; // The manager component
-import CharacterRelationManager from '../../components/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
-import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '../../components/common/DetailField/DetailField';
-import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import TagChipList from '../../components/common/TagChipList/TagChipList';
-import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import ItemCharacterManager from '../../components/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
-import NoteManager from '../../components/NoteManager'; // Import NoteManager
+import ScenePresenceList, { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import CharacterSceneManager from '@/src/components/features/characters/CharacterManager/CharacterSceneManager'; // The manager component
+import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
+import ItemCharacterManager from '@/src/components/features/items/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
+import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema'; // For available scenes
 import { CharacterSelect } from '../../db/schemas/characters';
@@ -49,7 +50,7 @@ export type CharacterDetailScreenParamList = {
 type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 'CharacterDetail'>;
 
 const CharacterDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
@@ -445,6 +446,18 @@ const CharacterDetailScreen = () => {
     }, [navigation, headerTitle, renderHeaderRight])
   );
 
+  const characterLocationEntries = useMemo(() => {
+    const pairs = characterSceneRelations.flatMap(relation => {
+      if (relation.characterId !== characterId || relation.isDeleted) return [];
+      const scene = allScenes.find(candidate => candidate.id === relation.sceneId);
+      const location = scene?.locationId
+        ? allLocations.find(candidate => candidate.id === scene.locationId)
+        : undefined;
+      return scene && !scene.isDeleted && location && !location.isDeleted ? [{ item: location, scene }] : [];
+    });
+    return groupScenePresenceEntries(pairs);
+  }, [allLocations, allScenes, characterId, characterSceneRelations]);
+
   if (loading) {
     return <ScreenLoading padded message={t('loading_character_details')} />;
   }
@@ -513,11 +526,12 @@ const CharacterDetailScreen = () => {
         currentCharacterId={characterId}
       />
 
-      <CharacterLocationManager
-        characterSceneRelations={characterSceneRelations}
-        availableScenes={allScenes}
-        availableLocations={allLocations}
-        currentCharacterId={characterId}
+      <ScenePresenceList
+        entries={characterLocationEntries}
+        title={t('character_locations_title')}
+        noItemsMessage="no_locations_assigned_to_character"
+        entityType="Location"
+        sceneLabel={t('scene')}
       />
 
       <NoteManager
@@ -532,6 +546,7 @@ const CharacterDetailScreen = () => {
       />
 
       <EntityMetadata version={character.version} createdAt={character.createdAt} updatedAt={character.updatedAt} />
+      <FavoritedByList storyId={character.storyId} entityId={characterId} entityType="Character" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

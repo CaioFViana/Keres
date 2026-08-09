@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import LocationNodeSheet, { LocationNodeConnection } from '../../components/LocationGraph/LocationNodeSheet';
-import LocationGraphCanvas, { LocationGraphCanvasHandle } from '../../components/LocationGraph/LocationGraphCanvas';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
+import LocationGraphCanvas, { LocationGraphCanvasHandle } from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import { useDrizzle } from '../../db';
 import { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -18,6 +18,7 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import { buildLocationGraphLayout, GraphLocationRelation, LocationGraphNode, LocationRelationKind } from '../../utils/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '../../utils/locationGraphSvg';
 import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { LocationsScreenNavigationProp } from './LocationListScreen';
 
 /**
@@ -29,8 +30,14 @@ import { LocationsScreenNavigationProp } from './LocationListScreen';
  * Só visualização/navegação nesta etapa - sem edição visual (arrastar para reparentar etc.).
  */
 
+interface LocationNodeConnection {
+  relationId: string;
+  locationId: string;
+  locationName: string;
+}
+
 const LocationGraphScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
@@ -72,6 +79,16 @@ const LocationGraphScreen = () => {
   useFocusEffect(useCallback(() => {
     loadGraph();
   }, [loadGraph]));
+
+  useEffect(() => {
+    const handleRemoteChange = (change: { storyId?: string }) => {
+      if (change?.storyId === storyId) {
+        loadGraph();
+      }
+    };
+    entityEventEmitter.on('story_data_changed', handleRemoteChange);
+    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
+  }, [storyId, loadGraph]);
 
   useFocusEffect(useCallback(() => {
     setDocumentTitle(t('location_graph_title'));
@@ -229,6 +246,7 @@ const LocationGraphScreen = () => {
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
+      outlineWidth: 0,
     },
     emptyContainer: {
       flex: 1,
@@ -314,15 +332,47 @@ const LocationGraphScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <LocationNodeSheet
-        node={selectedNode}
-        parent={selectedParent}
-        children={selectedChildren}
-        connections={selectedConnections}
-        onClose={() => setSelectedNodeId(null)}
-        onOpenLocation={handleOpenLocation}
-        onSelectLocation={setSelectedNodeId}
-      />
+      {selectedNode && (
+        <GraphNodeSheet
+          title={selectedNode.location.name}
+          badges={selectedNode.isIsolated ? [{ label: t('location_graph_badge_isolated'), color: colors.textSecondary }] : undefined}
+          sections={[
+            {
+              title: t('parent_location'),
+              emptyMessage: t('no_parent_location'),
+              items: selectedParent ? [{
+                id: selectedParent.relationId,
+                icon: 'arrow-up-outline',
+                label: selectedParent.locationName,
+                onPress: () => setSelectedNodeId(selectedParent.locationId),
+              }] : [],
+            },
+            {
+              title: t('child_locations'),
+              emptyMessage: t('no_child_locations'),
+              items: selectedChildren.map(connection => ({
+                id: connection.relationId,
+                icon: 'arrow-down-outline' as const,
+                label: connection.locationName,
+                onPress: () => setSelectedNodeId(connection.locationId),
+              })),
+            },
+            {
+              title: t('connected_locations'),
+              emptyMessage: t('no_connected_locations'),
+              items: selectedConnections.map(connection => ({
+                id: connection.relationId,
+                icon: 'git-network-outline' as const,
+                label: connection.locationName,
+                onPress: () => setSelectedNodeId(connection.locationId),
+              })),
+            },
+          ]}
+          actionLabel={t('location_graph_open_location')}
+          onAction={() => handleOpenLocation(selectedNode.id)}
+          onClose={() => setSelectedNodeId(null)}
+        />
+      )}
     </View>
   );
 };

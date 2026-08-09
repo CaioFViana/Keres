@@ -4,6 +4,7 @@ import { createEntityStore } from './createEntityStore';
 
 export const useItemStore = createEntityStore<'items', ItemSelect, ItemService>({
   collectionKey: 'items',
+  favoriteEntityType: 'Item',
   createService: createItemService,
   fetchEntities: (service, p) =>
     service.getItemsByStoryId(

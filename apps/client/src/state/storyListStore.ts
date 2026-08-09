@@ -2,6 +2,7 @@ import { Story } from '@keres/shared/entities/Story';
 import { create } from 'zustand';
 import { createStoryService } from '../services/storymanagement/StoryService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useUserSettingsStore } from './userSettingsStore';
 
 interface StoryListState {
   stories: Story[];
@@ -18,7 +19,7 @@ export const useStoryListStore = create<StoryListState>((set, get) => ({
   setStories: (stories) => set({ stories }),
   fetchStories: async (storyService) => {
     try {
-      const fetchedStories = await storyService.getAllStories();
+      const fetchedStories = await storyService.getAllStories(useUserSettingsStore.getState().userId ?? undefined);
       set({ stories: fetchedStories as Story[] });
     } catch (error) {
       console.error('Error fetching stories:', error);

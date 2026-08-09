@@ -3,17 +3,20 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import TextInput from '../../components/common/TextInput/TextInput';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Button from '@/src/components/common/controls/Button/Button';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import apiClient from '../../services/apiClient';
-import { createServerService } from '../../services/ServerService';
+import { authTokenManager } from '../../services/AuthTokenManager';
+import { createServerService, ServerHasOwnedStoriesError } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };
@@ -27,7 +30,7 @@ type ServerRegistrationScreenNavigationProp = NativeStackNavigationProp<RootStac
 const MIN_PASSWORD_LENGTH = 8;
 
 const ServerRegistrationScreen = () => {
-    useBackButtonHandler()
+    useBackButtonHandler({ showWebBackButton: true })
     const { t } = useTranslation();
     const { colors } = useTheme();
     const navigation = useNavigation<ServerRegistrationScreenNavigationProp>();
@@ -120,8 +123,10 @@ const ServerRegistrationScreen = () => {
 
       let serverUserId: string | null = null; // Variable to hold the server-provided userId
       let serverUserTag: string | null = existingServer?.tag ?? null;
-      let newAccessToken = existingServer ? existingServer.jwtToken : '';
-      let newRefreshToken = existingServer ? existingServer.refreshToken : '';
+      const existingTokens = existingServer ? await authTokenManager.getTokens(existingServer.id) : null;
+      let newAccessToken = existingTokens?.accessToken || '';
+      let newRefreshToken = existingTokens?.refreshToken || '';
+      let tokensChanged = false;
       
       try {
         // 1. Server Check (/kerescheck) - always check if server is reachable
@@ -179,6 +184,7 @@ const ServerRegistrationScreen = () => {
           }
           newAccessToken = authResponse.data.accessToken;
           newRefreshToken = authResponse.data.refreshToken;
+          tokensChanged = true;
           serverUserId = authResponse.data.userId; // Extract the server-provided userId
           serverUserTag = authResponse.data.tag ?? serverUserTag;
         } else {
@@ -198,8 +204,6 @@ const ServerRegistrationScreen = () => {
           tag: serverUserTag,
           name: serverName || serverAddress,
           url: serverAddress,
-          jwtToken: newAccessToken,
-          refreshToken: newRefreshToken,
         };
   
         let savedServer;
@@ -213,7 +217,11 @@ const ServerRegistrationScreen = () => {
         }
         
         if (savedServer) {
+          if (tokensChanged) {
+            await authTokenManager.updateTokens(savedServer.id, newAccessToken, newRefreshToken);
+          }
           setActiveServer(savedServer); // Set the active server in Zustand store
+          entityEventEmitter.emit('server_connection_changed');
         }
         navigation.goBack();
   
@@ -251,8 +259,16 @@ const ServerRegistrationScreen = () => {
                   navigation.goBack();
                 } catch (err) {
                   console.error('Failed to delete server:', err);
-                  setError(t('failed_to_delete_server'));
-                  AppAlert.alert(t('error'), t('failed_to_delete_server'));
+                  if (err instanceof ServerHasOwnedStoriesError) {
+                    const message = t('cannot_delete_server_owned_stories_message', {
+                      stories: err.ownedStories.map((story) => story.title).join(', '),
+                    });
+                    setError(message);
+                    AppAlert.alert(t('cannot_delete_server_owned_stories_title'), message);
+                  } else {
+                    setError(t('failed_to_delete_server'));
+                    AppAlert.alert(t('error'), t('failed_to_delete_server'));
+                  }
                 } finally {
                   setLoading(false);
                 }
@@ -285,13 +301,7 @@ const ServerRegistrationScreen = () => {
     }
   
     return (
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-      >
-        <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-          <ScrollView style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
             <Text style={[styles.title, { color: colors.text }]}>
               {serverId ? t('edit_server') : t('register_new_server')}
             </Text>
@@ -402,9 +412,7 @@ const ServerRegistrationScreen = () => {
             )}
   
             {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
-          </ScrollView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
     );};
 
 const styles = StyleSheet.create({

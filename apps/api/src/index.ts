@@ -147,7 +147,7 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
       // In a real application, you would fetch user details from the database
       // and return a more complete user object. For now, just return the payload.
       return { user: payload as JWTPayload }; // Cast to our defined payload type
-    } catch (error) {
+    } catch {
       set.status = 401;
       throw new Error('Invalid token');
     }

@@ -7,6 +7,7 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 
 export type { FavoriteFilterState };
 
@@ -103,14 +104,18 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
     },
 
     async getById(tagId: string): Promise<TagSelect | undefined> {
-      return db.query.tags.findFirst({
+      const tag = await db.query.tags.findFirst({
         where: and(eq(tags.id, tagId), eq(tags.isDeleted, false)),
       });
+      return decorateFavorite(db, 'Tag', tag);
     },
 
     async createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect> {
-      const newTag = prepareNewEntityData<TagInsert>(tagData);
+      let newTag = prepareNewEntityData<TagInsert>(tagData);
+      const favorite = await normalizeFavoriteCreate(db, newTag.storyId, 'Tag', newTag);
+      newTag = favorite.data;
       const result = await db.insert(tags).values(newTag).returning().get();
+      await persistInitialFavorite(db, newTag.storyId, newTag.id, 'Tag', currentUserId, favorite.individualFavorite);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newTag.storyId, currentUserId);
       await recordLocalOperation(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, { ...result });
@@ -124,6 +129,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       if (!originalTag) {
         throw new Error(`Tag with ID ${tagId} not found for update.`);
       }
+      tagData = await normalizeFavoriteUpdate(db, originalTag.storyId, tagId, 'Tag', currentUserId, tagData);
 
       const potentialNewState = { ...originalTag, ...tagData };
 

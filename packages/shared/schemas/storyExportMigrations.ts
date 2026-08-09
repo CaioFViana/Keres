@@ -16,9 +16,41 @@ type StoryExportMigration = {
   migrate: (data: any) => any;
 };
 
-// Nenhuma migração ainda foi necessária - o formato nunca mudou de forma incompatível desde
-// que o versionamento foi introduzido. O registro existe pronto para quando isso acontecer.
-const migrations: StoryExportMigration[] = [];
+/**
+ * V1 -> V2
+ *
+ * As mudanças reais deste formato são favoritos por entidade, os campos novos de Story e a
+ * remoção de `Suggestion.isDefault`, que deixou de ter significado no produto.
+ */
+const migrateV1ToV2: StoryExportMigration = {
+  fromVersion: 1,
+  migrate: (data) => {
+    const story = data?.story
+      ? {
+        ...data.story,
+        // V1 representava favoritos como estado global da história.
+        favoriteBehavior: data.story.favoriteBehavior ?? 'global',
+        normalizeSceneTiming: data.story.normalizeSceneTiming ?? false,
+      }
+      : data?.story;
+    const suggestions = Array.isArray(data?.suggestions)
+      ? data.suggestions.map((rawSuggestion: any) => {
+        const suggestion = { ...rawSuggestion };
+        delete suggestion.isDefault;
+        return suggestion;
+      })
+      : data?.suggestions;
+
+    return {
+      ...data,
+      story,
+      suggestions,
+      favorites: Array.isArray(data?.favorites) ? data.favorites : [],
+    };
+  },
+};
+
+const migrations: StoryExportMigration[] = [migrateV1ToV2];
 
 /**
  * Normaliza um export bruto (JSON já parseado, ainda não validado pelo `FullStoryExportSchema`)
@@ -41,6 +73,13 @@ export function migrateStoryExport(raw: any): any {
     .filter((m) => m.fromVersion >= version)
     .sort((a, b) => a.fromVersion - b.fromVersion)) {
     data = migration.migrate(data);
+  }
+
+  // `individual` is the default only for stories created from now on. Exports written
+  // before favorite behavior existed represented the former global behavior, so importing
+  // one must not silently change its semantics merely because the schema now has a new default.
+  if (data?.story && data.story.favoriteBehavior === undefined) {
+    data = { ...data, story: { ...data.story, favoriteBehavior: 'global' } };
   }
 
   return { ...data, formatVersion: CURRENT_STORY_FORMAT_VERSION };

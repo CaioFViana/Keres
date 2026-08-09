@@ -648,9 +648,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVR52YHJERB8N7DQSQ4J",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "name": "Protagonist",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVR5QNKAZMRBWMFJEBG1",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "name": "Magic",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVR5Z417EH4VRBFP1TC2",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "name": "Turning point",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVR5T4S453CKA3TF54F4",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "tagId": "01KZKVMVR52YHJERB8N7DQSQ4J",
+      "relationId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVR5JGGYFZ4DAPEVW5TC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "tagId": "01KZKVMVR5QNKAZMRBWMFJEBG1",
+      "relationId": "01KYXBHD0F6JAR48EF3W034H4S",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVR5QMSVP9EKVSBX6BAJ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "tagId": "01KZKVMVR5Z417EH4VRBFP1TC2",
+      "relationId": "01KYXBHD0FT4ZRD77W22A1SPXT",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVR6W1FGMK9F9Y60FEDP",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR5RTZYMF51D9MVXERK",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVR6XV51VMT08D1YKDPS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR5RTZYMF51D9MVXERK",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVR6A03RNJB8641BQSRY",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR5RTZYMF51D9MVXERK",
+      "value": "Antagonist"
+    },
+    {
+      "id": "01KZKVMVR6QXT44BRJ1BX5Y2QH",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR5PP5CSG04WEWS128Z",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVR68F0ZSQMZGJNCF60S",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR5PP5CSG04WEWS128Z",
+      "value": "Tension"
+    },
+    {
+      "id": "01KZKVMVR6N99HQBZNP14TVQMN",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR5PP5CSG04WEWS128Z",
+      "value": "Hope"
+    },
+    {
+      "id": "01KZKVMVR6RXFXS33SE7JQ0NJ1",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "New"
+    },
+    {
+      "id": "01KZKVMVR65ZFZSKGYDDYKY37N",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Broken"
+    },
+    {
+      "id": "01KZKVMVR6ZTX72DK8MZHSFG6M",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Consumed"
+    },
+    {
+      "id": "01KZKVMVR6FW32C0DYG001DC38",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Written"
+    },
+    {
+      "id": "01KZKVMVR65KBBCN5CHRTTSBVX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Transferred"
+    },
+    {
+      "id": "01KZKVMVR65NPBQSKH7FTHPJ2D",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Resolved"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0FETYZS3CQAVQC6C3D",
@@ -713,7 +923,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVR5GQBXK1EWJ407XRKV",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "characterId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S"
+    },
+    {
+      "id": "01KZKVMVR5FNKZ5X2NKCM0CD9K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -723,7 +956,7 @@
       "name": "The Enchanted Rose",
       "category": "Enchanted flower",
       "description": "The only gift Beauty asked her father to bring her - a rose from the Beast's own garden.",
-      "initialState": "Growing untouched among countless others in the Beast's rose garden.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -739,7 +972,7 @@
       "name": "The Magic Ring",
       "category": "Enchanted object",
       "description": "A ring that carries whoever wears it instantly between the Beast's castle and any place they wish.",
-      "initialState": "Kept by the Beast, unused, in the castle.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -755,7 +988,7 @@
       "name": "The Magic Mirror",
       "category": "Enchanted object",
       "description": "A mirror that shows whoever holds it any place or person they wish to see, however far away.",
-      "initialState": "Kept by the Beast, unused, in the castle.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -772,8 +1005,8 @@
       "itemId": "01KYXK9BMQN9V35XYM1X1C7J76",
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
       "newCharacterOwnerId": "01KYXBHD0FTSMRJEM98HEJJXWA",
-      "newState": "Picked by the Merchant for Beauty - the Beast catches him and demands his life in payment for the theft.",
-      "extraNotes": null,
+      "newState": "New",
+      "extraNotes": "Picked by the Merchant for Beauty - the Beast catches him and demands his life in payment for the theft.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -786,8 +1019,8 @@
       "itemId": "01KYXK9BMQ2ENW16W7X1E9DTZE",
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
-      "newState": "Given to Beauty by the Beast, so she may travel home and back with a simple wish.",
-      "extraNotes": null,
+      "newState": "Transferred",
+      "extraNotes": "Given to Beauty by the Beast, so she may travel home and back with a simple wish.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -800,8 +1033,8 @@
       "itemId": "01KYXK9BMQ26HPVKCWMQTC4TMD",
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
-      "newState": "Given to Beauty alongside the ring, so she may see her family or the Beast from afar.",
-      "extraNotes": null,
+      "newState": "Transferred",
+      "extraNotes": "Given to Beauty alongside the ring, so she may see her family or the Beast from afar.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -809,5 +1042,111 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVR5RTZYMF51D9MVXERK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Character",
+      "name": "Narrative role",
+      "key": "narrative_role",
+      "description": "The character’s role in this retelling.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVR5PP5CSG04WEWS128Z",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Scene",
+      "name": "Emotional tone",
+      "key": "emotional_tone",
+      "description": "The prevailing mood of this scene.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVR530REHZR08FEG3X1J",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "fieldId": "01KZKVMVR5RTZYMF51D9MVXERK",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVR5RVC1DPA3KW9DNZT7",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "fieldId": "01KZKVMVR5RTZYMF51D9MVXERK",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVR5VBFWSKJY74DM4902",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0F6JAR48EF3W034H4S",
+      "fieldId": "01KZKVMVR5PP5CSG04WEWS128Z",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVR60DFFRRP776PB0DEJ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0FT4ZRD77W22A1SPXT",
+      "fieldId": "01KZKVMVR5PP5CSG04WEWS128Z",
+      "value": "Tension"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVR607GHHCAKBWZACB5A",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "locationAId": "01KYXBHD0FT43JJV1HABMERBPA",
+      "locationBId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

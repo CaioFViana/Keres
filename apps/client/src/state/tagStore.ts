@@ -6,6 +6,7 @@ export type { FavoriteFilterState } from '../types/entityFilters';
 
 export const useTagStore = createEntityStore<'tags', TagSelect, TagService>({
   collectionKey: 'tags',
+  favoriteEntityType: 'Tag',
   createService: createTagService,
   fetchEntities: (service, p) =>
     service.getTagsByStoryId(

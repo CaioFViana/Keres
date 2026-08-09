@@ -23,6 +23,10 @@ export interface GraphScene {
   isStart: boolean;
   isFinish: boolean;
   summary?: string | null;
+  gap?: number | null;
+  gapType?: string | null;
+  duration?: number | null;
+  durationType?: string | null;
 }
 
 /** Escolha, reduzida ao que o layout precisa (ChoiceSelect satisfaz esta forma). */

@@ -22,6 +22,11 @@ class EventEmitter {
     }
     this.listeners[event].forEach(listener => listener(...args));
   }
+
+  async emitAsync(event: string, ...args: any[]): Promise<void> {
+    if (!this.listeners[event]) return;
+    await Promise.all(this.listeners[event].map((listener) => Promise.resolve(listener(...args))));
+  }
 }
 
 export const entityEventEmitter = new EventEmitter();
@@ -37,4 +42,3 @@ export const entityEventEmitter = new EventEmitter();
 // Drawer.Screen in MainSystemStack.tsx/StorySelectionStack.tsx now resets its own stack
 // directly from `drawerItemPress` (fired only when the user taps that item in the drawer) -
 // see the comment there.
-

@@ -4,19 +4,26 @@ import { StackActions, useNavigation } from '@react-navigation/native'; // Impor
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import Select from '../../components/common/Select/Select';
-import TextInput from '../../components/common/TextInput/TextInput';
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import Button from '@/src/components/common/controls/Button/Button';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
+import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
+import { mediaFileService } from '../../services/MediaFileService';
 import { SyncEngineService } from '../../services/SyncEngineService'; // Import SyncEngineService
+import { servers } from '../../db/schema';
+import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 import { AppAlert } from '../../utils/AppAlert';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
 
@@ -60,14 +67,30 @@ const SettingsScreen = () => {
           text: t('reset'),
           onPress: async () => {
             try {
+              // Credentials live outside SQLite, so retain the server IDs before dropping
+              // any tables. The reset signal synchronously closes every realtime socket.
+              const savedServers = await drizzleClient.select({ id: servers.id }).from(servers).all();
+              const serverIds = savedServers.map((server) => server.id);
+              const realtimeShutdown = entityEventEmitter.emitAsync('application_resetting');
+
+              // Clearing the user first prevents SyncInitializer effects from rebuilding a
+              // WebSocket while the remaining asynchronous cleanup is still in progress.
+              resetSettings();
+              await Promise.all([
+                realtimeShutdown,
+                SyncEngineService.getInstance().reset(),
+              ]);
+              await authTokenManager.clearAllAuth(serverIds);
+              setAuthDb(null);
+              await mediaFileService.deleteAllMedia();
+
               await resetDatabase(db);
               console.log('Database reset complete.');
 
-              // Reset Zustand stores
-              resetSettings();
+              // Reset every in-memory store that can retain rows from the deleted database.
+              resetAllClientStores();
               resetTheme();
-              SyncEngineService.getInstance().reset(); // Reset the SyncEngineService
-              console.log('Zustand stores and SyncEngineService reset.');
+              console.log('Credentials, media, stores and synchronization services reset.');
 
               // Navigate to ColdInstallScreen and reset navigation stack
               navigation.dispatch(StackActions.replace('ColdInstall'));
@@ -87,13 +110,8 @@ const SettingsScreen = () => {
   const languageOptions = getLanguageOptions(t);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust this value as needed
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <View style={commonContainerStyles.container}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={{ flexGrow: 1 }}>
+        <View>
           <View style={styles.settingItem}>
             <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
             <View style={styles.inputWrapper}>
@@ -120,11 +138,9 @@ const SettingsScreen = () => {
 
           <View style={styles.settingItem}>
             <Text style={[styles.settingLabel, { color: colors.text }]}>{t('dark_mode')}</Text>
-            <Switch
+            <ThemedSwitch
               value={darkMode}
               onValueChange={handleDarkModeToggle}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={darkMode ? colors.onPrimary : colors.textSecondary}
             />
           </View>
 
@@ -132,8 +148,7 @@ const SettingsScreen = () => {
             {t('reset_application')}
           </Button>
         </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

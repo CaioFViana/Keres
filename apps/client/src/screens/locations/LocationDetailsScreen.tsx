@@ -1,21 +1,22 @@
-import NoteManager from '@/src/components/NoteManager';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
+import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager'; // Import LocationItemManager
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
+import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
+import ScenePresenceList, { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import CustomAttributeDetailFields from '../../components/common/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '../../components/common/DetailField/DetailField';
-import EntityMetadata from '../../components/common/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '../../components/common/ScreenState/ScreenState';
-import TagChipList from '../../components/common/TagChipList/TagChipList';
-import EntityGalleryManager from '../../components/GalleryManager/EntityGalleryManager';
-import LocationCharacterManager from '../../components/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
-import LocationItemManager from '../../components/LocationManager/LocationItemManager'; // Import LocationItemManager
-import LocationSceneManager from '../../components/LocationManager/LocationSceneManager'; // Import LocationSceneManager
-import LocationRelationManager from '../../components/LocationRelationManager/LocationRelationManager';
 import { useDrizzle } from '../../db';
 import { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
@@ -29,17 +30,17 @@ import { CharacterSceneServiceInterface, createCharacterSceneService } from '../
 import { CharacterService, createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
 import { createItemJourneyService, ItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
 import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createLocationRelationService, LocationRelationService } from '../../services/storymanagement/LocationRelationService';
+import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { LocationsScreenNavigationProp } from './LocationListScreen';
-import { AppAlert } from '../../utils/AppAlert';
 
 export type LocationDetailScreenParamList = {
   LocationDetail: { locationId: string };
@@ -48,7 +49,7 @@ export type LocationDetailScreenParamList = {
 type LocationDetailScreenRouteProp = RouteProp<LocationStackParamList, 'LocationDetail'>;
 
 const LocationDetailsScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>(); // Use the imported navigation type
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
@@ -400,6 +401,20 @@ const LocationDetailsScreen = () => {
     },
   });
 
+  const locationCharacterEntries = useMemo(() => {
+    const scenesById = new Map(
+      allScenes
+        .filter(scene => scene.locationId === locationId && !scene.isDeleted)
+        .map(scene => [scene.id, scene])
+    );
+    const pairs = characterSceneRelations.flatMap(relation => {
+      const scene = scenesById.get(relation.sceneId);
+      const character = allCharacters.find(candidate => candidate.id === relation.characterId);
+      return scene && character && !relation.isDeleted && !character.isDeleted ? [{ item: character, scene }] : [];
+    });
+    return groupScenePresenceEntries(pairs);
+  }, [allCharacters, allScenes, characterSceneRelations, locationId]);
+
   if (loading) {
     return <ScreenLoading padded message={t('loading_location_details')} />;
   }
@@ -425,6 +440,14 @@ const LocationDetailsScreen = () => {
 
       <DetailField label={t('extra_notes')} value={location.extraNotes || t('common_na')} />
 
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={locationId}
+        ownerType="Location"
+        onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
+      />
+
       <LocationRelationManager
         currentLocationId={locationId}
         allLocations={allLocations}
@@ -436,24 +459,20 @@ const LocationDetailsScreen = () => {
         editable={canEdit}
       />
 
-      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
-      <EntityGalleryManager
-        ownerId={locationId}
-        ownerType="Location"
-        onPressMedia={openGalleryMediaViewer}
-        editable={canEdit}
+      <ScenePresenceList
+        entries={locationCharacterEntries}
+        title={t('characters_in_location_title')}
+        noItemsMessage="no_characters_in_location"
+        entityType="Character"
+        sceneLabel={t('scene')}
       />
 
-      <LocationCharacterManager
-        currentLocationId={locationId}
-        availableScenes={allScenes}
-        characterSceneRelations={characterSceneRelations}
-        availableCharacters={allCharacters}
-      />
-
-      <LocationSceneManager
-        currentLocationId={locationId}
-        availableScenes={allScenes}
+      <RelatedScenesList
+        scenes={allScenes}
+        matchesScene={scene => scene.locationId === locationId}
+        title={t('scenes_in_location_title')}
+        noItemsMessage="no_scenes_in_location"
+        getDetails={scene => scene.summary ? [{ label: t('summary'), value: scene.summary }] : []}
       />
 
       <LocationItemManager
@@ -476,6 +495,7 @@ const LocationDetailsScreen = () => {
       />
 
       <EntityMetadata version={location.version} createdAt={location.createdAt} updatedAt={location.updatedAt} />
+      <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />
     </ScrollView>
   );
 };

@@ -523,9 +523,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVQX7AA8GEQCS4G1QH2Q",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "name": "Protagonist",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVQXFMZP3HSFR54K2FS5",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "name": "Magic",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVQYHXBB699TBP5CM8YD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "name": "Turning point",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVQY026D1V468JPWT37G",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "tagId": "01KZKVMVQX7AA8GEQCS4G1QH2Q",
+      "relationId": "01KYXBHD0BESDGG77MG3F2A721",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVQYM8K8NEBZ8KMKFKV7",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "tagId": "01KZKVMVQXFMZP3HSFR54K2FS5",
+      "relationId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVQYHF9WVW1GQH23R6VK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "tagId": "01KZKVMVQYHXBB699TBP5CM8YD",
+      "relationId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVQYJQYW3DDYC53SXC4V",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVQWTHYW2ZP6VDT580WD",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVQZS15RX2JF56JG5F9J",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVQWTHYW2ZP6VDT580WD",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVQZ70ZV8TT60K65JT2P",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVQWTHYW2ZP6VDT580WD",
+      "value": "Antagonist"
+    },
+    {
+      "id": "01KZKVMVQZVGJ9Y2GRCFQ0A9WR",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVQXZVEKQQFGRW8EVVJY",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVQZBPN8JYY1VKHF5QXT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVQXZVEKQQFGRW8EVVJY",
+      "value": "Tension"
+    },
+    {
+      "id": "01KZKVMVQZ0FT10NTYRFD30PV0",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "custom:01KZKVMVQXZVEKQQFGRW8EVVJY",
+      "value": "Hope"
+    },
+    {
+      "id": "01KZKVMVQZBZJZ66PHEHJG8AGE",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "New"
+    },
+    {
+      "id": "01KZKVMVQZKW7C730TAXSWWT13",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Broken"
+    },
+    {
+      "id": "01KZKVMVQZ8Q2ER3SQDE7V3S4M",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Consumed"
+    },
+    {
+      "id": "01KZKVMVQZ4NTRRE32PJN9DFKG",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Written"
+    },
+    {
+      "id": "01KZKVMVQZ5QY5X5ZZ2PSQ08H3",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Transferred"
+    },
+    {
+      "id": "01KZKVMVQZMB9NTHDWA5B754AC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "type": "item_state",
+      "value": "Resolved"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0BDQZCZ54XX052NY9X",
@@ -576,7 +786,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVQY2MDS21NM7S21XMPM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "characterId": "01KYXBHD0BESDGG77MG3F2A721",
+      "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT"
+    },
+    {
+      "id": "01KZKVMVQYYFJFCQJ35D0HGTXC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "characterId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -586,7 +819,7 @@
       "name": "Bottle labeled \"DRINK ME\"",
       "category": "Potion",
       "description": "A small bottle found on a glass table, with a paper tag reading \"DRINK ME\" tied around its neck.",
-      "initialState": "Full, sealed, waiting on the glass table.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -602,7 +835,7 @@
       "name": "Cake labeled \"EAT ME\"",
       "category": "Food",
       "description": "A small cake found under the table, with the words \"EAT ME\" marked out in currants.",
-      "initialState": "Whole, untouched, under the table.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -619,8 +852,8 @@
       "itemId": "01KYXK1XAWEGTPCV26S9PJ23HR",
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "newCharacterOwnerId": null,
-      "newState": "Drunk by Alice - she shrinks to just ten inches tall.",
-      "extraNotes": null,
+      "newState": "Consumed",
+      "extraNotes": "Drunk by Alice - she shrinks to just ten inches tall.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -633,8 +866,8 @@
       "itemId": "01KYXK1XAWT6AMEZP8BQ11EHQQ",
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "newCharacterOwnerId": null,
-      "newState": "Eaten by Alice - she grows enormous, filling the hallway.",
-      "extraNotes": null,
+      "newState": "Consumed",
+      "extraNotes": "Eaten by Alice - she grows enormous, filling the hallway.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -642,5 +875,111 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVQWTHYW2ZP6VDT580WD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Character",
+      "name": "Narrative role",
+      "key": "narrative_role",
+      "description": "The character’s role in this retelling.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVQXZVEKQQFGRW8EVVJY",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Scene",
+      "name": "Emotional tone",
+      "key": "emotional_tone",
+      "description": "The prevailing mood of this scene.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVQYKKASFXZ9MX60DA6P",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0BESDGG77MG3F2A721",
+      "fieldId": "01KZKVMVQWTHYW2ZP6VDT580WD",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVQYQNY1E6DVQNM53CSV",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0BF8DTMDDG223S8DYY",
+      "fieldId": "01KZKVMVQWTHYW2ZP6VDT580WD",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVQY2831QF3NK9SYANF7",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0B1AN43HZH3R8A5XXT",
+      "fieldId": "01KZKVMVQXZVEKQQFGRW8EVVJY",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVQY7YAAR26B6ZPVN5NT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
+      "fieldId": "01KZKVMVQXZVEKQQFGRW8EVVJY",
+      "value": "Tension"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVQZYDJCC9349W1TX47A",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "locationAId": "01KYXBHD0BBV4X3QKCJDDBV1S6",
+      "locationBId": "01KYXBHD0B6RME43YC69PZR0W2",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

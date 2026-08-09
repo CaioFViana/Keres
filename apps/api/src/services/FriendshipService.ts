@@ -1,5 +1,5 @@
 import { EnrichedFriendship, Friendship, FriendStatus } from '@keres/shared';
-import { and, eq, or, sql } from 'drizzle-orm';
+import { and, eq, ne, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { ulid } from 'ulid';
 import { db } from '../db';
@@ -7,8 +7,31 @@ import { friendships } from '../db/schema/tables/friendships';
 import { users } from '../db/schema/tables/users';
 import { AppError } from '../utils/errors';
 import { storyPermissionService } from './StoryPermissionService';
+import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 
 export class FriendshipService {
+  private notifyChanged(...userIds: string[]): void {
+    for (const userId of new Set(userIds)) emitUserEvent(userId, { type: 'friendships.changed' });
+  }
+
+  /**
+   * Profile data is embedded in the enriched friendship payload consumed by clients.
+   * Notify both sides whenever one profile changes so every connected device refreshes
+   * that payload and its local user/avatar cache immediately.
+   */
+  async notifyProfileChanged(userId: string): Promise<void> {
+    const related = await db.select({
+      senderId: friendships.senderId,
+      receiverId: friendships.receiverId,
+    }).from(friendships).where(and(
+      or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)),
+      ne(friendships.status, FriendStatus.BLACKLISTED),
+    ));
+    const affectedUserIds = related.map((friendship) => (
+      friendship.senderId === userId ? friendship.receiverId : friendship.senderId
+    ));
+    this.notifyChanged(userId, ...affectedUserIds);
+  }
   private async checkUserExistence(userId: string): Promise<void> {
     const userExists = await db.query.users.findFirst({
       where: eq(users.id, userId),
@@ -80,6 +103,7 @@ export class FriendshipService {
 
     const newFriendship = await db.insert(friendships).values(newFriendshipData).returning();
     
+    this.notifyChanged(senderId, receiverId);
     return newFriendship[0];
   }
   async acceptFriendRequest(userId: string, targetUserId: string): Promise<Friendship> {
@@ -114,6 +138,7 @@ export class FriendshipService {
       .where(eq(friendships.id, existingFriendship.id))
       .returning();
     
+    this.notifyChanged(userId, targetUserId);
     return updatedFriendship[0];
   }
 
@@ -147,6 +172,7 @@ export class FriendshipService {
 
     // After declining a friend request, delete any associated story permissions
     await storyPermissionService.deletePermissionsBetweenUsers(existingFriendship.senderId, existingFriendship.receiverId);
+    this.notifyChanged(userId, targetUserId);
   }
 
   async unfriendUser(userId: string, targetUserId: string): Promise<void> {
@@ -172,6 +198,7 @@ export class FriendshipService {
 
     // After unfriending, delete any associated story permissions
     await storyPermissionService.deletePermissionsBetweenUsers(existingFriendship.senderId, existingFriendship.receiverId);
+    this.notifyChanged(userId, targetUserId);
   }
 
   async blacklistUser(blisterId: string, blacklistedUserId: string): Promise<Friendship> {
@@ -206,6 +233,7 @@ export class FriendshipService {
       if (originalStatus === FriendStatus.FRIEND) {
         await storyPermissionService.deletePermissionsBetweenUsers(existingFriendship.senderId, existingFriendship.receiverId);
       }
+      this.notifyChanged(blisterId, blacklistedUserId);
       return updatedFriendship[0];
     } else {
       // Create new blacklisted friendship
@@ -219,6 +247,7 @@ export class FriendshipService {
         updatedAt: new Date(),
       };
       const newFriendship = await db.insert(friendships).values(newFriendshipData).returning();
+      this.notifyChanged(blisterId, blacklistedUserId);
       return newFriendship[0];
     }
   }
@@ -254,6 +283,7 @@ export class FriendshipService {
     }
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
+    this.notifyChanged(unblisterId, unblacklistedUserId);
   }
 
   async cancelSentFriendRequest(senderId: string, targetUserId: string): Promise<void> {
@@ -274,6 +304,7 @@ export class FriendshipService {
     }
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
+    this.notifyChanged(senderId, targetUserId);
   }
 
 

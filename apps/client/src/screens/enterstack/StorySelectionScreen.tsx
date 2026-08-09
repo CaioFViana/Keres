@@ -6,7 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import SummaryCard from '../../components/common/SummaryCard/SummaryCard';
+import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db';
 import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -169,6 +169,7 @@ const StorySelectionScreen = () => {
       const itemCount = await storyService.getItemCount();
       const galleryCount = await storyService.getGalleryCount();
       const tagCount = await storyService.getTagCount();
+      const customAttributeCount = await storyService.getCustomAttributeCount();
       const branchingStoryForkCount = await storyService.getBranchingStoryForkCount();
 
       updateSummary({
@@ -184,6 +185,7 @@ const StorySelectionScreen = () => {
         itemCount,
         galleryCount,
         tagCount,
+        customAttributeCount,
         branchingStoryForkCount,
       });
     } catch (error) {

@@ -46,15 +46,21 @@ export const syncRoute = new Elysia()
     }
 
     const { storyId } = params;
-    const { lastOperationVersion } = query;
+    const { lastOperationVersion, lastPublicFavoriteVersion } = query;
 
-    const { updates, serverMaxOperationVersion, role } = await syncService.getUpdatesForStory(user.userId, storyId, lastOperationVersion);
+    const { updates, publicFavorites, serverMaxOperationVersion, role } = await syncService.getUpdatesForStory(
+      user.userId,
+      storyId,
+      lastOperationVersion,
+      lastPublicFavoriteVersion,
+    );
 
     logger.info('Received pull request', { storyId, lastOperationVersion, updatesFound: updates.length, serverMaxOperationVersion });
 
     return {
       message: `Pull request received for story ${storyId}`,
       updates: updates,
+      publicFavorites,
       serverMaxOperationVersion: serverMaxOperationVersion, // Include the server's max operation version
       role,
     };
@@ -64,6 +70,7 @@ export const syncRoute = new Elysia()
     }),
     query: t.Object({
       lastOperationVersion: t.Numeric({ minimum: 0 }), // Expecting a numeric version
+      lastPublicFavoriteVersion: t.Optional(t.Numeric({ minimum: 0 })),
     }),
     detail: {
       summary: 'Pull story updates from the server',
@@ -73,6 +80,7 @@ export const syncRoute = new Elysia()
     response: t.Object({ // Update the response schema
       message: t.String(),
       updates: t.Array(t.Any()), // updates are StoryUpdate objects, using t.Any() for simplicity, can be more specific
+      publicFavorites: t.Array(t.Any()),
       serverMaxOperationVersion: t.Number(),
       role: t.Union([t.Literal('owner'), t.Literal('writer'), t.Literal('reader')]),
     }),

@@ -17,6 +17,7 @@ import { createOperationLogService } from '../../services/OperationLogService';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ISO_DATE_PATTERN } from '../../utils/reviveDates';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
@@ -61,12 +62,13 @@ type OperationLogDetailScreenRouteProp = RouteProp<OperationLogStackParamList, '
 type OperationLogDetailScreenNavigationProp = NativeStackNavigationProp<OperationLogStackParamList, 'OperationLogDetail'>;
 
 const OperationLogDetailScreen: React.FC = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<OperationLogDetailScreenNavigationProp>();
   const route = useRoute<OperationLogDetailScreenRouteProp>();
   const { logId } = route.params;
+  const { userId } = useUserSettingsStore();
 
   const drizzleDb = useDrizzle();
   const [operationLog, setOperationLog] = useState<OperationLogSelect | null>(null);
@@ -86,7 +88,7 @@ const OperationLogDetailScreen: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const log = await operationLogService.getOperationLogById(logId);
+      const log = await operationLogService.getOperationLogById(logId, userId ?? undefined);
       if (log) {
         setOperationLog(log);
       } else {
@@ -98,7 +100,7 @@ const OperationLogDetailScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [operationLogService, logId, t]);
+  }, [operationLogService, logId, t, userId]);
 
   useEffect(() => {
     fetchOperationLogDetails();

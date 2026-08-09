@@ -438,9 +438,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVRKK3ZHRCTNEHJQZKZJ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "name": "Protagonist",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRKKB8SQSNT6FDJKXZP",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "name": "Magic",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRKN31QH89KE8H4EPBK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "name": "Turning point",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVRM16VQWNFKNPQXJJP9",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "tagId": "01KZKVMVRKK3ZHRCTNEHJQZKZJ",
+      "relationId": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVRMW1NY3X9FJYYJCWSB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "tagId": "01KZKVMVRKKB8SQSNT6FDJKXZP",
+      "relationId": "01KYXBHD0M83N1C3AX7JH04JD2",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVRMPD6J4W7EFXZ3XRYB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "tagId": "01KZKVMVRKN31QH89KE8H4EPBK",
+      "relationId": "01KYXBHD0MQP5BEK9PFDBE3580",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVRMQDK1AWWTKHFXGDPC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRK0D7J6F84XH52R7EK",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVRMBRY02KFV80WP58XE",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRK0D7J6F84XH52R7EK",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVRMGQFER6ZF9VD2X5T5",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRK0D7J6F84XH52R7EK",
+      "value": "Antagonist"
+    },
+    {
+      "id": "01KZKVMVRMT597X6WSPFGRH40J",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRKWYKAZJWB4FTBVT59",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVRMYYFDR5K1SEE3FZJA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRKWYKAZJWB4FTBVT59",
+      "value": "Tension"
+    },
+    {
+      "id": "01KZKVMVRM7JNNP9D26ND6RXDH",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRKWYKAZJWB4FTBVT59",
+      "value": "Hope"
+    },
+    {
+      "id": "01KZKVMVRM8GHQ6RCDWA0XAHBT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "New"
+    },
+    {
+      "id": "01KZKVMVRMBPQ11ZB83PACD4ZY",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Broken"
+    },
+    {
+      "id": "01KZKVMVRMBE81G73SY5XBYSDJ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Consumed"
+    },
+    {
+      "id": "01KZKVMVRM7QFZ9GHVG2SV1VZ9",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Written"
+    },
+    {
+      "id": "01KZKVMVRMGZT1XS7D68BKJR06",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Transferred"
+    },
+    {
+      "id": "01KZKVMVRMSY5ZASE27E131NFS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Resolved"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0M2X4TZ0WEEYKMK96G",
@@ -491,7 +701,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVRMQ8KBSG3F82CWA757",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "characterId": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "sceneId": "01KYXBHD0M83N1C3AX7JH04JD2"
+    },
+    {
+      "id": "01KZKVMVRMN2SJEMVG5XF3FC6A",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "characterId": "01KYXBHD0MZVSA263GJW277EVN",
+      "sceneId": "01KYXBHD0MQP5BEK9PFDBE3580"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -501,7 +734,7 @@
       "name": "The Sea Witch's Potion",
       "category": "Potion",
       "description": "A potion brewed by the Sea Witch that turns a mermaid's tail into human legs, at a painful and permanent cost.",
-      "initialState": "Freshly brewed in the Witch's lair, paid for with the little mermaid's voice.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -517,7 +750,7 @@
       "name": "The Enchanted Knife",
       "category": "Enchanted weapon",
       "description": "A knife traded from the Sea Witch by the little mermaid's sisters, in exchange for their own hair.",
-      "initialState": "Forged by the Sea Witch, still in the sisters' keeping.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -534,8 +767,8 @@
       "itemId": "01KYXKY1XP89Y9MMHND96H7S38",
       "sceneId": "01KYXBHD0MKXH274VYGG8CD6H4",
       "newCharacterOwnerId": "01KYXBHD0MDSRT7CVV76CMDZC9",
-      "newState": "Drunk by the little mermaid - her tail splits into a pair of human legs, each step now like walking on knives.",
-      "extraNotes": null,
+      "newState": "Consumed",
+      "extraNotes": "Drunk by the little mermaid - her tail splits into a pair of human legs, each step now like walking on knives.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -548,8 +781,8 @@
       "itemId": "01KYXKY1XPAX2REJJNHSYC7J58",
       "sceneId": "01KYXBHD0MYMJ2B760NNHVCP90",
       "newCharacterOwnerId": "01KYXBHD0MDSRT7CVV76CMDZC9",
-      "newState": "Given to the little mermaid by her sisters, who traded their hair for it - if she kills the Prince before sunrise and lets his blood touch her feet, she will become a mermaid again.",
-      "extraNotes": null,
+      "newState": "Transferred",
+      "extraNotes": "Given to the little mermaid by her sisters, who traded their hair for it - if she kills the Prince before sunrise and lets his blood touch her feet, she will become a mermaid again.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -562,8 +795,8 @@
       "itemId": "01KYXKY1XPAX2REJJNHSYC7J58",
       "sceneId": "01KYXBHD0MQG0B9N41TXGDA4V3",
       "newCharacterOwnerId": null,
-      "newState": "Cast into the sea by the little mermaid, unused - she cannot bring herself to harm the Prince.",
-      "extraNotes": null,
+      "newState": "New",
+      "extraNotes": "Cast into the sea by the little mermaid, unused - she cannot bring herself to harm the Prince.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -571,5 +804,111 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVRK0D7J6F84XH52R7EK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Character",
+      "name": "Narrative role",
+      "key": "narrative_role",
+      "description": "The character’s role in this retelling.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVRKWYKAZJWB4FTBVT59",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Scene",
+      "name": "Emotional tone",
+      "key": "emotional_tone",
+      "description": "The prevailing mood of this scene.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVRMRKET0AS9Z5E22BJA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "fieldId": "01KZKVMVRK0D7J6F84XH52R7EK",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVRM9X674QGRXKFH23M6",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0MZVSA263GJW277EVN",
+      "fieldId": "01KZKVMVRK0D7J6F84XH52R7EK",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVRM9B6PTWK1BTJKWV75",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0M83N1C3AX7JH04JD2",
+      "fieldId": "01KZKVMVRKWYKAZJWB4FTBVT59",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVRMNQERDN0J6EM8B0G6",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0MQP5BEK9PFDBE3580",
+      "fieldId": "01KZKVMVRKWYKAZJWB4FTBVT59",
+      "value": "Tension"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVRMFWAP569P84E0110Y",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "locationAId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
+      "locationBId": "01KYXBHD0MESF281V4YSN4MAA5",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

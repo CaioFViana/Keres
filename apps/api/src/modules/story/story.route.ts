@@ -77,7 +77,7 @@ export const storyRoutes = new Elysia()
       throw new Error('Story not found or not authorized for export.');
     }
 
-    const fullStory = await storyExportImportService.exportStory(params.storyId);
+    const fullStory = await storyExportImportService.exportStory(params.storyId, user.userId);
     return fullStory;
   }, {
     params: t.Object({

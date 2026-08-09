@@ -32,15 +32,27 @@ jobs:
       - id: compute
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
+  # Validate the complete monorepo once before starting the platform-specific release builds.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
+
   # ---- Server: build + publish the API's Docker image to GHCR ----
   docker:
-    needs: version
+    needs: [version, verify]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # GHCR requires a lowercase image path; this repo's owner/name aren't guaranteed to be
       # (GitHub usernames/repo names can contain uppercase letters, and `github.repository`
@@ -74,10 +86,10 @@ jobs:
 
   # ---- Desktop: Windows (nsis installer + portable exe) ----
   desktop-windows:
-    needs: version
+    needs: [version, verify]
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -97,12 +109,12 @@ jobs:
       # download both in the run's Artifacts tab and, via create-release below, as its own
       # asset on the GitHub Release - matching electron-builder.yml's nsis/portable
       # artifactName overrides.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: desktop-windows-installer
           path: apps/desktop/release/Keres-Setup-*.exe
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: desktop-windows-portable
           path: apps/desktop/release/Keres-Portable-*.exe
@@ -110,10 +122,10 @@ jobs:
 
   # ---- Desktop: macOS (dmg) ----
   desktop-mac:
-    needs: version
+    needs: [version, verify]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -127,7 +139,7 @@ jobs:
           # An unsigned/unnotarized .dmg still opens locally via right-click > Open; it just
           # can't be double-clicked past Gatekeeper without that first step.
           CSC_IDENTITY_AUTO_DISCOVERY: false
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: desktop-mac
           path: apps/desktop/release/*.dmg
@@ -135,10 +147,10 @@ jobs:
 
   # ---- Desktop: Linux (AppImage + Flatpak) ----
   desktop-linux:
-    needs: version
+    needs: [version, verify]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -158,12 +170,12 @@ jobs:
         working-directory: apps/desktop
         run: bun run package:linux
       # Two separate artifacts, same reasoning as desktop-windows above.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: desktop-linux-appimage
           path: apps/desktop/release/*.AppImage
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: desktop-linux-flatpak
           path: apps/desktop/release/*.flatpak
@@ -174,20 +186,20 @@ jobs:
   # identifier (apps/client/app.json has none set today), and a macOS runner just to produce an
   # unsigned build that still can't be sideloaded onto a real device without that same account.
   mobile-android:
-    needs: version
+    needs: [version, verify]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
       # Belt-and-suspenders: GitHub's ubuntu-latest runners ship an Android SDK already, but
       # pin/verify it explicitly rather than relying on whatever happens to be preinstalled.
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
       - run: bun install --frozen-lockfile
       - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
       # `android/` is gitignored (generated, not source) - this recreates it fresh from
@@ -214,12 +226,12 @@ jobs:
             -PRELEASE_KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
             -PRELEASE_KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
       # Two separate artifacts, same reasoning as desktop-windows above.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: mobile-android-apk
           path: apps/client/android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: mobile-android-aab
           path: apps/client/android/app/build/outputs/bundle/release/*.aab
@@ -232,7 +244,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           path: release-artifacts
       - uses: softprops/action-gh-release@v2

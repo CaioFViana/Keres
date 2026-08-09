@@ -1,240 +1,129 @@
-import { and, eq, sql } from 'drizzle-orm';
-import { AppDrizzleClient, characterRelations, characters, itemJourneys, items, suggestions } from '../../db';
-import { createULID } from '../../utils/entityUtils'; // Changed ulid import
+import { and, eq, ne, sql } from 'drizzle-orm';
+import { AppDrizzleClient, characterRelations, characters, itemJourneys, items, SuggestionInsert, SuggestionSelect, suggestions } from '../../db';
+import { createULID } from '../../utils/entityUtils';
+import { entityEventEmitter } from '../../utils/EventEmitter';
+import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import { createServerService } from '../ServerService';
 import { createAttributeValueService } from './AttributeValueService';
-// Import other schemas as needed
 
-/** Prefixo reservado que marca um "type" de sugestão como um atributo customizado de Story
- *  Schema (`custom:<fieldId>`) em vez de uma das categorias fixas de `suggestionConfig` - ver
- *  `getSuggestions`/`addSuggestion` abaixo. `fieldId`, não a `key` legível do atributo, pra que
- *  renomear o atributo não perca o histórico de sugestões já colhidas. */
 const CUSTOM_ATTRIBUTE_TYPE_PREFIX = 'custom:';
 
 export function customAttributeSuggestionType(fieldId: string): string {
   return `${CUSTOM_ATTRIBUTE_TYPE_PREFIX}${fieldId}`;
 }
 
-// Define a flexible configuration for suggestion types
-// This maps a suggestion 'type' to its Drizzle schema, the column to query for dynamic data,
-// and optionally a column for filtering by storyId if not directly on the schema.
 const suggestionConfig = {
-  character_gender: {
-    schema: characters,
-    column: characters.gender,
-  },
-  character_race: {
-    schema: characters,
-    column: characters.race,
-  },
-  character_subrace: {
-    schema: characters,
-    column: characters.subrace,
-  },
-  characterRelation_type: {
-    schema: characterRelations,
-    column: characterRelations.relationType,
-  },
-  item_category: {
-    schema: items,
-    column: items.category,
-  },
-  item_initial_state: {
-    schema: items,
-    column: items.initialState,
-  },
-  item_state: {
-    schema: itemJourneys,
-    column: itemJourneys.newState,
-  },
-  // Add more configurations as the system evolves
+  character_gender: { schema: characters, column: characters.gender },
+  character_race: { schema: characters, column: characters.race },
+  character_subrace: { schema: characters, column: characters.subrace },
+  characterRelation_type: { schema: characterRelations, column: characterRelations.relationType },
+  item_category: { schema: items, column: items.category },
+  item_initial_state: { schema: items, column: items.initialState },
+  item_state: { schema: itemJourneys, column: itemJourneys.newState },
 };
 
-/**
- * Antes um union fechado (`keyof typeof suggestionConfig`) - agora `string` pra também aceitar
- * `custom:<fieldId>` (atributos de Story Schema, ver `customAttributeSuggestionType`). Os ~5
- * call sites com categorias fixas continuam passando literais de string, então isto não muda
- * nada pra eles - só perde a checagem de exaustividade que um union fechado daria, e não há
- * nenhum `switch`/exhaustiveness check sobre este tipo em nenhum outro lugar do código hoje.
- */
 export type SuggestionType = string;
 
 export interface SuggestionServiceInterface {
   getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]>;
-  addSuggestion(type: SuggestionType, value: string, storyId: string): Promise<string | null>;
-  removeSuggestion(id: string): Promise<boolean>;
+  getStoredSuggestions(type: SuggestionType, storyId: string): Promise<SuggestionSelect[]>;
+  createSuggestion(currentUserId: string, type: SuggestionType, value: string, storyId: string): Promise<SuggestionSelect>;
+  updateSuggestion(currentUserId: string, id: string, value: string): Promise<void>;
+  deleteSuggestion(currentUserId: string, id: string): Promise<void>;
 }
 
 export const createSuggestionService = (db: AppDrizzleClient): SuggestionServiceInterface => {
-  return {
-    /**
-     * Retrieves a unique list of suggestions for a given type and story, along with their counts.
-     * Suggestions are sourced from the 'suggestions' table and dynamic data from entity tables.
-     * @param type The type of suggestion to retrieve (e.g., 'character_gender').
-     * @param storyId The ID of the story to fetch suggestions for.
-     * @returns A promise that resolves to an array of [suggestion string, count] tuples.
-     */
-    async getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]> {
-      if (!storyId) {
-        console.error('getSuggestions: storyId is required.');
-        return [];
-      }
+  const serverService = createServerService(db);
 
+  const ensureUnique = async (storyId: string, type: string, value: string, excludeId?: string) => {
+    const conditions = [
+      eq(suggestions.storyId, storyId),
+      eq(suggestions.type, type),
+      eq(suggestions.value, value),
+      eq(suggestions.isDeleted, false),
+    ];
+    if (excludeId) conditions.push(ne(suggestions.id, excludeId));
+    const existing = await db.select({ id: suggestions.id }).from(suggestions).where(and(...conditions)).limit(1).get();
+    if (existing) throw new Error('Suggestion already exists for this field.');
+  };
+
+  return {
+    async getSuggestions(type, storyId) {
+      if (!storyId) return [];
       const isCustomAttribute = type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX);
       const config = isCustomAttribute ? null : suggestionConfig[type as keyof typeof suggestionConfig];
+      if (!isCustomAttribute && !config) return [];
 
-      if (!isCustomAttribute && !config) {
-        console.warn(`getSuggestions: No configuration found for suggestion type: ${type}`);
-        return [];
-      }
+      const counts = new Map<string, number>();
+      const stored = await db.select({ value: suggestions.value }).from(suggestions)
+        .where(and(eq(suggestions.type, type), eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false))).all();
+      stored.forEach(({ value }) => counts.set(value, counts.get(value) ?? 0));
 
-      const suggestionCounts = new Map<string, number>();
-
-      try {
-        // 1. Fetch suggestions from the 'suggestions' table
-        const predefinedSuggestions = await db.select({ value: suggestions.value })
-          .from(suggestions)
-          .where(and(eq(suggestions.type, type), eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false)))
-          .all();
-
-        predefinedSuggestions.forEach(s => {
-          if (s.value) {
-            // Predefined suggestions don't have a direct count from entities,
-            // but we add them to ensure they are always included.
-            // Their count will be updated if they also appear in dynamic data.
-            if (!suggestionCounts.has(s.value)) {
-              suggestionCounts.set(s.value, 0); // Initialize count for user-added suggestions
-            }
-          }
+      if (isCustomAttribute) {
+        const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
+        (await createAttributeValueService(db).getValueUsageCounts(fieldId)).forEach(([value, count]) => {
+          counts.set(value, (counts.get(value) ?? 0) + count);
         });
-
-        if (isCustomAttribute) {
-          // Atributo customizado: não tem coluna fixa pra minerar, os valores vivem em
-          // `attribute_values` - reaproveita a mesma contagem-por-valor que a busca avançada e
-          // o resto do app usam (ver AttributeValueService.getValueUsageCounts).
-          const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
-          const dynamicCounts = await createAttributeValueService(db).getValueUsageCounts(fieldId);
-          dynamicCounts.forEach(([value, count]) => {
-            suggestionCounts.set(value, (suggestionCounts.get(value) || 0) + count);
-          });
-        } else {
-          // 2. Dynamically query unique values and their counts from the entity table
-          const dynamicCounts = await db.select({
-              value: config!.column,
-              count: sql<number>`count(*)`,
-            })
-            .from(config!.schema)
-            .where(and(eq(config!.schema.storyId, storyId), eq(config!.schema.isDeleted, false))) // Assuming isDeleted column exists and should be filtered
-            .groupBy(config!.column)
-            .all();
-
-          dynamicCounts.forEach(row => {
-            const value = row.value;
-            const count = row.count;
-            if (value && typeof value === 'string') {
-              suggestionCounts.set(value, (suggestionCounts.get(value) || 0) + count);
-            }
-          });
-        }
-
-      } catch (error) {
-        console.error(`Error fetching suggestions for type ${type} and story ${storyId}:`, error);
-        return [];
+      } else {
+        const nativeConfig = config!;
+        const dynamic = await db.select({ value: nativeConfig.column, count: sql<number>`count(*)` }).from(nativeConfig.schema)
+          .where(and(eq(nativeConfig.schema.storyId, storyId), eq(nativeConfig.schema.isDeleted, false))).groupBy(nativeConfig.column).all();
+        dynamic.forEach(({ value, count }) => {
+          if (value && typeof value === 'string') counts.set(value, (counts.get(value) ?? 0) + count);
+        });
       }
-
-      return Array.from(suggestionCounts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+      return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
     },
 
-    /**
-     * Adds a new suggestion to the 'suggestions' table.
-     * @param type The type of suggestion.
-     * @param value The suggestion value.
-     * @param storyId The ID of the story this suggestion belongs to.
-     * @returns The newly inserted suggestion.
-     */
-    async addSuggestion(type: SuggestionType, value: string, storyId: string): Promise<string | null> {
-      if (!value || !type || !storyId) {
-        console.error('addSuggestion: type, value, and storyId are required.');
-        return null;
-      }
-
-      try {
-        // Check if the suggestion already exists for this type and story
-        const existing = await db.select()
-          .from(suggestions)
-          .where(and(
-            eq(suggestions.type, type),
-            eq(suggestions.value, value),
-            eq(suggestions.storyId, storyId),
-            eq(suggestions.isDeleted, false)
-          ))
-          .limit(1)
-          .get(); // .get() for expo-sqlite
-
-        if (existing) {
-          // console.log(`Suggestion '${value}' of type '${type}' already exists for story '${storyId}'.`);
-          return existing.value;
-        }
-
-        const newSuggestion = {
-          id: createULID(),
-          storyId,
-          type,
-          value,
-          isDefault: false, // User-added suggestions are not defaults
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          version: 1,
-          isDeleted: false,
-          deletedAt: null,
-        };
-
-        await db.insert(suggestions).values(newSuggestion).run(); // .run() for expo-sqlite
-
-        return newSuggestion.value;
-      } catch (error) {
-        console.error(`Error adding suggestion '${value}' for type ${type} and story ${storyId}:`, error);
-        return null;
-      }
+    async getStoredSuggestions(type, storyId) {
+      return db.select().from(suggestions).where(and(
+        eq(suggestions.type, type), eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false),
+      )).orderBy(suggestions.value).all();
     },
 
-    /**
-     * Removes a suggestion from the 'suggestions' table if it's not a default one.
-     * @param id The ID of the suggestion to remove.
-     * @returns True if the suggestion was removed, false otherwise.
-     */
-    async removeSuggestion(id: string): Promise<boolean> {
-      if (!id) {
-        console.error('removeSuggestion: id is required.');
-        return false;
-      }
+    async createSuggestion(currentUserId, type, value, storyId) {
+      const normalizedValue = value.trim();
+      if (!normalizedValue || !type || !storyId) throw new Error('Suggestion type, value, and story are required.');
+      await assertStoryIsWritable(db, storyId);
+      await ensureUnique(storyId, type, normalizedValue);
+      const now = new Date();
+      const suggestion: SuggestionInsert = {
+        id: createULID(), storyId, type, value: normalizedValue, createdAt: now, updatedAt: now,
+        version: 1, isDeleted: false, deletedAt: null,
+      };
+      const created = await db.insert(suggestions).values(suggestion).returning().get();
+      const userId = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      await recordLocalOperation(db, storyId, userId, 'create', 'Suggestion', created.id, { ...created });
+      entityEventEmitter.emit('suggestion_changed', storyId, created.id);
+      return created;
+    },
 
-      try {
-        const existing = await db.select()
-          .from(suggestions)
-          .where(eq(suggestions.id, id))
-          .limit(1)
-          .get();
+    async updateSuggestion(currentUserId, id, value) {
+      const current = await db.query.suggestions.findFirst({ where: eq(suggestions.id, id) });
+      if (!current || current.isDeleted) throw new Error('Suggestion not found.');
+      const normalizedValue = value.trim();
+      if (!normalizedValue) throw new Error('Suggestion value is required.');
+      await assertStoryIsWritable(db, current.storyId);
+      if (normalizedValue === current.value) return;
+      await ensureUnique(current.storyId, current.type, normalizedValue, id);
+      const [updated] = await db.update(suggestions).set({ value: normalizedValue, updatedAt: new Date(), version: sql`${suggestions.version} + 1` })
+        .where(eq(suggestions.id, id)).returning({ id: suggestions.id, storyId: suggestions.storyId, version: suggestions.version });
+      if (!updated) throw new Error('Could not update suggestion.');
+      const userId = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
+      await recordLocalOperation(db, updated.storyId, userId, 'update', 'Suggestion', id, { value: normalizedValue, version: updated.version });
+      entityEventEmitter.emit('suggestion_changed', updated.storyId, id);
+    },
 
-        if (!existing) {
-          console.warn(`Suggestion with ID '${id}' not found.`);
-          return false;
-        }
-
-        if (existing.isDefault) {
-          console.warn(`Cannot remove default suggestion with ID '${id}'.`);
-          return false;
-        }
-
-        await db.update(suggestions)
-          .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${suggestions.version} + 1` })
-          .where(eq(suggestions.id, id))
-          .run();
-        
-        return true;
-      } catch (error) {
-        console.error(`Error removing suggestion with ID '${id}':`, error);
-        return false;
-      }
+    async deleteSuggestion(currentUserId, id) {
+      const current = await db.query.suggestions.findFirst({ where: eq(suggestions.id, id) });
+      if (!current || current.isDeleted) return;
+      await assertStoryIsWritable(db, current.storyId);
+      const [updated] = await db.update(suggestions).set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${suggestions.version} + 1` })
+        .where(eq(suggestions.id, id)).returning({ id: suggestions.id, storyId: suggestions.storyId, version: suggestions.version });
+      if (!updated) throw new Error('Could not delete suggestion.');
+      const userId = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
+      await recordLocalOperation(db, updated.storyId, userId, 'delete', 'Suggestion', id, { id, isDeleted: true, version: updated.version });
+      entityEventEmitter.emit('suggestion_changed', updated.storyId, id);
     },
   };
 };

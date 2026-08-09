@@ -648,9 +648,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVR8M3W0PR2D2RYXNVXT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "name": "Protagonista",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVR837DS6WFJADHD030P",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "name": "Magia",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVR8EXWEC6MT1VR7T2NH",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "name": "Ponto de virada",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVR8GRSMRDKP53VWN1V8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "tagId": "01KZKVMVR8M3W0PR2D2RYXNVXT",
+      "relationId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVR85CMBGVNZAHQ1ZJMH",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "tagId": "01KZKVMVR837DS6WFJADHD030P",
+      "relationId": "01KYXBHD0F6JAR48EF3W034H4S",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVR8Z79YRX23EJ15DS4P",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "tagId": "01KZKVMVR8EXWEC6MT1VR7T2NH",
+      "relationId": "01KYXBHD0FT4ZRD77W22A1SPXT",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVR8FPS05DWVS0E3142R",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR8VJMGY34QT73R6B30",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVR8010QTJ1QK0WAAHTC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR8VJMGY34QT73R6B30",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVR84ZBRDZC6Z4GWQQDM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR8VJMGY34QT73R6B30",
+      "value": "Antagonista"
+    },
+    {
+      "id": "01KZKVMVR8A5VCCRTH0KRV5X19",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR87BQ3KR55QG6Q2TA8",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVR86387G2QE1C5K1N7P",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR87BQ3KR55QG6Q2TA8",
+      "value": "Tensão"
+    },
+    {
+      "id": "01KZKVMVR8RJ5TVB6JCK7KJQNQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "custom:01KZKVMVR87BQ3KR55QG6Q2TA8",
+      "value": "Esperança"
+    },
+    {
+      "id": "01KZKVMVR8P1QYSTRR05WV4JVR",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Novo"
+    },
+    {
+      "id": "01KZKVMVR9PWJYCCTPXRK9YXQW",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Quebrado"
+    },
+    {
+      "id": "01KZKVMVR95NGWJ1BN0VWWXEP5",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Consumido"
+    },
+    {
+      "id": "01KZKVMVR9HDZGQ6DT76GTNFYA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Escrito"
+    },
+    {
+      "id": "01KZKVMVR9C0H3CXVZ8D0CM93X",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Transferido"
+    },
+    {
+      "id": "01KZKVMVR9C2QRKNE94SY34CAN",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "type": "item_state",
+      "value": "Resolvido"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0FETYZS3CQAVQC6C3D",
@@ -713,7 +923,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVR8ZEK9N8JY2QTQCBYQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "characterId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "sceneId": "01KYXBHD0F6JAR48EF3W034H4S"
+    },
+    {
+      "id": "01KZKVMVR8NWZ3CX1XH0K116YK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "characterId": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -723,7 +956,7 @@
       "name": "A Rosa Encantada",
       "category": "Flor encantada",
       "description": "O único presente que Bela pediu ao pai que trouxesse - uma rosa do próprio jardim da Fera.",
-      "initialState": "Crescendo intocada entre incontáveis outras no jardim de rosas da Fera.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -739,7 +972,7 @@
       "name": "O Anel Mágico",
       "category": "Objeto encantado",
       "description": "Um anel que transporta instantaneamente quem o usa entre o castelo da Fera e qualquer lugar que deseje.",
-      "initialState": "Guardado pela Fera, sem uso, no castelo.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -755,7 +988,7 @@
       "name": "O Espelho Mágico",
       "category": "Objeto encantado",
       "description": "Um espelho que mostra a quem o segura qualquer lugar ou pessoa que deseje ver, por mais distante que esteja.",
-      "initialState": "Guardado pela Fera, sem uso, no castelo.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -772,8 +1005,8 @@
       "itemId": "01KYXK9BMQN9V35XYM1X1C7J76",
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
       "newCharacterOwnerId": "01KYXBHD0FTSMRJEM98HEJJXWA",
-      "newState": "Colhida pelo Mercador para Bela - a Fera o flagra e exige sua vida em troca do roubo.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Colhida pelo Mercador para Bela - a Fera o flagra e exige sua vida em troca do roubo.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -786,8 +1019,8 @@
       "itemId": "01KYXK9BMQ2ENW16W7X1E9DTZE",
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
-      "newState": "Dado a Bela pela Fera, para que ela possa viajar até em casa e voltar com um simples desejo.",
-      "extraNotes": null,
+      "newState": "Transferido",
+      "extraNotes": "Dado a Bela pela Fera, para que ela possa viajar até em casa e voltar com um simples desejo.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -800,8 +1033,8 @@
       "itemId": "01KYXK9BMQ26HPVKCWMQTC4TMD",
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "newCharacterOwnerId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
-      "newState": "Dado a Bela junto com o anel, para que possa ver a família ou a Fera à distância.",
-      "extraNotes": null,
+      "newState": "Transferido",
+      "extraNotes": "Dado a Bela junto com o anel, para que possa ver a família ou a Fera à distância.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -809,5 +1042,111 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVR8VJMGY34QT73R6B30",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Character",
+      "name": "Papel narrativo",
+      "key": "narrative_role",
+      "description": "O papel do personagem nesta releitura.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVR87BQ3KR55QG6Q2TA8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Scene",
+      "name": "Tom emocional",
+      "key": "emotional_tone",
+      "description": "O clima predominante desta cena.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVR8HZYXGW9FPZ25GZZD",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0FC1Q4CNJK79XCNMVW",
+      "fieldId": "01KZKVMVR8VJMGY34QT73R6B30",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVR8H6E3SMK4AYBBK406",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0FE9MY6A6A9B1GT176",
+      "fieldId": "01KZKVMVR8VJMGY34QT73R6B30",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVR8XW01HCBJFN5XB23Z",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0F6JAR48EF3W034H4S",
+      "fieldId": "01KZKVMVR87BQ3KR55QG6Q2TA8",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVR8DV3BDJ28GYFAQRHS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0FT4ZRD77W22A1SPXT",
+      "fieldId": "01KZKVMVR87BQ3KR55QG6Q2TA8",
+      "value": "Tensão"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVR9W16CTZAJZ32QS8C6",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0FH380VGZSZQMXQEWM",
+      "locationAId": "01KYXBHD0FT43JJV1HABMERBPA",
+      "locationBId": "01KYXBHD0FZ2NWDRHTAD2KY6YF",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

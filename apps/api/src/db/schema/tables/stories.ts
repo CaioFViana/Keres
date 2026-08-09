@@ -18,6 +18,7 @@ import { tagRelations } from './tagRelations';
 import { suggestions } from './suggestions';
 import { storySchemaFields } from './storySchemaFields';
 import { attributeValues } from './attributeValues';
+import { favorites } from './favorites';
 import { storyTypeEnum } from '../enums';
 
 
@@ -31,8 +32,10 @@ export const stories = pgTable('stories', {
   language: text('language'),
   author: text('author'),
   isFavorite: boolean('is_favorite').notNull().default(false),
+  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual', 'individual_public'] }).notNull().default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
+  normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   version: integer('version').notNull().default(1),
@@ -62,4 +65,5 @@ export const storiesRelations = relations(stories, ({ one, many }) => ({
   suggestions: many(suggestions),
   storySchemaFields: many(storySchemaFields),
   attributeValues: many(attributeValues),
+  favorites: many(favorites),
 }));

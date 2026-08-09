@@ -20,6 +20,7 @@ import { NoteRelationSchema } from './NoteRelationSchemas';
 import { CURRENT_STORY_FORMAT_VERSION } from './StoryExportVersion';
 import { StorySchemaFieldSchema } from './StorySchemaFieldSchemas';
 import { AttributeValueSchema } from './AttributeValueSchemas';
+import { FavoriteSchema } from './FavoriteSchemas';
 
 // This schema defines the structure for a full story export/import.
 // It includes the main story object and all its related entities as arrays.
@@ -43,12 +44,12 @@ export const FullStoryExportSchema = z.object({
     galleryRelations: z.array(GalleryRelationSchema).optional(),
     items: z.array(ItemSchema).optional(),
     itemJourneys: z.array(ItemJourneySchema),
-    // Opcionais pelo mesmo motivo de `items`/`galleryRelations`: exports gerados antes desta
-    // feature existir continuam importáveis sem precisar de uma migração de formatVersion -
-    // essa adição é puramente aditiva, não muda a forma de nenhum campo existente.
+    // Opcionais para manter importáveis exports legados que antecedem esses recursos.
     storySchemaFields: z.array(StorySchemaFieldSchema).optional(),
     attributeValues: z.array(AttributeValueSchema).optional(),
-    // Mesmo motivo: exports gerados antes desta feature existir continuam importáveis.
+    // Introduzido no formato V2; a migração V1 -> V2 fornece uma lista vazia quando ausente.
+    favorites: z.array(FavoriteSchema).optional(),
+    // Mesmo motivo: exports legados sem este recurso continuam importáveis.
     locationRelations: z.array(LocationRelationSchema).optional(),
     serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
     // Ausente em exports de antes deste campo existir - `migrateStoryExport` normaliza para

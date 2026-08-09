@@ -1,13 +1,13 @@
-import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { servers, ServerSelect } from '../db/schema';
+import { ServerSelect } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
-import apiClient, { clearServerTokenCache, createKeresAxiosInstance, isOfflineError, TokenProvider, updateServerTokenCache } from './apiClient';
+import apiClient, { clearAllServerAuthState, clearServerTokenCache, createKeresAxiosInstance, isOfflineError, TokenProvider, updateServerTokenCache } from './apiClient';
+import { AuthTokens, tokenVault } from './TokenVault';
 
 let drizzleDb: AppDrizzleClient | null = null;
 
 // Function to initialize the database instance for the AuthTokenManager
-export const setAuthDb = (db: AppDrizzleClient) => {
+export const setAuthDb = (db: AppDrizzleClient | null) => {
     drizzleDb = db;
 };
 
@@ -23,12 +23,12 @@ class AuthTokenManager implements TokenProvider {
     // which might not always reflect the apiClient's *current* internal server context during complex operations.
     public getAccessToken(): string | null {
         const activeServer = useUserSettingsStore.getState().activeServer;
-        return activeServer?.jwtToken || null;
+        return activeServer ? tokenVault.peek(activeServer.id)?.accessToken || null : null;
     }
 
     public getRefreshToken(): string | null {
         const activeServer = useUserSettingsStore.getState().activeServer;
-        return activeServer?.refreshToken || null;
+        return activeServer ? tokenVault.peek(activeServer.id)?.refreshToken || null : null;
     }
 
     public getServerUrl(): string | null {
@@ -36,25 +36,26 @@ class AuthTokenManager implements TokenProvider {
         return activeServer?.url || null;
     }
 
+    public async hydrateTokens(): Promise<void> {
+        if (!drizzleDb) return;
+        const savedServers = await drizzleDb.query.servers.findMany();
+        for (const server of savedServers) {
+            const tokens = await tokenVault.get(server.id);
+            if (tokens) updateServerTokenCache(server.id, tokens.accessToken, tokens.refreshToken);
+        }
+    }
+
+    public async getTokens(serverId: string): Promise<AuthTokens | null> {
+        return tokenVault.get(serverId);
+    }
+
     // This method is called by the API client's response interceptor upon successful token refresh.
     // Takes an explicit serverId rather than reading useUserSettingsStore's "activeServer", because
     // the refresh that just succeeded may belong to a background sync for a server that isn't the
     // one currently open in the UI - writing its tokens onto the wrong server would be a real bug.
     public async updateTokens(serverId: string, accessToken: string, refreshToken: string) {
-        if (!drizzleDb) {
-            console.log('Cannot update tokens: database not set.');
-            return;
-        }
-
         try {
-            // Update in Drizzle DB
-            await drizzleDb.update(servers)
-                .set({
-                    jwtToken: accessToken,
-                    refreshToken: refreshToken,
-                })
-                .where(eq(servers.id, serverId));
-
+            await tokenVault.set(serverId, { accessToken, refreshToken });
             // Update the shared token cache so every Axios instance configured for this
             // server (SyncEngineService's client included, not just the default apiClient)
             // picks up the refreshed token on its next request.
@@ -63,16 +64,12 @@ class AuthTokenManager implements TokenProvider {
             // Keep the UI-facing "active server" in sync only if it's the same server being refreshed.
             const activeServer = useUserSettingsStore.getState().activeServer;
             if (activeServer?.id === serverId) {
-                const updatedActiveServer = {
-                    ...activeServer,
-                    jwtToken: accessToken,
-                    refreshToken: refreshToken,
-                };
-                useUserSettingsStore.getState().setActiveServer(updatedActiveServer);
-                apiClient.setActiveServer(updatedActiveServer);
+                useUserSettingsStore.getState().setActiveServer(activeServer);
+                apiClient.setActiveServer(activeServer);
             }
         } catch (error) {
-            console.log('Failed to update tokens in DB/store:', error);
+            console.log('Failed to update tokens in secure storage/cache:', error);
+            throw error;
         }
     }
 
@@ -95,9 +92,8 @@ class AuthTokenManager implements TokenProvider {
             return null;
         }
 
-        // Use the refresh token from the database, which should be the most up-to-date
-        // The currentRefreshToken parameter is a fallback or for initial checks, but the DB is authoritative.
-        const refreshTokenToUse = server.refreshToken || currentRefreshToken;
+        // The Vault is authoritative; the parameter is retained as an interceptor fallback.
+        const refreshTokenToUse = (await tokenVault.get(serverId))?.refreshToken || currentRefreshToken;
 
         if (!refreshTokenToUse) {
             console.log('AuthTokenManager: No refresh token available for server. Clearing authentication.');
@@ -145,33 +141,34 @@ class AuthTokenManager implements TokenProvider {
     // response interceptor after a failed refresh) knows exactly which server failed, and it may not
     // be the one the UI currently considers "active".
     public clearAuth(serverId: string): void {
+        void this.clearAuthForServer(serverId);
+    }
+
+    /** Awaitable variant used when removing a locally registered server. */
+    public async clearAuthForServer(serverId: string): Promise<void> {
         clearServerTokenCache(serverId);
+        try {
+            await tokenVault.remove(serverId);
+        } catch (error) {
+            console.log('Failed to clear secure credentials:', error);
+        }
 
         const activeServer = useUserSettingsStore.getState().activeServer;
         const isActiveServer = activeServer?.id === serverId;
 
-        if (!drizzleDb) {
-            console.log('Cannot clear auth in DB: database not set.');
-            if (isActiveServer) {
-                useUserSettingsStore.getState().clearActiveServer();
-                apiClient.setActiveServer(null);
-            }
-            return;
+        if (isActiveServer) {
+            useUserSettingsStore.getState().clearActiveServer();
+            apiClient.setActiveServer(null);
         }
+    }
 
-        drizzleDb.update(servers)
-            .set({ jwtToken: null, refreshToken: null })
-            .where(eq(servers.id, serverId))
-            .then(() => {
-                // Only reset the UI-facing "active server" if it's the one we just cleared.
-                if (isActiveServer) {
-                    useUserSettingsStore.getState().clearActiveServer();
-                    apiClient.setActiveServer(null);
-                }
-            })
-            .catch(error => console.log('Failed to clear auth in DB:', error));
+    public async clearAllAuth(serverIds: string[]): Promise<void> {
+        await Promise.all(serverIds.map((serverId) => tokenVault.remove(serverId)));
+        clearAllServerAuthState(serverIds);
+        this._getServerById = null;
+        useUserSettingsStore.getState().clearActiveServer();
+        apiClient.setActiveServer(null);
     }
 }
 
 export const authTokenManager = new AuthTokenManager();
-

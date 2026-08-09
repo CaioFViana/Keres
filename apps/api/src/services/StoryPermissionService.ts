@@ -2,8 +2,9 @@ import { and, eq, or, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { stories, storyPermissions, users } from '../db/schema';
-import { Friendship, FriendStatus } from '@keres/shared';
+import { FriendStatus } from '@keres/shared';
 import { friendships } from '../db/schema/tables/friendships';
+import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 
 export class StoryPermissionService {
   // Helper method to check if two users are friends
@@ -110,6 +111,7 @@ export class StoryPermissionService {
         })
         .where(eq(storyPermissions.id, existingPermission.id))
         .returning();
+      emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
       return updatedPermission[0];
     } else {
       // Create new permission
@@ -124,6 +126,7 @@ export class StoryPermissionService {
       };
 
       await db.insert(storyPermissions).values(newPermission);
+      emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
       return newPermission;
     }
   }
@@ -163,6 +166,8 @@ export class StoryPermissionService {
         version: permission.version + 1,
       })
       .where(eq(storyPermissions.id, permission.id));
+
+    emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
 
     return { message: 'Story permission deleted successfully.' };
   }
@@ -229,6 +234,14 @@ export class StoryPermissionService {
       return permission.permissionType === 'writer';
     }
     return false; // Should not reach here
+  }
+
+  async getReadableStoryIds(userId: string): Promise<string[]> {
+    const owned = await db.select({ id: stories.id }).from(stories)
+      .where(and(eq(stories.userId, userId), eq(stories.isDeleted, false)));
+    const shared = await db.select({ storyId: storyPermissions.storyId }).from(storyPermissions)
+      .where(and(eq(storyPermissions.userId, userId), eq(storyPermissions.isDeleted, false)));
+    return [...new Set([...owned.map((story) => story.id), ...shared.map((permission) => permission.storyId)])];
   }
 }
 

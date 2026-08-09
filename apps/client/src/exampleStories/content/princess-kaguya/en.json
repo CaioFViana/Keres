@@ -514,9 +514,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVRRHSPZYSYYEKDYPNFV",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "name": "Protagonist",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRRARTQ0RTVCAAHJN7N",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "name": "Magic",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRRQ89CK5XHTR1W75K1",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "name": "Turning point",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVRR26VT0RFZTVHNX8F5",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "tagId": "01KZKVMVRRHSPZYSYYEKDYPNFV",
+      "relationId": "01KYXGBR5M62694V70YZH2QPFC",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVRRC9S80APXHB057VB3",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "tagId": "01KZKVMVRRARTQ0RTVCAAHJN7N",
+      "relationId": "01KYXGBR5M8E9XRNT31VZ9581J",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVRR1XCAK7QZKT7A8VW4",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "tagId": "01KZKVMVRRQ89CK5XHTR1W75K1",
+      "relationId": "01KYXGBR5MBPKAFMDNTC4AXV4S",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVRRA8F8QH4RPETCH17P",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRR4JN2DM3J5QZ7GZDA",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVRRRWZK6VS120TJBT59",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRR4JN2DM3J5QZ7GZDA",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVRRZM2PC5YQCMDQA3J1",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRR4JN2DM3J5QZ7GZDA",
+      "value": "Antagonist"
+    },
+    {
+      "id": "01KZKVMVRRRR4Y10M1JGRFGAAC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRRCVSPEM2FCMRZKYXP",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVRRA5RS8FF66BXH1T7R",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRRCVSPEM2FCMRZKYXP",
+      "value": "Tension"
+    },
+    {
+      "id": "01KZKVMVRRGFC8JEBDTD5Z5G5P",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRRCVSPEM2FCMRZKYXP",
+      "value": "Hope"
+    },
+    {
+      "id": "01KZKVMVRREYE5CP3GKZP7EYQK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "New"
+    },
+    {
+      "id": "01KZKVMVRRWXPZTHANDQ64TMQQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Broken"
+    },
+    {
+      "id": "01KZKVMVRRXMY3VBBDS4NN17SS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Consumed"
+    },
+    {
+      "id": "01KZKVMVRRB37J1FY0YHGCB41W",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Written"
+    },
+    {
+      "id": "01KZKVMVRRVK1X9T75KET1QRJP",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Transferred"
+    },
+    {
+      "id": "01KZKVMVRR1MMGR2BM8E2A40M0",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Resolved"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXGBR5MBSFKV589701EY3RP",
@@ -627,7 +837,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVRRJV4MN74031J69976",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "characterId": "01KYXGBR5M62694V70YZH2QPFC",
+      "sceneId": "01KYXGBR5M8E9XRNT31VZ9581J"
+    },
+    {
+      "id": "01KZKVMVRR51271SQPD101YR8Y",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "sceneId": "01KYXGBR5MBPKAFMDNTC4AXV4S"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -637,7 +870,7 @@
       "name": "The Elixir of Immortality",
       "category": "Enchanted potion",
       "description": "A vial of the Moon people's elixir, which grants eternal life to whoever drinks it.",
-      "initialState": "Brought down from the Moon by the celestial retinue, untouched.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -653,7 +886,7 @@
       "name": "Kaguya-hime's Farewell Letter",
       "category": "Letter",
       "description": "A final letter written by Kaguya-hime to the Emperor before she dons the Robe of Feathers and forgets all earthly love.",
-      "initialState": "Not yet written.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -670,8 +903,8 @@
       "itemId": "01KYXM6K0E6TVQT4TYVDMDS4AV",
       "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA",
       "newCharacterOwnerId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "newState": "Left behind for the Emperor by Kaguya-hime, along with her farewell letter, before she ascends to the Moon.",
-      "extraNotes": null,
+      "newState": "Transferred",
+      "extraNotes": "Left behind for the Emperor by Kaguya-hime, along with her farewell letter, before she ascends to the Moon.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -684,8 +917,8 @@
       "itemId": "01KYXM6K0E6TVQT4TYVDMDS4AV",
       "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R",
       "newCharacterOwnerId": null,
-      "newState": "Carried to the summit of Mount Fuji and burned on the Emperor's orders, since no life is worth living forever without Kaguya-hime.",
-      "extraNotes": null,
+      "newState": "Consumed",
+      "extraNotes": "Carried to the summit of Mount Fuji and burned on the Emperor's orders, since no life is worth living forever without Kaguya-hime.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -698,8 +931,8 @@
       "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
       "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA",
       "newCharacterOwnerId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "newState": "Written and left behind for the Emperor by Kaguya-hime just before the Robe of Feathers erases her earthly memory.",
-      "extraNotes": null,
+      "newState": "Written",
+      "extraNotes": "Written and left behind for the Emperor by Kaguya-hime just before the Robe of Feathers erases her earthly memory.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -712,8 +945,8 @@
       "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
       "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R",
       "newCharacterOwnerId": null,
-      "newState": "Burned atop Mount Fuji together with the elixir, its smoke said to rise from the peak ever since.",
-      "extraNotes": null,
+      "newState": "Consumed",
+      "extraNotes": "Burned atop Mount Fuji together with the elixir, its smoke said to rise from the peak ever since.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -721,5 +954,111 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVRR4JN2DM3J5QZ7GZDA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Character",
+      "name": "Narrative role",
+      "key": "narrative_role",
+      "description": "The character’s role in this retelling.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVRRCVSPEM2FCMRZKYXP",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Scene",
+      "name": "Emotional tone",
+      "key": "emotional_tone",
+      "description": "The prevailing mood of this scene.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVRRGKBTC0WCAEKRPEKY",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Character",
+      "entityId": "01KYXGBR5M62694V70YZH2QPFC",
+      "fieldId": "01KZKVMVRR4JN2DM3J5QZ7GZDA",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVRR1PCWBRJCZ43BV5RK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Character",
+      "entityId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "fieldId": "01KZKVMVRR4JN2DM3J5QZ7GZDA",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVRRT9ENBHQWEXKAED1F",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Scene",
+      "entityId": "01KYXGBR5M8E9XRNT31VZ9581J",
+      "fieldId": "01KZKVMVRRCVSPEM2FCMRZKYXP",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVRRC7GMQJ6ZYBXEAACM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Scene",
+      "entityId": "01KYXGBR5MBPKAFMDNTC4AXV4S",
+      "fieldId": "01KZKVMVRRCVSPEM2FCMRZKYXP",
+      "value": "Tension"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVRREJ61DAAKT55PZCVN",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "locationAId": "01KYXGBR5MVSFG1QK139RXY4FB",
+      "locationBId": "01KYXGBR5MTPTHJBHV9WHXQVRV",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true,
+  "formatVersion": 2
 }

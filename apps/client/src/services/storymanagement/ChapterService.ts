@@ -8,6 +8,7 @@ import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } fr
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
 
 export type { FavoriteFilterState };
 
@@ -112,15 +113,19 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
     },
 
     async getById(chapterId: string): Promise<ChapterSelect | undefined> {
-      return db.query.chapters.findFirst({
+      const chapter = await db.query.chapters.findFirst({
         where: and(eq(chapters.id, chapterId), eq(chapters.isDeleted, false)),
       });
+      return decorateFavorite(db, 'Chapter', chapter);
     },
 
     async createChapter(currentUserId: string, chapterData: Create<ChapterInsert>): Promise<ChapterSelect> {
       await assertStoryIsWritable(db, chapterData.storyId);
-      const newChapter = prepareNewEntityData<ChapterInsert>(chapterData);
+      let newChapter = prepareNewEntityData<ChapterInsert>(chapterData);
+      const favorite = await normalizeFavoriteCreate(db, newChapter.storyId, 'Chapter', newChapter);
+      newChapter = favorite.data;
       const result = await db.insert(chapters).values(newChapter).returning().get();
+      await persistInitialFavorite(db, newChapter.storyId, newChapter.id, 'Chapter', currentUserId, favorite.individualFavorite);
 
       const userIdToLog = await getUserIdForOperation(db, serverService, newChapter.storyId, currentUserId);
       await recordLocalOperation(db, newChapter.storyId, userIdToLog, 'create', 'Chapter', newChapter.id, { ...result });
@@ -135,6 +140,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         throw new Error(`Chapter with ID ${chapterId} not found for update.`);
       }
       await assertStoryIsWritable(db, originalChapter.storyId);
+      chapterData = await normalizeFavoriteUpdate(db, originalChapter.storyId, chapterId, 'Chapter', currentUserId, chapterData);
 
       const potentialNewState = { ...originalChapter, ...chapterData };
 

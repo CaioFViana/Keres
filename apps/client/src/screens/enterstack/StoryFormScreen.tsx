@@ -1,13 +1,15 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { Story } from '@keres/shared/entities/Story';
+import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import Button from '../../components/common/Button/Button';
-import Select from '../../components/common/Select/Select';
-import TextInput from '../../components/common/TextInput/TextInput';
+import { ActivityIndicator, BackHandler, StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import Button from '@/src/components/common/controls/Button/Button';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -27,7 +29,7 @@ type StoryFormScreenRouteProp = NativeStackScreenProps<RootStackParamList, 'Stor
 type StoryFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StoryForm'>;
 
 const StoryFormScreen = () => {
-  useBackButtonHandler()
+  useBackButtonHandler({ showWebBackButton: true })
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StoryFormScreenNavigationProp>();
@@ -47,6 +49,7 @@ const StoryFormScreen = () => {
   const [language, setLanguage] = useState<string | null>(null);
   const [author, setAuthor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
 
@@ -67,7 +70,7 @@ const StoryFormScreen = () => {
       if (storyId) {
         try {
           setLoading(true);
-          const fetchedStory = await storyService().getStoryById(storyId);
+          const fetchedStory = await storyService().getStoryById(storyId, userId ?? undefined);
           if (fetchedStory) {
             setTitle(fetchedStory.title);
             setType(fetchedStory.type);
@@ -76,6 +79,7 @@ const StoryFormScreen = () => {
             setLanguage(fetchedStory.language);
             setAuthor(fetchedStory.author);
             setIsFavorite(fetchedStory.isFavorite);
+            setFavoriteBehavior(fetchedStory.favoriteBehavior);
             setExtraNotes(fetchedStory.extraNotes);
             setTheme(fetchedStory.theme);
             applyTheme(fetchedStory.theme || 'default');
@@ -94,7 +98,7 @@ const StoryFormScreen = () => {
       }
     };
     loadStory();
-  }, [storyId, storyService, t, applyTheme]);
+  }, [storyId, storyService, userId, t, applyTheme]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -120,8 +124,10 @@ const StoryFormScreen = () => {
         language,
         author,
         isFavorite,
+        favoriteBehavior,
         extraNotes,
         theme,
+        normalizeSceneTiming: false,
         lastOperationLog: 0,
         lastServerSyncedLog: 0,
       };
@@ -213,13 +219,7 @@ const StoryFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
           <Text style={[styles.title, { color: colors.text }]}>{storyId ? t('edit_story') : t('create_new_story_screen_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {storyId ? t('edit_story_description') : t('create_new_story_screen_description')}
@@ -277,11 +277,9 @@ const StoryFormScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('set_favorite')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isFavorite}
               onValueChange={setIsFavorite}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>
@@ -315,9 +313,7 @@ const StoryFormScreen = () => {
               {t('delete_story_title')}
             </Button>
           )}
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

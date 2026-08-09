@@ -2,6 +2,7 @@ import { UpdateUserPasswordSchema, UpdateUserProfileSchema, UpdateUserTagSchema 
 import { Elysia, t } from 'elysia';
 import { JWTPayload } from '../../index';
 import { InvalidCurrentPasswordError, TagAlreadyTakenError, userService } from '../../services/UserService';
+import { friendshipService } from '../../services/FriendshipService';
 
 const userResponseSchema = t.Object({
   id: t.String(),
@@ -101,6 +102,7 @@ export const userRoutes = new Elysia()
 
     try {
       const updated = await userService.updateUserTag(user.userId, parsed.data.tag);
+      await friendshipService.notifyProfileChanged(user.userId);
       return updated;
     } catch (error) {
       // TagAlreadyTakenError covers the common case; a unique-violation can still slip
@@ -141,6 +143,7 @@ export const userRoutes = new Elysia()
     }
 
     const updated = await userService.updateUserProfile(user.userId, parsed.data);
+    await friendshipService.notifyProfileChanged(user.userId);
     return updated;
   }, {
     body: t.Object({

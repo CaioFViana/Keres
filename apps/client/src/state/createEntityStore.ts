@@ -5,6 +5,8 @@ import { AppDrizzleClient } from '../db';
 import { AdvancedSearchCriteria, FavoriteFilterState, SortDirection } from '../types/entityFilters';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from './userSettingsStore';
+import { FavoriteEntityType } from '@keres/shared';
+import { createFavoriteService } from '../services/storymanagement/FavoriteService';
 
 /** The filter/sort state a fetch is run against. */
 export interface EntityQueryParams {
@@ -56,6 +58,7 @@ export type EntityStore<TKey extends string, TEntity, TService> =
 export interface EntityStoreConfig<TKey extends string, TEntity, TService> {
   /** Plural collection name, e.g. `'tags'`. Drives the public keys: `tags` / `fetchTags`. */
   collectionKey: TKey;
+  favoriteEntityType?: FavoriteEntityType;
   createService: (db: AppDrizzleClient) => TService;
   /** Maps the shared query params onto this service's own fetch signature. */
   fetchEntities: (service: TService, params: EntityQueryParams) => Promise<TEntity[]>;
@@ -142,15 +145,33 @@ export function createEntityStore<
 
       setPartial({ loading: true, error: null });
       try {
-        const entities = await config.fetchEntities(service, {
+        const localUserId = useUserSettingsStore.getState().userId;
+        const favoriteService = state.db ? createFavoriteService(state.db) : null;
+        const individualFavorites = !!(
+          config.favoriteEntityType && localUserId && favoriteService
+          && await favoriteService.getBehavior(storyId) !== 'global'
+        );
+        let entities = await config.fetchEntities(service, {
           storyId,
           searchTerm: state.searchTerm,
           activeFilterTags: state.activeFilterTags,
-          favoriteFilterState: state.favoriteFilterState,
+          favoriteFilterState: individualFavorites ? 'all' : state.favoriteFilterState,
           activeSort: state.activeSort,
           sortDirection: state.sortDirection,
           advancedSearchCriteria: state.advancedSearchCriteria,
         });
+        if (individualFavorites && favoriteService && localUserId && config.favoriteEntityType) {
+          entities = await favoriteService.decorateEntities(
+            storyId,
+            config.favoriteEntityType,
+            localUserId,
+            entities as (TEntity & { isFavorite: boolean })[],
+          ) as TEntity[];
+          if (state.favoriteFilterState !== 'all') {
+            const expected = state.favoriteFilterState === 'favorite';
+            entities = entities.filter((entity) => (entity as TEntity & { isFavorite: boolean }).isFavorite === expected);
+          }
+        }
         setPartial({ [collectionKey]: entities, loading: false });
       } catch (err) {
         console.error(`Failed to fetch ${label}:`, err);
@@ -173,7 +194,7 @@ export function createEntityStore<
         console.warn(`Service or storyId not set; cannot toggle favorite for ${label}.`);
         return;
       }
-      if (!config.updateFavorite) {
+      if (!config.updateFavorite || !config.favoriteEntityType) {
         console.warn(`No updateFavorite configured for ${label}.`);
         return;
       }
@@ -194,7 +215,12 @@ export function createEntityStore<
       });
 
       try {
-        await config.updateFavorite(service, userId, id, isFavorite);
+        const favoriteService = createFavoriteService((get() as Store).db!);
+        if (await favoriteService.getBehavior(storyId) !== 'global') {
+          await favoriteService.setFavorite(storyId, id, config.favoriteEntityType, userId, isFavorite);
+        } else {
+          await config.updateFavorite(service, userId, id, isFavorite);
+        }
         if (config.changeEvent) {
           entityEventEmitter.emit(config.changeEvent, storyId);
         }

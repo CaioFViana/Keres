@@ -1,0 +1,60 @@
+name: keres
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-keres}
+      POSTGRES_USER: ${POSTGRES_USER:-keres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - backend
+
+  api:
+    image: ghcr.io/caiofviana/keres:${KERES_IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      SERVER_VERSION: ${SERVER_VERSION:-unknown}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-keres}:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD no arquivo .env}@db:5432/${POSTGRES_DB:-keres}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET no arquivo .env}
+      JWT_SECRET_REFRESH: ${JWT_SECRET_REFRESH:?Define JWT_SECRET_REFRESH no arquivo .env}
+      ROOT_ADMIN_USERNAME: ${ROOT_ADMIN_USERNAME:-root}
+      ROOT_ADMIN_PASSWORD: ${ROOT_ADMIN_PASSWORD:?Define ROOT_ADMIN_PASSWORD no arquivo .env}
+      DEFAULT_PASSWORD_RESET_VALUE: ${DEFAULT_PASSWORD_RESET_VALUE:?Define DEFAULT_PASSWORD_RESET_VALUE no arquivo .env}
+      MEDIA_STORAGE_PATH: /app/apps/api/media-storage
+      MEDIA_MAX_BYTES: ${MEDIA_MAX_BYTES:-52428800}
+    ports:
+      - "${KERES_BIND_ADDRESS:-127.0.0.1}:${KERES_PORT:-3000}:3000"
+    volumes:
+      - media_storage:/app/apps/api/media-storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/kerescheck').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  db_data:
+  media_storage:

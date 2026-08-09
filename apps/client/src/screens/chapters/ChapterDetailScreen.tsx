@@ -1,10 +1,11 @@
-import ChapterSceneManager from '@/src/components/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
-import CustomAttributeDetailFields from '@/src/components/common/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '@/src/components/common/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '@/src/components/common/ScreenState/ScreenState';
-import TagChipList from '@/src/components/common/TagChipList/TagChipList'; // Import TagChipList
-import NoteManager from '@/src/components/NoteManager';
+import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import { useDrizzle } from '@/src/db';
 import { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -19,6 +20,7 @@ import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { formatChapterUniverseDuration, formatSceneUniverseDuration, hasSceneUniverseDuration } from '@/src/utils/sceneTiming';
 import { Ionicons } from '@expo/vector-icons';
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -35,7 +37,7 @@ export type ChapterDetailScreenParamList = {
 type ChapterDetailScreenRouteProp = RouteProp<ChapterDetailScreenParamList, 'ChapterDetail'>;
 
 const ChapterDetailScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const navigation = useNavigation<ChaptersScreenNavigationProp>();
   const route = useRoute<ChapterDetailScreenRouteProp>();
@@ -245,6 +247,18 @@ const ChapterDetailScreen = () => {
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={chapterTags} />
       <DetailField label={t('summary')} value={chapter.summary || t('common_na')} />
+      {selectedStory?.type === 'linear' && (
+        <DetailField
+          label={t('in_universe_duration')}
+          value={formatChapterUniverseDuration(
+            allScenes
+              .filter((scene) => scene.chapterId === chapterId)
+              .sort((a, b) => a.index - b.index),
+            t,
+            selectedStory.normalizeSceneTiming,
+          )}
+        />
+      )}
 
       <CustomAttributeDetailFields storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} />
 
@@ -252,10 +266,20 @@ const ChapterDetailScreen = () => {
       <DetailField label={t('extra_notes')} value={chapter.extraNotes || t('common_na')} />
 
 
-      <ChapterSceneManager
-        currentChapterId={chapterId}
-        availableScenes={allScenes}
-        availableLocations={allLocations}
+      <RelatedScenesList
+        scenes={allScenes}
+        matchesScene={scene => scene.chapterId === chapterId}
+        sortScenes={(a, b) => a.index - b.index}
+        title={t('scenes_in_chapter_title')}
+        noItemsMessage="no_scenes_in_chapter"
+        getDetails={scene => {
+          const details = scene.summary ? [{ label: t('summary'), value: scene.summary }] : [];
+          if (hasSceneUniverseDuration(scene)) {
+            details.push({ label: t('in_universe_duration'), value: formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming) });
+          }
+          const locationName = allLocations.find(location => location.id === scene.locationId)?.name;
+          return locationName ? [...details, { label: t('location'), value: locationName }] : details;
+        }}
       />
 
       <NoteManager
@@ -270,6 +294,7 @@ const ChapterDetailScreen = () => {
       />
 
       <EntityMetadata version={chapter.version} createdAt={chapter.createdAt} updatedAt={chapter.updatedAt} />
+      <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

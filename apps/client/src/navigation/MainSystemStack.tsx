@@ -7,7 +7,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
+import ResizableDrawerContent, {
+  DRAWER_MIN_WIDTH,
+  useResizableDrawerWidth,
+} from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
 import ChapterFormScreen from '../screens/chapters/ChapterFormScreen';
 import ChapterListScreen from '../screens/chapters/ChapterListScreen';
@@ -21,7 +26,7 @@ import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
 import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
-import GalleryMediaViewerOverlay from '../components/GalleryManager/GalleryMediaViewerOverlay';
+import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
@@ -47,6 +52,7 @@ import SceneFormScreen from '../screens/scenes/SceneFormScreen';
 import SceneListScreen from '../screens/scenes/SceneListScreen';
 import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
+import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
@@ -88,6 +94,7 @@ export type MainSystemDrawerParamList = {
   StoryAnalysis: { storyId: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
+  Suggestions: undefined;
   StorySelection: undefined;
 };
 
@@ -416,12 +423,24 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
+  const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
+  const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
+  const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
 
   return (
     <>
     <Drawer.Navigator
-      defaultStatus="closed"
+      defaultStatus={isWide ? 'open' : 'closed'}
       backBehavior="history"
+      drawerContent={(props) => (
+        <ResizableDrawerContent
+          {...props}
+          drawerWidth={drawerWidth}
+          maximumWidth={maximumWidth}
+          onDrawerWidthChange={setDrawerWidth}
+          resizable={!isCompact}
+        />
+      )}
       screenOptions={({ navigation }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,
@@ -429,11 +448,15 @@ const MainSystemNavigator = () => {
           backgroundColor: colors.surface,
         },
         headerTintColor: colors.text,
-        headerLeft: () => <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />,
+        headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />,
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
+        drawerType: isWide ? 'permanent' : 'front',
+        swipeEnabled: !isWide,
         drawerStyle: {
           backgroundColor: colors.surface,
+          minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
+          width: isCompact ? compactDrawerWidth : drawerWidth,
         },
       })}
     >
@@ -659,6 +682,14 @@ const MainSystemNavigator = () => {
             navigation.navigate('StorySchemaStack', { screen: 'StorySchemaList' });
           },
         })}
+      />
+      <Drawer.Screen
+        name="Suggestions"
+        component={SuggestionsScreen}
+        options={{
+          title: t('standard_suggestions_title'),
+          drawerLabel: t('standard_suggestions_title'),
+        }}
       />
       <Drawer.Screen
         name="OperationLogStack"

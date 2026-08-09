@@ -3,12 +3,14 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native';
-import AttributeValueInput from '../../components/common/CustomAttributeFields/AttributeValueInput';
-import Button from '../../components/common/Button/Button';
-import Select from '../../components/common/Select/Select';
-import TextInput from '../../components/common/TextInput/TextInput';
-import { ScreenLoading } from '../../components/common/ScreenState/ScreenState';
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
+import Button from '@/src/components/common/controls/Button/Button';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -27,7 +29,7 @@ type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<StoryS
 const ATTRIBUTE_TYPE_OPTIONS = Object.values(AttributeType);
 
 const StorySchemaFieldFormScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StorySchemaFieldFormScreenNavigationProp>();
@@ -170,9 +172,7 @@ const StorySchemaFieldFormScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
           <Text style={styles.label}>{t('attribute_display_name')}</Text>
           <TextInput
             placeholder={t('attribute_display_name_placeholder')}
@@ -212,11 +212,9 @@ const StorySchemaFieldFormScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { marginTop: 0 }]}>{t('attribute_required')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isRequired}
               onValueChange={setIsRequired}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isRequired ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
             />
           </View>
@@ -234,9 +232,7 @@ const StorySchemaFieldFormScreen = () => {
           <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
             {saving ? t('saving') : t('save')}
           </Button>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 

@@ -1,17 +1,31 @@
 import { and, eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { ServerInsert, ServerSelect, servers } from '../db/schema';
+import { friendships, ServerInsert, ServerSelect, servers, stories } from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
+import { entityEventEmitter } from '../utils/EventEmitter';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added
 import { isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
+
+export interface OwnedServerStory {
+  id: string;
+  title: string;
+}
+
+export class ServerHasOwnedStoriesError extends Error {
+  constructor(public readonly ownedStories: OwnedServerStory[]) {
+    super('Cannot remove a server while locally linked stories are owned by this account.');
+    this.name = 'ServerHasOwnedStoriesError';
+  }
+}
 
 export interface ServerService {
   getAllServers(): Promise<ServerSelect[]>;
   getServerById(serverId: string): Promise<ServerSelect | undefined>;
   createServer(serverData: Create<ServerInsert>): Promise<ServerSelect>;
   updateServer(serverId: string, serverData: Partial<Omit<ServerInsert, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
+  getOwnedStories(serverId: string): Promise<OwnedServerStory[]>;
   deleteServer(serverId: string): Promise<void>;
   refreshServerToken(server: ServerSelect): Promise<ServerSelect>; // Added
 }
@@ -46,15 +60,41 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         .run();
     },
 
+    async getOwnedStories(serverId: string): Promise<OwnedServerStory[]> {
+      return db.select({ id: stories.id, title: stories.title })
+        .from(stories)
+        .where(and(
+          eq(stories.serverId, serverId),
+          eq(stories.myRole, 'owner'),
+          eq(stories.isDeleted, false),
+        ))
+        .all();
+    },
+
     async deleteServer(serverId: string): Promise<void> {
-      await db.update(servers)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
-        .where(eq(servers.id, serverId))
-        .run();
+      const ownedStories = await this.getOwnedStories(serverId);
+      if (ownedStories.length > 0) {
+        throw new ServerHasOwnedStoriesError(ownedStories);
+      }
+
+      await db.transaction(async (tx) => {
+        // Friendships are a local cache of server state. Leaving the server must remove
+        // only this local copy; logging in again will repopulate it from the unchanged API.
+        await tx.delete(friendships).where(eq(friendships.serverId, serverId)).run();
+        await tx.update(servers)
+          .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
+          .where(eq(servers.id, serverId))
+          .run();
+      });
+
+      await authTokenManager.clearAuthForServer(serverId);
+      entityEventEmitter.emit('friendship_changed');
+      entityEventEmitter.emit('server_connection_changed');
     },
 
     async refreshServerToken(server: ServerSelect): Promise<ServerSelect> {
-      if (!server.jwtToken || !server.refreshToken) {
+      const tokens = await authTokenManager.getTokens(server.id);
+      if (!tokens) {
         // Persistent state (the server was never authenticated), re-evaluated on every
         // sync cycle - log it, but don't notify the user every interval.
         console.log(`Server ${server.name} does not have JWT or Refresh Token. Please re-authenticate.`);
@@ -62,7 +102,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       }
 
       // Check if the JWT is actually expired before trying to refresh
-      if (!isJwtExpired(server.jwtToken)) {
+      if (!isJwtExpired(tokens.accessToken)) {
         console.log(`JWT for server ${server.name} is not expired. No refresh needed.`);
         return server; // Return current server if not expired
       }
@@ -71,7 +111,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       try {
         // Trigger the token refresh via the AuthTokenManager
         // This will update the tokens in the database and the user settings store
-        const refreshedTokens = await authTokenManager.refreshAccessToken(server.id, server.refreshToken);
+        const refreshedTokens = await authTokenManager.refreshAccessToken(server.id, tokens.refreshToken);
 
         if (!refreshedTokens) {
           const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;
@@ -80,21 +120,9 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
           return server; // Return original server if refresh failed
         }
 
-        // Fetch the updated server object from the database to ensure consistency
-        const updatedServer = await db.query.servers.findFirst({
-          where: and(eq(servers.id, server.id), eq(servers.isDeleted, false)),
-        });
-
-        if (!updatedServer) {
-            const message = `Could not find updated server with ID ${server.id} after token refresh or server is deleted. Please check server status.`;
-            console.log(message);
-            showNotification(message, 'error');
-            return server;
-        }
-
         console.log(`Successfully refreshed tokens for server ${server.name}.`);
         showNotification(`Tokens for ${server.name} refreshed successfully.`, 'success');
-        return updatedServer;
+        return server;
 
       } catch (error) {
         if (isOfflineError(error)) {

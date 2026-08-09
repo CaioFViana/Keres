@@ -91,6 +91,11 @@ export async function deleteDirectory(relativeDirPath: string): Promise<void> {
   for (const path of knownPaths) {
     if (path.startsWith(prefix)) {
       knownPaths.delete(path);
+      const blobUrl = blobUrlCache.get(path);
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+        blobUrlCache.delete(path);
+      }
     }
   }
   await bridge().deleteDirectory(relativeDirPath);

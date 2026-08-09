@@ -15,6 +15,7 @@ export const useChapterStore = createEntityStore<
   ChapterExtraActions
 >({
   collectionKey: 'chapters',
+  favoriteEntityType: 'Chapter',
   createService: createChapterService,
   fetchEntities: (service, p) =>
     service.getChaptersByStoryId(

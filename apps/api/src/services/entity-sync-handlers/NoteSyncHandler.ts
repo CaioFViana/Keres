@@ -22,7 +22,7 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<typeof CreateNoteData
     );
   }
 
-  private async validateRelatedEntities(storyId: string): Promise<void> {
+  private async validateRelatedEntities(): Promise<void> {
     // Currently no related entities to validate for Note
   }
 
@@ -35,7 +35,7 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<typeof CreateNoteData
       throw new Error(`Conflict: Note with ID ${update.id} already exists.`);
     }
 
-    await this.validateRelatedEntities(storyId);
+    await this.validateRelatedEntities();
 
     await db.insert(notes).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
@@ -51,7 +51,7 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<typeof CreateNoteData
 
   async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
-    await this.validateRelatedEntities(storyId);
+    await this.validateRelatedEntities();
 
     await db.update(notes)
       .set({

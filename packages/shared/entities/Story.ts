@@ -1,3 +1,5 @@
+export type FavoriteBehavior = 'global' | 'individual' | 'individual_public'
+
 export interface Story {
   id: string
   userId: string // ID of the user who owns this story
@@ -10,8 +12,10 @@ export interface Story {
   // owns/manages it in the app) - e.g. the original author for an imported public-domain tale.
   author: string | null
   isFavorite: boolean
+  favoriteBehavior: FavoriteBehavior
   extraNotes: string | null
   theme: string | null
+  normalizeSceneTiming: boolean
   // Optional: ID of the server this story is synchronized with.
   // This ID references an entry in the local 'Server' entity.
   // If null or undefined, the story is considered offline-only.

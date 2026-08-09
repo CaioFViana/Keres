@@ -1,13 +1,13 @@
-import { Story } from '@keres/shared/entities/Story';
+import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TouchableWithoutFeedback, View } from 'react-native'; // Removed BackHandler
-import Button from '../../components/common/Button/Button';
-import Select from '../../components/common/Select/Select';
-import TextInput from '../../components/common/TextInput/TextInput';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Removed BackHandler
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import { Button, Select, TextInput } from '@/src/components/common';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
@@ -32,7 +32,7 @@ import { AppAlert } from '../../utils/AppAlert';
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>;
 
 const StorySettingsScreen = () => {
-  useBackButtonHandler(); // Call the hook here
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StorySettingsScreenNavigationProp>();
@@ -64,8 +64,10 @@ const StorySettingsScreen = () => {
   const [language, setLanguage] = useState<string | null>(null);
   const [author, setAuthor] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
+  const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
   const [uploadTargetServerId, setUploadTargetServerId] = useState<string | null>(null);
@@ -89,7 +91,7 @@ const StorySettingsScreen = () => {
       try {
         setLoading(true);
         // Fetch story
-        const fetchedStory = await storyService().getStoryById(storyId);
+        const fetchedStory = await storyService().getStoryById(storyId, userId ?? undefined);
 
         if (!fetchedStory) {
           setError(t('story_not_found'));
@@ -103,8 +105,10 @@ const StorySettingsScreen = () => {
         setLanguage(fetchedStory.language);
         setAuthor(fetchedStory.author);
         setIsFavorite(fetchedStory.isFavorite);
+        setFavoriteBehavior(fetchedStory.favoriteBehavior);
         setExtraNotes(fetchedStory.extraNotes);
         setTheme(fetchedStory.theme);
+        setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
         applyTheme(fetchedStory.theme || 'default');
 
         // Fetch servers
@@ -225,14 +229,19 @@ const StorySettingsScreen = () => {
         language,
         author,
         isFavorite,
+        favoriteBehavior,
         extraNotes,
         theme,
+        normalizeSceneTiming,
         // `serverId` não entra aqui - vincular/desvincular tem efeitos colaterais de rede
         // (enviar a história, avisar o servidor) que não fazem sentido como campo de
         // formulário comum; ver handleSendToServer/handleUnlinkFromServer.
       };
 
       await storyService().updateStory(userId, storyId, storyData);
+      if (selectedStory) {
+        setSelectedStory({ ...selectedStory, ...storyData });
+      }
       AppAlert.alert(t('success'), t('story_updated_successfully'));
       navigation.goBack();
     } catch (err) {
@@ -367,6 +376,30 @@ const StorySettingsScreen = () => {
     } catch (err) {
       console.error('Failed to add collaborator:', err);
       AppAlert.alert(t('error'), t('add_collaborator_failed'));
+    } finally {
+      setServerActionLoading(false);
+    }
+  };
+
+  const handleUpdateCollaboratorPermission = async (
+    collaborator: StoryCollaborator,
+    permissionType: 'reader' | 'writer'
+  ) => {
+    if (!storyId || !linkedServer || permissionType === collaborator.permissionType) return;
+
+    setServerActionLoading(true);
+    try {
+      await storyPermissionApi.updateCollaboratorPermission(
+        linkedServer,
+        storyId,
+        collaborator.userId,
+        permissionType
+      );
+      const refreshedCollaborators = await storyPermissionApi.getCollaborators(linkedServer, storyId);
+      setCollaborators(refreshedCollaborators);
+    } catch (err) {
+      console.error('Failed to update collaborator permission:', err);
+      AppAlert.alert(t('error'), t('update_collaborator_permission_failed'));
     } finally {
       setServerActionLoading(false);
     }
@@ -549,13 +582,7 @@ const StorySettingsScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}>
-        <ScrollView style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
+    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
           <Text style={[styles.title, { color: colors.text }]}>{t('story_settings_screen_title')}</Text>
           <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
             {t('story_settings_screen_description')}
@@ -622,12 +649,38 @@ const StorySettingsScreen = () => {
 
           <View style={styles.switchContainer}>
             <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
-            <Switch
+            <ThemedSwitch
               value={isFavorite}
               onValueChange={setIsFavorite}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isFavorite ? colors.onPrimary : colors.textSecondary}
               style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+              disabled={!canEdit}
+            />
+          </View>
+
+          <Text style={[styles.label, { color: colors.text }]}>{t('favorite_behavior')}</Text>
+          <Select
+            options={[
+              { label: t('favorite_behavior_global'), value: 'global' },
+              { label: t('favorite_behavior_individual'), value: 'individual' },
+              { label: t('favorite_behavior_individual_public'), value: 'individual_public' },
+            ]}
+            value={favoriteBehavior}
+            onValueChange={(value) => setFavoriteBehavior(value as FavoriteBehavior)}
+            placeholder={t('favorite_behavior')}
+            disabled={!canEdit}
+          />
+          <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
+            {t(`favorite_behavior_${favoriteBehavior}_description`)}
+          </Text>
+
+          <View style={styles.switchContainer}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={[styles.label, { color: colors.text }]}>{t('normalize_scene_timing')}</Text>
+              <Text style={{ color: colors.textSecondary }}>{t('normalize_scene_timing_description')}</Text>
+            </View>
+            <ThemedSwitch
+              value={normalizeSceneTiming}
+              onValueChange={setNormalizeSceneTiming}
               disabled={!canEdit}
             />
           </View>
@@ -719,9 +772,21 @@ const StorySettingsScreen = () => {
                   )}
                   {(collaborators ?? []).map((collaborator) => (
                     <View key={collaborator.id} style={styles.collaboratorRow}>
-                      <Text style={{ color: colors.text, flex: 1 }}>
-                        {collaborator.user?.username ?? collaborator.userId} ({t(`permission_${collaborator.permissionType}`)})
+                      <Text style={[styles.collaboratorName, { color: colors.text }]} numberOfLines={2}>
+                        {collaborator.user?.username ?? collaborator.userId}
                       </Text>
+                      <View style={styles.collaboratorPermissionSelect}>
+                        <Select
+                          options={permissionTypeOptions}
+                          value={collaborator.permissionType}
+                          onValueChange={(value) => {
+                            if (value === 'reader' || value === 'writer') {
+                              void handleUpdateCollaboratorPermission(collaborator, value);
+                            }
+                          }}
+                          disabled={serverActionLoading}
+                        />
+                      </View>
                       <Button
                         onPress={() => handleRemoveCollaborator(collaborator)}
                         disabled={serverActionLoading}
@@ -755,9 +820,7 @@ const StorySettingsScreen = () => {
           <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]} disabled={!canEdit}>
             {t('delete_story_title')}
           </Button>
-        </ScrollView>
-      </TouchableWithoutFeedback>    
-    </KeyboardAvoidingView>
+    </KeyboardAwareScreen>
   );
 };
 
@@ -814,6 +877,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  collaboratorName: {
+    flex: 1,
+    minWidth: 120,
+  },
+  collaboratorPermissionSelect: {
+    width: 140,
+    marginLeft: 8,
   },
   removeCollaboratorButton: {
     marginLeft: 10,

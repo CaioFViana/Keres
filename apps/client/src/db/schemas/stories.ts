@@ -14,6 +14,7 @@ export const stories = sqliteTable('stories', {
   favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual', 'individual_public'] }).notNull().default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
+  normalizeSceneTiming: integer('normalize_scene_timing', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

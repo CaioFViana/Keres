@@ -92,8 +92,8 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     measurementContent: {
       position: 'absolute',
       opacity: 0,
-      zIndex: -1,
-      width: '100%',
+      left: 0,
+      right: 0,
     },
     animatedWrapper: {
       overflow: 'hidden',
@@ -104,8 +104,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
   });
 
   const onLayout = React.useCallback((event: LayoutChangeEvent) => {
-    // Add a small buffer to the measured height to prevent content from being cut off
-    const measuredHeight = event.nativeEvent.layout.height + 20;
+    const measuredHeight = event.nativeEvent.layout.height;
     if (contentHeight.value !== measuredHeight) {
       contentHeight.value = measuredHeight;
       if (isOpen) {
@@ -129,8 +128,10 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
         </View>
       </AnimatedPressable>
 
-      <View style={styles.measurementContent} onLayout={onLayout}>
-        {expandedContent}
+      <View style={styles.measurementContent} pointerEvents="none">
+        <View style={styles.expandedContentInner} onLayout={onLayout}>
+          {expandedContent}
+        </View>
       </View>
 
       <Animated.View style={[styles.animatedWrapper, animatedContainerStyle]}>

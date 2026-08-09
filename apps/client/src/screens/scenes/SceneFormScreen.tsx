@@ -111,9 +111,9 @@ const SceneFormScreen = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [gap, setGap] = useState<number | null>(null);
-  const [gapType, setGapType] = useState<string | null>(null); // e.g., 'minutes', 'hours', 'days'
+  const [gapType, setGapType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
   const [duration, setDuration] = useState<number | null>(null);
-  const [durationType, setDurationType] = useState<string | null>(null); // e.g., 'minutes', 'hours', 'days'
+  const [durationType, setDurationType] = useState<string | null>(null); // e.g., 'seconds', 'minutes', 'hours'
   const [isStart, setIsStart] = useState(false);
   const [isFinish, setIsFinish] = useState(false);
 
@@ -413,6 +413,7 @@ const SceneFormScreen = () => {
   }, [locations]);
 
   const gapDurationTypeOptions = [
+    { label: t('seconds'), value: 'seconds' },
     { label: t('minutes'), value: 'minutes' },
     { label: t('hours'), value: 'hours' },
     { label: t('days'), value: 'days' },

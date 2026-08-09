@@ -20,6 +20,7 @@ import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { formatChapterUniverseDuration, formatSceneUniverseDuration, hasSceneUniverseDuration } from '@/src/utils/sceneTiming';
 import { Ionicons } from '@expo/vector-icons';
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -246,6 +247,18 @@ const ChapterDetailScreen = () => {
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={chapterTags} />
       <DetailField label={t('summary')} value={chapter.summary || t('common_na')} />
+      {selectedStory?.type === 'linear' && (
+        <DetailField
+          label={t('in_universe_duration')}
+          value={formatChapterUniverseDuration(
+            allScenes
+              .filter((scene) => scene.chapterId === chapterId)
+              .sort((a, b) => a.index - b.index),
+            t,
+            selectedStory.normalizeSceneTiming,
+          )}
+        />
+      )}
 
       <CustomAttributeDetailFields storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} />
 
@@ -256,10 +269,14 @@ const ChapterDetailScreen = () => {
       <RelatedScenesList
         scenes={allScenes}
         matchesScene={scene => scene.chapterId === chapterId}
+        sortScenes={(a, b) => a.index - b.index}
         title={t('scenes_in_chapter_title')}
         noItemsMessage="no_scenes_in_chapter"
         getDetails={scene => {
           const details = scene.summary ? [{ label: t('summary'), value: scene.summary }] : [];
+          if (hasSceneUniverseDuration(scene)) {
+            details.push({ label: t('in_universe_duration'), value: formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming) });
+          }
           const locationName = allLocations.find(location => location.id === scene.locationId)?.name;
           return locationName ? [...details, { label: t('location'), value: locationName }] : details;
         }}

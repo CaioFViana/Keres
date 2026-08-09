@@ -17,6 +17,7 @@ export const StoryCreateInputSchema = z.object({
   favoriteBehavior: FavoriteBehaviorSchema.default('individual'),
   extraNotes: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
+  normalizeSceneTiming: z.boolean().default(false),
 });
 
 // Schema for the 'data' payload when creating a story via sync
@@ -31,6 +32,7 @@ export const CreateStoryDataSchema = z.object({
   favoriteBehavior: FavoriteBehaviorSchema.default('individual'),
   extraNotes: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
+  normalizeSceneTiming: z.boolean().default(false),
 });
 
 // Full Story Schema, including server-managed fields like userId

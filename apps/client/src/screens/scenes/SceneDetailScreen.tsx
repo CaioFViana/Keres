@@ -42,6 +42,7 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { formatSceneGap, formatSceneUniverseDuration } from '../../utils/sceneTiming';
 import { ScenesScreenNavigationProp } from './SceneListScreen';
 
 // Define the parameter list for this screen
@@ -412,6 +413,8 @@ const SceneDetailScreen = () => {
       )}
       <TagChipList tags={sceneTags} />
       <DetailField label={t('summary')} value={scene.summary || t('common_na')} />
+      <DetailField label={t('gap')} value={formatSceneGap(scene, t, selectedStory?.normalizeSceneTiming)} />
+      <DetailField label={t('in_universe_duration')} value={formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming)} />
 
       <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
 

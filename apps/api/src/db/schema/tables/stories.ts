@@ -35,6 +35,7 @@ export const stories = pgTable('stories', {
   favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual', 'individual_public'] }).notNull().default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
+  normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   version: integer('version').notNull().default(1),

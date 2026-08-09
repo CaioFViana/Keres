@@ -16,6 +16,7 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { formatSceneGap, formatSceneUniverseDuration } from '../../utils/sceneTiming';
 import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
 import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -441,6 +442,10 @@ const ChoiceViewScreen = () => {
           ]}
           sections={[
             ...(selectedNode.scene.summary ? [{ title: t('summary'), description: selectedNode.scene.summary }] : []),
+            {
+              title: t('scene_timing'),
+              description: `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}\n${t('in_universe_duration')}: ${formatSceneUniverseDuration(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}`,
+            },
             {
               title: t('story_map_outgoing_choices'),
               emptyMessage: t('story_map_no_outgoing_choices'),

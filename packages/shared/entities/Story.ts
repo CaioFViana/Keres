@@ -15,6 +15,7 @@ export interface Story {
   favoriteBehavior: FavoriteBehavior
   extraNotes: string | null
   theme: string | null
+  normalizeSceneTiming: boolean
   // Optional: ID of the server this story is synchronized with.
   // This ID references an entry in the local 'Server' entity.
   // If null or undefined, the story is considered offline-only.

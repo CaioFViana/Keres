@@ -36,6 +36,13 @@
       "when": 1786243502600,
       "tag": "0004_equal_saracen",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786243502601,
+      "tag": "0005_scene_timing_normalization",
+      "breakpoints": true
     }
   ]
 }

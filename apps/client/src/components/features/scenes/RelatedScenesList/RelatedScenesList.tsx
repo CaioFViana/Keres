@@ -20,6 +20,7 @@ interface RelatedScenesListProps {
   title: string;
   noItemsMessage: string;
   getDetails?: (scene: SceneSelect) => SceneDetail[];
+  sortScenes?: (a: SceneSelect, b: SceneSelect) => number;
 }
 
 /** Lista colapsável de cenas relacionadas a uma entidade, com navegação para o detalhe da cena. */
@@ -29,6 +30,7 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
   title,
   noItemsMessage,
   getDetails,
+  sortScenes,
 }) => {
   const { colors } = useTheme();
   const navigation = useNavigation();
@@ -36,8 +38,8 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
   const relatedScenes = useMemo(() => (
     scenes
       .filter(scene => !scene.isDeleted && matchesScene(scene))
-      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-  ), [scenes, matchesScene]);
+      .sort(sortScenes ?? ((a, b) => (a.name || '').localeCompare(b.name || '')))
+  ), [scenes, matchesScene, sortScenes]);
 
   const handleScenePress = useCallback((scene: SceneSelect) => {
     const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();

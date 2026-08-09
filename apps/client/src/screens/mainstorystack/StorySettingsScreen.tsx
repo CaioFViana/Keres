@@ -67,6 +67,7 @@ const StorySettingsScreen = () => {
   const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
+  const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
   const [uploadTargetServerId, setUploadTargetServerId] = useState<string | null>(null);
@@ -107,6 +108,7 @@ const StorySettingsScreen = () => {
         setFavoriteBehavior(fetchedStory.favoriteBehavior);
         setExtraNotes(fetchedStory.extraNotes);
         setTheme(fetchedStory.theme);
+        setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
         applyTheme(fetchedStory.theme || 'default');
 
         // Fetch servers
@@ -230,12 +232,16 @@ const StorySettingsScreen = () => {
         favoriteBehavior,
         extraNotes,
         theme,
+        normalizeSceneTiming,
         // `serverId` não entra aqui - vincular/desvincular tem efeitos colaterais de rede
         // (enviar a história, avisar o servidor) que não fazem sentido como campo de
         // formulário comum; ver handleSendToServer/handleUnlinkFromServer.
       };
 
       await storyService().updateStory(userId, storyId, storyData);
+      if (selectedStory) {
+        setSelectedStory({ ...selectedStory, ...storyData });
+      }
       AppAlert.alert(t('success'), t('story_updated_successfully'));
       navigation.goBack();
     } catch (err) {
@@ -666,6 +672,18 @@ const StorySettingsScreen = () => {
           <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
             {t(`favorite_behavior_${favoriteBehavior}_description`)}
           </Text>
+
+          <View style={styles.switchContainer}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={[styles.label, { color: colors.text }]}>{t('normalize_scene_timing')}</Text>
+              <Text style={{ color: colors.textSecondary }}>{t('normalize_scene_timing_description')}</Text>
+            </View>
+            <ThemedSwitch
+              value={normalizeSceneTiming}
+              onValueChange={setNormalizeSceneTiming}
+              disabled={!canEdit}
+            />
+          </View>
 
           <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
           <TextInput

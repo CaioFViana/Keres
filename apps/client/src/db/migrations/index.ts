@@ -8,6 +8,7 @@ import migration_4 from './0003_loose_omega_red';
 import migration_5 from './0004_mixed_bucky';
 import migration_6 from './0005_omniscient_gamma_corps';
 import migration_7 from './0006_nasty_donald_blake';
+import migration_8 from './0007_scene_timing_normalization';
 
 
 const migrations = [
@@ -18,6 +19,7 @@ const migrations = [
   { id: 5, name: '0004_mixed_bucky', run: migration_5 },
   { id: 6, name: '0005_omniscient_gamma_corps', run: migration_6 },
   { id: 7, name: '0006_nasty_donald_blake', run: migration_7 },
+  { id: 8, name: '0007_scene_timing_normalization', run: migration_8 },
 ];
 
 export default migrations;

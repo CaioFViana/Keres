@@ -1,13 +1,13 @@
 import { AppDrizzleClient } from '../db';
 import { ServerSelect } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
-import apiClient, { clearServerTokenCache, createKeresAxiosInstance, isOfflineError, TokenProvider, updateServerTokenCache } from './apiClient';
+import apiClient, { clearAllServerAuthState, clearServerTokenCache, createKeresAxiosInstance, isOfflineError, TokenProvider, updateServerTokenCache } from './apiClient';
 import { AuthTokens, tokenVault } from './TokenVault';
 
 let drizzleDb: AppDrizzleClient | null = null;
 
 // Function to initialize the database instance for the AuthTokenManager
-export const setAuthDb = (db: AppDrizzleClient) => {
+export const setAuthDb = (db: AppDrizzleClient | null) => {
     drizzleDb = db;
 };
 
@@ -54,11 +54,6 @@ class AuthTokenManager implements TokenProvider {
     // the refresh that just succeeded may belong to a background sync for a server that isn't the
     // one currently open in the UI - writing its tokens onto the wrong server would be a real bug.
     public async updateTokens(serverId: string, accessToken: string, refreshToken: string) {
-        if (!drizzleDb) {
-            console.log('Cannot update tokens: database not set.');
-            return;
-        }
-
         try {
             await tokenVault.set(serverId, { accessToken, refreshToken });
             // Update the shared token cache so every Axios instance configured for this
@@ -73,7 +68,8 @@ class AuthTokenManager implements TokenProvider {
                 apiClient.setActiveServer(activeServer);
             }
         } catch (error) {
-            console.log('Failed to update tokens in DB/store:', error);
+            console.log('Failed to update tokens in secure storage/cache:', error);
+            throw error;
         }
     }
 
@@ -155,6 +151,14 @@ class AuthTokenManager implements TokenProvider {
             useUserSettingsStore.getState().clearActiveServer();
             apiClient.setActiveServer(null);
         }
+    }
+
+    public async clearAllAuth(serverIds: string[]): Promise<void> {
+        await Promise.all(serverIds.map((serverId) => tokenVault.remove(serverId)));
+        clearAllServerAuthState(serverIds);
+        this._getServerById = null;
+        useUserSettingsStore.getState().clearActiveServer();
+        apiClient.setActiveServer(null);
     }
 }
 

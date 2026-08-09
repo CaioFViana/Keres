@@ -23,12 +23,32 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const drizzleClient = useDrizzle();
   const storyService = useRef(createStoryService(drizzleClient)).current;
   const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
-  const { userId } = useUserSettingsStore();
+  const { userId, activeServer } = useUserSettingsStore();
+  // Registering or re-authenticating a server happens while this component remains mounted.
+  // A scalar revision makes the reconciliation/WebSocket effects react to that persisted
+  // connection without depending on object identity (which would reconnect unnecessarily).
+  const serverConnectionRevision = activeServer
+    ? `${activeServer.id}:${activeServer.idUser}:${activeServer.url}:${activeServer.updatedAt.getTime()}`
+    : '';
   const { showNotification } = useNotificationStore();
   const { fetchStories: fetchStoryList } = useStoryListStore();
   const { selectedStory } = useStoryStore(); // Get selectedStory from useStoryStore
   const { t } = useTranslation();
   const realtimeByServerRef = useRef(new Map<string, ServerRealtimeService>());
+  const activeReconciliationsRef = useRef(new Set<Promise<unknown>>());
+
+  useEffect(() => {
+    const stopRealtimeForReset = async () => {
+      const realtimeStops = Array.from(realtimeByServerRef.current.values()).map((realtime) => realtime.stop());
+      realtimeByServerRef.current.clear();
+      await Promise.allSettled([
+        ...realtimeStops,
+        ...Array.from(activeReconciliationsRef.current),
+      ]);
+    };
+    entityEventEmitter.on('application_resetting', stopRealtimeForReset);
+    return () => entityEventEmitter.off('application_resetting', stopRealtimeForReset);
+  }, []);
 
   useEffect(() => {
     // Set token provider for apiClient once on mount
@@ -119,33 +139,50 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     return sawUnreachableServer;
   }, [drizzleClient, userId, storyService, showNotification, t, fetchStoryList, friendshipService]);
 
+  const startServerReconciliation = useCallback(() => {
+    // Continuous 30-second polling is replaced by ServerRealtimeService notifications.
+    const reconciliation = syncDataWithServers();
+    activeReconciliationsRef.current.add(reconciliation);
+    reconciliation
+      .catch((error) => console.log('SyncInitializer: initial reconciliation failed.', error))
+      .finally(() => activeReconciliationsRef.current.delete(reconciliation));
+  }, [syncDataWithServers]);
+
   useEffect(() => {
     // One initial reconciliation covers data that changed while the app was closed.
-    // Continuous 30-second polling is replaced by ServerRealtimeService notifications.
-    syncDataWithServers().catch((error) => console.log('SyncInitializer: initial reconciliation failed.', error));
-  }, [syncDataWithServers]); // Dependency on syncDataWithServers ensures the latest version is used
+    startServerReconciliation();
+  }, [startServerReconciliation]);
+
+  useEffect(() => {
+    // Server registration happens below this already-mounted component. Use an explicit
+    // signal so its first friendship/story reconciliation does not depend on navigation
+    // timing or on Zustand observing a different active-server object.
+    entityEventEmitter.on('server_connection_changed', startServerReconciliation);
+    return () => entityEventEmitter.off('server_connection_changed', startServerReconciliation);
+  }, [startServerReconciliation]);
 
   // Friendship and permission events matter even when no story is open. Keep one
   // WebSocket per configured server for the lifetime of the signed-in client.
   useEffect(() => {
-    if (!drizzleClient) return;
+    if (!drizzleClient || !userId) return;
     let disposed = false;
+    const realtimeConnections = realtimeByServerRef.current;
     const connectServers = async () => {
       const servers = await createServerService(drizzleClient).getAllServers();
       if (disposed) return;
       for (const server of servers) {
         const realtime = new ServerRealtimeService(drizzleClient, server, server.idUser);
-        realtimeByServerRef.current.set(server.id, realtime);
+        realtimeConnections.set(server.id, realtime);
         realtime.start(server.id === selectedStory?.serverId ? selectedStory.id : undefined);
       }
     };
     connectServers().catch((error) => console.log('SyncInitializer: failed to start realtime connections.', error));
     return () => {
       disposed = true;
-      for (const realtime of realtimeByServerRef.current.values()) realtime.stop();
-      realtimeByServerRef.current.clear();
+      for (const realtime of realtimeConnections.values()) void realtime.stop();
+      realtimeConnections.clear();
     };
-  }, [drizzleClient, selectedStory?.id, selectedStory?.serverId]);
+  }, [drizzleClient, userId, selectedStory?.id, selectedStory?.serverId, serverConnectionRevision]);
 
   // A local operation is ready to push immediately. Remote application also emits
   // this event, but requestSync coalesces it into at most one follow-up pull.

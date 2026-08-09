@@ -7,6 +7,7 @@ import {
 } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import { Platform } from 'react-native';
 import * as webMediaStore from './webMediaStore';
@@ -327,6 +328,30 @@ export const mediaFileService = {
       }
     } catch (error) {
       console.warn('Could not delete media directory for story:', storyId, error);
+    }
+  },
+
+  /** Removes the complete application-owned media tree during a full app reset. */
+  async deleteAllMedia(): Promise<void> {
+    try {
+      if (isWeb) {
+        // Plain browser builds do not have the Electron filesystem bridge and therefore
+        // cannot have files in this store to remove.
+        if (typeof window !== 'undefined' && window.keresMedia) {
+          await webMediaStore.deleteDirectory('media');
+        }
+        return;
+      }
+
+      // Expo Go can reject Directory.delete() for a non-empty application directory.
+      // The legacy implementation explicitly removes directory contents recursively and
+      // is idempotent when the directory has never been created.
+      const directory = new Directory(Paths.document, 'media');
+      await LegacyFileSystem.deleteAsync(directory.uri, { idempotent: true });
+    } catch (error) {
+      // Orphaned media must not leave the reset half-complete. Its database references
+      // are removed below, so a cleanup failure only means reclaiming disk space failed.
+      console.warn('Could not remove every local media file during app reset:', error);
     }
   },
 };

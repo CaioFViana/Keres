@@ -11,13 +11,18 @@ import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
+import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
+import { mediaFileService } from '../../services/MediaFileService';
 import { SyncEngineService } from '../../services/SyncEngineService'; // Import SyncEngineService
+import { servers } from '../../db/schema';
+import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 import { AppAlert } from '../../utils/AppAlert';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
 
@@ -61,14 +66,30 @@ const SettingsScreen = () => {
           text: t('reset'),
           onPress: async () => {
             try {
+              // Credentials live outside SQLite, so retain the server IDs before dropping
+              // any tables. The reset signal synchronously closes every realtime socket.
+              const savedServers = await drizzleClient.select({ id: servers.id }).from(servers).all();
+              const serverIds = savedServers.map((server) => server.id);
+              const realtimeShutdown = entityEventEmitter.emitAsync('application_resetting');
+
+              // Clearing the user first prevents SyncInitializer effects from rebuilding a
+              // WebSocket while the remaining asynchronous cleanup is still in progress.
+              resetSettings();
+              await Promise.all([
+                realtimeShutdown,
+                SyncEngineService.getInstance().reset(),
+              ]);
+              await authTokenManager.clearAllAuth(serverIds);
+              setAuthDb(null);
+              await mediaFileService.deleteAllMedia();
+
               await resetDatabase(db);
               console.log('Database reset complete.');
 
-              // Reset Zustand stores
-              resetSettings();
+              // Reset every in-memory store that can retain rows from the deleted database.
+              resetAllClientStores();
               resetTheme();
-              SyncEngineService.getInstance().reset(); // Reset the SyncEngineService
-              console.log('Zustand stores and SyncEngineService reset.');
+              console.log('Credentials, media, stores and synchronization services reset.');
 
               // Navigate to ColdInstallScreen and reset navigation stack
               navigation.dispatch(StackActions.replace('ColdInstall'));

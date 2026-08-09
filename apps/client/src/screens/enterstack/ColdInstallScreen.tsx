@@ -7,7 +7,9 @@ import { BackHandler, StyleSheet, Text, View } from 'react-native';
 import { Button, FormContainer, Select, TextInput } from '@/src/components/common';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { migrate } from '../../db/migrate'; // Import migrate
+import { setAuthDb } from '../../services/AuthTokenManager';
 import { createClientSettings } from '../../services/ClientSettingsService'; // Import createClientSettings
+import { SyncEngineService } from '../../services/SyncEngineService';
 import { useNotificationStore } from '../../state/notificationStore'; // Import useNotificationStore
 import { useThemeStore } from '../../state/themeStore'; // Import useThemeStore
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -86,6 +88,12 @@ const ColdInstallScreen = () => {
 
     // Run database migrations first
     await migrate(db); // Use the raw db instance for migrations
+
+    // A full reset deliberately detaches these services while the old account is being
+    // erased. Reattach them as soon as the fresh schema exists, before server registration
+    // can attempt to persist tokens or start its first synchronization.
+    setAuthDb(drizzleDb);
+    SyncEngineService.getInstance().setDbInstance(drizzleDb);
 
     // Create initial client settings in SQLite
     await createClientSettings(drizzleDb, { // Pass drizzleDb

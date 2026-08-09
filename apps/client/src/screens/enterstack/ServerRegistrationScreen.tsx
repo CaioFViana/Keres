@@ -16,6 +16,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };
@@ -220,6 +221,7 @@ const ServerRegistrationScreen = () => {
             await authTokenManager.updateTokens(savedServer.id, newAccessToken, newRefreshToken);
           }
           setActiveServer(savedServer); // Set the active server in Zustand store
+          entityEventEmitter.emit('server_connection_changed');
         }
         navigation.goBack();
   

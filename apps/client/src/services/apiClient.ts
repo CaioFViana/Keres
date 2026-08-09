@@ -84,6 +84,18 @@ interface RefreshState {
 // unrelated servers.
 const refreshStateByServerId = new Map<string, RefreshState>();
 
+/** Clears credentials and rejects refresh requests that belong to an app reset. */
+export function clearAllServerAuthState(serverIds: string[]): void {
+  for (const serverId of serverIds) {
+    serverTokenCache.delete(serverId);
+    const refreshState = refreshStateByServerId.get(serverId);
+    if (refreshState) {
+      processQueue(refreshState, new AxiosError('Authentication cleared by application reset.', 'AUTH_RESET'));
+      refreshStateByServerId.delete(serverId);
+    }
+  }
+}
+
 function getRefreshState(serverId: string): RefreshState {
   let state = refreshStateByServerId.get(serverId);
   if (!state) {

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, net, protocol, safeStorage, session } from 'electron';
+import { app, BrowserWindow, ipcMain, net, protocol, safeStorage, session } from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -229,7 +229,7 @@ async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
   await writeAuthVault(vault);
 }
 
-Menu.setApplicationMenu(null)
+//Menu.setApplicationMenu(null)
 
 /** Resolves a "media/<storyId>/<hash>.<ext>"-shaped relative path, rejecting any escape from MEDIA_ROOT. */
 function resolveMediaPath(relativePath: string): string {

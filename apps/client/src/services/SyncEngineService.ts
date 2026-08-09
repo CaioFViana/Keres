@@ -100,6 +100,8 @@ export class SyncEngineService {
   private isRunning: boolean = false;
   private syncInFlight = false;
   private syncQueued = false;
+  private activeSyncOperations = 0;
+  private syncIdleResolvers = new Set<() => void>();
   /**
    * Incremented by every start/stop. A cycle captures the value it started under and
    * refuses to schedule its successor once it changes, so a cycle still in flight when
@@ -219,7 +221,7 @@ export class SyncEngineService {
     const runCycle = async () => {
       let wasOffline = false;
       try {
-        wasOffline = await this.performSync();
+        wasOffline = await this.performTrackedSync();
       } catch (error) {
         if (isOfflineError(error)) {
           console.log('SyncEngineService: sync cycle skipped, server unreachable.');
@@ -252,7 +254,7 @@ export class SyncEngineService {
     const run = async () => {
       do {
         this.syncQueued = false;
-        await this.performSync();
+        await this.performTrackedSync();
       } while (this.syncQueued);
       this.syncInFlight = false;
     };
@@ -275,9 +277,32 @@ export class SyncEngineService {
     this.client.defaults.baseURL = undefined;
   }
 
-  public reset() {
+  private async performTrackedSync(): Promise<boolean> {
+    this.activeSyncOperations += 1;
+    try {
+      return await this.performSync();
+    } finally {
+      this.activeSyncOperations -= 1;
+      if (this.activeSyncOperations === 0) {
+        for (const resolve of this.syncIdleResolvers) resolve();
+        this.syncIdleResolvers.clear();
+      }
+    }
+  }
+
+  private async waitForSyncIdle(): Promise<void> {
+    if (this.activeSyncOperations === 0) return;
+    await new Promise<void>((resolve) => this.syncIdleResolvers.add(resolve));
+  }
+
+  public async reset(): Promise<void> {
     this.stopSync();
+    this.syncQueued = false;
+    await this.waitForSyncIdle();
+    this.syncInFlight = false;
     this._db = null;
+    this._conflictService = null;
+    this._mediaSyncService = null;
     console.log('Sync engine has been reset, database instance cleared.');
   }
 

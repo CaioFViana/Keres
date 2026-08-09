@@ -11,6 +11,7 @@ interface ConnectivityState {
   /** Record an unreachable server. Announces only the first transition into offline. */
   reportUnreachable: (serverId: string, serverName?: string | null) => void;
   isOffline: (serverId: string) => boolean;
+  reset: () => void;
 }
 
 const label = (key: string, serverName?: string | null) =>
@@ -27,6 +28,8 @@ const label = (key: string, serverName?: string | null) =>
  */
 export const useConnectivityStore = create<ConnectivityState>((set, get) => ({
   statusByServerId: {},
+
+  reset: () => set({ statusByServerId: {} }),
 
   reportReachable: (serverId, serverName) => {
     const previous = get().statusByServerId[serverId] ?? 'unknown';

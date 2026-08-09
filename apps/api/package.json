@@ -4,6 +4,8 @@
   "main": "index.ts",
   "scripts": {
     "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src --ext .ts",
     "build": "cd ../admin && bun run build",
     "db:generate": "bun drizzle-kit generate --dialect postgresql --schema=./src/db/schema.ts",
     "db:migrate": "bun drizzle-kit migrate",
@@ -36,8 +38,11 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.66.0",
+    "@typescript-eslint/parser": "^8.66.0",
     "@types/bun": "^1.1.6",
     "drizzle-kit": "^0.31.6",
+    "eslint": "^9.25.0",
     "typescript": "^5.5.3"
   }
 }

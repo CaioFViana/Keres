@@ -14,8 +14,6 @@ import { chapters, galleries, stories } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-type CreateStoryDataType = z.infer<typeof CreateStoryDataSchema>;
-
 export class StorySyncHandler extends BaseSyncEntityHandler<typeof CreateStoryDataSchema, typeof PartialStorySchema> {
   entityName = 'Story';
 

@@ -128,7 +128,7 @@ const LocationFormScreen = () => {
       }
     };
     loadLocation();
-  }, [currentLocationId, isEditing, selectedStory?.id, t]);
+  }, [currentLocationId, drizzleDb, isEditing, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {

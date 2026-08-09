@@ -118,7 +118,7 @@ const WorldRuleFormScreen = () => {
       }
     };
     loadWorldRule();
-  }, [currentWorldRuleId, isEditing, selectedStory?.id, t]);
+  }, [currentWorldRuleId, drizzleDb, isEditing, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {

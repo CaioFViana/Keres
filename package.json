@@ -14,7 +14,9 @@
     "docker:up": "docker compose -f apps/api/docker-compose.yml up -d",
     "docker:down": "docker compose -f apps/api/docker-compose.yml down",
     "desktop:start": "cd apps/desktop && bun run start",
-    "desktop:package": "cd apps/desktop && bun run package"
+    "desktop:package": "cd apps/desktop && bun run package",
+    "typecheck": "bun run --cwd packages/shared typecheck && bun run --cwd apps/client typecheck && bun run --cwd apps/api typecheck && bun run --cwd apps/admin typecheck && bun run --cwd apps/desktop typecheck",
+    "lint": "bun run --cwd packages/shared lint && bun run --cwd apps/client lint && bun run --cwd apps/api lint && bun run --cwd apps/admin lint && bun run --cwd apps/desktop lint"
   },
   "workspaces": [
     "apps/*",

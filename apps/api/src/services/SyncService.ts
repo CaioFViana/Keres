@@ -515,12 +515,6 @@ export class SyncService {
        */
       const resultingEntityVersion = op.entityVersion ?? op.operationVersion;
 
-      // If the original payload contains updatedAt/deletedAt (which are dates from the original client payload)
-      // ensure they are converted to Date objects for consistency before making a decision.
-      const payloadUpdatedAt = payloadAsRecord.updatedAt ? new Date(payloadAsRecord.updatedAt) : undefined;
-      const payloadDeletedAt = payloadAsRecord.deletedAt ? new Date(payloadAsRecord.deletedAt) : undefined;
-
-
       // --- Enrich data based on operation type ---
       if (op.operationType === 'create') {
         // For 'create', the client original payload contains the base data.

@@ -137,7 +137,7 @@ const ItemFormScreen = () => {
       }
     };
     loadItem();
-  }, [currentItemId, isEditing, selectedStory?.id, t]);
+  }, [currentItemId, drizzleDb, isEditing, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {

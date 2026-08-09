@@ -17,7 +17,7 @@ export async function login(username: string, password: string): Promise<LoginRe
 
   try {
     await apiClient.get('/admin/api/users', { params: { pageSize: 1 } });
-  } catch (error) {
+  } catch {
     clearToken();
     throw new Error('This account does not have admin access.');
   }

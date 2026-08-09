@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig, isAxiosError } from 'axios';
+import { AxiosError, AxiosInstance, AxiosRequestConfig, create as createAxios, InternalAxiosRequestConfig, isAxiosError } from 'axios';
 import { Platform } from 'react-native';
 import { ServerSelect } from '../db/schema'; // Import ServerSelect
 import { useConnectivityStore } from '../state/connectivityStore';
@@ -269,7 +269,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
 }
 
 // Global API client instance
-const apiClient: KeresAxiosInstance = axios.create() as KeresAxiosInstance;
+const apiClient: KeresAxiosInstance = createAxios() as KeresAxiosInstance;
 applyInterceptors(apiClient); // Apply interceptors (and setActiveServer) to the global instance
 
 // Method to dynamically set the base URL for the global instance
@@ -286,7 +286,7 @@ apiClient.setTokenProvider = (provider: TokenProvider | null) => {
 
 // Function to create a new Axios instance with interceptors
 export function createKeresAxiosInstance(config?: AxiosRequestConfig): KeresAxiosInstance {
-  const instance = axios.create(config) as KeresAxiosInstance;
+  const instance = createAxios(config) as KeresAxiosInstance;
   applyInterceptors(instance); // Also sets instance.setActiveServer, scoped to this instance
   instance.setBaseUrl = (url: string) => { instance.defaults.baseURL = url; };
   instance.setTokenProvider = (provider: TokenProvider | null) => { tokenProvider = provider; };
@@ -295,7 +295,7 @@ export function createKeresAxiosInstance(config?: AxiosRequestConfig): KeresAxio
 
 // Function to create a new Axios instance WITHOUT interceptors
 export function createPlainAxiosInstance(config?: AxiosRequestConfig): AxiosInstance {
-  return axios.create(config);
+  return createAxios(config);
 }
 
 export default apiClient;

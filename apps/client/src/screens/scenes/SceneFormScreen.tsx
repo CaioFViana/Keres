@@ -202,7 +202,7 @@ const SceneFormScreen = () => {
       }
     };
     loadSceneAndData();
-  }, [currentSceneId, isEditing, selectedStory?.id, t, fetchCharacterSceneRelations]);
+  }, [currentSceneId, drizzleDb, isEditing, selectedStory?.id, t, fetchCharacterSceneRelations]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {

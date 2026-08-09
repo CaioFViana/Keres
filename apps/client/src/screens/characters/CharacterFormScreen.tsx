@@ -186,7 +186,7 @@ const CharacterFormScreen = () => {
       }
     };
     loadCharacterAndData();
-  }, [currentCharacterId, isEditing, selectedStory?.id, t,
+  }, [currentCharacterId, drizzleDb, isEditing, selectedStory?.id, t,
     fetchAllCharactersInStory, fetchRelationsForCharacter
   ]);
 

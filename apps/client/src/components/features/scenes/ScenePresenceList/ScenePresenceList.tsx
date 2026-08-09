@@ -17,7 +17,7 @@ export interface ScenePresenceEntry<TItem extends RelatedEntity> {
 }
 
 export function groupScenePresenceEntries<TItem extends RelatedEntity>(
-  pairs: Array<{ item: TItem; scene: SceneSelect }>
+  pairs: { item: TItem; scene: SceneSelect }[]
 ): ScenePresenceEntry<TItem>[] {
   const grouped = new Map<string, ScenePresenceEntry<TItem>>();
 

@@ -22,7 +22,7 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWor
     );
   }
 
-  private async validateRelatedEntities(storyId: string): Promise<void> {
+  private async validateRelatedEntities(): Promise<void> {
     // WorldRule has no direct related entities to validate
   }
 
@@ -35,7 +35,7 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWor
       throw new Error(`Conflict: WorldRule with ID ${update.id} already exists.`);
     }
 
-    await this.validateRelatedEntities(storyId);
+    await this.validateRelatedEntities();
 
     await db.insert(worldRules).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
@@ -52,7 +52,7 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWor
   async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
-    await this.validateRelatedEntities(storyId);
+    await this.validateRelatedEntities();
 
     await db.update(worldRules)
       .set({

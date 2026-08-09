@@ -1,5 +1,5 @@
 import { CURRENT_STORY_FORMAT_VERSION, EffectiveStoryRole, FullStoryExportSchema, FullStoryExportType } from '@keres/shared';
-import { and, asc, count, eq, sql } from 'drizzle-orm';
+import { and, count, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import {
   AttributeValueInsert,
@@ -578,7 +578,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               id: storyId,
               type: 'delete',
             }]);
-            const conflict = (response.data?.conflicts as Array<{ entity: string; entityId: string; message?: string; reason?: string }> | undefined)
+            const conflict = (response.data?.conflicts as { entity: string; entityId: string; message?: string; reason?: string }[] | undefined)
               ?.find((c) => c.entity === 'Story' && c.entityId === storyId);
             if (conflict) {
               console.warn(`Server rejected deletion for story ${storyId} (proceeding with local deletion regardless): ${conflict.message || conflict.reason}`);
@@ -660,7 +660,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // The route always answers 200 and reports per-operation outcome in the body - a
       // rejected operation never throws, so this check is the only way to actually know
       // whether the server's copy is gone.
-      const conflict = (response.data?.conflicts as Array<{ entity: string; entityId: string; message?: string; reason?: string }> | undefined)
+      const conflict = (response.data?.conflicts as { entity: string; entityId: string; message?: string; reason?: string }[] | undefined)
         ?.find((c) => c.entity === 'Story' && c.entityId === storyId);
       if (conflict) {
         throw new Error(`Server rejected the delete: ${conflict.message || conflict.reason || 'unknown reason'}`);

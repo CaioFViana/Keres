@@ -2,7 +2,7 @@ import { and, eq, or, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { stories, storyPermissions, users } from '../db/schema';
-import { Friendship, FriendStatus } from '@keres/shared';
+import { FriendStatus } from '@keres/shared';
 import { friendships } from '../db/schema/tables/friendships';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 

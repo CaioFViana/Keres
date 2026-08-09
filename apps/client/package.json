@@ -13,6 +13,7 @@
     "web": "expo start --web",
     "export:web": "node scripts/generate-migrations-index.js && node scripts/generate-example-stories-index.js && expo export -p web",
     "lint": "expo lint",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "locales:audit": "tsx scripts/verify-translations.ts",
     "locales:audit:force": "tsx scripts/verify-translations.ts --force"

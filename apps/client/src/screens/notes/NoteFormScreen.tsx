@@ -102,7 +102,7 @@ const NoteFormScreen = () => {
       }
     };
     loadNote();
-  }, [noteId, isEditing, noteService, t]);
+  }, [drizzleDb, noteId, isEditing, noteService, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {

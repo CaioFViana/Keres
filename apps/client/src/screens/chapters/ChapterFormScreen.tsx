@@ -122,7 +122,7 @@ const ChapterFormScreen = () => {
       }
     };
     loadChapter();
-  }, [currentChapterId, isEditing, selectedStory?.id, t]);
+  }, [currentChapterId, drizzleDb, isEditing, selectedStory?.id, t]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {

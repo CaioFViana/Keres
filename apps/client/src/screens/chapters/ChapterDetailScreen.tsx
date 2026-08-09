@@ -1,4 +1,4 @@
-import ChapterSceneManager from '@/src/components/features/chapters/ChapterManager/ChapterSceneManager'; // Import ChapterSceneManager
+import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
@@ -253,10 +253,16 @@ const ChapterDetailScreen = () => {
       <DetailField label={t('extra_notes')} value={chapter.extraNotes || t('common_na')} />
 
 
-      <ChapterSceneManager
-        currentChapterId={chapterId}
-        availableScenes={allScenes}
-        availableLocations={allLocations}
+      <RelatedScenesList
+        scenes={allScenes}
+        matchesScene={scene => scene.chapterId === chapterId}
+        title={t('scenes_in_chapter_title')}
+        noItemsMessage="no_scenes_in_chapter"
+        getDetails={scene => {
+          const details = scene.summary ? [{ label: t('summary'), value: scene.summary }] : [];
+          const locationName = allLocations.find(location => location.id === scene.locationId)?.name;
+          return locationName ? [...details, { label: t('location'), value: locationName }] : details;
+        }}
       />
 
       <NoteManager

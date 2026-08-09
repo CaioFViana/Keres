@@ -15,7 +15,7 @@ import TagChipList from '@/src/components/common/display/TagChipList/TagChipList
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import LocationCharacterManager from '@/src/components/features/locations/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
 import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager'; // Import LocationItemManager
-import LocationSceneManager from '@/src/components/features/locations/LocationManager/LocationSceneManager'; // Import LocationSceneManager
+import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import { useDrizzle } from '../../db';
 import { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
@@ -452,9 +452,12 @@ const LocationDetailsScreen = () => {
         availableCharacters={allCharacters}
       />
 
-      <LocationSceneManager
-        currentLocationId={locationId}
-        availableScenes={allScenes}
+      <RelatedScenesList
+        scenes={allScenes}
+        matchesScene={scene => scene.locationId === locationId}
+        title={t('scenes_in_location_title')}
+        noItemsMessage="no_scenes_in_location"
+        getDetails={scene => scene.summary ? [{ label: t('summary'), value: scene.summary }] : []}
       />
 
       <LocationItemManager

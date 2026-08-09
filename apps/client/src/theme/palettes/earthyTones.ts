@@ -1,53 +1,17 @@
 import { ThemeColors } from '../ThemeColors';
 
 const lightColors: ThemeColors = {
-  primary: '#6D4C41', // Brown (Darker earth tone)
-  primaryVariant: '#8D6E63', // Lighter Brown
-  primaryContainer: '#D7CCC8', // Very light brown/beige
-  onPrimaryContainer: '#6D4C41', // On Very light brown
-  secondary: '#FFB74D', // Orange (Sun/sand)
-  secondaryVariant: '#FF9800', // Darker Orange
-  background: '#FBE9E7', // Lightest peach/beige background
-  surface: '#FFFFFF',
-  error: '#B00020',
-  onPrimary: '#FFFFFF',
-  onSecondary: '#000000',
-  onBackground: '#000000',
-  onSurface: '#000000',
-  onError: '#FFFFFF',
-  text: '#000000',
-  textSecondary: '#666666',
-  card: '#EFEBE9', // Light beige for cards
-  border: '#BCAAA4', // Medium beige border
-  notification: '#FFC107',
-  accent: '#4CAF50', // Green accent (foliage)
-  star: '#FFD700',
-  shadow: '#000000',
+  primary: '#76513A', primaryVariant: '#5B3B27', primaryContainer: '#FFDBC8', onPrimaryContainer: '#2C1609',
+  secondary: '#8A4F2D', secondaryVariant: '#6C3A1E', background: '#FFF9F6', surface: '#FFFBFF',
+  error: '#BA1A1A', onPrimary: '#FFFFFF', onSecondary: '#FFFFFF', onBackground: '#211A17', onSurface: '#211A17', onError: '#FFFFFF',
+  text: '#211A17', textSecondary: '#625B56', card: '#F8EEE8', border: '#DFC3B5', notification: '#805B00', accent: '#8A4F2D', star: '#8A6500', shadow: '#000000',
 };
 
 const darkColors: ThemeColors = {
-  primary: '#A1887F', // Lighter Brown for dark mode
-  primaryVariant: '#8D6E63', // Brown
-  primaryContainer: '#5D4037', // Dark Brown
-  onPrimaryContainer: '#D7CCC8', // On Dark Brown
-  secondary: '#FFCC80', // Light Orange (Sun/sand)
-  secondaryVariant: '#FFB74D', // Orange
-  background: '#3E2723', // Very dark brown background
-  surface: '#2C1D1B', // Darker brown
-  error: '#CF6679',
-  onPrimary: '#FFFFFF',
-  onSecondary: '#000000',
-  onBackground: '#FFFFFF',
-  onSurface: '#FFFFFF',
-  onError: '#000000',
-  text: '#FFFFFF',
-  textSecondary: '#AAAAAA',
-  card: '#4E342E', // Dark brown for cards
-  border: '#6D4C41', // Medium brown border
-  notification: '#FFC107',
-  accent: '#81C784', // Lighter green accent
-  star: '#FFD700',
-  shadow: 'rgba(255, 255, 255, 0.2)',
+  primary: '#E9BDA3', primaryVariant: '#CDA58D', primaryContainer: '#5B3D29', onPrimaryContainer: '#FFDBC8',
+  secondary: '#FFB68D', secondaryVariant: '#E99C74', background: '#1D1713', surface: '#251D18',
+  error: '#FFB4AB', onPrimary: '#442511', onSecondary: '#51230F', onBackground: '#EDE0DA', onSurface: '#EDE0DA', onError: '#690005',
+  text: '#EDE0DA', textSecondary: '#D5C2B8', card: '#30251F', border: '#51443C', notification: '#FFD166', accent: '#FFB68D', star: '#FFD166', shadow: '#000000',
 };
 
 export const earthyTonesTheme = { lightColors, darkColors };

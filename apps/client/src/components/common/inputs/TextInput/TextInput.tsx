@@ -12,6 +12,7 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({
   onFocus,
   onPointerEnter,
   onPointerLeave,
+  multiline,
   ...rest
 }, ref) => {
   const { colors } = useTheme();
@@ -38,6 +39,11 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({
         outlineWidth: 0,
       } as any : {}),
     },
+    multilineInput: {
+      paddingTop: 10,
+      paddingBottom: 10,
+      textAlignVertical: 'top',
+    },
   });
 
   // A multiline field asks to grow taller than the single-line default via `minHeight` in its
@@ -62,7 +68,7 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({
   return (
     <RNTextInput
       ref={ref}
-      style={[commonInputStyles.input, styles.input, style, interactionStyle, heightOverride]}
+      style={[commonInputStyles.input, styles.input, multiline && styles.multilineInput, style, interactionStyle, heightOverride]}
       placeholderTextColor={colors.textSecondary}
       onFocus={(event) => {
         setIsFocused(true);
@@ -81,6 +87,7 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({
         setIsHovered(false);
         onPointerLeave?.(event);
       }}
+      multiline={multiline}
       {...rest}
     />
   );

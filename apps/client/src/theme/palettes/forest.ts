@@ -1,53 +1,17 @@
 import { ThemeColors } from '../ThemeColors';
 
 const lightColors: ThemeColors = {
-  primary: '#6B8E23', // OliveDrab
-  primaryVariant: '#8FBC8F', // DarkSeaGreen
-  primaryContainer: '#C8E6C9', // Added light green
-  onPrimaryContainer: '#2E7D32', // Added dark green
-  secondary: '#556B2F', // DarkOliveGreen
-  secondaryVariant: '#6B8E23', // OliveDrab
-  background: '#E6F2E6', // Pastel green
-  surface: '#FFFFFF',
-  error: '#DC3545',
-  onPrimary: '#FFFFFF',
-  onSecondary: '#FFFFFF',
-  onBackground: '#000000',
-  onSurface: '#000000',
-  onError: '#FFFFFF',
-  text: '#000000',
-  textSecondary: '#666666',
-  card: '#C1E1C1', // Light pastel green
-  border: '#A3D9A3', // Medium Green
-  notification: '#FFC107',
-  accent: '#7CFC00', // Lawn Green for a vibrant accent
-  star: '#FFD700',
-  shadow: '#000000', // Added shadow for light theme
+  primary: '#3F6B2A', primaryVariant: '#295315', primaryContainer: '#C0F1A6', onPrimaryContainer: '#102000',
+  secondary: '#52634A', secondaryVariant: '#3B4B34', background: '#F8FBF4', surface: '#FDFDF9',
+  error: '#BA1A1A', onPrimary: '#FFFFFF', onSecondary: '#FFFFFF', onBackground: '#1A1C18', onSurface: '#1A1C18', onError: '#FFFFFF',
+  text: '#1A1C18', textSecondary: '#596057', card: '#EDF3E8', border: '#C2CABB', notification: '#805B00', accent: '#2E7D32', star: '#8A6500', shadow: '#000000',
 };
 
 const darkColors: ThemeColors = {
-  primary: '#8FBC8F', // DarkSeaGreen
-  primaryVariant: '#6B8E23', // OliveDrab
-  primaryContainer: '#388E3C', // Added darker green
-  onPrimaryContainer: '#C8E6C9', // Added light green
-  secondary: '#556B2F', // DarkOliveGreen
-  secondaryVariant: '#6B8E23', // OliveDrab
-  background: '#2F3E2F', // Dark green with subtle tint
-  surface: '#3A4D3A', // Slightly lighter dark green
-  error: '#FF6347', // Tomato
-  onPrimary: '#FFFFFF',
-  onSecondary: '#FFFFFF',
-  onBackground: '#FFFFFF',
-  onSurface: '#FFFFFF',
-  onError: '#000000',
-  text: '#FFFFFF',
-  textSecondary: '#AAAAAA',
-  card: '#3D523D', // Darker green with subtle tint
-  border: '#4F6F4F', // Medium Dark Green
-  notification: '#FFC107',
-  accent: '#A2FF2C', // A bright green for accent in dark mode
-  star: '#FFD700',
-  shadow: 'rgba(255, 255, 255, 0.2)', // Added shadow for dark theme
+  primary: '#A5D786', primaryVariant: '#8EBD70', primaryContainer: '#285414', onPrimaryContainer: '#C0F1A6',
+  secondary: '#BBCBB0', secondaryVariant: '#A0B097', background: '#141812', surface: '#1A1E17',
+  error: '#FFB4AB', onPrimary: '#193800', onSecondary: '#263423', onBackground: '#E2E4DD', onSurface: '#E2E4DD', onError: '#690005',
+  text: '#E2E4DD', textSecondary: '#C2CABB', card: '#242A20', border: '#41493C', notification: '#FFD166', accent: '#9CE59A', star: '#FFD166', shadow: '#000000',
 };
 
 export const forestTheme = { lightColors, darkColors };

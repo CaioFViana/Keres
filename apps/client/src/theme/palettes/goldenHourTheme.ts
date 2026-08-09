@@ -1,53 +1,17 @@
 import { ThemeColors } from '../ThemeColors';
 
 const lightColors: ThemeColors = {
-  primary: '#FFD140', // Golden Yellow
-  primaryVariant: '#FFC107', // Amber
-  primaryContainer: '#FFFDE7', // Very Light Yellow
-  onPrimaryContainer: '#FFD140', // On Very Light Yellow
-  secondary: '#8BC34A', // Light Green (complementary/nature)
-  secondaryVariant: '#689F38', // Darker Green
-  background: '#FFFDE7', // Lightest Yellow background
-  surface: '#FFFFFF',
-  error: '#B00020',
-  onPrimary: '#000000', // Black text on yellow
-  onSecondary: '#FFFFFF',
-  onBackground: '#000000',
-  onSurface: '#000000',
-  onError: '#FFFFFF',
-  text: '#000000',
-  textSecondary: '#666666',
-  card: '#FFF9C4', // Pale Yellow for cards
-  border: '#FFEE58', // Brighter Yellow border
-  notification: '#FFC107',
-  accent: '#2196F3', // Blue accent
-  star: '#FFD700',
-  shadow: '#000000',
+  primary: '#765B00', primaryVariant: '#5C4700', primaryContainer: '#FFE08A', onPrimaryContainer: '#241A00',
+  secondary: '#675F3F', secondaryVariant: '#4F482C', background: '#FFFAEF', surface: '#FFFBFF',
+  error: '#BA1A1A', onPrimary: '#FFFFFF', onSecondary: '#FFFFFF', onBackground: '#201B13', onSurface: '#201B13', onError: '#FFFFFF',
+  text: '#201B13', textSecondary: '#625F55', card: '#FFF1C7', border: '#E3C777', notification: '#805B00', accent: '#8C6500', star: '#8A6500', shadow: '#000000',
 };
 
 const darkColors: ThemeColors = {
-  primary: '#FFECB3', // Very Light Yellow for dark mode
-  primaryVariant: '#FFD700', // Gold
-  primaryContainer: '#FFC107', // Amber
-  onPrimaryContainer: '#000000', // On Amber
-  secondary: '#A5D6A7', // Light Green
-  secondaryVariant: '#8BC34A', // Green
-  background: '#3A3A00', // Dark Olive background
-  surface: '#2C2C00', // Darker Olive
-  error: '#CF6679',
-  onPrimary: '#000000',
-  onSecondary: '#000000',
-  onBackground: '#FFFFFF',
-  onSurface: '#FFFFFF',
-  onError: '#000000',
-  text: '#FFFFFF',
-  textSecondary: '#AAAAAA',
-  card: '#4D4D00', // Dark Olive for cards
-  border: '#6B6B00', // Medium Olive border
-  notification: '#FFC107',
-  accent: '#64B5F6', // Lighter Blue accent
-  star: '#FFD700',
-  shadow: 'rgba(255, 255, 255, 0.2)',
+  primary: '#FFD95C', primaryVariant: '#E8BF3D', primaryContainer: '#5B4500', onPrimaryContainer: '#FFE08A',
+  secondary: '#D9C99B', secondaryVariant: '#BEB087', background: '#1D1A12', surface: '#262217',
+  error: '#FFB4AB', onPrimary: '#3D2E00', onSecondary: '#37311A', onBackground: '#EAE3D5', onSurface: '#EAE3D5', onError: '#690005',
+  text: '#EAE3D5', textSecondary: '#D0C7B1', card: '#312C1F', border: '#504937', notification: '#FFD166', accent: '#F5D16B', star: '#FFD166', shadow: '#000000',
 };
 
 export const goldenHourTheme = { lightColors, darkColors };

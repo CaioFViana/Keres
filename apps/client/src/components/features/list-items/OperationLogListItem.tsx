@@ -85,10 +85,12 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
 
   const styles = StyleSheet.create({
     cardContainer: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.card,
       borderRadius: 8,
       padding: 15,
       marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
@@ -103,7 +105,7 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({ log, onPres
     operationTypeText: {
       fontSize: 16,
       fontWeight: 'bold',
-      color: colors.primary,
+      color: colors.text,
       textTransform: 'capitalize',
       marginLeft: 5, // Space between icon and text
     },

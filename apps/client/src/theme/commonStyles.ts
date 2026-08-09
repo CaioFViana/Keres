@@ -164,7 +164,11 @@ export const getCommonInputStyles = (colors: ThemeColors) => StyleSheet.create({
     // React Native Web otherwise adds a browser outline on focus, which looks
     // like a second border on inputs and controls. Focus is still represented
     // by the component's own themed border/state.
-    ...(Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {}),
+    ...(Platform.OS === 'web' ? {
+      outlineColor: 'transparent',
+      outlineStyle: 'none',
+      outlineWidth: 0,
+    } as any : {}),
   },
   customComponentInput: {
     paddingHorizontal: 0, 

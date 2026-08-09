@@ -1,14 +1,23 @@
-import React, { useContext } from 'react';
-import { Platform, TextInput as RNTextInput, StyleSheet, TextInputProps } from 'react-native';
 import { KeyboardAwareContext } from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import React, { useContext, useState } from 'react';
+import { Platform, TextInput as RNTextInput, StyleSheet, TextInputProps } from 'react-native';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 
 type CustomTextInputProps = TextInputProps;
 
-const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({ style, onFocus, ...rest }, ref) => {
+const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({
+  style,
+  onBlur,
+  onFocus,
+  onPointerEnter,
+  onPointerLeave,
+  ...rest
+}, ref) => {
   const { colors } = useTheme();
   const requestFocusScroll = useContext(KeyboardAwareContext);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const commonInputStyles = getCommonInputStyles(colors);
 
   const styles = StyleSheet.create({
@@ -23,7 +32,11 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({ style, 
       color: colors.text,
       backgroundColor: colors.surface,
       fontSize: 16,
-      ...(Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {}),
+      ...(Platform.OS === 'web' ? {
+        outlineColor: 'transparent',
+        outlineStyle: 'none',
+        outlineWidth: 0,
+      } as any : {}),
     },
   });
 
@@ -38,15 +51,35 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(({ style, 
   // actually requested - is what makes that request actually take effect.
   const requestedMinHeight = StyleSheet.flatten(style)?.minHeight;
   const heightOverride = requestedMinHeight ? { height: undefined } : null;
+  const interactionStyle = isFocused || (Platform.OS === 'web' && isHovered)
+    ? {
+        borderColor: colors.primary,
+        borderStyle: 'solid' as const,
+        borderWidth: 1,
+      }
+    : null;
 
   return (
     <RNTextInput
       ref={ref}
-      style={[commonInputStyles.input, styles.input, style, heightOverride]}
+      style={[commonInputStyles.input, styles.input, style, interactionStyle, heightOverride]}
       placeholderTextColor={colors.textSecondary}
       onFocus={(event) => {
+        setIsFocused(true);
         onFocus?.(event);
         requestFocusScroll?.();
+      }}
+      onBlur={(event) => {
+        setIsFocused(false);
+        onBlur?.(event);
+      }}
+      onPointerEnter={(event) => {
+        setIsHovered(true);
+        onPointerEnter?.(event);
+      }}
+      onPointerLeave={(event) => {
+        setIsHovered(false);
+        onPointerLeave?.(event);
       }}
       {...rest}
     />

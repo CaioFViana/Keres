@@ -25,7 +25,10 @@ const FormContainer: React.FC<FormContainerProps> = ({ children, style }) => {
   });
 
   return (
-    <KeyboardAwareScreen contentContainerStyle={[styles.innerContainer, style]}>
+    <KeyboardAwareScreen
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={[styles.innerContainer, style]}
+    >
       {children}
     </KeyboardAwareScreen>
   );

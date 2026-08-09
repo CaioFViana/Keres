@@ -4,10 +4,10 @@ import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entit
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CharacterLocationManager from '@/src/components/features/characters/CharacterManager/CharacterLocationManager'; // Import CharacterLocationManager
+import ScenePresenceList, { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import CharacterSceneManager from '@/src/components/features/characters/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
@@ -446,6 +446,18 @@ const CharacterDetailScreen = () => {
     }, [navigation, headerTitle, renderHeaderRight])
   );
 
+  const characterLocationEntries = useMemo(() => {
+    const pairs = characterSceneRelations.flatMap(relation => {
+      if (relation.characterId !== characterId || relation.isDeleted) return [];
+      const scene = allScenes.find(candidate => candidate.id === relation.sceneId);
+      const location = scene?.locationId
+        ? allLocations.find(candidate => candidate.id === scene.locationId)
+        : undefined;
+      return scene && !scene.isDeleted && location && !location.isDeleted ? [{ item: location, scene }] : [];
+    });
+    return groupScenePresenceEntries(pairs);
+  }, [allLocations, allScenes, characterId, characterSceneRelations]);
+
   if (loading) {
     return <ScreenLoading padded message={t('loading_character_details')} />;
   }
@@ -514,11 +526,12 @@ const CharacterDetailScreen = () => {
         currentCharacterId={characterId}
       />
 
-      <CharacterLocationManager
-        characterSceneRelations={characterSceneRelations}
-        availableScenes={allScenes}
-        availableLocations={allLocations}
-        currentCharacterId={characterId}
+      <ScenePresenceList
+        entries={characterLocationEntries}
+        title={t('character_locations_title')}
+        noItemsMessage="no_locations_assigned_to_character"
+        entityType="Location"
+        sceneLabel={t('scene')}
       />
 
       <NoteManager

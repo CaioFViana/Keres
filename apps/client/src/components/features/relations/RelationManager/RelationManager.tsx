@@ -82,22 +82,19 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
       padding: 5,
     },
     addRelationContainer: {
-      // flexDirection: 'row', // Removed flexDirection here, will manage with flexGrow on Select
-      alignItems: 'center',
       marginTop: 15,
       marginBottom: 10,
+      gap: 10,
     },
     dropdown: {
-      flex: 1, // Allow Select to grow
-      marginRight: 10,
+      width: '100%',
       zIndex: 2,
     },
     addButton: {
-      paddingHorizontal: 10,
-      paddingVertical: 16,
+      alignItems: 'center',
+      paddingVertical: 14,
       borderRadius: 5,
       backgroundColor: colors.primary,
-      alignSelf: 'flex-start', // Align button to start
     },
     addButtonText: {
       color: colors.onPrimary,
@@ -117,12 +114,27 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
       marginBottom: 10,
     },
     selectAddRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        marginBottom: 10,
+      gap: 10,
+    },
+    assignedItems: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      overflow: 'hidden',
+    },
+    relationItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 15,
+      backgroundColor: colors.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
     },
   });
+
+  const activeRelations = relations.filter(relation => !relation.isDeleted);
 
   const handleAddRelation = useCallback(async () => {
     if (!selectedItemIdToAdd) {
@@ -131,7 +143,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
     }
 
     // Check for duplicates using the generic getRelationItemId
-    const itemExists = relations.some(rel => getRelationItemId(rel) === selectedItemIdToAdd);
+    const itemExists = activeRelations.some(rel => getRelationItemId(rel) === selectedItemIdToAdd);
     if (itemExists) {
       AppAlert.alert(t('error'), itemAlreadyAddedMessage);
       return;
@@ -142,7 +154,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
     await onSave(newRelation);
     setSelectedItemIdToAdd(null);
     setSearchTerm(''); // Clear search term after adding
-  }, [selectedItemIdToAdd, relations, currentStoryId, currentEntityId, createRelationObject, getRelationItemId, onSave, t, selectItemToAddMessage, itemAlreadyAddedMessage]);
+  }, [selectedItemIdToAdd, activeRelations, currentStoryId, currentEntityId, createRelationObject, getRelationItemId, onSave, t, selectItemToAddMessage, itemAlreadyAddedMessage]);
 
   const handleDeleteRelation = useCallback(async (relationId: string) => {
     AppAlert.alert(
@@ -166,7 +178,7 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
   }, [onDelete, t, deleteConfirmationTitle, deleteConfirmationMessage]);
 
   const filteredAvailableItems = availableItems
-    .filter(item => filterAvailableItems(item, relations, getRelationItemId))
+    .filter(item => filterAvailableItems(item, activeRelations, getRelationItemId))
     .filter(item => getItemSearchValue(item).toLowerCase().includes(searchTerm.toLowerCase()));
 
   const availableItemOptions = filteredAvailableItems.map(item => ({
@@ -240,11 +252,11 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
             </View>
           )}
 
-          {relations.length === 0 ? (
+          {activeRelations.length === 0 ? (
             <Text style={{ color: colors.textSecondary }}>{noItemsAssignedMessage}</Text>
           ) : (
-            <View>
-              {relations.map(renderRelationItem)}
+            <View style={styles.assignedItems}>
+              {activeRelations.map(renderRelationItem)}
             </View>
           )}
         </View>

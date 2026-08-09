@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
@@ -13,9 +13,9 @@ import FavoritedByList from '@/src/components/features/favorites/FavoritedByList
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import LocationCharacterManager from '@/src/components/features/locations/LocationManager/LocationCharacterManager'; // Import LocationCharacterManager
 import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager'; // Import LocationItemManager
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
+import ScenePresenceList, { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import { useDrizzle } from '../../db';
 import { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
@@ -401,6 +401,20 @@ const LocationDetailsScreen = () => {
     },
   });
 
+  const locationCharacterEntries = useMemo(() => {
+    const scenesById = new Map(
+      allScenes
+        .filter(scene => scene.locationId === locationId && !scene.isDeleted)
+        .map(scene => [scene.id, scene])
+    );
+    const pairs = characterSceneRelations.flatMap(relation => {
+      const scene = scenesById.get(relation.sceneId);
+      const character = allCharacters.find(candidate => candidate.id === relation.characterId);
+      return scene && character && !relation.isDeleted && !character.isDeleted ? [{ item: character, scene }] : [];
+    });
+    return groupScenePresenceEntries(pairs);
+  }, [allCharacters, allScenes, characterSceneRelations, locationId]);
+
   if (loading) {
     return <ScreenLoading padded message={t('loading_location_details')} />;
   }
@@ -445,11 +459,12 @@ const LocationDetailsScreen = () => {
         editable={canEdit}
       />
 
-      <LocationCharacterManager
-        currentLocationId={locationId}
-        availableScenes={allScenes}
-        characterSceneRelations={characterSceneRelations}
-        availableCharacters={allCharacters}
+      <ScenePresenceList
+        entries={locationCharacterEntries}
+        title={t('characters_in_location_title')}
+        noItemsMessage="no_characters_in_location"
+        entityType="Character"
+        sceneLabel={t('scene')}
       />
 
       <RelatedScenesList

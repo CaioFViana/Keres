@@ -1,12 +1,8 @@
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import { Character } from '@keres/shared/entities/Character';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
 import { createULID } from '../../../../utils/entityUtils';
-import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager'; // Removed BaseItem, BaseRelation
 
 interface CharacterRelationManagerProps {
@@ -29,15 +25,6 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
   currentSceneId,
 }) => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
-
-  const handleCharacterPress = useCallback((character: Character) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Character', character.id);
-    }
-  }, [navigation]);
-
   const createCharacterSceneRelationObject = (selectedCharacterId: string, storyId: string, sceneId: string): CharacterScene => {
     return {
       id: createULID(),
@@ -83,7 +70,6 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
       deleteConfirmationTitle={t('delete_character_from_scene_title')}
       deleteConfirmationMessage={t('delete_character_from_scene_message')}
       title={t('characters_title')}
-      onItemPress={handleCharacterPress}
     />
   );
 };

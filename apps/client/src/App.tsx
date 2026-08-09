@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
 import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
 import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
+import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
 import SyncConflictModal from '@/src/components/features/sync/SyncConflictModal/SyncConflictModal';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
@@ -36,6 +37,7 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: colors.background }}>
       <StatusBar style={statusBarStyle} />
+      <WebScrollbarTheme />
       {children}
       <DocumentTitleSync />
       <NotificationPopup />

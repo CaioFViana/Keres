@@ -17,7 +17,14 @@ const GalleryMediaViewerOverlay: React.FC = () => {
 
   return (
     <Modal visible={galleryId !== null} animationType="slide" onRequestClose={close}>
-      {galleryId && <GalleryDetailContent key={galleryId} galleryId={galleryId} onClose={close} />}
+      {galleryId && (
+        <GalleryDetailContent
+          key={galleryId}
+          galleryId={galleryId}
+          onClose={close}
+          showCloseButton
+        />
+      )}
     </Modal>
   );
 };

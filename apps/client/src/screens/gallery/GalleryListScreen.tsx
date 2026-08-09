@@ -3,7 +3,7 @@ import { MEDIA_TYPES } from '@keres/shared';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -14,6 +14,7 @@ import { GallerySelect } from '../../db/schemas/galleries';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { GalleryStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { importPickedMediaAssets } from '../../services/galleryMediaImport';
 import { mediaFileService } from '../../services/MediaFileService';
@@ -33,6 +34,7 @@ const GalleryListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { breakpoint } = useResponsiveLayout();
   const navigation = useNavigation<GalleryScreenNavigationProp>();
   const db = useDrizzle();
   const { userId } = useUserSettingsStore();
@@ -152,6 +154,8 @@ const GalleryListScreen = () => {
     { label: t('sort_by_updated_at'), value: 'updatedAt' },
   ], [t]);
 
+  const numColumns = breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2;
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -169,10 +173,11 @@ const GalleryListScreen = () => {
   return (
     <View style={styles.container}>
       <GenericFilterSortList
+        key={`gallery-columns-${numColumns}`}
         data={galleries}
         renderItem={renderGalleryItem}
         keyExtractor={(item) => item.id}
-        numColumns={2}
+        numColumns={numColumns}
         columnWrapperStyle={styles.columnWrapper}
         onSearch={handleSearch}
         onSearchSubmit={handleSearchSubmit}

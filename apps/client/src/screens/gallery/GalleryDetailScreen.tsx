@@ -17,7 +17,13 @@ const GalleryDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<GalleryDetailRouteProp>();
 
-  return <GalleryDetailContent galleryId={route.params.galleryId} onClose={() => navigation.goBack()} />;
+  return (
+    <GalleryDetailContent
+      galleryId={route.params.galleryId}
+      onClose={() => navigation.goBack()}
+      showCloseButton
+    />
+  );
 };
 
 export default GalleryDetailScreen;

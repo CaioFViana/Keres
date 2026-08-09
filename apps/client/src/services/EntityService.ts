@@ -20,6 +20,7 @@ import {
   notes,
   operationLogs,
   scenes,
+  suggestions,
   stories,
   storySchemaFields,
   tagRelations,
@@ -171,6 +172,14 @@ export class EntityService {
         });
         entitySpecificName = gallery?.title || gallery?.fileName;
         translatedEntityType = t('gallery')
+        break;
+      case OperationLogEntityType.Suggestion:
+        const suggestion = await db.query.suggestions.findFirst({
+          where: and(eq(suggestions.id, entityId), eq(suggestions.storyId, storyId)),
+          columns: { value: true },
+        });
+        entitySpecificName = suggestion?.value;
+        translatedEntityType = t('suggestion');
         break;
       case OperationLogEntityType.Favorite:
         const favorite = await db.query.favorites.findFirst({

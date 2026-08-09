@@ -22,5 +22,6 @@ export enum OperationLogEntityType {
   AttributeValue = 'AttributeValue',
   LocationRelation = 'LocationRelation',
   Favorite = 'Favorite',
+  Suggestion = 'Suggestion',
   // Add other relevant entities as they are introduced to the system
 }

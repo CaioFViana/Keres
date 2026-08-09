@@ -5,7 +5,6 @@ export const suggestions = sqliteTable('suggestions', {
   storyId: text('story_id').notNull(),
   type: text('type').notNull(),
   value: text('value').notNull(),
-  isDefault: integer('is_default', { mode: 'boolean' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

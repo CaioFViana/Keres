@@ -1,5 +1,5 @@
 import { CreateStoryUpdate, CreateSuggestionDataSchema, CreateSuggestionDataType, DeleteStoryUpdate, PartialSuggestionSchema, UpdateStoryUpdate } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { suggestions } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
@@ -69,7 +69,7 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<typeof CreateSu
           eq(suggestions.type, newType),
           eq(suggestions.value, newValue),
           eq(suggestions.isDeleted, false),
-          eq(suggestions.id, update.id!) // Exclude the current suggestion from the check
+          ne(suggestions.id, update.id!) // Exclude the current suggestion from the check
         ),
       });
 

@@ -76,6 +76,11 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
     content: {
       flexGrow: 1,
     },
+    scrollView: {
+      // A alça é sobreposta à borda direita do drawer. Reservar a mesma largura para o
+      // ScrollView mantém sua barra de rolagem visível, ao lado da alça, em vez de atrás dela.
+      marginRight: resizable ? 10 : 0,
+    },
     resizeHandle: {
       alignItems: 'center',
       bottom: 0,
@@ -98,7 +103,7 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
 
   return (
     <View style={styles.container}>
-      <DrawerContentScrollView {...drawerProps} contentContainerStyle={styles.content}>
+      <DrawerContentScrollView {...drawerProps} style={styles.scrollView} contentContainerStyle={styles.content}>
         <DrawerItemList {...drawerProps} />
       </DrawerContentScrollView>
       {resizable && (

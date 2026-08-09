@@ -981,7 +981,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             updatedAt: new Date(),
             version: suggestion.version,
             isDeleted: false,
-            isDefault: suggestion.isDefault,
             deletedAt: null,
           };
           await tx.insert(suggestions).values(suggestionToInsert).run();

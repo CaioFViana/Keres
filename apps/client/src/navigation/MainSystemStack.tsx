@@ -52,6 +52,7 @@ import SceneFormScreen from '../screens/scenes/SceneFormScreen';
 import SceneListScreen from '../screens/scenes/SceneListScreen';
 import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
 import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
+import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
 import TagDetailScreen, { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
@@ -93,6 +94,7 @@ export type MainSystemDrawerParamList = {
   StoryAnalysis: { storyId: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
+  Suggestions: undefined;
   StorySelection: undefined;
 };
 
@@ -680,6 +682,14 @@ const MainSystemNavigator = () => {
             navigation.navigate('StorySchemaStack', { screen: 'StorySchemaList' });
           },
         })}
+      />
+      <Drawer.Screen
+        name="Suggestions"
+        component={SuggestionsScreen}
+        options={{
+          title: t('standard_suggestions_title'),
+          drawerLabel: t('standard_suggestions_title'),
+        }}
       />
       <Drawer.Screen
         name="OperationLogStack"

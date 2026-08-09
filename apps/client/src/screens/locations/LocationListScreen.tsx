@@ -19,6 +19,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -88,6 +89,14 @@ const LocationsScreen = () => {
     fetchTags();
   }, [fetchTags]);
 
+  useEffect(() => {
+    const handleTagChange = (changedStoryId: string) => {
+      if (changedStoryId === storyId) fetchTags();
+    };
+    entityEventEmitter.on('tag_changed', handleTagChange);
+    return () => entityEventEmitter.off('tag_changed', handleTagChange);
+  }, [fetchTags, storyId]);
+
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(t('locations_title'));
@@ -133,7 +142,7 @@ const LocationsScreen = () => {
   ), [handleToggleFavorite, handleViewDetails]);
 
   const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id }));
+    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
   }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DropDownPicker, { ItemType, ValueType } from 'react-native-dropdown-picker'; // Import ItemType and ValueType
 import { useTheme } from '../../../../theme';
 
 interface SelectOption {
   label: string;
   value: string;
+  /** Cor opcional exibida como marcador na lista e na badge de seleção. */
+  color?: string | null;
 }
 
 // Props for single select
@@ -47,6 +49,9 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
   const dropdownItems: ItemType<string>[] = options.map(option => ({
     label: option.label,
     value: option.value,
+    icon: option.color ? () => (
+      <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 1, borderColor: colors.border, backgroundColor: option.color ?? undefined }} />
+    ) : undefined,
   }));
 
   const dropdownStyles = StyleSheet.create({
@@ -87,7 +92,40 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
       backgroundColor: colors.surface, // Adjust as needed
       opacity: 0.4,
     },
+    colorMarker: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    badge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 14,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      marginRight: 4,
+    },
+    badgeText: {
+      color: colors.text,
+      fontSize: 14,
+    },
   });
+
+  const renderBadgeItem = ({ label, value, props }: any) => {
+    const color = options.find((option) => option.value === value)?.color;
+    return (
+      <TouchableOpacity {...props} style={[props.style, dropdownStyles.badge]}>
+        {color && <View style={[dropdownStyles.colorMarker, { backgroundColor: color }]} />}
+        <Text style={dropdownStyles.badgeText}>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   // Conditional rendering or casting for DropDownPicker props
   if (multiple) {
@@ -125,6 +163,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
           zIndexInverse={1000}
           multiple={true} // Explicitly true
           mode="BADGE"
+          renderBadgeItem={renderBadgeItem}
           disabled={disabled} // Pass disabled prop
           disabledStyle={dropdownStyles.disabledStyle} // Apply disabled style
         />

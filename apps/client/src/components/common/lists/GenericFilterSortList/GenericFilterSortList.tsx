@@ -5,6 +5,7 @@ import { ActivityIndicator, FlatList, Keyboard, StyleProp, StyleSheet, Text, Tou
 import { useTheme } from '../../../../theme';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import Select from '@/src/components/common/inputs/Select/Select';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Import metadata
 import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
@@ -23,7 +24,7 @@ interface GenericFilterSortListProps<T> {
   currentSearchTerm?: string;
   // Filter Props
   filterComponent?: React.ReactNode;
-  filterOptions?: { label: string; value: string }[];
+  filterOptions?: { label: string; value: string; color?: string | null }[];
   onFilterChange: (filterValues: string[]) => void;
   selectedFilterValues: string[];
   // Sort Props
@@ -189,6 +190,8 @@ const GenericFilterSortList = <T,>({
     setIsAdvancedSearchModalVisible(false);
   }, [onAdvancedSearch]);
 
+  const usesColoredFilterOptions = !!filterOptions?.some((option) => !!option.color);
+
   return (
     <View style={styles(colors).container}>
       <View style={styles(colors).searchContainer}>
@@ -207,14 +210,35 @@ const GenericFilterSortList = <T,>({
       <View style={styles(colors).filterSortControlsWrapper}>
         <View style={styles(colors).filterSortRow}>
           <View style={[styles(colors).selectContainer, { flex: 1 }]}>
-            <Select
-              options={filterOptions || []}
-              value={selectedFilter}
-              onValueChange={handleFilterSelection}
-              placeholder={t('filter_by_tags')}
-              multiple={true}
-              disabled={disableTagFilter}
-            />
+            {usesColoredFilterOptions ? (
+              <MultiSelectPill
+                options={(filterOptions || []).map((option) => ({ ...option, color: option.color || undefined }))}
+                selectedValues={selectedFilter}
+                onSelectionChange={handleFilterSelection}
+                placeholder={t('filter_by_tags')}
+                style={{ marginBottom: 0 }}
+                triggerStyle={{
+                  borderColor: colors.primary,
+                  borderRadius: 5,
+                  height: 50,
+                  minHeight: 50,
+                  paddingVertical: 6,
+                  flexWrap: 'nowrap',
+                  overflow: 'hidden',
+                  justifyContent: 'center',
+                }}
+                pillStyle={{ marginBottom: 0 }}
+              />
+            ) : (
+              <Select
+                options={filterOptions || []}
+                value={selectedFilter}
+                onValueChange={handleFilterSelection}
+                placeholder={t('filter_by_tags')}
+                multiple={true}
+                disabled={disableTagFilter}
+              />
+            )}
           </View>
           <TouchableOpacity
             onPress={handleOpenAdvancedSearchModal}

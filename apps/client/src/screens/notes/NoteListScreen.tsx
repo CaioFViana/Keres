@@ -19,6 +19,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { useNoteStore } from '../../state/noteStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NotesStack'>,
@@ -80,6 +81,14 @@ const NotesScreen = () => {
     fetchTags();
   }, [fetchTags]);
 
+  useEffect(() => {
+    const handleTagChange = (changedStoryId: string) => {
+      if (changedStoryId === storyId) fetchTags();
+    };
+    entityEventEmitter.on('tag_changed', handleTagChange);
+    return () => entityEventEmitter.off('tag_changed', handleTagChange);
+  }, [fetchTags, storyId]);
+
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(t('notes_title'));
@@ -110,7 +119,7 @@ const NotesScreen = () => {
   ), [handleViewDetails, handleToggleFavorite]);
 
   const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id }));
+    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
   }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {

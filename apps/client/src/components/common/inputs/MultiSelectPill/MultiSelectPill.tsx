@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle, useWindowDimensions } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../../theme';
 import { getContrastTextColor } from '../../../../utils/colorUtils';
@@ -13,6 +13,10 @@ interface MultiSelectPillProps {
   placeholder?: string;
   label?: string;
   noOptionsText?: string;
+  /** Ajustes de layout para contextos compactos, como barras de filtro. */
+  style?: StyleProp<ViewStyle>;
+  triggerStyle?: StyleProp<ViewStyle>;
+  pillStyle?: StyleProp<ViewStyle>;
 }
 
 const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
@@ -22,6 +26,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   placeholder,
   label,
   noOptionsText,
+  style,
+  triggerStyle,
+  pillStyle,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -100,6 +107,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     },
     placeholderText: {
       color: colors.textSecondary,
+      fontSize: 16,
     },
     addButton: {
       backgroundColor: colors.primary,
@@ -140,6 +148,19 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       fontSize: 16,
       color: colors.text,
     },
+    optionLeading: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 10,
+    },
+    optionColor: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
     noOptionsText: {
       padding: 15,
       color: colors.textSecondary,
@@ -148,15 +169,15 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <TouchableOpacity onPress={openModal} style={styles.pillContainer}>
+      <TouchableOpacity onPress={openModal} style={[styles.pillContainer, triggerStyle]}>
         {selectedOptionDetails.length > 0 ? (
           selectedOptionDetails.map((option, index) => {
             const pillBackgroundColor = option.color || colors.primaryContainer;
             const pillTextColor = getContrastTextColor(pillBackgroundColor);
             return (
-              <View key={option.value} style={[styles.pill, { backgroundColor: pillBackgroundColor }]}>
+              <View key={option.value} style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}>
                 <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
               </View>
             );
@@ -194,16 +215,23 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
           <ScrollView keyboardShouldPersistTaps="handled">
             {options.length > 0 ? (
               options.map(option => (
+                (() => {
+                  return (
                 <TouchableOpacity
                   key={option.value}
                   style={styles.optionContainer}
                   onPress={() => toggleOption(option.value)}
                 >
-                  <Text style={styles.optionText}>{option.label}</Text>
+                  <View style={styles.optionLeading}>
+                    <View style={[styles.optionColor, { backgroundColor: option.color || colors.primaryContainer }]} />
+                    <Text style={styles.optionText}>{option.label}</Text>
+                  </View>
                   {selectedValues.includes(option.value) && (
                     <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                   )}
                 </TouchableOpacity>
+                  );
+                })()
               ))
             ) : (
               <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>

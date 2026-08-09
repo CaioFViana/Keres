@@ -10,7 +10,7 @@ import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
 import apiClient, { isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
-import { createServerService } from '../../services/ServerService';
+import { createServerService, OwnedServerStory, ServerHasOwnedStoriesError } from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
@@ -106,7 +106,28 @@ const ServerManagementScreen = () => {
     };
   }, [isFocused, loadAndPingServers]);
 
-  const handleDeleteServer = (serverId: string) => {
+  const showOwnedStoriesBlock = useCallback((ownedStories: OwnedServerStory[]) => {
+    AppAlert.alert(
+      t('cannot_delete_server_owned_stories_title'),
+      t('cannot_delete_server_owned_stories_message', {
+        stories: ownedStories.map((story) => story.title).join(', '),
+      }),
+    );
+  }, [t]);
+
+  const handleDeleteServer = async (serverId: string) => {
+    try {
+      const ownedStories = await serverService.getOwnedStories(serverId);
+      if (ownedStories.length > 0) {
+        showOwnedStoriesBlock(ownedStories);
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to check stories before deleting server:', err);
+      AppAlert.alert(t('error'), t('failed_to_delete_server'));
+      return;
+    }
+
     AppAlert.alert(
       t('delete_server_title'),
       t('delete_server_message'),
@@ -124,7 +145,11 @@ const ServerManagementScreen = () => {
               AppAlert.alert(t('success'), t('server_deleted_successfully'));
             } catch (err) {
               console.error('Failed to delete server:', err);
-              AppAlert.alert(t('error'), t('failed_to_delete_server'));
+              if (err instanceof ServerHasOwnedStoriesError) {
+                showOwnedStoriesBlock(err.ownedStories);
+              } else {
+                AppAlert.alert(t('error'), t('failed_to_delete_server'));
+              }
             }
           },
           style: 'destructive',
@@ -246,7 +271,7 @@ const ServerManagementScreen = () => {
         <TouchableOpacity onPress={() => navigation.navigate('ServerRegistration', { serverId: item.id })}>
           <Ionicons name="pencil-outline" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDeleteServer(item.id)} style={{ marginLeft: 10 }}>
+        <TouchableOpacity onPress={() => void handleDeleteServer(item.id)} style={{ marginLeft: 10 }}>
           <Ionicons name="trash-outline" size={24} color={colors.error} />
         </TouchableOpacity>
       </View>

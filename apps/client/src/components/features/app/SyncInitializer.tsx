@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../db';
 import apiClient, { isOfflineError } from '../../../services/apiClient';
@@ -36,6 +36,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const { t } = useTranslation();
   const realtimeByServerRef = useRef(new Map<string, ServerRealtimeService>());
   const activeReconciliationsRef = useRef(new Set<Promise<unknown>>());
+  const [serverRegistryRevision, setServerRegistryRevision] = useState(0);
 
   useEffect(() => {
     const stopRealtimeForReset = async () => {
@@ -157,8 +158,12 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     // Server registration happens below this already-mounted component. Use an explicit
     // signal so its first friendship/story reconciliation does not depend on navigation
     // timing or on Zustand observing a different active-server object.
-    entityEventEmitter.on('server_connection_changed', startServerReconciliation);
-    return () => entityEventEmitter.off('server_connection_changed', startServerReconciliation);
+    const handleServerConnectionChanged = () => {
+      setServerRegistryRevision((revision) => revision + 1);
+      startServerReconciliation();
+    };
+    entityEventEmitter.on('server_connection_changed', handleServerConnectionChanged);
+    return () => entityEventEmitter.off('server_connection_changed', handleServerConnectionChanged);
   }, [startServerReconciliation]);
 
   // Friendship and permission events matter even when no story is open. Keep one
@@ -182,7 +187,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       for (const realtime of realtimeConnections.values()) void realtime.stop();
       realtimeConnections.clear();
     };
-  }, [drizzleClient, userId, selectedStory?.id, selectedStory?.serverId, serverConnectionRevision]);
+  }, [drizzleClient, userId, selectedStory?.id, selectedStory?.serverId, serverConnectionRevision, serverRegistryRevision]);
 
   // A local operation is ready to push immediately. Remote application also emits
   // this event, but requestSync coalesces it into at most one follow-up pull.
@@ -276,7 +281,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     };
     // serverId matters as much as id here: linking an existing story to a server changes
     // serverId while id stays put, and sync must reconfigure when that happens.
-  }, [selectedStory?.id, selectedStory?.serverId, drizzleClient, showNotification, t]);
+  }, [selectedStory?.id, selectedStory?.serverId, drizzleClient, showNotification, t, serverRegistryRevision]);
 
   return <>{children}</>;
 };

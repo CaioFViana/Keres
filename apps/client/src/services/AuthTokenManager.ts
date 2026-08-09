@@ -141,8 +141,17 @@ class AuthTokenManager implements TokenProvider {
     // response interceptor after a failed refresh) knows exactly which server failed, and it may not
     // be the one the UI currently considers "active".
     public clearAuth(serverId: string): void {
+        void this.clearAuthForServer(serverId);
+    }
+
+    /** Awaitable variant used when removing a locally registered server. */
+    public async clearAuthForServer(serverId: string): Promise<void> {
         clearServerTokenCache(serverId);
-        tokenVault.remove(serverId).catch(error => console.log('Failed to clear secure credentials:', error));
+        try {
+            await tokenVault.remove(serverId);
+        } catch (error) {
+            console.log('Failed to clear secure credentials:', error);
+        }
 
         const activeServer = useUserSettingsStore.getState().activeServer;
         const isActiveServer = activeServer?.id === serverId;

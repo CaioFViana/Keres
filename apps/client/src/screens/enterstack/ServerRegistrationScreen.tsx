@@ -11,7 +11,7 @@ import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import apiClient from '../../services/apiClient';
 import { authTokenManager } from '../../services/AuthTokenManager';
-import { createServerService } from '../../services/ServerService';
+import { createServerService, ServerHasOwnedStoriesError } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
@@ -259,8 +259,16 @@ const ServerRegistrationScreen = () => {
                   navigation.goBack();
                 } catch (err) {
                   console.error('Failed to delete server:', err);
-                  setError(t('failed_to_delete_server'));
-                  AppAlert.alert(t('error'), t('failed_to_delete_server'));
+                  if (err instanceof ServerHasOwnedStoriesError) {
+                    const message = t('cannot_delete_server_owned_stories_message', {
+                      stories: err.ownedStories.map((story) => story.title).join(', '),
+                    });
+                    setError(message);
+                    AppAlert.alert(t('cannot_delete_server_owned_stories_title'), message);
+                  } else {
+                    setError(t('failed_to_delete_server'));
+                    AppAlert.alert(t('error'), t('failed_to_delete_server'));
+                  }
                 } finally {
                   setLoading(false);
                 }

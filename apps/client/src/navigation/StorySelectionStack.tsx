@@ -5,6 +5,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity } from 'react-native';
+import ResizableDrawerContent, {
+  DRAWER_MIN_WIDTH,
+  useResizableDrawerWidth,
+} from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
@@ -144,11 +148,22 @@ const FriendshipStackNavigator = () => {
 const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { isWide } = useResponsiveLayout();
+  const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
+  const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
+  const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
 
   return (
     <Drawer.Navigator
       defaultStatus={isWide ? 'open' : 'closed'}
+      drawerContent={(props) => (
+        <ResizableDrawerContent
+          {...props}
+          drawerWidth={drawerWidth}
+          maximumWidth={maximumWidth}
+          onDrawerWidthChange={setDrawerWidth}
+          resizable={!isCompact}
+        />
+      )}
       screenOptions={({ navigation }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,
@@ -163,7 +178,8 @@ const StorySelectionNavigator = () => {
         swipeEnabled: !isWide,
         drawerStyle: {
           backgroundColor: colors.surface,
-          width: isWide ? 280 : undefined,
+          minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
+          width: isCompact ? compactDrawerWidth : drawerWidth,
         },
       })}
     >

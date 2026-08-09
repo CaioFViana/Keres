@@ -7,6 +7,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
+import ResizableDrawerContent, {
+  DRAWER_MIN_WIDTH,
+  useResizableDrawerWidth,
+} from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import ChapterDetailScreen, { ChapterDetailScreenParamList } from '../screens/chapters/ChapterDetailScreen';
@@ -417,13 +421,24 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
-  const { isWide } = useResponsiveLayout();
+  const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
+  const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
+  const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
 
   return (
     <>
     <Drawer.Navigator
       defaultStatus={isWide ? 'open' : 'closed'}
       backBehavior="history"
+      drawerContent={(props) => (
+        <ResizableDrawerContent
+          {...props}
+          drawerWidth={drawerWidth}
+          maximumWidth={maximumWidth}
+          onDrawerWidthChange={setDrawerWidth}
+          resizable={!isCompact}
+        />
+      )}
       screenOptions={({ navigation }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,
@@ -438,7 +453,8 @@ const MainSystemNavigator = () => {
         swipeEnabled: !isWide,
         drawerStyle: {
           backgroundColor: colors.surface,
-          width: isWide ? 280 : undefined,
+          minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
+          width: isCompact ? compactDrawerWidth : drawerWidth,
         },
       })}
     >

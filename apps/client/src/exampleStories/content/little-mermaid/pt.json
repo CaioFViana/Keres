@@ -438,9 +438,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVRP88PRGW42CT7ES4SH",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "name": "Protagonista",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRPY5MHRG3DTRN13YNX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "name": "Magia",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRPGG7BADM1XWS4QQXT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "name": "Ponto de virada",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVRPCWXMYZPRH5R65C7J",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "tagId": "01KZKVMVRP88PRGW42CT7ES4SH",
+      "relationId": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVRPGKAP1V16ZJJ1DXZA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "tagId": "01KZKVMVRPY5MHRG3DTRN13YNX",
+      "relationId": "01KYXBHD0M83N1C3AX7JH04JD2",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVRP6ZAMAYFFCR72A8B8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "tagId": "01KZKVMVRPGG7BADM1XWS4QQXT",
+      "relationId": "01KYXBHD0MQP5BEK9PFDBE3580",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVRPRFBHK8PT4TPV4MDM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRPQ765T6H049K6TV28",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVRP8YQPERHG5SGYGKPV",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRPQ765T6H049K6TV28",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVRPRSP0BSG0SCDW2M5W",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRPQ765T6H049K6TV28",
+      "value": "Antagonista"
+    },
+    {
+      "id": "01KZKVMVRPQ9N2A62123D253MM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRP7RV38WHGBK4982G9",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVRP6F3026ZT6GPMQ3DE",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRP7RV38WHGBK4982G9",
+      "value": "Tensão"
+    },
+    {
+      "id": "01KZKVMVRP5YWRMWMYSW19CX1G",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "custom:01KZKVMVRP7RV38WHGBK4982G9",
+      "value": "Esperança"
+    },
+    {
+      "id": "01KZKVMVRP74AFMERP1JAHAABT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Novo"
+    },
+    {
+      "id": "01KZKVMVRP7Q4K663CY90R4E9Z",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Quebrado"
+    },
+    {
+      "id": "01KZKVMVRPHESG5Q82DBYK2QBF",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Consumido"
+    },
+    {
+      "id": "01KZKVMVRP1N7R56ZM6AKDXEKB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Escrito"
+    },
+    {
+      "id": "01KZKVMVRPTXXEE51C4DRNE8Q8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Transferido"
+    },
+    {
+      "id": "01KZKVMVRPRS9GZ4JK0N197ZEF",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "type": "item_state",
+      "value": "Resolvido"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0M2X4TZ0WEEYKMK96G",
@@ -491,7 +701,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVRPDJZDSHAVJAS2GCCM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "characterId": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "sceneId": "01KYXBHD0M83N1C3AX7JH04JD2"
+    },
+    {
+      "id": "01KZKVMVRP0F9KW5Y4P4V3ZDM2",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "characterId": "01KYXBHD0MZVSA263GJW277EVN",
+      "sceneId": "01KYXBHD0MQP5BEK9PFDBE3580"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -501,7 +734,7 @@
       "name": "A Poção da Bruxa do Mar",
       "category": "Poção",
       "description": "Uma poção preparada pela Bruxa do Mar que transforma a cauda de uma sereia em pernas humanas, a um custo doloroso e permanente.",
-      "initialState": "Recém-preparada no covil da Bruxa, paga com a voz da pequena sereia.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -517,7 +750,7 @@
       "name": "A Faca Encantada",
       "category": "Arma encantada",
       "description": "Uma faca trocada com a Bruxa do Mar pelas irmãs da pequena sereia, em troca dos próprios cabelos.",
-      "initialState": "Forjada pela Bruxa do Mar, ainda em posse das irmãs.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -534,8 +767,8 @@
       "itemId": "01KYXKY1XP89Y9MMHND96H7S38",
       "sceneId": "01KYXBHD0MKXH274VYGG8CD6H4",
       "newCharacterOwnerId": "01KYXBHD0MDSRT7CVV76CMDZC9",
-      "newState": "Bebida pela pequena sereia - sua cauda se divide num par de pernas humanas, e cada passo agora dói como pisar em facas.",
-      "extraNotes": null,
+      "newState": "Consumido",
+      "extraNotes": "Bebida pela pequena sereia - sua cauda se divide num par de pernas humanas, e cada passo agora dói como pisar em facas.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -548,8 +781,8 @@
       "itemId": "01KYXKY1XPAX2REJJNHSYC7J58",
       "sceneId": "01KYXBHD0MYMJ2B760NNHVCP90",
       "newCharacterOwnerId": "01KYXBHD0MDSRT7CVV76CMDZC9",
-      "newState": "Dada à pequena sereia pelas irmãs, que a trocaram pelos próprios cabelos - se ela matar o Príncipe antes do sol nascer e deixar o sangue tocar seus pés, voltará a ser sereia.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Dada à pequena sereia pelas irmãs, que a trocaram pelos próprios cabelos - se ela matar o Príncipe antes do sol nascer e deixar o sangue tocar seus pés, voltará a ser sereia.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -562,8 +795,8 @@
       "itemId": "01KYXKY1XPAX2REJJNHSYC7J58",
       "sceneId": "01KYXBHD0MQG0B9N41TXGDA4V3",
       "newCharacterOwnerId": null,
-      "newState": "Lançada ao mar pela pequena sereia, sem uso - ela não consegue ferir o Príncipe.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Lançada ao mar pela pequena sereia, sem uso - ela não consegue ferir o Príncipe.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -571,5 +804,110 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVRPQ765T6H049K6TV28",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Character",
+      "name": "Papel narrativo",
+      "key": "narrative_role",
+      "description": "O papel do personagem nesta releitura.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVRP7RV38WHGBK4982G9",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Scene",
+      "name": "Tom emocional",
+      "key": "emotional_tone",
+      "description": "O clima predominante desta cena.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVRPRC5K0X4EB8TCWQZ2",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "fieldId": "01KZKVMVRPQ765T6H049K6TV28",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVRP7G6PM73D82Q0G2HJ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0MZVSA263GJW277EVN",
+      "fieldId": "01KZKVMVRPQ765T6H049K6TV28",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVRPAZDH9SEYV20J17AE",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0M83N1C3AX7JH04JD2",
+      "fieldId": "01KZKVMVRP7RV38WHGBK4982G9",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVRPT2WXQAEWDG8TESTM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0MQP5BEK9PFDBE3580",
+      "fieldId": "01KZKVMVRP7RV38WHGBK4982G9",
+      "value": "Tensão"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVRQP0RXTBNKCSDRTHGZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "locationAId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
+      "locationBId": "01KYXBHD0MESF281V4YSN4MAA5",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true
 }

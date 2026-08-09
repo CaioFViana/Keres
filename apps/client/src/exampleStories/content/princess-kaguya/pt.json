@@ -514,9 +514,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVRSYA5QMTFJ4K011B9X",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "name": "Protagonista",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRSP1WWBANBA4W7VE1Y",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "name": "Magia",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRSVJWASDA1CRG4MH58",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "name": "Ponto de virada",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVRS8GVPGDAE1YFK55AY",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "tagId": "01KZKVMVRSYA5QMTFJ4K011B9X",
+      "relationId": "01KYXGBR5M62694V70YZH2QPFC",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVRS4Z215TQC2MAM8D8G",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "tagId": "01KZKVMVRSP1WWBANBA4W7VE1Y",
+      "relationId": "01KYXGBR5M8E9XRNT31VZ9581J",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVRS3K2SBZ3EF03AKSFN",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "tagId": "01KZKVMVRSVJWASDA1CRG4MH58",
+      "relationId": "01KYXGBR5MBPKAFMDNTC4AXV4S",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVRT890QTCJW7AQ89C5K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRS73BN9GX7NHXEZ59Q",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVRT8P4KB4K7H8W5MTQV",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRS73BN9GX7NHXEZ59Q",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVRT7N9TC0NB17XT1T6F",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRS73BN9GX7NHXEZ59Q",
+      "value": "Antagonista"
+    },
+    {
+      "id": "01KZKVMVRTV0AVWQSV4T7KM0TF",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRSHJ72KFP1VBFX5NRC",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVRTS74YMDH05MM1H0M3",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRSHJ72KFP1VBFX5NRC",
+      "value": "Tensão"
+    },
+    {
+      "id": "01KZKVMVRT0D0DXGNQPE5PV68H",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "custom:01KZKVMVRSHJ72KFP1VBFX5NRC",
+      "value": "Esperança"
+    },
+    {
+      "id": "01KZKVMVRTB9PR3P706JEDATAS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Novo"
+    },
+    {
+      "id": "01KZKVMVRTSP5T1HFJX9ZABHQG",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Quebrado"
+    },
+    {
+      "id": "01KZKVMVRTQ06YP34A58MSYGQV",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Consumido"
+    },
+    {
+      "id": "01KZKVMVRTH8XQSCWPMKP2EWNS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Escrito"
+    },
+    {
+      "id": "01KZKVMVRT4QKVH9JM1AFN0702",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Transferido"
+    },
+    {
+      "id": "01KZKVMVRTD7BG8EZQ19GVMAKN",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "type": "item_state",
+      "value": "Resolvido"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXGBR5MBSFKV589701EY3RP",
@@ -627,7 +837,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVRSW6P3R17SJE1GSTS0",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "characterId": "01KYXGBR5M62694V70YZH2QPFC",
+      "sceneId": "01KYXGBR5M8E9XRNT31VZ9581J"
+    },
+    {
+      "id": "01KZKVMVRS2R3E9XZ4881B1RM0",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "characterId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "sceneId": "01KYXGBR5MBPKAFMDNTC4AXV4S"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -637,7 +870,7 @@
       "name": "O Elixir da Imortalidade",
       "category": "Poção encantada",
       "description": "Um frasco do elixir do povo da Lua, que concede vida eterna a quem o bebe.",
-      "initialState": "Trazido da Lua pela comitiva celestial, intocado.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -653,7 +886,7 @@
       "name": "A Carta de Despedida de Kaguya-hime",
       "category": "Carta",
       "description": "Uma carta final escrita por Kaguya-hime ao Imperador antes de vestir o Manto de Penas e esquecer todo amor terreno.",
-      "initialState": "Ainda não escrita.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -670,8 +903,8 @@
       "itemId": "01KYXM6K0E6TVQT4TYVDMDS4AV",
       "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA",
       "newCharacterOwnerId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "newState": "Deixado para o Imperador por Kaguya-hime, junto com sua carta de despedida, antes de ela subir à Lua.",
-      "extraNotes": null,
+      "newState": "Transferido",
+      "extraNotes": "Deixado para o Imperador por Kaguya-hime, junto com sua carta de despedida, antes de ela subir à Lua.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -684,8 +917,8 @@
       "itemId": "01KYXM6K0E6TVQT4TYVDMDS4AV",
       "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R",
       "newCharacterOwnerId": null,
-      "newState": "Levado ao topo do Monte Fuji e queimado por ordem do Imperador, já que nenhuma vida vale a pena viver para sempre sem Kaguya-hime.",
-      "extraNotes": null,
+      "newState": "Consumido",
+      "extraNotes": "Levado ao topo do Monte Fuji e queimado por ordem do Imperador, já que nenhuma vida vale a pena viver para sempre sem Kaguya-hime.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -698,8 +931,8 @@
       "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
       "sceneId": "01KYXGBR5M0DPWTX98SRBYB6NA",
       "newCharacterOwnerId": "01KYXGBR5MHZ18Z41SWFF2FY23",
-      "newState": "Escrita e deixada para o Imperador por Kaguya-hime, pouco antes de o Manto de Penas apagar sua memória terrena.",
-      "extraNotes": null,
+      "newState": "Escrito",
+      "extraNotes": "Escrita e deixada para o Imperador por Kaguya-hime, pouco antes de o Manto de Penas apagar sua memória terrena.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -712,8 +945,8 @@
       "itemId": "01KYXM6K0E6YDVZ3TMQ41RD37J",
       "sceneId": "01KYXGBR5MQH5N7YEZNCK4B81R",
       "newCharacterOwnerId": null,
-      "newState": "Queimada no topo do Monte Fuji junto com o elixir, sua fumaça dita subir do cume desde então.",
-      "extraNotes": null,
+      "newState": "Consumido",
+      "extraNotes": "Queimada no topo do Monte Fuji junto com o elixir, sua fumaça dita subir do cume desde então.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -721,5 +954,110 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVRS73BN9GX7NHXEZ59Q",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Character",
+      "name": "Papel narrativo",
+      "key": "narrative_role",
+      "description": "O papel do personagem nesta releitura.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVRSHJ72KFP1VBFX5NRC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Scene",
+      "name": "Tom emocional",
+      "key": "emotional_tone",
+      "description": "O clima predominante desta cena.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVRSCDTT32T6ABKPRHPB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Character",
+      "entityId": "01KYXGBR5M62694V70YZH2QPFC",
+      "fieldId": "01KZKVMVRS73BN9GX7NHXEZ59Q",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVRSZ68VS7P3ERS4J24W",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Character",
+      "entityId": "01KYXGBR5MXA37W9VGNVHGGSFF",
+      "fieldId": "01KZKVMVRS73BN9GX7NHXEZ59Q",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVRSX8T0M64WQEQQ0Z0B",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Scene",
+      "entityId": "01KYXGBR5M8E9XRNT31VZ9581J",
+      "fieldId": "01KZKVMVRSHJ72KFP1VBFX5NRC",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVRSAMKC5CT6WS0GXWVC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "entityType": "Scene",
+      "entityId": "01KYXGBR5MBPKAFMDNTC4AXV4S",
+      "fieldId": "01KZKVMVRSHJ72KFP1VBFX5NRC",
+      "value": "Tensão"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVRTT1ZJTVTC52JBK4JJ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXGBR5M19WFZ5701RXWTRAZ",
+      "locationAId": "01KYXGBR5MVSFG1QK139RXY4FB",
+      "locationBId": "01KYXGBR5MTPTHJBHV9WHXQVRV",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true
 }

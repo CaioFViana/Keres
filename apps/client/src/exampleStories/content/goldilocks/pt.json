@@ -317,9 +317,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVRJXMPX83SJ5SXX27ZA",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "name": "Protagonista",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRJGQCFQKATSBM13PQ2",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "name": "Magia",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRJMR2373AKQYTY6W6H",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "name": "Ponto de virada",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVRJ0HCES2K62V5S5H2X",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "tagId": "01KZKVMVRJXMPX83SJ5SXX27ZA",
+      "relationId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVRJRY01F811V1EWDRA8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "tagId": "01KZKVMVRJGQCFQKATSBM13PQ2",
+      "relationId": "01KYXBHD0KQNJ4T7GWC4W6VD18",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVRJAJY6RWXQBR73Z4EV",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "tagId": "01KZKVMVRJMR2373AKQYTY6W6H",
+      "relationId": "01KYXBHD0K044SNWCNX8SZ2C3R",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVRJWTCY28GH10EXVBK7",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRJB8NHK3D0TTEKVMSW",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVRJR6MQFJ2HE0W1RNT7",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRJB8NHK3D0TTEKVMSW",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVRJGCBJ3TZ60KF2CZ6B",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRJB8NHK3D0TTEKVMSW",
+      "value": "Antagonista"
+    },
+    {
+      "id": "01KZKVMVRJMREQX74K9HG2XD0X",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRJVC3E7XD8TTHP6TET",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVRJ9HR1K6X55QBQTVJK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRJVC3E7XD8TTHP6TET",
+      "value": "Tensão"
+    },
+    {
+      "id": "01KZKVMVRJ1VZZDZZPNN18WB6R",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRJVC3E7XD8TTHP6TET",
+      "value": "Esperança"
+    },
+    {
+      "id": "01KZKVMVRJ23HV2PZ1KH5MPHHB",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Novo"
+    },
+    {
+      "id": "01KZKVMVRJ6H8YFSKQAZEZH6H3",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Quebrado"
+    },
+    {
+      "id": "01KZKVMVRJA6ATDT0HE1BAW8RT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Consumido"
+    },
+    {
+      "id": "01KZKVMVRJKN4AXKF3RRD2AZP8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Escrito"
+    },
+    {
+      "id": "01KZKVMVRJTP559J4XFRJ3T2B5",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Transferido"
+    },
+    {
+      "id": "01KZKVMVRJSNX7RRE8AEYD5N22",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Resolvido"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0KGJXYSKT167R05EX7",
@@ -358,7 +568,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVRJWQQ2MQBKHXRC7G2M",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "characterId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "sceneId": "01KYXBHD0KQNJ4T7GWC4W6VD18"
+    },
+    {
+      "id": "01KZKVMVRJEPHPRGTWV158BPWK",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "characterId": "01KYXBHD0KADEQ76V5K52QR225",
+      "sceneId": "01KYXBHD0K044SNWCNX8SZ2C3R"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -368,7 +601,7 @@
       "name": "A Sopa do Ursinho",
       "category": "Comida",
       "description": "A menor das três tigelas de sopa deixadas esfriando na mesa, na temperatura perfeita.",
-      "initialState": "Cheia, esfriando na mesa ao lado das outras duas tigelas.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -384,7 +617,7 @@
       "name": "A Cadeira do Ursinho",
       "category": "Móvel",
       "description": "A menor das três cadeiras da sala, do tamanho certo para o Ursinho.",
-      "initialState": "De pé na sala, ao lado das outras duas cadeiras.",
+      "initialState": "Novo",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -401,8 +634,8 @@
       "itemId": "01KYXKRGJQC429TKTH2KSHG6ZV",
       "sceneId": "01KYXBHD0K044SNWCNX8SZ2C3R",
       "newCharacterOwnerId": null,
-      "newState": "Comida por completo por Cachinhos Dourados, deixando a tigela vazia.",
-      "extraNotes": null,
+      "newState": "Novo",
+      "extraNotes": "Comida por completo por Cachinhos Dourados, deixando a tigela vazia.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -415,8 +648,8 @@
       "itemId": "01KYXKRGJQ5TMXGTHQ3KN7WCR9",
       "sceneId": "01KYXBHD0K17NGGSSYC2SN0K46",
       "newCharacterOwnerId": null,
-      "newState": "Quebrada sob o peso de Cachinhos Dourados - o assento cede e não pode mais ser usada.",
-      "extraNotes": null,
+      "newState": "Quebrado",
+      "extraNotes": "Quebrada sob o peso de Cachinhos Dourados - o assento cede e não pode mais ser usada.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -424,5 +657,110 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVRJB8NHK3D0TTEKVMSW",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Character",
+      "name": "Papel narrativo",
+      "key": "narrative_role",
+      "description": "O papel do personagem nesta releitura.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVRJVC3E7XD8TTHP6TET",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Scene",
+      "name": "Tom emocional",
+      "key": "emotional_tone",
+      "description": "O clima predominante desta cena.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVRJDBVGB179Q9PBHTH9",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "fieldId": "01KZKVMVRJB8NHK3D0TTEKVMSW",
+      "value": "Protagonista"
+    },
+    {
+      "id": "01KZKVMVRJ35FT66FEAZKGAPNW",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0KADEQ76V5K52QR225",
+      "fieldId": "01KZKVMVRJB8NHK3D0TTEKVMSW",
+      "value": "Personagem de apoio"
+    },
+    {
+      "id": "01KZKVMVRJPFWYM6TMWRJFFAPP",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0KQNJ4T7GWC4W6VD18",
+      "fieldId": "01KZKVMVRJVC3E7XD8TTHP6TET",
+      "value": "Encantamento"
+    },
+    {
+      "id": "01KZKVMVRJ14Z8SDW1P39HS8A8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0K044SNWCNX8SZ2C3R",
+      "fieldId": "01KZKVMVRJVC3E7XD8TTHP6TET",
+      "value": "Tensão"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVRJNTPJZWT1605DCQF2",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "locationAId": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "locationBId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true
 }

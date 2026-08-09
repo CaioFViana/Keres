@@ -18,8 +18,8 @@ export interface ExampleStoryLanguage {
  * Uma história de exemplo, em todos os idiomas em que foi empacotada.
  *
  * `slug` vem do nome da pasta em `content/` e identifica a história através dos idiomas -
- * cada idioma é o mesmo "roteiro", só que os dois viram histórias (e ids) completamente
- * independentes uma vez instalados, já que `importFullStory` preserva o id de cada arquivo.
+ * cada idioma é o mesmo "roteiro", mas cada instalação ganha uma cópia com IDs novos e
+ * vínculos internos remapeados. Essa regra vale apenas para o catálogo de exemplos.
  */
 export interface ExampleStoryEntry {
   slug: string;

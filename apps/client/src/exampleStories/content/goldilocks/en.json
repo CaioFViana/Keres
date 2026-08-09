@@ -317,9 +317,219 @@
       "deletedAt": null
     }
   ],
-  "tags": [],
-  "tagRelations": [],
-  "suggestions": [],
+  "tags": [
+    {
+      "id": "01KZKVMVRF5089JD2KNJSJTYMP",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "name": "Protagonist",
+      "color": "#7C4DFF",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRG4E1M7NM7M1GAP4WX",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "name": "Magic",
+      "color": "#F9A825",
+      "isFavorite": false,
+      "extraNotes": null
+    },
+    {
+      "id": "01KZKVMVRGPW1HF0CM33FMTPZ9",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "name": "Turning point",
+      "color": "#00897B",
+      "isFavorite": false,
+      "extraNotes": null
+    }
+  ],
+  "tagRelations": [
+    {
+      "id": "01KZKVMVRGTR4FZW4SGJ63YW2G",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "tagId": "01KZKVMVRF5089JD2KNJSJTYMP",
+      "relationId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "relationType": "Character"
+    },
+    {
+      "id": "01KZKVMVRGPDD27359WR89BYW0",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "tagId": "01KZKVMVRG4E1M7NM7M1GAP4WX",
+      "relationId": "01KYXBHD0KQNJ4T7GWC4W6VD18",
+      "relationType": "Scene"
+    },
+    {
+      "id": "01KZKVMVRG9FXPQJDJX3J388VH",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "tagId": "01KZKVMVRGPW1HF0CM33FMTPZ9",
+      "relationId": "01KYXBHD0K044SNWCNX8SZ2C3R",
+      "relationType": "Scene"
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "01KZKVMVRG73MG3SQ9S9D44JKM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRF3QR8SW1PVBGAB451",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVRGBBFNF1AZR13WEDNT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRF3QR8SW1PVBGAB451",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVRGKN70TCBC27SBV82Z",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRF3QR8SW1PVBGAB451",
+      "value": "Antagonist"
+    },
+    {
+      "id": "01KZKVMVRGD68EBESQWW9GCTVY",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRF5T1JT5ZCGJM4AV5S",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVRG7S3GSPQS70X6DF31",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRF5T1JT5ZCGJM4AV5S",
+      "value": "Tension"
+    },
+    {
+      "id": "01KZKVMVRG21QZS2EFHQ2NDJKM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "custom:01KZKVMVRF5T1JT5ZCGJM4AV5S",
+      "value": "Hope"
+    },
+    {
+      "id": "01KZKVMVRGZCYHN9THHR21M2HQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "New"
+    },
+    {
+      "id": "01KZKVMVRG55NHHKEAKR02RHWM",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Broken"
+    },
+    {
+      "id": "01KZKVMVRGP1NVG0WP72JE1SSZ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Consumed"
+    },
+    {
+      "id": "01KZKVMVRGF66M5J293JFEH4PT",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Written"
+    },
+    {
+      "id": "01KZKVMVRG04VBA856MPM14WM4",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Transferred"
+    },
+    {
+      "id": "01KZKVMVRGVE1B1E010NJCJTJN",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "type": "item_state",
+      "value": "Resolved"
+    }
+  ],
   "characterRelations": [
     {
       "id": "01KYXBHD0KGJXYSKT167R05EX7",
@@ -358,7 +568,30 @@
       "deletedAt": null
     }
   ],
-  "characterScenes": [],
+  "characterScenes": [
+    {
+      "id": "01KZKVMVRGWCNZB4SSGYXKYJF3",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "characterId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "sceneId": "01KYXBHD0KQNJ4T7GWC4W6VD18"
+    },
+    {
+      "id": "01KZKVMVRG5KVDFRRWWFQ8DHRP",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "characterId": "01KYXBHD0KADEQ76V5K52QR225",
+      "sceneId": "01KYXBHD0K044SNWCNX8SZ2C3R"
+    }
+  ],
   "galleryItems": [],
   "items": [
     {
@@ -368,7 +601,7 @@
       "name": "Baby Bear's Bowl of Porridge",
       "category": "Food",
       "description": "The smallest of the three bowls of porridge left cooling on the table, just the right temperature.",
-      "initialState": "Full, cooling on the table alongside the other two bowls.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -384,7 +617,7 @@
       "name": "Baby Bear's Chair",
       "category": "Furniture",
       "description": "The smallest of the three chairs in the living room, sized just for Baby Bear.",
-      "initialState": "Standing in the living room alongside the other two chairs.",
+      "initialState": "New",
       "isFavorite": false,
       "extraNotes": null,
       "createdAt": "2024-01-01T00:00:00.000Z",
@@ -401,8 +634,8 @@
       "itemId": "01KYXKRGJQC429TKTH2KSHG6ZV",
       "sceneId": "01KYXBHD0K044SNWCNX8SZ2C3R",
       "newCharacterOwnerId": null,
-      "newState": "Eaten completely by Goldilocks, leaving the bowl empty.",
-      "extraNotes": null,
+      "newState": "Consumed",
+      "extraNotes": "Eaten completely by Goldilocks, leaving the bowl empty.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -415,8 +648,8 @@
       "itemId": "01KYXKRGJQ5TMXGTHQ3KN7WCR9",
       "sceneId": "01KYXBHD0K17NGGSSYC2SN0K46",
       "newCharacterOwnerId": null,
-      "newState": "Broken under Goldilocks's weight - the seat gives way and cannot be sat in again.",
-      "extraNotes": null,
+      "newState": "Broken",
+      "extraNotes": "Broken under Goldilocks's weight - the seat gives way and cannot be sat in again.",
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
       "version": 1,
@@ -424,5 +657,110 @@
       "deletedAt": null
     }
   ],
-  "serverLastOperationVersion": 0
+  "serverLastOperationVersion": 0,
+  "storySchemaFields": [
+    {
+      "id": "01KZKVMVRF3QR8SW1PVBGAB451",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Character",
+      "name": "Narrative role",
+      "key": "narrative_role",
+      "description": "The character’s role in this retelling.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    },
+    {
+      "id": "01KZKVMVRF5T1JT5ZCGJM4AV5S",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Scene",
+      "name": "Emotional tone",
+      "key": "emotional_tone",
+      "description": "The prevailing mood of this scene.",
+      "type": "suggestion",
+      "isRequired": false,
+      "defaultValue": null,
+      "order": 0
+    }
+  ],
+  "attributeValues": [
+    {
+      "id": "01KZKVMVRG5ST2T9E7HR0GAKZR",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "fieldId": "01KZKVMVRF3QR8SW1PVBGAB451",
+      "value": "Protagonist"
+    },
+    {
+      "id": "01KZKVMVRG9VQJJV37VMNVW2XE",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0KADEQ76V5K52QR225",
+      "fieldId": "01KZKVMVRF3QR8SW1PVBGAB451",
+      "value": "Supporting character"
+    },
+    {
+      "id": "01KZKVMVRG2JYRTZHGRT69A58H",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0KQNJ4T7GWC4W6VD18",
+      "fieldId": "01KZKVMVRF5T1JT5ZCGJM4AV5S",
+      "value": "Wonder"
+    },
+    {
+      "id": "01KZKVMVRGPFTPDVXTXGRVPWXC",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0K044SNWCNX8SZ2C3R",
+      "fieldId": "01KZKVMVRF5T1JT5ZCGJM4AV5S",
+      "value": "Tension"
+    }
+  ],
+  "locationRelations": [
+    {
+      "id": "01KZKVMVRGCGRBQY2XXGZKHZ9K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "locationAId": "01KYXBHD0KRN12R25N2S4HBCS6",
+      "locationBId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
+      "relationType": "connected_to"
+    }
+  ],
+  "exampleCatalogEnriched": true
 }

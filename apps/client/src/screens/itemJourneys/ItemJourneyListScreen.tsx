@@ -161,7 +161,7 @@ const ItemJourneyListScreen = () => {
     filterRow: { flexDirection: 'row', paddingHorizontal: 12, paddingTop: 8, gap: 8, alignItems: 'flex-start' },
     searchInputWrapper: { flex: 1 },
     sortWrapper: { width: 170 },
-    headerButton: { marginLeft: 15 },
+    headerButton: { marginRight: 15 },
     itemHeaderLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     itemName: { fontSize: 16, fontWeight: '600', color: colors.text, flex: 1 },
     journeyCountBadge: {

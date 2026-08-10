@@ -7,6 +7,8 @@ describe('desktop IPC security', () => {
     expect(isTrustedRendererUrl('app://app/settings')).toBe(true);
     expect(isTrustedRendererUrl('https://app/')).toBe(false);
     expect(isTrustedRendererUrl('app://app.evil/')).toBe(false);
+    expect(isTrustedRendererUrl('app://app@evil/')).toBe(false);
+    expect(isTrustedRendererUrl('app://app:1234/')).toBe(false);
     expect(isTrustedRendererUrl(undefined)).toBe(false);
   });
 

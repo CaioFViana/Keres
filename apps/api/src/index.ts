@@ -7,6 +7,7 @@ import { swagger } from '@elysiajs/swagger';
 import { Elysia, t } from 'elysia';
 import { existsSync } from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { env } from './config/env';
 import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
@@ -31,11 +32,12 @@ import { logger } from './utils/logger';
  * de URL. Se o build ainda não existir (dev sem `bun run build`, ou API rodando sozinha),
  * isso não derruba o servidor - só o painel fica indisponível, a API continua normal.
  *
- * Resolvido a partir de `import.meta.dir` (não `process.cwd()`): precisa continuar
+ * Resolvido a partir do próprio módulo (não `process.cwd()`): precisa continuar
  * encontrando `apps/admin/dist` não importa de onde o processo foi iniciado (ex: dentro do
  * container Docker o WORKDIR final é `apps/api`, mas nada garante isso em todo cenário).
  */
-const adminDistPath = path.join(import.meta.dir, '..', '..', 'admin', 'dist');
+const apiSourceDirectory = path.dirname(fileURLToPath(import.meta.url));
+const adminDistPath = path.join(apiSourceDirectory, '..', '..', 'admin', 'dist');
 const adminDistIndexPath = path.join(adminDistPath, 'index.html');
 const adminUiAvailable = existsSync(adminDistIndexPath);
 

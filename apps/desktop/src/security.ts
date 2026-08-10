@@ -7,7 +7,11 @@ export function isTrustedRendererUrl(url: string | undefined): boolean {
   if (!url) return false;
   try {
     const parsed = new URL(url);
-    return parsed.protocol === TRUSTED_RENDERER_SCHEME && parsed.hostname === TRUSTED_RENDERER_HOST;
+    return parsed.protocol === TRUSTED_RENDERER_SCHEME
+      && parsed.hostname === TRUSTED_RENDERER_HOST
+      && !parsed.port
+      && !parsed.username
+      && !parsed.password;
   } catch {
     return false;
   }

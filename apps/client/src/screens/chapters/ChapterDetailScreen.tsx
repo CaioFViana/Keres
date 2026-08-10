@@ -321,7 +321,7 @@ const ChapterDetailScreen = () => {
         currentEntityType="Chapter"
       />
 
-      <SeeAlsoManager storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} editable={canEdit} />
+      <SeeAlsoManager storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} editable={false} />
 
       <EntityMetadata version={chapter.version} createdAt={chapter.createdAt} updatedAt={chapter.updatedAt} />
       <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />

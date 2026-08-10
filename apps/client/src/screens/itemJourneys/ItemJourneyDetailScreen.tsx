@@ -273,7 +273,7 @@ const ItemJourneyDetailScreen = () => {
         currentEntityType="ItemJourney"
       />
 
-      <SeeAlsoManager storyId={itemJourney.storyId} entityType="ItemJourney" entityId={itemJourneyId} editable={canEdit} />
+      <SeeAlsoManager storyId={itemJourney.storyId} entityType="ItemJourney" entityId={itemJourneyId} editable={false} />
 
       <EntityMetadata version={itemJourney.version} createdAt={itemJourney.createdAt} updatedAt={itemJourney.updatedAt} />
 

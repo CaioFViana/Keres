@@ -10,6 +10,7 @@ import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttribute
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -343,6 +344,12 @@ const WorldRuleFormScreen = () => {
                 currentEntityId={currentWorldRuleId}
                 currentEntityType="WorldRule"
               />
+            </View>
+          )}
+
+          {currentWorldRuleId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <SeeAlsoManager storyId={selectedStory.id} entityType="WorldRule" entityId={currentWorldRuleId} editable={true} />
             </View>
           )}
 

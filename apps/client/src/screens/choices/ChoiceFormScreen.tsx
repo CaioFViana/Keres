@@ -10,6 +10,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -268,6 +269,12 @@ const ChoiceFormScreen = () => {
                 currentEntityId={currentChoiceId}
                 currentEntityType="Choice"
               />
+            </View>
+          )}
+
+          {currentChoiceId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <SeeAlsoManager storyId={selectedStory.id} entityType="Choice" entityId={currentChoiceId} editable={true} />
             </View>
           )}
 

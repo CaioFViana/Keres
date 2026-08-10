@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { eq } from 'drizzle-orm';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useDrizzle } from '../../../../db';
 import { CommentSelect, servers, stories } from '../../../../db/schema';
 import { useUserProfileResolver, ResolvedUserProfile } from '../../../../hooks/useUserProfileResolver';
@@ -29,11 +30,9 @@ interface CommentThreadModalProps {
 }
 
 /**
- * Modal simples (não o picker em dois passos de GroupedMultiSelectPill - não é necessário
- * aqui): lista os comentários existentes de um campo e, se `canComment`, um formulário para
- * adicionar um novo. `fieldValueSnapshot` é sempre o valor *atual* do campo (mostrado como
- * referência para o autor escrever o trecho relevante) - o `contentSnapshot` de cada
- * comentário já existente é congelado desde a criação e não muda aqui.
+ * Usa o mesmo `ResponsiveModal` de `GraphNodeSheet`/seletores: bottom sheet em telas
+ * compactas, painel lateral em telas largas - em vez de um bottom sheet fixo em qualquer
+ * tamanho de tela, que ficava com cara de app mobile mesmo no desktop.
  */
 const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   visible, onClose, storyId, fieldLabel, fieldValueSnapshot, comments,
@@ -118,8 +117,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   }, [onDelete, t]);
 
   const styles = StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    sheet: { backgroundColor: colors.background, borderTopLeftRadius: 12, borderTopRightRadius: 12, maxHeight: '85%' },
+    sheet: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
     headerTitle: { fontSize: 17, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
     list: { paddingHorizontal: 15 },
@@ -142,107 +140,110 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     excerptInput: { minHeight: 40, textAlignVertical: 'top' },
     commentInput: { minHeight: 70, textAlignVertical: 'top' },
     warningText: { color: colors.notification, fontSize: 12, marginBottom: 8 },
-    criticalityRow: { flexDirection: 'row', marginBottom: 10 },
+    // Ícones de criticidade e o botão de postar dividem a mesma linha, em vez de cada um
+    // ocupar a largura toda em linhas separadas - ficava com bastante espaço horizontal
+    // ocioso em telas largas.
+    actionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    criticalityRow: { flexDirection: 'row' },
     criticalityButton: { padding: 8, borderRadius: 8, marginRight: 6 },
     criticalityButtonActive: { backgroundColor: colors.primaryContainer },
+    postButton: { paddingHorizontal: 20 },
   });
 
   return (
-    <Modal transparent visible={visible} onRequestClose={onClose} animationType="slide">
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle} numberOfLines={1}>{fieldLabel}</Text>
-            <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')} hitSlop={8}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
+    <ResponsiveModal visible={visible} onClose={onClose} placement="adaptive" contentStyle={styles.sheet} maxHeight="85%">
+      <View style={styles.header}>
+        <Text style={styles.headerTitle} numberOfLines={1}>{fieldLabel}</Text>
+        <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')} hitSlop={8}>
+          <Ionicons name="close" size={24} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
+        {sortedComments.length === 0 ? (
+          <Text style={styles.emptyText}>{t('no_comments_yet')}</Text>
+        ) : sortedComments.map((comment) => {
+          const profile = profiles[comment.authorUserId];
+          const canManage = isStoryOwner || comment.authorUserId === currentUserId;
+          return (
+            <View key={comment.id} style={styles.commentRow}>
+              <Avatar seed={comment.authorUserId} color={profile?.avatarColor} icon={profile?.avatarIcon} size={32} />
+              <View style={styles.commentBody}>
+                <View style={styles.commentHeaderRow}>
+                  <Ionicons
+                    name={CRITICALITY_ICONS[comment.criticality as CommentCriticality] ?? CRITICALITY_ICONS[3]}
+                    size={16}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.authorName}> {profile?.name || comment.authorUserId}</Text>
+                  <Text style={styles.timestamp}>{comment.createdAt.toLocaleString()}</Text>
+                </View>
+                {!!comment.excerptText && (
+                  <View style={styles.excerptBlock}>
+                    <Text style={styles.excerptText}>"{comment.excerptText}"</Text>
+                  </View>
+                )}
+                <Text style={styles.commentText}>{comment.commentText}</Text>
+                {canManage && (
+                  <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(comment.id)}>
+                    <Text style={styles.deleteText}>{t('delete')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          );
+        })}
+      </ScrollView>
+
+      {canComment && (
+        <View style={styles.footer}>
+          <View style={styles.snapshotBlock}>
+            <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
+            <Text style={styles.snapshotText} numberOfLines={4}>{fieldValueSnapshot || t('common_na')}</Text>
           </View>
 
-          <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
-            {sortedComments.length === 0 ? (
-              <Text style={styles.emptyText}>{t('no_comments_yet')}</Text>
-            ) : sortedComments.map((comment) => {
-              const profile = profiles[comment.authorUserId];
-              const canManage = isStoryOwner || comment.authorUserId === currentUserId;
-              return (
-                <View key={comment.id} style={styles.commentRow}>
-                  <Avatar seed={comment.authorUserId} color={profile?.avatarColor} icon={profile?.avatarIcon} size={32} />
-                  <View style={styles.commentBody}>
-                    <View style={styles.commentHeaderRow}>
-                      <Ionicons
-                        name={CRITICALITY_ICONS[comment.criticality as CommentCriticality] ?? CRITICALITY_ICONS[3]}
-                        size={16}
-                        color={colors.primary}
-                      />
-                      <Text style={styles.authorName}> {profile?.name || comment.authorUserId}</Text>
-                      <Text style={styles.timestamp}>{comment.createdAt.toLocaleString()}</Text>
-                    </View>
-                    {!!comment.excerptText && (
-                      <View style={styles.excerptBlock}>
-                        <Text style={styles.excerptText}>"{comment.excerptText}"</Text>
-                      </View>
-                    )}
-                    <Text style={styles.commentText}>{comment.commentText}</Text>
-                    {canManage && (
-                      <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(comment.id)}>
-                        <Text style={styles.deleteText}>{t('delete')}</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
-          </ScrollView>
+          <TextInput
+            style={[styles.input, styles.excerptInput]}
+            value={excerptText}
+            onChangeText={setExcerptText}
+            placeholder={t('excerpt_placeholder')}
+            multiline
+          />
+          {excerptMismatch && <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>}
 
-          {canComment && (
-            <View style={styles.footer}>
-              <View style={styles.snapshotBlock}>
-                <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
-                <Text style={styles.snapshotText} numberOfLines={4}>{fieldValueSnapshot || t('common_na')}</Text>
-              </View>
+          <TextInput
+            style={[styles.input, styles.commentInput]}
+            value={commentText}
+            onChangeText={setCommentText}
+            placeholder={t('comment_text_placeholder')}
+            multiline
+          />
 
-              <TextInput
-                style={[styles.input, styles.excerptInput]}
-                value={excerptText}
-                onChangeText={setExcerptText}
-                placeholder={t('excerpt_placeholder')}
-                multiline
-              />
-              {excerptMismatch && <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>}
-
-              <View style={styles.criticalityRow}>
-                {CRITICALITY_LEVELS.map((level) => (
-                  <TouchableOpacity
-                    key={level}
-                    style={[styles.criticalityButton, criticality === level && styles.criticalityButtonActive]}
-                    onPress={() => setCriticality(level)}
-                    accessibilityLabel={t(`comment_criticality_${level}`)}
-                  >
-                    <Ionicons
-                      name={CRITICALITY_ICONS[level]}
-                      size={20}
-                      color={criticality === level ? colors.primary : colors.textSecondary}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TextInput
-                style={[styles.input, styles.commentInput]}
-                value={commentText}
-                onChangeText={setCommentText}
-                placeholder={t('comment_text_placeholder')}
-                multiline
-              />
-
-              <Button onPress={handleSubmit} disabled={submitting || !commentText.trim()}>
-                {submitting ? t('saving') : t('add_comment')}
-              </Button>
+          <View style={styles.actionRow}>
+            <View style={styles.criticalityRow}>
+              {CRITICALITY_LEVELS.map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[styles.criticalityButton, criticality === level && styles.criticalityButtonActive]}
+                  onPress={() => setCriticality(level)}
+                  accessibilityLabel={t(`comment_criticality_${level}`)}
+                >
+                  <Ionicons
+                    name={CRITICALITY_ICONS[level]}
+                    size={20}
+                    color={criticality === level ? colors.primary : colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              ))}
             </View>
-          )}
+
+            <Button onPress={handleSubmit} disabled={submitting || !commentText.trim()} style={styles.postButton}>
+              {submitting ? t('saving') : t('add_comment')}
+            </Button>
+          </View>
         </View>
-      </View>
-    </Modal>
+      )}
+    </ResponsiveModal>
   );
 };
 

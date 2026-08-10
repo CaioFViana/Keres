@@ -174,7 +174,7 @@ const ChoiceDetailScreen = () => {
         currentEntityType="Choice"
       />
 
-      <SeeAlsoManager storyId={choice.storyId} entityType="Choice" entityId={choiceId} editable={canEdit} />
+      <SeeAlsoManager storyId={choice.storyId} entityType="Choice" entityId={choiceId} editable={false} />
 
       <EntityMetadata version={choice.version} createdAt={choice.createdAt} updatedAt={choice.updatedAt} />
 

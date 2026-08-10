@@ -507,7 +507,7 @@ const LocationDetailsScreen = () => {
         currentEntityType="Location"
       />
 
-      <SeeAlsoManager storyId={location.storyId} entityType="Location" entityId={locationId} editable={canEdit} />
+      <SeeAlsoManager storyId={location.storyId} entityType="Location" entityId={locationId} editable={false} />
 
       <EntityMetadata version={location.version} createdAt={location.createdAt} updatedAt={location.updatedAt} />
       <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />

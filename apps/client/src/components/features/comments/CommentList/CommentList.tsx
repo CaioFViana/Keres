@@ -75,7 +75,9 @@ const CommentList: React.FC<CommentListProps> = ({ storyId, pageSize = 20, onPre
 
   const styles = StyleSheet.create({
     container: { flex: 1, padding: 10 },
-    searchInput: { marginBottom: 10 },
+    // TextInput's own default style caps width at 80% - overridden here so the search box
+    // fills the available width instead of leaving a fixed gap on wide screens.
+    searchInput: { marginBottom: 10, width: '100%' },
     emptyText: { color: colors.textSecondary, textAlign: 'center', marginTop: 20 },
     footer: { paddingVertical: 20, alignItems: 'center' },
   });

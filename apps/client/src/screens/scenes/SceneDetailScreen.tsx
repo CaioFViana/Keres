@@ -505,7 +505,7 @@ const SceneDetailScreen = () => {
         choicesForScene={choicesForScene}
       />
 
-      <SeeAlsoManager storyId={scene.storyId} entityType="Scene" entityId={sceneId} editable={canEdit} />
+      <SeeAlsoManager storyId={scene.storyId} entityType="Scene" entityId={sceneId} editable={false} />
 
       <EntityMetadata version={scene.version} createdAt={scene.createdAt} updatedAt={scene.updatedAt} />
       <FavoritedByList storyId={scene.storyId} entityId={sceneId} entityType="Scene" />

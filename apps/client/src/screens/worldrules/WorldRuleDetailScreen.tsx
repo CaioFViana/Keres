@@ -231,7 +231,7 @@ const WorldRuleDetailScreen = () => {
         currentEntityType="WorldRule"
       />
 
-      <SeeAlsoManager storyId={worldRule.storyId} entityType="WorldRule" entityId={worldRuleId} editable={canEdit} />
+      <SeeAlsoManager storyId={worldRule.storyId} entityType="WorldRule" entityId={worldRuleId} editable={false} />
 
       <EntityMetadata version={worldRule.version} createdAt={worldRule.createdAt} updatedAt={worldRule.updatedAt} />
       <FavoritedByList storyId={worldRule.storyId} entityId={worldRuleId} entityType="WorldRule" />

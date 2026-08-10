@@ -558,7 +558,7 @@ const CharacterDetailScreen = () => {
         currentEntityType="Character"
       />
 
-      <SeeAlsoManager storyId={character.storyId} entityType="Character" entityId={characterId} editable={canEdit} />
+      <SeeAlsoManager storyId={character.storyId} entityType="Character" entityId={characterId} editable={false} />
 
       <EntityMetadata version={character.version} createdAt={character.createdAt} updatedAt={character.updatedAt} />
       <FavoritedByList storyId={character.storyId} entityId={characterId} entityType="Character" />

@@ -3,6 +3,7 @@ import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
+import { assertValidServerId, isTrustedRendererUrl } from './security';
 
 // package.json's "name" is "@keres/desktop" (the workspace naming convention, "@keres/*"
 // everywhere) - Electron otherwise derives the userData path directly from it, and the "/"
@@ -149,7 +150,7 @@ type TokenPair = { accessToken: string; refreshToken: string };
 type EncryptedTokenVault = Record<string, string>;
 
 function isTrustedRenderer(event: Electron.IpcMainInvokeEvent): boolean {
-  return event.senderFrame?.url.startsWith(`${SCHEME}://app/`) ?? false;
+  return isTrustedRendererUrl(event.senderFrame?.url);
 }
 
 function assertTrustedRenderer(event: Electron.IpcMainInvokeEvent): void {
@@ -180,10 +181,6 @@ async function writeAuthVault(vault: EncryptedTokenVault): Promise<void> {
   await fs.rename(tempPath, AUTH_VAULT_FILE);
 }
 
-function assertServerId(serverId: string): void {
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(serverId)) throw new Error('Invalid server identifier.');
-}
-
 function registerAuthIpcHandlers() {
   ipcMain.handle('auth:status', async (event) => {
     assertTrustedRenderer(event);
@@ -192,7 +189,7 @@ function registerAuthIpcHandlers() {
 
   ipcMain.handle('auth:read', async (event, serverId: string): Promise<TokenPair | null> => {
     assertTrustedRenderer(event);
-    assertServerId(serverId);
+    assertValidServerId(serverId);
     if (!await secureStorageAvailable()) return null;
     const encrypted = (await readAuthVault())[serverId];
     if (!encrypted) return null;
@@ -204,14 +201,14 @@ function registerAuthIpcHandlers() {
 
   ipcMain.handle('auth:write', async (event, serverId: string, tokens: TokenPair) => {
     assertTrustedRenderer(event);
-    assertServerId(serverId);
+    assertValidServerId(serverId);
     if (!tokens?.accessToken || !tokens?.refreshToken) throw new Error('Invalid token payload.');
     await saveTokens(serverId, tokens);
   });
 
   ipcMain.handle('auth:remove', async (event, serverId: string) => {
     assertTrustedRenderer(event);
-    assertServerId(serverId);
+    assertValidServerId(serverId);
     const vault = await readAuthVault();
     if (serverId in vault) {
       delete vault[serverId];

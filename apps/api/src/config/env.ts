@@ -1,7 +1,19 @@
 import * as dotenv from 'dotenv';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
-dotenv.config({ path: '../../.env' });
+// Independente do diretório em que `bun run` foi chamado; o `.env` da API fica em apps/api.
+const environmentDirectory = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(environmentDirectory, '..', '..', '.env') });
+
+// Docker Compose expande variáveis não configuradas como string vazia. Para os campos S3
+// opcionais, vazio deve significar "não configurado", não um endpoint/segredo inválido no
+// modo local.
+const optionalEnvironmentString = z.preprocess(
+  (value) => value === '' ? undefined : value,
+  z.string().min(1).optional(),
+);
 
 const envSchema = z.object({
   DATABASE_URL: z.url(),
@@ -15,11 +27,11 @@ const envSchema = z.object({
   /** Raiz onde os arquivos de mídia da galeria são gravados (endereçados por hash). */
   MEDIA_STORAGE_PATH: z.string().optional().default('./media-storage'),
   /** Endpoint opcional para provedores S3 compatíveis; ausente usa o endpoint da AWS. */
-  MEDIA_S3_ENDPOINT: z.url().optional(),
+  MEDIA_S3_ENDPOINT: z.preprocess((value) => value === '' ? undefined : value, z.url().optional()),
   MEDIA_S3_REGION: z.string().min(1).optional().default('us-east-1'),
-  MEDIA_S3_BUCKET: z.string().min(1).optional(),
-  MEDIA_S3_ACCESS_KEY_ID: z.string().min(1).optional(),
-  MEDIA_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  MEDIA_S3_BUCKET: optionalEnvironmentString,
+  MEDIA_S3_ACCESS_KEY_ID: optionalEnvironmentString,
+  MEDIA_S3_SECRET_ACCESS_KEY: optionalEnvironmentString,
   MEDIA_S3_PREFIX: z.string().optional().default('keres'),
   MEDIA_S3_FORCE_PATH_STYLE: z.enum(['true', 'false']).optional().default('false').transform((value) => value === 'true'),
   /** Teto por arquivo. Vídeo de celular passa fácil de 20 MB, daí o padrão de 50 MB. */

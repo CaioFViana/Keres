@@ -72,4 +72,7 @@ WORKDIR /app/apps/api
 
 EXPOSE 3000
 
-CMD ["bun", "run", "src/index.ts"]
+# `server.ts` is the production entrypoint: it applies pending migrations, reconciles the
+# root admin and only then opens the HTTP port. `index.ts` deliberately only creates the app
+# so route tests can import it without causing production side effects.
+CMD ["bun", "run", "src/server.ts"]

@@ -18,6 +18,7 @@ export const StoryCreateInputSchema = z.object({
   extraNotes: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
   normalizeSceneTiming: z.boolean().default(false),
+  allowReaderComments: z.boolean().default(false),
 });
 
 // Schema for the 'data' payload when creating a story via sync
@@ -33,6 +34,7 @@ export const CreateStoryDataSchema = z.object({
   extraNotes: z.string().nullable().optional(),
   theme: z.string().nullable().optional(),
   normalizeSceneTiming: z.boolean().default(false),
+  allowReaderComments: z.boolean().default(false),
 });
 
 // Full Story Schema, including server-managed fields like userId

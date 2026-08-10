@@ -1,22 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { GlobalSearchResult } from '../../../services/storymanagement/GlobalSearchService';
-
-const ENTITY_ICONS: Record<GlobalSearchEntityType, keyof typeof Ionicons.glyphMap> = {
-  Character: 'person-outline',
-  Scene: 'film-outline',
-  Location: 'location-outline',
-  Item: 'cube-outline',
-  ItemJourney: 'swap-horizontal-outline',
-  Tag: 'pricetag-outline',
-  Choice: 'git-branch-outline',
-  Chapter: 'book-outline',
-  Note: 'document-text-outline',
-  WorldRule: 'shield-checkmark-outline',
-};
+import { ENTITY_TYPE_ICONS } from '../../../utils/entityTypeIcons';
 
 interface GlobalSearchResultItemProps {
   result: GlobalSearchResult;
@@ -29,7 +16,7 @@ const GlobalSearchResultItem: React.FC<GlobalSearchResultItemProps> = ({ result,
 
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(result)}>
-      <Ionicons name={ENTITY_ICONS[result.entityType]} size={22} color={colors.primary} style={styles.icon} />
+      <Ionicons name={ENTITY_TYPE_ICONS[result.entityType]} size={22} color={colors.primary} style={styles.icon} />
       <View style={styles.textContainer}>
         <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
           {result.title}

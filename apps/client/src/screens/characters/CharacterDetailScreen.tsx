@@ -19,6 +19,9 @@ import TagChipList from '@/src/components/common/display/TagChipList/TagChipList
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import ItemCharacterManager from '@/src/components/features/items/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import { useEntityComments } from '../../hooks/useEntityComments';
 import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema'; // For available scenes
 import { CharacterSelect } from '../../db/schemas/characters';
@@ -94,6 +97,9 @@ const CharacterDetailScreen = () => {
 
   const [character, setCharacter] = useState<CharacterSelect | null>(null);
   const { canEdit } = useStoryRole(character?.storyId);
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(character?.storyId, 'Character', characterId);
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
 
@@ -475,21 +481,28 @@ const CharacterDetailScreen = () => {
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
       <TagChipList tags={characterTags} />
 
-      <DetailField label={t('gender')} value={character.gender || t('common_na')} />
-      <DetailField label={t('race')} value={character.race || t('common_na')} />
-      {character.subrace && <DetailField label={t('subrace')} value={character.subrace} />}
-      <DetailField label={t('description')} value={character.description || t('common_na')} />
-      <DetailField label={t('personality')} value={character.personality || t('common_na')} />
-      <DetailField label={t('motivation')} value={character.motivation || t('common_na')} />
-      <DetailField label={t('qualities')} value={character.qualities || t('common_na')} />
-      <DetailField label={t('weaknesses')} value={character.weaknesses || t('common_na')} />
-      <DetailField label={t('biography')} value={character.biography || t('common_na')} />
-      <DetailField label={t('planned_timeline')} value={character.plannedTimeline || t('common_na')} />
+      {(() => {
+        const commentableFieldProps = { storyId: character.storyId, canComment, isStoryOwner, currentUserId, onDeleteComment: deleteComment, onUpdateComment: updateComment };
+        return (
+          <>
+            <CommentableDetailField {...commentableFieldProps} label={t('gender')} value={character.gender || t('common_na')} comments={commentsByField['gender'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'gender' }, { ...input, contentSnapshot: character.gender || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('race')} value={character.race || t('common_na')} comments={commentsByField['race'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'race' }, { ...input, contentSnapshot: character.race || t('common_na') })} />
+            {character.subrace && <CommentableDetailField {...commentableFieldProps} label={t('subrace')} value={character.subrace} comments={commentsByField['subrace'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'subrace' }, { ...input, contentSnapshot: character.subrace })} />}
+            <CommentableDetailField {...commentableFieldProps} label={t('description')} value={character.description || t('common_na')} comments={commentsByField['description'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'description' }, { ...input, contentSnapshot: character.description || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('personality')} value={character.personality || t('common_na')} comments={commentsByField['personality'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'personality' }, { ...input, contentSnapshot: character.personality || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('motivation')} value={character.motivation || t('common_na')} comments={commentsByField['motivation'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'motivation' }, { ...input, contentSnapshot: character.motivation || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('qualities')} value={character.qualities || t('common_na')} comments={commentsByField['qualities'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'qualities' }, { ...input, contentSnapshot: character.qualities || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('weaknesses')} value={character.weaknesses || t('common_na')} comments={commentsByField['weaknesses'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'weaknesses' }, { ...input, contentSnapshot: character.weaknesses || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('biography')} value={character.biography || t('common_na')} comments={commentsByField['biography'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'biography' }, { ...input, contentSnapshot: character.biography || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('planned_timeline')} value={character.plannedTimeline || t('common_na')} comments={commentsByField['plannedTimeline'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'plannedTimeline' }, { ...input, contentSnapshot: character.plannedTimeline || t('common_na') })} />
 
-      <CustomAttributeDetailFields storyId={character.storyId} entityType="Character" entityId={characterId} />
+            <CustomAttributeDetailFields storyId={character.storyId} entityType="Character" entityId={characterId} />
 
-      <DetailField label={t('is_favorite')} value={character.isFavorite ? t('common_yes') : t('common_no')} />
-      <DetailField label={t('extra_notes')} value={character.extraNotes || t('common_na')} />
+            <DetailField label={t('is_favorite')} value={character.isFavorite ? t('common_yes') : t('common_no')} />
+            <CommentableDetailField {...commentableFieldProps} label={t('extra_notes')} value={character.extraNotes || t('common_na')} comments={commentsByField['extraNotes'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: character.extraNotes || t('common_na') })} />
+          </>
+        );
+      })()}
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager
@@ -544,6 +557,8 @@ const CharacterDetailScreen = () => {
         currentEntityId={characterId}
         currentEntityType="Character"
       />
+
+      <SeeAlsoManager storyId={character.storyId} entityType="Character" entityId={characterId} editable={canEdit} />
 
       <EntityMetadata version={character.version} createdAt={character.createdAt} updatedAt={character.updatedAt} />
       <FavoritedByList storyId={character.storyId} entityId={characterId} entityType="Character" />

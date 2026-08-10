@@ -68,6 +68,7 @@ const StorySettingsScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
   const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
+  const [allowReaderComments, setAllowReaderComments] = useState(false);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
   const [uploadTargetServerId, setUploadTargetServerId] = useState<string | null>(null);
@@ -109,6 +110,7 @@ const StorySettingsScreen = () => {
         setExtraNotes(fetchedStory.extraNotes);
         setTheme(fetchedStory.theme);
         setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
+        setAllowReaderComments(fetchedStory.allowReaderComments);
         applyTheme(fetchedStory.theme || 'default');
 
         // Fetch servers
@@ -233,6 +235,7 @@ const StorySettingsScreen = () => {
         extraNotes,
         theme,
         normalizeSceneTiming,
+        allowReaderComments,
         // `serverId` não entra aqui - vincular/desvincular tem efeitos colaterais de rede
         // (enviar a história, avisar o servidor) que não fazem sentido como campo de
         // formulário comum; ver handleSendToServer/handleUnlinkFromServer.
@@ -684,6 +687,22 @@ const StorySettingsScreen = () => {
               disabled={!canEdit}
             />
           </View>
+
+          {/* Só existe distinção reader/writer para histórias vinculadas a um servidor - uma
+              história local não tem colaboradores, então este ajuste não faria sentido. */}
+          {serverId && (
+            <View style={styles.switchContainer}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={[styles.label, { color: colors.text }]}>{t('allow_reader_comments')}</Text>
+                <Text style={{ color: colors.textSecondary }}>{t('allow_reader_comments_description')}</Text>
+              </View>
+              <ThemedSwitch
+                value={allowReaderComments}
+                onValueChange={setAllowReaderComments}
+                disabled={!canEdit}
+              />
+            </View>
+          )}
 
           <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
           <TextInput

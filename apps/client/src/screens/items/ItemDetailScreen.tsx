@@ -12,9 +12,12 @@ import TagChipList from '@/src/components/common/display/TagChipList/TagChipList
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import ItemJourneyTimeline from '@/src/components/features/item-journeys/ItemJourney/ItemJourneyTimeline';
 import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { useDrizzle } from '../../db';
 import { CharacterSelect, ItemSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -58,6 +61,9 @@ const ItemDetailScreen = () => {
 
   const [item, setItem] = useState<ItemSelect | null>(null);
   const { canEdit } = useStoryRole(item?.storyId);
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(item?.storyId, 'Item', itemId);
 
   const {
     selectedTags: itemTags,
@@ -171,16 +177,23 @@ const ItemDetailScreen = () => {
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
-      <TagChipList tags={itemTags} />
-      <DetailField label={t('description')} value={item.description || t('common_na')} />
-      <DetailField label={t('category')} value={item.category || t('common_na')} />
-      <DetailField label={t('initial_state')} value={item.initialState || t('common_na')} />
-      <DetailField label={t('character_owner')} value={owner?.name || t('common_na')} />
+      {(() => {
+        const commentableFieldProps = { storyId: item.storyId, canComment, isStoryOwner, currentUserId, onDeleteComment: deleteComment, onUpdateComment: updateComment };
+        return (
+          <>
+            <TagChipList tags={itemTags} />
+            <CommentableDetailField {...commentableFieldProps} label={t('description')} value={item.description || t('common_na')} comments={commentsByField['description'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'description' }, { ...input, contentSnapshot: item.description || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('category')} value={item.category || t('common_na')} comments={commentsByField['category'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'category' }, { ...input, contentSnapshot: item.category || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('initial_state')} value={item.initialState || t('common_na')} comments={commentsByField['initialState'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'initialState' }, { ...input, contentSnapshot: item.initialState || t('common_na') })} />
+            <DetailField label={t('character_owner')} value={owner?.name || t('common_na')} />
 
-      <CustomAttributeDetailFields storyId={item.storyId} entityType="Item" entityId={itemId} />
+            <CustomAttributeDetailFields storyId={item.storyId} entityType="Item" entityId={itemId} />
 
-      <DetailField label={t('extra_notes')} value={item.extraNotes || t('common_na')} />
-      <DetailField label={t('is_favorite')} value={item.isFavorite ? t('common_yes') : t('common_no')} />
+            <CommentableDetailField {...commentableFieldProps} label={t('extra_notes')} value={item.extraNotes || t('common_na')} comments={commentsByField['extraNotes'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: item.extraNotes || t('common_na') })} />
+            <DetailField label={t('is_favorite')} value={item.isFavorite ? t('common_yes') : t('common_no')} />
+          </>
+        );
+      })()}
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager
@@ -204,6 +217,8 @@ const ItemDetailScreen = () => {
         currentEntityId={itemId}
         currentEntityType="Item"
       />
+
+      <SeeAlsoManager storyId={item.storyId} entityType="Item" entityId={itemId} editable={canEdit} />
 
       <EntityMetadata version={item.version} createdAt={item.createdAt} updatedAt={item.updatedAt} />
       <FavoritedByList storyId={item.storyId} entityId={itemId} entityType="Item" />

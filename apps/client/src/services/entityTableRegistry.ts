@@ -24,6 +24,7 @@ export const ENTITY_TABLES = {
   Note: schema.notes,
   NoteRelation: schema.noteRelations,
   Scene: schema.scenes,
+  SeeAlsoRelation: schema.seeAlsoRelations,
   Story: schema.stories,
   Suggestion: schema.suggestions,
   Tag: schema.tags,

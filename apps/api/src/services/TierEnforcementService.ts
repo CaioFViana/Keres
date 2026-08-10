@@ -71,7 +71,9 @@ export class TierEnforcementService {
     }
 
     const handlers = [...syncService.getEntityHandlers().values()]
-      .filter((h) => h.entityName !== 'Story' && h.entityName !== 'Favorite');
+      // Favorite e Comment são metadados/anotações pessoais, não conteúdo da história - não
+      // devem consumir nem ser bloqueados pelo limite de entidades do tier.
+      .filter((h) => h.entityName !== 'Story' && h.entityName !== 'Favorite' && h.entityName !== 'Comment');
 
     if (tier.maxEntitiesPerStory !== null) {
       const counts = await Promise.all(handlers.map((h) => h.countForStoryIds([storyId])));

@@ -20,9 +20,12 @@ import EntityGalleryManager from '@/src/components/features/gallery/GalleryManag
 import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager'; // Import ItemSceneManager
 import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager'; // Import NoteRelationManager
 import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -112,6 +115,9 @@ const SceneDetailScreen = () => {
 
   const [scene, setScene] = useState<SceneSelect | null>(null);
   const { canEdit } = useStoryRole(scene?.storyId);
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(scene?.storyId, 'Scene', sceneId);
   const [chapter, setChapter] = useState<Chapter | null>(null); // State for chapter details
   const [location, setLocation] = useState<Location | null>(null); // State for location details
   const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined); // State for previous scene
@@ -412,14 +418,36 @@ const SceneDetailScreen = () => {
         </Text>
       )}
       <TagChipList tags={sceneTags} />
-      <DetailField label={t('summary')} value={scene.summary || t('common_na')} />
+      <CommentableDetailField
+        storyId={scene.storyId}
+        label={t('summary')}
+        value={scene.summary || t('common_na')}
+        comments={commentsByField['summary'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'summary' }, { ...input, contentSnapshot: scene.summary || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
       <DetailField label={t('gap')} value={formatSceneGap(scene, t, selectedStory?.normalizeSceneTiming)} />
       <DetailField label={t('in_universe_duration')} value={formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming)} />
 
       <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
 
       <DetailField label={t('is_favorite')} value={scene.isFavorite ? t('common_yes') : t('common_no')} />
-      <DetailField label={t('extra_notes')} value={scene.extraNotes || t('common_na')} />
+      <CommentableDetailField
+        storyId={scene.storyId}
+        label={t('extra_notes')}
+        value={scene.extraNotes || t('common_na')}
+        comments={commentsByField['extraNotes'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: scene.extraNotes || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
 
       {location && (
         <>
@@ -476,6 +504,8 @@ const SceneDetailScreen = () => {
         nextScene={nextScene}
         choicesForScene={choicesForScene}
       />
+
+      <SeeAlsoManager storyId={scene.storyId} entityType="Scene" entityId={sceneId} editable={canEdit} />
 
       <EntityMetadata version={scene.version} createdAt={scene.createdAt} updatedAt={scene.updatedAt} />
       <FavoritedByList storyId={scene.storyId} entityId={sceneId} entityType="Scene" />

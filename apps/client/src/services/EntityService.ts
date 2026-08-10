@@ -9,6 +9,7 @@ import {
   characters,
   characterScenes,
   choices,
+  comments,
   favorites,
   galleries,
   galleryRelations,
@@ -20,6 +21,7 @@ import {
   notes,
   operationLogs,
   scenes,
+  seeAlsoRelations,
   suggestions,
   stories,
   storySchemaFields,
@@ -63,6 +65,8 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   gallery: OperationLogEntityType.Gallery,
   galleryrelation: OperationLogEntityType.GalleryRelation,
   favorite: OperationLogEntityType.Favorite,
+  seealsorelation: OperationLogEntityType.SeeAlsoRelation,
+  comment: OperationLogEntityType.Comment,
 };
 
 export class EntityService {
@@ -412,6 +416,35 @@ export class EntityService {
         }
         translatedEntityType = t('custom_attribute_value');
         break;
+      case OperationLogEntityType.SeeAlsoRelation:
+        const seeAlsoRelation = await db.query.seeAlsoRelations.findFirst({
+          where: and(eq(seeAlsoRelations.id, entityId), eq(seeAlsoRelations.storyId, storyId), eq(seeAlsoRelations.isDeleted, false)),
+          columns: { entityAType: true, entityAId: true, entityBType: true, entityBId: true },
+        });
+        if (seeAlsoRelation) {
+          const sideA = await EntityService._resolveRelationEntityName(db, seeAlsoRelation.entityAType as OperationLogEntityType, seeAlsoRelation.entityAId, storyId, t);
+          const sideB = await EntityService._resolveRelationEntityName(db, seeAlsoRelation.entityBType as OperationLogEntityType, seeAlsoRelation.entityBId, storyId, t);
+          entitySpecificName = `${sideA.name || t('unknown_entity')} (${sideA.type || t('unknown_entity_type')}) - ${sideB.name || t('unknown_entity')} (${sideB.type || t('unknown_entity_type')})`;
+        }
+        translatedEntityType = t('see_also_relation');
+        break;
+      case OperationLogEntityType.Comment:
+        const comment = await db.query.comments.findFirst({
+          where: and(eq(comments.id, entityId), eq(comments.storyId, storyId), eq(comments.isDeleted, false)),
+          columns: { entityType: true, entityId: true, fieldId: true, fieldKey: true, commentText: true },
+        });
+        if (comment) {
+          const target = await EntityService._resolveRelationEntityName(db, comment.entityType as OperationLogEntityType, comment.entityId, storyId, t);
+          let fieldLabel = comment.fieldKey || '';
+          if (comment.fieldId) {
+            const field = await db.query.storySchemaFields.findFirst({ where: eq(storySchemaFields.id, comment.fieldId), columns: { name: true } });
+            fieldLabel = field?.name || fieldLabel;
+          }
+          const snippet = comment.commentText.length > 60 ? `${comment.commentText.slice(0, 60)}...` : comment.commentText;
+          entitySpecificName = `${target.name || t('unknown_entity')} (${target.type || t('unknown_entity_type')}) - ${fieldLabel}: "${snippet}"`;
+        }
+        translatedEntityType = t('comment');
+        break;
       }
     if (entitySpecificName) {
       return `${translatedEntityType} - ${entitySpecificName}`;
@@ -472,6 +505,16 @@ export class EntityService {
         const item = await db.query.items.findFirst({ where: and(eq(items.id, relationId), eq(items.storyId, storyId), eq(items.isDeleted, false)), columns: { name: true } });
         name = item?.name;
         type = t('item');
+        break;
+      case OperationLogEntityType.Choice:
+        const relatedChoice = await db.query.choices.findFirst({ where: and(eq(choices.id, relationId), eq(choices.storyId, storyId), eq(choices.isDeleted, false)), columns: { text: true } });
+        name = relatedChoice?.text;
+        type = t('choice');
+        break;
+      case OperationLogEntityType.Tag:
+        const relatedTag = await db.query.tags.findFirst({ where: and(eq(tags.id, relationId), eq(tags.storyId, storyId), eq(tags.isDeleted, false)), columns: { name: true } });
+        name = relatedTag?.name;
+        type = t('tag');
         break;
       case OperationLogEntityType.Gallery:
         const gallery = await db.query.galleries.findFirst({ where: and(eq(galleries.id, relationId), eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)), columns: { title: true, fileName: true } });

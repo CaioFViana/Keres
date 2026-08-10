@@ -6,9 +6,12 @@ import FavoritedByList from '@/src/components/features/favorites/FavoritedByList
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
 import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { useDrizzle } from '@/src/db';
 import { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
@@ -68,6 +71,9 @@ const ChapterDetailScreen = () => {
 
   const [chapter, setChapter] = useState<ChapterSelect | null>(null);
   const { canEdit } = useStoryRole(chapter?.storyId);
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(chapter?.storyId, 'Chapter', chapterId);
 
   const {
     selectedTags: chapterTags,
@@ -246,7 +252,18 @@ const ChapterDetailScreen = () => {
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={chapterTags} />
-      <DetailField label={t('summary')} value={chapter.summary || t('common_na')} />
+      <CommentableDetailField
+        storyId={chapter.storyId}
+        label={t('summary')}
+        value={chapter.summary || t('common_na')}
+        comments={commentsByField['summary'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'summary' }, { ...input, contentSnapshot: chapter.summary || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
       {selectedStory?.type === 'linear' && (
         <DetailField
           label={t('in_universe_duration')}
@@ -263,7 +280,18 @@ const ChapterDetailScreen = () => {
       <CustomAttributeDetailFields storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} />
 
       <DetailField label={t('is_favorite')} value={chapter.isFavorite ? t('common_yes') : t('common_no')} />
-      <DetailField label={t('extra_notes')} value={chapter.extraNotes || t('common_na')} />
+      <CommentableDetailField
+        storyId={chapter.storyId}
+        label={t('extra_notes')}
+        value={chapter.extraNotes || t('common_na')}
+        comments={commentsByField['extraNotes'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: chapter.extraNotes || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
 
 
       <RelatedScenesList
@@ -292,6 +320,8 @@ const ChapterDetailScreen = () => {
         currentEntityId={chapterId}
         currentEntityType="Chapter"
       />
+
+      <SeeAlsoManager storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} editable={canEdit} />
 
       <EntityMetadata version={chapter.version} createdAt={chapter.createdAt} updatedAt={chapter.updatedAt} />
       <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />

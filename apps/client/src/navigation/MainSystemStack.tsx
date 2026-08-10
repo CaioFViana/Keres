@@ -25,6 +25,7 @@ import ChoiceDetailScreen from '../screens/choices/ChoiceDetailScreen';
 import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
+import CommentListScreen from '../screens/comments/CommentListScreen';
 import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
@@ -93,6 +94,7 @@ export type MainSystemDrawerParamList = {
   StorySettings: { storyId: string };
   StoryAnalysis: { storyId: string };
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
+  CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
   StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
   Suggestions: undefined;
   StorySelection: undefined;
@@ -384,6 +386,23 @@ const OperationLogStackNavigator = () => {
       <OperationLogStack.Screen name="OperationLog" component={OperationLogScreen} />
       <OperationLogStack.Screen name="OperationLogDetail" component={OperationLogDetailScreen} />
     </OperationLogStack.Navigator>
+  );
+};
+//#endregion
+//#region Comments
+
+const CommentsStack = createNativeStackNavigator<CommentsStackParamList>();
+
+export type CommentsStackParamList = {
+  CommentsList: undefined;
+};
+
+const CommentsStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <CommentsStack.Navigator screenOptions={{ headerShown: false }}>
+      <CommentsStack.Screen name="CommentsList" component={CommentListScreen} />
+    </CommentsStack.Navigator>
   );
 };
 //#endregion
@@ -702,6 +721,20 @@ const MainSystemNavigator = () => {
           drawerItemPress: (e) => {
             e.preventDefault();
             navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
+          },
+        })}
+      />
+      <Drawer.Screen
+        name="CommentsStack"
+        component={CommentsStackNavigator}
+        options={{
+          title: t('comments_title'),
+          drawerLabel: t('comments_title'),
+        }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('CommentsStack', { screen: 'CommentsList' });
           },
         })}
       />

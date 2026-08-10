@@ -19,6 +19,8 @@ import { suggestions } from './suggestions';
 import { storySchemaFields } from './storySchemaFields';
 import { attributeValues } from './attributeValues';
 import { favorites } from './favorites';
+import { seeAlsoRelations } from './seeAlsoRelations';
+import { comments } from './comments';
 import { storyTypeEnum } from '../enums';
 
 
@@ -36,6 +38,7 @@ export const stories = pgTable('stories', {
   extraNotes: text('extra_notes'),
   theme: text('theme'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
+  allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   version: integer('version').notNull().default(1),
@@ -66,4 +69,6 @@ export const storiesRelations = relations(stories, ({ one, many }) => ({
   storySchemaFields: many(storySchemaFields),
   attributeValues: many(attributeValues),
   favorites: many(favorites),
+  seeAlsoRelations: many(seeAlsoRelations),
+  comments: many(comments),
 }));

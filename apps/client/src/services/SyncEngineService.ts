@@ -30,6 +30,8 @@ import { StorySchemaFieldClientSyncHandler } from './entity-sync-handlers/StoryS
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
 import { FavoriteClientSyncHandler } from './entity-sync-handlers/FavoriteClientSyncHandler';
+import { SeeAlsoRelationClientSyncHandler } from './entity-sync-handlers/SeeAlsoRelationClientSyncHandler';
+import { CommentClientSyncHandler } from './entity-sync-handlers/CommentClientSyncHandler';
 import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
 import { createServerService } from './ServerService';
 import { createStoryService } from './storymanagement/StoryService';
@@ -70,6 +72,8 @@ const SYNC_ENTITY_EVENTS: Record<string, string> = {
   StorySchemaField: 'story_schema_field_changed',
   AttributeValue: 'attribute_value_changed',
   Favorite: 'favorite_changed',
+  SeeAlsoRelation: 'see_also_relation_changed',
+  Comment: 'comment_changed',
 };
 
 const FAVORITE_TARGET_EVENTS: Record<string, string> = {
@@ -145,6 +149,8 @@ export class SyncEngineService {
     this.registerEntityHandler(new StorySchemaFieldClientSyncHandler())
     this.registerEntityHandler(new AttributeValueClientSyncHandler())
     this.registerEntityHandler(new FavoriteClientSyncHandler())
+    this.registerEntityHandler(new SeeAlsoRelationClientSyncHandler())
+    this.registerEntityHandler(new CommentClientSyncHandler())
     // TODO: Register other entity handlers here
   }
 

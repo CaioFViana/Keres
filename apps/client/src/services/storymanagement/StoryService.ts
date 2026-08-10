@@ -17,6 +17,8 @@ import {
   ChoiceInsert,
   choices,
   ChoiceSelect,
+  CommentInsert,
+  comments,
   galleries,
   GalleryInsert,
   favorites,
@@ -40,6 +42,8 @@ import {
   SceneInsert,
   scenes,
   SceneSelect,
+  SeeAlsoRelationInsert,
+  seeAlsoRelations,
   servers,
   stories,
   StoryInsert, StorySelect,
@@ -94,6 +98,7 @@ import {
  */
 async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string): Promise<void> {
   await tx.delete(attributeValues).where(eq(attributeValues.storyId, storyId)).run();
+  await tx.delete(comments).where(eq(comments.storyId, storyId)).run();
   await tx.delete(favorites).where(eq(favorites.storyId, storyId)).run();
   await tx.delete(chapters).where(eq(chapters.storyId, storyId)).run();
   await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
@@ -110,6 +115,7 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(notes).where(eq(notes.storyId, storyId)).run();
   await tx.delete(operationLogs).where(eq(operationLogs.storyId, storyId)).run();
   await tx.delete(scenes).where(eq(scenes.storyId, storyId)).run();
+  await tx.delete(seeAlsoRelations).where(eq(seeAlsoRelations.storyId, storyId)).run();
   await tx.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
   await tx.delete(storySchemaFields).where(eq(storySchemaFields.storyId, storyId)).run();
   await tx.delete(suggestions).where(eq(suggestions.storyId, storyId)).run();
@@ -711,7 +717,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyWorldRules, storyNotes, storyNoteRelations, storyTags, storyTagRelations,
         storySuggestions, storyCharacterRelations, storyCharacterScenes, storyGalleryItems,
         storyGalleryRelations, storyItems, storyItemJourneys,
-        storySchemaFieldRows, storyAttributeValues, storyFavorites,
+        storySchemaFieldRows, storyAttributeValues, storyFavorites, storyComments, storySeeAlsoRelations,
       ] = await Promise.all([
         db.query.chapters.findMany({ where: belongsToStory(chapters) }),
         db.query.scenes.findMany({ where: belongsToStory(scenes) }),
@@ -734,6 +740,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.storySchemaFields.findMany({ where: belongsToStory(storySchemaFields) }),
         db.query.attributeValues.findMany({ where: belongsToStory(attributeValues) }),
         db.query.favorites.findMany({ where: belongsToStory(favorites) }),
+        db.query.comments.findMany({ where: belongsToStory(comments) }),
+        db.query.seeAlsoRelations.findMany({ where: belongsToStory(seeAlsoRelations) }),
       ]);
 
       return FullStoryExportSchema.parse({
@@ -767,6 +775,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storySchemaFields: storySchemaFieldRows,
         attributeValues: storyAttributeValues,
         favorites: storyFavorites,
+        comments: storyComments,
+        seeAlsoRelations: storySeeAlsoRelations,
         // O importador usa este número como ponto de partida da sincronização. Preservar o
         // marcador local mantém o pacote útil para uma história já ligada a um servidor.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
@@ -1169,6 +1179,40 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               deletedAt: null,
             };
             await tx.insert(attributeValues).values(attributeValueToInsert).run();
+          }
+        }
+
+        // Relações "Veja também" só entram depois das entidades às quais apontam. A relação
+        // já vem canonicalizada pelo serviço que a criou; manter os IDs preserva a simetria.
+        if (fullStoryData.seeAlsoRelations) {
+          for (const relation of fullStoryData.seeAlsoRelations) {
+            const relationToInsert: SeeAlsoRelationInsert = {
+              ...relation,
+              storyId: originalStory.id,
+              createdAt: new Date(relation.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(seeAlsoRelations).values(relationToInsert).onConflictDoNothing().run();
+          }
+        }
+
+        // Em cópia local, o autor do comentário passa a ser o usuário local, exatamente como
+        // Favorites. Ao importar uma história já vinculada a servidor, preservamos o autor
+        // original para não reatribuir anotações colaborativas.
+        if (fullStoryData.comments) {
+          for (const comment of fullStoryData.comments) {
+            const commentToInsert: CommentInsert = {
+              ...comment,
+              storyId: originalStory.id,
+              authorUserId: queriedServerId ? comment.authorUserId : userId,
+              createdAt: new Date(comment.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(comments).values(commentToInsert).run();
           }
         }
 

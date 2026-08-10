@@ -21,6 +21,8 @@ import { CURRENT_STORY_FORMAT_VERSION } from './StoryExportVersion';
 import { StorySchemaFieldSchema } from './StorySchemaFieldSchemas';
 import { AttributeValueSchema } from './AttributeValueSchemas';
 import { FavoriteSchema } from './FavoriteSchemas';
+import { CommentSchema } from './CommentSchemas';
+import { SeeAlsoRelationSchema } from './SeeAlsoRelationSchemas';
 
 // This schema defines the structure for a full story export/import.
 // It includes the main story object and all its related entities as arrays.
@@ -49,6 +51,9 @@ export const FullStoryExportSchema = z.object({
     attributeValues: z.array(AttributeValueSchema).optional(),
     // Introduzido no formato V2; a migração V1 -> V2 fornece uma lista vazia quando ausente.
     favorites: z.array(FavoriteSchema).optional(),
+    // Introduzidos no formato V3; migrações anteriores fornecem listas vazias.
+    comments: z.array(CommentSchema).optional(),
+    seeAlsoRelations: z.array(SeeAlsoRelationSchema).optional(),
     // Mesmo motivo: exports legados sem este recurso continuam importáveis.
     locationRelations: z.array(LocationRelationSchema).optional(),
     serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version

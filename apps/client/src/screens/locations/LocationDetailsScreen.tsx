@@ -1,17 +1,16 @@
-import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager'; // Import LocationItemManager
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
 import ScenePresenceList, { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities

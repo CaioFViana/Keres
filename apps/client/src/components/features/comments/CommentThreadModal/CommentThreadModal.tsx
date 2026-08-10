@@ -1,15 +1,15 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
 import { eq } from 'drizzle-orm';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useDrizzle } from '../../../../db';
 import { CommentSelect, servers, stories } from '../../../../db/schema';
-import { useUserProfileResolver, ResolvedUserProfile } from '../../../../hooks/useUserProfileResolver';
+import { ResolvedUserProfile, useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
 import { useTheme } from '../../../../theme';
 import { AppAlert } from '../../../../utils/AppAlert';
 import { CommentCriticality, CRITICALITY_ICONS, CRITICALITY_LEVELS, DEFAULT_CRITICALITY } from '../../../../utils/commentCriticality';
@@ -180,7 +180,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
                 </View>
                 {!!comment.excerptText && (
                   <View style={styles.excerptBlock}>
-                    <Text style={styles.excerptText}>"{comment.excerptText}"</Text>
+                    <Text style={styles.excerptText}>{comment.excerptText}</Text>
                   </View>
                 )}
                 <Text style={styles.commentText}>{comment.commentText}</Text>

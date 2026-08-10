@@ -1,3 +1,11 @@
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
 import { Ionicons } from '@expo/vector-icons';
 import { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
@@ -5,15 +13,6 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
-import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
 import { NoteSelect } from '../../db/schemas/notes';

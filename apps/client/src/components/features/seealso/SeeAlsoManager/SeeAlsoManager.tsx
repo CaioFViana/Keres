@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SeeAlsoEntityType } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import GroupedMultiSelectPill from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
 import { decodeSeeAlsoValue, encodeSeeAlsoValue, useSeeAlsoEntityOptions } from '../../../../hooks/useSeeAlsoEntityOptions';
@@ -84,15 +84,27 @@ const SeeAlsoManager: React.FC<SeeAlsoManagerProps> = ({ storyId, entityType, en
         <Text style={styles.emptyText}>{t('see_also_empty')}</Text>
       ) : relations.map((relation, index) => {
         const option = optionsByValue.get(encodeSeeAlsoValue(relation.otherType, relation.otherId));
-        return (
-          <TouchableOpacity
-            key={relation.relationId}
-            style={[styles.row, index === relations.length - 1 && styles.rowLast]}
-            onPress={() => handlePress(relation.otherType, relation.otherId)}
-          >
+        const rowStyle = [styles.row, index === relations.length - 1 && styles.rowLast];
+        const rowContent = (
+          <>
             <Ionicons name={ENTITY_TYPE_ICONS[relation.otherType]} size={20} color={colors.primary} style={styles.icon} />
             <Text style={styles.name} numberOfLines={1}>{option?.name || relation.otherId}</Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+            {!editable && <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />}
+          </>
+        );
+        // Em Forms (editable), a linha não navega - sair da tela perderia as alterações não
+        // salvas do formulário. Só as telas de detalhe (view-only) navegam ao tocar.
+        return editable ? (
+          <View key={relation.relationId} style={rowStyle}>
+            {rowContent}
+          </View>
+        ) : (
+          <TouchableOpacity
+            key={relation.relationId}
+            style={rowStyle}
+            onPress={() => handlePress(relation.otherType, relation.otherId)}
+          >
+            {rowContent}
           </TouchableOpacity>
         );
       })}

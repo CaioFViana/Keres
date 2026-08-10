@@ -1,11 +1,12 @@
-import { AttributeType, decodeAttributeValue, StorySchemaEntityType } from '@keres/shared';
+import { AttributeType, CommentEntityType, decodeAttributeValue, StorySchemaEntityType } from '@keres/shared';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
 import { createAttributeValueService } from '../../../../services/storymanagement/AttributeValueService';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
+import { useEntityComments } from '../../../../hooks/useEntityComments';
 import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
-import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 
 interface CustomAttributeDetailFieldsProps {
   storyId: string;
@@ -34,6 +35,9 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
   const drizzleDb = useDrizzle();
   const fields = useStorySchemaFields(storyId, entityType);
   const [values, setValues] = useState<Record<string, string | null>>({});
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(storyId, entityType as CommentEntityType, entityId);
 
   const fetchValues = useCallback(async () => {
     try {
@@ -65,11 +69,20 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
         // defaultValue do campo (o mais honesto disponível) em vez de mostrar N/A à toa.
         const rawValue = values[field.id] ?? field.defaultValue ?? null;
         const decoded = decodeAttributeValue(field.type as AttributeType, rawValue);
+        const displayValue = formatValueForDisplay(field.type, decoded, t);
         return (
-          <DetailField
+          <CommentableDetailField
             key={field.id}
+            storyId={storyId}
             label={field.name}
-            value={formatValueForDisplay(field.type, decoded, t)}
+            value={displayValue}
+            comments={commentsByField[field.id] ?? []}
+            canComment={canComment}
+            isStoryOwner={isStoryOwner}
+            currentUserId={currentUserId}
+            onAddComment={(input) => addComment({ fieldId: field.id }, { ...input, contentSnapshot: displayValue })}
+            onDeleteComment={deleteComment}
+            onUpdateComment={updateComment}
           />
         );
       })}

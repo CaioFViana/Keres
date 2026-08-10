@@ -15,6 +15,9 @@ export const stories = sqliteTable('stories', {
   extraNotes: text('extra_notes'),
   theme: text('theme'),
   normalizeSceneTiming: integer('normalize_scene_timing', { mode: 'boolean' }).notNull().default(false),
+  // Só relevante para histórias vinculadas a um servidor - só lá existe a distinção
+  // reader/writer que este campo governa (ver CommentSyncHandler/SyncService no servidor).
+  allowReaderComments: integer('allow_reader_comments', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

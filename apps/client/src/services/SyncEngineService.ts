@@ -30,10 +30,13 @@ import { StorySchemaFieldClientSyncHandler } from './entity-sync-handlers/StoryS
 import { TagClientSyncHandler } from './entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClientSyncHandler';
 import { FavoriteClientSyncHandler } from './entity-sync-handlers/FavoriteClientSyncHandler';
+import { SeeAlsoRelationClientSyncHandler } from './entity-sync-handlers/SeeAlsoRelationClientSyncHandler';
+import { CommentClientSyncHandler } from './entity-sync-handlers/CommentClientSyncHandler';
 import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
 import { createServerService } from './ServerService';
 import { createStoryService } from './storymanagement/StoryService';
 import { createFavoriteService } from './storymanagement/FavoriteService';
+import { createCommentService } from './storymanagement/CommentService';
 import { createSyncConflictService, findContestedFields, mergeLocalOperationPayloads, SyncConflictService } from './SyncConflictService';
 
 export interface ServerStoryPreview {
@@ -70,6 +73,8 @@ const SYNC_ENTITY_EVENTS: Record<string, string> = {
   StorySchemaField: 'story_schema_field_changed',
   AttributeValue: 'attribute_value_changed',
   Favorite: 'favorite_changed',
+  SeeAlsoRelation: 'see_also_relation_changed',
+  Comment: 'comment_changed',
 };
 
 const FAVORITE_TARGET_EVENTS: Record<string, string> = {
@@ -145,6 +150,8 @@ export class SyncEngineService {
     this.registerEntityHandler(new StorySchemaFieldClientSyncHandler())
     this.registerEntityHandler(new AttributeValueClientSyncHandler())
     this.registerEntityHandler(new FavoriteClientSyncHandler())
+    this.registerEntityHandler(new SeeAlsoRelationClientSyncHandler())
+    this.registerEntityHandler(new CommentClientSyncHandler())
     // TODO: Register other entity handlers here
   }
 
@@ -440,13 +447,14 @@ export class SyncEngineService {
     // a base correta pro próximo ciclo de sync, não o `serverLastOperationVersion` do pacote
     // exportado (que reflete um vínculo anterior, sempre 0 pra uma história nunca vinculada).
     await createFavoriteService(this._db).migrateUserIdentity(storyId, userId, server.idUser);
-    // These favorite operations are already represented by the imported snapshot. Sending
-    // them again would carry the former local-only user id, which has no meaning on the server.
+    await createCommentService(this._db).migrateAuthorIdentity(storyId, userId, server.idUser);
+    // Essas operações já estão representadas pelo snapshot importado. Reenviá-las carregaria
+    // a antiga identidade local, que não existe no servidor, e duplicaria o comentário.
     await this._db.update(schema.operationLogs)
       .set({ isSynced: true })
       .where(and(
         eq(schema.operationLogs.storyId, storyId),
-        eq(schema.operationLogs.entityType, 'Favorite'),
+        sql`${schema.operationLogs.entityType} in ('Favorite', 'Comment')`,
         lte(schema.operationLogs.operationVersion, story.lastOperationLog),
       ));
     await storyService.updateStory(userId, storyId, {

@@ -1,18 +1,20 @@
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
-import NoteManager from '@/src/components/features/notes/NoteManager';
 import { useDrizzle } from '../../db';
 import { WorldRuleWithTags } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -53,6 +55,9 @@ const WorldRuleDetailScreen = () => {
 
   const [worldRule, setWorldRule] = useState<WorldRuleWithTags | null>(null);
   const { canEdit } = useStoryRole(worldRule?.storyId);
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(worldRule?.storyId, 'WorldRule', worldRuleId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -186,11 +191,33 @@ const WorldRuleDetailScreen = () => {
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={worldRule.tags} />
 
-      <DetailField label={t('description')} value={worldRule.description || t('common_na')} />
+      <CommentableDetailField
+        storyId={worldRule.storyId}
+        label={t('description')}
+        value={worldRule.description || t('common_na')}
+        comments={commentsByField['description'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'description' }, { ...input, contentSnapshot: worldRule.description || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
 
       <CustomAttributeDetailFields storyId={worldRule.storyId} entityType="WorldRule" entityId={worldRuleId} />
 
-      <DetailField label={t('extra_notes')} value={worldRule.extraNotes || t('common_na')} />
+      <CommentableDetailField
+        storyId={worldRule.storyId}
+        label={t('extra_notes')}
+        value={worldRule.extraNotes || t('common_na')}
+        comments={commentsByField['extraNotes'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: worldRule.extraNotes || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
 
       <NoteManager
         noteRelations={worldRuleNoteRelations}
@@ -202,6 +229,8 @@ const WorldRuleDetailScreen = () => {
         currentEntityId={worldRuleId}
         currentEntityType="WorldRule"
       />
+
+      <SeeAlsoManager storyId={worldRule.storyId} entityType="WorldRule" entityId={worldRuleId} editable={false} />
 
       <EntityMetadata version={worldRule.version} createdAt={worldRule.createdAt} updatedAt={worldRule.updatedAt} />
       <FavoritedByList storyId={worldRule.storyId} entityId={worldRuleId} entityType="WorldRule" />

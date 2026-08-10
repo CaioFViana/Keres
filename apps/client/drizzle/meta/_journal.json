@@ -29,6 +29,13 @@
       "when": 1786306117550,
       "tag": "0003_military_rhino",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1786390395547,
+      "tag": "0004_rapid_rage",
+      "breakpoints": true
     }
   ]
 }

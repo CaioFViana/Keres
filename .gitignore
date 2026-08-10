@@ -7,7 +7,7 @@ apps/admin/dist
 
 # Arquivos de mídia da galeria, gravados em disco pelo servidor e endereçados por hash.
 # São conteúdo de usuário, não código - o caminho é configurável por MEDIA_STORAGE_PATH.
-media-storage/
+apps/api/media-storage/
 
 # Build output do client web (apps/client) - gerado por `bun run export:web`, consumido
 # pelo Electron (ver apps/desktop). Não é código-fonte.

@@ -78,6 +78,12 @@ export class StoryExportImportService {
         const attributeValues = await db.query.attributeValues.findMany({
             where: (attributeValues, { eq, and }) => and(eq(attributeValues.storyId, storyId), eq(attributeValues.isDeleted, false)),
         });
+        const comments = await db.query.comments.findMany({
+            where: (comments, { eq, and }) => and(eq(comments.storyId, storyId), eq(comments.isDeleted, false)),
+        });
+        const seeAlsoRelations = await db.query.seeAlsoRelations.findMany({
+            where: (relations, { eq, and }) => and(eq(relations.storyId, storyId), eq(relations.isDeleted, false)),
+        });
         const favorites = userId ? await db.query.favorites.findMany({
             where: (favorites, { eq, and }) => and(
                 eq(favorites.storyId, storyId),
@@ -121,6 +127,8 @@ export class StoryExportImportService {
             storySchemaFields,
             attributeValues,
             favorites,
+            comments,
+            seeAlsoRelations,
             serverLastOperationVersion: serverLastOperationVersion,
             formatVersion: CURRENT_STORY_FORMAT_VERSION,
         });
@@ -659,6 +667,50 @@ export class StoryExportImportService {
                     };
                 });
                 await tx.insert(dbSchema.attributeValues).values(newAttributeValuesData);
+            }
+
+            if (validatedFullStory.seeAlsoRelations && validatedFullStory.seeAlsoRelations.length > 0) {
+                const newSeeAlsoRelationsData = validatedFullStory.seeAlsoRelations.map(original => {
+                    const entityAId = idMap.get(original.entityAId);
+                    const entityBId = idMap.get(original.entityBId);
+                    if (!entityAId || !entityBId) {
+                        throw new Error(`Import Error: See-also relation ${original.id} references an entity absent from the export.`);
+                    }
+                    return {
+                        ...original,
+                        id: nextId(original.id),
+                        storyId: targetStoryId,
+                        entityAId,
+                        entityBId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.seeAlsoRelations).values(newSeeAlsoRelationsData);
+            }
+
+            if (validatedFullStory.comments && validatedFullStory.comments.length > 0) {
+                const newCommentsData = validatedFullStory.comments.map(original => {
+                    const entityId = idMap.get(original.entityId);
+                    const fieldId = original.fieldId ? idMap.get(original.fieldId) : null;
+                    if (!entityId) {
+                        throw new Error(`Import Error: Comment ${original.id} references an entity absent from the export.`);
+                    }
+                    if (original.fieldId && !fieldId) {
+                        throw new Error(`Import Error: Comment ${original.id} references a custom field absent from the export.`);
+                    }
+                    return {
+                        ...original,
+                        id: nextId(original.id),
+                        storyId: targetStoryId,
+                        entityId,
+                        fieldId,
+                        // Comentários importados pertencem ao usuário que importou, como os
+                        // Favorites: o autor de outro servidor pode nem existir neste banco.
+                        authorUserId: userId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.comments).values(newCommentsData);
             }
 
             if (validatedFullStory.favorites && validatedFullStory.favorites.length > 0) {

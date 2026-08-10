@@ -1,0 +1,115 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
+import { SeeAlsoEntityType } from '@keres/shared';
+import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import GroupedMultiSelectPill from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
+import { decodeSeeAlsoValue, encodeSeeAlsoValue, useSeeAlsoEntityOptions } from '../../../../hooks/useSeeAlsoEntityOptions';
+import { useSeeAlsoRelations } from '../../../../hooks/useSeeAlsoRelations';
+import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
+import { useTheme } from '../../../../theme';
+import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
+import { ENTITY_TYPE_ICONS } from '../../../../utils/entityTypeIcons';
+
+interface SeeAlsoManagerProps {
+  storyId: string;
+  entityType: SeeAlsoEntityType;
+  entityId: string;
+  editable: boolean;
+}
+
+/**
+ * Seção "Veja também" de uma tela de detalhe: lista, clicável, de outras entidades marcadas
+ * como relacionadas a esta (vínculo mútuo - ver useSeeAlsoRelations), mais um picker
+ * (`GroupedMultiSelectPill`, o mesmo usado na Galeria) para adicionar/remover vínculos.
+ *
+ * Aplica a mudança imediatamente ao selecionar/desselecionar (sem botão "Salvar" separado) -
+ * mesmo padrão de TagChipList/NoteManager/CharacterRelationManager nestas mesmas telas.
+ */
+const SeeAlsoManager: React.FC<SeeAlsoManagerProps> = ({ storyId, entityType, entityId, editable }) => {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const navigation = useNavigation();
+  const { relations, save } = useSeeAlsoRelations(storyId, entityType, entityId);
+  const { groupedOptions, optionsByValue } = useSeeAlsoEntityOptions(storyId, entityType, entityId);
+
+  const selectedValues = useMemo(
+    () => relations.map((relation) => encodeSeeAlsoValue(relation.otherType, relation.otherId)),
+    [relations]
+  );
+
+  const handleSelectionChange = useCallback((selected: string[]) => {
+    const targets = selected
+      .map(decodeSeeAlsoValue)
+      .filter((ref): ref is NonNullable<typeof ref> => ref !== null);
+    save(targets);
+  }, [save]);
+
+  const handlePress = useCallback((otherType: SeeAlsoEntityType, otherId: string) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, otherType, otherId);
+    }
+  }, [navigation]);
+
+  const styles = StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    rowLast: { borderBottomWidth: 0 },
+    icon: { marginRight: 10 },
+    name: { flex: 1, fontSize: 15, color: colors.text },
+    emptyText: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
+  });
+
+  return (
+    <CollapsibleCard title={`${t('see_also_title')} (${relations.length})`} initialExpanded={false}>
+      {editable && (
+        <GroupedMultiSelectPill
+          groups={groupedOptions}
+          selectedValues={selectedValues}
+          onSelectionChange={handleSelectionChange}
+          placeholder={t('see_also_select_placeholder')}
+          noOptionsText={t('see_also_no_entities_available')}
+        />
+      )}
+      {relations.length === 0 ? (
+        <Text style={styles.emptyText}>{t('see_also_empty')}</Text>
+      ) : relations.map((relation, index) => {
+        const option = optionsByValue.get(encodeSeeAlsoValue(relation.otherType, relation.otherId));
+        const rowStyle = [styles.row, index === relations.length - 1 && styles.rowLast];
+        const rowContent = (
+          <>
+            <Ionicons name={ENTITY_TYPE_ICONS[relation.otherType]} size={20} color={colors.primary} style={styles.icon} />
+            <Text style={styles.name} numberOfLines={1}>{option?.name || relation.otherId}</Text>
+            {!editable && <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />}
+          </>
+        );
+        // Em Forms (editable), a linha não navega - sair da tela perderia as alterações não
+        // salvas do formulário. Só as telas de detalhe (view-only) navegam ao tocar.
+        return editable ? (
+          <View key={relation.relationId} style={rowStyle}>
+            {rowContent}
+          </View>
+        ) : (
+          <TouchableOpacity
+            key={relation.relationId}
+            style={rowStyle}
+            onPress={() => handlePress(relation.otherType, relation.otherId)}
+          >
+            {rowContent}
+          </TouchableOpacity>
+        );
+      })}
+    </CollapsibleCard>
+  );
+};
+
+export default SeeAlsoManager;

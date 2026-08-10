@@ -14,6 +14,7 @@ import { createStorySchemaFieldService } from '../../services/storymanagement/St
 import { createSuggestionService, customAttributeSuggestionType } from '../../services/storymanagement/SuggestionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
@@ -33,6 +34,7 @@ const SuggestionsScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
+  const { isCompact } = useResponsiveLayout();
   const db = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
@@ -95,22 +97,55 @@ const SuggestionsScreen = () => {
   const selectedGroup = groups.find((group) => group.type === selectedType);
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background, padding: 16 }, title: { color: colors.text, fontSize: 24, fontWeight: 'bold' }, description: { color: colors.textSecondary, marginTop: 5, marginBottom: 16 },
-    groups: { maxHeight: 118, marginBottom: 16 }, chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, marginRight: 8, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }, chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary }, chipText: { color: colors.text }, chipTextSelected: { color: colors.onPrimary, fontWeight: '600' },
-    key: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 }, inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 }, input: { flex: 1, marginBottom: 0 }, row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border }, value: { flex: 1, color: colors.text, fontSize: 16 }, icon: { padding: 7 }, empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
+    // Compacto: tira de chips com rolagem horizontal (cabe bem em telas estreitas). Largo:
+    // coluna fixa à esquerda com a lista completa de grupos, sem depender de rolagem
+    // horizontal para alcançar grupos "fora da tela" - o problema original nesta tela.
+    wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
+    // Rolagem vertical com quebra de linha, não rolagem horizontal - numa lista com muitos
+    // grupos, um chip "fora da tela" para o lado não tinha nenhuma pista visual de que
+    // existia mais coisa para rolar; quebrando linha, tudo fica alcançável só descendo.
+    groups: { maxHeight: 160, marginBottom: 16 },
+    groupsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
+    chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, marginRight: 8, marginBottom: 8, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }, chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary }, chipText: { color: colors.text }, chipTextSelected: { color: colors.onPrimary, fontWeight: '600' },
+    groupsColumn: { width: 300, borderRightWidth: 1, borderRightColor: colors.border, paddingRight: 16 },
+    groupListItem: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 6 },
+    groupListItemSelected: { backgroundColor: colors.primaryContainer },
+    groupListItemText: { color: colors.text },
+    groupListItemTextSelected: { color: colors.text, fontWeight: '700' },
+    contentColumn: { flex: 1 },
+    key: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 }, inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 }, input: { flex: 1, marginBottom: 0, width: undefined }, row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border }, value: { flex: 1, color: colors.text, fontSize: 16 }, icon: { padding: 7 }, empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
   });
 
-  return <View style={styles.container}>
-    <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
-    <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groups} contentContainerStyle={{ alignItems: 'flex-start' }}>
-      {groups.map((group) => <TouchableOpacity key={group.type} onPress={() => setSelectedType(group.type)} style={[styles.chip, selectedType === group.type && styles.chipSelected]}><Text style={[styles.chipText, selectedType === group.type && styles.chipTextSelected]}>{group.label}</Text></TouchableOpacity>)}
+  const groupsList = isCompact ? (
+    <ScrollView style={styles.groups}>
+      <View style={styles.groupsWrap}>
+        {groups.map((group) => <TouchableOpacity key={group.type} onPress={() => setSelectedType(group.type)} style={[styles.chip, selectedType === group.type && styles.chipSelected]}><Text style={[styles.chipText, selectedType === group.type && styles.chipTextSelected]}>{group.label}</Text></TouchableOpacity>)}
+      </View>
     </ScrollView>
+  ) : (
+    <ScrollView style={styles.groupsColumn}>
+      {groups.map((group) => <TouchableOpacity key={group.type} onPress={() => setSelectedType(group.type)} style={[styles.groupListItem, selectedType === group.type && styles.groupListItemSelected]}><Text style={[styles.groupListItemText, selectedType === group.type && styles.groupListItemTextSelected]}>{group.label}</Text></TouchableOpacity>)}
+    </ScrollView>
+  );
+
+  const content = <>
     {selectedGroup && <Text style={styles.key}>{t('suggestion_key')}: {selectedGroup.key}</Text>}
     {canEdit && selectedType && <View style={styles.inputRow}><TextInput value={newValue} onChangeText={setNewValue} placeholder={t('suggestion_value_placeholder')} style={styles.input} /><Button onPress={add}>{t('add')}</Button></View>}
     <ScrollView>{stored.map((suggestion) => <View key={suggestion.id} style={styles.row}>
       {editingId === suggestion.id ? <TextInput value={editingValue} onChangeText={setEditingValue} style={styles.input} /> : <Text style={styles.value}>{suggestion.value}</Text>}
       {canEdit && (editingId === suggestion.id ? <TouchableOpacity style={styles.icon} onPress={saveEdit}><Ionicons name="checkmark" size={22} color={colors.primary} /></TouchableOpacity> : <><TouchableOpacity style={styles.icon} onPress={() => { setEditingId(suggestion.id); setEditingValue(suggestion.value); }}><Ionicons name="pencil-outline" size={20} color={colors.primary} /></TouchableOpacity><TouchableOpacity style={styles.icon} onPress={() => remove(suggestion.id)}><Ionicons name="trash-outline" size={20} color={colors.error} /></TouchableOpacity></>)}
     </View>)}{selectedType && stored.length === 0 && <Text style={styles.empty}>{t('no_suggestions_available')}</Text>}</ScrollView>
+  </>;
+
+  return <View style={styles.container}>
+    <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
+    <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
+    {isCompact ? <>{groupsList}{content}</> : (
+      <View style={styles.wideLayout}>
+        {groupsList}
+        <View style={styles.contentColumn}>{content}</View>
+      </View>
+    )}
   </View>;
 };
 

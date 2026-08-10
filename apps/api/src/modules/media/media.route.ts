@@ -154,7 +154,7 @@ export const mediaRoutes = new Elysia()
     set.headers['content-type'] = blob.mimeType;
     // O conteúdo de um hash nunca muda, então pode ser guardado indefinidamente.
     set.headers['cache-control'] = 'private, max-age=31536000, immutable';
-    return blob.file;
+    return blob.body;
   }, {
     params: t.Object({ storyId: t.String(), hash: t.String() }),
     detail: {

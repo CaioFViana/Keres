@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     container_name: keres_database
@@ -40,8 +38,9 @@ services:
       db:
         condition: service_healthy
     volumes:
-      # MEDIA_STORAGE_PATH defaults to ./media-storage, relative to apps/api - without this
-      # volume, every uploaded gallery file is lost on container recreation/rebuild.
+      # O modo padrão é `local`, cujo caminho relativo resolve para este destino. Para S3,
+      # defina MEDIA_STORAGE_DRIVER=s3 e MEDIA_S3_* no env_file; não há sobrescrita aqui.
+      # Sem este volume, cada arquivo do modo local seria perdido ao recriar o container.
       - media_storage:/app/apps/api/media-storage
 
 volumes:

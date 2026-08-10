@@ -50,7 +50,17 @@ const migrateV1ToV2: StoryExportMigration = {
   },
 };
 
-const migrations: StoryExportMigration[] = [migrateV1ToV2];
+/** V2 -> V3: comentários de campos e relações bidirecionais "Veja também". */
+const migrateV2ToV3: StoryExportMigration = {
+  fromVersion: 2,
+  migrate: (data) => ({
+    ...data,
+    comments: Array.isArray(data?.comments) ? data.comments : [],
+    seeAlsoRelations: Array.isArray(data?.seeAlsoRelations) ? data.seeAlsoRelations : [],
+  }),
+};
+
+const migrations: StoryExportMigration[] = [migrateV1ToV2, migrateV2ToV3];
 
 /**
  * Normaliza um export bruto (JSON já parseado, ainda não validado pelo `FullStoryExportSchema`)

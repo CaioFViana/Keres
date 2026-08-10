@@ -14,6 +14,7 @@ import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttribute
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -572,6 +573,12 @@ const CharacterFormScreen = () => {
                 currentEntityId={currentCharacterId}
                 currentEntityType="Character"
               />
+            </View>
+          )}
+
+          {currentCharacterId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <SeeAlsoManager storyId={selectedStory.id} entityType="Character" entityId={currentCharacterId} editable={true} />
             </View>
           )}
 

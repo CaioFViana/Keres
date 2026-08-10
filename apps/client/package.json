@@ -1,7 +1,7 @@
 {
   "name": "@keres/client",
   "main": "expo-router/entry",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "scripts": {
     "prestart": "node scripts/generate-migrations-index.js && node scripts/generate-example-stories-index.js",
     "example-stories:generate": "node scripts/generate-example-stories-index.js",
@@ -13,6 +13,7 @@
     "web": "expo start --web",
     "export:web": "node scripts/generate-migrations-index.js && node scripts/generate-example-stories-index.js && expo export -p web",
     "lint": "expo lint",
+    "test": "jest --runInBand",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "locales:audit": "tsx scripts/verify-translations.ts",
@@ -71,11 +72,14 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@types/jest": "29.5.14",
     "@types/react": "~19.1.0",
     "@types/spark-md5": "^3.0.5",
     "drizzle-kit": "^0.31.6",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "jest": "~29.7.0",
+    "jest-expo": "~54.0.17",
     "tsx": "^4.16.2",
     "typescript": "~5.9.2"
   },

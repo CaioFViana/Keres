@@ -1,8 +1,8 @@
-import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager'; // Import LocationItemManager
@@ -10,6 +10,7 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
 import ScenePresenceList, { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
@@ -21,6 +22,7 @@ import { useDrizzle } from '../../db';
 import { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
@@ -71,6 +73,9 @@ const LocationDetailsScreen = () => {
 
   const [location, setLocation] = useState<LocationSelect | null>(null);
   const { canEdit } = useStoryRole(location?.storyId);
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(location?.storyId, 'Location', locationId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -431,14 +436,21 @@ const LocationDetailsScreen = () => {
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
       <TagChipList tags={locationTags} />
 
-      <DetailField label={t('description')} value={location.description || t('common_na')} />
-      <DetailField label={t('field_climate')} value={location.climate || t('common_na')} />
-      <DetailField label={t('field_culture')} value={location.culture || t('common_na')} />
-      <DetailField label={t('field_politics')} value={location.politics || t('common_na')} />
+      {(() => {
+        const commentableFieldProps = { storyId: location.storyId, canComment, isStoryOwner, currentUserId, onDeleteComment: deleteComment, onUpdateComment: updateComment };
+        return (
+          <>
+            <CommentableDetailField {...commentableFieldProps} label={t('description')} value={location.description || t('common_na')} comments={commentsByField['description'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'description' }, { ...input, contentSnapshot: location.description || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('field_climate')} value={location.climate || t('common_na')} comments={commentsByField['climate'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'climate' }, { ...input, contentSnapshot: location.climate || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('field_culture')} value={location.culture || t('common_na')} comments={commentsByField['culture'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'culture' }, { ...input, contentSnapshot: location.culture || t('common_na') })} />
+            <CommentableDetailField {...commentableFieldProps} label={t('field_politics')} value={location.politics || t('common_na')} comments={commentsByField['politics'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'politics' }, { ...input, contentSnapshot: location.politics || t('common_na') })} />
 
-      <CustomAttributeDetailFields storyId={location.storyId} entityType="Location" entityId={locationId} />
+            <CustomAttributeDetailFields storyId={location.storyId} entityType="Location" entityId={locationId} />
 
-      <DetailField label={t('extra_notes')} value={location.extraNotes || t('common_na')} />
+            <CommentableDetailField {...commentableFieldProps} label={t('extra_notes')} value={location.extraNotes || t('common_na')} comments={commentsByField['extraNotes'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: location.extraNotes || t('common_na') })} />
+          </>
+        );
+      })()}
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager
@@ -493,6 +505,8 @@ const LocationDetailsScreen = () => {
         currentEntityId={locationId}
         currentEntityType="Location"
       />
+
+      <SeeAlsoManager storyId={location.storyId} entityType="Location" entityId={locationId} editable={false} />
 
       <EntityMetadata version={location.version} createdAt={location.createdAt} updatedAt={location.updatedAt} />
       <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />

@@ -77,6 +77,21 @@ export const entityFieldMetadata: { [entityName: string]: EntityFieldMetadata[] 
     { name: 'newCharacterOwnerId', label: 'new_character_owner', type: 'id', isSearchable: true },
     { name: 'newState', label: 'new_state', type: 'string', isSearchable: true, isSuggestion: true, suggestionsSource: 'item_state' },
     { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
-  ]
+  ],
+  Chapter: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'summary', label: 'summary', type: 'string', isSearchable: true },
+    { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
+    { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+  ],
+  Scene: [
+    { name: 'name', label: 'field_name', type: 'string', isSearchable: true },
+    { name: 'summary', label: 'summary', type: 'string', isSearchable: true },
+    { name: 'isFavorite', label: 'field_isFavorite', type: 'boolean', isSearchable: true },
+    { name: 'extraNotes', label: 'field_extraNotes', type: 'string', isSearchable: true },
+  ],
+  Choice: [
+    { name: 'text', label: 'text', type: 'string', isSearchable: true },
+  ],
   // Add other relevant entities as needed
 };

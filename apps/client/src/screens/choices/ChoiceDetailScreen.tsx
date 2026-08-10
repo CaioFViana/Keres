@@ -6,10 +6,13 @@ import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-na
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { ChoiceSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -48,6 +51,9 @@ const ChoiceDetailScreen = () => {
 
   const [choice, setChoice] = useState<ChoiceSelect | null>(null);
   const { canEdit } = useStoryRole(choice?.storyId);
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(choice?.storyId, 'Choice', choiceId);
 
   const {
     selectedTags: choiceTags,
@@ -144,6 +150,19 @@ const ChoiceDetailScreen = () => {
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={choiceTags} />
 
+      <CommentableDetailField
+        storyId={choice.storyId}
+        label={t('text')}
+        value={choice.text || t('common_na')}
+        comments={commentsByField['text'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'text' }, { ...input, contentSnapshot: choice.text || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
+
       <NoteManager
         noteRelations={choiceNoteRelations}
         availableNotes={allNotes}
@@ -154,6 +173,8 @@ const ChoiceDetailScreen = () => {
         currentEntityId={choiceId}
         currentEntityType="Choice"
       />
+
+      <SeeAlsoManager storyId={choice.storyId} entityType="Choice" entityId={choiceId} editable={false} />
 
       <EntityMetadata version={choice.version} createdAt={choice.createdAt} updatedAt={choice.updatedAt} />
 

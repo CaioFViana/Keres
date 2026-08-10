@@ -1,13 +1,14 @@
 {
   "name": "@keres/desktop",
   "desktopName": "com.keres.desktop.desktop",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
     "build:client": "cd ../client && bun run export:web",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc -p tsconfig.test.json",
+    "lint": "eslint src test --ext .ts",
+    "test": "vitest run",
     "build:main": "tsc -p tsconfig.json",
     "build": "bun run build:client && bun run build:main",
     "start": "bun run build && electron .",
@@ -17,12 +18,13 @@
     "package:linux": "bun run build && electron-builder --linux"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "@typescript-eslint/eslint-plugin": "^8.66.0",
     "@typescript-eslint/parser": "^8.66.0",
-    "@types/node": "^22.10.2",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.6",
     "eslint": "^9.25.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.10"
   }
 }

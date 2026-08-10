@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import CharacterRelationManager from '@/src/components/features/characters/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
@@ -662,6 +663,12 @@ const SceneFormScreen = () => {
                 currentEntityId={currentSceneId}
                 currentEntityType="Scene"
               />
+            </View>
+          )}
+
+          {currentSceneId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <SeeAlsoManager storyId={selectedStory.id} entityType="Scene" entityId={currentSceneId} editable={true} />
             </View>
           )}
 

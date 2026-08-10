@@ -4,12 +4,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
-import { servers, stories, users } from '../../../../db/schema';
-import { friendshipApiService } from '../../../../services/FriendshipApiService';
+import { servers, stories } from '../../../../db/schema';
 import { createFavoriteService } from '../../../../services/storymanagement/FavoriteService';
-import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
+import { ResolvedUserProfile, useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
 import Avatar from '../../../common/display/Avatar/Avatar';
 import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
 
@@ -19,75 +18,16 @@ interface FavoritedByListProps {
   entityType: FavoriteEntityType;
 }
 
-interface FavoriterProfile {
-  id: string;
-  name: string;
-  avatarColor?: string | null;
-  avatarIcon?: string | null;
-  isCurrentUser: boolean;
-}
-
-const remoteProfileCache = new Map<string, Promise<FavoriterProfile | undefined>>();
+type FavoriterProfile = ResolvedUserProfile;
 
 const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, entityType }) => {
   const db = useDrizzle();
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const { userId: localUserId, username: localUsername } = useUserSettingsStore();
+  const resolveProfile = useUserProfileResolver();
   const [isPublic, setIsPublic] = useState(false);
   const [profiles, setProfiles] = useState<FavoriterProfile[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const resolveProfile = useCallback(async (
-    userId: string,
-    storyServer: typeof servers.$inferSelect | undefined,
-  ): Promise<FavoriterProfile> => {
-    const isCurrentUser = (!storyServer && userId === localUserId) || storyServer?.idUser === userId;
-    // Friendship sync keeps this local user row enriched with the friend's current name,
-    // icon and color. Prefer it over the network cache so a realtime refresh is immediately
-    // reflected by every FavoritedByList already mounted.
-    const localProfile = await db.query.users.findFirst({
-      where: eq(users.idUser, userId),
-      columns: { displayName: true, avatarColor: true, avatarIcon: true },
-    });
-    if (localProfile) {
-      return {
-        id: userId,
-        name: localProfile.displayName || (isCurrentUser ? storyServer?.userName || localUsername : undefined) || t('user_not_found'),
-        avatarColor: localProfile.avatarColor,
-        avatarIcon: localProfile.avatarIcon,
-        isCurrentUser,
-      };
-    }
-
-    if (!storyServer && isCurrentUser) {
-      return { id: userId, name: localUsername || t('user_not_found'), isCurrentUser: true };
-    }
-
-    if (storyServer) {
-      const cacheKey = `${storyServer.id}:${userId}`;
-      let request = remoteProfileCache.get(cacheKey);
-      if (!request) {
-        request = friendshipApiService.getUserDetails(storyServer, userId)
-          .then((user) => user ? ({
-            id: user.id,
-            name: user.username,
-            avatarColor: user.avatarColor,
-            avatarIcon: user.avatarIcon,
-            isCurrentUser: false,
-          }) : undefined)
-          .catch(() => {
-            remoteProfileCache.delete(cacheKey);
-            return undefined;
-          });
-        remoteProfileCache.set(cacheKey, request);
-      }
-      const remoteProfile = await request;
-      if (remoteProfile) return { ...remoteProfile, isCurrentUser };
-    }
-
-    return { id: userId, name: userId, isCurrentUser };
-  }, [db, localUserId, localUsername, t]);
 
   const fetchFavoriters = useCallback(async () => {
     setLoading(true);
@@ -130,8 +70,10 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
     const handleStoryChange = (changedStoryId: string) => {
       if (changedStoryId === storyId) fetchFavoriters();
     };
+    // O hook `useUserProfileResolver` já limpa o cache compartilhado de perfis remotos ao
+    // ouvir este mesmo evento - este listener continua existindo aqui só para acionar o
+    // refetch dos `profiles` já exibidos (o hook não sabe disso, só invalida o cache).
     const handleFriendshipChange = () => {
-      remoteProfileCache.clear();
       fetchFavoriters();
     };
     entityEventEmitter.on('favorite_changed', handleFavoriteChange);

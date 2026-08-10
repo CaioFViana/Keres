@@ -8,10 +8,13 @@ import DetailField from '@/src/components/common/display/DetailField/DetailField
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import { useDrizzle } from '../../db';
 import { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -79,6 +82,9 @@ const ItemJourneyDetailScreen = () => {
 
   const [itemJourney, setItemJourney] = useState<ItemJourneySelect | null>(null);
   const { canEdit } = useStoryRole(itemJourney?.storyId);
+  const {
+    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+  } = useEntityComments(itemJourney?.storyId, 'ItemJourney', itemJourneyId);
 
   const {
     selectedTags: itemJourneyTags,
@@ -215,8 +221,30 @@ const ItemJourneyDetailScreen = () => {
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       )}
-      <DetailField label={t('item_state')} value={itemJourney.newState || t('common_na')} />
-      <DetailField label={t('extra_notes')} value={itemJourney.extraNotes || t('common_na')} />
+      <CommentableDetailField
+        storyId={itemJourney.storyId}
+        label={t('item_state')}
+        value={itemJourney.newState || t('common_na')}
+        comments={commentsByField['newState'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'newState' }, { ...input, contentSnapshot: itemJourney.newState || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
+      <CommentableDetailField
+        storyId={itemJourney.storyId}
+        label={t('extra_notes')}
+        value={itemJourney.extraNotes || t('common_na')}
+        comments={commentsByField['extraNotes'] ?? []}
+        canComment={canComment}
+        isStoryOwner={isStoryOwner}
+        currentUserId={currentUserId}
+        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: itemJourney.extraNotes || t('common_na') })}
+        onDeleteComment={deleteComment}
+        onUpdateComment={updateComment}
+      />
       {relatedScene && (
         <TouchableOpacity onPress={handleScenePress} style={styles.relationLink} activeOpacity={0.7}>
           <View style={{ flex: 1 }}>
@@ -244,6 +272,8 @@ const ItemJourneyDetailScreen = () => {
         currentEntityId={itemJourneyId}
         currentEntityType="ItemJourney"
       />
+
+      <SeeAlsoManager storyId={itemJourney.storyId} entityType="ItemJourney" entityId={itemJourneyId} editable={false} />
 
       <EntityMetadata version={itemJourney.version} createdAt={itemJourney.createdAt} updatedAt={itemJourney.updatedAt} />
 

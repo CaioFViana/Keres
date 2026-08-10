@@ -128,6 +128,7 @@ const StoryFormScreen = () => {
         extraNotes,
         theme,
         normalizeSceneTiming: false,
+        allowReaderComments: false,
         lastOperationLog: 0,
         lastServerSyncedLog: 0,
       };

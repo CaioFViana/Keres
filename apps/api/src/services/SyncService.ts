@@ -31,6 +31,8 @@ import { TagRelationSyncHandler } from './entity-sync-handlers/TagRelationSyncHa
 import { TagSyncHandler } from './entity-sync-handlers/TagSyncHandler';
 import { WorldRuleSyncHandler } from './entity-sync-handlers/WorldRuleSyncHandler';
 import { FavoriteSyncHandler } from './entity-sync-handlers/FavoriteSyncHandler';
+import { SeeAlsoRelationSyncHandler } from './entity-sync-handlers/SeeAlsoRelationSyncHandler';
+import { CommentSyncHandler } from './entity-sync-handlers/CommentSyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
 
 export class SyncService {
@@ -60,6 +62,8 @@ export class SyncService {
     this.registerEntityHandler(new AttributeValueSyncHandler());
     this.registerEntityHandler(new LocationRelationSyncHandler());
     this.registerEntityHandler(new FavoriteSyncHandler());
+    this.registerEntityHandler(new SeeAlsoRelationSyncHandler());
+    this.registerEntityHandler(new CommentSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {
@@ -149,9 +153,14 @@ export class SyncService {
       }
 
       // Personal favorites are user-owned metadata, so readers may change their own rows
-      // without gaining permission to edit the story itself.
-      if (role === 'reader' && update.entity !== 'Favorite') {
-        recordConflict('unauthorized', 'Reader access only permits personal favorite changes.');
+      // without gaining permission to edit the story itself. Comments are similar in spirit
+      // but opt-in per story (`story.allowReaderComments`, only meaningful/shown for
+      // server-linked stories) - when off, this check locks a reader out of create/update/
+      // delete uniformly, including comments they already posted while it was on.
+      const readerCanWriteEntity = update.entity === 'Favorite'
+        || (update.entity === 'Comment' && story.allowReaderComments);
+      if (role === 'reader' && !readerCanWriteEntity) {
+        recordConflict('unauthorized', 'Reader access only permits personal favorite changes' + (story.allowReaderComments ? ' or comments.' : '.'));
         continue;
       }
 
@@ -198,7 +207,9 @@ export class SyncService {
           } else {
             if (update.entity === 'Story') {
               await tierEnforcementService.assertCanCreateStory(userId);
-            } else if (update.entity !== 'Favorite') {
+            } else if (update.entity !== 'Favorite' && update.entity !== 'Comment') {
+              // Comments são anotações, não conteúdo da história - não devem consumir nem
+              // ser bloqueados pelo limite de entidades do tier, mesmo padrão de Favorite.
               await tierEnforcementService.assertCanCreateEntity(userId, storyId);
             }
             await handler.create(userId, storyId, update as CreateStoryUpdate);
@@ -214,6 +225,15 @@ export class SyncService {
             // Excluir algo que o servidor não tem é o resultado desejado, não um erro.
             alreadyApplied = true;
           } else {
+            // Comentário: o dono da história pode excluir qualquer comentário (moderação);
+            // escritor/leitor só o próprio - mesmo com acesso de leitura a comentários
+            // desligado depois, o autor original (se writer/reader) só perde a capacidade de
+            // excluir o próprio; o dono sempre pode. Verificado aqui, não em
+            // CommentSyncHandler, porque `role` só está disponível nesta função.
+            if (update.entity === 'Comment' && role !== 'owner' && currentEntity.authorUserId !== userId) {
+              recordConflict('unauthorized', 'Only the comment author or the story owner can delete this comment.');
+              continue;
+            }
             await handler.delete(userId, storyId, update as DeleteStoryUpdate, currentEntity);
           }
         }

@@ -7,8 +7,8 @@ import { swagger } from '@elysiajs/swagger';
 import { Elysia, t } from 'elysia';
 import { existsSync } from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { env } from './config/env';
-import { runMigrations } from './db/migrate';
 import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
 import { friendRoutes } from './modules/friend/friend.route';
@@ -18,18 +18,8 @@ import { storyPermissionRoutes } from './modules/storyPermission/storyPermission
 import { syncRoute } from './modules/sync/sync.route';
 import { userRoutes } from './modules/user/user.route'; // Import userRoutes
 import { wsRoutes } from './modules/webSocket/webSocket.route';
-import { reconcileRootAdmin } from './services/RootAdminService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';
-
-// Precisa rodar antes de tudo: um banco novo não tem nenhuma tabela, e a própria consulta de
-// reconcileRootAdmin logo abaixo já falharia sem isto.
-await runMigrations();
-
-// Roda antes de qualquer coisa aceitar tráfego: garante que a conta admin "root"
-// configurada via env exista e esteja com isAdmin=true antes que qualquer login seja
-// possível (ver RootAdminService.ts para o porquê disso substituir um script de bootstrap).
-await reconcileRootAdmin();
 
 /**
  * Co-hospedagem do painel admin: subir a API já serve o app web junto, no mesmo
@@ -42,11 +32,12 @@ await reconcileRootAdmin();
  * de URL. Se o build ainda não existir (dev sem `bun run build`, ou API rodando sozinha),
  * isso não derruba o servidor - só o painel fica indisponível, a API continua normal.
  *
- * Resolvido a partir de `import.meta.dir` (não `process.cwd()`): precisa continuar
+ * Resolvido a partir do próprio módulo (não `process.cwd()`): precisa continuar
  * encontrando `apps/admin/dist` não importa de onde o processo foi iniciado (ex: dentro do
  * container Docker o WORKDIR final é `apps/api`, mas nada garante isso em todo cenário).
  */
-const adminDistPath = path.join(import.meta.dir, '..', '..', 'admin', 'dist');
+const apiSourceDirectory = path.dirname(fileURLToPath(import.meta.url));
+const adminDistPath = path.join(apiSourceDirectory, '..', '..', 'admin', 'dist');
 const adminDistIndexPath = path.join(adminDistPath, 'index.html');
 const adminUiAvailable = existsSync(adminDistIndexPath);
 
@@ -85,7 +76,9 @@ export interface JWTPayload {
   username: string;
 }
 
-export const elysiaApp = new Elysia() // Export app as elysiaApp
+/** Cria a aplicação sem migrar banco, reconciliar admin ou abrir uma porta. */
+export async function createApp() {
+  return new Elysia()
   .use(
     swagger({
       path: '/swagger',
@@ -228,11 +221,5 @@ export const elysiaApp = new Elysia() // Export app as elysiaApp
   .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
   .group('/friend', (app) => app.use(friendRoutes))
   .group('/user', (app) => app.use(userRoutes)) // Add userRoutes
-  .group('/ws', (app) => app.use(wsRoutes))
-  .listen(env.PORT, ({ hostname, port }) => { // Corrected parameters
-    logger.info(`Elysia is running at http://${hostname}:${port}`);
-    logger.info(`Swagger UI at http://${hostname}:${port}/swagger`);
-    if (adminUiAvailable) {
-      logger.info(`Admin panel at http://${hostname}:${port}/admin`);
-    }
-  });
+    .group('/ws', (app) => app.use(wsRoutes));
+}

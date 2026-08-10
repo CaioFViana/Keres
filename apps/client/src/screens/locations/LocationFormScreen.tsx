@@ -11,6 +11,7 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -384,6 +385,12 @@ const LocationFormScreen = () => {
                 currentEntityId={currentLocationId}
                 currentEntityType="Location"
               />
+            </View>
+          )}
+
+          {currentLocationId && selectedStory?.id && (
+            <View style={styles.tagSection}>
+              <SeeAlsoManager storyId={selectedStory.id} entityType="Location" entityId={currentLocationId} editable={true} />
             </View>
           )}
 

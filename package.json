@@ -1,15 +1,15 @@
 {
   "name": "keres-monorepo",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "",
   "description": "",
   "keywords": [],
   "license": "ISC",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "bun run --cwd packages/shared test && bun run --cwd apps/client test && bun run --cwd apps/api test && bun run --cwd apps/admin test && bun run --cwd apps/desktop test",
     "build:admin": "cd apps/admin && bun run build",
-    "start:api": "cd apps/api && bun run src/index.ts",
+    "start:api": "cd apps/api && bun run src/server.ts",
     "docker:build": "docker compose -f apps/api/docker-compose.yml build",
     "docker:up": "docker compose -f apps/api/docker-compose.yml up -d",
     "docker:down": "docker compose -f apps/api/docker-compose.yml down",

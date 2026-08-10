@@ -15,6 +15,7 @@ export * from './schema/tables/itemJourneys';
 export * from './schema/tables/items';
 export * from './schema/tables/locations';
 export * from './schema/tables/locationRelations';
+export * from './schema/tables/mediaStorageSettings';
 export * from './schema/tables/notes';
 export * from './schema/tables/noteRelations';
 export * from './schema/tables/operationLog';

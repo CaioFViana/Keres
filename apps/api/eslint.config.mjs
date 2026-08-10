@@ -4,7 +4,7 @@ import tsParser from '@typescript-eslint/parser';
 export default [
   { ignores: ['node_modules/', 'dist/', 'drizzle/'] },
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', 'test/**/*.ts', 'vitest.config.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },

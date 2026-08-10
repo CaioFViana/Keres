@@ -10,8 +10,18 @@ const envSchema = z.object({
   PORT: z.string().optional().default('3000'),
   SERVER_VERSION: z.string().optional().default('1.0.0'),
   NODE_ENV: z.string().optional().default("development"),
+  /** Backend físico da galeria. Não altere em um banco que já possua mídia sem migrá-la. */
+  MEDIA_STORAGE_DRIVER: z.enum(['local', 's3']).optional().default('local'),
   /** Raiz onde os arquivos de mídia da galeria são gravados (endereçados por hash). */
   MEDIA_STORAGE_PATH: z.string().optional().default('./media-storage'),
+  /** Endpoint opcional para provedores S3 compatíveis; ausente usa o endpoint da AWS. */
+  MEDIA_S3_ENDPOINT: z.url().optional(),
+  MEDIA_S3_REGION: z.string().min(1).optional().default('us-east-1'),
+  MEDIA_S3_BUCKET: z.string().min(1).optional(),
+  MEDIA_S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+  MEDIA_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  MEDIA_S3_PREFIX: z.string().optional().default('keres'),
+  MEDIA_S3_FORCE_PATH_STYLE: z.enum(['true', 'false']).optional().default('false').transform((value) => value === 'true'),
   /** Teto por arquivo. Vídeo de celular passa fácil de 20 MB, daí o padrão de 50 MB. */
   MEDIA_MAX_BYTES: z.coerce.number().int().positive().optional().default(50 * 1024 * 1024),
   /**
@@ -32,3 +42,15 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+
+if (env.MEDIA_STORAGE_DRIVER === 's3') {
+  const missing = [
+    ['MEDIA_S3_BUCKET', env.MEDIA_S3_BUCKET],
+    ['MEDIA_S3_ACCESS_KEY_ID', env.MEDIA_S3_ACCESS_KEY_ID],
+    ['MEDIA_S3_SECRET_ACCESS_KEY', env.MEDIA_S3_SECRET_ACCESS_KEY],
+  ].filter(([, value]) => !value).map(([key]) => key);
+
+  if (missing.length > 0) {
+    throw new Error(`MEDIA_STORAGE_DRIVER=s3 requires: ${missing.join(', ')}.`);
+  }
+}

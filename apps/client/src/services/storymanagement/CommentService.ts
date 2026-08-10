@@ -22,6 +22,7 @@ export interface CommentService {
   createComment(currentUserId: string, storyId: string, entityType: CommentEntityType, entityId: string, target: CommentTarget, input: CreateCommentInput): Promise<CommentSelect>;
   updateComment(currentUserId: string, commentId: string, changes: { commentText?: string; excerptText?: string | null; criticality?: number }): Promise<CommentSelect>;
   deleteComment(currentUserId: string, commentId: string, isStoryOwner: boolean): Promise<boolean>;
+  migrateAuthorIdentity(storyId: string, fromUserId: string, toUserId: string): Promise<void>;
 }
 
 export const createCommentService = (db: AppDrizzleClient): CommentService => {
@@ -150,6 +151,14 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
       });
       entityEventEmitter.emit('comment_changed', existing.storyId, existing.entityType, existing.entityId);
       return true;
+    },
+
+    async migrateAuthorIdentity(storyId, fromUserId, toUserId) {
+      if (fromUserId === toUserId) return;
+      await db.update(comments)
+        .set({ authorUserId: toUserId })
+        .where(and(eq(comments.storyId, storyId), eq(comments.authorUserId, fromUserId)))
+        .run();
     },
   };
 };

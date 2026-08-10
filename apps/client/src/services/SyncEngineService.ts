@@ -36,6 +36,7 @@ import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
 import { createServerService } from './ServerService';
 import { createStoryService } from './storymanagement/StoryService';
 import { createFavoriteService } from './storymanagement/FavoriteService';
+import { createCommentService } from './storymanagement/CommentService';
 import { createSyncConflictService, findContestedFields, mergeLocalOperationPayloads, SyncConflictService } from './SyncConflictService';
 
 export interface ServerStoryPreview {
@@ -446,13 +447,14 @@ export class SyncEngineService {
     // a base correta pro próximo ciclo de sync, não o `serverLastOperationVersion` do pacote
     // exportado (que reflete um vínculo anterior, sempre 0 pra uma história nunca vinculada).
     await createFavoriteService(this._db).migrateUserIdentity(storyId, userId, server.idUser);
-    // These favorite operations are already represented by the imported snapshot. Sending
-    // them again would carry the former local-only user id, which has no meaning on the server.
+    await createCommentService(this._db).migrateAuthorIdentity(storyId, userId, server.idUser);
+    // Essas operações já estão representadas pelo snapshot importado. Reenviá-las carregaria
+    // a antiga identidade local, que não existe no servidor, e duplicaria o comentário.
     await this._db.update(schema.operationLogs)
       .set({ isSynced: true })
       .where(and(
         eq(schema.operationLogs.storyId, storyId),
-        eq(schema.operationLogs.entityType, 'Favorite'),
+        sql`${schema.operationLogs.entityType} in ('Favorite', 'Comment')`,
         lte(schema.operationLogs.operationVersion, story.lastOperationLog),
       ));
     await storyService.updateStory(userId, storyId, {

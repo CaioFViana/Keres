@@ -2,11 +2,12 @@ import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { eq } from 'drizzle-orm';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
 import { CommentSelect, servers, stories } from '../../../../db/schema';
 import { ResolvedUserProfile, useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
@@ -117,10 +118,11 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   }, [onDelete, t]);
 
   const styles = StyleSheet.create({
-    sheet: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
+    sheet: { flex: 1, paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
+    keyboardContent: { flexGrow: 1 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
     headerTitle: { fontSize: 17, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
-    list: { paddingHorizontal: 15 },
+    list: { paddingHorizontal: 15, flexGrow: 1 },
     commentRow: { flexDirection: 'row', marginVertical: 10 },
     commentBody: { flex: 1, marginLeft: 10 },
     commentHeaderRow: { flexDirection: 'row', alignItems: 'center' },
@@ -151,7 +153,15 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   });
 
   return (
-    <ResponsiveModal visible={visible} onClose={onClose} placement="adaptive" contentStyle={styles.sheet} maxHeight="85%">
+    <ResponsiveModal
+      visible={visible}
+      onClose={onClose}
+      placement="adaptive"
+      contentStyle={styles.sheet}
+      maxHeight="85%"
+      keyboardAvoiding={false}
+    >
+      <KeyboardAwareScreen contentContainerStyle={styles.keyboardContent} keyboardVerticalOffset={0}>
       <View style={styles.header}>
         <Text style={styles.headerTitle} numberOfLines={1}>{fieldLabel}</Text>
         <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')} hitSlop={8}>
@@ -159,7 +169,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
+      <View style={styles.list}>
         {sortedComments.length === 0 ? (
           <Text style={styles.emptyText}>{t('no_comments_yet')}</Text>
         ) : sortedComments.map((comment) => {
@@ -193,7 +203,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
             </View>
           );
         })}
-      </ScrollView>
+      </View>
 
       {canComment && (
         <View style={styles.footer}>
@@ -243,6 +253,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
           </View>
         </View>
       )}
+      </KeyboardAwareScreen>
     </ResponsiveModal>
   );
 };

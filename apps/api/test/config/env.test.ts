@@ -87,14 +87,22 @@ describe('env', () => {
     });
   });
 
-  it('rejects a DATABASE_URL that is not a URL', async () => {
-    await expect(loadEnv({ DATABASE_URL: 'not a url' })).rejects.toThrow();
+  it.each([
+    ['not a URL at all', 'not a url'],
+    // `new URL()` aceita isto (lê "localhost:" como esquema), então só a checagem de esquema pega.
+    ['a host:port missing its scheme', 'localhost:5432'],
+    ['a scheme for another database', 'mysql://user:pass@localhost:3306/keres'],
+    ['an http URL', 'http://localhost:5432/keres'],
+  ])('rejects a DATABASE_URL that is %s', async (_label, value) => {
+    await expect(loadEnv({ DATABASE_URL: value })).rejects.toThrow();
   });
 
-  // `z.url()` só exige que `new URL()` aceite o valor, então um host:porta solto passa aqui e
-  // só falha na primeira conexão. Documentado como comportamento atual, não como desejado.
-  it('does not catch a host:port string missing its scheme', async () => {
-    expect((await loadEnv({ DATABASE_URL: 'localhost:5432' })).DATABASE_URL).toBe('localhost:5432');
+  it.each([
+    ['postgres://', 'postgres://user:pass@localhost:5432/keres'],
+    ['postgresql://', 'postgresql://user:pass@localhost:5432/keres'],
+    ['a URL with query parameters', 'postgres://user:pass@localhost:5432/keres?sslmode=require'],
+  ])('accepts %s', async (_label, value) => {
+    expect((await loadEnv({ DATABASE_URL: value })).DATABASE_URL).toBe(value);
   });
 
   it.each(['JWT_SECRET', 'JWT_SECRET_REFRESH'])('rejects a %s shorter than 32 characters', async (key) => {

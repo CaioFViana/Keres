@@ -16,7 +16,12 @@ const optionalEnvironmentString = z.preprocess(
 );
 
 const envSchema = z.object({
-  DATABASE_URL: z.url(),
+  // `z.url()` sozinho só exige que `new URL(value)` funcione, então "localhost:5432" passa
+  // (vira protocolo "localhost:") e o erro só aparece como falha de conexão do pg no boot.
+  DATABASE_URL: z.url().refine(
+    (value) => /^postgres(ql)?:\/\//.test(value),
+    'DATABASE_URL must start with postgres:// or postgresql://',
+  ),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   JWT_SECRET_REFRESH: z.string().min(32, 'JWT_SECRET_REFRESH must be at least 32 characters long'),
   PORT: z.string().optional().default('3000'),

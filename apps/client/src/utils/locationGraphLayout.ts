@@ -119,7 +119,7 @@ export function buildLocationGraphLayout(
     connectionDegree.set(edge.locationBId, (connectionDegree.get(edge.locationBId) ?? 0) + 1);
   }
 
-  const roots = locations.filter(location => !parentOf.has(location.id));
+  const roots = collectRoots(locations, parentOf, childrenOf);
 
   const isolatedRoots: GraphLocation[] = [];
   const treeRoots: GraphLocation[] = [];
@@ -133,8 +133,11 @@ export function buildLocationGraphLayout(
     }
   }
 
+  // Compartilhado entre as árvores: uma Location alcançável por mais de um caminho (dois `contains`
+  // apontando para ela, ou um ciclo) é desenhada uma vez só, não uma vez por caminho.
+  const placed = new Set<string>();
   const treeBoxes = treeRoots
-    .map(root => layoutTree(root, childrenOf, locationById))
+    .map(root => layoutTree(root, childrenOf, locationById, placed))
     // Maiores primeiro deixa o empacotamento em prateleiras mais compacto (first-fit decreasing).
     .sort((a, b) => (b.width * b.height) - (a.width * a.height));
 
@@ -174,31 +177,81 @@ export function buildLocationGraphLayout(
 }
 
 /**
+ * Raízes da floresta `contains`.
+ *
+ * Normalmente é só "quem não tem pai". O caso extra existe para dado corrompido: num ciclo
+ * `contains` fechado (a contém b, b contém a) toda Location tem pai, nenhuma seria raiz, e o
+ * mapa inteiro sairia vazio - o pior resultado possível, porque o usuário não veria nem o
+ * problema nem o resto da história. O servidor (`LocationRelationSyncHandler`) impede esse
+ * dado; isto é a rede de segurança para quando ele chega assim mesmo. Elege a Location de
+ * menor id de cada grupo inalcançável como raiz, de forma determinística, para o grupo
+ * aparecer no mapa em vez de sumir dele.
+ */
+function collectRoots(
+  locations: GraphLocation[],
+  parentOf: Map<string, string>,
+  childrenOf: Map<string, string[]>
+): GraphLocation[] {
+  const roots = locations.filter(location => !parentOf.has(location.id));
+  const reachable = new Set<string>();
+
+  // Iterativo, não recursivo: a profundidade aqui é a da árvore de Locations do usuário, e
+  // este módulo existe justamente para aguentar uma história grande sem estourar a pilha.
+  const markReachable = (startId: string) => {
+    const stack = [startId];
+    while (stack.length > 0) {
+      const id = stack.pop()!;
+      if (reachable.has(id)) continue;
+      reachable.add(id);
+      for (const childId of childrenOf.get(id) ?? []) stack.push(childId);
+    }
+  };
+
+  for (const root of roots) markReachable(root.id);
+
+  const unreachable = [...locations]
+    .filter(location => !reachable.has(location.id))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  for (const orphan of unreachable) {
+    if (reachable.has(orphan.id)) continue;
+    roots.push(orphan);
+    markReachable(orphan.id);
+  }
+
+  return roots;
+}
+
+/**
  * Layout em árvore topo-para-baixo de uma única raiz: largura de cada subárvore calculada de
  * baixo para cima (pós-ordem), pai centralizado acima dos filhos. Sem minimização de
  * cruzamentos (desnecessária - é uma árvore, não um DAG geral) e sem simulação iterativa.
+ *
+ * `placed` é compartilhado entre as árvores da mesma chamada e garante que cada Location seja
+ * posicionada uma única vez, mesmo quando mais de um caminho leva até ela.
  */
-function layoutTree(root: GraphLocation, childrenOf: Map<string, string[]>, locationById: Map<string, GraphLocation>): TreeBox {
+function layoutTree(
+  root: GraphLocation,
+  childrenOf: Map<string, string[]>,
+  locationById: Map<string, GraphLocation>,
+  placed: Set<string>
+): TreeBox {
   const positioned: PositionedNode[] = [];
-  const visiting = new Set<string>();
 
   function measureAndPlace(nodeId: string, depth: number, xOffset: number): number {
     const location = locationById.get(nodeId);
-    if (!location || visiting.has(nodeId) || depth > MAX_TREE_DEPTH) {
-      // Ciclo ou dado corrompido: para de descer e trata como folha, em vez de recursão infinita.
-      if (location) {
-        positioned.push({ id: nodeId, location, depth, x: xOffset, y: depth * (NODE_HEIGHT + LAYER_GAP) });
-      }
+    // Marcado na entrada, antes de descer: cobre tanto "já desenhado por outro caminho" quanto
+    // um ciclo `contains` corrompido, que aqui simplesmente para de descer em vez de recursão
+    // infinita. O `MAX_TREE_DEPTH` continua como última defesa.
+    if (!location || placed.has(nodeId) || depth > MAX_TREE_DEPTH) {
       return NODE_WIDTH;
     }
-    visiting.add(nodeId);
+    placed.add(nodeId);
 
     const childIds = [...(childrenOf.get(nodeId) ?? [])]
       .sort((a, b) => (locationById.get(a)?.name ?? '').localeCompare(locationById.get(b)?.name ?? ''));
 
     if (childIds.length === 0) {
       positioned.push({ id: nodeId, location, depth, x: xOffset, y: depth * (NODE_HEIGHT + LAYER_GAP) });
-      visiting.delete(nodeId);
       return NODE_WIDTH;
     }
 
@@ -212,7 +265,6 @@ function layoutTree(root: GraphLocation, childrenOf: Map<string, string[]>, loca
     const subtreeWidth = Math.max(childX - NODE_GAP - xOffset, NODE_WIDTH);
     const center = (childCenters[0] + childCenters[childCenters.length - 1]) / 2;
     positioned.push({ id: nodeId, location, depth, x: center - NODE_WIDTH / 2, y: depth * (NODE_HEIGHT + LAYER_GAP) });
-    visiting.delete(nodeId);
     return subtreeWidth;
   }
 

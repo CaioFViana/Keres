@@ -130,24 +130,54 @@ describe('buildLocationGraphLayout', () => {
       [rel('r1', 'a', 'b'), rel('r2', 'b', 'c'), rel('r3', 'c', 'b')],
     );
 
-    expect(layout.nodes.length).toBeGreaterThan(0);
+    const ids = layout.nodes.map((node) => node.id);
+    expect(ids.sort()).toEqual(['a', 'b', 'c']);
     expect(layout.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y))).toBe(true);
   });
 
   /**
-   * Comportamento atual, não desejado: num ciclo `contains` fechado nenhuma das locations fica
-   * sem pai, então não há raiz, e o mapa sai vazio - o guarda de ciclo do `layoutTree` nunca
-   * chega a rodar. O servidor (`LocationRelationSyncHandler`) impede esse dado, então isto é
-   * uma rede de segurança que hoje não existe, e não uma regressão.
+   * Num ciclo `contains` fechado toda location tem pai, então nenhuma é raiz pelo critério
+   * normal. Sem uma raiz eleita, o mapa inteiro sairia vazio - o pior resultado possível,
+   * porque esconderia tanto o problema quanto o resto da história.
    */
-  it('draws nothing at all when every location sits inside a closed contains cycle', () => {
+  it('still draws a group whose locations all sit inside a closed contains cycle', () => {
     const layout = buildLocationGraphLayout(
       [location('a'), location('b')],
       [rel('r1', 'a', 'b'), rel('r2', 'b', 'a')],
     );
 
-    expect(layout.nodes).toEqual([]);
-    expect(layout).toMatchObject({ treeCount: 0, isolatedCount: 0 });
+    expect(layout.nodes.map((node) => node.id).sort()).toEqual(['a', 'b']);
+    expect(layout.treeCount).toBe(1);
+  });
+
+  it('elects the lowest id as the fallback root, so the drawing stays deterministic', () => {
+    const cycle = [rel('r1', 'z', 'm'), rel('r2', 'm', 'a'), rel('r3', 'a', 'z')];
+
+    const layout = buildLocationGraphLayout([location('z'), location('m'), location('a')], cycle);
+    const roots = layout.nodes.filter((node) => node.depth === 0).map((node) => node.id);
+
+    expect(roots).toEqual(['a']);
+    expect(buildLocationGraphLayout([location('a'), location('m'), location('z')], cycle)).toEqual(layout);
+  });
+
+  it('keeps drawing the healthy locations when only part of the story is cyclic', () => {
+    const layout = buildLocationGraphLayout(
+      [location('reino'), location('cidade'), location('x'), location('y')],
+      [rel('r1', 'reino', 'cidade'), rel('r2', 'x', 'y'), rel('r3', 'y', 'x')],
+    );
+
+    expect(layout.nodes.map((node) => node.id).sort()).toEqual(['cidade', 'reino', 'x', 'y']);
+  });
+
+  it('draws a location reached by two contains parents only once', () => {
+    const layout = buildLocationGraphLayout(
+      [location('reino'), location('ducado'), location('vila')],
+      [rel('r1', 'reino', 'vila'), rel('r2', 'ducado', 'vila')],
+    );
+
+    const ids = layout.nodes.map((node) => node.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain('vila');
   });
 
   it('never overlaps two nodes', () => {

@@ -1,0 +1,27 @@
+# Postgres descartável para `bun run test:integration`.
+#
+# Porta 55432 e volume em memória de propósito: nunca deve colidir com - nem sobreviver ao lado
+# de - o banco de desenvolvimento que `docker-compose.yml` sobe. Cada `up` começa vazio, e as
+# migrações são aplicadas pelo helper de teste.
+#
+#   docker compose -f apps/api/docker-compose.test.yml up -d
+#   bun run test:integration
+#   docker compose -f apps/api/docker-compose.test.yml down
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: keres_test
+      POSTGRES_PASSWORD: keres_test
+      POSTGRES_DB: keres_test
+    ports:
+      - '55432:5432'
+    # Sem volume nomeado: os dados vivem em tmpfs e somem com o container. Também deixa a
+    # suíte bem mais rápida, já que nada toca o disco.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U keres_test']
+      interval: 5s
+      timeout: 5s
+      retries: 10

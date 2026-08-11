@@ -8,6 +8,9 @@
   "private": true,
   "scripts": {
     "test": "bun run --cwd packages/shared test && bun run --cwd apps/client test && bun run --cwd apps/api test && bun run --cwd apps/admin test && bun run --cwd apps/desktop test",
+    "test:coverage": "bun run --cwd packages/shared test:coverage && bun run --cwd apps/client test:coverage && bun run --cwd apps/api test:coverage && bun run --cwd apps/admin test:coverage && bun run --cwd apps/desktop test:coverage",
+    "test:integration": "bun run --cwd apps/api test:integration",
+    "test:all": "bun run test && bun run test:integration",
     "build:admin": "cd apps/admin && bun run build",
     "start:api": "cd apps/api && bun run src/server.ts",
     "docker:build": "docker compose -f apps/api/docker-compose.yml build",

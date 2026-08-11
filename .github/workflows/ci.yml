@@ -1,0 +1,62 @@
+name: CI
+
+# Toda mudança, não só releases: `release.yml` dispara apenas em tag, então sem este workflow
+# uma regressão só apareceria na hora de cortar a versão.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+# Um push novo na mesma branch/PR torna a execução anterior irrelevante.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Mesma versão fixada em release.yml, pelo mesmo motivo: instalar sempre com o formato de
+  # lockfile com que o bun.lock foi gerado.
+  BUN_VERSION: '1.2.19'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun run test
+
+  # Separado de `verify` para que uma falha de banco não se confunda com uma falha de código, e
+  # para as duas rodarem em paralelo. Localmente o equivalente é
+  # `docker compose -f apps/api/docker-compose.test.yml up -d && bun run test:integration`.
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: keres_test
+          POSTGRES_PASSWORD: keres_test
+          POSTGRES_DB: keres_test
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U keres_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://keres_test:keres_test@localhost:55432/keres_test
+      JWT_SECRET: ci-jwt-secret-that-is-at-least-thirty-two-characters
+      JWT_SECRET_REFRESH: ci-refresh-secret-that-is-at-least-thirty-two-characters
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: bun run test:integration

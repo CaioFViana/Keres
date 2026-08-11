@@ -16,3 +16,6 @@ apps/client/dist
 # Build output do Electron (apps/desktop) - main/preload compilados e instaladores gerados.
 apps/desktop/dist-electron
 apps/desktop/release
+
+# Relatórios de cobertura, gerados por `bun run test:coverage` em cada workspace.
+coverage/

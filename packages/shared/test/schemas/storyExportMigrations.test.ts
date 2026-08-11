@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CURRENT_STORY_FORMAT_VERSION } from './StoryExportVersion';
-import { migrateStoryExport, StoryExportVersionError } from './storyExportMigrations';
+import { CURRENT_STORY_FORMAT_VERSION } from '../../schemas/StoryExportVersion';
+import { migrateStoryExport, StoryExportVersionError } from '../../schemas/storyExportMigrations';
 
 describe('migrateStoryExport', () => {
   it('migrates a V1 export to the current format without changing the source object', () => {

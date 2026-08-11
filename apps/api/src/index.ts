@@ -56,7 +56,7 @@ const DB_CONNECTIVITY_ERROR_CODES = new Set([
   '57P03', // Postgres: cannot_connect_now
 ]);
 
-function isDatabaseConnectivityError(error: unknown): boolean {
+export function isDatabaseConnectivityError(error: unknown): boolean {
   let current: unknown = error;
   // drizzle/pg wrap the root network error in `.cause`, sometimes more than one layer deep.
   for (let depth = 0; current && depth < 5; depth++) {

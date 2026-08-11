@@ -5,8 +5,10 @@
   "scripts": {
     "start": "bun run src/server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint src test vitest.config.ts --ext .ts",
+    "lint": "eslint src test vitest.config.ts vitest.integration.config.ts --ext .ts",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "build": "cd ../admin && bun run build",
     "db:generate": "bun drizzle-kit generate --dialect postgresql --schema=./src/db/schema.ts",
     "db:migrate": "bun drizzle-kit migrate",
@@ -46,6 +48,7 @@
     "drizzle-kit": "^0.31.6",
     "eslint": "^9.25.0",
     "typescript": "^5.5.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.10"
   }
 }

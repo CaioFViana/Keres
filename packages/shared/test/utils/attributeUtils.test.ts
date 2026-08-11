@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { AttributeType } from '../metadata/AttributeType';
-import { deriveAttributeKey } from './attributeKey';
-import { decodeAttributeValue, encodeAttributeValue } from './attributeValueCodec';
+import { AttributeType } from '../../metadata/AttributeType';
+import { deriveAttributeKey } from '../../utils/attributeKey';
+import { decodeAttributeValue, encodeAttributeValue } from '../../utils/attributeValueCodec';
 
 describe('deriveAttributeKey', () => {
   it('creates stable keys from human-readable labels', () => {

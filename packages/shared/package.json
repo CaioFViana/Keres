@@ -8,12 +8,14 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint . --ext .ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.66.0",
     "@typescript-eslint/parser": "^8.66.0",
     "eslint": "^9.25.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.10"
   }
 }

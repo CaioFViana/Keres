@@ -3,6 +3,7 @@ import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
+import { resolveClientFile, resolveMediaPath as resolveMediaPathIn } from './paths';
 import { assertValidServerId, isTrustedRendererUrl } from './security';
 
 // package.json's "name" is "@keres/desktop" (the workspace naming convention, "@keres/*"
@@ -74,33 +75,10 @@ function withIsolationHeaders(response: Response): Response {
   });
 }
 
-/**
- * Resolves a request path to a file under CLIENT_DIST. Expo Router's static web export
- * lays routes out as directories with their own index.html (like Next.js), but we also
- * accept a flat "route.html" export and fall back to the root index.html for anything
- * unmatched, so client-side navigation (History API) keeps working on refresh either way.
- */
-function resolveFile(relativePath: string): string {
-  const candidates = path.extname(relativePath)
-    ? [relativePath]
-    : [
-        path.join(relativePath, 'index.html'),
-        `${relativePath}.html`,
-      ];
-
-  for (const candidate of candidates) {
-    const filePath = path.join(CLIENT_DIST, candidate);
-    if (filePath.startsWith(CLIENT_DIST) && existsSync(filePath)) {
-      return filePath;
-    }
-  }
-  return path.join(CLIENT_DIST, 'index.html');
-}
-
 async function handleAppRequest(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const relativePath = decodeURIComponent(url.pathname);
-  const filePath = resolveFile(relativePath === '/' ? '/index.html' : relativePath);
+  const filePath = resolveClientFile(CLIENT_DIST, relativePath === '/' ? '/index.html' : relativePath, existsSync);
   const response = await net.fetch(pathToFileURL(filePath).toString());
   return withIsolationHeaders(response);
 }
@@ -228,14 +206,7 @@ async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
 
 Menu.setApplicationMenu(null)
 
-/** Resolves a "media/<storyId>/<hash>.<ext>"-shaped relative path, rejecting any escape from MEDIA_ROOT. */
-function resolveMediaPath(relativePath: string): string {
-  const resolved = path.join(MEDIA_ROOT, relativePath);
-  if (resolved !== MEDIA_ROOT && !resolved.startsWith(MEDIA_ROOT + path.sep)) {
-    throw new Error(`Refusing to access path outside media storage: "${relativePath}".`);
-  }
-  return resolved;
-}
+const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT, relativePath);
 
 function registerMediaIpcHandlers() {
   ipcMain.handle('media:write', async (_event, relativePath: string, bytes: Uint8Array) => {

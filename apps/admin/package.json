@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src test vitest.config.ts --ext .ts,.tsx",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
@@ -28,6 +29,7 @@
     "jsdom": "^30.0.1",
     "typescript": "^5.5.3",
     "vite": "^6.0.7",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.10"
   }
 }

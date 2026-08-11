@@ -159,7 +159,8 @@ async function writeAuthVault(vault: EncryptedTokenVault): Promise<void> {
   await fs.rename(tempPath, AUTH_VAULT_FILE);
 }
 
-function registerAuthIpcHandlers() {
+/** Exportado para o teste registrar os canais sem precisar que o app fique pronto. */
+export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:status', async (event) => {
     assertTrustedRenderer(event);
     return { available: await secureStorageAvailable() };
@@ -208,7 +209,8 @@ Menu.setApplicationMenu(null)
 
 const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT, relativePath);
 
-function registerMediaIpcHandlers() {
+/** Exportado para o teste registrar os canais sem precisar que o app fique pronto. */
+export function registerMediaIpcHandlers() {
   ipcMain.handle('media:write', async (_event, relativePath: string, bytes: Uint8Array) => {
     const filePath = resolveMediaPath(relativePath);
     await fs.mkdir(path.dirname(filePath), { recursive: true });

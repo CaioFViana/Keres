@@ -57,19 +57,24 @@ Concluído:
    testes antes de publicar.
 5. Varredura de lógica pura: utils do client, schemas/metadados do shared, utils e config da
    API, resolução de caminhos do desktop.
+6. Unidades com test doubles: `createEntityStore` (a fábrica das 17 stores de entidade), a
+   camada de API do admin, os 10 canais IPC do desktop com Electron mockado, o `apiClient` do
+   client (cache de token por servidor, interceptors e refresh no 401) e `storyTypeConversion`.
 
 Pendente:
 
-6. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
+7. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
    `customAttributeFieldMetadata`, `documentTitle`, `entityTypeIcons`, `commentCriticality`.
-7. Unidades com test doubles: stores zustand e services sem SQLite no client, camada de API
-   completa do admin, handlers IPC do desktop com Electron mockado.
-8. Integração da API contra o Postgres descartável: helpers de banco/app, suítes de rota
+8. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
+   `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`),
+   `AuthTokenManager`, `TokenVault`, `OperationLogService`, `SyncConflictService` e
+   `favoriteBehaviorUtils`.
+9. Integração da API contra o Postgres descartável: helpers de banco/app, suítes de rota
    (incluindo 401/403 em toda rota protegida) e de serviço (`SyncService`,
    `StoryExportImportService`, `FriendshipService`, `BaseSyncEntityHandler`).
-9. Motor de sync do client (`SyncEngineService`, `MediaSyncService`, `EntityService`) sobre um
-   banco de teste em `better-sqlite3`.
-10. Limiares de cobertura, calibrados no valor medido depois do item 8 e subidos por ratchet.
+10. Motor de sync do client (`SyncEngineService`, `MediaSyncService`, `EntityService`) sobre um
+    banco de teste em `better-sqlite3`.
+11. Limiares de cobertura, calibrados no valor medido depois do item 9 e subidos por ratchet.
 
 ## Regras
 

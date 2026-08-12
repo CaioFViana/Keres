@@ -701,20 +701,6 @@ const MainSystemNavigator = () => {
         }}
       />
       <Drawer.Screen
-        name="OperationLogStack"
-        component={OperationLogStackNavigator}
-        options={{
-          title: t('operation_logs_title'),
-          drawerLabel: t('operation_logs_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
-          },
-        })}
-      />
-      <Drawer.Screen
         name="CommentsStack"
         component={CommentsStackNavigator}
         options={{
@@ -728,8 +714,22 @@ const MainSystemNavigator = () => {
           },
         })}
       />
-      <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
+      <Drawer.Screen
+        name="OperationLogStack"
+        component={OperationLogStackNavigator}
+        options={{
+          title: t('operation_logs_title'),
+          drawerLabel: t('operation_logs_title'),
+        }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
+          },
+        })}
+      />
       <Drawer.Screen name="StoryAnalysis" component={StoryAnalysisScreen} options={{ title: t('story_analysis_title') }} />
+      <Drawer.Screen name="StorySettings" component={StorySettingsScreen} options={{ title: t('story_settings_title') }} />
       <Drawer.Screen
         name="StorySelection"
         component={() => <View />} // A dummy component, as it won't be displayed

@@ -20,6 +20,7 @@ export interface ApiResponse<T = any> {
 }
 
 export interface RequestOptions {
+  /** Objeto simples vira JSON; um `FormData` é enviado como multipart, sem cabeçalho manual. */
   body?: unknown;
   /** Enviado como `Authorization: Bearer`. Omitir para exercitar o caminho não autenticado. */
   token?: string;
@@ -35,8 +36,11 @@ export async function request<T = any>(
   const app = await getApp();
 
   const headers: Record<string, string> = { ...options.headers };
-  let body: string | undefined;
-  if (options.body !== undefined) {
+  let body: string | FormData | undefined;
+  if (options.body instanceof FormData) {
+    // Sem `content-type` manual: só o próprio `Request` sabe gerar o boundary do multipart.
+    body = options.body;
+  } else if (options.body !== undefined) {
     headers['content-type'] = 'application/json';
     body = JSON.stringify(options.body);
   }

@@ -65,20 +65,37 @@ Concluído:
    de rota para auth, user, story (export/import), sync, story permissions e admin - cada
    rota protegida com o seu caso de 401 e, no painel, de 403.
 
+8. Banco de teste do client em `better-sqlite3` (`test/helpers/testDb.ts`), aplicando as
+   migrações de produção sem cópia, e as suítes sobre ele: `OperationLogService`, `syncUtils`
+   (numeração do log de operações e a guarda de história somente-leitura), os handlers de sync
+   que aplicam o pull no banco local, e `EntityService`.
+9. Ciclo de sincronização do `SyncEngineService` contra o banco de teste: pull incremental,
+   avanço do cursor, push do que está pendente e o que fica de fora dele.
+
+   A instância do Axios é privada, mas isso não exige mock de módulo nem mudança de desenho: o
+   Axios resolve o adapter na hora da requisição e cai em `axios.defaults.adapter` quando a
+   instância não tem um próprio, e `createKeresAxiosInstance()` nunca define um. Basta o teste
+   atribuir `axios.defaults.adapter` - vale inclusive para o singleton já construído, e os
+   interceptors continuam rodando.
+10. Rotas de friend (todo o ciclo de amizade e bloqueio) e de media (canal binário da galeria,
+    incluindo a checagem de que a história referencia o hash pedido). O upload usa
+    `test/helpers/bunShim.ts`, que supre as APIs do Bun que a camada de mídia usa e que não
+    existem em Node.
+
 Pendente:
 
-8. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
-   `customAttributeFieldMetadata`, `documentTitle`, `entityTypeIcons`, `commentCriticality`.
-9. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
-   `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`),
-   `AuthTokenManager`, `TokenVault`, `OperationLogService`, `SyncConflictService` e
-   `favoriteBehaviorUtils`.
-10. Restante da integração da API: rotas de friend e media, e suítes de serviço com banco real
-    (`StoryExportImportService` além do round-trip já coberto, `FriendshipService`,
-    `BaseSyncEntityHandler` e os 25 handlers concretos).
-11. Motor de sync do client (`SyncEngineService`, `MediaSyncService`, `EntityService`) sobre um
-    banco de teste em `better-sqlite3`.
-12. Limiares de cobertura, calibrados no valor medido depois do item 10 e subidos por ratchet.
+11. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
+    `customAttributeFieldMetadata`, `documentTitle`, `entityTypeIcons`, `commentCriticality`.
+12. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
+    `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`),
+    `AuthTokenManager`, `TokenVault`, `SyncConflictService` e `favoriteBehaviorUtils`.
+13. Suítes de serviço da API com banco real: `StoryExportImportService` além do round-trip já
+    coberto, `BaseSyncEntityHandler` e os 25 handlers concretos.
+14. `MediaSyncService`: reconciliação de mídia, que transfere bytes por fora do Axios e hoje
+    entra mockada na suíte do motor de sync. E, no `SyncEngineService`, os caminhos que a
+    suíte atual ainda não cobre: `downloadAndImportStory`, `uploadNewStoryToServer` e a
+    resolução de conflito ponta a ponta contra `SyncConflictService`.
+15. Limiares de cobertura, calibrados no valor medido depois do item 13 e subidos por ratchet.
 
 ## Regras
 

@@ -24,6 +24,14 @@ export const BaseStoryUpdateSchema = z.object({
    * - pull (servidor -> cliente): é a versão da entidade DEPOIS da operação, para
    *   que o cliente saiba em que base as próximas edições dele se apoiam.
    *
+   * ATENÇÃO, para operações `update`: quem o servidor lê como base é `changes.version`,
+   * não este campo (ver `BaseSyncEntityHandler.checkVersionConflict`, alimentado por
+   * `update.changes.version`). Este aqui continua sendo preenchido e é o que a resposta
+   * de conflito ecoa, mas um push que traga só ele e omita `changes.version` não é
+   * comparado com nada: o servidor aceita a escrita, e a detecção de conflito daquela
+   * operação simplesmente não acontece. `SyncEngineService` duplica o valor nos dois
+   * lugares justamente por isso.
+   *
    * Nunca deve receber a versão da *operação* (`operationVersion`): são contadores
    * diferentes e confundi-los desliga a detecção de conflitos.
    */

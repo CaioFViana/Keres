@@ -37,14 +37,14 @@ export class FriendshipService {
       where: eq(users.id, userId),
     });
     if (!userExists) {
-      throw new Error(`User with ID ${userId} not found.`);
+      throw new AppError(404, `User with ID ${userId} not found.`);
     }
   }
 
 
   async sendFriendRequest(senderId: string, receiverId: string): Promise<Friendship> {
     if (senderId === receiverId) {
-      throw new Error('Cannot send friend request to self.');
+      throw new AppError(400, 'Cannot send friend request to self.');
     }
 
     await this.checkUserExistence(senderId);
@@ -59,7 +59,7 @@ export class FriendshipService {
       ),
     });
     if (existingDirectPending) {
-      throw new Error('Friend request already pending from you to you. Please approve the pending request.');
+      throw new AppError(409, 'Friend request already pending from you to you. Please approve the pending request.');
     }
 
     // Check for an existing reverse pending request (receiver -> sender)
@@ -71,7 +71,7 @@ export class FriendshipService {
       ),
     });
     if (existingReversePending) {
-      throw new Error('There is a pending friend request from this user to you.');
+      throw new AppError(409, 'There is a pending friend request from this user to you.');
     }
 
     // Check for any existing non-pending friendship (FRIEND, BLACKLISTED) in either direction
@@ -84,12 +84,12 @@ export class FriendshipService {
 
     if (existingEstablishedFriendship) {
       if (existingEstablishedFriendship.status === FriendStatus.FRIEND) {
-        throw new Error('Already friends.');
+        throw new AppError(409, 'Already friends.');
       } else if (existingEstablishedFriendship.status === FriendStatus.BLACKLISTED) {
-        throw new Error('A blacklisted relationship exists between these users, cannot send request.');
+        throw new AppError(403, 'A blacklisted relationship exists between these users, cannot send request.');
       }
       // If it's another status (e.g., PENDING, but not covered by above checks, though it should be)
-      throw new Error('An existing friendship relationship is preventing this request.');
+      throw new AppError(409, 'An existing friendship relationship is preventing this request.');
     }
 
     const newFriendshipData = {
@@ -120,16 +120,16 @@ export class FriendshipService {
     });
 
     if (!existingFriendship) {
-      throw new Error('Friend request not found or not pending from this user.');
+      throw new AppError(404, 'Friend request not found or not pending from this user.');
     }
 
     // Authorization check: Ensure the authenticated user (userId) is indeed the receiver
     // and that targetUserId is indeed the sender of *this specific pending request*.
     if (existingFriendship.receiverId !== userId) {
-      throw new Error('Unauthorized: You are not the recipient of this friend request.');
+      throw new AppError(403, 'Unauthorized: You are not the recipient of this friend request.');
     }
     if (existingFriendship.senderId !== targetUserId) {
-      throw new Error('Unauthorized: The target user is not the sender of this request.');
+      throw new AppError(403, 'Unauthorized: The target user is not the sender of this request.');
     }
 
 
@@ -156,16 +156,16 @@ export class FriendshipService {
     });
 
     if (!existingFriendship) {
-      throw new Error('Friend request not found or not pending from this user.');
+      throw new AppError(404, 'Friend request not found or not pending from this user.');
     }
 
     // Authorization check: Ensure the authenticated user (userId) is indeed the receiver
     // and that targetUserId is indeed the sender of *this specific pending request*.
     if (existingFriendship.receiverId !== userId) {
-      throw new Error('Unauthorized: You are not the recipient of this friend request.');
+      throw new AppError(403, 'Unauthorized: You are not the recipient of this friend request.');
     }
     if (existingFriendship.senderId !== targetUserId) {
-      throw new Error('Unauthorized: The target user is not the sender of this request.');
+      throw new AppError(403, 'Unauthorized: The target user is not the sender of this request.');
     }
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
@@ -191,7 +191,7 @@ export class FriendshipService {
     });
 
     if (!existingFriendship) {
-      throw new Error('Users are not friends.');
+      throw new AppError(409, 'Users are not friends.');
     }
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
@@ -203,7 +203,7 @@ export class FriendshipService {
 
   async blacklistUser(blisterId: string, blacklistedUserId: string): Promise<Friendship> {
     if (blisterId === blacklistedUserId) {
-      throw new Error('Cannot blacklist self.');
+      throw new AppError(400, 'Cannot blacklist self.');
     }
 
     await this.checkUserExistence(blisterId);
@@ -254,7 +254,7 @@ export class FriendshipService {
 
   async unblacklistUser(unblisterId: string, unblacklistedUserId: string): Promise<void> {
     if (unblisterId === unblacklistedUserId) {
-      throw new Error('Cannot unblacklist self.');
+      throw new AppError(400, 'Cannot unblacklist self.');
     }
 
     await this.checkUserExistence(unblisterId);
@@ -271,7 +271,7 @@ export class FriendshipService {
     });
 
     if (!existingFriendship) {
-      throw new Error('User is not blacklisted by you.');
+      throw new AppError(404, 'User is not blacklisted by you.');
     }
 
     // Only the user who actually issued the blacklist can undo it - being blocked isn't a
@@ -300,7 +300,7 @@ export class FriendshipService {
     });
 
     if (!existingFriendship) {
-      throw new Error('Sent friend request not found or not pending.');
+      throw new AppError(404, 'Sent friend request not found or not pending.');
     }
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));

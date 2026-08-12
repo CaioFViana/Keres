@@ -10,3 +10,9 @@ process.env.DATABASE_URL ??= 'postgres://keres_test:keres_test@localhost:55432/k
 process.env.JWT_SECRET ??= 'test-jwt-secret-that-is-at-least-thirty-two-characters';
 process.env.JWT_SECRET_REFRESH ??= 'test-refresh-secret-that-is-at-least-thirty-two-characters';
 process.env.NODE_ENV = 'test';
+
+// Mídia gravada em disco vai para uma pasta descartável, nunca para a `./media-storage` do
+// operador (o padrão de `env.ts`, relativo ao diretório de onde o processo subiu).
+import * as os from 'node:os';
+import * as path from 'node:path';
+process.env.MEDIA_STORAGE_PATH ??= path.join(os.tmpdir(), 'keres-media-test');

@@ -1,5 +1,5 @@
-import { StorySchemaEntityType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
+import { StorySchemaEntityType } from '@keres/shared';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -7,6 +7,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
+import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
@@ -26,8 +27,6 @@ import ChoiceFormScreen from '../screens/choices/ChoiceFormScreen';
 import ChoiceListScreen from '../screens/choices/ChoiceListScreen';
 import ChoiceViewScreen from '../screens/choices/ChoiceViewScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
-import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
-import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
@@ -39,10 +38,11 @@ import ItemFormScreen from '../screens/items/ItemFormScreen';
 import ItemListScreen from '../screens/items/ItemListScreen';
 import LocationDetailsScreen, { LocationDetailScreenParamList } from '../screens/locations/LocationDetailsScreen';
 import LocationFormScreen from '../screens/locations/LocationFormScreen';
+import LocationGraphScreen from '../screens/locations/LocationGraphScreen';
 import LocationListScreen from '../screens/locations/LocationListScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
-import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
+import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import NoteDetailScreen, { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
 import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
@@ -66,23 +66,15 @@ import { useTheme } from '../theme';
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
   GlobalSearch: undefined;
-  // Tipado com os parâmetros da pilha interna porque o mapa de relações abre um personagem
-  // específico a partir de outra aba do drawer.
-  CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
-  // Tipado com os parâmetros da pilha interna: GenericRelationDisplay (via navigateToEntityDetail)
-  // abre um local específico a partir de outras abas do drawer (ex: a partir de um Personagem).
-  LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
   // Todas as pilhas abaixo aceitam `{ screen, params }` opcional pela mesma razão: cada
   // `Drawer.Screen` tem seu próprio `drawerItemPress` (ver mais abaixo) que navega
   // explicitamente para a tela de lista da pilha ao ser tocado no menu, em vez de deixar o
   // Drawer restaurar o estado aninhado como estava.
+  CharactersStack: NavigatorScreenParams<CharacterStackParamList> | undefined;
+  LocationsStack: NavigatorScreenParams<LocationStackParamList> | undefined;
   ChaptersStack: NavigatorScreenParams<ChapterStackParamList> | undefined;
-  // Tipado com os parâmetros da pilha interna porque o mapa da história abre uma cena
-  // específica a partir de outra aba do drawer.
   ScenesStack: NavigatorScreenParams<SceneStackParamList> | undefined;
   ChoicesStack: NavigatorScreenParams<ChoiceStackParamList> | undefined;
-  // Tipado com os parâmetros da pilha interna: GenericRelationDisplay (via navigateToEntityDetail)
-  // abre um item específico a partir de outras abas do drawer (ex: a partir de um Local).
   ItemsStack: NavigatorScreenParams<ItemStackParamList> | undefined;
   ItemJourneysStack: NavigatorScreenParams<ItemJourneyStackParamList> | undefined;
   TagsStack: NavigatorScreenParams<TagsStackParamList> | undefined;
@@ -221,7 +213,6 @@ const ItemStackNavigator = () => {
   );
 };
 //#endregion
-
 //#region ItemJourney
 const ItemJourneyStack = createNativeStackNavigator<ItemJourneyStackParamList>();
 
@@ -246,7 +237,6 @@ const ItemJourneyStackNavigator = () => {
   );
 };
 //#endregion
-
 //#region Location
 
 const LocationStack = createNativeStackNavigator<LocationStackParamList>();
@@ -531,20 +521,6 @@ const MainSystemNavigator = () => {
         })}
       />
       <Drawer.Screen
-        name="LocationsStack"
-        component={LocationStackNavigator}
-        options={{
-          title: t('locations_title'),
-          drawerLabel: t('locations_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('LocationsStack', { screen: 'Locations' });
-          },
-        })}
-      />
-      <Drawer.Screen
         name="ChaptersStack"
         component={ChapterStackNavigator}
         options={{
@@ -555,6 +531,20 @@ const MainSystemNavigator = () => {
           drawerItemPress: (e) => {
             e.preventDefault();
             navigation.navigate('ChaptersStack', { screen: 'Chapters' });
+          },
+        })}
+      />
+      <Drawer.Screen
+        name="ScenesStack"
+        component={SceneStackNavigator}
+        options={{
+          title: t('scenes_title'),
+          drawerLabel: t('scenes_title'),
+        }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('ScenesStack', { screen: 'Scenes' });
           },
         })}
       />
@@ -573,6 +563,20 @@ const MainSystemNavigator = () => {
           drawerItemPress: (e) => {
             e.preventDefault();
             navigation.navigate('ChoicesStack', { screen: 'Choices' });
+          },
+        })}
+      />
+      <Drawer.Screen
+        name="LocationsStack"
+        component={LocationStackNavigator}
+        options={{
+          title: t('locations_title'),
+          drawerLabel: t('locations_title'),
+        }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('LocationsStack', { screen: 'Locations' });
           },
         })}
       />
@@ -601,20 +605,6 @@ const MainSystemNavigator = () => {
           drawerItemPress: (e) => {
             e.preventDefault();
             navigation.navigate('ItemJourneysStack', { screen: 'ItemJourneys' });
-          },
-        })}
-      />
-      <Drawer.Screen
-        name="ScenesStack"
-        component={SceneStackNavigator}
-        options={{
-          title: t('scenes_title'),
-          drawerLabel: t('scenes_title'),
-        }}
-        listeners={({ navigation }) => ({
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('ScenesStack', { screen: 'Scenes' });
           },
         })}
       />

@@ -91,11 +91,11 @@ Concluído:
 13. Lógica pura restante do client, fechando a varredura: os dois geradores de SVG que faltavam,
     `customAttributeFieldMetadata`, `documentTitle` e as tabelas de ícones.
 
-Pendente:
-
-14. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
-    `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`),
+14. Stores avulsas e o resto da camada de credenciais e conflitos do client: `appAlert`,
+    `connectivity`, `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`,
     `AuthTokenManager`, `TokenVault`, `SyncConflictService` e `favoriteBehaviorUtils`.
+
+Pendente:
 15. `MediaSyncService`: reconciliação de mídia, que transfere bytes por fora do Axios e hoje
     entra mockada na suíte do motor de sync. E, no `SyncEngineService`, os caminhos que a
     suíte atual ainda não cobre: `downloadAndImportStory`, `uploadNewStoryToServer` e a

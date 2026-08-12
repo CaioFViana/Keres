@@ -5,9 +5,27 @@
 Cobrir lógica e integração de dados sem acoplar os ambientes que o monorepo já usa:
 Expo/React Native, Elysia/PostgreSQL, Vite/React e Electron.
 
-Fora de escopo por decisão explícita: renderização das telas e componentes React Native e das
-páginas do admin. Custo alto e alta taxa de quebra por mudança visual; nada de Testing Library
-por enquanto.
+Fora de escopo por decisão explícita: renderização das 60 telas do client e das 5 páginas do
+admin. Custo alto e alta taxa de quebra por mudança visual - um teste que afirma que um
+`<Text>` mostra uma string quebra a cada ajuste de layout sem nunca pegar um bug.
+
+Os **hooks** (`src/hooks`, 21 arquivos) são a exceção deliberada: é onde mora a lógica das
+telas, e o `renderHook` da React Native Testing Library os exercita sem renderizar nada. Um
+bug ali afeta várias telas de uma vez.
+
+## Sobre testar componentes React Native
+
+A ferramenta é `@testing-library/react-native`, o que a [documentação do
+Expo](https://docs.expo.dev/develop/unit-testing/) recomenda junto com o `jest-expo` que este
+projeto já usa. Dois pontos que valem registro:
+
+- `react-test-renderer` **não** é alternativa: não suporta React 19, e o client está no 19.1.0.
+  A RNTL 14 usa o pacote `test-renderer` no lugar dele, e o traz como peer.
+- Na RNTL 14, `renderHook` devolve uma **Promise** (assim como `rerender` e `unmount`). Sem o
+  `await`, `result` vem `undefined` e todo teste falha com a mesma mensagem enganosa.
+- A própria Expo desaconselha snapshot para UI e aponta E2E (Maestro) no lugar. Se um dia as
+  telas precisarem de cobertura, o caminho é uma punhado de jornadas críticas ponta a ponta -
+  criar história, sincronizar, resolver conflito -, não teste por tela.
 
 ## Ferramentas
 
@@ -16,7 +34,7 @@ por enquanto.
 | `packages/shared` | Vitest | Schemas, migrações de exportação, metadados e utilitários puros. |
 | `apps/api` | Vitest | Utilitários, config e rotas Elysia; integração com Postgres descartável. |
 | `apps/admin` | Vitest | Camada de API (axios mockado). |
-| `apps/client` | Jest + `jest-expo` | Utils puros, stores zustand e services sem SQLite. |
+| `apps/client` | Jest + `jest-expo` + RNTL | Utils, stores, services, banco de teste em `better-sqlite3` e hooks. |
 | `apps/desktop` | Vitest | Utilitários e IPC, com Electron mockado. |
 
 O client fica em Jest de propósito: `jest-expo` é o preset oficial do SDK 54 e entrega o
@@ -125,6 +143,19 @@ A regra é de **ratchet**: quando a cobertura sobe, o piso sobe junto na mesma m
 um piso é uma decisão consciente, não um atalho para fazer o CI passar - se a cobertura caiu,
 ou o teste que faltou não foi escrito, ou código coberto foi removido, e as duas situações
 merecem ser ditas na descrição do commit.
+
+### O que a cobertura do client mede
+
+O `jest.config.js` precisa de `src` em `roots`, e não só `test`. Sem isso o Jest não varre
+`src/`, o `collectCoverageFrom` fica sem efeito, e o relatório mede apenas os arquivos que
+algum teste já importa - uma métrica que se autoconfirma. Foi assim por um tempo aqui: 136 dos
+377 arquivos, mostrando 42% onde o número real era 15%.
+
+`testMatch` ficou ancorado em `test/` justamente porque `roots` passou a incluir `src`; um glob
+solto sairia procurando teste dentro do código de produção.
+
+Os workspaces em Vitest não têm esse problema - o provider v8 já inclui os arquivos não
+tocados, e é por isso que schemas e páginas sem teste aparecem com 0% nos relatórios deles.
 
 Os pisos só valem se a suíte rodar com cobertura, e é por isso que o CI usa
 `bun run test:coverage` e `test:integration:coverage` no lugar dos comandos sem cobertura.

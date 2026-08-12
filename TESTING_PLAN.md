@@ -88,10 +88,11 @@ Concluído:
     história local), reinício de versão e posse, recusa de pacote de formato futuro ou com
     referência pendurada, e atomicidade - um import que falha no meio não deixa nada para trás.
 
+13. Lógica pura restante do client, fechando a varredura: os dois geradores de SVG que faltavam,
+    `customAttributeFieldMetadata`, `documentTitle` e as tabelas de ícones.
+
 Pendente:
 
-13. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
-    `customAttributeFieldMetadata`, `documentTitle`, `entityTypeIcons`, `commentCriticality`.
 14. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
     `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`),
     `AuthTokenManager`, `TokenVault`, `SyncConflictService` e `favoriteBehaviorUtils`.

@@ -45,8 +45,9 @@ jobs:
       - run: bun run lint
       # Só as suítes unitárias: as de integração precisam de um Postgres de pé e rodam no
       # workflow de CI (ci.yml), que é onde uma regressão deve aparecer - antes do release,
-      # não durante ele.
-      - run: bun run test
+      # não durante ele. Com cobertura para os limiares valerem também numa tag que não
+      # passou por PR.
+      - run: bun run test:coverage
 
   # ---- Server: build + publish the API's Docker image to GHCR ----
   docker:

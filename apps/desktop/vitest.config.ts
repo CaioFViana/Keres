@@ -8,6 +8,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**'],
+      // Piso, não meta - ver a regra do ratchet em TESTING_PLAN.md.
+      thresholds: { lines: 68, functions: 55, branches: 70 },
     },
   },
 });

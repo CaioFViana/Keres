@@ -21,6 +21,8 @@ export default defineConfig({
       // Diretório próprio: sem isto o relatório da integração sobrescreveria o das suítes
       // unitárias, e `test:report` mostraria um dos dois no lugar do outro.
       reportsDirectory: 'coverage-integration',
+      // Piso, não meta - ver a regra do ratchet em TESTING_PLAN.md.
+      thresholds: { lines: 48, functions: 51, branches: 36 },
     },
   },
 });

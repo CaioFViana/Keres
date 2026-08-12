@@ -28,7 +28,9 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run lint
-      - run: bun run test
+      # Com cobertura, e não `bun run test`: é o que aplica os limiares definidos em cada
+      # workspace. Sem isto os pisos existiriam no arquivo e nunca seriam checados.
+      - run: bun run test:coverage
 
   # Separado de `verify` para que uma falha de banco não se confunda com uma falha de código, e
   # para as duas rodarem em paralelo. Localmente o equivalente é
@@ -59,4 +61,4 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
-      - run: bun run test:integration
+      - run: bun run --cwd apps/api test:integration:coverage

@@ -108,9 +108,26 @@ Concluído:
     inteira entre aparelho e servidor, incluindo a preservação do id local e a migração da
     identidade de favoritos e comentários para a conta do servidor.
 
-Pendente:
-17. Limiares de cobertura, calibrados no valor medido por `bun run test:report` e subidos por
-    ratchet.
+17. Limiares de cobertura em cada workspace, calibrados nos valores medidos, com o CI rodando
+    as suítes *com* cobertura para que os pisos sejam de fato aplicados.
+
+O roteiro está concluído. O que ficou deliberadamente fora de escopo continua fora: a
+renderização das telas e componentes React Native e das páginas do admin.
+
+## Limiares de cobertura
+
+Cada workspace tem um piso em `coverage.thresholds` (Vitest) ou `coverageThreshold` (Jest),
+fixado um pouco abaixo do valor medido para absorver flutuação. `apps/api` tem dois conjuntos:
+um na config unitária e outro na de integração, medidos separadamente - a unitária cobre só o
+que roda sem banco, então o número dela é baixo por construção.
+
+A regra é de **ratchet**: quando a cobertura sobe, o piso sobe junto na mesma mudança. Baixar
+um piso é uma decisão consciente, não um atalho para fazer o CI passar - se a cobertura caiu,
+ou o teste que faltou não foi escrito, ou código coberto foi removido, e as duas situações
+merecem ser ditas na descrição do commit.
+
+Os pisos só valem se a suíte rodar com cobertura, e é por isso que o CI usa
+`bun run test:coverage` e `test:integration:coverage` no lugar dos comandos sem cobertura.
 
 ## Regras
 

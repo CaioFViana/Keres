@@ -10,4 +10,9 @@ module.exports = {
     '!src/exampleStories/**',
   ],
   coverageReporters: ['text', 'lcov'],
+  // Piso, não meta: fixado um pouco abaixo do medido para absorver flutuação, e para subir
+  // junto quando a cobertura subir. Ver a regra do ratchet em TESTING_PLAN.md.
+  coverageThreshold: {
+    global: { lines: 40, functions: 50, branches: 29 },
+  },
 };

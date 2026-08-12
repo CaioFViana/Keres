@@ -10,6 +10,9 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['entities/**', 'metadata/**', 'schemas/**', 'utils/**', 'index.ts'],
+      // Piso, não meta: fixado um pouco abaixo do medido para absorver flutuação, e para
+      // subir junto quando a cobertura subir. Ver a regra do ratchet em TESTING_PLAN.md.
+      thresholds: { lines: 48, functions: 48, branches: 46 },
     },
   },
 });

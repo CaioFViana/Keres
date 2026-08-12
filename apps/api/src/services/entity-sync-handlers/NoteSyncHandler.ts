@@ -1,5 +1,4 @@
-import { CreateNoteDataSchema, CreateNoteDataType, CreateStoryUpdate, PartialNoteSchema, UpdateStoryUpdate } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import { CreateNoteDataSchema, CreateNoteDataType, CreateStoryUpdate, PartialNoteSchema } from '@keres/shared';
 import { db } from '../../db';
 import { notes } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
@@ -49,19 +48,9 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<typeof CreateNoteData
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
-    const validatedChanges = this.updateSchema.parse(update.changes);
-    await this.validateRelatedEntities();
-
-    await db.update(notes)
-      .set({
-        ...validatedChanges,
-        updatedAt: new Date(),
-        version: currentEntity.version + 1,
-      })
-      .where(and(
-        eq(notes.id, update.id!),
-        eq(notes.version, currentEntity.version)
-      ));
-  }
+  // `update` e `delete` vêm da base de propósito. Houve aqui um override que só repetia o
+  // que a base faz, mas sem `checkVersionConflict`, sem a checagem de `deleted_on_server` e
+  // sem honrar o `operationTime` do cliente - o resultado era que uma edição concorrente
+  // sobre esta entidade não gerava conflito nenhum e, quando a cláusula `where version = ...`
+  // não casava, a edição do usuário sumia sem erro e sem aviso.
 }

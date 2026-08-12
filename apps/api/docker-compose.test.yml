@@ -7,6 +7,10 @@
 #   docker compose -f apps/api/docker-compose.test.yml up -d
 #   bun run test:integration
 #   docker compose -f apps/api/docker-compose.test.yml down
+# Projeto próprio: sem isto o Compose agrupa este arquivo com o `docker-compose.yml` de
+# desenvolvimento (ambos no diretório `api`) e trata o banco de dev como container órfão.
+name: keres-test
+
 services:
   postgres-test:
     image: postgres:16-alpine

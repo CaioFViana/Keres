@@ -3,6 +3,7 @@ import { Elysia, t } from 'elysia';
 import { JWTPayload } from '../../index';
 import { InvalidCurrentPasswordError, TagAlreadyTakenError, userService } from '../../services/UserService';
 import { friendshipService } from '../../services/FriendshipService';
+import { isUniqueViolation } from '../../utils/errors';
 
 const userResponseSchema = t.Object({
   id: t.String(),
@@ -107,7 +108,7 @@ export const userRoutes = new Elysia()
     } catch (error) {
       // TagAlreadyTakenError covers the common case; a unique-violation can still slip
       // through under a concurrent race, so treat both the same way.
-      if (error instanceof TagAlreadyTakenError || (error as { code?: string })?.code === '23505') {
+      if (error instanceof TagAlreadyTakenError || isUniqueViolation(error)) {
         set.status = 409;
         return { message: 'Tag is already taken.' };
       }

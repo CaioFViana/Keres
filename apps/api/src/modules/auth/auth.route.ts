@@ -9,6 +9,7 @@ import { jwtRefresh } from '../../config/jwt';
 import { db } from '../../db';
 import { users } from '../../db/schema';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
+import { isUniqueViolation } from '../../utils/errors';
 import type { JWTPayload } from '../../index';
 import { createWebSocketTicket } from '../webSocket/webSocket.route';
 
@@ -133,7 +134,7 @@ export const authRoutes = new Elysia()
           })
           .returning({ id: users.id, username: users.username, tag: users.tag });
       } catch (error) {
-        if ((error as { code?: string })?.code === '23505') {
+        if (isUniqueViolation(error)) {
           [newUser] = await db
             .insert(users)
             .values({

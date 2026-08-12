@@ -5,6 +5,7 @@ import { stories, storyPermissions, users } from '../db/schema';
 import { FriendStatus } from '@keres/shared';
 import { friendships } from '../db/schema/tables/friendships';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
+import { AppError } from '../utils/errors';
 
 export class StoryPermissionService {
   // Helper method to check if two users are friends
@@ -65,14 +66,18 @@ export class StoryPermissionService {
     targetUserId: string,
     permissionType: 'reader' | 'writer'
   ) {
+    // `AppError` e não `Error`: são recusas deliberadas, com mensagem que o usuário precisa
+    // ler. Um `Error` simples aqui não bate com o prefixo "Unauthorized" que
+    // `withOwnershipCheck` traduz, cai no fallback do `onError` e chega ao cliente como
+    // "Internal server error." - indistinguível de uma falha de verdade.
     if (ownerUserId === targetUserId) {
-      throw new Error('The story owner already has full permissions and cannot be assigned additional permissions.');
+      throw new AppError(400, 'The story owner already has full permissions and cannot be assigned additional permissions.');
     }
 
     // New: Check if ownerUserId and targetUserId are friends
     const areFriends = await this._areFriends(ownerUserId, targetUserId);
     if (!areFriends) {
-      throw new Error('Permission can only be granted to friends.');
+      throw new AppError(403, 'Permission can only be granted to friends.');
     }
 
     // 1. Verify ownerUserId owns the story
@@ -135,7 +140,7 @@ export class StoryPermissionService {
     // New: Check if ownerUserId and targetUserId are friends
     const areFriends = await this._areFriends(ownerUserId, targetUserId);
     if (!areFriends) {
-      throw new Error('Permission can only be revoked from friends.');
+      throw new AppError(403, 'Permission can only be revoked from friends.');
     }
 
     // 1. Verify ownerUserId owns the story
@@ -198,9 +203,23 @@ export class StoryPermissionService {
     return permissions;
   }
 
+  /**
+   * O `isDeleted` no filtro é o que faz uma revogação valer.
+   *
+   * `deleteStoryPermission` é soft delete (a linha precisa sobreviver para o cliente receber
+   * o tombstone pelo sync). Sem excluí-la aqui, todo chamador - `hasPermission` (export de
+   * história, rotas de mídia, WebSocket) e os dois pontos de `SyncService` que derivam o
+   * papel do usuário - continuava enxergando o colaborador removido como se ele ainda
+   * tivesse acesso. `getReadableStoryIds` já filtrava, e era só por isso que a história
+   * sumia da lista do `pullpreviews` enquanto continuava acessível por id.
+   */
   async getUserPermissionForStory(userId: string, storyId: string) {
     const permission = await db.query.storyPermissions.findFirst({
-      where: and(eq(storyPermissions.storyId, storyId), eq(storyPermissions.userId, userId)),
+      where: and(
+        eq(storyPermissions.storyId, storyId),
+        eq(storyPermissions.userId, userId),
+        eq(storyPermissions.isDeleted, false),
+      ),
     });
     return permission;
   }

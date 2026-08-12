@@ -61,20 +61,24 @@ Concluído:
    camada de API do admin, os 10 canais IPC do desktop com Electron mockado, o `apiClient` do
    client (cache de token por servidor, interceptors e refresh no 401) e `storyTypeConversion`.
 
+7. Integração da API contra o Postgres descartável: helpers de banco e de aplicação, e suítes
+   de rota para auth, user, story (export/import), sync, story permissions e admin - cada
+   rota protegida com o seu caso de 401 e, no painel, de 403.
+
 Pendente:
 
-7. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
+8. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
    `customAttributeFieldMetadata`, `documentTitle`, `entityTypeIcons`, `commentCriticality`.
-8. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
+9. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
    `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`),
    `AuthTokenManager`, `TokenVault`, `OperationLogService`, `SyncConflictService` e
    `favoriteBehaviorUtils`.
-9. Integração da API contra o Postgres descartável: helpers de banco/app, suítes de rota
-   (incluindo 401/403 em toda rota protegida) e de serviço (`SyncService`,
-   `StoryExportImportService`, `FriendshipService`, `BaseSyncEntityHandler`).
-10. Motor de sync do client (`SyncEngineService`, `MediaSyncService`, `EntityService`) sobre um
+10. Restante da integração da API: rotas de friend e media, e suítes de serviço com banco real
+    (`StoryExportImportService` além do round-trip já coberto, `FriendshipService`,
+    `BaseSyncEntityHandler` e os 25 handlers concretos).
+11. Motor de sync do client (`SyncEngineService`, `MediaSyncService`, `EntityService`) sobre um
     banco de teste em `better-sqlite3`.
-11. Limiares de cobertura, calibrados no valor medido depois do item 9 e subidos por ratchet.
+12. Limiares de cobertura, calibrados no valor medido depois do item 10 e subidos por ratchet.
 
 ## Regras
 

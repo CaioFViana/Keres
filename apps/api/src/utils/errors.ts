@@ -12,3 +12,31 @@ export class AppError extends Error {
     this.name = 'AppError';
   }
 }
+
+/** `unique_violation` do Postgres. */
+const UNIQUE_VIOLATION = '23505';
+
+/**
+ * Código de erro do Postgres, procurado também em `.cause`.
+ *
+ * O drizzle não repassa o erro do `pg`: ele lança um `Error` próprio ("Failed query: ...") com
+ * o original pendurado em `cause`. Por isso um `(error as { code?: string }).code === '23505'`
+ * escrito direto no `catch` nunca é verdadeiro numa query feita pelo drizzle - o tratamento
+ * vira código morto e a rota devolve 500 no lugar do resultado que ela pretendia dar.
+ */
+export function postgresErrorCode(error: unknown): string | undefined {
+  let current: unknown = error;
+  for (let depth = 0; current && depth < 5; depth++) {
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === 'string') {
+      return code;
+    }
+    current = (current as { cause?: unknown }).cause;
+  }
+  return undefined;
+}
+
+/** Violação de restrição de unicidade, seja ela lançada pelo `pg` ou embrulhada pelo drizzle. */
+export function isUniqueViolation(error: unknown): boolean {
+  return postgresErrorCode(error) === UNIQUE_VIOLATION;
+}

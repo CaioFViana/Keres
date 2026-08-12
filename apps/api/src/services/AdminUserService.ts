@@ -5,6 +5,7 @@ import { ulid } from 'ulid';
 import { env } from '../config/env';
 import { db } from '../db';
 import { users } from '../db/schema';
+import { isUniqueViolation } from '../utils/errors';
 
 export class UsernameAlreadyTakenError extends Error {
   constructor() {
@@ -129,7 +130,7 @@ export class AdminUserService {
         tierId: input.tierId ?? null,
       }).returning(ADMIN_USER_RETURNING);
     } catch (error) {
-      if ((error as { code?: string })?.code === '23505') {
+      if (isUniqueViolation(error)) {
         [created] = await db.insert(users).values({
           id,
           username: input.username,

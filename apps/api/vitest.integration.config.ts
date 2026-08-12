@@ -18,6 +18,9 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**'],
+      // Diretório próprio: sem isto o relatório da integração sobrescreveria o das suítes
+      // unitárias, e `test:report` mostraria um dos dois no lugar do outro.
+      reportsDirectory: 'coverage-integration',
     },
   },
 });

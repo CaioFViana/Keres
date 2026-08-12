@@ -32,11 +32,16 @@ de todos os módulos nativos `expo-*`. Vitest não tem preset oficial de Expo/RN
 ## Comandos
 
 ```bash
+bun run test:report       # tabela agregada: suítes, testes e cobertura de tudo
 bun run test              # todas as suítes unitárias, sem infra
-bun run test:coverage     # o mesmo, com relatório de cobertura
 bun run test:integration  # suítes que exigem o Postgres descartável
 bun run test:all          # os dois acima
+bun run test:coverage     # só as unitárias, com relatório de cobertura
 ```
+
+`test:report` inclui a integração da API como linha própria. Sem o banco de pé, aquela linha
+aparece como indisponível e o relatório continua válido para o resto - falta de infra não é
+falha de código.
 
 Para as de integração, suba o banco antes:
 
@@ -95,12 +100,17 @@ Concluído:
     `connectivity`, `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`,
     `AuthTokenManager`, `TokenVault`, `SyncConflictService` e `favoriteBehaviorUtils`.
 
+15. `MediaSyncService`: a reconciliação de mídia, incluindo a deduplicação por hash, os dois
+    caminhos de download (disco no nativo, Axios na web) e a regra de nunca deixar uma falha
+    de transferência derrubar o ciclo.
+
+16. `downloadAndImportStory` e `uploadNewStoryToServer`: a transferência de uma história
+    inteira entre aparelho e servidor, incluindo a preservação do id local e a migração da
+    identidade de favoritos e comentários para a conta do servidor.
+
 Pendente:
-15. `MediaSyncService`: reconciliação de mídia, que transfere bytes por fora do Axios e hoje
-    entra mockada na suíte do motor de sync. E, no `SyncEngineService`, os caminhos que a
-    suíte atual ainda não cobre: `downloadAndImportStory`, `uploadNewStoryToServer` e a
-    resolução de conflito ponta a ponta contra `SyncConflictService`.
-16. Limiares de cobertura, calibrados no valor medido depois do item 15 e subidos por ratchet.
+17. Limiares de cobertura, calibrados no valor medido por `bun run test:report` e subidos por
+    ratchet.
 
 ## Regras
 

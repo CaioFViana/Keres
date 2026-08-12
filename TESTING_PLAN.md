@@ -84,20 +84,22 @@ Concluído:
 11. `BaseSyncEntityHandler` contra banco real: controle de concorrência otimista, conflito de
     entidade excluída no servidor, `operationTime`, soft delete idempotente, e as consultas
     que alimentam o limite de plano e a tela de recuperação do admin.
+12. `StoryExportImportService`: remapeamento de ids (e a preservação deles no envio de uma
+    história local), reinício de versão e posse, recusa de pacote de formato futuro ou com
+    referência pendurada, e atomicidade - um import que falha no meio não deixa nada para trás.
 
 Pendente:
 
-12. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
+13. Restante da lógica pura do client: `storyGraphSvg`, `locationGraphSvg`,
     `customAttributeFieldMetadata`, `documentTitle`, `entityTypeIcons`, `commentCriticality`.
-13. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
+14. Restante das unidades com test doubles: stores avulsas (`appAlert`, `connectivity`,
     `notification`, `syncConflict`, `userSettings`, `resetAllClientStores`),
     `AuthTokenManager`, `TokenVault`, `SyncConflictService` e `favoriteBehaviorUtils`.
-14. `StoryExportImportService` além do round-trip já coberto.
 15. `MediaSyncService`: reconciliação de mídia, que transfere bytes por fora do Axios e hoje
     entra mockada na suíte do motor de sync. E, no `SyncEngineService`, os caminhos que a
     suíte atual ainda não cobre: `downloadAndImportStory`, `uploadNewStoryToServer` e a
     resolução de conflito ponta a ponta contra `SyncConflictService`.
-16. Limiares de cobertura, calibrados no valor medido depois do item 14 e subidos por ratchet.
+16. Limiares de cobertura, calibrados no valor medido depois do item 15 e subidos por ratchet.
 
 ## Regras
 

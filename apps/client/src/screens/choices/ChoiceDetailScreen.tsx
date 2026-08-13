@@ -27,6 +27,7 @@ import { createChoiceCheckService } from '../../services/storymanagement/ChoiceC
 import { createEffectService } from '../../services/storymanagement/EffectService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { createItemService } from '../../services/storymanagement/ItemService';
+import { describeChoiceCheck, describeEffect } from '../../utils/choiceCheckEffectDescriptions';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -239,49 +240,6 @@ const ChoiceDetailScreen = () => {
     return <ScreenError padded message={t('choice_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
 
-  const describeCheckCondition = (check: ChoiceCheck): string => {
-    switch (check.type) {
-      case 'sceneCount': {
-        const sceneName = (check.sceneId && sceneNamesById[check.sceneId]) || t('common_na');
-        return t('check_condition_scene_count', { scene: sceneName, count: check.minVisits ?? 1 });
-      }
-      case 'inventory': {
-        const itemName = (check.itemId && itemNamesById[check.itemId]) || t('common_na');
-        return check.itemPresence === 'lacks'
-          ? t('check_condition_inventory_lacks', { item: itemName })
-          : t('check_condition_inventory_has', { item: itemName });
-      }
-      case 'trigger': {
-        const triggerName = check.triggerName || t('common_na');
-        return check.triggerState === 'unset'
-          ? t('check_condition_trigger_unset', { trigger: triggerName })
-          : t('check_condition_trigger_set', { trigger: triggerName });
-      }
-      default:
-        return '';
-    }
-  };
-
-  const describeCheck = (check: ChoiceCheck): string => {
-    const prefix = check.mode === 'block' ? t('check_condition_prefix_block') : t('check_condition_prefix_enable');
-    return `${prefix} ${describeCheckCondition(check)}`;
-  };
-
-  const describeEffect = (effect: Effect): string => {
-    switch (effect.effectType) {
-      case 'itemGrant':
-        return t('effect_description_item_grant', { item: (effect.itemId && itemNamesById[effect.itemId]) || t('common_na') });
-      case 'itemTake':
-        return t('effect_description_item_take', { item: (effect.itemId && itemNamesById[effect.itemId]) || t('common_na') });
-      case 'triggerSet':
-        return t('effect_description_trigger_set', { trigger: effect.triggerName || t('common_na') });
-      case 'triggerUnset':
-        return t('effect_description_trigger_unset', { trigger: effect.triggerName || t('common_na') });
-      default:
-        return '';
-    }
-  };
-
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={choiceTags} />
@@ -357,7 +315,7 @@ const ChoiceDetailScreen = () => {
                   <Text style={{ color: colors.textSecondary }}>{t('no_checks_in_group')}</Text>
                 )}
                 {groupChecks.map(check => (
-                  <Text key={check.id} style={styles.checkRow}>{`• ${describeCheck(check)}`}</Text>
+                  <Text key={check.id} style={styles.checkRow}>{`• ${describeChoiceCheck(check, sceneNamesById, itemNamesById, t)}`}</Text>
                 ))}
               </View>
             );
@@ -370,7 +328,7 @@ const ChoiceDetailScreen = () => {
           {choiceEffects.length > 0 && (
             <View style={styles.card}>
               {choiceEffects.map(effect => (
-                <Text key={effect.id} style={styles.checkRow}>{`• ${describeEffect(effect)}`}</Text>
+                <Text key={effect.id} style={styles.checkRow}>{`• ${describeEffect(effect, itemNamesById, t)}`}</Text>
               ))}
             </View>
           )}

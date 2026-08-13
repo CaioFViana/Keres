@@ -1,4 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
+import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
+import { Effect } from '@keres/shared/entities/Effect';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,12 +14,17 @@ import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
+import { createChoiceCheckGroupService } from '../../services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '../../services/storymanagement/ChoiceCheckService';
+import { createEffectService } from '../../services/storymanagement/EffectService';
+import { createItemService } from '../../services/storymanagement/ItemService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { formatSceneGap, formatSceneUniverseDuration } from '../../utils/sceneTiming';
+import { describeChoiceCheck, describeEffect } from '../../utils/choiceCheckEffectDescriptions';
+import { formatSceneGap, formatSceneUniverseDuration, hasSceneGap, hasSceneUniverseDuration } from '../../utils/sceneTiming';
 import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
 import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -41,6 +49,8 @@ interface SceneNodeConnection {
   text: string;
   sceneId: string;
   sceneName: string;
+  /** Resumo compacto dos checks/effects da Choice - undefined quando ela não tem nenhum. */
+  extra?: string;
 }
 
 const ChoiceViewScreen = () => {
@@ -57,6 +67,10 @@ const ChoiceViewScreen = () => {
   const [scenes, setScenes] = useState<SceneSelect[]>([]);
   const [choices, setChoices] = useState<ChoiceSelect[]>([]);
   const [chapters, setChapters] = useState<ChapterSelect[]>([]);
+  const [checkGroups, setCheckGroups] = useState<ChoiceCheckGroup[]>([]);
+  const [checks, setChecks] = useState<ChoiceCheck[]>([]);
+  const [effects, setEffects] = useState<Effect[]>([]);
+  const [itemNamesById, setItemNamesById] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -70,14 +84,22 @@ const ChoiceViewScreen = () => {
     try {
       setLoading(true);
       setError(null);
-      const [loadedScenes, loadedChoices, loadedChapters] = await Promise.all([
+      const [loadedScenes, loadedChoices, loadedChapters, loadedCheckGroups, loadedChecks, loadedEffects, loadedItems] = await Promise.all([
         createSceneService(drizzleDb).getScenesByStoryId(storyId),
         createChoiceService(drizzleDb).getChoicesByStoryId(storyId),
         createChapterService(drizzleDb).getChaptersByStoryId(storyId),
+        createChoiceCheckGroupService(drizzleDb).getAllByStoryId(storyId),
+        createChoiceCheckService(drizzleDb).getAllByStoryId(storyId),
+        createEffectService(drizzleDb).getAllByStoryId(storyId),
+        createItemService(drizzleDb).getItemsByStoryId(storyId),
       ]);
       setScenes(loadedScenes);
       setChoices(loadedChoices);
       setChapters(loadedChapters);
+      setCheckGroups(loadedCheckGroups);
+      setChecks(loadedChecks);
+      setEffects(loadedEffects);
+      setItemNamesById(Object.fromEntries(loadedItems.map(item => [item.id, item.name])));
     } catch (loadError) {
       console.log('ChoiceViewScreen: failed to load graph data.', loadError);
       setError(t('failed_to_load_graph_data'));
@@ -118,6 +140,57 @@ const ChoiceViewScreen = () => {
     [layout.nodes, selectedNodeId]
   );
 
+  const sceneNamesById = useMemo(
+    () => Object.fromEntries(scenes.map(scene => [scene.id, scene.name])),
+    [scenes]
+  );
+
+  // Checks/effects agrupados por Choice (via ChoiceCheckGroup) e effects por Scene - só usados
+  // quando existem, pra não pesar a maioria das Choices/Scenes que não tem nenhum.
+  const checksByChoiceId = useMemo(() => {
+    const groupIdToChoiceId = new Map(checkGroups.map(group => [group.id, group.choiceId]));
+    const map = new Map<string, ChoiceCheck[]>();
+    for (const check of checks) {
+      const choiceId = groupIdToChoiceId.get(check.groupId);
+      if (!choiceId) continue;
+      if (!map.has(choiceId)) map.set(choiceId, []);
+      map.get(choiceId)!.push(check);
+    }
+    return map;
+  }, [checkGroups, checks]);
+
+  const effectsByChoiceId = useMemo(() => {
+    const map = new Map<string, Effect[]>();
+    for (const effect of effects) {
+      if (effect.entityType !== 'Choice') continue;
+      if (!map.has(effect.entityId)) map.set(effect.entityId, []);
+      map.get(effect.entityId)!.push(effect);
+    }
+    return map;
+  }, [effects]);
+
+  const effectsBySceneId = useMemo(() => {
+    const map = new Map<string, Effect[]>();
+    for (const effect of effects) {
+      if (effect.entityType !== 'Scene') continue;
+      if (!map.has(effect.entityId)) map.set(effect.entityId, []);
+      map.get(effect.entityId)!.push(effect);
+    }
+    return map;
+  }, [effects]);
+
+  const describeChoiceExtra = useCallback((choiceId: string): string | undefined => {
+    const checksForChoice = checksByChoiceId.get(choiceId) ?? [];
+    const effectsForChoice = effectsByChoiceId.get(choiceId) ?? [];
+    if (checksForChoice.length === 0 && effectsForChoice.length === 0) return undefined;
+    return [
+      ...checksForChoice.map(check => describeChoiceCheck(check, sceneNamesById, itemNamesById, t)),
+      ...effectsForChoice.map(effect => describeEffect(effect, itemNamesById, t)),
+    ].join(' · ');
+  }, [checksByChoiceId, effectsByChoiceId, sceneNamesById, itemNamesById, t]);
+
+  const selectedSceneEffects = selectedNodeId ? (effectsBySceneId.get(selectedNodeId) ?? []) : [];
+
   const connections = useMemo(() => {
     if (!selectedNodeId) return { outgoing: [] as SceneNodeConnection[], incoming: [] as SceneNodeConnection[] };
     const nameById = new Map(layout.nodes.map(node => [node.id, node.scene.name]));
@@ -127,6 +200,7 @@ const ChoiceViewScreen = () => {
       text: edge.label.trim(),
       sceneId,
       sceneName: nameById.get(sceneId) ?? t('unknown_scene'),
+      extra: describeChoiceExtra(edge.id),
     });
 
     return {
@@ -137,7 +211,7 @@ const ChoiceViewScreen = () => {
         .filter(edge => edge.targetId === selectedNodeId)
         .map(edge => toConnection(edge, edge.sourceId)),
     };
-  }, [layout.edges, layout.nodes, selectedNodeId, t]);
+  }, [layout.edges, layout.nodes, selectedNodeId, t, describeChoiceExtra]);
 
   const handleSelectNode = useCallback((node: GraphNode) => {
     setSelectedNodeId(node.id);
@@ -442,10 +516,17 @@ const ChoiceViewScreen = () => {
           ]}
           sections={[
             ...(selectedNode.scene.summary ? [{ title: t('summary'), description: selectedNode.scene.summary }] : []),
-            {
+            ...(hasSceneGap(selectedNode.scene) || hasSceneUniverseDuration(selectedNode.scene) ? [{
               title: t('scene_timing'),
-              description: `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}\n${t('in_universe_duration')}: ${formatSceneUniverseDuration(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}`,
-            },
+              description: [
+                hasSceneGap(selectedNode.scene) ? `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}` : null,
+                hasSceneUniverseDuration(selectedNode.scene) ? `${t('in_universe_duration')}: ${formatSceneUniverseDuration(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}` : null,
+              ].filter(Boolean).join('\n'),
+            }] : []),
+            ...(selectedSceneEffects.length > 0 ? [{
+              title: t('effects_title'),
+              description: selectedSceneEffects.map(effect => `• ${describeEffect(effect, itemNamesById, t)}`).join('\n'),
+            }] : []),
             {
               title: t('story_map_outgoing_choices'),
               emptyMessage: t('story_map_no_outgoing_choices'),
@@ -454,6 +535,7 @@ const ChoiceViewScreen = () => {
                 icon: 'arrow-forward' as const,
                 label: connection.text || t('story_map_implicit_choice'),
                 detail: connection.sceneName,
+                extra: connection.extra,
                 italicLabel: !connection.text,
                 onPress: () => setSelectedNodeId(connection.sceneId),
               })),
@@ -466,6 +548,7 @@ const ChoiceViewScreen = () => {
                 icon: 'arrow-back' as const,
                 label: connection.text || t('story_map_implicit_choice'),
                 detail: connection.sceneName,
+                extra: connection.extra,
                 italicLabel: !connection.text,
                 onPress: () => setSelectedNodeId(connection.sceneId),
               })),

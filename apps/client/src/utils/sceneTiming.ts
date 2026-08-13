@@ -87,6 +87,11 @@ export const hasSceneUniverseDuration = (scene: SceneTimingSource): boolean => B
   getTimingPart(scene.duration, scene.durationType)
 );
 
+/** True only when a scene has a gap that should be surfaced in compact lists. */
+export const hasSceneGap = (scene: SceneTimingSource): boolean => Boolean(
+  getTimingPart(scene.gap, scene.gapType)
+);
+
 /**
  * Calculates a linear chapter's elapsed in-universe time. A scene's gap belongs to the
  * transition into that scene, so the first scene's gap is intentionally excluded.

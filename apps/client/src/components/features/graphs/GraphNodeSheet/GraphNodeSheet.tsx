@@ -14,6 +14,8 @@ export interface GraphNodeSheetItem {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   detail?: string;
+  /** Linha extra compacta (checks/effects da Choice) - só ocupa espaço quando existe. */
+  extra?: string;
   italicLabel?: boolean;
   onPress: () => void;
 }
@@ -142,6 +144,11 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
       color: colors.textSecondary,
       marginTop: 2,
     },
+    itemExtra: {
+      fontSize: 11.5,
+      color: colors.primary,
+      marginTop: 3,
+    },
     actionButton: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -193,6 +200,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
                   <View style={styles.itemText}>
                     <Text style={[styles.itemLabel, item.italicLabel && { fontStyle: 'italic', color: colors.textSecondary }]} numberOfLines={2}>{item.label}</Text>
                     {!!item.detail && <Text style={styles.itemDetail} numberOfLines={1}>{item.detail}</Text>}
+                    {!!item.extra && <Text style={styles.itemExtra} numberOfLines={2}>{item.extra}</Text>}
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
                 </TouchableOpacity>

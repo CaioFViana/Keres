@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../src/api/apiClient', () => ({ apiClient: mocks }));
 
 import { AdminUserApiService } from '../../src/api/AdminUserApiService';
+import { LogsApiService } from '../../src/api/LogsApiService';
 import { RecoveryApiService } from '../../src/api/RecoveryApiService';
 import { RegistrationSettingsApiService } from '../../src/api/RegistrationSettingsApiService';
 import { TierApiService } from '../../src/api/TierApiService';
@@ -126,6 +127,18 @@ describe('RegistrationSettingsApiService', () => {
     await RegistrationSettingsApiService.update({ allowRegistration: true } as any);
 
     expect(mocks.put).toHaveBeenCalledWith('/admin/api/registration-settings', { allowRegistration: true });
+  });
+});
+
+describe('LogsApiService', () => {
+  it('browses persisted API logs with the filters as query parameters', async () => {
+    mocks.get.mockResolvedValue({ data: { items: [], total: 0, page: 1, pageSize: 50 } });
+    const filters = { level: 'error' as const, storyId: 'story-1', userId: 'user-1', page: 2, pageSize: 50 };
+
+    const result = await LogsApiService.list(filters);
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/api/logs', { params: filters });
+    expect(result).toEqual({ items: [], total: 0, page: 1, pageSize: 50 });
   });
 });
 

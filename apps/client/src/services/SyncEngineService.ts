@@ -14,8 +14,11 @@ import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSy
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
 import { CharacterRelationClientSyncHandler } from './entity-sync-handlers/CharacterRelationClientSyncHandler';
 import { CharacterSceneClientSyncHandler } from './entity-sync-handlers/CharacterSceneClientSyncHandler';
+import { ChoiceCheckClientSyncHandler } from './entity-sync-handlers/ChoiceCheckClientSyncHandler';
+import { ChoiceCheckGroupClientSyncHandler } from './entity-sync-handlers/ChoiceCheckGroupClientSyncHandler';
 import { ChoiceClientSyncHandler } from './entity-sync-handlers/ChoiceClientSyncHandler';
 import { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
+import { EffectClientSyncHandler } from './entity-sync-handlers/EffectClientSyncHandler';
 import { GalleryClientSyncHandler } from './entity-sync-handlers/GalleryClientSyncHandler';
 import { GalleryRelationClientSyncHandler } from './entity-sync-handlers/GalleryRelationClientSyncHandler';
 import { ItemClientSyncHandler } from './entity-sync-handlers/ItemClientSyncHandler';
@@ -66,6 +69,9 @@ const SYNC_ENTITY_EVENTS: Record<string, string> = {
   Chapter: 'chapter_changed',
   Scene: 'scene_changed',
   Choice: 'choice_changed',
+  ChoiceCheckGroup: 'choice_check_group_changed',
+  ChoiceCheck: 'choice_check_changed',
+  Effect: 'effect_changed',
   Item: 'item_changed',
   ItemJourney: 'item_journey_changed',
   Gallery: 'gallery_changed',
@@ -142,6 +148,9 @@ export class SyncEngineService {
     this.registerEntityHandler(new ChapterClientSyncHandler());
     this.registerEntityHandler(new CharacterSceneClientSyncHandler());
     this.registerEntityHandler(new ChoiceClientSyncHandler())
+    this.registerEntityHandler(new ChoiceCheckGroupClientSyncHandler())
+    this.registerEntityHandler(new ChoiceCheckClientSyncHandler())
+    this.registerEntityHandler(new EffectClientSyncHandler())
     this.registerEntityHandler(new ItemClientSyncHandler())
     this.registerEntityHandler(new ItemJourneyClientSyncHandler())
     this.registerEntityHandler(new SceneClientSyncHandler())

@@ -4,6 +4,7 @@ export interface Choice {
   sceneId: string
   nextSceneId: string
   text: string
+  notes: string | null
   createdAt: Date
   updatedAt: Date
   version: number

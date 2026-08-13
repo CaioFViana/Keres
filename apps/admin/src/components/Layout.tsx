@@ -14,6 +14,9 @@ export function Layout() {
         <NavLink to="/recovery" className={({ isActive }) => (isActive ? 'active' : '')}>
           Recovery
         </NavLink>
+        <NavLink to="/logs" className={({ isActive }) => (isActive ? 'active' : '')}>
+          Logs
+        </NavLink>
         <NavLink to="/tiers" className={({ isActive }) => (isActive ? 'active' : '')}>
           Tiers
         </NavLink>

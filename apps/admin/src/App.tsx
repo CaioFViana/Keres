@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
 import { RequireAdmin } from './auth/RequireAdmin';
 import { Layout } from './components/Layout';
+import { LogsPage } from './pages/logs/LogsPage';
 import { RecoveryPage } from './pages/recovery/RecoveryPage';
 import { RegistrationSettingsPage } from './pages/settings/RegistrationSettingsPage';
 import { TiersPage } from './pages/tiers/TiersPage';
@@ -22,6 +23,7 @@ export function App() {
             <Route path="/users/new" element={<UserFormPage />} />
             <Route path="/users/:id" element={<UserFormPage />} />
             <Route path="/recovery" element={<RecoveryPage />} />
+            <Route path="/logs" element={<LogsPage />} />
             <Route path="/tiers" element={<TiersPage />} />
             <Route path="/settings" element={<RegistrationSettingsPage />} />
           </Route>

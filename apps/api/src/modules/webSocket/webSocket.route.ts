@@ -3,45 +3,20 @@ import { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { eventManager } from '../../utils/EventManager'; // Import eventManager
 import { logger } from '../../utils/logger';
-import { ulid } from 'ulid';
+import { RealtimeSessionService, type RealtimeEvent } from '../../services/RealtimeSessionService';
 
-type RealtimeEvent = { type: 'story.changed'; storyId: string; maxOperationVersion?: number } | { type: 'friendships.changed' } | { type: 'stories.catalog-changed' };
-const tickets = new Map<string, { user: JWTPayload; expiresAt: number }>();
+const realtimeSessions = new RealtimeSessionService({
+  eventBus: eventManager,
+  // Encaminhamento tardio: StoryPermissionService participa do grafo de SyncService, que por
+  // sua vez registra wsRoutes. Ler o método no momento da chamada evita depender da ordem de
+  // avaliação desses módulos circulares.
+  canReadStory: (userId, storyId, role) => storyPermissionService.hasPermission(userId, storyId, role),
+  getReadableStoryIds: (userId) => storyPermissionService.getReadableStoryIds(userId),
+  logInfo: logger.info.bind(logger),
+});
 
-export function createWebSocketTicket(user: JWTPayload): string {
-  const ticket = ulid();
-  tickets.set(ticket, { user, expiresAt: Date.now() + 30_000 });
-  return ticket;
-}
-
-function takeTicket(ticket: string | undefined): JWTPayload | null {
-  if (!ticket) return null;
-  const entry = tickets.get(ticket);
-  tickets.delete(ticket);
-  return entry && entry.expiresAt > Date.now() ? entry.user : null;
-}
-
-function hasValidTicket(ticket: string | undefined): boolean {
-  const entry = ticket ? tickets.get(ticket) : undefined;
-  return !!entry && entry.expiresAt > Date.now();
-}
-
-export function emitUserEvent(userId: string, event: RealtimeEvent): void {
-  eventManager.emit(`userUpdate:${userId}`, event);
-}
-
-function subscribeToStory(ws: any, userId: string, storyId: string): void {
-  const key = `storyUpdate:${storyId}`;
-  const callback = (event: { maxOperationVersion?: number }) => ws.send(JSON.stringify({
-    type: 'story.changed', storyId, maxOperationVersion: event.maxOperationVersion,
-  }));
-  ws.storyCallbacks ??= new Map();
-  const previous = ws.storyCallbacks.get(storyId);
-  if (previous) eventManager.off(key, previous);
-  ws.storyCallbacks.set(storyId, callback);
-  eventManager.on(key, callback);
-  logger.info('Realtime story subscription created', { userId, storyId });
-}
+export const createWebSocketTicket = (user: JWTPayload) => realtimeSessions.createTicket(user);
+export const emitUserEvent = (userId: string, event: RealtimeEvent) => realtimeSessions.emitUserEvent(userId, event);
 
 export const wsRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -100,37 +75,18 @@ export const wsRoutes = new Elysia()
   )
   .ws('/events', {
     beforeHandle({ query, set }) {
-      if (!hasValidTicket(query.ticket)) {
+      if (!realtimeSessions.hasValidTicket(query.ticket)) {
         set.status = 401;
         return 'Unauthorized WebSocket ticket.';
       }
     },
     async open(ws) {
-      const user = takeTicket((ws.data as any).query?.ticket);
-      if (!user) { ws.close(); return; }
-      const callback = (event: RealtimeEvent) => ws.send(JSON.stringify(event));
-      (ws as any).realtimeCallback = callback;
-      (ws as any).realtimeUserId = user.userId;
-      eventManager.on(`userUpdate:${user.userId}`, callback);
-      logger.info('User joined realtime channel', { userId: user.userId });
-      for (const storyId of await storyPermissionService.getReadableStoryIds(user.userId)) {
-        subscribeToStory(ws as any, user.userId, storyId);
-      }
-      ws.send(JSON.stringify({ type: 'server.heartbeat', sentAt: new Date().toISOString() }));
+      await realtimeSessions.openEvents(ws as any, (ws.data as any).query?.ticket);
     },
     async message(ws, message) {
-      const userId = (ws as any).realtimeUserId as string | undefined;
-      if (!userId) return;
-      let request: { type?: string; storyId?: string };
-      try { request = typeof message === 'string' ? JSON.parse(message) : message as any; } catch { return; }
-      if (request.type !== 'subscribe' || !request.storyId) return;
-      if (!await storyPermissionService.hasPermission(userId, request.storyId, 'reader')) return;
-      subscribeToStory(ws as any, userId, request.storyId);
+      await realtimeSessions.handleEventMessage(ws as any, message);
     },
     close(ws) {
-      const userId = (ws as any).realtimeUserId;
-      if (userId && (ws as any).realtimeCallback) eventManager.off(`userUpdate:${userId}`, (ws as any).realtimeCallback);
-      for (const [storyId, callback] of ((ws as any).storyCallbacks ?? new Map())) eventManager.off(`storyUpdate:${storyId}`, callback);
-      if (userId) logger.info('User left realtime channel', { userId });
+      realtimeSessions.closeEvents(ws as any);
     },
   });

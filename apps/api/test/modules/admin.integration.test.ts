@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, softDeleteUser, truncateAll } from '../helpers/database';
 
 let admin: TestUser;
@@ -196,6 +196,60 @@ describe('tiers', () => {
     const { status } = await request('GET', '/admin/api/tiers/nao-existe', { token: admin.token });
 
     expect(status).toBe(404);
+  });
+
+  it('reads and updates a tier without losing its configured limits', async () => {
+    const { data: created } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Pro', maxStories: 5, maxEntitiesPerStory: null, maxEntitiesTotal: null, maxStorageBytesPerStory: null, maxStorageBytesTotal: null },
+    });
+
+    const read = await request('GET', `/admin/api/tiers/${created.id}`, { token: admin.token });
+    const updated = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { name: 'Pro Plus', maxStories: 10 },
+    });
+
+    expect(read.status).toBe(200);
+    expect(read.data).toMatchObject({ id: created.id, maxStories: 5 });
+    expect(updated.status).toBe(200);
+    expect(updated.data).toMatchObject({ name: 'Pro Plus', maxStories: 10 });
+  });
+
+  it('rejects duplicate tier names on creation and rename', async () => {
+    const first = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Free' } });
+    const duplicate = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Free' } });
+    const second = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Pro' } });
+    const rename = await request('PUT', `/admin/api/tiers/${second.data.id}`, { token: admin.token, body: { name: first.data.name } });
+
+    expect(duplicate.status).toBe(409);
+    expect(rename.status).toBe(409);
+  });
+
+  it('refuses to delete a tier that is used by registration defaults or active users', async () => {
+    const defaultTier = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Default' } });
+    await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { defaultTierId: defaultTier.data.id },
+    });
+    const defaultDelete = await request('DELETE', `/admin/api/tiers/${defaultTier.data.id}`, { token: admin.token });
+
+    const assignedTier = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Assigned' } });
+    await request('PUT', `/admin/api/users/${comum.userId}`, { token: admin.token, body: { tierId: assignedTier.data.id } });
+    const assignedDelete = await request('DELETE', `/admin/api/tiers/${assignedTier.data.id}`, { token: admin.token });
+
+    expect(defaultDelete.status).toBe(409);
+    expect(defaultDelete.data.message).toMatch(/default tier/i);
+    expect(assignedDelete.status).toBe(409);
+    expect(assignedDelete.data.message).toMatch(/active users/i);
+  });
+
+  it('validates tier inputs before applying them', async () => {
+    const invalidCreate = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: '' } });
+    const invalidUpdate = await request('PUT', `/admin/api/tiers/${newId()}`, { token: admin.token, body: { maxStories: -1 } });
+
+    expect(invalidCreate.status).toBe(400);
+    expect(invalidUpdate.status).toBe(400);
   });
 });
 

@@ -4,11 +4,12 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import { Scene } from '@keres/shared/entities/Scene';
+import { Effect } from '@keres/shared/entities/Effect';
 import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import CharacterRelationManager from '@/src/components/features/characters/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
@@ -26,8 +27,10 @@ import { createAttributeValueService } from '../../services/storymanagement/Attr
 import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '../../services/storymanagement/SceneService';
+import { createEffectService } from '../../services/storymanagement/EffectService';
 import { useChapterStore } from '../../state/chapterStore'; // Import useChapterStore
 import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
+import { useItemStore } from '../../state/itemStore';
 import { useLocationStore } from '../../state/locationStore'; // Import useLocationStore
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -52,6 +55,7 @@ const SceneFormScreen = () => {
   const { chapters, fetchChapters, setDbAndStoryId: setChapterDbAndStoryId, initializeService: initializeChapterService } = useChapterStore(); // For chapter selection
   const { locations, fetchLocations, setDbAndStoryId: setLocationDbAndStoryId, initializeService: initializeLocationService } = useLocationStore(); // For location selection
   const { characters, fetchCharacters, setDbAndStoryId: setCharacterDbAndStoryId, initializeService: initializeCharacterService } = useCharacterStore(); // For character selection
+  const { items, fetchItems, setDbAndStoryId: setItemDbAndStoryId, initializeService: initializeItemService } = useItemStore();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -62,6 +66,9 @@ const SceneFormScreen = () => {
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null); // Ref for LocationService
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
+  const effectServiceRef = useRef<ReturnType<typeof createEffectService> | null>(null);
+
+  const isBranching = selectedStory?.type === 'branching';
 
   useEffect(() => {
     if (drizzleDb) {
@@ -74,8 +81,19 @@ const SceneFormScreen = () => {
       if (!characterSceneServiceRef.current) {
         characterSceneServiceRef.current = createCharacterSceneService(drizzleDb); // Initialize CharacterSceneService
       }
+      if (!effectServiceRef.current) {
+        effectServiceRef.current = createEffectService(drizzleDb);
+      }
     }
   }, [drizzleDb]);
+
+  useEffect(() => {
+    if (drizzleDb && selectedStory?.id) {
+      setItemDbAndStoryId(drizzleDb, selectedStory.id);
+      initializeItemService();
+      fetchItems();
+    }
+  }, [drizzleDb, selectedStory?.id, setItemDbAndStoryId, initializeItemService, fetchItems]);
 
   // Initialize Chapter Service and fetch chapters
   useEffect(() => {
@@ -119,6 +137,7 @@ const SceneFormScreen = () => {
   const [isFinish, setIsFinish] = useState(false);
 
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character-scene relations
+  const [sceneEffects, setSceneEffects] = useState<Effect[]>([]);
 
   const {
     availableTags,
@@ -162,6 +181,77 @@ const SceneFormScreen = () => {
     }
   }, [selectedStory?.id, currentSceneId]);
 
+  const fetchSceneEffects = useCallback(async () => {
+    if (!effectServiceRef.current || !selectedStory?.id || !currentSceneId) {
+      setSceneEffects([]);
+      return;
+    }
+    try {
+      const fetchedEffects = await effectServiceRef.current.getEffectsByEntity(selectedStory.id, 'Scene', currentSceneId);
+      setSceneEffects(fetchedEffects);
+    } catch (err) {
+      console.error('Failed to fetch scene effects:', err);
+    }
+  }, [selectedStory?.id, currentSceneId]);
+
+  useEffect(() => {
+    if (isBranching) {
+      fetchSceneEffects();
+    }
+  }, [isBranching, fetchSceneEffects]);
+
+  const handleAddEffect = async () => {
+    if (!userId || !selectedStory?.id || !currentSceneId || !effectServiceRef.current) {
+      return;
+    }
+    try {
+      const newEffect = await effectServiceRef.current.createEffect(userId, {
+        storyId: selectedStory.id,
+        entityType: 'Scene',
+        entityId: currentSceneId,
+        effectType: 'itemGrant',
+        itemId: null,
+        triggerName: null,
+      });
+      setSceneEffects(prev => [...prev, newEffect]);
+      entityEventEmitter.emit('effect_changed', selectedStory.id, currentSceneId);
+    } catch (err) {
+      console.error('Failed to add effect:', err);
+      AppAlert.alert(t('error'), t('failed_to_save_effect'));
+    }
+  };
+
+  const handleUpdateEffect = async (effectId: string, changes: Partial<Omit<Effect, 'id' | 'storyId' | 'entityType' | 'entityId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>) => {
+    if (!userId || !effectServiceRef.current) {
+      return;
+    }
+    try {
+      const updatedEffect = await effectServiceRef.current.updateEffect(userId, effectId, changes);
+      setSceneEffects(prev => prev.map(effect => (effect.id === effectId ? updatedEffect : effect)));
+      entityEventEmitter.emit('effect_changed', selectedStory?.id, currentSceneId);
+    } catch (err) {
+      console.error('Failed to update effect:', err);
+      AppAlert.alert(t('error'), t('failed_to_save_effect'));
+    }
+  };
+
+  const handleChangeEffectType = (effectId: string, effectType: Effect['effectType']) => {
+    handleUpdateEffect(effectId, { effectType, itemId: null, triggerName: null });
+  };
+
+  const handleDeleteEffect = async (effectId: string) => {
+    if (!userId || !effectServiceRef.current) {
+      return;
+    }
+    try {
+      await effectServiceRef.current.deleteEffect(userId, effectId);
+      setSceneEffects(prev => prev.filter(effect => effect.id !== effectId));
+      entityEventEmitter.emit('effect_changed', selectedStory?.id, currentSceneId);
+    } catch (err) {
+      console.error('Failed to delete effect:', err);
+      AppAlert.alert(t('error'), t('failed_to_delete_effect'));
+    }
+  };
 
   useEffect(() => {
     const loadSceneAndData = async () => {
@@ -413,6 +503,15 @@ const SceneFormScreen = () => {
     return locations.map(location => ({ label: location.name, value: location.id }));
   }, [locations]);
 
+  const itemOptions = useMemo(() => items.filter(item => !item.isDeleted).map(item => ({ label: item.name, value: item.id })), [items]);
+
+  const effectTypeOptions = useMemo(() => ([
+    { label: t('effect_type_item_grant'), value: 'itemGrant' },
+    { label: t('effect_type_item_take'), value: 'itemTake' },
+    { label: t('effect_type_trigger_set'), value: 'triggerSet' },
+    { label: t('effect_type_trigger_unset'), value: 'triggerUnset' },
+  ]), [t]);
+
   const gapDurationTypeOptions = [
     { label: t('seconds'), value: 'seconds' },
     { label: t('minutes'), value: 'minutes' },
@@ -485,6 +584,12 @@ const SceneFormScreen = () => {
         gap: 10,
         marginBottom: 10,
     },
+    card: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, marginBottom: 12, backgroundColor: colors.surface },
+    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+    cardRowLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
+    fieldFlex: { flex: 1 },
+    removeLink: { color: colors.error, fontWeight: '600' },
+    addLink: { color: colors.primary, fontWeight: '600', marginTop: 4 },
   });
 
   if (loading) {
@@ -669,6 +774,70 @@ const SceneFormScreen = () => {
           {currentSceneId && selectedStory?.id && (
             <View style={styles.tagSection}>
               <SeeAlsoManager storyId={selectedStory.id} entityType="Scene" entityId={currentSceneId} editable={true} />
+            </View>
+          )}
+
+          {currentSceneId && selectedStory?.id && isBranching && (
+            <View style={styles.tagSection}>
+              <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
+
+              {sceneEffects.map(effect => (
+                <View key={effect.id} style={styles.card}>
+                  <View style={styles.cardRow}>
+                    <View style={styles.fieldFlex}>
+                      <Text style={styles.cardRowLabel}>{t('effect_type')}</Text>
+                      <Select
+                        options={effectTypeOptions}
+                        value={effect.effectType}
+                        onValueChange={(value) => value && handleChangeEffectType(effect.id, value as Effect['effectType'])}
+                        multiple={false}
+                      />
+                    </View>
+                  </View>
+
+                  {(effect.effectType === 'itemGrant' || effect.effectType === 'itemTake') && (
+                    <View style={styles.cardRow}>
+                      <View style={styles.fieldFlex}>
+                        <Text style={styles.cardRowLabel}>{t('item')}</Text>
+                        <Select
+                          options={itemOptions}
+                          value={effect.itemId}
+                          onValueChange={(value) => handleUpdateEffect(effect.id, { itemId: value })}
+                          placeholder={t('select_item')}
+                          multiple={false}
+                          allowDeselect={true}
+                        />
+                      </View>
+                    </View>
+                  )}
+
+                  {(effect.effectType === 'triggerSet' || effect.effectType === 'triggerUnset') && (
+                    <View style={styles.cardRow}>
+                      <View style={styles.fieldFlex}>
+                        <Text style={styles.cardRowLabel}>{t('check_trigger_name')}</Text>
+                        <TextInput
+                          placeholder={t('check_trigger_name_placeholder')}
+                          value={effect.triggerName || ''}
+                          onChangeText={(value) => handleUpdateEffect(effect.id, { triggerName: value || null })}
+                          style={commonInputStyles.input}
+                        />
+                      </View>
+                    </View>
+                  )}
+
+                  <TouchableOpacity onPress={() => handleDeleteEffect(effect.id)}>
+                    <Text style={styles.removeLink}>{t('remove_effect')}</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              {sceneEffects.length === 0 && (
+                <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>{t('no_effects')}</Text>
+              )}
+
+              <TouchableOpacity onPress={handleAddEffect}>
+                <Text style={styles.addLink}>{t('add_effect')}</Text>
+              </TouchableOpacity>
             </View>
           )}
 

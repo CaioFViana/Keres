@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Chapter } from '@keres/shared/entities/Chapter';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import { Choice } from '@keres/shared/entities/Choice'; // Import Choice
+import { Effect } from '@keres/shared/entities/Effect';
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
 import { Location } from '@keres/shared/entities/Location'; // Import Location
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -38,6 +39,7 @@ import { createItemJourneyService, ItemJourneyService } from '../../services/sto
 import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
 import { createLocationService, LocationService } from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
+import { createEffectService, EffectService } from '../../services/storymanagement/EffectService';
 import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -74,6 +76,7 @@ const SceneDetailScreen = () => {
   const locationServiceRef = useRef<LocationService | null>(null); // Ref for LocationService
   const itemServiceRef = useRef<ItemService | null>(null); // Ref for ItemService
   const itemJourneyServiceRef = useRef<ItemJourneyService | null>(null); // Ref for ItemJourneyService
+  const effectServiceRef = useRef<EffectService | null>(null); // Ref for EffectService
 
   const { characters, fetchCharacters, setDbAndStoryId: setCharacterDbAndStoryId, initializeService: initializeCharacterService } = useCharacterStore(); // For character data
 
@@ -100,6 +103,9 @@ const SceneDetailScreen = () => {
       }
       if (!itemJourneyServiceRef.current) {
         itemJourneyServiceRef.current = createItemJourneyService(drizzleDb);
+      }
+      if (!effectServiceRef.current) {
+        effectServiceRef.current = createEffectService(drizzleDb);
       }
     }
   }, [drizzleDb]);
@@ -133,6 +139,8 @@ const SceneDetailScreen = () => {
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character-scene relations
   const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in the story
   const [itemJourneys, setItemJourneys] = useState<ItemJourney[]>([]); // State for item journeys related to the scene
+  const [sceneEffects, setSceneEffects] = useState<Effect[]>([]); // State for effects caused by this scene
+  const isBranching = selectedStory?.type === 'branching';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -165,6 +173,8 @@ const SceneDetailScreen = () => {
       flexDirection: 'row',
       alignItems: 'center',
     },
+    card: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, marginBottom: 12, backgroundColor: colors.surface },
+    checkRow: { color: colors.text, marginTop: 4 },
   });
 
   const fetchScene = useCallback(async () => {
@@ -294,6 +304,25 @@ const SceneDetailScreen = () => {
     }
   }, [selectedStory?.id, sceneId]);
 
+  const fetchSceneEffects = useCallback(async () => {
+    if (!effectServiceRef.current || !selectedStory?.id || !sceneId) {
+      setSceneEffects([]);
+      return;
+    }
+    try {
+      const fetchedEffects = await effectServiceRef.current.getEffectsByEntity(selectedStory.id, 'Scene', sceneId);
+      setSceneEffects(fetchedEffects);
+    } catch (err) {
+      console.error('Failed to fetch scene effects:', err);
+    }
+  }, [selectedStory?.id, sceneId]);
+
+  const handleEffectChange = useCallback((changedStoryId: string, changedEntityId: string) => {
+    if (selectedStory?.id === changedStoryId && changedEntityId === sceneId) {
+      fetchSceneEffects();
+    }
+  }, [selectedStory?.id, sceneId, fetchSceneEffects]);
+
   const handleItemChange = useCallback((changedStoryId: string, changedItemId: string) => {
     if (selectedStory?.id === changedStoryId) {
       fetchAllItems();
@@ -340,15 +369,17 @@ const SceneDetailScreen = () => {
       entityEventEmitter.on('character_scene_changed', handleCharacterSceneChange); // Listen for character scene changes
       entityEventEmitter.on('item_changed', handleItemChange); // Listen for item changes
       entityEventEmitter.on('item_journey_changed', handleItemJourneyChange); // Listen for item journey changes
+      entityEventEmitter.on('effect_changed', handleEffectChange); // Listen for effect changes
 
       return () => {
         entityEventEmitter.off('scene_changed', handleSceneChange);
         entityEventEmitter.off('character_scene_changed', handleCharacterSceneChange); // Cleanup listener
         entityEventEmitter.off('item_changed', handleItemChange); // Cleanup listener
         entityEventEmitter.off('item_journey_changed', handleItemJourneyChange); // Cleanup listener
+        entityEventEmitter.off('effect_changed', handleEffectChange); // Cleanup listener
       };
     }
-  }, [sceneId, fetchScene, handleSceneChange, handleCharacterSceneChange, handleItemChange, handleItemJourneyChange]);
+  }, [sceneId, fetchScene, handleSceneChange, handleCharacterSceneChange, handleItemChange, handleItemJourneyChange, handleEffectChange]);
 
   useEffect(() => {
     if (scene) {
@@ -357,8 +388,11 @@ const SceneDetailScreen = () => {
       fetchCharacterSceneRelations();
       fetchAllItems(); // Fetch all items when scene changes
       fetchItemJourneysForScene(); // Fetch item journeys for scene when scene changes
+      if (isBranching) {
+        fetchSceneEffects();
+      }
     }
-  }, [scene, fetchChapter, fetchLocation, fetchCharacterSceneRelations, fetchAllItems, fetchItemJourneysForScene]);
+  }, [scene, fetchChapter, fetchLocation, fetchCharacterSceneRelations, fetchAllItems, fetchItemJourneysForScene, isBranching, fetchSceneEffects]);
 
   useEffect(() => {
     if (selectedStory?.type === 'linear' && scene && chapter) {
@@ -408,6 +442,22 @@ const SceneDetailScreen = () => {
   if (!scene) {
     return <ScreenError padded message={t('scene_data_missing')} onGoBack={() => navigation.goBack()} />;
   }
+
+  const describeEffect = (effect: Effect): string => {
+    const itemName = (effect.itemId && allItems.find(item => item.id === effect.itemId)?.name) || t('common_na');
+    switch (effect.effectType) {
+      case 'itemGrant':
+        return t('effect_description_item_grant', { item: itemName });
+      case 'itemTake':
+        return t('effect_description_item_take', { item: itemName });
+      case 'triggerSet':
+        return t('effect_description_trigger_set', { trigger: effect.triggerName || t('common_na') });
+      case 'triggerUnset':
+        return t('effect_description_trigger_unset', { trigger: effect.triggerName || t('common_na') });
+      default:
+        return '';
+    }
+  };
 
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
@@ -506,6 +556,22 @@ const SceneDetailScreen = () => {
       />
 
       <SeeAlsoManager storyId={scene.storyId} entityType="Scene" entityId={sceneId} editable={false} />
+
+      {isBranching && (
+        <>
+          <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
+          {sceneEffects.length === 0 && (
+            <DetailField label={t('effects_title')} value={t('no_effects')} />
+          )}
+          {sceneEffects.length > 0 && (
+            <View style={styles.card}>
+              {sceneEffects.map(effect => (
+                <Text key={effect.id} style={styles.checkRow}>{`• ${describeEffect(effect)}`}</Text>
+              ))}
+            </View>
+          )}
+        </>
+      )}
 
       <EntityMetadata version={scene.version} createdAt={scene.createdAt} updatedAt={scene.updatedAt} />
       <FavoritedByList storyId={scene.storyId} entityId={sceneId} entityType="Scene" />

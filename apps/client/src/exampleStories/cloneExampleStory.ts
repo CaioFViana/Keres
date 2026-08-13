@@ -23,6 +23,9 @@ export function cloneExampleStoryForInstall(
   registerAll(example.chapters);
   registerAll(example.scenes);
   registerAll(example.choices);
+  registerAll(example.choiceCheckGroups);
+  registerAll(example.choiceChecks);
+  registerAll(example.effects);
   registerAll(example.characters);
   registerAll(example.locations);
   registerAll(example.worldRules);
@@ -66,6 +69,16 @@ export function cloneExampleStoryForInstall(
     })),
     choices: example.choices.map(choice => ({
       ...cloneEntity(choice), storyId, sceneId: remapId(choice.sceneId), nextSceneId: remapId(choice.nextSceneId),
+    })),
+    choiceCheckGroups: example.choiceCheckGroups?.map(group => ({
+      ...cloneEntity(group), storyId, choiceId: remapId(group.choiceId),
+    })),
+    choiceChecks: example.choiceChecks?.map(check => ({
+      ...cloneEntity(check), storyId, groupId: remapId(check.groupId),
+      sceneId: remapNullableId(check.sceneId), itemId: remapNullableId(check.itemId),
+    })),
+    effects: example.effects?.map(effect => ({
+      ...cloneEntity(effect), storyId, entityId: remapId(effect.entityId), itemId: remapNullableId(effect.itemId),
     })),
     characters: example.characters.map(character => ({ ...cloneEntity(character), storyId })),
     locations: example.locations.map(location => ({ ...cloneEntity(location), storyId })),

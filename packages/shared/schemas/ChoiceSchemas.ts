@@ -6,7 +6,7 @@ export const ChoiceSchema = z.object({
   sceneId: z.string(),
   nextSceneId: z.string(),
   text: z.string(),
-  notes: z.string().nullable(),
+  notes: z.string().nullable().default(null),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),

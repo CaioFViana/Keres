@@ -6,6 +6,7 @@ import migration_2 from './0001_lethal_landau';
 import migration_3 from './0002_purple_bloodscream';
 import migration_4 from './0003_military_rhino';
 import migration_5 from './0004_rapid_rage';
+import migration_6 from './0005_fat_ozymandias';
 
 
 const migrations = [
@@ -14,6 +15,7 @@ const migrations = [
   { id: 3, name: '0002_purple_bloodscream', run: migration_3 },
   { id: 4, name: '0003_military_rhino', run: migration_4 },
   { id: 5, name: '0004_rapid_rage', run: migration_5 },
+  { id: 6, name: '0005_fat_ozymandias', run: migration_6 },
 ];
 
 export default migrations;

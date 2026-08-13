@@ -14,11 +14,17 @@ import {
   CharacterSceneInsert,
   characterScenes,
   CharacterSelect,
+  ChoiceCheckGroupInsert,
+  choiceCheckGroups,
+  ChoiceCheckInsert,
+  choiceChecks,
   ChoiceInsert,
   choices,
   ChoiceSelect,
   CommentInsert,
   comments,
+  EffectInsert,
+  effects,
   galleries,
   GalleryInsert,
   favorites,
@@ -104,7 +110,10 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(characterRelations).where(eq(characterRelations.storyId, storyId)).run();
   await tx.delete(characterScenes).where(eq(characterScenes.storyId, storyId)).run();
   await tx.delete(characters).where(eq(characters.storyId, storyId)).run();
+  await tx.delete(choiceChecks).where(eq(choiceChecks.storyId, storyId)).run();
+  await tx.delete(choiceCheckGroups).where(eq(choiceCheckGroups.storyId, storyId)).run();
   await tx.delete(choices).where(eq(choices.storyId, storyId)).run();
+  await tx.delete(effects).where(eq(effects.storyId, storyId)).run();
   await tx.delete(galleryRelations).where(eq(galleryRelations.storyId, storyId)).run();
   await tx.delete(galleries).where(eq(galleries.storyId, storyId)).run();
   await tx.delete(itemJourneys).where(eq(itemJourneys.storyId, storyId)).run();
@@ -893,6 +902,56 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             deletedAt: null,
           };
           await tx.insert(choices).values(choiceToInsert).run();
+        }
+
+        // 4.1 Process ChoiceCheckGroups/ChoiceChecks/Effects (Optional) - novos na história,
+        // arrays opcionais pelo mesmo motivo de locationRelations acima: um export antigo (ou
+        // uma história de exemplo empacotada antes desses campos existirem) não os tem.
+        if (fullStoryData.choiceCheckGroups) {
+          for (const group of fullStoryData.choiceCheckGroups) {
+            const groupToInsert: ChoiceCheckGroupInsert = {
+              ...group,
+              storyId: group.storyId,
+              choiceId: group.choiceId,
+              createdAt: new Date(group.createdAt),
+              updatedAt: new Date(),
+              version: group.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(choiceCheckGroups).values(groupToInsert).run();
+          }
+        }
+        if (fullStoryData.choiceChecks) {
+          for (const check of fullStoryData.choiceChecks) {
+            const checkToInsert: ChoiceCheckInsert = {
+              ...check,
+              storyId: check.storyId,
+              groupId: check.groupId,
+              createdAt: new Date(check.createdAt),
+              updatedAt: new Date(),
+              version: check.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(choiceChecks).values(checkToInsert).run();
+          }
+        }
+        if (fullStoryData.effects) {
+          for (const effect of fullStoryData.effects) {
+            const effectToInsert: EffectInsert = {
+              ...effect,
+              storyId: effect.storyId,
+              entityType: effect.entityType,
+              entityId: effect.entityId,
+              createdAt: new Date(effect.createdAt),
+              updatedAt: new Date(),
+              version: effect.version,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(effects).values(effectToInsert).run();
+          }
         }
 
         // 5. Process Characters

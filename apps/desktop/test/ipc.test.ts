@@ -286,6 +286,14 @@ describe('media channels', () => {
     expect(listed.sort()).toEqual(['media/story-1/a.png', 'media/story-2/b.png']);
   });
 
+  it('lists only files directly inside each story directory', async () => {
+    await invoke('media:write', null, 'media/story-1/a.png', BYTES);
+    await fs.mkdir(path.join(MEDIA_ROOT, 'media', 'story-1', 'nested'));
+    await fs.writeFile(path.join(MEDIA_ROOT, 'media', 'story-1', 'nested', 'ignored.png'), BYTES);
+
+    await expect(invoke('media:list-all', null)).resolves.toEqual(['media/story-1/a.png']);
+  });
+
   it('returns an empty list when no media was ever written', async () => {
     await expect(invoke('media:list-all', null)).resolves.toEqual([]);
   });

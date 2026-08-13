@@ -43,6 +43,13 @@
       "when": 1786625535888,
       "tag": "0005_cool_cloak",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786641546265,
+      "tag": "0006_new_rhino",
+      "breakpoints": true
     }
   ]
 }

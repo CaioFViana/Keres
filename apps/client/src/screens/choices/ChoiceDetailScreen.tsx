@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +32,8 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { navigateToEntityDetail } from '../../utils/entityNavigation';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
 export type ChoiceDetailScreenParamList = {
@@ -112,6 +115,7 @@ const ChoiceDetailScreen = () => {
     card: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, marginBottom: 12, backgroundColor: colors.surface },
     checkRow: { color: colors.text, marginTop: 4 },
     groupLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
+    sceneLink: { flexDirection: 'row', alignItems: 'center' },
   });
 
   const fetchChoice = useCallback(async () => {
@@ -203,6 +207,13 @@ const ChoiceDetailScreen = () => {
   }, [choice, isBranching, fetchChecksAndEffects, fetchNameLookups]);
 
 
+  const handleScenePress = useCallback((targetSceneId: string) => {
+    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    if (drawerNavigation) {
+      navigateToEntityDetail(drawerNavigation, 'Scene', targetSceneId);
+    }
+  }, [navigation]);
+
   const renderHeaderRight = useCallback(() => (
     canEdit ? (
       <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', { choiceId })} style={{ marginRight: 15 }}>
@@ -274,6 +285,20 @@ const ChoiceDetailScreen = () => {
   return (
     <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
       <TagChipList tags={choiceTags} />
+
+      <TouchableOpacity onPress={() => handleScenePress(choice.sceneId)} style={styles.sceneLink} activeOpacity={0.7}>
+        <View style={{ flex: 1 }}>
+          <DetailField label={t('from_scene')} value={sceneNamesById[choice.sceneId] || t('common_na')} />
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => handleScenePress(choice.nextSceneId)} style={styles.sceneLink} activeOpacity={0.7}>
+        <View style={{ flex: 1 }}>
+          <DetailField label={t('next_scene')} value={sceneNamesById[choice.nextSceneId] || t('common_na')} />
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
 
       <CommentableDetailField
         storyId={choice.storyId}

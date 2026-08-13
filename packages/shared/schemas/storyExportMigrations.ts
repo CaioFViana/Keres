@@ -60,7 +60,18 @@ const migrateV2ToV3: StoryExportMigration = {
   }),
 };
 
-const migrations: StoryExportMigration[] = [migrateV1ToV2, migrateV2ToV3];
+/** V3 -> V4: grupos/checks de Choice e effects (Scene/Choice). */
+const migrateV3ToV4: StoryExportMigration = {
+  fromVersion: 3,
+  migrate: (data) => ({
+    ...data,
+    choiceCheckGroups: Array.isArray(data?.choiceCheckGroups) ? data.choiceCheckGroups : [],
+    choiceChecks: Array.isArray(data?.choiceChecks) ? data.choiceChecks : [],
+    effects: Array.isArray(data?.effects) ? data.effects : [],
+  }),
+};
+
+const migrations: StoryExportMigration[] = [migrateV1ToV2, migrateV2ToV3, migrateV3ToV4];
 
 /**
  * Normaliza um export bruto (JSON já parseado, ainda não validado pelo `FullStoryExportSchema`)

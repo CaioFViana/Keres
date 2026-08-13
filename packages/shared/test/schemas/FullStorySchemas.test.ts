@@ -39,6 +39,9 @@ const LEGACY_OPTIONAL_COLLECTIONS = [
   'comments',
   'seeAlsoRelations',
   'locationRelations',
+  'choiceCheckGroups',
+  'choiceChecks',
+  'effects',
 ] as const;
 
 function buildExport(overrides: Record<string, unknown> = {}) {

@@ -41,6 +41,26 @@ describe('migrateStoryExport', () => {
       ...v2Export,
       comments: [],
       seeAlsoRelations: [],
+      choiceCheckGroups: [],
+      choiceChecks: [],
+      effects: [],
+      formatVersion: CURRENT_STORY_FORMAT_VERSION,
+    });
+  });
+
+  it('migrates a V3 export with empty V4 check/effect collections', () => {
+    const v3Export = {
+      formatVersion: 3,
+      story: { id: 'story-3b', title: 'Current story', favoriteBehavior: 'individual', normalizeSceneTiming: false },
+      comments: [{ id: 'comment-1' }],
+      seeAlsoRelations: [{ id: 'relation-1' }],
+    };
+
+    expect(migrateStoryExport(v3Export)).toEqual({
+      ...v3Export,
+      choiceCheckGroups: [],
+      choiceChecks: [],
+      effects: [],
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });

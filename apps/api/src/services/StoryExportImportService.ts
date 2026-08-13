@@ -27,6 +27,15 @@ export class StoryExportImportService {
         const choices = await db.query.choices.findMany({
             where: (choices, { eq, and }) => and(eq(choices.storyId, storyId), eq(choices.isDeleted, false)),
         });
+        const choiceCheckGroups = await db.query.choiceCheckGroups.findMany({
+            where: (choiceCheckGroups, { eq, and }) => and(eq(choiceCheckGroups.storyId, storyId), eq(choiceCheckGroups.isDeleted, false)),
+        });
+        const choiceChecks = await db.query.choiceChecks.findMany({
+            where: (choiceChecks, { eq, and }) => and(eq(choiceChecks.storyId, storyId), eq(choiceChecks.isDeleted, false)),
+        });
+        const effects = await db.query.effects.findMany({
+            where: (effects, { eq, and }) => and(eq(effects.storyId, storyId), eq(effects.isDeleted, false)),
+        });
         const characters = await db.query.characters.findMany({
             where: (characters, { eq, and }) => and(eq(characters.storyId, storyId), eq(characters.isDeleted, false)),
         });
@@ -109,6 +118,9 @@ export class StoryExportImportService {
             chapters,
             scenes,
             choices,
+            choiceCheckGroups,
+            choiceChecks,
+            effects,
             characters,
             locations,
             locationRelations,
@@ -535,6 +547,95 @@ export class StoryExportImportService {
                     };
                 });
                 await tx.insert(dbSchema.items).values(newItemsData);
+            }
+
+            // --- ChoiceCheckGroups (Optional, map choice ID) ---
+            // Depois de Choices de propósito: choiceId precisa já estar no idMap.
+            if (validatedFullStory.choiceCheckGroups && validatedFullStory.choiceCheckGroups.length > 0) {
+                const newChoiceCheckGroupsData = validatedFullStory.choiceCheckGroups.map(original => {
+                    const newId = nextId(original.id);
+                    idMap.set(original.id, newId);
+                    const mappedChoiceId = idMap.get(original.choiceId);
+                    if (!mappedChoiceId) {
+                        throw new Error(`Import Error: Choice ID ${original.choiceId} not found in ID map for choice check group ${original.id}.`);
+                    }
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        choiceId: mappedChoiceId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.choiceCheckGroups).values(newChoiceCheckGroupsData);
+            }
+
+            // --- ChoiceChecks (Optional, map group ID, and optional scene/item IDs) ---
+            // Depois de ChoiceCheckGroups, Scenes e Items de propósito: groupId/sceneId/itemId
+            // precisam já estar no idMap.
+            if (validatedFullStory.choiceChecks && validatedFullStory.choiceChecks.length > 0) {
+                const newChoiceChecksData = validatedFullStory.choiceChecks.map(original => {
+                    const newId = nextId(original.id);
+                    idMap.set(original.id, newId);
+                    const mappedGroupId = idMap.get(original.groupId);
+                    if (!mappedGroupId) {
+                        throw new Error(`Import Error: Group ID ${original.groupId} not found in ID map for choice check ${original.id}.`);
+                    }
+                    let mappedSceneId: string | null = null;
+                    if (original.sceneId) {
+                        mappedSceneId = idMap.get(original.sceneId) ?? null;
+                        if (!mappedSceneId) {
+                            throw new Error(`Import Error: Scene ID ${original.sceneId} not found in ID map for choice check ${original.id}.`);
+                        }
+                    }
+                    let mappedItemId: string | null = null;
+                    if (original.itemId) {
+                        mappedItemId = idMap.get(original.itemId) ?? null;
+                        if (!mappedItemId) {
+                            throw new Error(`Import Error: Item ID ${original.itemId} not found in ID map for choice check ${original.id}.`);
+                        }
+                    }
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        groupId: mappedGroupId,
+                        sceneId: mappedSceneId,
+                        itemId: mappedItemId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.choiceChecks).values(newChoiceChecksData);
+            }
+
+            // --- Effects (Optional, map polymorphic entity ID via entityType, and optional item ID) ---
+            // Depois de Scenes, Choices e Items de propósito: entityId (Scene ou Choice) e
+            // itemId precisam já estar no idMap.
+            if (validatedFullStory.effects && validatedFullStory.effects.length > 0) {
+                const newEffectsData = validatedFullStory.effects.map(original => {
+                    const newId = nextId(original.id);
+                    idMap.set(original.id, newId);
+                    const mappedEntityId = idMap.get(original.entityId);
+                    if (!mappedEntityId) {
+                        throw new Error(`Import Error: Entity ID ${original.entityId} (${original.entityType}) not found in ID map for effect ${original.id}.`);
+                    }
+                    let mappedItemId: string | null = null;
+                    if (original.itemId) {
+                        mappedItemId = idMap.get(original.itemId) ?? null;
+                        if (!mappedItemId) {
+                            throw new Error(`Import Error: Item ID ${original.itemId} not found in ID map for effect ${original.id}.`);
+                        }
+                    }
+                    return {
+                        ...original,
+                        id: newId,
+                        storyId: targetStoryId,
+                        entityId: mappedEntityId,
+                        itemId: mappedItemId,
+                        version: 1, createdAt: now, updatedAt: now, isDeleted: false, deletedAt: null,
+                    };
+                });
+                await tx.insert(dbSchema.effects).values(newEffectsData);
             }
 
             // --- ItemJourneys (Optional, map item ID, scene ID, and optional new owner character ID) ---

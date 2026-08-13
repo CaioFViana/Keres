@@ -25,5 +25,8 @@ export enum OperationLogEntityType {
   Suggestion = 'Suggestion',
   SeeAlsoRelation = 'SeeAlsoRelation',
   Comment = 'Comment',
+  ChoiceCheckGroup = 'ChoiceCheckGroup',
+  ChoiceCheck = 'ChoiceCheck',
+  Effect = 'Effect',
   // Add other relevant entities as they are introduced to the system
 }

@@ -2,7 +2,7 @@ import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { chapters, locations, scenes, stories, users } from '../../src/db/schema';
+import { chapters, choiceCheckGroups, choiceChecks, choices, effects, locations, scenes, stories, users } from '../../src/db/schema';
 import { StoryExportImportService } from '../../src/services/StoryExportImportService';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
@@ -13,6 +13,11 @@ const ORIGINAL_STORY_ID = newId();
 const ORIGINAL_CHAPTER_ID = newId();
 const ORIGINAL_LOCATION_ID = newId();
 const ORIGINAL_SCENE_ID = newId();
+const ORIGINAL_CHOICE_ID = newId();
+const ORIGINAL_ITEM_ID = newId();
+const ORIGINAL_GROUP_ID = newId();
+const ORIGINAL_CHECK_ID = newId();
+const ORIGINAL_EFFECT_ID = newId();
 
 const OLD = new Date('2020-01-01T00:00:00.000Z');
 
@@ -88,6 +93,90 @@ const scene = (overrides: Record<string, unknown> = {}) => ({
   createdAt: OLD,
   updatedAt: OLD,
   version: 5,
+  isDeleted: false,
+  deletedAt: null,
+  ...overrides,
+});
+
+const choice = (overrides: Record<string, unknown> = {}) => ({
+  id: ORIGINAL_CHOICE_ID,
+  storyId: ORIGINAL_STORY_ID,
+  sceneId: ORIGINAL_SCENE_ID,
+  nextSceneId: ORIGINAL_SCENE_ID,
+  text: 'Abrir a porta',
+  notes: null,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 2,
+  isDeleted: false,
+  deletedAt: null,
+  ...overrides,
+});
+
+const item = (overrides: Record<string, unknown> = {}) => ({
+  id: ORIGINAL_ITEM_ID,
+  storyId: ORIGINAL_STORY_ID,
+  characterOwnerId: null,
+  name: 'Chave enferrujada',
+  category: null,
+  description: null,
+  initialState: null,
+  isFavorite: false,
+  extraNotes: null,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
+  ...overrides,
+});
+
+const choiceCheckGroup = (overrides: Record<string, unknown> = {}) => ({
+  id: ORIGINAL_GROUP_ID,
+  storyId: ORIGINAL_STORY_ID,
+  choiceId: ORIGINAL_CHOICE_ID,
+  combinator: 'AND',
+  order: 0,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
+  ...overrides,
+});
+
+const choiceCheck = (overrides: Record<string, unknown> = {}) => ({
+  id: ORIGINAL_CHECK_ID,
+  storyId: ORIGINAL_STORY_ID,
+  groupId: ORIGINAL_GROUP_ID,
+  mode: 'block',
+  type: 'inventory',
+  order: 0,
+  sceneId: null,
+  minVisits: null,
+  itemId: ORIGINAL_ITEM_ID,
+  itemPresence: 'has',
+  triggerName: null,
+  triggerState: null,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
+  ...overrides,
+});
+
+const effect = (overrides: Record<string, unknown> = {}) => ({
+  id: ORIGINAL_EFFECT_ID,
+  storyId: ORIGINAL_STORY_ID,
+  entityType: 'Choice',
+  entityId: ORIGINAL_CHOICE_ID,
+  effectType: 'itemGrant',
+  itemId: ORIGINAL_ITEM_ID,
+  triggerName: null,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 1,
   isDeleted: false,
   deletedAt: null,
   ...overrides,
@@ -324,5 +413,51 @@ describe('export', () => {
     const exported = await service.exportStory(storyId, IMPORTER_ID);
 
     expect(exported.formatVersion).toBe(CURRENT_STORY_FORMAT_VERSION);
+  });
+});
+
+describe('choice checks and effects', () => {
+  it('round-trips a choice check group, its check, and an effect', async () => {
+    const storyId = await service.importStory(
+      IMPORTER_ID,
+      buildExport({
+        choices: [choice()],
+        items: [item()],
+        choiceCheckGroups: [choiceCheckGroup()],
+        choiceChecks: [choiceCheck()],
+        effects: [effect()],
+      }),
+    );
+
+    const [importedChoice] = await db.select().from(choices).where(eq(choices.storyId, storyId));
+    const [importedGroup] = await db.select().from(choiceCheckGroups).where(eq(choiceCheckGroups.storyId, storyId));
+    const [importedCheck] = await db.select().from(choiceChecks).where(eq(choiceChecks.storyId, storyId));
+    const [importedEffect] = await db.select().from(effects).where(eq(effects.storyId, storyId));
+
+    expect(importedGroup.choiceId).toBe(importedChoice.id);
+    expect(importedCheck.groupId).toBe(importedGroup.id);
+    expect(importedCheck.itemPresence).toBe('has');
+    expect(importedEffect.entityType).toBe('Choice');
+    expect(importedEffect.entityId).toBe(importedChoice.id);
+    expect(importedEffect.effectType).toBe('itemGrant');
+
+    const exported = await service.exportStory(storyId, IMPORTER_ID);
+    expect(exported.choiceCheckGroups).toHaveLength(1);
+    expect(exported.choiceChecks).toHaveLength(1);
+    expect(exported.effects).toHaveLength(1);
+
+    const second = await service.importStory(IMPORTER_ID, exported);
+    const [reImportedGroup] = await db.select().from(choiceCheckGroups).where(eq(choiceCheckGroups.storyId, second));
+    const [reImportedChoice] = await db.select().from(choices).where(eq(choices.storyId, second));
+    expect(reImportedGroup.choiceId).toBe(reImportedChoice.id);
+  });
+
+  it('rejects a choice check group pointing at a choice the package does not carry', async () => {
+    const broken = buildExport({
+      choices: [choice()],
+      choiceCheckGroups: [choiceCheckGroup({ choiceId: newId() })],
+    });
+
+    await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(/not found in ID map/);
   });
 });

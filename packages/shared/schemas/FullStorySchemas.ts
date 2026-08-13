@@ -4,6 +4,9 @@ import { CharacterSchema } from './CharacterSchemas'; // Adjusted path
 import { CharacterRelationSchema } from './CharacterRelationSchemas'; // Adjusted path
 import { CharacterSceneSchema } from './CharacterSceneSchemas'; // Adjusted path
 import { ChoiceSchema } from './ChoiceSchemas'; // Adjusted path
+import { ChoiceCheckGroupSchema } from './ChoiceCheckGroupSchemas';
+import { ChoiceCheckSchema } from './ChoiceCheckSchemas';
+import { EffectSchema } from './EffectSchemas';
 import { GalleryRelationSchema, GallerySchema } from './GallerySchemas'; // Adjusted path
 import { ItemJourneySchema } from './ItemJourneySchemas'; // Adjusted path
 import { ItemSchema } from './ItemSchemas'; // Adjusted path
@@ -56,6 +59,10 @@ export const FullStoryExportSchema = z.object({
     seeAlsoRelations: z.array(SeeAlsoRelationSchema).optional(),
     // Mesmo motivo: exports legados sem este recurso continuam importáveis.
     locationRelations: z.array(LocationRelationSchema).optional(),
+    // Introduzidos no formato V4 (checks/effects de Choice); migrações anteriores fornecem listas vazias.
+    choiceCheckGroups: z.array(ChoiceCheckGroupSchema).optional(),
+    choiceChecks: z.array(ChoiceCheckSchema).optional(),
+    effects: z.array(EffectSchema).optional(),
     serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
     // Ausente em exports de antes deste campo existir - `migrateStoryExport` normaliza para
     // `CURRENT_STORY_FORMAT_VERSION` antes desta validação rodar, então o default aqui é só

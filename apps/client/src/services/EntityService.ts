@@ -8,8 +8,11 @@ import {
   characterRelations,
   characters,
   characterScenes,
+  choiceCheckGroups,
+  choiceChecks,
   choices,
   comments,
+  effects,
   favorites,
   galleries,
   galleryRelations,
@@ -67,6 +70,18 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   favorite: OperationLogEntityType.Favorite,
   seealsorelation: OperationLogEntityType.SeeAlsoRelation,
   comment: OperationLogEntityType.Comment,
+  choicecheckgroup: OperationLogEntityType.ChoiceCheckGroup,
+  choicecheck: OperationLogEntityType.ChoiceCheck,
+  effect: OperationLogEntityType.Effect,
+};
+
+/** Chaves de tradução do rótulo de cada tipo de Effect - usadas para montar o nome legível
+ *  de um Effect a partir do seu effectType (entidade sem nome próprio). */
+const EFFECT_TYPE_LABEL_KEYS: Record<string, string> = {
+  itemGrant: 'effect_item_grant',
+  itemTake: 'effect_item_take',
+  triggerSet: 'effect_trigger_set',
+  triggerUnset: 'effect_trigger_unset',
 };
 
 export class EntityService {
@@ -444,6 +459,63 @@ export class EntityService {
           entitySpecificName = `${target.name || t('unknown_entity')} (${target.type || t('unknown_entity_type')}) - ${fieldLabel}: "${snippet}"`;
         }
         translatedEntityType = t('comment');
+        break;
+      case OperationLogEntityType.ChoiceCheckGroup:
+        const choiceCheckGroup = await db.query.choiceCheckGroups.findFirst({
+          where: and(eq(choiceCheckGroups.id, entityId), eq(choiceCheckGroups.isDeleted, false)),
+          columns: { choiceId: true },
+        });
+        if (choiceCheckGroup) {
+          const groupChoice = await db.query.choices.findFirst({
+            where: and(eq(choices.id, choiceCheckGroup.choiceId), eq(choices.isDeleted, false)),
+            columns: { text: true },
+          });
+          entitySpecificName = groupChoice?.text || t('unknown_choice');
+        }
+        translatedEntityType = t('choice_check_group');
+        break;
+      case OperationLogEntityType.ChoiceCheck:
+        const choiceCheck = await db.query.choiceChecks.findFirst({
+          where: and(eq(choiceChecks.id, entityId), eq(choiceChecks.isDeleted, false)),
+          columns: { groupId: true },
+        });
+        if (choiceCheck) {
+          const checkGroup = await db.query.choiceCheckGroups.findFirst({
+            where: and(eq(choiceCheckGroups.id, choiceCheck.groupId), eq(choiceCheckGroups.isDeleted, false)),
+            columns: { choiceId: true },
+          });
+          const checkChoice = checkGroup
+            ? await db.query.choices.findFirst({
+                where: and(eq(choices.id, checkGroup.choiceId), eq(choices.isDeleted, false)),
+                columns: { text: true },
+              })
+            : undefined;
+          entitySpecificName = checkChoice?.text || t('unknown_choice');
+        }
+        translatedEntityType = t('choice_check');
+        break;
+      case OperationLogEntityType.Effect:
+        const effect = await db.query.effects.findFirst({
+          where: and(eq(effects.id, entityId), eq(effects.isDeleted, false)),
+          columns: { effectType: true, itemId: true, triggerName: true },
+        });
+        if (effect) {
+          const effectLabel = t(EFFECT_TYPE_LABEL_KEYS[effect.effectType] || effect.effectType);
+          let target: string | undefined;
+          if (effect.effectType === 'itemGrant' || effect.effectType === 'itemTake') {
+            const effectItem = effect.itemId
+              ? await db.query.items.findFirst({
+                  where: and(eq(items.id, effect.itemId), eq(items.isDeleted, false)),
+                  columns: { name: true },
+                })
+              : undefined;
+            target = effectItem?.name || t('unknown_item');
+          } else {
+            target = effect.triggerName || t('unknown_trigger');
+          }
+          entitySpecificName = `${effectLabel}: ${target}`;
+        }
+        translatedEntityType = t('effect');
         break;
       }
     if (entitySpecificName) {

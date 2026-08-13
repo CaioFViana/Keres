@@ -16,7 +16,7 @@ export default defineConfig({
       // Baixo por construção: esta config cobre só o que roda sem banco (utils, config,
       // adaptadores de armazenamento). Rotas, serviços e handlers são medidos por
       // `vitest.integration.config.ts`, que tem os seus próprios limiares.
-      thresholds: { lines: 12, functions: 18, branches: 3 },
+      thresholds: { lines: 17, functions: 23, branches: 7 },
     },
   },
 });

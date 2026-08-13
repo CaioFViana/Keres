@@ -9,7 +9,7 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: ['src/**'],
       // Piso, não meta - ver a regra do ratchet em TESTING_PLAN.md.
-      thresholds: { lines: 68, functions: 55, branches: 70 },
+      thresholds: { lines: 97, functions: 95, branches: 83 },
     },
   },
 });

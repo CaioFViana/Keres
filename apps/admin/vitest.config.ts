@@ -10,7 +10,7 @@ export default defineConfig({
       include: ['src/**'],
       // Baixo porque as 5 páginas React ficaram fora de escopo; o que está coberto é a
       // camada de API. Piso, não meta - ver a regra do ratchet em TESTING_PLAN.md.
-      thresholds: { lines: 17, functions: 18, branches: 2 },
+      thresholds: { lines: 74, functions: 56, branches: 50 },
     },
   },
 });

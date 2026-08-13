@@ -2,10 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import * as path from 'node:path';
 
-const shouldRun = process.env.RUN_S3_INTEGRATION === 'true';
-const describeS3 = shouldRun ? describe : describe.skip;
-
-describeS3('S3BlobStorage (SeaweedFS)', () => {
+describe('S3BlobStorage (SeaweedFS)', () => {
   let S3BlobStorage: typeof import('../../../src/services/media-storage/S3BlobStorage').S3BlobStorage;
 
   beforeAll(async () => {

@@ -1,15 +1,14 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import { scenes } from './scenes';
+import { choices } from './choices';
 import { stories } from './stories';
 
-export const choices = pgTable('choices', {
+export const choiceCheckGroups = pgTable('choice_check_groups', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull().references(() => stories.id),
-  sceneId: text('scene_id').notNull().references(() => scenes.id),
-  nextSceneId: text('next_scene_id').notNull().references(() => scenes.id),
-  text: text('text').notNull(),
-  notes: text('notes'),
+  choiceId: text('choice_id').notNull().references(() => choices.id),
+  combinator: text('combinator', { enum: ['AND', 'OR'] }).notNull().default('AND'),
+  order: integer('order').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   version: integer('version').notNull().default(1),
@@ -17,17 +16,13 @@ export const choices = pgTable('choices', {
   deletedAt: timestamp('deleted_at'),
 });
 
-export const choicesRelations = relations(choices, ({ one }) => ({
+export const choiceCheckGroupsRelations = relations(choiceCheckGroups, ({ one }) => ({
   story: one(stories, {
-    fields: [choices.storyId],
+    fields: [choiceCheckGroups.storyId],
     references: [stories.id],
   }),
-  scene: one(scenes, {
-    fields: [choices.sceneId],
-    references: [scenes.id],
-  }),
-  nextScene: one(scenes, {
-    fields: [choices.nextSceneId],
-    references: [scenes.id],
+  choice: one(choices, {
+    fields: [choiceCheckGroups.choiceId],
+    references: [choices.id],
   }),
 }));

@@ -6,6 +6,7 @@ export const ChoiceSchema = z.object({
   sceneId: z.string(),
   nextSceneId: z.string(),
   text: z.string(),
+  notes: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),
@@ -25,6 +26,7 @@ export const CreateChoiceDataSchema = ChoiceSchema.omit({
   sceneId: z.string().min(1, "Scene ID cannot be empty"),
   nextSceneId: z.string().min(1, "Next Scene ID cannot be empty"),
   text: z.string().min(1, "Choice text cannot be empty"),
+  notes: z.string().nullable().default(null),
 });
 
 export const PartialChoiceSchema = ChoiceSchema.partial();

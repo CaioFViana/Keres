@@ -7,6 +7,7 @@ export const choices = sqliteTable('choices', {
   sceneId: text('scene_id').notNull(),
   nextSceneId: text('next_scene_id').notNull(),
   text: text('text').notNull(),
+  notes: text('notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

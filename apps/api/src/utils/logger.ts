@@ -1,5 +1,14 @@
 type LogLevel = 'info' | 'warn' | 'error';
 
+type LogSink = (entry: { level: LogLevel; message: string; meta?: Record<string, unknown>; timestamp: string }) => void;
+
+let sink: LogSink | null = null;
+
+/** Registrado por `server.ts` depois das migrações rodarem - ver comentário lá sobre por quê. */
+export function setLogSink(fn: LogSink) {
+  sink = fn;
+}
+
 /** Turns a thrown value into a safely loggable object - pg errors carry a `.code` (e.g. ECONNREFUSED) worth keeping. */
 function serializeError(error: unknown): Record<string, unknown> {
   if (error instanceof Error) {
@@ -28,6 +37,13 @@ function write(level: LogLevel, message: string, meta?: Record<string, unknown>)
     console.warn(line);
   } else {
     console.log(line);
+  }
+  if (sink) {
+    try {
+      sink(entry);
+    } catch {
+      // Nunca deixa uma falha de persistência derrubar quem chamou o logger.
+    }
   }
 }
 

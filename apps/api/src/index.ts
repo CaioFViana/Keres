@@ -145,15 +145,19 @@ export async function createApp() {
       throw new Error('Invalid token');
     }
   })
-  .onError(({ code, error, set, path, request }) => {
+  .onError(({ code, error, set, path, request, user, params }) => {
     const err = error instanceof Error ? error : new Error(String(error));
     const label = `${request.method} ${path}`;
+    const userId = (user as JWTPayload | null)?.userId ?? null;
+    // Só rotas com um :storyId nos params carregam isto - não força o campo quando não é
+    // significativo (ex: nem toda rota é escopada a uma história).
+    const storyId = (params as { storyId?: string } | undefined)?.storyId ?? null;
 
     // A route that deliberately rejected with AppError (any status, including 500)
     // already chose a safe, user-facing message - relay it as-is.
     if (err instanceof AppError) {
       set.status = err.status;
-      logger.warn(`Rejected request: ${label}`, { status: err.status, message: err.message });
+      logger.warn(`Rejected request: ${label}`, { status: err.status, message: err.message, userId, storyId });
       return { message: err.message };
     }
 
@@ -162,19 +166,19 @@ export async function createApp() {
     // 500 is excluded here because Elysia defaults untouched status to 500 for any
     // unclassified thrown error, so it can't tell "the app chose 500" from "nothing did".
     if (typeof set.status === 'number' && set.status !== 500) {
-      logger.warn(`Rejected request: ${label}`, { status: set.status, message: err.message });
+      logger.warn(`Rejected request: ${label}`, { status: set.status, message: err.message, userId, storyId });
       return { message: err.message };
     }
 
     if (isDatabaseConnectivityError(err)) {
       set.status = 503;
-      logger.error(`Database unreachable while handling ${label}`, err, { code });
+      logger.error(`Database unreachable while handling ${label}`, err, { code, userId, storyId });
       return { message: 'Service temporarily unavailable. Please try again shortly.' };
     }
 
     // Anything else is unexpected - never leak internals (SQL, stack traces) to the client.
     set.status = 500;
-    logger.error(`Unhandled error while handling ${label}`, err, { code });
+    logger.error(`Unhandled error while handling ${label}`, err, { code, userId, storyId });
     return { message: 'Internal server error.' };
   })
   .get('/', ({ redirect }) => {

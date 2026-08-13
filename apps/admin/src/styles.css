@@ -274,3 +274,24 @@ a.button {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.level-error {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.level-warn {
+  color: #b9770e;
+  font-weight: 600;
+}
+
+.level-info {
+  color: #555;
+}
+
+.message-cell {
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

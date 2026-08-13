@@ -128,8 +128,9 @@ const SceneDetailScreen = () => {
   const [location, setLocation] = useState<Location | null>(null); // State for location details
   const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined); // State for previous scene
   const [nextScene, setNextScene] = useState<SceneSelect | undefined>(undefined); // State for next scene
-  const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]); // State for choices
-  const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({}); // For choice target scene labels
+  const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]); // State for choices leaving this scene
+  const [incomingChoicesForScene, setIncomingChoicesForScene] = useState<Choice[]>([]); // State for choices arriving at this scene
+  const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({}); // For choice target/source scene labels
   const {
     selectedTags: sceneTags,
     allNotes,
@@ -266,6 +267,20 @@ const SceneDetailScreen = () => {
     }
   }, [selectedStory?.id, sceneId, selectedStory?.type]);
 
+  const fetchIncomingChoicesForScene = useCallback(async () => {
+    if (!choiceServiceRef.current || !selectedStory?.id || !sceneId || selectedStory.type !== 'branching') {
+      setIncomingChoicesForScene([]);
+      return;
+    }
+    try {
+      const choices = await choiceServiceRef.current.getChoicesByStoryId(selectedStory.id, undefined, undefined, undefined, undefined, { nextSceneId: sceneId });
+      setIncomingChoicesForScene(choices);
+    } catch (err) {
+      console.error('Failed to fetch incoming choices for scene:', err);
+      setIncomingChoicesForScene([]);
+    }
+  }, [selectedStory?.id, sceneId, selectedStory?.type]);
+
   const fetchSceneNames = useCallback(async () => {
     if (!sceneServiceRef.current || !selectedStory?.id || selectedStory.type !== 'branching') {
       setSceneNamesById({});
@@ -365,9 +380,10 @@ const SceneDetailScreen = () => {
         fetchPreviousNextScenes();
       } else if (selectedStory?.type === 'branching') {
         fetchChoicesForScene();
+        fetchIncomingChoicesForScene();
       }
     }
-  }, [sceneId, navigation, setScene, setHeaderTitle, t, fetchChapter, selectedStory?.type, fetchPreviousNextScenes, fetchChoicesForScene]);
+  }, [sceneId, navigation, setScene, setHeaderTitle, t, fetchChapter, selectedStory?.type, fetchPreviousNextScenes, fetchChoicesForScene, fetchIncomingChoicesForScene]);
 
   const handleCharacterSceneChange = useCallback((changedStoryId: string, changedSceneId: string) => {
     if (changedSceneId === sceneId) {
@@ -413,9 +429,10 @@ const SceneDetailScreen = () => {
       fetchPreviousNextScenes();
     } else if (selectedStory?.type === 'branching' && scene) {
       fetchChoicesForScene();
+      fetchIncomingChoicesForScene();
       fetchSceneNames();
     }
-  }, [selectedStory, selectedStory?.type, scene, chapter, fetchPreviousNextScenes, fetchChoicesForScene, fetchSceneNames]);
+  }, [selectedStory, selectedStory?.type, scene, chapter, fetchPreviousNextScenes, fetchChoicesForScene, fetchIncomingChoicesForScene, fetchSceneNames]);
 
   const handleLocationPress = useCallback(() => {
     if (!location) return;
@@ -568,6 +585,7 @@ const SceneDetailScreen = () => {
         previousScene={previousScene}
         nextScene={nextScene}
         choicesForScene={choicesForScene}
+        incomingChoicesForScene={incomingChoicesForScene}
         sceneNamesById={sceneNamesById}
       />
 

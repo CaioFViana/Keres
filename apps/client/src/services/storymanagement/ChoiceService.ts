@@ -51,13 +51,17 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
       }
 
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        const { chapterId, sceneId, ...otherCriteria } = advancedSearchCriteria;
+        const { chapterId, sceneId, nextSceneId, ...otherCriteria } = advancedSearchCriteria;
 
         if (sceneId) {
           conditions.push(eq(choices.sceneId, sceneId) as SQL<boolean>);
         } else if (chapterId) {
           const sceneIdsInChapter = db.select({ id: scenes.id }).from(scenes).where(and(eq(scenes.chapterId, chapterId), eq(scenes.isDeleted, false)));
           conditions.push(inArray(choices.sceneId, sceneIdsInChapter) as SQL<boolean>);
+        }
+
+        if (nextSceneId) {
+          conditions.push(eq(choices.nextSceneId, nextSceneId) as SQL<boolean>);
         }
 
         // `entityFieldMetadata` não descreve Choice (só as entidades com busca avançada na

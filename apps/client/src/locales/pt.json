@@ -32,6 +32,7 @@
   "analysis_character_no_scenes": "Nunca aparece em nenhuma cena.",
   "analysis_choice_dangling_next_scene": "Aponta para uma cena que não existe mais.",
   "analysis_choice_dangling_scene": "Pertence a uma cena que não existe mais.",
+  "analysis_choice_never_satisfiable": "Os checks desta escolha nunca podem ser satisfeitos - ela é, na prática, inacessível.",
   "analysis_item_unused": "Nunca foi usado em nenhuma jornada de item.",
   "analysis_location_no_connections": "Não tem conexões com outras locations.",
   "analysis_location_unused": "Não é usada em nenhuma cena.",

@@ -7,6 +7,7 @@ const baseInput = (): StoryAnalysisInput => ({
   locations: [{ id: 'location', name: 'Location' }], locationRelations: [],
   scenes: [{ id: 'start', name: 'Start', locationId: 'location', isStart: true, isFinish: false }],
   choices: [],
+  choiceCheckGroups: [], choiceChecks: [], effects: [],
   items: [{ id: 'item', name: 'Item' }], itemJourneys: [],
   tags: [{ id: 'tag', name: 'Tag' }], tagRelations: [],
   chapters: [], notes: [], worldRules: [], storySchemaFields: [], attributeValues: [],
@@ -39,5 +40,105 @@ describe('buildStoryAnalysisReport', () => {
       expect.objectContaining({ id: 'scenes:no_start_scene', messageKey: 'analysis_no_start_scene', severity: 'error' }),
     ]));
     expect(findings.some(finding => ['analysis_scene_unreachable', 'analysis_scene_isolated'].includes(finding.messageKey))).toBe(false);
+  });
+
+  describe('choice checks', () => {
+    it('flags a choice whose inventory check requires an item that is never granted anywhere', () => {
+      const input = baseInput();
+      input.scenes.push({ id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false });
+      input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'end', text: 'go' });
+      input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'AND' });
+      input.choiceChecks.push({
+        id: 'c1', groupId: 'g1', mode: 'enable', type: 'inventory',
+        sceneId: null, minVisits: null, itemId: 'item', itemPresence: 'has', triggerName: null, triggerState: null,
+      });
+
+      const keys = buildStoryAnalysisReport(input).map(f => f.messageKey);
+
+      expect(keys).toContain('analysis_choice_never_satisfiable');
+    });
+
+    it('flags a scene-count check requiring more than one visit when there is no cycle to revisit it', () => {
+      const input = baseInput();
+      input.scenes.push(
+        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false },
+        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false },
+      );
+      input.choices.push(
+        { id: 'toTarget', sceneId: 'start', nextSceneId: 'target', text: 'go' },
+        { id: 'toEnd', sceneId: 'target', nextSceneId: 'end', text: 'proceed' },
+      );
+      input.choiceCheckGroups.push({ id: 'g1', choiceId: 'toEnd', combinator: 'AND' });
+      input.choiceChecks.push({
+        id: 'c1', groupId: 'g1', mode: 'enable', type: 'sceneCount',
+        sceneId: 'target', minVisits: 2, itemId: null, itemPresence: null, triggerName: null, triggerState: null,
+      });
+
+      const keys = buildStoryAnalysisReport(input).map(f => f.messageKey);
+
+      expect(keys).toContain('analysis_choice_never_satisfiable');
+    });
+
+    it('does not flag a scene-count check requiring more than one visit when the scene is revisitable via a cycle', () => {
+      const input = baseInput();
+      input.scenes.push(
+        { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false },
+        { id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false },
+      );
+      input.choices.push(
+        { id: 'toTarget', sceneId: 'start', nextSceneId: 'target', text: 'go' },
+        { id: 'loopBack', sceneId: 'target', nextSceneId: 'start', text: 'go back' },
+        { id: 'toEnd', sceneId: 'target', nextSceneId: 'end', text: 'proceed' },
+      );
+      input.choiceCheckGroups.push({ id: 'g1', choiceId: 'toEnd', combinator: 'AND' });
+      input.choiceChecks.push({
+        id: 'c1', groupId: 'g1', mode: 'enable', type: 'sceneCount',
+        sceneId: 'target', minVisits: 2, itemId: null, itemPresence: null, triggerName: null, triggerState: null,
+      });
+
+      const keys = buildStoryAnalysisReport(input).map(f => f.messageKey);
+
+      expect(keys).not.toContain('analysis_choice_never_satisfiable');
+    });
+
+    it('is satisfiable when an OR group has at least one check that can pass', () => {
+      const input = baseInput();
+      input.scenes.push({ id: 'end', name: 'End', locationId: 'location', isStart: false, isFinish: false });
+      input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'end', text: 'go' });
+      input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'OR' });
+      input.choiceChecks.push(
+        {
+          id: 'c1', groupId: 'g1', mode: 'enable', type: 'inventory',
+          sceneId: null, minVisits: null, itemId: 'item', itemPresence: 'has', triggerName: null, triggerState: null,
+        },
+        {
+          id: 'c2', groupId: 'g1', mode: 'enable', type: 'trigger',
+          sceneId: null, minVisits: null, itemId: null, itemPresence: null, triggerName: 'flag', triggerState: 'unset',
+        },
+      );
+
+      const keys = buildStoryAnalysisReport(input).map(f => f.messageKey);
+
+      expect(keys).not.toContain('analysis_choice_never_satisfiable');
+    });
+
+    it('cascades to scene reachability: a scene only reachable via a never-satisfiable choice is reported unreachable', () => {
+      const input = baseInput();
+      input.scenes.push({ id: 'onlyVia', name: 'Only Via', locationId: 'location', isStart: false, isFinish: false });
+      input.choices.push({ id: 'choice1', sceneId: 'start', nextSceneId: 'onlyVia', text: 'go' });
+      input.choiceCheckGroups.push({ id: 'g1', choiceId: 'choice1', combinator: 'AND' });
+      input.choiceChecks.push({
+        id: 'c1', groupId: 'g1', mode: 'enable', type: 'inventory',
+        sceneId: null, minVisits: null, itemId: 'item', itemPresence: 'has', triggerName: null, triggerState: null,
+      });
+
+      const findings = buildStoryAnalysisReport(input);
+      const keys = findings.map(f => f.messageKey);
+
+      expect(keys).toContain('analysis_choice_never_satisfiable');
+      expect(findings).toEqual(expect.arrayContaining([
+        expect.objectContaining({ entityId: 'onlyVia', messageKey: 'analysis_scene_unreachable' }),
+      ]));
+    });
   });
 });

@@ -32,6 +32,7 @@
   "analysis_character_no_scenes": "Never appears in any scene.",
   "analysis_choice_dangling_next_scene": "Points to a scene that no longer exists.",
   "analysis_choice_dangling_scene": "Belongs to a scene that no longer exists.",
+  "analysis_choice_never_satisfiable": "This choice's checks can never be satisfied - it is effectively unreachable.",
   "analysis_item_unused": "Never used in any item journey.",
   "analysis_location_no_connections": "Has no connections to other locations.",
   "analysis_location_unused": "Not used in any scene.",

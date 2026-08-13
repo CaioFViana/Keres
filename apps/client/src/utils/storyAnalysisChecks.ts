@@ -46,6 +46,42 @@ export interface AnalysisChoice {
   text: string;
 }
 
+export type ChoiceCheckCombinator = 'AND' | 'OR';
+export type ChoiceCheckMode = 'block' | 'enable';
+export type ChoiceCheckType = 'sceneCount' | 'inventory' | 'trigger';
+export type ChoiceCheckItemPresence = 'has' | 'lacks';
+export type ChoiceCheckTriggerState = 'set' | 'unset';
+
+export interface AnalysisChoiceCheckGroup {
+  id: string;
+  choiceId: string;
+  combinator: ChoiceCheckCombinator;
+}
+
+export interface AnalysisChoiceCheck {
+  id: string;
+  groupId: string;
+  mode: ChoiceCheckMode;
+  type: ChoiceCheckType;
+  sceneId: string | null;
+  minVisits: number | null;
+  itemId: string | null;
+  itemPresence: ChoiceCheckItemPresence | null;
+  triggerName: string | null;
+  triggerState: ChoiceCheckTriggerState | null;
+}
+
+export type EffectEntityType = 'Scene' | 'Choice';
+export type EffectType = 'itemGrant' | 'itemTake' | 'triggerSet' | 'triggerUnset';
+
+export interface AnalysisEffect {
+  entityType: EffectEntityType;
+  entityId: string;
+  effectType: EffectType;
+  itemId: string | null;
+  triggerName: string | null;
+}
+
 export interface AnalysisStorySchemaField {
   id: string;
   entityType: string;
@@ -69,6 +105,9 @@ export interface StoryAnalysisInput {
   locationRelations: { locationAId: string; locationBId: string }[];
   scenes: AnalysisScene[];
   choices: AnalysisChoice[];
+  choiceCheckGroups: AnalysisChoiceCheckGroup[];
+  choiceChecks: AnalysisChoiceCheck[];
+  effects: AnalysisEffect[];
   items: AnalysisEntityRef[];
   itemJourneys: { itemId: string }[];
   tags: AnalysisEntityRef[];
@@ -81,6 +120,10 @@ export interface StoryAnalysisInput {
 }
 
 export function buildStoryAnalysisReport(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+  const { findings: satisfiabilityFindings, unsatisfiableChoiceIds } = input.storyType === 'branching'
+    ? checkChoiceSatisfiability(input)
+    : { findings: [], unsatisfiableChoiceIds: new Set<string>() };
+
   return [
     ...checkCharacters(input),
     ...checkLocations(input),
@@ -88,9 +131,10 @@ export function buildStoryAnalysisReport(input: StoryAnalysisInput): StoryAnalys
     ...checkTags(input),
     // Alcançabilidade e integridade de Choice só fazem sentido pra histórias ramificadas -
     // uma história linear não usa Choice, as Scenes são encadeadas por índice/capítulo.
-    ...(input.storyType === 'branching' ? checkSceneReachability(input) : []),
+    ...(input.storyType === 'branching' ? checkSceneReachability(input, unsatisfiableChoiceIds) : []),
     ...checkSceneFinishWithChoices(input),
     ...(input.storyType === 'branching' ? checkChoices(input) : []),
+    ...satisfiabilityFindings,
     ...checkStorySchema(input),
   ];
 }
@@ -158,17 +202,20 @@ function checkTags(input: StoryAnalysisInput): StoryAnalysisFinding[] {
  * conforme a Scene tenha ou não alguma Choice tocando nela (isolada de verdade vs. só fora do
  * alcance do início).
  */
-function checkSceneReachability(input: StoryAnalysisInput): StoryAnalysisFinding[] {
+function checkSceneReachability(input: StoryAnalysisInput, unsatisfiableChoiceIds: Set<string>): StoryAnalysisFinding[] {
   const sceneIds = new Set(input.scenes.map(s => s.id));
   const outgoing = new Map<string, string[]>();
   const touchedByChoice = new Set<string>();
 
   for (const choice of input.choices) {
     if (!sceneIds.has(choice.sceneId) || !sceneIds.has(choice.nextSceneId)) continue;
-    if (!outgoing.has(choice.sceneId)) outgoing.set(choice.sceneId, []);
-    outgoing.get(choice.sceneId)!.push(choice.nextSceneId);
     touchedByChoice.add(choice.sceneId);
     touchedByChoice.add(choice.nextSceneId);
+    // Choice cujos checks provavelmente nunca serão satisfeitos não conta como aresta viva -
+    // uma Scene só alcançável por ela deve ser reportada como inacessível também.
+    if (unsatisfiableChoiceIds.has(choice.id)) continue;
+    if (!outgoing.has(choice.sceneId)) outgoing.set(choice.sceneId, []);
+    outgoing.get(choice.sceneId)!.push(choice.nextSceneId);
   }
 
   const startIds = input.scenes.filter(s => s.isStart).map(s => s.id);
@@ -217,6 +264,148 @@ function checkSceneFinishWithChoices(input: StoryAnalysisInput): StoryAnalysisFi
   return input.scenes
     .filter(scene => scene.isFinish && scenesWithOutgoingChoice.has(scene.id))
     .map(scene => buildFinding('scenes', 'warning', 'Scene', scene, 'analysis_scene_finish_with_choices'));
+}
+
+/**
+ * Heurística estrutural (não simula estado exaustivamente - ver plano da feature) que decide
+ * se uma Choice com Checks tem alguma chance de ficar disponível algum dia. Usa o nível do BFS
+ * de alcançabilidade (a partir das Scenes iniciais) como aproximação de "antes/depois" pra
+ * checks de inventory/trigger, e detecção de ciclo pra sceneCount > 1 (revisitável indefinidamente,
+ * então N não importa uma vez que exista o ciclo). "lacks"/"unset" são sempre satisfazíveis por
+ * padrão - não rastreamos "garantido e nunca desfeito" no v1, limitação documentada no plano.
+ */
+function checkChoiceSatisfiability(input: StoryAnalysisInput): {
+  findings: StoryAnalysisFinding[];
+  unsatisfiableChoiceIds: Set<string>;
+} {
+  const sceneIds = new Set(input.scenes.map(s => s.id));
+  const outgoing = new Map<string, string[]>();
+  for (const choice of input.choices) {
+    if (!sceneIds.has(choice.sceneId) || !sceneIds.has(choice.nextSceneId)) continue;
+    if (!outgoing.has(choice.sceneId)) outgoing.set(choice.sceneId, []);
+    outgoing.get(choice.sceneId)!.push(choice.nextSceneId);
+  }
+
+  const startIds = input.scenes.filter(s => s.isStart).map(s => s.id);
+  const levelByScene = new Map<string, number>();
+  const queue: string[] = [];
+  for (const id of startIds) {
+    if (!levelByScene.has(id)) {
+      levelByScene.set(id, 0);
+      queue.push(id);
+    }
+  }
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const currentLevel = levelByScene.get(current)!;
+    for (const next of outgoing.get(current) ?? []) {
+      if (!levelByScene.has(next)) {
+        levelByScene.set(next, currentLevel + 1);
+        queue.push(next);
+      }
+    }
+  }
+
+  function canReachSelf(sceneId: string): boolean {
+    const visited = new Set<string>();
+    const stack = [...(outgoing.get(sceneId) ?? [])];
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      if (current === sceneId) return true;
+      if (visited.has(current)) continue;
+      visited.add(current);
+      stack.push(...(outgoing.get(current) ?? []));
+    }
+    return false;
+  }
+
+  const choiceLevelById = new Map<string, number>();
+  for (const choice of input.choices) {
+    const level = levelByScene.get(choice.sceneId);
+    if (level !== undefined) choiceLevelById.set(choice.id, level);
+  }
+
+  function effectLevel(effect: AnalysisEffect): number | undefined {
+    if (effect.entityType === 'Scene') return levelByScene.get(effect.entityId);
+    const choice = input.choices.find(c => c.id === effect.entityId);
+    return choice ? levelByScene.get(choice.sceneId) : undefined;
+  }
+
+  function isReachableBeforeOrAt(effects: AnalysisEffect[], maxLevel: number): boolean {
+    return effects.some(effect => {
+      const level = effectLevel(effect);
+      return level !== undefined && level <= maxLevel;
+    });
+  }
+
+  const itemGrantEffects = input.effects.filter(e => e.effectType === 'itemGrant');
+  const triggerSetEffects = input.effects.filter(e => e.effectType === 'triggerSet');
+
+  function evaluateRawCondition(check: AnalysisChoiceCheck, choiceLevel: number): boolean {
+    switch (check.type) {
+      case 'sceneCount': {
+        if (!check.sceneId) return false;
+        const sceneLevel = levelByScene.get(check.sceneId);
+        if (sceneLevel === undefined) return false;
+        if ((check.minVisits ?? 1) <= 1) return true;
+        return canReachSelf(check.sceneId);
+      }
+      case 'inventory': {
+        if (!check.itemId) return false;
+        if (check.itemPresence === 'lacks') return true;
+        return isReachableBeforeOrAt(itemGrantEffects.filter(e => e.itemId === check.itemId), choiceLevel);
+      }
+      case 'trigger': {
+        if (!check.triggerName) return false;
+        if (check.triggerState === 'unset') return true;
+        return isReachableBeforeOrAt(triggerSetEffects.filter(e => e.triggerName === check.triggerName), choiceLevel);
+      }
+      default:
+        return false;
+    }
+  }
+
+  const checksByGroup = new Map<string, AnalysisChoiceCheck[]>();
+  for (const check of input.choiceChecks) {
+    if (!checksByGroup.has(check.groupId)) checksByGroup.set(check.groupId, []);
+    checksByGroup.get(check.groupId)!.push(check);
+  }
+  const groupsByChoice = new Map<string, AnalysisChoiceCheckGroup[]>();
+  for (const group of input.choiceCheckGroups) {
+    if (!groupsByChoice.has(group.choiceId)) groupsByChoice.set(group.choiceId, []);
+    groupsByChoice.get(group.choiceId)!.push(group);
+  }
+
+  const unsatisfiableChoiceIds = new Set<string>();
+  const findings: StoryAnalysisFinding[] = [];
+
+  for (const choice of input.choices) {
+    const groups = groupsByChoice.get(choice.id);
+    if (!groups || groups.length === 0) continue;
+    const choiceLevel = choiceLevelById.get(choice.id);
+    if (choiceLevel === undefined) continue; // já reportado por checkSceneReachability/checkChoices
+
+    const satisfiable = groups.every(group => {
+      const checks = checksByGroup.get(group.id) ?? [];
+      if (checks.length === 0) return true;
+      const results = checks.map(check => {
+        const raw = evaluateRawCondition(check, choiceLevel);
+        return check.mode === 'block' ? !raw : raw;
+      });
+      return group.combinator === 'OR' ? results.some(Boolean) : results.every(Boolean);
+    });
+
+    if (!satisfiable) {
+      unsatisfiableChoiceIds.add(choice.id);
+      findings.push(buildFinding(
+        'choices', 'warning', 'Choice',
+        { id: choice.id, name: choice.text || choice.id },
+        'analysis_choice_never_satisfiable'
+      ));
+    }
+  }
+
+  return { findings, unsatisfiableChoiceIds };
 }
 
 function checkChoices(input: StoryAnalysisInput): StoryAnalysisFinding[] {

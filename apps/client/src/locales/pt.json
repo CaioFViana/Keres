@@ -1143,6 +1143,7 @@
   "username_length_error": "O nome de usuário deve ter entre 3 e 20 caracteres",
   "username_placeholder": "Digite seu nome de usuário",
   "version": "Versão",
+  "view_choice_details": "Ver detalhes da escolha",
   "warning": "Aviso",
   "weaknesses": "Fraquezas",
   "weaknesses_placeholder": "Digite as fraquezas do personagem",

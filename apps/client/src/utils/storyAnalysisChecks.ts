@@ -273,97 +273,21 @@ function checkSceneFinishWithChoices(input: StoryAnalysisInput): StoryAnalysisFi
  * checks de inventory/trigger, e detecção de ciclo pra sceneCount > 1 (revisitável indefinidamente,
  * então N não importa uma vez que exista o ciclo). "lacks"/"unset" são sempre satisfazíveis por
  * padrão - não rastreamos "garantido e nunca desfeito" no v1, limitação documentada no plano.
+ *
+ * Roda em ponto fixo: uma Choice inacessível pode tornar uma Scene inacessível, o que por sua
+ * vez torna inacessível uma OUTRA Choice que exige aquela Scene (ex.: "Scene X visitada pelo
+ * menos 1 vez"). Uma única passada não pega essa cascata - repete reconstruindo o grafo sem as
+ * Choices já reprovadas até nenhuma rodada encontrar novidade. `unsatisfiableChoiceIds` só
+ * cresce (nunca remove uma Choice já reprovada), o que garante parada em no máximo
+ * `choices.length` rodadas mesmo se um check em modo `block` "melhorasse" com menos alcance.
  */
 function checkChoiceSatisfiability(input: StoryAnalysisInput): {
   findings: StoryAnalysisFinding[];
   unsatisfiableChoiceIds: Set<string>;
 } {
   const sceneIds = new Set(input.scenes.map(s => s.id));
-  const outgoing = new Map<string, string[]>();
-  for (const choice of input.choices) {
-    if (!sceneIds.has(choice.sceneId) || !sceneIds.has(choice.nextSceneId)) continue;
-    if (!outgoing.has(choice.sceneId)) outgoing.set(choice.sceneId, []);
-    outgoing.get(choice.sceneId)!.push(choice.nextSceneId);
-  }
-
   const startIds = input.scenes.filter(s => s.isStart).map(s => s.id);
-  const levelByScene = new Map<string, number>();
-  const queue: string[] = [];
-  for (const id of startIds) {
-    if (!levelByScene.has(id)) {
-      levelByScene.set(id, 0);
-      queue.push(id);
-    }
-  }
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    const currentLevel = levelByScene.get(current)!;
-    for (const next of outgoing.get(current) ?? []) {
-      if (!levelByScene.has(next)) {
-        levelByScene.set(next, currentLevel + 1);
-        queue.push(next);
-      }
-    }
-  }
-
-  function canReachSelf(sceneId: string): boolean {
-    const visited = new Set<string>();
-    const stack = [...(outgoing.get(sceneId) ?? [])];
-    while (stack.length > 0) {
-      const current = stack.pop()!;
-      if (current === sceneId) return true;
-      if (visited.has(current)) continue;
-      visited.add(current);
-      stack.push(...(outgoing.get(current) ?? []));
-    }
-    return false;
-  }
-
-  const choiceLevelById = new Map<string, number>();
-  for (const choice of input.choices) {
-    const level = levelByScene.get(choice.sceneId);
-    if (level !== undefined) choiceLevelById.set(choice.id, level);
-  }
-
-  function effectLevel(effect: AnalysisEffect): number | undefined {
-    if (effect.entityType === 'Scene') return levelByScene.get(effect.entityId);
-    const choice = input.choices.find(c => c.id === effect.entityId);
-    return choice ? levelByScene.get(choice.sceneId) : undefined;
-  }
-
-  function isReachableBeforeOrAt(effects: AnalysisEffect[], maxLevel: number): boolean {
-    return effects.some(effect => {
-      const level = effectLevel(effect);
-      return level !== undefined && level <= maxLevel;
-    });
-  }
-
-  const itemGrantEffects = input.effects.filter(e => e.effectType === 'itemGrant');
-  const triggerSetEffects = input.effects.filter(e => e.effectType === 'triggerSet');
-
-  function evaluateRawCondition(check: AnalysisChoiceCheck, choiceLevel: number): boolean {
-    switch (check.type) {
-      case 'sceneCount': {
-        if (!check.sceneId) return false;
-        const sceneLevel = levelByScene.get(check.sceneId);
-        if (sceneLevel === undefined) return false;
-        if ((check.minVisits ?? 1) <= 1) return true;
-        return canReachSelf(check.sceneId);
-      }
-      case 'inventory': {
-        if (!check.itemId) return false;
-        if (check.itemPresence === 'lacks') return true;
-        return isReachableBeforeOrAt(itemGrantEffects.filter(e => e.itemId === check.itemId), choiceLevel);
-      }
-      case 'trigger': {
-        if (!check.triggerName) return false;
-        if (check.triggerState === 'unset') return true;
-        return isReachableBeforeOrAt(triggerSetEffects.filter(e => e.triggerName === check.triggerName), choiceLevel);
-      }
-      default:
-        return false;
-    }
-  }
+  const choiceById = new Map(input.choices.map(c => [c.id, c]));
 
   const checksByGroup = new Map<string, AnalysisChoiceCheck[]>();
   for (const check of input.choiceChecks) {
@@ -375,35 +299,125 @@ function checkChoiceSatisfiability(input: StoryAnalysisInput): {
     if (!groupsByChoice.has(group.choiceId)) groupsByChoice.set(group.choiceId, []);
     groupsByChoice.get(group.choiceId)!.push(group);
   }
+  const itemGrantEffects = input.effects.filter(e => e.effectType === 'itemGrant');
+  const triggerSetEffects = input.effects.filter(e => e.effectType === 'triggerSet');
 
   const unsatisfiableChoiceIds = new Set<string>();
-  const findings: StoryAnalysisFinding[] = [];
+  const maxIterations = input.choices.length + 1;
+  let changed = true;
+  let iterations = 0;
 
-  for (const choice of input.choices) {
-    const groups = groupsByChoice.get(choice.id);
-    if (!groups || groups.length === 0) continue;
-    const choiceLevel = choiceLevelById.get(choice.id);
-    if (choiceLevel === undefined) continue; // já reportado por checkSceneReachability/checkChoices
+  while (changed && iterations <= maxIterations) {
+    changed = false;
+    iterations++;
 
-    const satisfiable = groups.every(group => {
-      const checks = checksByGroup.get(group.id) ?? [];
-      if (checks.length === 0) return true;
-      const results = checks.map(check => {
-        const raw = evaluateRawCondition(check, choiceLevel);
-        return check.mode === 'block' ? !raw : raw;
+    const outgoing = new Map<string, string[]>();
+    for (const choice of input.choices) {
+      if (!sceneIds.has(choice.sceneId) || !sceneIds.has(choice.nextSceneId)) continue;
+      if (unsatisfiableChoiceIds.has(choice.id)) continue;
+      if (!outgoing.has(choice.sceneId)) outgoing.set(choice.sceneId, []);
+      outgoing.get(choice.sceneId)!.push(choice.nextSceneId);
+    }
+
+    const levelByScene = new Map<string, number>();
+    const queue: string[] = [];
+    for (const id of startIds) {
+      if (!levelByScene.has(id)) {
+        levelByScene.set(id, 0);
+        queue.push(id);
+      }
+    }
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const currentLevel = levelByScene.get(current)!;
+      for (const next of outgoing.get(current) ?? []) {
+        if (!levelByScene.has(next)) {
+          levelByScene.set(next, currentLevel + 1);
+          queue.push(next);
+        }
+      }
+    }
+
+    function canReachSelf(sceneId: string): boolean {
+      const visited = new Set<string>();
+      const stack = [...(outgoing.get(sceneId) ?? [])];
+      while (stack.length > 0) {
+        const current = stack.pop()!;
+        if (current === sceneId) return true;
+        if (visited.has(current)) continue;
+        visited.add(current);
+        stack.push(...(outgoing.get(current) ?? []));
+      }
+      return false;
+    }
+
+    function effectLevel(effect: AnalysisEffect): number | undefined {
+      if (effect.entityType === 'Scene') return levelByScene.get(effect.entityId);
+      if (unsatisfiableChoiceIds.has(effect.entityId)) return undefined;
+      const choice = choiceById.get(effect.entityId);
+      return choice ? levelByScene.get(choice.sceneId) : undefined;
+    }
+
+    function isReachableBeforeOrAt(effects: AnalysisEffect[], maxLevel: number): boolean {
+      return effects.some(effect => {
+        const level = effectLevel(effect);
+        return level !== undefined && level <= maxLevel;
       });
-      return group.combinator === 'OR' ? results.some(Boolean) : results.every(Boolean);
-    });
+    }
 
-    if (!satisfiable) {
-      unsatisfiableChoiceIds.add(choice.id);
-      findings.push(buildFinding(
-        'choices', 'warning', 'Choice',
-        { id: choice.id, name: choice.text || choice.id },
-        'analysis_choice_never_satisfiable'
-      ));
+    function evaluateRawCondition(check: AnalysisChoiceCheck, choiceLevel: number): boolean {
+      switch (check.type) {
+        case 'sceneCount': {
+          if (!check.sceneId) return false;
+          const sceneLevel = levelByScene.get(check.sceneId);
+          if (sceneLevel === undefined) return false;
+          if ((check.minVisits ?? 1) <= 1) return true;
+          return canReachSelf(check.sceneId);
+        }
+        case 'inventory': {
+          if (!check.itemId) return false;
+          if (check.itemPresence === 'lacks') return true;
+          return isReachableBeforeOrAt(itemGrantEffects.filter(e => e.itemId === check.itemId), choiceLevel);
+        }
+        case 'trigger': {
+          if (!check.triggerName) return false;
+          if (check.triggerState === 'unset') return true;
+          return isReachableBeforeOrAt(triggerSetEffects.filter(e => e.triggerName === check.triggerName), choiceLevel);
+        }
+        default:
+          return false;
+      }
+    }
+
+    for (const choice of input.choices) {
+      if (unsatisfiableChoiceIds.has(choice.id)) continue;
+      const groups = groupsByChoice.get(choice.id);
+      if (!groups || groups.length === 0) continue;
+      const choiceLevel = levelByScene.get(choice.sceneId);
+      if (choiceLevel === undefined) continue; // já reportado por checkSceneReachability/checkChoices
+
+      const satisfiable = groups.every(group => {
+        const checks = checksByGroup.get(group.id) ?? [];
+        if (checks.length === 0) return true;
+        const results = checks.map(check => {
+          const raw = evaluateRawCondition(check, choiceLevel);
+          return check.mode === 'block' ? !raw : raw;
+        });
+        return group.combinator === 'OR' ? results.some(Boolean) : results.every(Boolean);
+      });
+
+      if (!satisfiable) {
+        unsatisfiableChoiceIds.add(choice.id);
+        changed = true;
+      }
     }
   }
+
+  const findings = [...unsatisfiableChoiceIds].map(id => buildFinding(
+    'choices', 'warning', 'Choice',
+    { id, name: choiceById.get(id)?.text || id },
+    'analysis_choice_never_satisfiable'
+  ));
 
   return { findings, unsatisfiableChoiceIds };
 }

@@ -1143,6 +1143,7 @@
   "username_length_error": "Username must be between 3 and 20 characters",
   "username_placeholder": "Enter your username",
   "version": "Version",
+  "view_choice_details": "View choice details",
   "warning": "Warning",
   "weaknesses": "Weaknesses",
   "weaknesses_placeholder": "Enter character's weaknesses",

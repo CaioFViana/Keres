@@ -129,6 +129,7 @@ const SceneDetailScreen = () => {
   const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined); // State for previous scene
   const [nextScene, setNextScene] = useState<SceneSelect | undefined>(undefined); // State for next scene
   const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]); // State for choices
+  const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({}); // For choice target scene labels
   const {
     selectedTags: sceneTags,
     allNotes,
@@ -265,6 +266,19 @@ const SceneDetailScreen = () => {
     }
   }, [selectedStory?.id, sceneId, selectedStory?.type]);
 
+  const fetchSceneNames = useCallback(async () => {
+    if (!sceneServiceRef.current || !selectedStory?.id || selectedStory.type !== 'branching') {
+      setSceneNamesById({});
+      return;
+    }
+    try {
+      const allScenes = await sceneServiceRef.current.getAllByStoryId(selectedStory.id);
+      setSceneNamesById(Object.fromEntries(allScenes.map(s => [s.id, s.name])));
+    } catch (err) {
+      console.error('Failed to fetch scene name lookups:', err);
+    }
+  }, [selectedStory?.id, selectedStory?.type]);
+
   const fetchCharacterSceneRelations = useCallback(async () => {
     if (!characterSceneServiceRef.current || !selectedStory?.id || !sceneId) {
       setCharacterSceneRelations([]);
@@ -399,8 +413,9 @@ const SceneDetailScreen = () => {
       fetchPreviousNextScenes();
     } else if (selectedStory?.type === 'branching' && scene) {
       fetchChoicesForScene();
+      fetchSceneNames();
     }
-  }, [selectedStory, selectedStory?.type, scene, chapter, fetchPreviousNextScenes, fetchChoicesForScene]);
+  }, [selectedStory, selectedStory?.type, scene, chapter, fetchPreviousNextScenes, fetchChoicesForScene, fetchSceneNames]);
 
   const handleLocationPress = useCallback(() => {
     if (!location) return;
@@ -553,6 +568,7 @@ const SceneDetailScreen = () => {
         previousScene={previousScene}
         nextScene={nextScene}
         choicesForScene={choicesForScene}
+        sceneNamesById={sceneNamesById}
       />
 
       <SeeAlsoManager storyId={scene.storyId} entityType="Scene" entityId={sceneId} editable={false} />

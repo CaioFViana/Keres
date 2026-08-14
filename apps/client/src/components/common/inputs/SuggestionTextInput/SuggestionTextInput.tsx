@@ -114,10 +114,11 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.primary,
       borderRadius: 5,
       backgroundColor: colors.surface,
       minHeight: 50,
+      overflow: 'hidden',
     },
     inputField: {
       flex: 1,
@@ -128,9 +129,8 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       paddingHorizontal: 10,
       paddingVertical: 8,
       backgroundColor: colors.primary,
-      borderRadius: 5,
       marginLeft: -1, // Overlap border
-      height: '100%',
+      alignSelf: 'stretch',
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -182,8 +182,6 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       style={[
         styles.container,
         style,
-        commonInputStyles.input,
-        commonInputStyles.customComponentInput,
       ]}
     >
       <View style={styles.inputWrapper}>
@@ -195,6 +193,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
             commonInputStyles.input,
             { flex: 1, borderWidth: 0, backgroundColor: 'transparent', marginBottom: 0 },
           ]}
+          suppressInteractionBorder
           {...rest}
         />
         <TouchableOpacity

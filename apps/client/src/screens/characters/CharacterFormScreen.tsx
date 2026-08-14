@@ -499,7 +499,6 @@ const CharacterFormScreen = () => {
         value={gender || ''}
         onChangeText={setGender}
         type="character_gender"
-        style={commonInputStyles.input}
         storyId={selectedStory?.id || ''}
       />
 
@@ -509,7 +508,6 @@ const CharacterFormScreen = () => {
         value={race || ''}
         onChangeText={setRace}
         type="character_race"
-        style={commonInputStyles.input}
         storyId={selectedStory?.id || ''}
       />
 
@@ -519,7 +517,6 @@ const CharacterFormScreen = () => {
         value={subrace || ''}
         onChangeText={setSubrace}
         type="character_subrace"
-        style={commonInputStyles.input}
         storyId={selectedStory?.id || ''}
       />
 

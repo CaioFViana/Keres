@@ -8,6 +8,7 @@ module.exports = {
   // Ancorado em `test/` de propósito: `roots` agora inclui `src`, e um glob solto passaria a
   // procurar testes lá dentro também.
   testMatch: ['<rootDir>/test/**/*.test.ts', '<rootDir>/test/**/*.test.tsx'],
+  setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',

@@ -4,10 +4,25 @@ import { Platform, TextInput as RNTextInput, StyleSheet, TextInputProps } from '
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 
-type CustomTextInputProps = TextInputProps;
+type CustomTextInputProps = TextInputProps & {
+  /** The parent composite control already draws the focus boundary. */
+  suppressInteractionBorder?: boolean;
+};
 
 const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
-  ({ style, onBlur, onFocus, onPointerEnter, onPointerLeave, multiline, ...rest }, ref) => {
+  (
+    {
+      style,
+      onBlur,
+      onFocus,
+      onPointerEnter,
+      onPointerLeave,
+      multiline,
+      suppressInteractionBorder = false,
+      ...rest
+    },
+    ref,
+  ) => {
     const { colors } = useTheme();
     const requestFocusScroll = useContext(KeyboardAwareContext);
     const [isFocused, setIsFocused] = useState(false);
@@ -53,7 +68,7 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
     const requestedMinHeight = StyleSheet.flatten(style)?.minHeight;
     const heightOverride = requestedMinHeight ? { height: undefined } : null;
     const interactionStyle =
-      isFocused || (Platform.OS === 'web' && isHovered)
+      !suppressInteractionBorder && (isFocused || (Platform.OS === 'web' && isHovered))
         ? {
             borderColor: colors.primary,
             borderStyle: 'solid' as const,

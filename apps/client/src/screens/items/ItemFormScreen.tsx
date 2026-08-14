@@ -339,7 +339,6 @@ const ItemFormScreen = () => {
         value={category || ''}
         onChangeText={setCategory}
         type="item_category"
-        style={commonInputStyles.input}
         storyId={selectedStory?.id || ''}
       />
 
@@ -349,7 +348,6 @@ const ItemFormScreen = () => {
         value={initialState || ''}
         onChangeText={setInitialState}
         type="item_initial_state"
-        style={commonInputStyles.input}
         storyId={selectedStory?.id || ''}
       />
 

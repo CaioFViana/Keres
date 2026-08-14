@@ -373,7 +373,6 @@ const ItemJourneyFormScreen = () => {
         value={newState || ''}
         onChangeText={setNewState}
         type="item_state"
-        style={commonInputStyles.input}
         storyId={selectedStory?.id || ''}
       />
 

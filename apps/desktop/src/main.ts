@@ -45,6 +45,7 @@ const APP_ICON = app.isPackaged
 const SCHEME = 'app';
 
 const APP_NAME = 'Keres';
+const SQLITE_WEB_SMOKE_TEST = process.argv.includes('--sqlite-web-smoke-test');
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -98,6 +99,7 @@ async function createWindow() {
     width: 1280,
     height: 800,
     title: APP_NAME,
+    show: !SQLITE_WEB_SMOKE_TEST,
     icon: APP_ICON, // Windows/Linux taskbar + title bar. No-op on macOS - see app.dock.setIcon below.
     webPreferences: {
       contextIsolation: true,
@@ -108,6 +110,16 @@ async function createWindow() {
   win.webContents.on('render-process-gone', (_e, details) => {
     console.error('[desktop] renderer process gone:', details.reason);
   });
+  if (SQLITE_WEB_SMOKE_TEST) {
+    win.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+      console.log(`[sqlite-web-smoke][renderer:${level}] ${sourceId}:${line} ${message}`);
+    });
+    win.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+      console.error(
+        `[sqlite-web-smoke] failed to load ${validatedURL}: ${errorCode} ${errorDescription}`,
+      );
+    });
+  }
 
   // apps/client's DocumentTitleSync now keeps document.title in sync with whatever screen is
   // focused ("Keres: Character - Aragorn", "Keres: Story Settings", ...). Electron's default
@@ -115,6 +127,30 @@ async function createWindow() {
   // here, so nothing needs to be done beyond the `title` option above, which only covers the
   // brief window before that first render.
   await win.loadURL(`${SCHEME}://app/`);
+
+  if (SQLITE_WEB_SMOKE_TEST) {
+    try {
+      const result = await win.webContents.executeJavaScript(`
+        new Promise((resolve, reject) => {
+          const deadline = Date.now() + 30000;
+          const poll = () => {
+            const serialized = document.documentElement.dataset.keresSqliteWebSmoke;
+            const result = serialized ? JSON.parse(serialized) : undefined;
+            if (result?.status === 'passed') return resolve(result);
+            if (result?.status === 'failed') return reject(new Error(result.message));
+            if (Date.now() >= deadline) return reject(new Error('Timed out waiting for the SQLite web smoke probe.'));
+            setTimeout(poll, 50);
+          };
+          poll();
+        });
+      `);
+      console.log('[sqlite-web-smoke] passed:', result);
+      app.exit(0);
+    } catch (error) {
+      console.error('[sqlite-web-smoke] failed:', error);
+      app.exit(1);
+    }
+  }
 }
 
 /**

@@ -10,6 +10,7 @@
     "lint": "eslint src test vitest.config.ts --ext .ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:sqlite-web": "node test/run-sqlite-web-smoke.cjs",
     "build:main": "tsc -p tsconfig.json",
     "build": "bun run build:client && bun run build:main",
     "start": "bun run build && electron .",

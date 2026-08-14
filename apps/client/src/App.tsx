@@ -1,21 +1,25 @@
+import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
+import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
+import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
+import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
+import SyncConflictModal from '@/src/components/features/sync/SyncConflictModal/SyncConflictModal';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
-import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
-import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
-import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
-import SyncConflictModal from '@/src/components/features/sync/SyncConflictModal/SyncConflictModal';
 import { AppDrizzleClient, DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
-import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
 import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
+import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
 import { useUserSettingsStore } from './state/userSettingsStore';
+import {
+  runSqliteWebSmokeProbe,
+  shouldRunSqliteWebSmokeProbe,
+} from './testing/sqliteWebSmokeProbe';
 import { useTheme } from './theme';
 import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
@@ -89,6 +93,9 @@ const DatabaseInitializer = () => {
           await hydrateWebMediaStore();
         }
         await migrate(db);
+        if (shouldRunSqliteWebSmokeProbe) {
+          await runSqliteWebSmokeProbe(db);
+        }
         const initializedDrizzle = initializeDrizzle(db);
         setDrizzleClient(initializedDrizzle);
         setDbInitialized(true);

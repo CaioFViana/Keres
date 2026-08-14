@@ -121,6 +121,10 @@ Para campos que requerem listas de valores pré-definidos (como gêneros literá
 - **Raças/Sub-raças:** O sistema pode sugerir "Elfo", "Anão", "Humano", mas o usuário pode adicionar "Draconiano" ou "Meio-Orc", e sub-raças como "Elfo da Floresta" ou "Anão da Montanha".
 - **Tipos de Relação:** Além de "Irmão", "Mãe", "Amigo", o usuário pode adicionar "Mentor", "Rival", "Mestre/Aprendiz".
 
+## Ajuda integrada
+
+O cliente inclui um catálogo de ajuda em português e inglês, com busca local, páginas por tarefa, tabelas de campos visíveis e acesso contextual pelos cabeçalhos das telas.
+
 **Nota sobre Suggestions:**
 > O código está implementado para que o sistema tenha uma lista padrão de sugestões, porém está inutilizado no momento visto que a forma atual permite uma completa customização desta lista ao usuário, sendo populada apenas pelo que o usuário insere. No entanto, pode-se ver como uma melhoria futura adicionar entradas nesta tabela para "persistir mesmo que todas as entidades com o valor X sejam excluidas." Talvez um novo futuro drawer.
 

@@ -343,9 +343,32 @@ export type HelpStackParamList = {
 
 - Seções na ordem do §6, com o `summary` de cada página e ícone por seção; a seção "Comece por
   aqui" aberta, as demais recolhidas.
-- Busca no topo, com debounce, sobre título + resumo + palavras-chave + texto dos blocos — mesma
-  sensação da busca das listas de entidade.
+- **Barra de busca fixa no topo** (§7.3.1).
 - `setDocumentTitle` no foco, como as demais telas.
+
+#### 7.3.1 Busca da ajuda (`HelpSearchBar`)
+
+Decidido: a ajuda **não** entra na Busca Global (que é escopada por uma história e misturaria
+documentação com conteúdo narrativo). Em vez disso, a própria tela de ajuda tem busca própria —
+é o caminho principal para quem chega com uma dúvida específica em vez de querer navegar o
+índice.
+
+- **Escopo:** título, resumo, palavras-chave e o texto renderizável de todos os blocos da página
+  (parágrafos, listas, passos, exemplos, células das tabelas de campos, perguntas e respostas do
+  bloco `faq`). Só o idioma ativo.
+- **Índice em memória:** montado uma vez, na primeira renderização, a partir do registry — um
+  registro por página com o texto já achatado e **normalizado** (minúsculas e sem acentos), para
+  que "historia" ache "história". Não há I/O nem consulta ao banco: o conteúdo já está no bundle.
+- **Comportamento:** debounce igual ao das listas de entidade; enquanto houver texto, a lista
+  agrupada por seção dá lugar a uma **lista plana de resultados**; limpar o campo (botão ✕ ou
+  campo vazio) volta ao índice, com as seções no estado em que estavam.
+- **Resultado:** título da página, etiqueta da seção a que ela pertence e um trecho do texto que
+  casou, com o termo em destaque. Tocar abre a página.
+- **Ordenação:** casou no título > nas palavras-chave > no resumo > no corpo; empate resolvido
+  pela ordem do catálogo, para o resultado ser estável.
+- **Sem resultado:** mensagem com atalho para a página "Como usar esta ajuda" e para "Perguntas
+  frequentes", em vez de uma tela vazia sem saída.
+- Nada é persistido: a busca não guarda histórico nem sobrevive a sair da tela.
 
 ### 7.4 `HelpPageScreen`
 
@@ -357,8 +380,9 @@ export type HelpStackParamList = {
 ### 7.5 i18n
 
 Chaves novas (só chrome de navegação): `help_title`, `help_index_title`,
-`help_search_placeholder`, `help_no_results`, `help_page_not_found`,
-`help_language_fallback_notice`, `help_section_*` (9), `help_field_column_*` (3).
+`help_search_placeholder`, `help_search_clear`, `help_search_results_count`, `help_no_results`,
+`help_no_results_hint`, `help_page_not_found`, `help_language_fallback_notice`,
+`help_section_*` (9), `help_field_column_*` (3).
 Rodar `bun run locales:audit` ao final.
 
 ## 8. Testes
@@ -382,9 +406,13 @@ Rodar `bun run locales:audit` ao final.
   `SQLite`, `Drizzle`, `JWT`, `endpoint`, `payload`, `schema` fora de "Atributos Customizados",
   nomes de arquivo `.tsx`/`.ts`, `isDeleted`, `deletedAt`, `storyId`, ...). É a defesa automática
   do princípio nº 2 do §2.
+- **Busca da ajuda** (`src/help/__tests__/helpSearch.test.ts`): a função de busca é pura e testada
+  fora da tela — casa sem acento e sem diferenciar maiúsculas, encontra por palavra-chave e por
+  texto de bloco, respeita a ordenação do §7.3.1 e devolve vazio para termo inexistente.
 - **Telas** (RNTL, com o padrão de mocks do cliente — `__esModule: true` e factory
-  autossuficiente): índice renderiza seções, busca filtra, tocar item navega, cada tipo de bloco
-  renderiza, `pageId` inválido mostra erro.
+  autossuficiente): índice renderiza seções, digitar filtra e troca o índice pela lista de
+  resultados, limpar volta ao índice, tocar resultado navega, cada tipo de bloco renderiza,
+  `pageId` inválido mostra erro.
 - `bun run typecheck` e `bun run lint` em `apps/client`; `bun run test:report` para o agregado.
 
 ## 9. Fases de entrega
@@ -416,6 +444,6 @@ Rodar `bun run locales:audit` ao final.
   história, e `project_plan.md` não descreve comentários, "veja também", efeitos, condições de
   escolha, favoritos nem permissões de colaboração. A ajuda será escrita a partir do **código e
   das telas**; a fase 9 corrige os docs.
-- **Em aberto:** incluir páginas de ajuda nos resultados da Busca Global? Recomendo **não** na
-  v1 — a Busca Global é escopada por história e misturar documentação com conteúdo narrativo
-  confunde os resultados. A busca própria do índice de ajuda cobre o caso.
+- **Decidido:** páginas de ajuda **não** entram na Busca Global — ela é escopada por história e
+  misturar documentação com conteúdo narrativo confunde os resultados. A necessidade é atendida
+  pela barra de busca da própria tela de ajuda, especificada em §7.3.1.

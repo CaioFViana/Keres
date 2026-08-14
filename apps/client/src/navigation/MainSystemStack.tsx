@@ -62,6 +62,8 @@ import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
+import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
+import { screenHelpPage } from '../help/contextualHelp';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -90,6 +92,7 @@ export type MainSystemDrawerParamList = {
   StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
   Suggestions: undefined;
   StorySelection: undefined;
+  HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
 
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
@@ -450,7 +453,7 @@ const MainSystemNavigator = () => {
           resizable={!isCompact}
         />
       )}
-      screenOptions={({ navigation }) => ({
+      screenOptions={({ navigation, route }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,
         headerStyle: {
@@ -458,6 +461,11 @@ const MainSystemNavigator = () => {
         },
         headerTintColor: colors.text,
         headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />,
+        headerRight: screenHelpPage[route.name] ? () => (
+          <TouchableOpacity onPress={() => navigation.navigate('HelpDrawer', { screen: 'HelpPage', params: { pageId: screenHelpPage[route.name] } })} style={{ marginRight: 15 }} accessibilityLabel={t('help_title')}>
+            <Ionicons name="help-circle-outline" size={26} color={colors.text} />
+          </TouchableOpacity>
+        ) : undefined,
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
         drawerType: isWide ? 'permanent' : 'front',
@@ -758,6 +766,12 @@ const MainSystemNavigator = () => {
             }
           },
         })}
+      />
+      <Drawer.Screen
+        name="HelpDrawer"
+        component={HelpStackNavigator}
+        options={{ title: t('help_title'), drawerLabel: t('help_title') }}
+        listeners={({ navigation }) => ({ drawerItemPress: (e) => { e.preventDefault(); navigation.navigate('HelpDrawer', { screen: 'HelpIndex' }); } })}
       />
     </Drawer.Navigator>
     <GalleryMediaViewerOverlay />

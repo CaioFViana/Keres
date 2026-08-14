@@ -62,3 +62,7 @@ Exceções ao padrão:
 - **Galeria** não segue Lista→Detalhe→Formulário: é uma grade de mídia importada (`GalleryListScreen`, cards visuais em vez de linhas de lista) com uma tela de Detalhe por item (`GalleryDetailScreen`); a "criação" é o fluxo de importação de arquivos, não um formulário de campos.
 - **Atributos Customizados** (Story Schema) tem Listagem e Formulário de campo, mas não "Detalhe" - o campo em si não tem uma visualização separada da edição.
 - **Log de Operações** é somente leitura: tem Listagem e Detalhe, sem Formulário.
+
+## Ajuda
+
+O drawer **Ajuda** está disponível no menu principal e no menu de uma história. O índice é pesquisável e cada tela mapeada exibe um ícone de ajuda contextual que abre a página correspondente.

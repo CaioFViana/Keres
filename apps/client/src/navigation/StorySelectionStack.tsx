@@ -21,6 +21,8 @@ import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
+import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
+import { screenHelpPage } from '../help/contextualHelp';
 import { useTheme } from '../theme';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
@@ -49,6 +51,7 @@ export type StorySelectionDrawerParamList = {
   ImportExport: undefined;
   ExampleStories: undefined;
   Settings: undefined;
+  HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
 
 const Drawer = createDrawerNavigator<StorySelectionDrawerParamList>();
@@ -164,7 +167,7 @@ const StorySelectionNavigator = () => {
           resizable={!isCompact}
         />
       )}
-      screenOptions={({ navigation }) => ({
+      screenOptions={({ navigation, route }) => ({
         headerShown: true,
         headerStatusBarHeight: 0,
         headerStyle: {
@@ -172,6 +175,11 @@ const StorySelectionNavigator = () => {
         },
         headerTintColor: colors.text,
         headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation} />,
+        headerRight: screenHelpPage[route.name] ? () => (
+          <TouchableOpacity onPress={() => navigation.navigate('HelpDrawer', { screen: 'HelpPage', params: { pageId: screenHelpPage[route.name] } })} style={{ marginRight: 15 }} accessibilityLabel={t('help_title')}>
+            <Ionicons name="help-circle-outline" size={26} color={colors.text} />
+          </TouchableOpacity>
+        ) : undefined,
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
         drawerType: isWide ? 'permanent' : 'front',
@@ -257,6 +265,12 @@ const StorySelectionNavigator = () => {
           title: t('settings_title'),
           drawerLabel: t('settings_title'),
         }}
+      />
+      <Drawer.Screen
+        name="HelpDrawer"
+        component={HelpStackNavigator}
+        options={{ title: t('help_title'), drawerLabel: t('help_title') }}
+        listeners={({ navigation }) => ({ drawerItemPress: (e) => { e.preventDefault(); navigation.navigate('HelpDrawer', { screen: 'HelpIndex' }); } })}
       />
     </Drawer.Navigator>
   );

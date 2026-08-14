@@ -1,0 +1,40 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { helpSections } from '../../help/catalog';
+import { getHelpPage, getHelpPages } from '../../help/repository';
+import { searchHelp } from '../../help/search';
+import { HelpBlock } from '../../help/types';
+import { useTheme } from '../../theme';
+import { setDocumentTitle } from '../../utils/documentTitle';
+
+type HelpNavigation = NativeStackNavigationProp<{ HelpIndex: undefined; HelpPage: { pageId: string } }>;
+
+function HelpBlockRenderer({ block, navigation }: { block: HelpBlock; navigation: HelpNavigation }) {
+  const { colors } = useTheme(); const { t } = useTranslation();
+  const styles = StyleSheet.create({ text:{color:colors.text,fontSize:15,lineHeight:22,marginBottom:12}, h2:{color:colors.text,fontSize:20,fontWeight:'700',marginTop:14,marginBottom:8}, box:{backgroundColor:colors.surface,borderColor:colors.border,borderWidth:StyleSheet.hairlineWidth,borderRadius:8,padding:12,marginBottom:12}, muted:{color:colors.textSecondary,fontSize:14,lineHeight:20}, row:{flexDirection:'row',borderBottomColor:colors.border,borderBottomWidth:StyleSheet.hairlineWidth,paddingVertical:8}, cell:{flex:1,color:colors.text,fontSize:13,paddingRight:6} });
+  if (block.type === 'paragraph') return <Text style={styles.text}>{block.text}</Text>;
+  if (block.type === 'heading') return <Text style={styles.h2}>{block.text}</Text>;
+  if (block.type === 'steps' || block.type === 'list') return <View>{block.items.map((item, i) => <Text key={item} style={styles.text}>{block.type === 'steps' || block.ordered ? `${i + 1}. ` : '• '}{item}</Text>)}</View>;
+  if (block.type === 'path') return <Text style={styles.muted}>{block.segments.join(' › ')}</Text>;
+  if (block.type === 'callout' || block.type === 'example') return <View style={styles.box}>{block.type === 'example' && block.title ? <Text style={[styles.text,{fontWeight:'700'}]}>{block.title}</Text> : null}<Text style={styles.muted}>{block.text}</Text></View>;
+  if (block.type === 'fields') return <View style={styles.box}><View style={styles.row}><Text style={styles.cell}>{t('help_field_column_name')}</Text><Text style={styles.cell}>{t('help_field_column_write')}</Text><Text style={styles.cell}>{t('help_field_column_note')}</Text></View>{block.rows.map(row => <View key={row.key} style={styles.row}><Text style={styles.cell}>{row.label}</Text><Text style={styles.cell}>{row.whatToWrite}</Text><Text style={styles.cell}>{row.note ?? ''}</Text></View>)}</View>;
+  if (block.type === 'table') return <View style={styles.box}>{block.rows.map((row,i) => <View key={i} style={styles.row}>{row.map((cell,j) => <Text key={j} style={styles.cell}>{cell}</Text>)}</View>)}</View>;
+  if (block.type === 'faq') return <View>{block.items.map(item => <View key={item.question} style={styles.box}><Text style={[styles.text,{fontWeight:'700'}]}>{item.question}</Text><Text style={styles.muted}>{item.answer}</Text></View>)}</View>;
+  return <View>{block.pages.map(id => <TouchableOpacity key={id} onPress={() => navigation.push('HelpPage', { pageId: id })}><Text style={[styles.text,{color:colors.primary}]}>→ {getHelpPage(id, 'pt')?.title ?? id}</Text></TouchableOpacity>)}</View>;
+}
+
+export function HelpIndexScreen() {
+  const { t, i18n } = useTranslation(); const { colors } = useTheme(); const navigation = useNavigation<HelpNavigation>();
+  const [query,setQuery] = useState(''); const [debouncedQuery,setDebouncedQuery] = useState(''); const [open,setOpen] = useState<Record<string,boolean>>({start:true}); const pages = useMemo(() => getHelpPages(i18n.language),[i18n.language]); const results = useMemo(() => searchHelp(pages,debouncedQuery),[pages,debouncedQuery]);
+  useEffect(() => { const timeout = setTimeout(() => setDebouncedQuery(query), 250); return () => clearTimeout(timeout); }, [query]);
+  useFocusEffect(useCallback(() => { setDocumentTitle(t('help_index_title')); }, [t]));
+  const styles=StyleSheet.create({container:{flex:1,backgroundColor:colors.background},searchRow:{flexDirection:'row',alignItems:'center',margin:16,marginBottom:4},search:{flex:1,borderColor:colors.border,borderWidth:1,borderRadius:8,color:colors.text,padding:12,backgroundColor:colors.surface},clear:{marginLeft:8,padding:10},section:{marginHorizontal:16,marginTop:12,borderColor:colors.border,borderWidth:StyleSheet.hairlineWidth,borderRadius:8,overflow:'hidden'},sectionHeader:{padding:14,flexDirection:'row',justifyContent:'space-between',backgroundColor:colors.surface},title:{fontSize:17,fontWeight:'700',color:colors.text},card:{padding:14,borderTopColor:colors.border,borderTopWidth:StyleSheet.hairlineWidth},summary:{color:colors.textSecondary,marginTop:4,lineHeight:19},label:{color:colors.textSecondary,fontSize:12,marginBottom:3},empty:{padding:24,color:colors.textSecondary,textAlign:'center'}});
+  const openPage=(id:string)=>navigation.navigate('HelpPage',{pageId:id});
+  return <View style={styles.container}><View style={styles.searchRow}><TextInput value={query} onChangeText={setQuery} placeholder={t('help_search_placeholder')} placeholderTextColor={colors.textSecondary} style={styles.search} accessibilityLabel={t('help_search_placeholder')} />{!!query && <TouchableOpacity style={styles.clear} onPress={()=>setQuery('')} accessibilityLabel={t('help_search_clear')}><Ionicons name="close-circle" size={22} color={colors.textSecondary}/></TouchableOpacity>}</View>{debouncedQuery ? <ScrollView>{results.length ? <><Text style={styles.label}>{t('help_search_results_count',{count:results.length})}</Text>{results.map(({page,excerpt}) => <TouchableOpacity key={page.id} style={styles.card} onPress={()=>openPage(page.id)}><Text style={styles.label}>{t(helpSections.find(section=>section.pageIds.includes(page.id))?.titleKey ?? 'help_title')}</Text><Text style={styles.title}>{page.title}</Text><Text style={styles.summary}>{excerpt}</Text></TouchableOpacity>)}</> : <><Text style={styles.empty}>{t('help_no_results')}</Text><TouchableOpacity onPress={()=>openPage('using-this-help')}><Text style={styles.empty}>{t('help_no_results_hint')}</Text></TouchableOpacity><TouchableOpacity onPress={()=>openPage('faq')}><Text style={styles.empty}>{t('faq')}</Text></TouchableOpacity></>}</ScrollView> : <ScrollView>{helpSections.map(section => { const isOpen=!!open[section.id]; return <View key={section.id} style={styles.section}><TouchableOpacity style={styles.sectionHeader} onPress={()=>setOpen(old=>({...old,[section.id]:!isOpen}))}><Text style={styles.title}>{t(section.titleKey)}</Text><Ionicons name={isOpen?'chevron-up':'chevron-down'} size={20} color={colors.text}/></TouchableOpacity>{isOpen && section.pageIds.map(id=>{const page=getHelpPage(id,i18n.language); return page && <TouchableOpacity key={id} style={styles.card} onPress={()=>openPage(id)}><Text style={styles.title}>{page.title}</Text><Text style={styles.summary}>{page.summary}</Text></TouchableOpacity>})}</View> })}</ScrollView>}</View>;
+}
+
+export function HelpPageScreen() { const { t,i18n }=useTranslation(); const navigation=useNavigation<HelpNavigation>(); const route=useRoute<{key:string;name:'HelpPage';params:{pageId:string}}>(); const {colors}=useTheme(); const page=getHelpPage(route.params.pageId,i18n.language); useFocusEffect(useCallback(()=>{setDocumentTitle(page?.title ?? t('help_page_not_found'));},[page?.title,t])); return <ScrollView style={{flex:1,backgroundColor:colors.background}} contentContainerStyle={{padding:20,paddingBottom:48}}>{page ? <><Text style={{fontSize:26,fontWeight:'700',color:colors.text,marginBottom:16}}>{page.title}</Text>{page.blocks.map((block,index)=><HelpBlockRenderer key={index} block={block} navigation={navigation}/>)}</> : <Text style={{color:colors.text,fontSize:16}}>{t('help_page_not_found')}</Text>}</ScrollView>; }

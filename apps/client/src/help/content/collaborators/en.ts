@@ -2,36 +2,37 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'collaborators',
   title: 'Writing together',
-  summary: 'Invite people and choose what each can do.',
-  keywords: ['writing together', 'help'],
+  summary: 'Invite friends to read or edit a synchronized story.',
+  keywords: ['collaborator', 'owner', 'writer', 'reader'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'Collaborators have owner, writer, or reader roles. The owner controls access and can allow reader comments.',
+      text: 'Collaborators are friends who receive access to a story sent to a server. The owner controls access; writers edit; readers view.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
       type: 'example',
       title: 'Example',
-      text: 'Consult writing together when this part of your work needs a decision or review.',
+      text: 'You remain the owner, invite Joana as a writer to fill scenes, and Leo as a reader to follow the review.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
     {
       type: 'steps',
       items: [
-        'Open the matching screen from the menu.',
-        'Read the information or choose the needed action.',
-        'Confirm the change when the screen asks.',
-        'Return to the story or list to check the result.',
+        'Send the story to a server and become friends with the person on that same server.',
+        'Open Story menu › Story settings.',
+        'In the collaborators area, choose a friend and the wanted role.',
+        'For readers, turn on Allow reader comments if you want them to comment on fields.',
+        'Remove or change the role when collaboration ends.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'The result can appear in collaboration, synchronization, lists, or related details according to the action taken.',
+      text: 'Writers can change content according to story access; readers cannot edit. Comments, public favorites, and synchronization show collaborator data when their corresponding features are active.',
     },
-    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['friends', 'comments', 'sync-basics', 'story-settings'] },
   ],
 };
 export default page;

@@ -1,6 +1,6 @@
-import { getHelpPages } from '../repository';
-import { searchHelp } from '../search';
-import { HelpPage } from '../types';
+import { getHelpPages } from '../../src/help/repository';
+import { searchHelp } from '../../src/help/search';
+import { HelpPage } from '../../src/help/types';
 
 describe('help search', () => {
   const pages = getHelpPages('pt');

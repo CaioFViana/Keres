@@ -2,36 +2,36 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'sync-conflicts',
   title: 'When a conflict appears',
-  summary: 'Choose which version to keep when two changes compete.',
-  keywords: ['when a conflict appears', 'help'],
+  summary: 'Choose how to reconcile local and server changes.',
+  keywords: ['conflict', 'keep mine', 'server', 'synchronization'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'A conflict asks for a field-by-field decision: keep yours, keep the server version, accept a deletion, or postpone.',
+      text: 'A conflict appears when the app cannot automatically apply both a local change and a server change.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
       type: 'example',
       title: 'Example',
-      text: 'Consult when a conflict appears when this part of your work needs a decision or review.',
+      text: 'You edit a scene description offline while someone else edits that same description on the server. The dialog shows both versions.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
     {
       type: 'steps',
       items: [
-        'Open the matching screen from the menu.',
-        'Read the information or choose the needed action.',
-        'Confirm the change when the screen asks.',
-        'Return to the story or list to check the result.',
+        'Read the reason and element shown in the dialog.',
+        'When fields are contested, choose Mine or Server for each field.',
+        'Use Keep mine to send your choice or Keep server to discard the local copy.',
+        'If deletion is involved, confirm restoring your copy or accepting deletion. Use Postpone only to decide later.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'The result can appear in collaboration, synchronization, lists, or related details according to the action taken.',
+      text: 'The choice decides which version synchronizes again. While postponed, the conflict remains pending and can stop that change from being sent.',
     },
-    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['sync-basics', 'activity-log', 'account-limits'] },
   ],
 };
 export default page;

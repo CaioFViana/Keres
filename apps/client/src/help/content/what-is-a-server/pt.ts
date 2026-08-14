@@ -2,36 +2,36 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'what-is-a-server',
   title: 'O que é um servidor Keres',
-  summary: 'Entenda quando usar sincronização e colaboração.',
-  keywords: ['o que é um servidor keres', 'configurar'],
+  summary: 'Entenda quando usar um servidor para sincronizar e colaborar.',
+  keywords: ['servidor', 'offline', 'sincronizar', 'colaborar'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Um servidor é opcional: ele permite manter histórias entre aparelhos e trabalhar com outras pessoas.',
+      text: 'Um servidor Keres é um lugar opcional onde uma conta guarda uma cópia sincronizada das histórias. Ele permite trabalhar em mais de um aparelho e compartilhar uma história com colaboradores.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'Use o que é um servidor keres quando precisar adaptar o aplicativo ao seu modo de trabalhar.',
+      text: 'Você planeja no notebook sem internet e, mais tarde, o aplicativo sincroniza a história com seu servidor. No celular, entra na mesma conta e continua a revisão. Sem servidor, a história ainda funciona no aparelho onde foi criada.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'steps',
       items: [
-        'Abra a tela correspondente pelo menu.',
-        'Preencha ou escolha as opções disponíveis.',
-        'Salve ou confirme a alteração quando a tela solicitar.',
-        'Volte ao menu para usar o recurso atualizado.',
+        'No menu principal, abra Servidores.',
+        'Cadastre um servidor ou entre em uma conta existente.',
+        'Abra uma história e use Configurações da história para enviá-la ao servidor quando quiser sincronizá-la.',
+        'Para trabalhar junto, adicione colaboradores à história enviada ao servidor.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A alteração vale para o recurso escolhido e pode aparecer em formulários, buscas, colaboração ou sincronização relacionados.',
+      text: 'Histórias sem servidor continuam locais. Histórias ligadas a um servidor podem sincronizar mídias, mostrar atividade, usar colaboração e exigir resolução de conflitos quando a mesma informação é alterada em lugares diferentes.',
     },
-    { type: 'seeAlso', pages: ['story-settings', 'sync-basics', 'friends'] },
+    { type: 'seeAlso', pages: ['add-server', 'sync-basics', 'collaborators', 'data-and-backup'] },
   ],
 };
 export default page;

@@ -1,5 +1,5 @@
-import { getHelpPage } from '../repository';
-import { fieldSources } from '../fieldSources';
+import { getHelpPage } from '../../src/help/repository';
+import { fieldSources } from '../../src/help/fieldSources';
 
 describe('help field coverage', () => {
   it('documents every declared visible field', () => {

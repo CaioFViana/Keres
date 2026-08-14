@@ -2,36 +2,36 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'your-profile',
   title: 'Your profile',
-  summary: 'Choose how other people see you on a server.',
-  keywords: ['your profile', 'help'],
+  summary: 'Choose how your account appears on each server.',
+  keywords: ['profile', 'avatar', 'bio', 'tag'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'Your profile gathers display name, @tag, avatar, and bio. Friends use the @tag to find you.',
+      text: 'The profile belongs to your account on one server and includes avatar color, icon, and bio. Your @tag is how other people find you.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
       type: 'example',
       title: 'Example',
-      text: 'Consult your profile when this part of your work needs a decision or review.',
+      text: 'You choose a gold star and write “fantasy reviewer” so collaborators recognize your account on the server.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
     {
       type: 'steps',
       items: [
-        'Open the matching screen from the menu.',
-        'Read the information or choose the needed action.',
-        'Confirm the change when the screen asks.',
-        'Return to the story or list to check the result.',
+        'Open Servers from the main menu.',
+        'On the wanted server, tap the profile icon.',
+        'Choose Avatar color, Avatar icon, and write a Bio of up to 200 characters.',
+        'Save. To change your @tag, tap it in the server list and confirm the edit.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'The result can appear in collaboration, synchronization, lists, or related details according to the action taken.',
+      text: 'Your avatar and name appear in friendships, collaborators, comments, and public favorites on that server. The profile does not change the app’s local user.',
     },
-    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['friends', 'collaborators', 'app-settings'] },
   ],
 };
 export default page;

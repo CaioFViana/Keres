@@ -21,10 +21,15 @@ const projects = [
   ['desktop', 'apps/desktop', [['test:coverage', 'coverage']]],
 ];
 
-// The API ratchet applies to the union of unit and integration coverage, not either
-// report in isolation. The individual Vitest configs keep their own ratchets too.
-const mergedRatchets = {
-  api: { lines: 74, functions: 75, branches: 60 },
+// The API ratchet applies to the union of unit and integration coverage, not either report in
+// isolation. The other values mirror their workspace coverage configs, so the report shows the
+// same thresholds that CI enforces.
+const ratchets = {
+  shared: { lines: 92, functions: 80, branches: 65 },
+  client: { lines: 13, functions: 13, branches: 9 },
+  api: { lines: 71, functions: 72, branches: 57 },
+  admin: { lines: 71, functions: 53, branches: 47 },
+  desktop: { lines: 94, functions: 92, branches: 80 },
 };
 
 function run(command, args) {
@@ -131,6 +136,18 @@ function percent([found, hit]) {
   return found === 0 ? '—' : `${((hit / found) * 100).toFixed(1)}%`;
 }
 
+function coverageWithRatchet(coverage, kind, ratchet) {
+  if (!coverage) return '—';
+  const [found, hit] = coverage[kind];
+  if (found === 0) return '—';
+  const value = (hit / found) * 100;
+  const minimum = ratchet?.[kind];
+  if (minimum === undefined) return `${value.toFixed(1)}%`;
+  const difference = value - minimum;
+  const sign = difference >= 0 ? '+' : '';
+  return `${percent(coverage[kind])} / ${minimum}% (${sign}${difference.toFixed(1)} pp)`;
+}
+
 function meetsRatchet(coverage, ratchet) {
   return (
     !ratchet ||
@@ -178,7 +195,7 @@ for (const [name, path, commands] of projects) {
     code === 0
       ? mergeCoverage(executions.map((result) => parseLcov(path, result.coverageDirectory)))
       : null;
-  const ratchetFailure = coverage && !meetsRatchet(coverage, mergedRatchets[name]);
+  const ratchetFailure = coverage && !meetsRatchet(coverage, ratchets[name]);
   const finalCode = code || ratchetFailure ? 1 : 0;
   results.push({
     name,
@@ -197,9 +214,9 @@ printTable(
     result.code === 0 ? '✓' : '✗',
     String(result.tests.suites || '—'),
     String(result.tests.tests || '—'),
-    result.coverage ? percent(result.coverage.lines) : '—',
-    result.coverage ? percent(result.coverage.functions) : '—',
-    result.coverage ? percent(result.coverage.branches) : '—',
+    coverageWithRatchet(result.coverage, 'lines', ratchets[result.name]),
+    coverageWithRatchet(result.coverage, 'functions', ratchets[result.name]),
+    coverageWithRatchet(result.coverage, 'branches', ratchets[result.name]),
   ]),
 );
 
@@ -208,7 +225,7 @@ if (failed.length) {
   console.error('\nFalhas (últimas linhas de cada saída):');
   for (const result of failed) {
     const message = result.ratchetFailure
-      ? `Cobertura agregada abaixo do ratchet: ${JSON.stringify(mergedRatchets[result.name])}`
+      ? `Cobertura abaixo do ratchet: ${JSON.stringify(ratchets[result.name])}`
       : result.output.trim().split(/\r?\n/).slice(-30).join('\n');
     console.error(`\n[${result.name}]\n${message}`);
   }

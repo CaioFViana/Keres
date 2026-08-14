@@ -2,36 +2,36 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'sync-basics',
   title: 'Como a sincronização funciona',
-  summary: 'Trabalhe offline e envie mudanças quando conectar.',
-  keywords: ['como a sincronização funciona', 'ajuda'],
+  summary: 'Trabalhe offline e envie mudanças quando a história estiver ligada a um servidor.',
+  keywords: ['sincronizar', 'offline', 'servidor', 'mídia'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Sincronização envia a história ligada ao servidor, suas mudanças e mídias. Você pode trabalhar sem rede e sincronizar depois.',
+      text: 'Sincronização mantém a cópia local e a cópia de uma história no servidor atualizadas quando há conexão.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'Consulte como a sincronização funciona quando essa parte do trabalho precisar de uma decisão ou revisão.',
+      text: 'Você escreve no trem sem internet; ao voltar à rede, as alterações e mídias da história ligada ao servidor são enviadas.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'steps',
       items: [
-        'Abra a tela correspondente pelo menu.',
-        'Leia as informações ou escolha a ação necessária.',
-        'Confirme a alteração quando a tela pedir.',
-        'Volte à história ou à lista para conferir o resultado.',
+        'Cadastre um servidor e envie a história em Configurações da história.',
+        'Continue trabalhando mesmo offline.',
+        'Quando houver conexão, aguarde a sincronização; a lista de servidores mostra a última sincronização.',
+        'Resolva um conflito se o aplicativo apresentar a janela correspondente.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'O resultado pode aparecer em colaboração, sincronização, listas ou detalhes relacionados, conforme a ação realizada.',
+      text: 'Histórias locais não são enviadas por conta própria. Histórias sincronizadas podem aparecer em outros aparelhos, para colaboradores, no histórico e nos limites de mídia da conta.',
     },
-    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['what-is-a-server', 'sync-conflicts', 'activity-log'] },
   ],
 };
 export default page;

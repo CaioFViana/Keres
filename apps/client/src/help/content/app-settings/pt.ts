@@ -1,37 +1,39 @@
 import { HelpPage } from '../../types';
+
 const page: HelpPage = {
   id: 'app-settings',
   title: 'Configurações do aplicativo',
-  summary: 'Ajuste aparência, idioma e seu nome local.',
-  keywords: ['configurações do aplicativo', 'configurar'],
+  summary: 'Ajuste seu nome local, idioma e aparência do Keres neste aparelho.',
+  keywords: ['tema escuro', 'idioma', 'nome de usuário', 'redefinir aplicativo'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'As configurações controlam tema claro ou escuro, idioma e nome de usuário local; não são as configurações de uma história.',
+      text: 'Estas configurações controlam a aparência e a identificação local do aplicativo. Elas não alteram o Tema de uma história, que é uma informação sobre o assunto da narrativa.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'Use configurações do aplicativo quando precisar adaptar o aplicativo ao seu modo de trabalhar.',
+      text: 'Você pode usar o modo escuro à noite e escolher português para a interface, mantendo uma história cujo Tema é “perdão”. Uma escolha não muda a outra.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'steps',
       items: [
-        'Abra a tela correspondente pelo menu.',
-        'Preencha ou escolha as opções disponíveis.',
-        'Salve ou confirme a alteração quando a tela solicitar.',
-        'Volte ao menu para usar o recurso atualizado.',
+        'No menu principal, abra Configurações.',
+        'Em Usuário, escreva o nome que identifica você neste aparelho.',
+        'Em Idioma, escolha o idioma da interface. A Ajuda acompanha essa escolha.',
+        'Ative ou desative Modo escuro para mudar a aparência do aplicativo.',
+        'Use Redefinir aplicativo somente quando quiser apagar os dados locais e voltar à instalação inicial. Leia a confirmação antes de aceitar.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A alteração vale para o recurso escolhido e pode aparecer em formulários, buscas, colaboração ou sincronização relacionados.',
+      text: 'Idioma e aparência se aplicam a todo o aplicativo neste aparelho. O nome local não é o mesmo que o nome, a @tag ou o perfil de uma conta em servidor. Redefinir remove histórias locais, mídias e conexões salvas deste aparelho.',
     },
-    { type: 'seeAlso', pages: ['story-settings', 'sync-basics', 'friends'] },
+    { type: 'seeAlso', pages: ['your-profile', 'data-and-backup', 'using-this-help'] },
   ],
 };
 export default page;

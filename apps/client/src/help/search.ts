@@ -9,7 +9,8 @@ function findNormalizedMatch(value: string, needle: string): number {
   let normalizedValue = '';
   const originalIndexes: number[] = [];
 
-  for (let index = 0; index < value.length; ) {
+  let index = 0;
+  while (index < value.length) {
     const codePoint = value.codePointAt(index);
     if (codePoint === undefined) break;
     const character = String.fromCodePoint(codePoint);

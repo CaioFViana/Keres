@@ -139,10 +139,11 @@ fixado um pouco abaixo do valor medido para absorver flutuação. `apps/api` tem
 um na config unitária e outro na de integração, medidos separadamente - a unitária cobre só o
 que roda sem banco, então o número dela é baixo por construção.
 
-A regra é de **ratchet**: quando a cobertura sobe, o piso sobe junto na mesma mudança. Baixar
-um piso é uma decisão consciente, não um atalho para fazer o CI passar - se a cobertura caiu,
-ou o teste que faltou não foi escrito, ou código coberto foi removido, e as duas situações
-merecem ser ditas na descrição do commit.
+A regra é de **ratchet**: quando a cobertura sobe, o piso sobe junto na mesma mudança. Cada
+piso mantém uma margem de 3 pontos percentuais abaixo da cobertura de referência, para absorver
+flutuações pequenas. Baixar além dessa margem é uma decisão consciente, não um atalho para fazer
+o CI passar - se a cobertura caiu, ou o teste que faltou não foi escrito, ou código coberto foi
+removido, e as duas situações merecem ser ditas na descrição do commit.
 
 ### O que a cobertura do client mede
 

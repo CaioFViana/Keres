@@ -2,36 +2,36 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'add-server',
   title: 'Cadastrando um servidor',
-  summary: 'Adicione um servidor, crie uma conta ou entre em uma existente.',
-  keywords: ['cadastrando um servidor', 'configurar'],
+  summary: 'Conecte uma conta existente ou crie uma conta em um servidor Keres.',
+  keywords: ['servidor', 'endereço', 'entrar', 'criar conta'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Cadastrar um servidor guarda o endereço fornecido por quem o administra e permite criar ou usar sua conta nele.',
+      text: 'Este formulário adiciona ao aplicativo a conta que você usa em um servidor Keres.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'Use cadastrando um servidor quando precisar adaptar o aplicativo ao seu modo de trabalhar.',
+      text: 'Você recebe o endereço https://keres.exemplo.com. Com ele e sua conta, pode sincronizar a mesma história entre aparelhos.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'steps',
       items: [
-        'Abra a tela correspondente pelo menu.',
-        'Preencha ou escolha as opções disponíveis.',
-        'Salve ou confirme a alteração quando a tela solicitar.',
-        'Volte ao menu para usar o recurso atualizado.',
+        'No menu principal, abra Servidores e toque em adicionar.',
+        'Escolha Entrar para uma conta existente ou Criar conta para um cadastro novo.',
+        'Informe o Endereço do servidor, sem caminhos como /admin ou /swagger, seu nome de usuário e senha.',
+        'Ao criar conta, confirme a senha. Dê um Nome ao servidor se quiser reconhecê-lo na lista e confirme.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A alteração vale para o recurso escolhido e pode aparecer em formulários, buscas, colaboração ou sincronização relacionados.',
+      text: 'O servidor aparece na lista com o estado de conexão, sua @tag e a data da última sincronização. Depois você pode enviar histórias para ele, editar o perfil e trocar a senha.',
     },
-    { type: 'seeAlso', pages: ['story-settings', 'sync-basics', 'friends'] },
+    { type: 'seeAlso', pages: ['what-is-a-server', 'your-profile', 'sync-basics'] },
   ],
 };
 export default page;

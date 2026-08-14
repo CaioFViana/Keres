@@ -2,36 +2,36 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'friends',
   title: 'Amigos',
-  summary: 'Conecte-se com pessoas antes de colaborar.',
-  keywords: ['amigos', 'ajuda'],
+  summary: 'Envie e responda pedidos de amizade no mesmo servidor.',
+  keywords: ['amigo', 'tag', 'convite', 'aceitar'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Amizade permite enviar convites de colaboração. Você pode enviar, aceitar, recusar, cancelar ou desfazer uma amizade.',
+      text: 'Amizade liga duas contas no mesmo servidor. Ela é necessária antes de adicionar alguém como colaborador de uma história.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'Consulte amigos quando essa parte do trabalho precisar de uma decisão ou revisão.',
+      text: 'Você procura a @tag de Joana, envia o pedido e, depois que ela aceita, pode convidá-la para escrever na sua história.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'steps',
       items: [
-        'Abra a tela correspondente pelo menu.',
-        'Leia as informações ou escolha a ação necessária.',
-        'Confirme a alteração quando a tela pedir.',
-        'Volte à história ou à lista para conferir o resultado.',
+        'Abra Amigos no menu principal e toque em adicionar.',
+        'Escolha o servidor, informe a @tag da pessoa e toque em verificar.',
+        'Confirme o pedido quando a conta encontrada estiver correta.',
+        'Na lista, abra um pedido recebido para aceitar, recusar ou desfazer uma amizade.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'O resultado pode aparecer em colaboração, sincronização, listas ou detalhes relacionados, conforme a ação realizada.',
+      text: 'A amizade só vale no servidor escolhido. Depois de aceita, a pessoa pode ser selecionada como colaboradora; desfazer a amizade não apaga histórias, mas pode impedir novos convites.',
     },
-    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['your-profile', 'collaborators', 'what-is-a-server'] },
   ],
 };
 export default page;

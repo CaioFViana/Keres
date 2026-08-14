@@ -2,36 +2,35 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'activity-log',
   title: 'Activity history',
-  summary: 'See changes recorded in a synchronized story.',
-  keywords: ['activity history', 'help'],
+  summary: 'See synchronized story changes and who made them.',
+  keywords: ['activity', 'history', 'created at', 'updated at'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'History shows shared operations. Created at marks the start; Updated at marks the latest change.',
+      text: 'Activity history gathers recorded changes for a story connected to a server.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
       type: 'example',
       title: 'Example',
-      text: 'Consult activity history when this part of your work needs a decision or review.',
+      text: 'While reviewing a scene, you see that a collaborator updated it yesterday and open the record to understand the change.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
     {
       type: 'steps',
       items: [
-        'Open the matching screen from the menu.',
-        'Read the information or choose the needed action.',
-        'Confirm the change when the screen asks.',
-        'Return to the story or list to check the result.',
+        'Open Story menu › Activity history.',
+        'Use the list to find a creation, edit, or link.',
+        'Tap a record to see details and its related element.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'The result can appear in collaboration, synchronization, lists, or related details according to the action taken.',
+      text: 'Created at shows when an element began; Updated at shows its latest change. A local-only story does not have the same shared server history.',
     },
-    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['sync-basics', 'comments', 'collaborators'] },
   ],
 };
 export default page;

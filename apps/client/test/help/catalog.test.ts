@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { helpPageIds, helpSections } from '../catalog';
-import { helpRegistry } from '../generated/registry';
-import { getHelpPage } from '../repository';
+import { helpPageIds, helpSections } from '../../src/help/catalog';
+import { helpRegistry } from '../../src/help/generated/registry';
+import { getHelpPage } from '../../src/help/repository';
 
 describe('help catalog', () => {
   it('has a page in both supported languages for every catalog entry', () => {
@@ -12,7 +12,7 @@ describe('help catalog', () => {
     }
   });
   it('has no content folder outside the catalog', () => {
-    const contentDirectory = path.join(__dirname, '..', 'content');
+    const contentDirectory = path.join(__dirname, '../../src/help/content');
     const contentPageIds = fs
       .readdirSync(contentDirectory, { withFileTypes: true })
       .filter((entry) => entry.isDirectory())

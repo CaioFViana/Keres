@@ -1,4 +1,4 @@
-import { getHelpPages } from '../repository';
+import { getHelpPages } from '../../src/help/repository';
 
 const forbidden =
   /\b(ULID|tombstone|polimórfic|FK|SQLite|Drizzle|JWT|endpoint|payload|isDeleted|deletedAt|storyId)\b/i;

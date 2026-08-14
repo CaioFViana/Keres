@@ -9,7 +9,12 @@ import { AppAlertButton, AppAlertOptions, useAppAlertStore } from '../state/appA
  * plataformas (mesma base do `SyncConflictModal`, que sempre funcionou na web).
  */
 export const AppAlert = {
-  alert(title: string, message?: string, buttons?: AppAlertButton[], options?: AppAlertOptions): void {
+  alert(
+    title: string,
+    message?: string,
+    buttons?: AppAlertButton[],
+    options?: AppAlertOptions,
+  ): void {
     useAppAlertStore.getState().show(title, message, buttons, options);
   },
 };

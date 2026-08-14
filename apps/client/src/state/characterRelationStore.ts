@@ -1,4 +1,8 @@
-import { CharacterRelationServiceInterface, CharacterRelationWithNames, createCharacterRelationService } from '../services/storymanagement/CharacterRelationService';
+import {
+  CharacterRelationServiceInterface,
+  CharacterRelationWithNames,
+  createCharacterRelationService,
+} from '../services/storymanagement/CharacterRelationService';
 import { createEntityStore } from './createEntityStore';
 
 export type { FavoriteFilterState } from '../types/entityFilters';

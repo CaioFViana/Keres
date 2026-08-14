@@ -4,13 +4,24 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
 import apiClient, { isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
-import { createServerService, OwnedServerStory, ServerHasOwnedStoriesError } from '../../services/ServerService';
+import {
+  createServerService,
+  OwnedServerStory,
+  ServerHasOwnedStoriesError,
+} from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
@@ -21,10 +32,13 @@ interface ServerWithStatus extends ServerSelect {
   apiVersion: string | null;
 }
 
-type ServerManagementScreenNavigationProp = NativeStackNavigationProp<ServerManagementStackParamList, 'ServerManagement'>;
+type ServerManagementScreenNavigationProp = NativeStackNavigationProp<
+  ServerManagementStackParamList,
+  'ServerManagement'
+>;
 
 const ServerManagementScreen = () => {
-  useBackButtonHandler()
+  useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ServerManagementScreenNavigationProp>();
@@ -68,7 +82,7 @@ const ServerManagementScreen = () => {
   const loadAndPingServers = useCallback(async () => {
     try {
       const fetchedServers = await serverService.getAllServers();
-      const serversWithStatus: ServerWithStatus[] = fetchedServers.map(s => ({
+      const serversWithStatus: ServerWithStatus[] = fetchedServers.map((s) => ({
         ...s,
         pingStatus: 'pending',
         apiVersion: null,
@@ -106,14 +120,17 @@ const ServerManagementScreen = () => {
     };
   }, [isFocused, loadAndPingServers]);
 
-  const showOwnedStoriesBlock = useCallback((ownedStories: OwnedServerStory[]) => {
-    AppAlert.alert(
-      t('cannot_delete_server_owned_stories_title'),
-      t('cannot_delete_server_owned_stories_message', {
-        stories: ownedStories.map((story) => story.title).join(', '),
-      }),
-    );
-  }, [t]);
+  const showOwnedStoriesBlock = useCallback(
+    (ownedStories: OwnedServerStory[]) => {
+      AppAlert.alert(
+        t('cannot_delete_server_owned_stories_title'),
+        t('cannot_delete_server_owned_stories_message', {
+          stories: ownedStories.map((story) => story.title).join(', '),
+        }),
+      );
+    },
+    [t],
+  );
 
   const handleDeleteServer = async (serverId: string) => {
     try {
@@ -141,7 +158,7 @@ const ServerManagementScreen = () => {
           onPress: async () => {
             try {
               await serverService.deleteServer(serverId); // Delete from the database
-              setServers(prev => prev.filter(server => server.id !== serverId)); // Update servers state directly
+              setServers((prev) => prev.filter((server) => server.id !== serverId)); // Update servers state directly
               AppAlert.alert(t('success'), t('server_deleted_successfully'));
             } catch (err) {
               console.error('Failed to delete server:', err);
@@ -155,7 +172,7 @@ const ServerManagementScreen = () => {
           style: 'destructive',
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
@@ -180,7 +197,7 @@ const ServerManagementScreen = () => {
     try {
       const updated = await userApiService.updateOwnTag(server, newTag);
       await serverService.updateServer(server.id, { tag: updated.tag });
-      setServers(prev => prev.map(s => (s.id === server.id ? { ...s, tag: updated.tag } : s)));
+      setServers((prev) => prev.map((s) => (s.id === server.id ? { ...s, tag: updated.tag } : s)));
       handleCancelEditTag();
     } catch (err: any) {
       if (isOfflineError(err)) {
@@ -212,11 +229,15 @@ const ServerManagementScreen = () => {
   };
 
   const renderServerItem = ({ item }: { item: ServerWithStatus }) => (
-    <View style={[commonCardStyles.cardContainer, styles.serverItem, { borderColor: colors.border }]}>
+    <View
+      style={[commonCardStyles.cardContainer, styles.serverItem, { borderColor: colors.border }]}
+    >
       <View style={styles.serverInfo}>
         <Text style={[styles.serverName, { color: colors.text }]}>{item.name}</Text>
         <Text style={[styles.serverUrl, { color: colors.textSecondary }]}>{item.url}</Text>
-        <Text style={[styles.serverUser, { color: colors.textSecondary }]}>User: {item.userName}</Text>
+        <Text style={[styles.serverUser, { color: colors.textSecondary }]}>
+          User: {item.userName}
+        </Text>
         {editingTagServerId === item.id ? (
           <View style={styles.tagEditRow}>
             <Text style={[styles.tagAtPrefix, { color: colors.textSecondary }]}>@</Text>
@@ -246,7 +267,12 @@ const ServerManagementScreen = () => {
             <Text style={[styles.serverTag, { color: colors.primary }]}>
               {item.tag ? `@${item.tag}` : t('no_tag_set')}
             </Text>
-            <Ionicons name="pencil-outline" size={14} color={colors.textSecondary} style={{ marginLeft: 6 }} />
+            <Ionicons
+              name="pencil-outline"
+              size={14}
+              color={colors.textSecondary}
+              style={{ marginLeft: 6 }}
+            />
           </TouchableOpacity>
         )}
         {item.lastSyncDate && (
@@ -262,16 +288,27 @@ const ServerManagementScreen = () => {
           color={getPingIconColor(item.pingStatus)}
           style={{ marginRight: 10 }}
         />
-        <TouchableOpacity onPress={() => navigation.navigate('MyProfile', { serverId: item.id })} style={{ marginRight: 10 }}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('MyProfile', { serverId: item.id })}
+          style={{ marginRight: 10 }}
+        >
           <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('ChangePassword', { serverId: item.id })} style={{ marginRight: 10 }}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ChangePassword', { serverId: item.id })}
+          style={{ marginRight: 10 }}
+        >
           <Ionicons name="key-outline" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('ServerRegistration', { serverId: item.id })}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ServerRegistration', { serverId: item.id })}
+        >
           <Ionicons name="pencil-outline" size={24} color={colors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => void handleDeleteServer(item.id)} style={{ marginLeft: 10 }}>
+        <TouchableOpacity
+          onPress={() => void handleDeleteServer(item.id)}
+          style={{ marginLeft: 10 }}
+        >
           <Ionicons name="trash-outline" size={24} color={colors.error} />
         </TouchableOpacity>
       </View>
@@ -301,7 +338,11 @@ const ServerManagementScreen = () => {
         data={servers}
         renderItem={renderServerItem}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={{ color: colors.textSecondary, textAlign: 'center' }}>{t('no_servers_found')}</Text>}
+        ListEmptyComponent={
+          <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
+            {t('no_servers_found')}
+          </Text>
+        }
         contentContainerStyle={styles.listContentContainer}
       />
       <TouchableOpacity
@@ -394,7 +435,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: "#000000",
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

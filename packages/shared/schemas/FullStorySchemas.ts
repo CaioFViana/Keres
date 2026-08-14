@@ -30,45 +30,45 @@ import { SeeAlsoRelationSchema } from './SeeAlsoRelationSchemas';
 // This schema defines the structure for a full story export/import.
 // It includes the main story object and all its related entities as arrays.
 export const FullStoryExportSchema = z.object({
-    story: StorySchema,
-    chapters: z.array(ChapterSchema),
-    scenes: z.array(SceneSchema),
-    choices: z.array(ChoiceSchema),
-    characters: z.array(CharacterSchema),
-    locations: z.array(LocationSchema),
-    worldRules: z.array(WorldRuleSchema),
-    notes: z.array(NoteSchema),
-    noteRelations: z.array(NoteRelationSchema),
-    tags: z.array(TagSchema),
-    tagRelations: z.array(TagRelationSchema),
-    suggestions: z.array(SuggestionSchema),
-    characterRelations: z.array(CharacterRelationSchema),
-    characterScenes: z.array(CharacterSceneSchema),
-    galleryItems: z.array(GallerySchema),
-    // Opcional para que pacotes gerados antes da galeria virar N:N continuem importáveis.
-    galleryRelations: z.array(GalleryRelationSchema).optional(),
-    items: z.array(ItemSchema).optional(),
-    itemJourneys: z.array(ItemJourneySchema),
-    // Opcionais para manter importáveis exports legados que antecedem esses recursos.
-    storySchemaFields: z.array(StorySchemaFieldSchema).optional(),
-    attributeValues: z.array(AttributeValueSchema).optional(),
-    // Introduzido no formato V2; a migração V1 -> V2 fornece uma lista vazia quando ausente.
-    favorites: z.array(FavoriteSchema).optional(),
-    // Introduzidos no formato V3; migrações anteriores fornecem listas vazias.
-    comments: z.array(CommentSchema).optional(),
-    seeAlsoRelations: z.array(SeeAlsoRelationSchema).optional(),
-    // Mesmo motivo: exports legados sem este recurso continuam importáveis.
-    locationRelations: z.array(LocationRelationSchema).optional(),
-    // Introduzidos no formato V4 (checks/effects de Choice); migrações anteriores fornecem listas vazias.
-    choiceCheckGroups: z.array(ChoiceCheckGroupSchema).optional(),
-    choiceChecks: z.array(ChoiceCheckSchema).optional(),
-    effects: z.array(EffectSchema).optional(),
-    serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
-    // Ausente em exports de antes deste campo existir - `migrateStoryExport` normaliza para
-    // `CURRENT_STORY_FORMAT_VERSION` antes desta validação rodar, então o default aqui é só
-    // uma rede de segurança para chamadas que pulem a migração.
-    formatVersion: z.number().int().min(1).default(CURRENT_STORY_FORMAT_VERSION),
-    // Add other entities as they are defined in the schema
+  story: StorySchema,
+  chapters: z.array(ChapterSchema),
+  scenes: z.array(SceneSchema),
+  choices: z.array(ChoiceSchema),
+  characters: z.array(CharacterSchema),
+  locations: z.array(LocationSchema),
+  worldRules: z.array(WorldRuleSchema),
+  notes: z.array(NoteSchema),
+  noteRelations: z.array(NoteRelationSchema),
+  tags: z.array(TagSchema),
+  tagRelations: z.array(TagRelationSchema),
+  suggestions: z.array(SuggestionSchema),
+  characterRelations: z.array(CharacterRelationSchema),
+  characterScenes: z.array(CharacterSceneSchema),
+  galleryItems: z.array(GallerySchema),
+  // Opcional para que pacotes gerados antes da galeria virar N:N continuem importáveis.
+  galleryRelations: z.array(GalleryRelationSchema).optional(),
+  items: z.array(ItemSchema).optional(),
+  itemJourneys: z.array(ItemJourneySchema),
+  // Opcionais para manter importáveis exports legados que antecedem esses recursos.
+  storySchemaFields: z.array(StorySchemaFieldSchema).optional(),
+  attributeValues: z.array(AttributeValueSchema).optional(),
+  // Introduzido no formato V2; a migração V1 -> V2 fornece uma lista vazia quando ausente.
+  favorites: z.array(FavoriteSchema).optional(),
+  // Introduzidos no formato V3; migrações anteriores fornecem listas vazias.
+  comments: z.array(CommentSchema).optional(),
+  seeAlsoRelations: z.array(SeeAlsoRelationSchema).optional(),
+  // Mesmo motivo: exports legados sem este recurso continuam importáveis.
+  locationRelations: z.array(LocationRelationSchema).optional(),
+  // Introduzidos no formato V4 (checks/effects de Choice); migrações anteriores fornecem listas vazias.
+  choiceCheckGroups: z.array(ChoiceCheckGroupSchema).optional(),
+  choiceChecks: z.array(ChoiceCheckSchema).optional(),
+  effects: z.array(EffectSchema).optional(),
+  serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
+  // Ausente em exports de antes deste campo existir - `migrateStoryExport` normaliza para
+  // `CURRENT_STORY_FORMAT_VERSION` antes desta validação rodar, então o default aqui é só
+  // uma rede de segurança para chamadas que pulem a migração.
+  formatVersion: z.number().int().min(1).default(CURRENT_STORY_FORMAT_VERSION),
+  // Add other entities as they are defined in the schema
 });
 
 export type FullStoryExportType = z.infer<typeof FullStoryExportSchema>;

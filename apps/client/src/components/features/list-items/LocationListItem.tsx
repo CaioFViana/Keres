@@ -13,7 +13,11 @@ interface LocationListItemProps {
   onViewDetails: (locationId: string) => void;
 }
 
-const LocationListItem: React.FC<LocationListItemProps> = ({ location, onToggleFavorite, onViewDetails }) => {
+const LocationListItem: React.FC<LocationListItemProps> = ({
+  location,
+  onToggleFavorite,
+  onViewDetails,
+}) => {
   const { colors } = useTheme();
 
   const descriptionSummary = truncate(location.description, 150);
@@ -40,9 +44,7 @@ const LocationListItem: React.FC<LocationListItemProps> = ({ location, onToggleF
           {loc.politics ? `Politics: ${loc.politics}` : ''}
         </Text>
       )}
-      {loc.tags && loc.tags.length > 0 && (
-        <TagList tags={loc.tags} />
-      )}
+      {loc.tags && loc.tags.length > 0 && <TagList tags={loc.tags} />}
     </View>
   );
 

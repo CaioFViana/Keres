@@ -38,20 +38,37 @@ function buildInstance(replies: Reply[]) {
 
     if ('networkError' in reply) {
       return Promise.reject(
-        Object.assign(new AxiosError(reply.networkError, 'ERR_NETWORK', config as any), { request: {} }),
+        Object.assign(new AxiosError(reply.networkError, 'ERR_NETWORK', config as any), {
+          request: {},
+        }),
       );
     }
     if ('timeout' in reply) {
       return Promise.reject(
-        Object.assign(new AxiosError('timeout of 0ms exceeded', 'ECONNABORTED', config as any), { request: {} }),
+        Object.assign(new AxiosError('timeout of 0ms exceeded', 'ECONNABORTED', config as any), {
+          request: {},
+        }),
       );
     }
     if (reply.status >= 400) {
       return Promise.reject(
-        Object.assign(new AxiosError(`Request failed with status code ${reply.status}`, undefined, config as any), {
-          request: {},
-          response: { status: reply.status, data: reply.data, config, headers: {}, statusText: '' },
-        }),
+        Object.assign(
+          new AxiosError(
+            `Request failed with status code ${reply.status}`,
+            undefined,
+            config as any,
+          ),
+          {
+            request: {},
+            response: {
+              status: reply.status,
+              data: reply.data,
+              config,
+              headers: {},
+              statusText: '',
+            },
+          },
+        ),
       );
     }
     return { data: reply.data, status: reply.status, statusText: 'OK', headers: {}, config } as any;
@@ -66,7 +83,10 @@ function tokenProvider(overrides: Partial<TokenProvider> = {}): TokenProvider {
     getAccessToken: () => null,
     getRefreshToken: () => null,
     getServerUrl: () => SERVER.url,
-    refreshAccessToken: jest.fn(async () => ({ accessToken: 'novo-access', refreshToken: 'novo-refresh' })),
+    refreshAccessToken: jest.fn(async () => ({
+      accessToken: 'novo-access',
+      refreshToken: 'novo-refresh',
+    })),
     clearAuth: jest.fn(),
     ...overrides,
   };
@@ -160,14 +180,17 @@ describe('request interceptor', () => {
     expect(seen[0].headers?.Authorization).toBeUndefined();
   });
 
-  it.each(['/auth/login', '/auth/refresh'])('never attaches the access token to %s', async (url) => {
-    updateServerTokenCache(SERVER.id, 'access-1', 'refresh-1');
-    const { instance, seen } = buildInstance([{ status: 200 }]);
+  it.each(['/auth/login', '/auth/refresh'])(
+    'never attaches the access token to %s',
+    async (url) => {
+      updateServerTokenCache(SERVER.id, 'access-1', 'refresh-1');
+      const { instance, seen } = buildInstance([{ status: 200 }]);
 
-    await instance.post(url, {});
+      await instance.post(url, {});
 
-    expect(seen[0].headers?.Authorization).toBeUndefined();
-  });
+      expect(seen[0].headers?.Authorization).toBeUndefined();
+    },
+  );
 
   it('does not overwrite an Authorization header the caller set', async () => {
     updateServerTokenCache(SERVER.id, 'access-1', 'refresh-1');
@@ -217,7 +240,9 @@ describe('connectivity reporting', () => {
 
 describe('error normalization', () => {
   it('relays the message the API chose, instead of a generic one', async () => {
-    const { instance } = buildInstance([{ status: 403, data: { message: 'Story limit reached for your plan' } }]);
+    const { instance } = buildInstance([
+      { status: 403, data: { message: 'Story limit reached for your plan' } },
+    ]);
 
     await expect(instance.get('/stories')).rejects.toMatchObject({
       code: 'SERVER_ERROR_403',
@@ -256,7 +281,10 @@ describe('error normalization', () => {
 describe('token refresh on 401', () => {
   it('refreshes, retries the request and caches the new tokens', async () => {
     updateServerTokenCache(SERVER.id, 'expirado', 'refresh-1');
-    const { instance, seen } = buildInstance([{ status: 401 }, { status: 200, data: { ok: true } }]);
+    const { instance, seen } = buildInstance([
+      { status: 401 },
+      { status: 200, data: { ok: true } },
+    ]);
     const provider = tokenProvider();
     instance.setTokenProvider(provider);
 
@@ -315,7 +343,10 @@ describe('token refresh on 401', () => {
       refreshAccessToken: jest.fn(
         () =>
           new Promise((resolve) =>
-            setTimeout(() => resolve({ accessToken: 'novo-access', refreshToken: 'novo-refresh' }), 10),
+            setTimeout(
+              () => resolve({ accessToken: 'novo-access', refreshToken: 'novo-refresh' }),
+              10,
+            ),
           ),
       ),
     });
@@ -333,7 +364,9 @@ describe('token refresh on 401', () => {
     const provider = tokenProvider();
     instance.setTokenProvider(provider);
 
-    await expect(instance.post('/auth/refresh', {})).rejects.toMatchObject({ code: 'SERVER_ERROR_401' });
+    await expect(instance.post('/auth/refresh', {})).rejects.toMatchObject({
+      code: 'SERVER_ERROR_401',
+    });
     expect(provider.refreshAccessToken).not.toHaveBeenCalled();
   });
 

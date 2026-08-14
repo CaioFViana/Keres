@@ -15,14 +15,17 @@ class EventManager {
   off(eventName: string, callback: EventCallback) {
     const eventListeners = this.listeners.get(eventName);
     if (eventListeners) {
-      this.listeners.set(eventName, eventListeners.filter(cb => cb !== callback));
+      this.listeners.set(
+        eventName,
+        eventListeners.filter((cb) => cb !== callback),
+      );
     }
   }
 
   emit(eventName: string, payload: any) {
     const eventListeners = this.listeners.get(eventName);
     if (eventListeners) {
-      eventListeners.forEach(callback => callback(payload));
+      eventListeners.forEach((callback) => callback(payload));
     }
   }
 }

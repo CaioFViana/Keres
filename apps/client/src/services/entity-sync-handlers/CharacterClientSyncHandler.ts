@@ -51,7 +51,8 @@ export class CharacterClientSyncHandler implements ClientSyncEntityHandler {
 
     const characterChanges = update.changes as Partial<Character>;
 
-    await this.db.update(schema.characters)
+    await this.db
+      .update(schema.characters)
       .set({
         ...characterChanges,
         storyId: storyId,
@@ -72,7 +73,8 @@ export class CharacterClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.characters)
+    await this.db
+      .update(schema.characters)
       .set({
         storyId: storyId,
         isDeleted: true,

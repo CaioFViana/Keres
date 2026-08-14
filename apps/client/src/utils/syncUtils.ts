@@ -44,7 +44,7 @@ export async function recordLocalOperation(
   operationType: StoryUpdateType,
   entityType: string,
   entityId: string,
-  payload: Record<string, any>
+  payload: Record<string, any>,
 ): Promise<void> {
   if (!db) {
     console.error('recordLocalOperation: Drizzle client (db) not set.');
@@ -75,7 +75,8 @@ export async function recordLocalOperation(
   });
 
   // Update the story's lastOperationLog
-  await db.update(schema.stories)
+  await db
+    .update(schema.stories)
     .set({ lastOperationLog: nextOperationVersion, updatedAt: new Date() }) // Also update updatedAt
     .where(eq(schema.stories.id, storyId));
 
@@ -85,14 +86,16 @@ export async function recordLocalOperation(
   // never from the local write path that creates the entry in the first place.
   entityEventEmitter.emit('operation_log_updated', storyId);
 
-  console.log(`Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${nextOperationVersion}`);
+  console.log(
+    `Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${nextOperationVersion}`,
+  );
 }
 
 export async function getUserIdForOperation(
   db: AppDrizzleClient,
   serverService: ServerService,
   storyId: string,
-  currentLocalUserId: string
+  currentLocalUserId: string,
 ): Promise<string> {
   const story = await db.query.stories.findFirst({
     where: (stories, { eq }) => eq(stories.id, storyId),

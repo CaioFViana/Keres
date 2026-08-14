@@ -1,4 +1,3 @@
-
 class EventEmitter {
   private listeners: { [event: string]: Function[] } = {};
 
@@ -13,14 +12,14 @@ class EventEmitter {
     if (!this.listeners[event]) {
       return;
     }
-    this.listeners[event] = this.listeners[event].filter(l => l !== listener);
+    this.listeners[event] = this.listeners[event].filter((l) => l !== listener);
   }
 
   emit(event: string, ...args: any[]) {
     if (!this.listeners[event]) {
       return;
     }
-    this.listeners[event].forEach(listener => listener(...args));
+    this.listeners[event].forEach((listener) => listener(...args));
   }
 
   async emitAsync(event: string, ...args: any[]): Promise<void> {

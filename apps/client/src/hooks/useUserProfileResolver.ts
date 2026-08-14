@@ -34,56 +34,65 @@ export function useUserProfileResolver() {
   const { t } = useTranslation();
   const { userId: localUserId, username: localUsername } = useUserSettingsStore();
 
-  const resolveProfile = useCallback(async (
-    userId: string,
-    storyServer: ServerSelect | undefined,
-  ): Promise<ResolvedUserProfile> => {
-    const isCurrentUser = (!storyServer && userId === localUserId) || storyServer?.idUser === userId;
-    // Friendship sync keeps this local user row enriched with the friend's current name,
-    // icon and color. Prefer it over the network cache so a realtime refresh is immediately
-    // reflected by every consumer already mounted.
-    const localProfile = await db.query.users.findFirst({
-      where: eq(users.idUser, userId),
-      columns: { displayName: true, avatarColor: true, avatarIcon: true },
-    });
-    if (localProfile) {
-      return {
-        id: userId,
-        name: localProfile.displayName || (isCurrentUser ? storyServer?.userName || localUsername : undefined) || t('user_not_found'),
-        avatarColor: localProfile.avatarColor,
-        avatarIcon: localProfile.avatarIcon,
-        isCurrentUser,
-      };
-    }
-
-    if (!storyServer && isCurrentUser) {
-      return { id: userId, name: localUsername || t('user_not_found'), isCurrentUser: true };
-    }
-
-    if (storyServer) {
-      const cacheKey = `${storyServer.id}:${userId}`;
-      let request = remoteProfileCache.get(cacheKey);
-      if (!request) {
-        request = friendshipApiService.getUserDetails(storyServer, userId)
-          .then((user) => user ? ({
-            id: user.id,
-            name: user.username,
-            avatarColor: user.avatarColor,
-            avatarIcon: user.avatarIcon,
-            isCurrentUser: false,
-          }) : undefined)
-          .catch(() => {
-            remoteProfileCache.delete(cacheKey);
-            return undefined;
-          });
-        remoteProfileCache.set(cacheKey, request);
+  const resolveProfile = useCallback(
+    async (userId: string, storyServer: ServerSelect | undefined): Promise<ResolvedUserProfile> => {
+      const isCurrentUser =
+        (!storyServer && userId === localUserId) || storyServer?.idUser === userId;
+      // Friendship sync keeps this local user row enriched with the friend's current name,
+      // icon and color. Prefer it over the network cache so a realtime refresh is immediately
+      // reflected by every consumer already mounted.
+      const localProfile = await db.query.users.findFirst({
+        where: eq(users.idUser, userId),
+        columns: { displayName: true, avatarColor: true, avatarIcon: true },
+      });
+      if (localProfile) {
+        return {
+          id: userId,
+          name:
+            localProfile.displayName ||
+            (isCurrentUser ? storyServer?.userName || localUsername : undefined) ||
+            t('user_not_found'),
+          avatarColor: localProfile.avatarColor,
+          avatarIcon: localProfile.avatarIcon,
+          isCurrentUser,
+        };
       }
-      const remoteProfile = await request;
-      if (remoteProfile) return { ...remoteProfile, isCurrentUser };
-    }
 
-    return { id: userId, name: userId, isCurrentUser };
-  }, [db, localUserId, localUsername, t]);
+      if (!storyServer && isCurrentUser) {
+        return { id: userId, name: localUsername || t('user_not_found'), isCurrentUser: true };
+      }
+
+      if (storyServer) {
+        const cacheKey = `${storyServer.id}:${userId}`;
+        let request = remoteProfileCache.get(cacheKey);
+        if (!request) {
+          request = friendshipApiService
+            .getUserDetails(storyServer, userId)
+            .then((user) =>
+              user
+                ? {
+                    id: user.id,
+                    name: user.username,
+                    avatarColor: user.avatarColor,
+                    avatarIcon: user.avatarIcon,
+                    isCurrentUser: false,
+                  }
+                : undefined,
+            )
+            .catch(() => {
+              remoteProfileCache.delete(cacheKey);
+              return undefined;
+            });
+          remoteProfileCache.set(cacheKey, request);
+        }
+        const remoteProfile = await request;
+        if (remoteProfile) return { ...remoteProfile, isCurrentUser };
+      }
+
+      return { id: userId, name: userId, isCurrentUser };
+    },
+    [db, localUserId, localUsername, t],
+  );
 
   // Só invalida o cache compartilhado - quem quiser re-buscar perfis já exibidos precisa
   // do próprio listener de `friendship_changed` chamando seu próprio refetch (ver

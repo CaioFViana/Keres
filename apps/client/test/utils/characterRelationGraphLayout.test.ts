@@ -9,7 +9,12 @@ import {
 
 const character = (id: string, name = `Personagem ${id}`): GraphCharacter => ({ id, name });
 
-const relation = (id: string, charId1: string, charId2: string, relationType = 'irmão'): GraphRelation => ({
+const relation = (
+  id: string,
+  charId1: string,
+  charId2: string,
+  relationType = 'irmão',
+): GraphRelation => ({
   id,
   charId1,
   charId2,
@@ -17,7 +22,9 @@ const relation = (id: string, charId1: string, charId2: string, relationType = '
 });
 
 /** Nós desenhados como retângulos: qualquer sobreposição é texto ilegível na tela. */
-function overlappingPairs(nodes: { id: string; x: number; y: number; width: number; height: number }[]) {
+function overlappingPairs(
+  nodes: { id: string; x: number; y: number; width: number; height: number }[],
+) {
   const pairs: string[] = [];
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
@@ -103,7 +110,9 @@ describe('buildCharacterRelationGraphLayout', () => {
 
     expect(layout.edges).toHaveLength(1);
     expect(layout.edges[0]).toMatchObject({ id: 'r1', sourceId: 'a', targetId: 'b', label: 'mãe' });
-    expect(layout.edges[0].path).toMatch(/^M -?\d+(\.\d+)? -?\d+(\.\d+)? L -?\d+(\.\d+)? -?\d+(\.\d+)?$/);
+    expect(layout.edges[0].path).toMatch(
+      /^M -?\d+(\.\d+)? -?\d+(\.\d+)? L -?\d+(\.\d+)? -?\d+(\.\d+)?$/,
+    );
   });
 
   it('puts the relation label at the midpoint of its edge', () => {
@@ -154,7 +163,11 @@ describe('buildCharacterRelationGraphLayout', () => {
 
   it('keeps every node inside the reported canvas, respecting the padding', () => {
     const characters = Array.from({ length: 20 }, (_, index) => character(`c${index}`));
-    const relations = [relation('r1', 'c0', 'c1'), relation('r2', 'c2', 'c3'), relation('r3', 'c3', 'c4')];
+    const relations = [
+      relation('r1', 'c0', 'c1'),
+      relation('r2', 'c2', 'c3'),
+      relation('r3', 'c3', 'c4'),
+    ];
 
     const layout = buildCharacterRelationGraphLayout(characters, relations);
 
@@ -172,7 +185,9 @@ describe('buildCharacterRelationGraphLayout', () => {
       [relation('r1', 'a', 'b')],
     );
 
-    expect(layout.nodes.every((node) => node.width === NODE_WIDTH && node.height === NODE_HEIGHT)).toBe(true);
+    expect(
+      layout.nodes.every((node) => node.width === NODE_WIDTH && node.height === NODE_HEIGHT),
+    ).toBe(true);
   });
 
   it('wraps a long character name into at most two lines', () => {
@@ -187,7 +202,11 @@ describe('buildCharacterRelationGraphLayout', () => {
 
   it('is deterministic, so the same story always draws the same map', () => {
     const characters = Array.from({ length: 10 }, (_, index) => character(`c${index}`));
-    const relations = [relation('r1', 'c0', 'c1'), relation('r2', 'c1', 'c2'), relation('r3', 'c5', 'c6')];
+    const relations = [
+      relation('r1', 'c0', 'c1'),
+      relation('r2', 'c1', 'c2'),
+      relation('r3', 'c5', 'c6'),
+    ];
 
     const first = buildCharacterRelationGraphLayout(characters, relations);
     const second = buildCharacterRelationGraphLayout(characters, relations);
@@ -197,7 +216,9 @@ describe('buildCharacterRelationGraphLayout', () => {
 
   it('handles a large graph without blowing the call stack', () => {
     const characters = Array.from({ length: 2000 }, (_, index) => character(`c${index}`));
-    const relations = characters.slice(1).map((c, index) => relation(`r${index}`, `c${index}`, c.id));
+    const relations = characters
+      .slice(1)
+      .map((c, index) => relation(`r${index}`, `c${index}`, c.id));
 
     const layout = buildCharacterRelationGraphLayout(characters, relations);
 

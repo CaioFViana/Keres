@@ -15,7 +15,11 @@ import { entityEventEmitter } from '../utils/EventEmitter';
  * defaulting to owner. The old fail-open default let a reader edit for as long as their local
  * copy hadn't completed a sync cycle, since "unknown" was silently treated as "owner".
  */
-export function useStoryRole(storyId: string | undefined | null): { role: EffectiveStoryRole | null; canEdit: boolean; loading: boolean } {
+export function useStoryRole(storyId: string | undefined | null): {
+  role: EffectiveStoryRole | null;
+  canEdit: boolean;
+  loading: boolean;
+} {
   const drizzleDb = useDrizzle();
   const [role, setRole] = useState<EffectiveStoryRole | null>(null);
   const [loading, setLoading] = useState(true);

@@ -30,7 +30,10 @@ type TierRow = typeof tiers.$inferSelect;
 export class TierEnforcementService {
   /** Tier do usuário; se nenhum, o tier padrão de cadastro; se nenhum, ilimitado (`null`). */
   async getEffectiveTier(userId: string): Promise<TierRow | null> {
-    const user = await db.query.users.findFirst({ where: eq(users.id, userId), columns: { tierId: true } });
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { tierId: true },
+    });
     if (user?.tierId) {
       const tier = await db.query.tiers.findFirst({ where: eq(tiers.id, user.tierId) });
       if (tier) {
@@ -38,7 +41,9 @@ export class TierEnforcementService {
       }
     }
 
-    const settings = await db.query.registrationSettings.findFirst({ where: eq(registrationSettings.id, 'singleton') });
+    const settings = await db.query.registrationSettings.findFirst({
+      where: eq(registrationSettings.id, 'singleton'),
+    });
     if (settings?.defaultTierId) {
       const tier = await db.query.tiers.findFirst({ where: eq(tiers.id, settings.defaultTierId) });
       if (tier) {
@@ -73,13 +78,18 @@ export class TierEnforcementService {
     const handlers = [...syncService.getEntityHandlers().values()]
       // Favorite e Comment são metadados/anotações pessoais, não conteúdo da história - não
       // devem consumir nem ser bloqueados pelo limite de entidades do tier.
-      .filter((h) => h.entityName !== 'Story' && h.entityName !== 'Favorite' && h.entityName !== 'Comment');
+      .filter(
+        (h) =>
+          h.entityName !== 'Story' && h.entityName !== 'Favorite' && h.entityName !== 'Comment',
+      );
 
     if (tier.maxEntitiesPerStory !== null) {
       const counts = await Promise.all(handlers.map((h) => h.countForStoryIds([storyId])));
       const total = counts.reduce((sum, c) => sum + c, 0);
       if (total >= tier.maxEntitiesPerStory) {
-        throw new TierLimitExceededError(`Entity limit for this story reached for your plan (${tier.maxEntitiesPerStory}).`);
+        throw new TierLimitExceededError(
+          `Entity limit for this story reached for your plan (${tier.maxEntitiesPerStory}).`,
+        );
       }
     }
 
@@ -92,7 +102,9 @@ export class TierEnforcementService {
       const counts = await Promise.all(handlers.map((h) => h.countForStoryIds(storyIds)));
       const total = counts.reduce((sum, c) => sum + c, 0);
       if (total >= tier.maxEntitiesTotal) {
-        throw new TierLimitExceededError(`Total entity limit reached for your plan (${tier.maxEntitiesTotal}).`);
+        throw new TierLimitExceededError(
+          `Total entity limit reached for your plan (${tier.maxEntitiesTotal}).`,
+        );
       }
     }
   }
@@ -102,7 +114,11 @@ export class TierEnforcementService {
    * globalmente, então duas histórias referenciando o mesmo hash devem contar os bytes
    * uma vez para cada uma (é o que elas "usam"), não uma vez só no total do servidor.
    */
-  async assertCanUploadMedia(userId: string, storyId: string, incomingBytes: number): Promise<void> {
+  async assertCanUploadMedia(
+    userId: string,
+    storyId: string,
+    incomingBytes: number,
+  ): Promise<void> {
     const tier = await this.getEffectiveTier(userId);
     if (!tier || (tier.maxStorageBytesPerStory === null && tier.maxStorageBytesTotal === null)) {
       return;
@@ -114,7 +130,9 @@ export class TierEnforcementService {
         .from(galleries)
         .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)));
       if (used + incomingBytes > tier.maxStorageBytesPerStory) {
-        throw new TierLimitExceededError(`Storage limit for this story reached for your plan (${tier.maxStorageBytesPerStory} bytes).`);
+        throw new TierLimitExceededError(
+          `Storage limit for this story reached for your plan (${tier.maxStorageBytesPerStory} bytes).`,
+        );
       }
     }
 
@@ -125,7 +143,9 @@ export class TierEnforcementService {
         .innerJoin(stories, eq(galleries.storyId, stories.id))
         .where(and(eq(stories.userId, userId), eq(galleries.isDeleted, false)));
       if (used + incomingBytes > tier.maxStorageBytesTotal) {
-        throw new TierLimitExceededError(`Total storage limit reached for your plan (${tier.maxStorageBytesTotal} bytes).`);
+        throw new TierLimitExceededError(
+          `Total storage limit reached for your plan (${tier.maxStorageBytesTotal} bytes).`,
+        );
       }
     }
   }

@@ -7,7 +7,10 @@
  * is the unambiguous signal `onError` needs to relay the former and sanitize the latter.
  */
 export class AppError extends Error {
-  constructor(public readonly status: number, message: string) {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
     super(message);
     this.name = 'AppError';
   }

@@ -6,7 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
@@ -22,7 +25,10 @@ import { AppAlert } from '../../utils/AppAlert';
 const MIN_NEW_PASSWORD_LENGTH = 8;
 
 type ChangePasswordScreenRouteProp = RouteProp<ServerManagementStackParamList, 'ChangePassword'>;
-type ChangePasswordScreenNavigationProp = NativeStackNavigationProp<ServerManagementStackParamList, 'ChangePassword'>;
+type ChangePasswordScreenNavigationProp = NativeStackNavigationProp<
+  ServerManagementStackParamList,
+  'ChangePassword'
+>;
 
 const ChangePasswordScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -66,13 +72,15 @@ const ChangePasswordScreen = () => {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [drizzleDb, serverId, t]);
 
   useFocusEffect(
     useCallback(() => {
       navigation.setOptions({ title: t('change_password_title') });
-    }, [navigation, t])
+    }, [navigation, t]),
   );
 
   const handleSave = async () => {
@@ -117,38 +125,47 @@ const ChangePasswordScreen = () => {
   }
 
   if (error || !server) {
-    return <ScreenError message={error || t('server_not_found')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError message={error || t('server_not_found')} onGoBack={() => navigation.goBack()} />
+    );
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={styles.label}>{t('current_password')}</Text>
-          <TextInput
-            placeholder={t('current_password_placeholder')}
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            secureTextEntry
-          />
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={styles.label}>{t('current_password')}</Text>
+      <TextInput
+        placeholder={t('current_password_placeholder')}
+        value={currentPassword}
+        onChangeText={setCurrentPassword}
+        secureTextEntry
+      />
 
-          <Text style={styles.label}>{t('new_password')}</Text>
-          <TextInput
-            placeholder={t('new_password_placeholder')}
-            value={newPassword}
-            onChangeText={setNewPassword}
-            secureTextEntry
-          />
+      <Text style={styles.label}>{t('new_password')}</Text>
+      <TextInput
+        placeholder={t('new_password_placeholder')}
+        value={newPassword}
+        onChangeText={setNewPassword}
+        secureTextEntry
+      />
 
-          <Text style={styles.label}>{t('confirm_new_password')}</Text>
-          <TextInput
-            placeholder={t('confirm_new_password_placeholder')}
-            value={confirmNewPassword}
-            onChangeText={setConfirmNewPassword}
-            secureTextEntry
-          />
+      <Text style={styles.label}>{t('confirm_new_password')}</Text>
+      <TextInput
+        placeholder={t('confirm_new_password_placeholder')}
+        value={confirmNewPassword}
+        onChangeText={setConfirmNewPassword}
+        secureTextEntry
+      />
 
-          <Button onPress={handleSave} style={styles.saveButton} disabled={saving || !currentPassword || !newPassword || !confirmNewPassword}>
-            {saving ? t('saving') : t('save')}
-          </Button>
+      <Button
+        onPress={handleSave}
+        style={styles.saveButton}
+        disabled={saving || !currentPassword || !newPassword || !confirmNewPassword}
+      >
+        {saving ? t('saving') : t('save')}
+      </Button>
     </KeyboardAwareScreen>
   );
 };

@@ -13,7 +13,10 @@ let database: TestDatabase;
 let service: ReturnType<typeof createOperationLogService>;
 let clock: number;
 
-async function seedStory(id = STORY_ID, favoriteBehavior: 'global' | 'individual' | 'individual_public' = 'global') {
+async function seedStory(
+  id = STORY_ID,
+  favoriteBehavior: 'global' | 'individual' | 'individual_public' = 'global',
+) {
   const now = new Date();
   await database.db.insert(stories).values({
     id,
@@ -259,11 +262,14 @@ describe('privacy of individual favourites', () => {
 });
 
 describe('getFavoriteBehavior', () => {
-  it.each(['global', 'individual', 'individual_public'] as const)('reports %s', async (behavior) => {
-    await seedStory(STORY_ID, behavior);
+  it.each(['global', 'individual', 'individual_public'] as const)(
+    'reports %s',
+    async (behavior) => {
+      await seedStory(STORY_ID, behavior);
 
-    expect(await service.getFavoriteBehavior(STORY_ID)).toBe(behavior);
-  });
+      expect(await service.getFavoriteBehavior(STORY_ID)).toBe(behavior);
+    },
+  );
 
   it('falls back to individual for a story it cannot find, the safer default', async () => {
     expect(await service.getFavoriteBehavior('nao-existe')).toBe('individual');
@@ -272,7 +278,10 @@ describe('getFavoriteBehavior', () => {
   it('follows a change to the story setting', async () => {
     await seedStory(STORY_ID, 'global');
 
-    await database.db.update(stories).set({ favoriteBehavior: 'individual' }).where(eq(stories.id, STORY_ID));
+    await database.db
+      .update(stories)
+      .set({ favoriteBehavior: 'individual' })
+      .where(eq(stories.id, STORY_ID));
 
     expect(await service.getFavoriteBehavior(STORY_ID)).toBe('individual');
   });

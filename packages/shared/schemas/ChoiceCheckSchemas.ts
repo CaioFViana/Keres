@@ -29,7 +29,7 @@ export const CreateChoiceCheckDataSchema = ChoiceCheckSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  groupId: z.string().min(1, "Group ID cannot be empty"),
+  groupId: z.string().min(1, 'Group ID cannot be empty'),
   mode: z.enum(['block', 'enable']).default('block'),
   type: z.enum(['sceneCount', 'inventory', 'trigger']),
   order: z.number().default(0),

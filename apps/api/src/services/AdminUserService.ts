@@ -27,7 +27,9 @@ export class AdminUserNotFoundError extends Error {
  */
 export class RootAdminProtectedError extends Error {
   constructor() {
-    super('The root admin account cannot be modified or deleted through the admin panel. Change ROOT_ADMIN_USERNAME/ROOT_ADMIN_PASSWORD and restart the API instead.');
+    super(
+      'The root admin account cannot be modified or deleted through the admin panel. Change ROOT_ADMIN_USERNAME/ROOT_ADMIN_PASSWORD and restart the API instead.',
+    );
     this.name = 'RootAdminProtectedError';
   }
 }
@@ -73,10 +75,9 @@ export class AdminUserService {
   async list(query: AdminUserListQuery) {
     const conditions = [];
     if (query.search) {
-      conditions.push(or(
-        ilike(users.username, `%${query.search}%`),
-        ilike(users.tag, `%${query.search}%`),
-      ));
+      conditions.push(
+        or(ilike(users.username, `%${query.search}%`), ilike(users.tag, `%${query.search}%`)),
+      );
     }
     if (query.isAdmin !== undefined) {
       conditions.push(eq(users.isAdmin, query.isAdmin));
@@ -108,7 +109,9 @@ export class AdminUserService {
   }
 
   async create(input: AdminCreateUser) {
-    const existingUsername = await db.query.users.findFirst({ where: eq(users.username, input.username) });
+    const existingUsername = await db.query.users.findFirst({
+      where: eq(users.username, input.username),
+    });
     if (existingUsername) {
       throw new UsernameAlreadyTakenError();
     }
@@ -121,24 +124,30 @@ export class AdminUserService {
     // uso mesmo que o username não esteja, já que as duas colunas não compartilham unicidade.
     let created;
     try {
-      [created] = await db.insert(users).values({
-        id,
-        username: input.username,
-        tag: desiredTag,
-        password: hashedPassword,
-        isAdmin: input.isAdmin,
-        tierId: input.tierId ?? null,
-      }).returning(ADMIN_USER_RETURNING);
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        [created] = await db.insert(users).values({
+      [created] = await db
+        .insert(users)
+        .values({
           id,
           username: input.username,
-          tag: `${desiredTag}${id.slice(-4)}`,
+          tag: desiredTag,
           password: hashedPassword,
           isAdmin: input.isAdmin,
           tierId: input.tierId ?? null,
-        }).returning(ADMIN_USER_RETURNING);
+        })
+        .returning(ADMIN_USER_RETURNING);
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        [created] = await db
+          .insert(users)
+          .values({
+            id,
+            username: input.username,
+            tag: `${desiredTag}${id.slice(-4)}`,
+            password: hashedPassword,
+            isAdmin: input.isAdmin,
+            tierId: input.tierId ?? null,
+          })
+          .returning(ADMIN_USER_RETURNING);
       } else {
         throw error;
       }

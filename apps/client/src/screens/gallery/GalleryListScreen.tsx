@@ -118,41 +118,65 @@ const GalleryListScreen = () => {
       setDocumentTitle(t('gallery_title'));
       navigation.getParent()?.setOptions({
         title: t('gallery_title'),
-        headerRight: canEdit ? () => (
-          <TouchableOpacity onPress={handleAddMedia} style={{ marginRight: 15 }} disabled={importing}>
-            {importing
-              ? <ActivityIndicator size="small" color={colors.text} />
-              : <Ionicons name="add" size={30} color={colors.text} />}
-          </TouchableOpacity>
-        ) : undefined,
+        headerRight: canEdit
+          ? () => (
+              <TouchableOpacity
+                onPress={handleAddMedia}
+                style={{ marginRight: 15 }}
+                disabled={importing}
+              >
+                {importing ? (
+                  <ActivityIndicator size="small" color={colors.text} />
+                ) : (
+                  <Ionicons name="add" size={30} color={colors.text} />
+                )}
+              </TouchableOpacity>
+            )
+          : undefined,
       });
-    }, [navigation, colors.text, t, handleAddMedia, importing, canEdit])
+    }, [navigation, colors.text, t, handleAddMedia, importing, canEdit]),
   );
 
-  const handleViewDetails = useCallback((galleryId: string) => {
-    navigation.navigate('GalleryDetail', { galleryId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (galleryId: string) => {
+      navigation.navigate('GalleryDetail', { galleryId });
+    },
+    [navigation],
+  );
 
-  const handleToggleFavorite = useCallback(async (galleryId: string, isFavorite: boolean) => {
-    await toggleFavorite(galleryId, isFavorite);
-  }, [toggleFavorite]);
+  const handleToggleFavorite = useCallback(
+    async (galleryId: string, isFavorite: boolean) => {
+      await toggleFavorite(galleryId, isFavorite);
+    },
+    [toggleFavorite],
+  );
 
-  const renderGalleryItem = useCallback(({ item }: { item: GallerySelect }) => (
-    <GalleryGridItem media={item} onPress={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
-  ), [handleViewDetails, handleToggleFavorite]);
+  const renderGalleryItem = useCallback(
+    ({ item }: { item: GallerySelect }) => (
+      <GalleryGridItem
+        media={item}
+        onPress={handleViewDetails}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    ),
+    [handleViewDetails, handleToggleFavorite],
+  );
 
   const mediaTypeOptions = useMemo(
     () => MEDIA_TYPES.map((type) => ({ label: t(`media_type_${type}`), value: type })),
-    [t]
+    [t],
   );
 
-  const sortOptions = useMemo(() => [
-    { label: t('sort_by_created_at'), value: 'createdAt' },
-    { label: t('sort_by_title'), value: 'title' },
-    { label: t('sort_by_file_name'), value: 'fileName' },
-    { label: t('sort_by_size'), value: 'sizeBytes' },
-    { label: t('sort_by_updated_at'), value: 'updatedAt' },
-  ], [t]);
+  const sortOptions = useMemo(
+    () => [
+      { label: t('sort_by_created_at'), value: 'createdAt' },
+      { label: t('sort_by_title'), value: 'title' },
+      { label: t('sort_by_file_name'), value: 'fileName' },
+      { label: t('sort_by_size'), value: 'sizeBytes' },
+      { label: t('sort_by_updated_at'), value: 'updatedAt' },
+    ],
+    [t],
+  );
 
   const numColumns = breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2;
 

@@ -1,9 +1,18 @@
-import { CreateFavoriteDataSchema, CreateStoryUpdate, DeleteStoryUpdate, PartialFavoriteSchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateFavoriteDataSchema,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  PartialFavoriteSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { db } from '../../db';
 import { favorites } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
-export class FavoriteSyncHandler extends BaseSyncEntityHandler<typeof CreateFavoriteDataSchema, typeof PartialFavoriteSchema> {
+export class FavoriteSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateFavoriteDataSchema,
+  typeof PartialFavoriteSchema
+> {
   entityName = 'Favorite';
 
   constructor() {
@@ -35,7 +44,12 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<typeof CreateFavo
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     if (currentEntity.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only update their own favorites.');
     }
@@ -47,7 +61,12 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<typeof CreateFavo
     await super.update(userId, storyId, { ...update, changes }, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     if (currentEntity.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only remove their own favorites.');
     }

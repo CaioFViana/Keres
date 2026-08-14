@@ -23,7 +23,9 @@ describe('createULID', () => {
 
 describe('prepareNewEntityData', () => {
   it('fills in the sync bookkeeping fields a brand new entity needs', () => {
-    const entity = prepareNewEntityData<{ id: string; version: number; name: string }>({ name: 'Keres' });
+    const entity = prepareNewEntityData<{ id: string; version: number; name: string }>({
+      name: 'Keres',
+    });
 
     expect(entity.name).toBe('Keres');
     expect(entity.id).toMatch(/^[0-9A-Z]{26}$/);
@@ -52,47 +54,65 @@ describe('prepareNewEntityData', () => {
  */
 describe('getChangedFields', () => {
   it('returns nothing when the objects are equal', () => {
-    expect(getChangedFields({ name: 'Keres', version: 1 }, { name: 'Keres', version: 1 })).toEqual({});
-  });
-
-  it('reports only the fields that actually changed', () => {
-    expect(getChangedFields({ name: 'Keres', title: 'A', version: 1 }, { name: 'Nyx', title: 'A', version: 1 })).toEqual(
-      { name: 'Nyx' },
+    expect(getChangedFields({ name: 'Keres', version: 1 }, { name: 'Keres', version: 1 })).toEqual(
+      {},
     );
   });
 
+  it('reports only the fields that actually changed', () => {
+    expect(
+      getChangedFields(
+        { name: 'Keres', title: 'A', version: 1 },
+        { name: 'Nyx', title: 'A', version: 1 },
+      ),
+    ).toEqual({ name: 'Nyx' });
+  });
+
   it('reports a field that only exists in the new object', () => {
-    expect(getChangedFields({ name: 'Keres' } as any, { name: 'Keres', title: 'Deusa' })).toEqual({ title: 'Deusa' });
+    expect(getChangedFields({ name: 'Keres' } as any, { name: 'Keres', title: 'Deusa' })).toEqual({
+      title: 'Deusa',
+    });
   });
 
   it('marks a removed field as null, since JSON.stringify would drop undefined', () => {
-    const changes = getChangedFields({ name: 'Keres', title: 'Deusa' } as any, { name: 'Keres' } as any);
+    const changes = getChangedFields(
+      { name: 'Keres', title: 'Deusa' } as any,
+      { name: 'Keres' } as any,
+    );
 
     expect(changes).toEqual({ title: null });
     expect(JSON.parse(JSON.stringify(changes))).toEqual({ title: null });
   });
 
   it('distinguishes null from undefined as a new value', () => {
-    expect(getChangedFields({ title: 'Deusa' } as any, { title: null } as any)).toEqual({ title: null });
+    expect(getChangedFields({ title: 'Deusa' } as any, { title: null } as any)).toEqual({
+      title: null,
+    });
   });
 
   it('compares dates by instant, not by identity', () => {
     const instant = new Date('2026-08-11T18:00:00.000Z');
 
-    expect(getChangedFields({ updatedAt: instant }, { updatedAt: new Date(instant.getTime()) })).toEqual({});
+    expect(
+      getChangedFields({ updatedAt: instant }, { updatedAt: new Date(instant.getTime()) }),
+    ).toEqual({});
   });
 
   it('detects a date change that a naive object comparison would miss', () => {
     const older = new Date('2026-08-11T18:00:00.000Z');
     const newer = new Date('2026-08-12T18:00:00.000Z');
 
-    expect(getChangedFields({ updatedAt: older }, { updatedAt: newer })).toEqual({ updatedAt: newer });
+    expect(getChangedFields({ updatedAt: older }, { updatedAt: newer })).toEqual({
+      updatedAt: newer,
+    });
   });
 
   it('detects a date replaced by a non-date value', () => {
     const date = new Date('2026-08-11T18:00:00.000Z');
 
-    expect(getChangedFields({ deletedAt: date } as any, { deletedAt: null } as any)).toEqual({ deletedAt: null });
+    expect(getChangedFields({ deletedAt: date } as any, { deletedAt: null } as any)).toEqual({
+      deletedAt: null,
+    });
   });
 
   it('returns only the changed leaves of a nested object', () => {
@@ -109,13 +129,17 @@ describe('getChangedFields', () => {
   });
 
   it('replaces an array wholesale when any element differs', () => {
-    expect(getChangedFields({ tags: ['a', 'b'] }, { tags: ['a', 'c'] })).toEqual({ tags: ['a', 'c'] });
+    expect(getChangedFields({ tags: ['a', 'b'] }, { tags: ['a', 'c'] })).toEqual({
+      tags: ['a', 'c'],
+    });
     expect(getChangedFields({ tags: ['a'] }, { tags: ['a', 'b'] })).toEqual({ tags: ['a', 'b'] });
     expect(getChangedFields({ tags: ['a', 'b'] }, { tags: ['a', 'b'] })).toEqual({});
   });
 
   it('treats an array replacing an object as a change', () => {
-    expect(getChangedFields({ value: { a: 1 } } as any, { value: [1] } as any)).toEqual({ value: [1] });
+    expect(getChangedFields({ value: { a: 1 } } as any, { value: [1] } as any)).toEqual({
+      value: [1],
+    });
   });
 
   it('treats the whole new object as changed when there is no old object', () => {

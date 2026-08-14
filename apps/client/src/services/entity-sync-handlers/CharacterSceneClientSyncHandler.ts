@@ -1,4 +1,9 @@
-import { CharacterScene, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CharacterScene,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -49,7 +54,8 @@ export class CharacterSceneClientSyncHandler implements ClientSyncEntityHandler 
 
     const changes = update.changes as Partial<CharacterScene>;
 
-    await this.db.update(schema.characterScenes)
+    await this.db
+      .update(schema.characterScenes)
       .set({
         ...changes,
         updatedAt: new Date(),
@@ -68,7 +74,8 @@ export class CharacterSceneClientSyncHandler implements ClientSyncEntityHandler 
       return;
     }
 
-    await this.db.update(schema.characterScenes)
+    await this.db
+      .update(schema.characterScenes)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

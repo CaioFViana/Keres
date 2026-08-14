@@ -20,11 +20,12 @@ export const authRoutes = new Elysia()
       name: 'jwt',
       secret: env.JWT_SECRET,
       exp: '1h', // Access token expiration, consistent with index.ts
-      schema: t.Object({ // Define schema for JWT payload, consistent with index.ts
+      schema: t.Object({
+        // Define schema for JWT payload, consistent with index.ts
         userId: t.String(),
         username: t.String(),
-      })
-    })
+      }),
+    }),
   )
   .use(jwtRefresh) // Register jwtRefresh plugin
   .use(bearer())
@@ -37,7 +38,8 @@ export const authRoutes = new Elysia()
   })
   .post(
     '/login',
-    async ({ jwt, jwtRefresh, body, set, cookie }) => { // Destructure jwtRefresh and cookie
+    async ({ jwt, jwtRefresh, body, set, cookie }) => {
+      // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
       const user = await db.query.users.findFirst({
@@ -87,11 +89,12 @@ export const authRoutes = new Elysia()
         summary: 'User login',
         tags: ['Auth'],
       },
-    }
+    },
   )
   .post(
     '/register',
-    async ({ jwt, jwtRefresh, body, set, cookie }) => { // Destructure jwtRefresh and cookie
+    async ({ jwt, jwtRefresh, body, set, cookie }) => {
+      // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
       // Avaliado ao vivo a cada tentativa (ver RegistrationSettingsService) em vez de
@@ -157,7 +160,10 @@ export const authRoutes = new Elysia()
 
       // Sign JWT with userId and username as per the schema defined in index.ts
       const accessToken = await jwt.sign({ userId: newUser.id, username: newUser.username });
-      const refreshToken = await jwtRefresh.sign({ userId: newUser.id, username: newUser.username }); // Use jwtRefresh for refresh token
+      const refreshToken = await jwtRefresh.sign({
+        userId: newUser.id,
+        username: newUser.username,
+      }); // Use jwtRefresh for refresh token
 
       cookie['access_token'].set({
         value: accessToken,
@@ -175,7 +181,13 @@ export const authRoutes = new Elysia()
         maxAge: 7 * 24 * 3600, // 7 days
       });
 
-      return { accessToken, refreshToken, userId: newUser.id, username: newUser.username, tag: newUser.tag };
+      return {
+        accessToken,
+        refreshToken,
+        userId: newUser.id,
+        username: newUser.username,
+        tag: newUser.tag,
+      };
     },
     {
       body: t.Object({
@@ -186,11 +198,12 @@ export const authRoutes = new Elysia()
         summary: 'User registration',
         tags: ['Auth'],
       },
-    }
+    },
   )
   .post(
     '/refresh',
-    async ({ jwt, jwtRefresh, body, set, cookie }) => { // Destructure jwtRefresh and cookie
+    async ({ jwt, jwtRefresh, body, set, cookie }) => {
+      // Destructure jwtRefresh and cookie
       let refreshToken: string | undefined = body.refreshToken;
 
       if (!refreshToken && typeof cookie['refresh_token'].value === 'string') {
@@ -211,7 +224,10 @@ export const authRoutes = new Elysia()
 
       // Sign a new access token with the payload from the refresh token
       const newAccessToken = await jwt.sign({ userId: payload.userId, username: payload.username });
-      const newRefreshToken = await jwtRefresh.sign({ userId: payload.userId, username: payload.username }); // Generate a new refresh token
+      const newRefreshToken = await jwtRefresh.sign({
+        userId: payload.userId,
+        username: payload.username,
+      }); // Generate a new refresh token
 
       cookie['access_token'].set({
         value: newAccessToken,
@@ -229,7 +245,11 @@ export const authRoutes = new Elysia()
         maxAge: 7 * 24 * 3600, // 7 days
       });
 
-      return { accessToken: newAccessToken, refreshToken: newRefreshToken, username: payload.username };
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        username: payload.username,
+      };
     },
     {
       body: t.Object({
@@ -239,5 +259,5 @@ export const authRoutes = new Elysia()
         summary: 'Refresh access token',
         tags: ['Auth'],
       },
-    }
+    },
   );

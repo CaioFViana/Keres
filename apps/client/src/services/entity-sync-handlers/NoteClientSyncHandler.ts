@@ -51,7 +51,8 @@ export class NoteClientSyncHandler implements ClientSyncEntityHandler {
 
     const noteChanges = update.changes as Partial<Note>;
 
-    await this.db.update(schema.notes)
+    await this.db
+      .update(schema.notes)
       .set({
         ...noteChanges,
         storyId: storyId,
@@ -72,7 +73,8 @@ export class NoteClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.notes)
+    await this.db
+      .update(schema.notes)
       .set({
         storyId: storyId,
         isDeleted: true,

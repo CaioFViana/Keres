@@ -1,6 +1,12 @@
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { Location } from '@keres/shared/entities/Location';
-import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import {
+  RouteProp,
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +14,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
@@ -29,9 +39,11 @@ import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/comm
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
 
-
 type LocationFormScreenRouteProp = RouteProp<LocationStackParamList, 'LocationForm'>;
-type LocationFormScreenNavigationProp = NativeStackNavigationProp<LocationStackParamList, 'LocationForm'>;
+type LocationFormScreenNavigationProp = NativeStackNavigationProp<
+  LocationStackParamList,
+  'LocationForm'
+>;
 
 const LocationFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -90,9 +102,9 @@ const LocationFormScreen = () => {
       setDocumentTitle(isEditing ? t('edit_location_title') : t('create_location_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_location_title') : t('create_location_title'),
-        headerRight: () => <View/>
+        headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t])
+    }, [navigation, isEditing, t]),
   );
 
   useEffect(() => {
@@ -116,7 +128,9 @@ const LocationFormScreen = () => {
             setIsFavorite(fetchedLocation.isFavorite);
             setExtraNotes(fetchedLocation.extraNotes);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentLocationId!);
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
+              currentLocationId!,
+            );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Location not found:', currentLocationId);
@@ -160,7 +174,10 @@ const LocationFormScreen = () => {
     setLoading(true);
 
     try {
-      const locationData: Omit<Location, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
+      const locationData: Omit<
+        Location,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      > = {
         name: name.trim(),
         description,
         climate,
@@ -173,19 +190,31 @@ const LocationFormScreen = () => {
       let savedLocation: Location;
 
       if (isEditing) {
-        savedLocation = await locationServiceRef.current!.updateLocation(userId, currentLocationId!, locationData);
+        savedLocation = await locationServiceRef.current!.updateLocation(
+          userId,
+          currentLocationId!,
+          locationData,
+        );
         AppAlert.alert(t('success'), t('location_updated_successfully'));
       } else {
-        savedLocation = await locationServiceRef.current!.createLocation(userId, { ...locationData, storyId: selectedStory.id });
+        savedLocation = await locationServiceRef.current!.createLocation(userId, {
+          ...locationData,
+          storyId: selectedStory.id,
+        });
         AppAlert.alert(t('success'), t('location_created_successfully'));
         setCurrentLocationId(savedLocation.id);
       }
 
       if (savedLocation.id) {
         await persistTagRelations(savedLocation.id);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Location', savedLocation.id, customValues);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(
+          userId,
+          selectedStory.id,
+          'Location',
+          savedLocation.id,
+          customValues,
+        );
       }
-
 
       entityEventEmitter.emit('location_changed', selectedStory.id, savedLocation.id);
 
@@ -194,7 +223,6 @@ const LocationFormScreen = () => {
       } else {
         navigation.goBack();
       }
-
     } catch (err) {
       console.error('Failed to save location:', err);
       AppAlert.alert(t('error'), t('failed_to_save_location'));
@@ -227,9 +255,12 @@ const LocationFormScreen = () => {
     });
   };
 
-  const handleTagSelectionChange = useCallback((newSelection: string[]) => {
-    setSelectedTagIds(newSelection);
-  }, [setSelectedTagIds]);
+  const handleTagSelectionChange = useCallback(
+    (newSelection: string[]) => {
+      setSelectedTagIds(newSelection);
+    },
+    [setSelectedTagIds],
+  );
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -261,7 +292,7 @@ const LocationFormScreen = () => {
     },
     deleteButton: {
       backgroundColor: 'red',
-      marginBottom: 15
+      marginBottom: 15,
     },
     centered: {
       flex: 1,
@@ -289,120 +320,136 @@ const LocationFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_location_title') : t('create_location_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {t('location_form_description')}
-          </Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {isEditing ? t('edit_location_title') : t('create_location_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {t('location_form_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
-          <TextInput
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
+      <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
+      <TextInput
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
+      <TextInput
+        placeholder={t('description_placeholder')}
+        value={description || ''}
+        onChangeText={setDescription}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('field_climate')}</Text>
+      <TextInput
+        placeholder={t('climate_placeholder')}
+        value={climate || ''}
+        onChangeText={setClimate}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('field_culture')}</Text>
+      <TextInput
+        placeholder={t('culture_placeholder')}
+        value={culture || ''}
+        onChangeText={setCulture}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('field_politics')}</Text>
+      <TextInput
+        placeholder={t('politics_placeholder')}
+        value={politics || ''}
+        onChangeText={setPolitics}
+        style={commonInputStyles.input}
+      />
+
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
+          {t('is_favorite')}
+        </Text>
+        <ThemedSwitch
+          value={isFavorite}
+          onValueChange={setIsFavorite}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+      <TextInput
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes || ''}
+        onChangeText={setExtraNotes}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
+
+      <CustomAttributeFields
+        storyId={selectedStory?.id || ''}
+        fields={customFields}
+        values={customValues}
+        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+      />
+
+      <View style={styles.tagSection}>
+        <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+        <MultiSelectPill
+          options={availableTags.map((tag) => ({
+            label: tag.name,
+            value: tag.id,
+            color: tag.color || colors.primaryContainer,
+          }))}
+          selectedValues={selectedTagIds}
+          onSelectionChange={handleTagSelectionChange}
+          placeholder={t('select_tags_for_location')}
+          label={t('location_tags')}
+        />
+      </View>
+
+      {currentLocationId && selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+          <NoteManager
+            noteRelations={locationNoteRelations}
+            availableNotes={allNotes}
+            onSave={saveNoteRelation}
+            onDelete={deleteNoteRelation}
+            editable={true}
+            currentStoryId={selectedStory.id}
+            currentEntityId={currentLocationId}
+            currentEntityType="Location"
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-          <TextInput
-            placeholder={t('description_placeholder')}
-            value={description || ""}
-            onChangeText={setDescription}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
+      {currentLocationId && selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <SeeAlsoManager
+            storyId={selectedStory.id}
+            entityType="Location"
+            entityId={currentLocationId}
+            editable={true}
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('field_climate')}</Text>
-          <TextInput
-            placeholder={t('climate_placeholder')}
-            value={climate || ""}
-            onChangeText={setClimate}
-            style={commonInputStyles.input}
-          />
+      <Button onPress={handleSave} style={styles.saveButton}>
+        {t('save_location')}
+      </Button>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('field_culture')}</Text>
-          <TextInput
-            placeholder={t('culture_placeholder')}
-            value={culture || ""}
-            onChangeText={setCulture}
-            style={commonInputStyles.input}
-          />
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('field_politics')}</Text>
-          <TextInput
-            placeholder={t('politics_placeholder')}
-            value={politics || ""}
-            onChangeText={setPolitics}
-            style={commonInputStyles.input}
-          />
-
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ""}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
-          />
-
-          <CustomAttributeFields
-            storyId={selectedStory?.id || ''}
-            fields={customFields}
-            values={customValues}
-            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
-          />
-
-          <View style={styles.tagSection}>
-            <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-            <MultiSelectPill
-              options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
-              selectedValues={selectedTagIds}
-              onSelectionChange={handleTagSelectionChange}
-              placeholder={t('select_tags_for_location')}
-              label={t('location_tags')}
-            />
-          </View>
-
-          {currentLocationId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
-              <NoteManager
-                noteRelations={locationNoteRelations}
-                availableNotes={allNotes}
-                onSave={saveNoteRelation}
-                onDelete={deleteNoteRelation}
-                editable={true}
-                currentStoryId={selectedStory.id}
-                currentEntityId={currentLocationId}
-                currentEntityType="Location"
-              />
-            </View>
-          )}
-
-          {currentLocationId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <SeeAlsoManager storyId={selectedStory.id} entityType="Location" entityId={currentLocationId} editable={true} />
-            </View>
-          )}
-
-          <Button onPress={handleSave} style={styles.saveButton}>
-            {t('save_location')}
-          </Button>
-
-          {isEditing && (
-            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_location_title')}
-            </Button>
-          )}
+      {isEditing && (
+        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          {t('delete_location_title')}
+        </Button>
+      )}
     </KeyboardAwareScreen>
   );
 };

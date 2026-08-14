@@ -20,27 +20,96 @@ let characterId: string;
 let sceneId: string;
 let itemId: string;
 
-const create = (entity: string, id: string, data: Record<string, unknown>) => ({ type: 'create', entity, id, data } as CreateStoryUpdate);
-const remove = (entity: string, id: string, version: number) => ({ type: 'delete', entity, id, version } as DeleteStoryUpdate);
+const create = (entity: string, id: string, data: Record<string, unknown>) =>
+  ({ type: 'create', entity, id, data }) as CreateStoryUpdate;
+const remove = (entity: string, id: string, version: number) =>
+  ({ type: 'delete', entity, id, version }) as DeleteStoryUpdate;
 
 beforeEach(async () => {
   await truncateAll();
   userId = newId();
   storyId = newId();
   const now = new Date();
-  await db.insert(users).values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
-  await db.insert(stories).values({ id: storyId, userId, title: 'A Queda', type: 'linear', createdAt: now, updatedAt: now, version: 1, isDeleted: false } as never);
+  await db
+    .insert(users)
+    .values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
+  await db.insert(stories).values({
+    id: storyId,
+    userId,
+    title: 'A Queda',
+    type: 'linear',
+    createdAt: now,
+    updatedAt: now,
+    version: 1,
+    isDeleted: false,
+  } as never);
 
   const chapterId = newId();
   const locationId = newId();
   characterId = newId();
   sceneId = newId();
   itemId = newId();
-  await new ChapterSyncHandler().create(userId, storyId, create('Chapter', chapterId, { name: 'Prólogo', index: 1, summary: null, isFavorite: false, extraNotes: null }));
-  await new LocationSyncHandler().create(userId, storyId, create('Location', locationId, { name: 'Olímpo', description: null, climate: null, culture: null, politics: null, isFavorite: false, extraNotes: null }));
-  await new CharacterSyncHandler().create(userId, storyId, create('Character', characterId, { name: 'Keres' }));
-  await new SceneSyncHandler().create(userId, storyId, create('Scene', sceneId, { chapterId, locationId, name: 'Chegada', index: 0, summary: null, gap: null, gapType: null, duration: null, durationType: null, isStart: true, isFinish: false, isFavorite: false, extraNotes: null }));
-  await new ItemSyncHandler().create(userId, storyId, create('Item', itemId, { characterOwnerId: characterId, name: 'Chave de ônix', category: null, description: null, initialState: null, isFavorite: false, extraNotes: null }));
+  await new ChapterSyncHandler().create(
+    userId,
+    storyId,
+    create('Chapter', chapterId, {
+      name: 'Prólogo',
+      index: 1,
+      summary: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new LocationSyncHandler().create(
+    userId,
+    storyId,
+    create('Location', locationId, {
+      name: 'Olímpo',
+      description: null,
+      climate: null,
+      culture: null,
+      politics: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new CharacterSyncHandler().create(
+    userId,
+    storyId,
+    create('Character', characterId, { name: 'Keres' }),
+  );
+  await new SceneSyncHandler().create(
+    userId,
+    storyId,
+    create('Scene', sceneId, {
+      chapterId,
+      locationId,
+      name: 'Chegada',
+      index: 0,
+      summary: null,
+      gap: null,
+      gapType: null,
+      duration: null,
+      durationType: null,
+      isStart: true,
+      isFinish: false,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new ItemSyncHandler().create(
+    userId,
+    storyId,
+    create('Item', itemId, {
+      characterOwnerId: characterId,
+      name: 'Chave de ônix',
+      category: null,
+      description: null,
+      initialState: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
 });
 
 describe('collaboration sync entity handlers', () => {
@@ -49,13 +118,48 @@ describe('collaboration sync entity handlers', () => {
     const favorites = new FavoriteSyncHandler();
     const commentId = newId();
     const favoriteId = newId();
-    await comments.create(userId, storyId, create('Comment', commentId, { entityType: 'Character', entityId: characterId, fieldId: null, fieldKey: 'name', contentSnapshot: 'Keres', excerptText: null, authorUserId: userId, commentText: 'Rever este nome', criticality: 2 }));
-    await favorites.create(userId, storyId, create('Favorite', favoriteId, { userId, entityId: characterId, entityType: 'Character' }));
+    await comments.create(
+      userId,
+      storyId,
+      create('Comment', commentId, {
+        entityType: 'Character',
+        entityId: characterId,
+        fieldId: null,
+        fieldKey: 'name',
+        contentSnapshot: 'Keres',
+        excerptText: null,
+        authorUserId: userId,
+        commentText: 'Rever este nome',
+        criticality: 2,
+      }),
+    );
+    await favorites.create(
+      userId,
+      storyId,
+      create('Favorite', favoriteId, { userId, entityId: characterId, entityType: 'Character' }),
+    );
 
     const comment = await comments.findById(commentId);
-    await comments.update(userId, storyId, { type: 'update', entity: 'Comment', id: commentId, changes: { commentText: 'Nome aprovado', version: 1 } } as UpdateStoryUpdate, comment);
-    expect(await comments.findById(commentId)).toMatchObject({ commentText: 'Nome aprovado', version: 2 });
-    expect(await favorites.findById(favoriteId)).toMatchObject({ userId, entityId: characterId, isDeleted: false });
+    await comments.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'Comment',
+        id: commentId,
+        changes: { commentText: 'Nome aprovado', version: 1 },
+      } as UpdateStoryUpdate,
+      comment,
+    );
+    expect(await comments.findById(commentId)).toMatchObject({
+      commentText: 'Nome aprovado',
+      version: 2,
+    });
+    expect(await favorites.findById(favoriteId)).toMatchObject({
+      userId,
+      entityId: characterId,
+      isDeleted: false,
+    });
 
     const favorite = await favorites.findById(favoriteId);
     await favorites.delete(userId, storyId, remove('Favorite', favoriteId, 1), favorite);
@@ -70,15 +174,54 @@ describe('collaboration sync entity handlers', () => {
     const journeys = new ItemJourneySyncHandler();
     const characterSceneId = newId();
     const journeyId = newId();
-    await characterScenes.create(userId, storyId, create('CharacterScene', characterSceneId, { characterId, sceneId }));
-    await expect(characterScenes.create(userId, storyId, create('CharacterScene', newId(), { characterId, sceneId }))).rejects.toThrow(/already exists/i);
-    await journeys.create(userId, storyId, create('ItemJourney', journeyId, { itemId, sceneId, newCharacterOwnerId: characterId, newState: 'ativada', extraNotes: null }));
+    await characterScenes.create(
+      userId,
+      storyId,
+      create('CharacterScene', characterSceneId, { characterId, sceneId }),
+    );
+    await expect(
+      characterScenes.create(
+        userId,
+        storyId,
+        create('CharacterScene', newId(), { characterId, sceneId }),
+      ),
+    ).rejects.toThrow(/already exists/i);
+    await journeys.create(
+      userId,
+      storyId,
+      create('ItemJourney', journeyId, {
+        itemId,
+        sceneId,
+        newCharacterOwnerId: characterId,
+        newState: 'ativada',
+        extraNotes: null,
+      }),
+    );
 
-    expect(await characterScenes.findById(characterSceneId)).toMatchObject({ characterId, sceneId, version: 1 });
-    expect(await journeys.findById(journeyId)).toMatchObject({ itemId, sceneId, newCharacterOwnerId: characterId, newState: 'ativada' });
+    expect(await characterScenes.findById(characterSceneId)).toMatchObject({
+      characterId,
+      sceneId,
+      version: 1,
+    });
+    expect(await journeys.findById(journeyId)).toMatchObject({
+      itemId,
+      sceneId,
+      newCharacterOwnerId: characterId,
+      newState: 'ativada',
+    });
 
     const journey = await journeys.findById(journeyId);
-    await journeys.update(userId, storyId, { type: 'update', entity: 'ItemJourney', id: journeyId, changes: { newState: 'consumida', version: 1 } } as UpdateStoryUpdate, journey);
+    await journeys.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'ItemJourney',
+        id: journeyId,
+        changes: { newState: 'consumida', version: 1 },
+      } as UpdateStoryUpdate,
+      journey,
+    );
     expect(await journeys.findById(journeyId)).toMatchObject({ newState: 'consumida', version: 2 });
 
     for (const [entity, id, handler, version] of [

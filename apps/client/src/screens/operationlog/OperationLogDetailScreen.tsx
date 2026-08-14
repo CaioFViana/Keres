@@ -50,16 +50,27 @@ const REFERENCE_FIELD_ENTITY_TYPES: Record<string, OperationLogEntityType> = {
 
 const getOperationIcon = (operationType: string): keyof typeof Ionicons.glyphMap => {
   switch (operationType) {
-    case 'create': return 'add-circle-outline';
-    case 'update': return 'create-outline';
-    case 'delete': return 'trash-outline';
-    case 'reorder': return 'repeat-outline';
-    default: return 'help-circle-outline';
+    case 'create':
+      return 'add-circle-outline';
+    case 'update':
+      return 'create-outline';
+    case 'delete':
+      return 'trash-outline';
+    case 'reorder':
+      return 'repeat-outline';
+    default:
+      return 'help-circle-outline';
   }
 };
 
-type OperationLogDetailScreenRouteProp = RouteProp<OperationLogStackParamList, 'OperationLogDetail'>;
-type OperationLogDetailScreenNavigationProp = NativeStackNavigationProp<OperationLogStackParamList, 'OperationLogDetail'>;
+type OperationLogDetailScreenRouteProp = RouteProp<
+  OperationLogStackParamList,
+  'OperationLogDetail'
+>;
+type OperationLogDetailScreenNavigationProp = NativeStackNavigationProp<
+  OperationLogStackParamList,
+  'OperationLogDetail'
+>;
 
 const OperationLogDetailScreen: React.FC = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -74,7 +85,9 @@ const OperationLogDetailScreen: React.FC = () => {
   const [operationLog, setOperationLog] = useState<OperationLogSelect | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [operationLogService, setOperationLogService] = useState<ReturnType<typeof createOperationLogService> | null>(null);
+  const [operationLogService, setOperationLogService] = useState<ReturnType<
+    typeof createOperationLogService
+  > | null>(null);
 
   useEffect(() => {
     if (drizzleDb) {
@@ -128,16 +141,19 @@ const OperationLogDetailScreen: React.FC = () => {
       navigation.setOptions({
         title: t('operation_log_detail_title'),
       });
-    }, [navigation, t])
+    }, [navigation, t]),
   );
 
   const { entityName: mainEntityName, loading: mainEntityLoading } = useEntityName(
     operationLog?.entityType as OperationLogEntityType,
     operationLog?.entityId || '',
-    operationLog?.storyId || ''
+    operationLog?.storyId || '',
   );
 
-  const userDisplayName = useUserDisplayName(operationLog?.userId || '', operationLog?.storyId || '');
+  const userDisplayName = useUserDisplayName(
+    operationLog?.userId || '',
+    operationLog?.storyId || '',
+  );
 
   const styles = StyleSheet.create({
     container: {
@@ -260,7 +276,9 @@ const OperationLogDetailScreen: React.FC = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.textSecondary, marginTop: 10 }}>{t('loading_details')}...</Text>
+        <Text style={{ color: colors.textSecondary, marginTop: 10 }}>
+          {t('loading_details')}...
+        </Text>
       </View>
     );
   }
@@ -273,7 +291,10 @@ const OperationLogDetailScreen: React.FC = () => {
     return <Text style={styles.errorText}>{t('operation_log_not_found')}</Text>;
   }
 
-  const formattedDate = operationLog.createdAt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  const formattedDate = operationLog.createdAt.toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
   const payload = operationLog.payload ? JSON.parse(operationLog.payload) : null;
 
   return (
@@ -281,7 +302,11 @@ const OperationLogDetailScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.headerCard}>
           <View style={styles.headerTopRow}>
-            <Ionicons name={getOperationIcon(operationLog.operationType)} size={22} color={colors.primary} />
+            <Ionicons
+              name={getOperationIcon(operationLog.operationType)}
+              size={22}
+              color={colors.primary}
+            />
             <Text style={styles.headerTitle} numberOfLines={2}>
               {t(operationLog.operationType)} {mainEntityName || t('unknown_entity')}
             </Text>
@@ -289,11 +314,21 @@ const OperationLogDetailScreen: React.FC = () => {
           <Text style={styles.headerSubtitle}>{t(operationLog.entityType)}</Text>
 
           <View style={styles.metaRow}>
-            <Ionicons name="person-circle-outline" size={18} color={colors.textSecondary} style={styles.metaIcon} />
+            <Ionicons
+              name="person-circle-outline"
+              size={18}
+              color={colors.textSecondary}
+              style={styles.metaIcon}
+            />
             <Text style={styles.metaText}>{userDisplayName}</Text>
           </View>
           <View style={styles.metaRow}>
-            <Ionicons name="time-outline" size={18} color={colors.textSecondary} style={styles.metaIcon} />
+            <Ionicons
+              name="time-outline"
+              size={18}
+              color={colors.textSecondary}
+              style={styles.metaIcon}
+            />
             <Text style={styles.metaText}>{formattedDate}</Text>
           </View>
           <View style={styles.metaRow}>
@@ -304,7 +339,8 @@ const OperationLogDetailScreen: React.FC = () => {
               style={styles.metaIcon}
             />
             <Text style={styles.metaText}>
-              {operationLog.isSynced ? t('synced') : t('pending')} (v{operationLog.serverOperationVersion})
+              {operationLog.isSynced ? t('synced') : t('pending')} (v
+              {operationLog.serverOperationVersion})
             </Text>
           </View>
         </View>
@@ -322,7 +358,9 @@ const OperationLogDetailScreen: React.FC = () => {
                       // 'Chapter' reordena as Cenas daquele capítulo (ver
                       // ChapterService.reorderChapters / SceneService.reorderScenes).
                       entityType={
-                        operationLog.entityType === OperationLogEntityType.Story ? OperationLogEntityType.Chapter : OperationLogEntityType.Scene
+                        operationLog.entityType === OperationLogEntityType.Story
+                          ? OperationLogEntityType.Chapter
+                          : OperationLogEntityType.Scene
                       }
                       entityId={item.id}
                       storyId={operationLog.storyId}
@@ -338,7 +376,9 @@ const OperationLogDetailScreen: React.FC = () => {
               // services/storymanagement/*.ts) - o rótulo vem de entityFieldMetadata quando a
               // entidade tem metadados cadastrados, senão de uma versão "humanizada" da chave.
               Object.entries(payload).map(([key, value]) => {
-                const fieldMeta = entityFieldMetadata[operationLog.entityType]?.find((f) => f.name === key);
+                const fieldMeta = entityFieldMetadata[operationLog.entityType]?.find(
+                  (f) => f.name === key,
+                );
                 const label = fieldMeta ? t(fieldMeta.label) : humanizeFieldName(key);
                 const referenceEntityType = REFERENCE_FIELD_ENTITY_TYPES[key];
 
@@ -362,7 +402,12 @@ const OperationLogDetailScreen: React.FC = () => {
                           style={styles.changeValue}
                         />
                       ) : typeof value === 'string' && ISO_DATE_PATTERN.test(value) ? (
-                        <Text style={styles.changeValue}>{new Date(value).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</Text>
+                        <Text style={styles.changeValue}>
+                          {new Date(value).toLocaleString('en-US', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                        </Text>
                       ) : typeof value === 'object' ? (
                         <Text style={styles.jsonValue}>{JSON.stringify(value, null, 2)}</Text>
                       ) : (
@@ -413,7 +458,7 @@ const ResolvedFieldValue: React.FC<{
     };
   }, [db, entityType, entityId, storyId, t]);
 
-  return <Text style={style}>{loading ? '…' : (name || entityId)}</Text>;
+  return <Text style={style}>{loading ? '…' : name || entityId}</Text>;
 };
 
 export default OperationLogDetailScreen;

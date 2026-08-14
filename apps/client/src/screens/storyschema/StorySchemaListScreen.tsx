@@ -28,7 +28,10 @@ const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   WorldRule: 'world_rules_title',
 };
 
-type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<StorySchemaStackParamList, 'StorySchemaList'>;
+type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<
+  StorySchemaStackParamList,
+  'StorySchemaList'
+>;
 
 const StorySchemaListScreen = () => {
   useBackButtonHandler();
@@ -47,7 +50,7 @@ const StorySchemaListScreen = () => {
   useFocusEffect(
     useCallback(() => {
       navigation.setOptions({ title: t('story_schema_management_title') });
-    }, [navigation, t])
+    }, [navigation, t]),
   );
 
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -129,33 +132,41 @@ const StorySchemaListScreen = () => {
     },
   });
 
-  const handleDelete = useCallback((field: StorySchemaFieldSelect) => {
-    AppAlert.alert(
-      t('delete_attribute_title'),
-      t('delete_attribute_message', { name: field.name }),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('delete'),
-          style: 'destructive',
-          onPress: async () => {
-            if (!userId) return;
-            try {
-              await createStorySchemaFieldService(drizzleDb).deleteField(userId, field.id);
-            } catch (err) {
-              console.error('Failed to delete attribute field:', err);
-              AppAlert.alert(t('error'), t('failed_to_delete_attribute'));
-            }
+  const handleDelete = useCallback(
+    (field: StorySchemaFieldSelect) => {
+      AppAlert.alert(
+        t('delete_attribute_title'),
+        t('delete_attribute_message', { name: field.name }),
+        [
+          { text: t('cancel'), style: 'cancel' },
+          {
+            text: t('delete'),
+            style: 'destructive',
+            onPress: async () => {
+              if (!userId) return;
+              try {
+                await createStorySchemaFieldService(drizzleDb).deleteField(userId, field.id);
+              } catch (err) {
+                console.error('Failed to delete attribute field:', err);
+                AppAlert.alert(t('error'), t('failed_to_delete_attribute'));
+              }
+            },
           },
-        },
-      ],
-      { cancelable: true }
-    );
-  }, [drizzleDb, userId, t]);
+        ],
+        { cancelable: true },
+      );
+    },
+    [drizzleDb, userId, t],
+  );
 
   if (!storyId) {
     return (
-      <View style={[commonContainerStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View
+        style={[
+          commonContainerStyles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
         <Text style={{ color: colors.error }}>{t('no_story_selected')}</Text>
       </View>
     );
@@ -186,14 +197,24 @@ const StorySchemaListScreen = () => {
         renderItem={({ item }) => (
           <View style={styles.fieldRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.fieldName}>{item.name}{item.isRequired ? ' *' : ''}</Text>
-              <Text style={styles.fieldMeta}>{item.key} · {t(`attribute_type_${item.type}`)}</Text>
+              <Text style={styles.fieldName}>
+                {item.name}
+                {item.isRequired ? ' *' : ''}
+              </Text>
+              <Text style={styles.fieldMeta}>
+                {item.key} · {t(`attribute_type_${item.type}`)}
+              </Text>
             </View>
             {canEdit && (
               <>
                 <TouchableOpacity
                   style={styles.actionButton}
-                  onPress={() => navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType, fieldId: item.id })}
+                  onPress={() =>
+                    navigation.navigate('StorySchemaFieldForm', {
+                      entityType: activeEntityType,
+                      fieldId: item.id,
+                    })
+                  }
                 >
                   <Ionicons name="pencil-outline" size={22} color={colors.primary} />
                 </TouchableOpacity>
@@ -210,7 +231,9 @@ const StorySchemaListScreen = () => {
       {canEdit && (
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType })}
+          onPress={() =>
+            navigation.navigate('StorySchemaFieldForm', { entityType: activeEntityType })
+          }
         >
           <Ionicons name="add" size={30} color={colors.onPrimary} />
         </TouchableOpacity>

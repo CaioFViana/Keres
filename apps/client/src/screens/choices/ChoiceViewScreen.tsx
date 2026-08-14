@@ -5,10 +5,22 @@ import { Effect } from '@keres/shared/entities/Effect';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
-import StoryGraphCanvas, { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
+import StoryGraphCanvas, {
+  StoryGraphCanvasHandle,
+} from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../db';
 import { ChapterSelect, ChoiceSelect, SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -24,7 +36,12 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { describeChoiceCheck, describeEffect } from '../../utils/choiceCheckEffectDescriptions';
-import { formatSceneGap, formatSceneUniverseDuration, hasSceneGap, hasSceneUniverseDuration } from '../../utils/sceneTiming';
+import {
+  formatSceneGap,
+  formatSceneUniverseDuration,
+  hasSceneGap,
+  hasSceneUniverseDuration,
+} from '../../utils/sceneTiming';
 import { buildStoryGraphLayout, GraphEdge, GraphNode } from '../../utils/storyGraphLayout';
 import { renderStoryMapSvg } from '../../utils/storyGraphSvg';
 import { buildStoryMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
@@ -84,7 +101,15 @@ const ChoiceViewScreen = () => {
     try {
       setLoading(true);
       setError(null);
-      const [loadedScenes, loadedChoices, loadedChapters, loadedCheckGroups, loadedChecks, loadedEffects, loadedItems] = await Promise.all([
+      const [
+        loadedScenes,
+        loadedChoices,
+        loadedChapters,
+        loadedCheckGroups,
+        loadedChecks,
+        loadedEffects,
+        loadedItems,
+      ] = await Promise.all([
         createSceneService(drizzleDb).getScenesByStoryId(storyId),
         createChoiceService(drizzleDb).getChoicesByStoryId(storyId),
         createChapterService(drizzleDb).getChaptersByStoryId(storyId),
@@ -99,7 +124,7 @@ const ChoiceViewScreen = () => {
       setCheckGroups(loadedCheckGroups);
       setChecks(loadedChecks);
       setEffects(loadedEffects);
-      setItemNamesById(Object.fromEntries(loadedItems.map(item => [item.id, item.name])));
+      setItemNamesById(Object.fromEntries(loadedItems.map((item) => [item.id, item.name])));
     } catch (loadError) {
       console.log('ChoiceViewScreen: failed to load graph data.', loadError);
       setError(t('failed_to_load_graph_data'));
@@ -109,9 +134,11 @@ const ChoiceViewScreen = () => {
   }, [drizzleDb, storyId, t]);
 
   // Recarrega ao focar: cenas e escolhas podem ter mudado em outra tela.
-  useFocusEffect(useCallback(() => {
-    loadGraph();
-  }, [loadGraph]));
+  useFocusEffect(
+    useCallback(() => {
+      loadGraph();
+    }, [loadGraph]),
+  );
 
   useEffect(() => {
     const handleRemoteChange = (change: { storyId?: string }) => {
@@ -123,32 +150,34 @@ const ChoiceViewScreen = () => {
     return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
   }, [storyId, loadGraph]);
 
-  useFocusEffect(useCallback(() => {
-    setDocumentTitle(t('story_map_title'));
-    navigation.getParent()?.setOptions({ title: t('story_map_title'), headerRight: undefined });
-  }, [navigation, t]));
+  useFocusEffect(
+    useCallback(() => {
+      setDocumentTitle(t('story_map_title'));
+      navigation.getParent()?.setOptions({ title: t('story_map_title'), headerRight: undefined });
+    }, [navigation, t]),
+  );
 
   const layout = useMemo(
     () => buildStoryGraphLayout(scenes, choices, chapters),
-    [scenes, choices, chapters]
+    [scenes, choices, chapters],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;
 
   const selectedNode = useMemo(
-    () => layout.nodes.find(node => node.id === selectedNodeId) ?? null,
-    [layout.nodes, selectedNodeId]
+    () => layout.nodes.find((node) => node.id === selectedNodeId) ?? null,
+    [layout.nodes, selectedNodeId],
   );
 
   const sceneNamesById = useMemo(
-    () => Object.fromEntries(scenes.map(scene => [scene.id, scene.name])),
-    [scenes]
+    () => Object.fromEntries(scenes.map((scene) => [scene.id, scene.name])),
+    [scenes],
   );
 
   // Checks/effects agrupados por Choice (via ChoiceCheckGroup) e effects por Scene - só usados
   // quando existem, pra não pesar a maioria das Choices/Scenes que não tem nenhum.
   const checksByChoiceId = useMemo(() => {
-    const groupIdToChoiceId = new Map(checkGroups.map(group => [group.id, group.choiceId]));
+    const groupIdToChoiceId = new Map(checkGroups.map((group) => [group.id, group.choiceId]));
     const map = new Map<string, ChoiceCheck[]>();
     for (const check of checks) {
       const choiceId = groupIdToChoiceId.get(check.groupId);
@@ -179,21 +208,27 @@ const ChoiceViewScreen = () => {
     return map;
   }, [effects]);
 
-  const describeChoiceExtra = useCallback((choiceId: string): string | undefined => {
-    const checksForChoice = checksByChoiceId.get(choiceId) ?? [];
-    const effectsForChoice = effectsByChoiceId.get(choiceId) ?? [];
-    if (checksForChoice.length === 0 && effectsForChoice.length === 0) return undefined;
-    return [
-      ...checksForChoice.map(check => describeChoiceCheck(check, sceneNamesById, itemNamesById, t)),
-      ...effectsForChoice.map(effect => describeEffect(effect, itemNamesById, t)),
-    ].join(' · ');
-  }, [checksByChoiceId, effectsByChoiceId, sceneNamesById, itemNamesById, t]);
+  const describeChoiceExtra = useCallback(
+    (choiceId: string): string | undefined => {
+      const checksForChoice = checksByChoiceId.get(choiceId) ?? [];
+      const effectsForChoice = effectsByChoiceId.get(choiceId) ?? [];
+      if (checksForChoice.length === 0 && effectsForChoice.length === 0) return undefined;
+      return [
+        ...checksForChoice.map((check) =>
+          describeChoiceCheck(check, sceneNamesById, itemNamesById, t),
+        ),
+        ...effectsForChoice.map((effect) => describeEffect(effect, itemNamesById, t)),
+      ].join(' · ');
+    },
+    [checksByChoiceId, effectsByChoiceId, sceneNamesById, itemNamesById, t],
+  );
 
   const selectedSceneEffects = selectedNodeId ? (effectsBySceneId.get(selectedNodeId) ?? []) : [];
 
   const connections = useMemo(() => {
-    if (!selectedNodeId) return { outgoing: [] as SceneNodeConnection[], incoming: [] as SceneNodeConnection[] };
-    const nameById = new Map(layout.nodes.map(node => [node.id, node.scene.name]));
+    if (!selectedNodeId)
+      return { outgoing: [] as SceneNodeConnection[], incoming: [] as SceneNodeConnection[] };
+    const nameById = new Map(layout.nodes.map((node) => [node.id, node.scene.name]));
 
     const toConnection = (edge: GraphEdge, sceneId: string): SceneNodeConnection => ({
       choiceId: edge.id,
@@ -205,11 +240,11 @@ const ChoiceViewScreen = () => {
 
     return {
       outgoing: layout.edges
-        .filter(edge => edge.sourceId === selectedNodeId)
-        .map(edge => toConnection(edge, edge.targetId)),
+        .filter((edge) => edge.sourceId === selectedNodeId)
+        .map((edge) => toConnection(edge, edge.targetId)),
       incoming: layout.edges
-        .filter(edge => edge.targetId === selectedNodeId)
-        .map(edge => toConnection(edge, edge.sourceId)),
+        .filter((edge) => edge.targetId === selectedNodeId)
+        .map((edge) => toConnection(edge, edge.sourceId)),
     };
   }, [layout.edges, layout.nodes, selectedNodeId, t, describeChoiceExtra]);
 
@@ -217,20 +252,24 @@ const ChoiceViewScreen = () => {
     setSelectedNodeId(node.id);
   }, []);
 
-  const handleOpenScene = useCallback((sceneId: string) => {
-    setSelectedNodeId(null);
-    navigation.navigate('ScenesStack', { screen: 'SceneDetail', params: { sceneId } });
-  }, [navigation]);
+  const handleOpenScene = useCallback(
+    (sceneId: string) => {
+      setSelectedNodeId(null);
+      navigation.navigate('ScenesStack', { screen: 'SceneDetail', params: { sceneId } });
+    },
+    [navigation],
+  );
 
   // Mesma linha de contexto na tela e no arquivo exportado: o mapa impresso e o mapa aberto
   // no app precisam dizer a mesma coisa sobre o que está sendo mostrado.
   const mapSubtitle = useMemo(
-    () => t('story_map_subtitle', {
-      sceneCount: layout.nodes.length,
-      choiceCount: layout.edges.length,
-      date: new Date().toLocaleDateString(),
-    }),
-    [layout.edges.length, layout.nodes.length, t]
+    () =>
+      t('story_map_subtitle', {
+        sceneCount: layout.nodes.length,
+        choiceCount: layout.edges.length,
+        date: new Date().toLocaleDateString(),
+      }),
+    [layout.edges.length, layout.nodes.length, t],
   );
 
   const handleExport = useCallback(async () => {
@@ -265,7 +304,10 @@ const ChoiceViewScreen = () => {
       } else {
         // Sem share sheet o arquivo existe mas o usuário não tem como alcançá-lo; dizer onde
         // ele está é mais útil do que alegar sucesso.
-        showNotification(t('story_map_export_no_share_target', { path: result.uri || result.fileName }), 'warning');
+        showNotification(
+          t('story_map_export_no_share_target', { path: result.uri || result.fileName }),
+          'warning',
+        );
       }
     } catch (exportError) {
       console.log('ChoiceViewScreen: failed to export story map.', exportError);
@@ -275,117 +317,121 @@ const ChoiceViewScreen = () => {
     }
   }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t]);
 
-  const styles = useMemo(() => StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    header: {
-      backgroundColor: colors.surface,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      paddingTop: 9,
-      paddingBottom: 3,
-    },
-    headerTitle: {
-      fontSize: 14,
-      fontWeight: 'bold',
-      color: colors.text,
-      paddingHorizontal: 12,
-    },
-    headerSubtitle: {
-      fontSize: 11,
-      color: colors.textSecondary,
-      paddingHorizontal: 12,
-      marginTop: 1,
-    },
-    legendBar: {
-      // Sem isto o ScrollView horizontal estica na vertical e come metade da tela: dentro de
-      // um container em coluna ele cresce no eixo cruzado por padrão.
-      flexGrow: 0,
-      flexShrink: 0,
-    },
-    legendContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-    },
-    legendChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginRight: 14,
-    },
-    legendSwatch: {
-      width: 11,
-      height: 11,
-      borderRadius: 3,
-      marginRight: 5,
-    },
-    legendOutline: {
-      width: 11,
-      height: 11,
-      borderRadius: 3,
-      borderWidth: 2,
-      marginRight: 5,
-    },
-    legendDash: {
-      width: 14,
-      height: 0,
-      borderTopWidth: 2,
-      borderStyle: 'dashed',
-      marginRight: 5,
-    },
-    legendLabel: {
-      fontSize: 11,
-      color: colors.textSecondary,
-    },
-    warningBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 7,
-      backgroundColor: colors.surface,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    warningText: {
-      flex: 1,
-      marginLeft: 7,
-      fontSize: 11.5,
-      color: colors.textSecondary,
-    },
-    controls: {
-      position: 'absolute',
-      right: 14,
-      bottom: 18,
-    },
-    controlButton: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 9,
-      backgroundColor: colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      outlineWidth: 0,
-    },
-    emptyContainer: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 32,
-    },
-    emptyText: {
-      marginTop: 12,
-      fontSize: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 21,
-    },
-  }), [colors]);
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        header: {
+          backgroundColor: colors.surface,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+          paddingTop: 9,
+          paddingBottom: 3,
+        },
+        headerTitle: {
+          fontSize: 14,
+          fontWeight: 'bold',
+          color: colors.text,
+          paddingHorizontal: 12,
+        },
+        headerSubtitle: {
+          fontSize: 11,
+          color: colors.textSecondary,
+          paddingHorizontal: 12,
+          marginTop: 1,
+        },
+        legendBar: {
+          // Sem isto o ScrollView horizontal estica na vertical e come metade da tela: dentro de
+          // um container em coluna ele cresce no eixo cruzado por padrão.
+          flexGrow: 0,
+          flexShrink: 0,
+        },
+        legendContent: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+        },
+        legendChip: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginRight: 14,
+        },
+        legendSwatch: {
+          width: 11,
+          height: 11,
+          borderRadius: 3,
+          marginRight: 5,
+        },
+        legendOutline: {
+          width: 11,
+          height: 11,
+          borderRadius: 3,
+          borderWidth: 2,
+          marginRight: 5,
+        },
+        legendDash: {
+          width: 14,
+          height: 0,
+          borderTopWidth: 2,
+          borderStyle: 'dashed',
+          marginRight: 5,
+        },
+        legendLabel: {
+          fontSize: 11,
+          color: colors.textSecondary,
+        },
+        warningBar: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 12,
+          paddingVertical: 7,
+          backgroundColor: colors.surface,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+        },
+        warningText: {
+          flex: 1,
+          marginLeft: 7,
+          fontSize: 11.5,
+          color: colors.textSecondary,
+        },
+        controls: {
+          position: 'absolute',
+          right: 14,
+          bottom: 18,
+        },
+        controlButton: {
+          width: 42,
+          height: 42,
+          borderRadius: 21,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 9,
+          backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          outlineWidth: 0,
+        },
+        emptyContainer: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 32,
+        },
+        emptyText: {
+          marginTop: 12,
+          fontSize: 15,
+          color: colors.textSecondary,
+          textAlign: 'center',
+          lineHeight: 21,
+        },
+      }),
+    [colors],
+  );
 
   if (loading) {
     return <ScreenLoading message={t('loading_graph_data')} />;
@@ -410,9 +456,13 @@ const ChoiceViewScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         {!!selectedStory?.title && (
-          <Text style={styles.headerTitle} numberOfLines={1}>{selectedStory.title}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {selectedStory.title}
+          </Text>
         )}
-        <Text style={styles.headerSubtitle} numberOfLines={1}>{mapSubtitle}</Text>
+        <Text style={styles.headerSubtitle} numberOfLines={1}>
+          {mapSubtitle}
+        </Text>
 
         <ScrollView
           horizontal
@@ -420,7 +470,7 @@ const ChoiceViewScreen = () => {
           style={styles.legendBar}
           contentContainerStyle={styles.legendContent}
         >
-          {layout.chapters.map(chapter => (
+          {layout.chapters.map((chapter) => (
             <View key={chapter.id} style={styles.legendChip}>
               <View style={[styles.legendSwatch, { backgroundColor: chapter.color }]} />
               <Text style={styles.legendLabel}>{`${chapter.name} (${chapter.sceneCount})`}</Text>
@@ -499,38 +549,68 @@ const ChoiceViewScreen = () => {
           disabled={exporting}
           accessibilityLabel={t('story_map_export')}
         >
-          {exporting
-            ? <ActivityIndicator size="small" color={colors.primary} />
-            : <Ionicons name="image-outline" size={20} color={colors.text} />}
+          {exporting ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Ionicons name="image-outline" size={20} color={colors.text} />
+          )}
         </TouchableOpacity>
       </View>
 
       {selectedNode && (
         <GraphNodeSheet
           title={selectedNode.scene.name}
-          subtitle={selectedNode.chapterName ? { text: selectedNode.chapterName, color: selectedNode.chapterColor } : undefined}
+          subtitle={
+            selectedNode.chapterName
+              ? { text: selectedNode.chapterName, color: selectedNode.chapterColor }
+              : undefined
+          }
           badges={[
-            ...(selectedNode.isStart ? [{ label: t('story_map_badge_start'), color: colors.accent }] : []),
-            ...(selectedNode.isFinish ? [{ label: t('story_map_badge_finish'), color: colors.error }] : []),
-            ...(selectedNode.isDetached ? [{ label: t('story_map_badge_detached'), color: colors.textSecondary }] : []),
+            ...(selectedNode.isStart
+              ? [{ label: t('story_map_badge_start'), color: colors.accent }]
+              : []),
+            ...(selectedNode.isFinish
+              ? [{ label: t('story_map_badge_finish'), color: colors.error }]
+              : []),
+            ...(selectedNode.isDetached
+              ? [{ label: t('story_map_badge_detached'), color: colors.textSecondary }]
+              : []),
           ]}
           sections={[
-            ...(selectedNode.scene.summary ? [{ title: t('summary'), description: selectedNode.scene.summary }] : []),
-            ...(hasSceneGap(selectedNode.scene) || hasSceneUniverseDuration(selectedNode.scene) ? [{
-              title: t('scene_timing'),
-              description: [
-                hasSceneGap(selectedNode.scene) ? `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}` : null,
-                hasSceneUniverseDuration(selectedNode.scene) ? `${t('in_universe_duration')}: ${formatSceneUniverseDuration(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}` : null,
-              ].filter(Boolean).join('\n'),
-            }] : []),
-            ...(selectedSceneEffects.length > 0 ? [{
-              title: t('effects_title'),
-              description: selectedSceneEffects.map(effect => `• ${describeEffect(effect, itemNamesById, t)}`).join('\n'),
-            }] : []),
+            ...(selectedNode.scene.summary
+              ? [{ title: t('summary'), description: selectedNode.scene.summary }]
+              : []),
+            ...(hasSceneGap(selectedNode.scene) || hasSceneUniverseDuration(selectedNode.scene)
+              ? [
+                  {
+                    title: t('scene_timing'),
+                    description: [
+                      hasSceneGap(selectedNode.scene)
+                        ? `${t('gap')}: ${formatSceneGap(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}`
+                        : null,
+                      hasSceneUniverseDuration(selectedNode.scene)
+                        ? `${t('in_universe_duration')}: ${formatSceneUniverseDuration(selectedNode.scene, t, selectedStory?.normalizeSceneTiming)}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join('\n'),
+                  },
+                ]
+              : []),
+            ...(selectedSceneEffects.length > 0
+              ? [
+                  {
+                    title: t('effects_title'),
+                    description: selectedSceneEffects
+                      .map((effect) => `• ${describeEffect(effect, itemNamesById, t)}`)
+                      .join('\n'),
+                  },
+                ]
+              : []),
             {
               title: t('story_map_outgoing_choices'),
               emptyMessage: t('story_map_no_outgoing_choices'),
-              items: connections.outgoing.map(connection => ({
+              items: connections.outgoing.map((connection) => ({
                 id: connection.choiceId,
                 icon: 'arrow-forward' as const,
                 label: connection.text || t('story_map_implicit_choice'),
@@ -543,7 +623,7 @@ const ChoiceViewScreen = () => {
             {
               title: t('story_map_incoming_choices'),
               emptyMessage: t('story_map_no_incoming_choices'),
-              items: connections.incoming.map(connection => ({
+              items: connections.incoming.map((connection) => ({
                 id: connection.choiceId,
                 icon: 'arrow-back' as const,
                 label: connection.text || t('story_map_implicit_choice'),

@@ -81,7 +81,10 @@ describe('updateTokens', () => {
   it('stores the new pair and publishes it to every axios instance', async () => {
     await authTokenManager.updateTokens(SERVER.id, 'access-novo', 'refresh-novo');
 
-    expect(tokenVault.peek(SERVER.id)).toEqual({ accessToken: 'access-novo', refreshToken: 'refresh-novo' });
+    expect(tokenVault.peek(SERVER.id)).toEqual({
+      accessToken: 'access-novo',
+      refreshToken: 'refresh-novo',
+    });
     expect(getServerAccessToken(SERVER.id)).toBe('access-novo');
   });
 
@@ -121,7 +124,10 @@ describe('refreshAccessToken', () => {
 
     await authTokenManager.refreshAccessToken(SERVER.id, 'refresh-1');
 
-    expect(tokenVault.peek(SERVER.id)).toEqual({ accessToken: 'novo-access', refreshToken: 'novo-refresh' });
+    expect(tokenVault.peek(SERVER.id)).toEqual({
+      accessToken: 'novo-access',
+      refreshToken: 'novo-refresh',
+    });
   });
 
   /** O cofre é a fonte de verdade; o parâmetro é só o resgate para o interceptor. */

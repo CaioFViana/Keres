@@ -30,11 +30,21 @@ export function LoginPage() {
         <h1>Keres Admin</h1>
         <label>
           Username
-          <input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus required />
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoFocus
+            required
+          />
         </label>
         <label>
           Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </label>
         {error && <p className="error-text">{error}</p>}
         <button type="submit" disabled={loading}>

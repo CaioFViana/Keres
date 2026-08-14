@@ -4,7 +4,10 @@ import { click, flush, render } from '../helpers/react';
 
 const mocks = vi.hoisted(() => ({ getToken: vi.fn(), clearToken: vi.fn(), login: vi.fn() }));
 
-vi.mock('../../src/api/apiClient', () => ({ getToken: mocks.getToken, clearToken: mocks.clearToken }));
+vi.mock('../../src/api/apiClient', () => ({
+  getToken: mocks.getToken,
+  clearToken: mocks.clearToken,
+}));
 vi.mock('../../src/api/AdminAuthService', () => ({ login: mocks.login }));
 
 function AuthProbe() {
@@ -27,7 +30,11 @@ beforeEach(() => {
 
 describe('admin authentication context', () => {
   it('updates the shared session after a successful login and clears it on logout', async () => {
-    const view = await render(<AuthProvider><AuthProbe /></AuthProvider>);
+    const view = await render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
     const [loginButton, logoutButton] = Array.from(view.container.querySelectorAll('button'));
 
     expect(view.container.textContent).toContain('signed-out');
@@ -44,7 +51,11 @@ describe('admin authentication context', () => {
 
   it('starts authenticated when a persisted token exists', async () => {
     mocks.getToken.mockReturnValue('persisted-token');
-    const view = await render(<AuthProvider><AuthProbe /></AuthProvider>);
+    const view = await render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
 
     expect(view.container.textContent).toContain('signed-in:');
     await view.unmount();

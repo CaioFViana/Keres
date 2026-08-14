@@ -44,7 +44,9 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
   const [page, setPage] = useState(1);
   const [totalLogs, setTotalLogs] = useState(0);
   const [favoriteBehavior, setFavoriteBehavior] = useState<FavoriteBehavior>('individual');
-  const [operationLogService, setOperationLogService] = useState<ReturnType<typeof createOperationLogService> | null>(null);
+  const [operationLogService, setOperationLogService] = useState<ReturnType<
+    typeof createOperationLogService
+  > | null>(null);
 
   useEffect(() => {
     if (drizzleDb) {
@@ -52,39 +54,51 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     }
   }, [drizzleDb]);
 
-  const fetchLogs = useCallback(async (currentPage: number = 1) => {
-    if (!operationLogService || !storyId) return;
+  const fetchLogs = useCallback(
+    async (currentPage: number = 1) => {
+      if (!operationLogService || !storyId) return;
 
-    setLoading(true);
-    setError(null);
-    try {
-      let fetchedLogs: OperationLogSelect[] = [];
-      let total: number = 0;
+      setLoading(true);
+      setError(null);
+      try {
+        let fetchedLogs: OperationLogSelect[] = [];
+        let total: number = 0;
 
-      if (paginated) {
-        const result = await operationLogService.getPaginatedOperationLogs(storyId, currentPage, pageSize, userId ?? undefined);
-        fetchedLogs = result.logs;
-        total = result.total;
-      } else if (limit) {
-        fetchedLogs = await operationLogService.getRecentOperationLogs(storyId, limit, userId ?? undefined);
-        total = fetchedLogs.length; // For recent, total is just the limit
+        if (paginated) {
+          const result = await operationLogService.getPaginatedOperationLogs(
+            storyId,
+            currentPage,
+            pageSize,
+            userId ?? undefined,
+          );
+          fetchedLogs = result.logs;
+          total = result.total;
+        } else if (limit) {
+          fetchedLogs = await operationLogService.getRecentOperationLogs(
+            storyId,
+            limit,
+            userId ?? undefined,
+          );
+          total = fetchedLogs.length; // For recent, total is just the limit
+        }
+
+        setFavoriteBehavior(await operationLogService.getFavoriteBehavior(storyId));
+
+        setLogs((currentLogs) => {
+          if (!paginated || currentPage === 1) return fetchedLogs;
+          const knownIds = new Set(currentLogs.map((log) => log.id));
+          return [...currentLogs, ...fetchedLogs.filter((log) => !knownIds.has(log.id))];
+        });
+        setTotalLogs(total);
+      } catch (err) {
+        console.error('Failed to fetch operation logs:', err);
+        setError(t('failed_to_load_operation_logs'));
+      } finally {
+        setLoading(false);
       }
-
-      setFavoriteBehavior(await operationLogService.getFavoriteBehavior(storyId));
-
-      setLogs((currentLogs) => {
-        if (!paginated || currentPage === 1) return fetchedLogs;
-        const knownIds = new Set(currentLogs.map((log) => log.id));
-        return [...currentLogs, ...fetchedLogs.filter((log) => !knownIds.has(log.id))];
-      });
-      setTotalLogs(total);
-    } catch (err) {
-      console.error('Failed to fetch operation logs:', err);
-      setError(t('failed_to_load_operation_logs'));
-    } finally {
-      setLoading(false);
-    }
-  }, [operationLogService, storyId, limit, paginated, pageSize, t, userId]);
+    },
+    [operationLogService, storyId, limit, paginated, pageSize, t, userId],
+  );
 
   useEffect(() => {
     setPage(1); // Reset page when storyId or mode changes
@@ -117,16 +131,17 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     let previousServerVersion: number | undefined;
 
     for (const log of logs) {
-      const currentServerVersion = log.isSynced && (log.serverOperationVersion ?? 0) > 0
-        ? log.serverOperationVersion!
-        : undefined;
+      const currentServerVersion =
+        log.isSynced && (log.serverOperationVersion ?? 0) > 0
+          ? log.serverOperationVersion!
+          : undefined;
 
       if (
-        showPrivateGaps
-        && favoriteBehavior === 'individual'
-        && previousServerVersion !== undefined
-        && currentServerVersion !== undefined
-        && currentServerVersion < previousServerVersion - 1
+        showPrivateGaps &&
+        favoriteBehavior === 'individual' &&
+        previousServerVersion !== undefined &&
+        currentServerVersion !== undefined &&
+        currentServerVersion < previousServerVersion - 1
       ) {
         entries.push({
           type: 'privateGap',
@@ -222,12 +237,13 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     },
   });
 
-  const renderPrivacyNotice = () => hasPrivateGaps ? (
-    <View style={styles.privacyNotice} accessibilityRole="text">
-      <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
-      <Text style={styles.privacyNoticeText}>{t('private_operations_explanation')}</Text>
-    </View>
-  ) : null;
+  const renderPrivacyNotice = () =>
+    hasPrivateGaps ? (
+      <View style={styles.privacyNotice} accessibilityRole="text">
+        <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+        <Text style={styles.privacyNoticeText}>{t('private_operations_explanation')}</Text>
+      </View>
+    ) : null;
 
   const renderEntry = (entry: OperationLogListEntry) => {
     if (entry.type === 'log') {
@@ -253,7 +269,9 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.textSecondary, marginTop: 10 }}>{t('loading_operations')}...</Text>
+        <Text style={{ color: colors.textSecondary, marginTop: 10 }}>
+          {t('loading_operations')}...
+        </Text>
       </View>
     );
   }
@@ -283,7 +301,7 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     <View style={styles.container}>
       <FlatList
         data={listEntries}
-        keyExtractor={(item) => item.type === 'log' ? item.log.id : item.key}
+        keyExtractor={(item) => (item.type === 'log' ? item.log.id : item.key)}
         renderItem={({ item }) => renderEntry(item)}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}

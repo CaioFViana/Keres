@@ -13,9 +13,7 @@ interface CharacterRelationListItemProps {
   relation: CharacterRelationWithNames;
 }
 
-const CharacterRelationListItem: React.FC<CharacterRelationListItemProps> = ({
-  relation,
-}) => {
+const CharacterRelationListItem: React.FC<CharacterRelationListItemProps> = ({ relation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -54,7 +52,9 @@ const CharacterRelationListItem: React.FC<CharacterRelationListItemProps> = ({
     <View style={styles.container}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{`${relation.char1Name} - ${relation.char2Name}`}</Text>
-        <Text style={styles.details}>{t('relation_type')}: {relation.relationType}</Text>
+        <Text style={styles.details}>
+          {t('relation_type')}: {relation.relationType}
+        </Text>
       </View>
     </View>
   );

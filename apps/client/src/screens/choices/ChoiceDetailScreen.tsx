@@ -5,7 +5,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
@@ -55,7 +58,9 @@ const ChoiceDetailScreen = () => {
 
   const drizzleDb = useDrizzle();
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
-  const choiceCheckGroupServiceRef = useRef<ReturnType<typeof createChoiceCheckGroupService> | null>(null);
+  const choiceCheckGroupServiceRef = useRef<ReturnType<
+    typeof createChoiceCheckGroupService
+  > | null>(null);
   const choiceCheckServiceRef = useRef<ReturnType<typeof createChoiceCheckService> | null>(null);
   const effectServiceRef = useRef<ReturnType<typeof createEffectService> | null>(null);
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
@@ -93,7 +98,13 @@ const ChoiceDetailScreen = () => {
   const [itemNamesById, setItemNamesById] = useState<Record<string, string>>({});
   const { canEdit } = useStoryRole(choice?.storyId);
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(choice?.storyId, 'Choice', choiceId);
 
   const {
@@ -111,9 +122,22 @@ const ChoiceDetailScreen = () => {
   const styles = StyleSheet.create({
     mainTitle: { fontSize: 28, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
     buttonContainer: { marginTop: 20 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 15,
+      marginBottom: 5,
+    },
     sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
-    card: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, marginBottom: 12, backgroundColor: colors.surface },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: colors.surface,
+    },
     checkRow: { color: colors.text, marginTop: 4 },
     groupLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
     sceneLink: { flexDirection: 'row', alignItems: 'center' },
@@ -145,30 +169,47 @@ const ChoiceDetailScreen = () => {
     }
   }, [choiceId, navigation, t]);
 
-  const handleChoiceChange = useCallback(async (changedStoryId: string, changedChoiceId: string) => {
-    if (changedChoiceId === choiceId && choiceServiceRef.current) {
-      const updatedChoice = await choiceServiceRef.current.getById(choiceId);
-      if (!updatedChoice || updatedChoice.isDeleted) {
-        navigation.goBack();
-      } else {
-        setChoice(updatedChoice);
-        setHeaderTitle(updatedChoice.text || t('choice_details_title')); // Use text
+  const handleChoiceChange = useCallback(
+    async (changedStoryId: string, changedChoiceId: string) => {
+      if (changedChoiceId === choiceId && choiceServiceRef.current) {
+        const updatedChoice = await choiceServiceRef.current.getById(choiceId);
+        if (!updatedChoice || updatedChoice.isDeleted) {
+          navigation.goBack();
+        } else {
+          setChoice(updatedChoice);
+          setHeaderTitle(updatedChoice.text || t('choice_details_title')); // Use text
+        }
       }
-    }
-  }, [choiceId, navigation, t]);
+    },
+    [choiceId, navigation, t],
+  );
 
   const fetchChecksAndEffects = useCallback(async () => {
-    if (!choiceCheckGroupServiceRef.current || !choiceCheckServiceRef.current || !effectServiceRef.current || !choice?.storyId) {
+    if (
+      !choiceCheckGroupServiceRef.current ||
+      !choiceCheckServiceRef.current ||
+      !effectServiceRef.current ||
+      !choice?.storyId
+    ) {
       return;
     }
     try {
-      const groups = await choiceCheckGroupServiceRef.current.getChoiceCheckGroupsByChoiceId(choice.storyId, choiceId);
+      const groups = await choiceCheckGroupServiceRef.current.getChoiceCheckGroupsByChoiceId(
+        choice.storyId,
+        choiceId,
+      );
       setCheckGroups(groups);
       const checksByGroupArrays = await Promise.all(
-        groups.map(group => choiceCheckServiceRef.current!.getChoiceChecksByGroupId(choice.storyId, group.id))
+        groups.map((group) =>
+          choiceCheckServiceRef.current!.getChoiceChecksByGroupId(choice.storyId, group.id),
+        ),
       );
       setChecks(checksByGroupArrays.flat());
-      const fetchedEffects = await effectServiceRef.current.getEffectsByEntity(choice.storyId, 'Choice', choiceId);
+      const fetchedEffects = await effectServiceRef.current.getEffectsByEntity(
+        choice.storyId,
+        'Choice',
+        choiceId,
+      );
       setChoiceEffects(fetchedEffects);
     } catch (err) {
       console.error('Failed to fetch choice checks/effects:', err);
@@ -184,8 +225,8 @@ const ChoiceDetailScreen = () => {
         sceneServiceRef.current.getAllByStoryId(choice.storyId),
         itemServiceRef.current.getItemsByStoryId(choice.storyId),
       ]);
-      setSceneNamesById(Object.fromEntries(allScenes.map(scene => [scene.id, scene.name])));
-      setItemNamesById(Object.fromEntries(allItems.map(item => [item.id, item.name])));
+      setSceneNamesById(Object.fromEntries(allScenes.map((scene) => [scene.id, scene.name])));
+      setItemNamesById(Object.fromEntries(allItems.map((item) => [item.id, item.name])));
     } catch (err) {
       console.error('Failed to fetch scene/item name lookups:', err);
     }
@@ -207,27 +248,35 @@ const ChoiceDetailScreen = () => {
     }
   }, [choice, isBranching, fetchChecksAndEffects, fetchNameLookups]);
 
+  const handleScenePress = useCallback(
+    (targetSceneId: string) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(drawerNavigation, 'Scene', targetSceneId);
+      }
+    },
+    [navigation],
+  );
 
-  const handleScenePress = useCallback((targetSceneId: string) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Scene', targetSceneId);
-    }
-  }, [navigation]);
-
-  const renderHeaderRight = useCallback(() => (
-    canEdit ? (
-      <TouchableOpacity onPress={() => navigation.navigate('ChoiceForm', { choiceId })} style={{ marginRight: 15 }}>
-        <Ionicons name="pencil-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    ) : null
-  ), [navigation, choiceId, colors.text, canEdit]);
+  const renderHeaderRight = useCallback(
+    () =>
+      canEdit ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ChoiceForm', { choiceId })}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="pencil-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ) : null,
+    [navigation, choiceId, colors.text, canEdit],
+  );
 
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
       setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight])
+    }, [navigation, headerTitle, renderHeaderRight]),
   );
 
   if (loading) {
@@ -237,23 +286,42 @@ const ChoiceDetailScreen = () => {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!choice) {
-    return <ScreenError padded message={t('choice_data_missing')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError padded message={t('choice_data_missing')} onGoBack={() => navigation.goBack()} />
+    );
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    >
       <TagChipList tags={choiceTags} />
 
-      <TouchableOpacity onPress={() => handleScenePress(choice.sceneId)} style={styles.sceneLink} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={() => handleScenePress(choice.sceneId)}
+        style={styles.sceneLink}
+        activeOpacity={0.7}
+      >
         <View style={{ flex: 1 }}>
-          <DetailField label={t('from_scene')} value={sceneNamesById[choice.sceneId] || t('common_na')} />
+          <DetailField
+            label={t('from_scene')}
+            value={sceneNamesById[choice.sceneId] || t('common_na')}
+          />
         </View>
         <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => handleScenePress(choice.nextSceneId)} style={styles.sceneLink} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={() => handleScenePress(choice.nextSceneId)}
+        style={styles.sceneLink}
+        activeOpacity={0.7}
+      >
         <View style={{ flex: 1 }}>
-          <DetailField label={t('next_scene')} value={sceneNamesById[choice.nextSceneId] || t('common_na')} />
+          <DetailField
+            label={t('next_scene')}
+            value={sceneNamesById[choice.nextSceneId] || t('common_na')}
+          />
         </View>
         <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
       </TouchableOpacity>
@@ -266,7 +334,12 @@ const ChoiceDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'text' }, { ...input, contentSnapshot: choice.text || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'text' },
+            { ...input, contentSnapshot: choice.text || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
@@ -279,7 +352,12 @@ const ChoiceDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'notes' }, { ...input, contentSnapshot: choice.notes || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'notes' },
+            { ...input, contentSnapshot: choice.notes || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
@@ -295,7 +373,12 @@ const ChoiceDetailScreen = () => {
         currentEntityType="Choice"
       />
 
-      <SeeAlsoManager storyId={choice.storyId} entityType="Choice" entityId={choiceId} editable={false} />
+      <SeeAlsoManager
+        storyId={choice.storyId}
+        entityType="Choice"
+        entityId={choiceId}
+        editable={false}
+      />
 
       {isBranching && (
         <>
@@ -304,18 +387,23 @@ const ChoiceDetailScreen = () => {
           {checkGroups.length === 0 && (
             <DetailField label={t('checks_title')} value={t('no_check_groups')} />
           )}
-          {checkGroups.map(group => {
-            const groupChecks = checks.filter(check => check.groupId === group.id);
+          {checkGroups.map((group) => {
+            const groupChecks = checks.filter((check) => check.groupId === group.id);
             return (
               <View key={group.id} style={styles.card}>
                 <Text style={styles.groupLabel}>
-                  {group.combinator === 'OR' ? t('check_group_combinator_or_label') : t('check_group_combinator_and_label')}
+                  {group.combinator === 'OR'
+                    ? t('check_group_combinator_or_label')
+                    : t('check_group_combinator_and_label')}
                 </Text>
                 {groupChecks.length === 0 && (
                   <Text style={{ color: colors.textSecondary }}>{t('no_checks_in_group')}</Text>
                 )}
-                {groupChecks.map(check => (
-                  <Text key={check.id} style={styles.checkRow}>{`• ${describeChoiceCheck(check, sceneNamesById, itemNamesById, t)}`}</Text>
+                {groupChecks.map((check) => (
+                  <Text
+                    key={check.id}
+                    style={styles.checkRow}
+                  >{`• ${describeChoiceCheck(check, sceneNamesById, itemNamesById, t)}`}</Text>
                 ))}
               </View>
             );
@@ -327,15 +415,22 @@ const ChoiceDetailScreen = () => {
           )}
           {choiceEffects.length > 0 && (
             <View style={styles.card}>
-              {choiceEffects.map(effect => (
-                <Text key={effect.id} style={styles.checkRow}>{`• ${describeEffect(effect, itemNamesById, t)}`}</Text>
+              {choiceEffects.map((effect) => (
+                <Text
+                  key={effect.id}
+                  style={styles.checkRow}
+                >{`• ${describeEffect(effect, itemNamesById, t)}`}</Text>
               ))}
             </View>
           )}
         </>
       )}
 
-      <EntityMetadata version={choice.version} createdAt={choice.createdAt} updatedAt={choice.updatedAt} />
+      <EntityMetadata
+        version={choice.version}
+        createdAt={choice.createdAt}
+        updatedAt={choice.updatedAt}
+      />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

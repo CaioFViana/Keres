@@ -2,7 +2,10 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 const electronMocks = vi.hoisted(() => {
   const events = new Map<string, (...args: any[]) => unknown>();
-  const windows: Array<{ loadURL: ReturnType<typeof vi.fn>; webContents: { on: ReturnType<typeof vi.fn> } }> = [];
+  const windows: Array<{
+    loadURL: ReturnType<typeof vi.fn>;
+    webContents: { on: ReturnType<typeof vi.fn> };
+  }> = [];
   const BrowserWindow = vi.fn(function () {
     const window = { loadURL: vi.fn(async () => {}), webContents: { on: vi.fn() } };
     windows.push(window);
@@ -14,7 +17,9 @@ const electronMocks = vi.hoisted(() => {
     clearCache: vi.fn(async () => {}),
     clearCodeCaches: vi.fn(async () => {}),
     events,
-    fetch: vi.fn(async () => new Response('client export', { headers: { 'content-type': 'text/html' } })),
+    fetch: vi.fn(
+      async () => new Response('client export', { headers: { 'content-type': 'text/html' } }),
+    ),
     handle: vi.fn(),
     protocolHandle: vi.fn(),
     quit: vi.fn(),
@@ -30,7 +35,9 @@ vi.mock('electron', () => ({
     isPackaged: false,
     whenReady: vi.fn(async () => {}),
     getPath: vi.fn(() => 'C:/Keres/user-data'),
-    on: vi.fn((event: string, handler: (...args: any[]) => unknown) => electronMocks.events.set(event, handler)),
+    on: vi.fn((event: string, handler: (...args: any[]) => unknown) =>
+      electronMocks.events.set(event, handler),
+    ),
     quit: electronMocks.quit,
   },
   BrowserWindow: Object.assign(electronMocks.BrowserWindow, { getAllWindows: vi.fn(() => []) }),
@@ -47,7 +54,12 @@ vi.mock('electron', () => ({
     encryptStringAsync: vi.fn(),
     decryptStringAsync: vi.fn(),
   },
-  session: { defaultSession: { clearCache: electronMocks.clearCache, clearCodeCaches: electronMocks.clearCodeCaches } },
+  session: {
+    defaultSession: {
+      clearCache: electronMocks.clearCache,
+      clearCodeCaches: electronMocks.clearCodeCaches,
+    },
+  },
 }));
 
 vi.mock('fs', () => ({ existsSync: vi.fn(() => true) }));
@@ -60,21 +72,28 @@ beforeAll(async () => {
 describe('desktop startup', () => {
   it('registers the secure app protocol and clears stale client caches before opening the window', () => {
     expect(electronMocks.registerSchemesAsPrivileged).toHaveBeenCalledWith([
-      expect.objectContaining({ scheme: 'app', privileges: expect.objectContaining({ secure: true, corsEnabled: true }) }),
+      expect.objectContaining({
+        scheme: 'app',
+        privileges: expect.objectContaining({ secure: true, corsEnabled: true }),
+      }),
     ]);
     expect(electronMocks.clearCache).toHaveBeenCalledOnce();
     expect(electronMocks.clearCodeCaches).toHaveBeenCalledWith({});
     expect(electronMocks.protocolHandle).toHaveBeenCalledWith('app', expect.any(Function));
     expect(electronMocks.handle).toHaveBeenCalledTimes(9);
-    expect(electronMocks.BrowserWindow).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'Keres',
-      webPreferences: expect.objectContaining({ contextIsolation: true, nodeIntegration: false }),
-    }));
+    expect(electronMocks.BrowserWindow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Keres',
+        webPreferences: expect.objectContaining({ contextIsolation: true, nodeIntegration: false }),
+      }),
+    );
     expect(electronMocks.windows[0].loadURL).toHaveBeenCalledWith('app://app/');
   });
 
   it('serves client files with isolation and no-cache headers', async () => {
-    const handler = electronMocks.protocolHandle.mock.calls[0][1] as (request: Request) => Promise<Response>;
+    const handler = electronMocks.protocolHandle.mock.calls[0][1] as (
+      request: Request,
+    ) => Promise<Response>;
     const response = await handler(new Request('app://app/story'));
 
     expect(electronMocks.fetch).toHaveBeenCalledWith(expect.stringMatching(/^file:/));

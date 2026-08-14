@@ -27,18 +27,18 @@ const migrateV1ToV2: StoryExportMigration = {
   migrate: (data) => {
     const story = data?.story
       ? {
-        ...data.story,
-        // V1 representava favoritos como estado global da história.
-        favoriteBehavior: data.story.favoriteBehavior ?? 'global',
-        normalizeSceneTiming: data.story.normalizeSceneTiming ?? false,
-      }
+          ...data.story,
+          // V1 representava favoritos como estado global da história.
+          favoriteBehavior: data.story.favoriteBehavior ?? 'global',
+          normalizeSceneTiming: data.story.normalizeSceneTiming ?? false,
+        }
       : data?.story;
     const suggestions = Array.isArray(data?.suggestions)
       ? data.suggestions.map((rawSuggestion: any) => {
-        const suggestion = { ...rawSuggestion };
-        delete suggestion.isDefault;
-        return suggestion;
-      })
+          const suggestion = { ...rawSuggestion };
+          delete suggestion.isDefault;
+          return suggestion;
+        })
       : data?.suggestions;
 
     return {
@@ -85,7 +85,7 @@ export function migrateStoryExport(raw: any): any {
 
   if (version > CURRENT_STORY_FORMAT_VERSION) {
     throw new StoryExportVersionError(
-      `This story export was created by a newer version of Keres (format ${version}) than this app supports (format ${CURRENT_STORY_FORMAT_VERSION}).`
+      `This story export was created by a newer version of Keres (format ${version}) than this app supports (format ${CURRENT_STORY_FORMAT_VERSION}).`,
     );
   }
 

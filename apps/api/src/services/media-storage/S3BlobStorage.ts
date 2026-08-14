@@ -1,10 +1,20 @@
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { env } from '../../config/env';
 import type { BlobStorage } from './BlobStorage';
 
 function isMissingObject(error: unknown): boolean {
   const value = error as { name?: string; $metadata?: { httpStatusCode?: number } };
-  return value?.name === 'NotFound' || value?.name === 'NoSuchKey' || value?.$metadata?.httpStatusCode === 404;
+  return (
+    value?.name === 'NotFound' ||
+    value?.name === 'NoSuchKey' ||
+    value?.$metadata?.httpStatusCode === 404
+  );
 }
 
 /** Adaptador para AWS S3 e endpoints compatíveis, como SeaweedFS e Ceph RGW. */
@@ -29,7 +39,9 @@ export class S3BlobStorage implements BlobStorage {
 
   async has(key: string): Promise<boolean> {
     try {
-      await this.client.send(new HeadObjectCommand({ Bucket: env.MEDIA_S3_BUCKET!, Key: this.objectKey(key) }));
+      await this.client.send(
+        new HeadObjectCommand({ Bucket: env.MEDIA_S3_BUCKET!, Key: this.objectKey(key) }),
+      );
       return true;
     } catch (error) {
       if (isMissingObject(error)) {
@@ -40,17 +52,21 @@ export class S3BlobStorage implements BlobStorage {
   }
 
   async put(key: string, bytes: ArrayBuffer, mimeType: string): Promise<void> {
-    await this.client.send(new PutObjectCommand({
-      Bucket: env.MEDIA_S3_BUCKET!,
-      Key: this.objectKey(key),
-      Body: new Uint8Array(bytes),
-      ContentType: mimeType,
-    }));
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: env.MEDIA_S3_BUCKET!,
+        Key: this.objectKey(key),
+        Body: new Uint8Array(bytes),
+        ContentType: mimeType,
+      }),
+    );
   }
 
   async get(key: string): Promise<ReadableStream<Uint8Array> | null> {
     try {
-      const response = await this.client.send(new GetObjectCommand({ Bucket: env.MEDIA_S3_BUCKET!, Key: this.objectKey(key) }));
+      const response = await this.client.send(
+        new GetObjectCommand({ Bucket: env.MEDIA_S3_BUCKET!, Key: this.objectKey(key) }),
+      );
       if (!response.Body) {
         return null;
       }
@@ -64,6 +80,8 @@ export class S3BlobStorage implements BlobStorage {
   }
 
   async delete(key: string): Promise<void> {
-    await this.client.send(new DeleteObjectCommand({ Bucket: env.MEDIA_S3_BUCKET!, Key: this.objectKey(key) }));
+    await this.client.send(
+      new DeleteObjectCommand({ Bucket: env.MEDIA_S3_BUCKET!, Key: this.objectKey(key) }),
+    );
   }
 }

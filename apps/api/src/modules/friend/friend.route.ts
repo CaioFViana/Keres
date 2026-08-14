@@ -1,6 +1,4 @@
-import {
-  UserTargetIdParam,
-} from '@keres/shared/schemas/FriendshipRouteSchemas';
+import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
 import { Elysia } from 'elysia';
 import { JWTPayload } from '../../index';
 import { friendshipService } from '../../services/FriendshipService';
@@ -14,10 +12,7 @@ export const friendRoutes = new Elysia()
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
       }
-      return friendshipService.sendFriendRequest(
-        user.userId,
-        params.targetUserId
-      );
+      return friendshipService.sendFriendRequest(user.userId, params.targetUserId);
     },
     {
       params: UserTargetIdParam,
@@ -26,7 +21,7 @@ export const friendRoutes = new Elysia()
         description: 'Sends a friend request to another user.',
         tags: ['Friendships'],
       },
-    }
+    },
   )
   .put(
     '/accept/:targetUserId',
@@ -35,10 +30,7 @@ export const friendRoutes = new Elysia()
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
       }
-      return friendshipService.acceptFriendRequest(
-        user.userId,
-        params.targetUserId
-      );
+      return friendshipService.acceptFriendRequest(user.userId, params.targetUserId);
     },
     {
       params: UserTargetIdParam,
@@ -47,7 +39,7 @@ export const friendRoutes = new Elysia()
         description: 'Accepts a pending friend request from another user.',
         tags: ['Friendships'],
       },
-    }
+    },
   )
   .delete(
     '/decline/:targetUserId',
@@ -56,10 +48,7 @@ export const friendRoutes = new Elysia()
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
       }
-      return friendshipService.declineFriendRequest(
-        user.userId,
-        params.targetUserId
-      );
+      return friendshipService.declineFriendRequest(user.userId, params.targetUserId);
     },
     {
       params: UserTargetIdParam,
@@ -68,7 +57,7 @@ export const friendRoutes = new Elysia()
         description: 'Declines a pending friend request received from another user.',
         tags: ['Friendships'],
       },
-    }
+    },
   )
   .delete(
     '/request/:targetUserId',
@@ -77,10 +66,7 @@ export const friendRoutes = new Elysia()
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
       }
-      return friendshipService.cancelSentFriendRequest(
-        user.userId,
-        params.targetUserId
-      );
+      return friendshipService.cancelSentFriendRequest(user.userId, params.targetUserId);
     },
     {
       params: UserTargetIdParam,
@@ -89,7 +75,7 @@ export const friendRoutes = new Elysia()
         description: 'Cancels a friend request previously sent to another user.',
         tags: ['Friendships'],
       },
-    }
+    },
   )
   .post(
     '/blacklist/:targetUserId',
@@ -98,19 +84,17 @@ export const friendRoutes = new Elysia()
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
       }
-      return friendshipService.blacklistUser(
-        user.userId,
-        params.targetUserId
-      );
+      return friendshipService.blacklistUser(user.userId, params.targetUserId);
     },
     {
       params: UserTargetIdParam,
       detail: {
         summary: 'Blacklist a user',
-        description: 'Blacklists another user, preventing them from sending friend requests or interacting.',
+        description:
+          'Blacklists another user, preventing them from sending friend requests or interacting.',
         tags: ['Friendships'],
       },
-    }
+    },
   )
   .delete(
     '/blacklist/:targetUserId',
@@ -119,19 +103,17 @@ export const friendRoutes = new Elysia()
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
       }
-      return friendshipService.unblacklistUser(
-        user.userId,
-        params.targetUserId
-      );
+      return friendshipService.unblacklistUser(user.userId, params.targetUserId);
     },
     {
       params: UserTargetIdParam,
       detail: {
         summary: 'Unblacklist a user',
-        description: 'Removes a user from the blacklist, allowing future interaction or friend requests.',
+        description:
+          'Removes a user from the blacklist, allowing future interaction or friend requests.',
         tags: ['Friendships'],
       },
-    }
+    },
   )
   .delete(
     '/unfriend/:targetUserId',
@@ -140,10 +122,7 @@ export const friendRoutes = new Elysia()
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
       }
-      return friendshipService.unfriendUser(
-        user.userId,
-        params.targetUserId
-      );
+      return friendshipService.unfriendUser(user.userId, params.targetUserId);
     },
     {
       params: UserTargetIdParam,
@@ -152,7 +131,7 @@ export const friendRoutes = new Elysia()
         description: 'Removes a user from your friends list.',
         tags: ['Friendships'],
       },
-    }
+    },
   )
   .get(
     '/',
@@ -166,8 +145,9 @@ export const friendRoutes = new Elysia()
     {
       detail: {
         summary: 'Get all friendships',
-        description: 'Retrieves all friendship relations (pending, friends, blacklisted) for the authenticated user.',
+        description:
+          'Retrieves all friendship relations (pending, friends, blacklisted) for the authenticated user.',
         tags: ['Friendships'],
       },
-    }
+    },
   );

@@ -64,24 +64,44 @@ export function LogsPage() {
           <option value="warn">warn</option>
           <option value="error">error</option>
         </select>
-        <input placeholder="Story ID" value={storyId} onChange={(e) => setStoryId(e.target.value)} />
+        <input
+          placeholder="Story ID"
+          value={storyId}
+          onChange={(e) => setStoryId(e.target.value)}
+        />
         <input placeholder="User ID" value={userId} onChange={(e) => setUserId(e.target.value)} />
-        <input placeholder="Search message..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input
+          placeholder="Search message..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         <button type="submit">Search</button>
       </form>
 
       {error && <p className="error-text">{error}</p>}
-      {loading ? <p>Loading...</p> : (
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
         <div className="log-layout">
           <table className="data-table">
             <thead>
-              <tr><th>When</th><th>Level</th><th>Message</th><th>Story</th><th>User</th></tr>
+              <tr>
+                <th>When</th>
+                <th>Level</th>
+                <th>Message</th>
+                <th>Story</th>
+                <th>User</th>
+              </tr>
             </thead>
             <tbody>
               {entries.map((entry) => (
-                <tr key={entry.id} onClick={() => setSelectedEntry(entry)} className="clickable-row">
+                <tr
+                  key={entry.id}
+                  onClick={() => setSelectedEntry(entry)}
+                  className="clickable-row"
+                >
                   <td>{new Date(entry.createdAt).toLocaleString()}</td>
                   <td className={LEVEL_CLASS[entry.level]}>{entry.level}</td>
                   <td className="message-cell">{entry.message}</td>
@@ -89,7 +109,11 @@ export function LogsPage() {
                   <td>{entry.userId ?? '-'}</td>
                 </tr>
               ))}
-              {entries.length === 0 && <tr><td colSpan={5}>No entries. Search above.</td></tr>}
+              {entries.length === 0 && (
+                <tr>
+                  <td colSpan={5}>No entries. Search above.</td>
+                </tr>
+              )}
             </tbody>
           </table>
 
@@ -97,10 +121,14 @@ export function LogsPage() {
             <div className="detail-panel">
               <h3>Log detail</h3>
               <dl>
-                <dt>Level</dt><dd className={LEVEL_CLASS[selectedEntry.level]}>{selectedEntry.level}</dd>
-                <dt>Story</dt><dd>{selectedEntry.storyId ?? '-'}</dd>
-                <dt>User</dt><dd>{selectedEntry.userId ?? '-'}</dd>
-                <dt>When</dt><dd>{new Date(selectedEntry.createdAt).toLocaleString()}</dd>
+                <dt>Level</dt>
+                <dd className={LEVEL_CLASS[selectedEntry.level]}>{selectedEntry.level}</dd>
+                <dt>Story</dt>
+                <dd>{selectedEntry.storyId ?? '-'}</dd>
+                <dt>User</dt>
+                <dd>{selectedEntry.userId ?? '-'}</dd>
+                <dt>When</dt>
+                <dd>{new Date(selectedEntry.createdAt).toLocaleString()}</dd>
               </dl>
               <p>{selectedEntry.message}</p>
               <pre>{JSON.stringify(selectedEntry.meta, null, 2)}</pre>
@@ -110,9 +138,15 @@ export function LogsPage() {
       )}
 
       <div className="pagination">
-        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</button>
-        <span>Page {page} of {Math.max(1, Math.ceil(total / pageSize))} ({total} total)</span>
-        <button disabled={page * pageSize >= total} onClick={() => setPage((p) => p + 1)}>Next</button>
+        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+          Previous
+        </button>
+        <span>
+          Page {page} of {Math.max(1, Math.ceil(total / pageSize))} ({total} total)
+        </span>
+        <button disabled={page * pageSize >= total} onClick={() => setPage((p) => p + 1)}>
+          Next
+        </button>
       </div>
     </div>
   );

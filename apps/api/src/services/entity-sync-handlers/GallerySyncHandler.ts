@@ -1,4 +1,13 @@
-import { CreateGalleryDataSchema, CreateGalleryDataType, CreateStoryUpdate, DeleteStoryUpdate, isSupportedMediaMimeType, mediaTypeForMimeType, PartialGallerySchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateGalleryDataSchema,
+  CreateGalleryDataType,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  isSupportedMediaMimeType,
+  mediaTypeForMimeType,
+  PartialGallerySchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { galleries } from '../../db/schema';
@@ -12,7 +21,10 @@ import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
  * Não há validação de dono porque a mídia não tem dono - o vínculo com personagens,
  * locais, notas, cenas e itens vive em `GalleryRelationSyncHandler`.
  */
-export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalleryDataSchema, typeof PartialGallerySchema> {
+export class GallerySyncHandler extends BaseSyncEntityHandler<
+  typeof CreateGalleryDataSchema,
+  typeof PartialGallerySchema
+> {
   entityName = 'Gallery';
 
   constructor() {
@@ -26,7 +38,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 
@@ -40,7 +52,9 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
     }
     const expected = mediaTypeForMimeType(mimeType);
     if (expected !== mediaType) {
-      throw new Error(`Validation Error: mediaType "${mediaType}" does not match MIME type "${mimeType}" (expected "${expected}").`);
+      throw new Error(
+        `Validation Error: mediaType "${mediaType}" does not match MIME type "${mimeType}" (expected "${expected}").`,
+      );
     }
   }
 
@@ -67,29 +81,37 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<typeof CreateGalle
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.mimeType !== undefined || validatedChanges.mediaType !== undefined) {
       this.assertSupportedMedia(
         validatedChanges.mimeType ?? currentEntity.mimeType,
-        validatedChanges.mediaType ?? currentEntity.mediaType
+        validatedChanges.mediaType ?? currentEntity.mediaType,
       );
     }
 
-    await db.update(galleries)
+    await db
+      .update(galleries)
       .set({
         ...validatedChanges,
         updatedAt: new Date(),
         version: currentEntity.version + 1,
       })
-      .where(and(
-        eq(galleries.id, update.id!),
-        eq(galleries.version, currentEntity.version)
-      ));
+      .where(and(eq(galleries.id, update.id!), eq(galleries.version, currentEntity.version)));
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
     // A linha vira tombstone acima, mas o hash pode ser usado por outra Gallery (mesma
     // história ou outra, já que o armazenamento é dedupado globalmente) - só o blob deixa

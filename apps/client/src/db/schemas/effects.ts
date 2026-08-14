@@ -7,7 +7,9 @@ export const effects = sqliteTable('effects', {
   storyId: text('story_id').notNull(),
   entityType: text('entity_type', { enum: ['Scene', 'Choice'] }).notNull(),
   entityId: text('entity_id').notNull(),
-  effectType: text('effect_type', { enum: ['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset'] }).notNull(),
+  effectType: text('effect_type', {
+    enum: ['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset'],
+  }).notNull(),
   // Usado quando effectType = 'itemGrant' | 'itemTake'
   itemId: text('item_id').references(() => items.id),
   // Usado quando effectType = 'triggerSet' | 'triggerUnset'

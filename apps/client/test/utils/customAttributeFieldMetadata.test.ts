@@ -26,7 +26,9 @@ const field = (overrides: Record<string, unknown> = {}) =>
  */
 describe('buildCustomAttributeFieldMetadata', () => {
   it('names the synthetic field after the field id, not the readable key', () => {
-    const [metadata] = buildCustomAttributeFieldMetadata([field({ id: 'abc', key: 'tipo_de_poder' })]);
+    const [metadata] = buildCustomAttributeFieldMetadata([
+      field({ id: 'abc', key: 'tipo_de_poder' }),
+    ]);
 
     expect(metadata.name).toBe('custom:abc');
   });
@@ -58,7 +60,9 @@ describe('buildCustomAttributeFieldMetadata', () => {
   });
 
   it('wires a suggestion field to its own suggestions source', () => {
-    const [metadata] = buildCustomAttributeFieldMetadata([field({ id: 'abc', type: AttributeType.SUGGESTION })]);
+    const [metadata] = buildCustomAttributeFieldMetadata([
+      field({ id: 'abc', type: AttributeType.SUGGESTION }),
+    ]);
 
     expect(metadata.isSuggestion).toBe(true);
     expect(metadata.suggestionsSource).toBe('custom:abc');
@@ -91,14 +95,19 @@ describe('extractCustomFieldId', () => {
   });
 
   it('round-trips with what the builder produced', () => {
-    const [metadata] = buildCustomAttributeFieldMetadata([field({ id: '01ARZ3NDEKTSV4RRFFQ69G5FAV' })]);
+    const [metadata] = buildCustomAttributeFieldMetadata([
+      field({ id: '01ARZ3NDEKTSV4RRFFQ69G5FAV' }),
+    ]);
 
     expect(extractCustomFieldId(metadata.name)).toBe('01ARZ3NDEKTSV4RRFFQ69G5FAV');
   });
 
-  it.each(['name', 'isFavorite', 'extraNotes'])('returns null for the native field %s', (nativeField) => {
-    expect(extractCustomFieldId(nativeField)).toBeNull();
-  });
+  it.each(['name', 'isFavorite', 'extraNotes'])(
+    'returns null for the native field %s',
+    (nativeField) => {
+      expect(extractCustomFieldId(nativeField)).toBeNull();
+    },
+  );
 
   it('does not treat the prefix appearing mid-string as a custom field', () => {
     expect(extractCustomFieldId('naocustom:abc')).toBeNull();

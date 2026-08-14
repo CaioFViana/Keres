@@ -87,7 +87,10 @@ describe('on native', () => {
   it('writes the tokens as JSON under the server key', async () => {
     await tokenVault.set('server-1', TOKENS);
 
-    expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith('keres.auth.server-1', JSON.stringify(TOKENS));
+    expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
+      'keres.auth.server-1',
+      JSON.stringify(TOKENS),
+    );
   });
 
   it('makes a written token readable straight from memory', async () => {

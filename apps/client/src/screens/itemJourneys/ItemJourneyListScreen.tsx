@@ -6,14 +6,26 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
-import { ChapterSelect, ChoiceSelect, ItemJourneySelect, ItemSelect, SceneSelect } from '../../db/schema';
+import {
+  ChapterSelect,
+  ChoiceSelect,
+  ItemJourneySelect,
+  ItemSelect,
+  SceneSelect,
+} from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { ItemJourneyStackParamList, MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import type {
+  ItemJourneyStackParamList,
+  MainSystemDrawerParamList,
+} from '../../navigation/MainSystemStack';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
@@ -68,13 +80,14 @@ const ItemJourneyListScreen = () => {
     try {
       setLoading(true);
       const storyId = selectedStory.id;
-      const [fetchedItems, fetchedJourneys, fetchedScenes, fetchedChapters, fetchedChoices] = await Promise.all([
-        createItemService(drizzleDb).getAllByStoryId(storyId),
-        createItemJourneyService(drizzleDb).getAllByStoryId(storyId),
-        createSceneService(drizzleDb).getAllByStoryId(storyId),
-        createChapterService(drizzleDb).getAllByStoryId(storyId),
-        createChoiceService(drizzleDb).getAllByStoryId(storyId),
-      ]);
+      const [fetchedItems, fetchedJourneys, fetchedScenes, fetchedChapters, fetchedChoices] =
+        await Promise.all([
+          createItemService(drizzleDb).getAllByStoryId(storyId),
+          createItemJourneyService(drizzleDb).getAllByStoryId(storyId),
+          createSceneService(drizzleDb).getAllByStoryId(storyId),
+          createChapterService(drizzleDb).getAllByStoryId(storyId),
+          createChoiceService(drizzleDb).getAllByStoryId(storyId),
+        ]);
       setItems(fetchedItems);
       setJourneys(fetchedJourneys);
       setScenes(fetchedScenes);
@@ -122,7 +135,13 @@ const ItemJourneyListScreen = () => {
       .filter((item) => journeysByItemId.has(item.id))
       .map((item) => ({
         item,
-        journeys: orderItemJourneysByNarrative(journeysByItemId.get(item.id)!, storyType, scenes, choices, chapters),
+        journeys: orderItemJourneysByNarrative(
+          journeysByItemId.get(item.id)!,
+          storyType,
+          scenes,
+          choices,
+          chapters,
+        ),
       }));
 
     if (searchText.trim()) {
@@ -130,49 +149,73 @@ const ItemJourneyListScreen = () => {
       grouped = grouped.filter(({ item }) => item.name.toLowerCase().includes(needle));
     }
 
-    grouped.sort((a, b) => (
+    grouped.sort((a, b) =>
       sortMode === 'name'
         ? a.item.name.localeCompare(b.item.name)
-        : b.journeys.length - a.journeys.length
-    ));
+        : b.journeys.length - a.journeys.length,
+    );
 
     return grouped;
   }, [items, journeys, scenes, choices, chapters, selectedStory?.type, searchText, sortMode]);
 
-  const handleOpenItem = useCallback((itemId: string) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Item', itemId);
-    }
-  }, [navigation]);
+  const handleOpenItem = useCallback(
+    (itemId: string) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(drawerNavigation, 'Item', itemId);
+      }
+    },
+    [navigation],
+  );
 
-  const handleOpenJourney = useCallback((journeyId: string) => {
-    navigation.navigate('ItemJourneyDetail', { itemJourneyId: journeyId });
-  }, [navigation]);
+  const handleOpenJourney = useCallback(
+    (journeyId: string) => {
+      navigation.navigate('ItemJourneyDetail', { itemJourneyId: journeyId });
+    },
+    [navigation],
+  );
 
-  const sortOptions = useMemo(() => ([
-    { label: t('sort_by_journey_count'), value: 'journeyCount' },
-    { label: t('sort_by_name'), value: 'name' },
-  ]), [t]);
+  const sortOptions = useMemo(
+    () => [
+      { label: t('sort_by_journey_count'), value: 'journeyCount' },
+      { label: t('sort_by_name'), value: 'name' },
+    ],
+    [t],
+  );
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     listContent: { padding: 12, paddingBottom: 24 },
-    filterRow: { flexDirection: 'row', paddingHorizontal: 12, paddingTop: 8, gap: 8, alignItems: 'flex-start' },
+    filterRow: {
+      flexDirection: 'row',
+      paddingHorizontal: 12,
+      paddingTop: 8,
+      gap: 8,
+      alignItems: 'flex-start',
+    },
     searchInputWrapper: { flex: 1 },
     sortWrapper: { width: 170 },
     headerButton: { marginRight: 15 },
     itemHeaderLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     itemName: { fontSize: 16, fontWeight: '600', color: colors.text, flex: 1 },
     journeyCountBadge: {
-      minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6,
-      alignItems: 'center', justifyContent: 'center',
-      backgroundColor: colors.primaryContainer, marginLeft: 8,
+      minWidth: 22,
+      height: 22,
+      borderRadius: 11,
+      paddingHorizontal: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+      marginLeft: 8,
     },
     journeyCountText: { fontSize: 12, fontWeight: '700', color: colors.primary },
     journeyRow: {
-      flexDirection: 'row', alignItems: 'center', paddingVertical: 8,
-      borderTopWidth: 1, borderTopColor: colors.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
     },
     journeyRowText: { flex: 1 },
     journeyScene: { fontSize: 12, color: colors.textSecondary },
@@ -186,46 +229,71 @@ const ItemJourneyListScreen = () => {
       setDocumentTitle(t('item_journeys_title'));
       navigation.getParent()?.setOptions({
         title: t('item_journeys_title'),
-        headerRight: canEdit ? () => (
-          <TouchableOpacity onPress={() => navigation.navigate('ItemJourneyForm', {})} style={styles.headerButton}>
-            <Ionicons name="add" size={30} color={colors.text} />
-          </TouchableOpacity>
-        ) : undefined,
+        headerRight: canEdit
+          ? () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ItemJourneyForm', {})}
+                style={styles.headerButton}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )
+          : undefined,
       });
-    }, [navigation, colors.text, t, styles.headerButton, canEdit])
+    }, [navigation, colors.text, t, styles.headerButton, canEdit]),
   );
 
-  const renderHeaderContent = useCallback((entry: ItemWithJourneys) => (
-    <View style={styles.itemHeaderLeft}>
-      <Text style={styles.itemName} numberOfLines={1}>{entry.item.name}</Text>
-      <View style={styles.journeyCountBadge}>
-        <Text style={styles.journeyCountText}>{entry.journeys.length}</Text>
+  const renderHeaderContent = useCallback(
+    (entry: ItemWithJourneys) => (
+      <View style={styles.itemHeaderLeft}>
+        <Text style={styles.itemName} numberOfLines={1}>
+          {entry.item.name}
+        </Text>
+        <View style={styles.journeyCountBadge}>
+          <Text style={styles.journeyCountText}>{entry.journeys.length}</Text>
+        </View>
       </View>
-    </View>
-  ), [styles]);
+    ),
+    [styles],
+  );
 
-  const renderExpandedContent = useCallback((entry: ItemWithJourneys) => (
-    <View>
-      {entry.journeys.map((journey) => (
-        <TouchableOpacity key={journey.id} style={styles.journeyRow} onPress={() => handleOpenJourney(journey.id)} activeOpacity={0.7}>
-          <View style={styles.journeyRowText}>
-            <Text style={styles.journeyScene} numberOfLines={1}>{sceneById.get(journey.sceneId)?.name ?? t('unknown_scene')}</Text>
-            <Text style={styles.journeyState} numberOfLines={1}>{journey.newState}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-        </TouchableOpacity>
-      ))}
-    </View>
-  ), [styles, sceneById, colors.textSecondary, handleOpenJourney, t]);
+  const renderExpandedContent = useCallback(
+    (entry: ItemWithJourneys) => (
+      <View>
+        {entry.journeys.map((journey) => (
+          <TouchableOpacity
+            key={journey.id}
+            style={styles.journeyRow}
+            onPress={() => handleOpenJourney(journey.id)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.journeyRowText}>
+              <Text style={styles.journeyScene} numberOfLines={1}>
+                {sceneById.get(journey.sceneId)?.name ?? t('unknown_scene')}
+              </Text>
+              <Text style={styles.journeyState} numberOfLines={1}>
+                {journey.newState}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ))}
+      </View>
+    ),
+    [styles, sceneById, colors.textSecondary, handleOpenJourney, t],
+  );
 
-  const renderItem = useCallback(({ item: entry }: { item: ItemWithJourneys }) => (
-    <GenericExpandedListItemWithActions
-      item={{ id: entry.item.id, isFavorite: entry.item.isFavorite }}
-      onViewDetails={() => handleOpenItem(entry.item.id)}
-      renderHeaderContent={() => renderHeaderContent(entry)}
-      renderExpandedContent={() => renderExpandedContent(entry)}
-    />
-  ), [handleOpenItem, renderHeaderContent, renderExpandedContent]);
+  const renderItem = useCallback(
+    ({ item: entry }: { item: ItemWithJourneys }) => (
+      <GenericExpandedListItemWithActions
+        item={{ id: entry.item.id, isFavorite: entry.item.isFavorite }}
+        onViewDetails={() => handleOpenItem(entry.item.id)}
+        renderHeaderContent={() => renderHeaderContent(entry)}
+        renderExpandedContent={() => renderExpandedContent(entry)}
+      />
+    ),
+    [handleOpenItem, renderHeaderContent, renderExpandedContent],
+  );
 
   if (loading && items.length === 0) {
     return <ScreenLoading message={t('loading_item_journeys')} />;
@@ -260,12 +328,12 @@ const ItemJourneyListScreen = () => {
         keyExtractor={(entry) => entry.item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        ListEmptyComponent={(
+        ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="cube-outline" size={40} color={colors.textSecondary} />
             <Text style={styles.emptyText}>{t('no_items_with_journeys')}</Text>
           </View>
-        )}
+        }
       />
     </View>
   );

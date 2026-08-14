@@ -7,8 +7,12 @@ import { stories } from './stories';
 
 export const noteRelations = pgTable('note_relations', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  noteId: text('note_id').notNull().references(() => notes.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  noteId: text('note_id')
+    .notNull()
+    .references(() => notes.id),
   relationId: text('relation_id').notNull(),
   relationType: text('relation_type').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -26,5 +30,5 @@ export const noteRelationsRelations = relations(noteRelations, ({ one }) => ({
   note: one(notes, {
     fields: [noteRelations.noteId],
     references: [notes.id],
-  })
+  }),
 }));

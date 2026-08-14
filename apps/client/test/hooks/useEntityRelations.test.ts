@@ -3,8 +3,14 @@
  */
 jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
 jest.mock('../../src/state/storyStore', () => ({ __esModule: true, useStoryStore: jest.fn() }));
-jest.mock('../../src/state/userSettingsStore', () => ({ __esModule: true, useUserSettingsStore: jest.fn() }));
-jest.mock('react-i18next', () => ({ __esModule: true, useTranslation: () => ({ t: (key: string) => key }) }));
+jest.mock('../../src/state/userSettingsStore', () => ({
+  __esModule: true,
+  useUserSettingsStore: jest.fn(),
+}));
+jest.mock('react-i18next', () => ({
+  __esModule: true,
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
 jest.mock('../../src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
 jest.mock('../../src/services/storymanagement/TagService', () => ({
   __esModule: true,
@@ -65,9 +71,10 @@ const noteRelationService = {
   saveNoteRelation: jest.fn(async (_userId: string, relation: any) => {
     const saved = { ...RELATION, ...relation, id: relation.id ?? RELATION.id };
     const index = storedRelations.findIndex((r) => r.id === saved.id);
-    storedRelations = index > -1
-      ? storedRelations.map((r, i) => (i === index ? saved : r))
-      : [...storedRelations, saved];
+    storedRelations =
+      index > -1
+        ? storedRelations.map((r, i) => (i === index ? saved : r))
+        : [...storedRelations, saved];
     return saved;
   }),
   deleteNoteRelation: jest.fn(async (_userId: string, relationId: string) => {
@@ -82,7 +89,11 @@ async function render(options: Record<string, unknown> = {}) {
   const view = await renderHook(() =>
     useEntityRelations({ entityType: ENTITY_TYPE, entityId: ENTITY_ID, ...options } as never),
   );
-  await waitFor(() => expect(view.result.current.availableTags.length + view.result.current.allNotes.length).toBeGreaterThan(0));
+  await waitFor(() =>
+    expect(
+      view.result.current.availableTags.length + view.result.current.allNotes.length,
+    ).toBeGreaterThan(0),
+  );
   return view;
 }
 
@@ -135,7 +146,11 @@ describe('loading', () => {
 
   it('skips the note half entirely when the screen asked for tags only', async () => {
     const { result } = await renderHook(() =>
-      useEntityRelations({ entityType: ENTITY_TYPE, entityId: ENTITY_ID, withNotes: false } as never),
+      useEntityRelations({
+        entityType: ENTITY_TYPE,
+        entityId: ENTITY_ID,
+        withNotes: false,
+      } as never),
     );
 
     await waitFor(() => expect(result.current.availableTags).toEqual(TAGS));
@@ -357,7 +372,11 @@ describe('reacting to changes elsewhere in the app', () => {
 
   it('does not subscribe to the note events when notes are off', async () => {
     await renderHook(() =>
-      useEntityRelations({ entityType: ENTITY_TYPE, entityId: ENTITY_ID, withNotes: false } as never),
+      useEntityRelations({
+        entityType: ENTITY_TYPE,
+        entityId: ENTITY_ID,
+        withNotes: false,
+      } as never),
     );
     await waitFor(() => expect(tagService.getTagsByStoryId).toHaveBeenCalled());
     noteService.getNotesByStoryId.mockClear();

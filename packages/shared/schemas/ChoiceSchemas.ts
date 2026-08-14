@@ -23,9 +23,9 @@ export const CreateChoiceDataSchema = ChoiceSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  sceneId: z.string().min(1, "Scene ID cannot be empty"),
-  nextSceneId: z.string().min(1, "Next Scene ID cannot be empty"),
-  text: z.string().min(1, "Choice text cannot be empty"),
+  sceneId: z.string().min(1, 'Scene ID cannot be empty'),
+  nextSceneId: z.string().min(1, 'Next Scene ID cannot be empty'),
+  text: z.string().min(1, 'Choice text cannot be empty'),
   notes: z.string().nullable().default(null),
 });
 

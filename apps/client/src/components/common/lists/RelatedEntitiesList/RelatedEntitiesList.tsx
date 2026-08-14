@@ -18,7 +18,11 @@ interface RelatedEntitiesListProps {
  * (RelationManager/GenericRelationDisplay) instead of the plain bullet list this used to
  * be, so a note's/tag's related-entities section doesn't stand out as its own thing.
  */
-const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({ title, noItemsMessage, groupedEntities }) => {
+const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({
+  title,
+  noItemsMessage,
+  groupedEntities,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const styles = StyleSheet.create({
@@ -32,7 +36,7 @@ const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({ title, noItem
     },
   });
 
-  const hasAnyEntity = Object.values(groupedEntities).some(names => names.length > 0);
+  const hasAnyEntity = Object.values(groupedEntities).some((names) => names.length > 0);
 
   return (
     <View style={styles.container}>
@@ -41,18 +45,19 @@ const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({ title, noItem
           {!hasAnyEntity ? (
             <Text style={{ color: colors.textSecondary }}>{noItemsMessage}</Text>
           ) : (
-            Object.entries(groupedEntities).map(([entityType, names]) => (
-              names.length > 0 && (
-                <View key={entityType}>
-                  <Text style={styles.groupTitle}>{t(`${entityType}_plural`)}</Text>
-                  {names.map((name, index) => (
-                    <View key={index} style={styles.relationItem}>
-                      <Text style={styles.relationText}>{name}</Text>
-                    </View>
-                  ))}
-                </View>
-              )
-            ))
+            Object.entries(groupedEntities).map(
+              ([entityType, names]) =>
+                names.length > 0 && (
+                  <View key={entityType}>
+                    <Text style={styles.groupTitle}>{t(`${entityType}_plural`)}</Text>
+                    {names.map((name, index) => (
+                      <View key={index} style={styles.relationItem}>
+                        <Text style={styles.relationText}>{name}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ),
+            )
           )}
         </View>
       </CollapsibleCard>

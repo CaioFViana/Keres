@@ -121,7 +121,9 @@ describe('POST /auth/refresh', () => {
 
   it('returns a token that actually authenticates', async () => {
     const user = await registerUser('ana');
-    const { data } = await request('POST', '/auth/refresh', { body: { refreshToken: user.refreshToken } });
+    const { data } = await request('POST', '/auth/refresh', {
+      body: { refreshToken: user.refreshToken },
+    });
 
     const { status } = await request('POST', '/auth/ws-ticket', { token: data.accessToken });
 
@@ -136,7 +138,9 @@ describe('POST /auth/refresh', () => {
   });
 
   it('rejects a malformed refresh token', async () => {
-    const { status, data } = await request('POST', '/auth/refresh', { body: { refreshToken: 'nao-e-um-jwt' } });
+    const { status, data } = await request('POST', '/auth/refresh', {
+      body: { refreshToken: 'nao-e-um-jwt' },
+    });
 
     expect(status).toBe(401);
     expect(data.message).toBe('Invalid or expired refresh token');
@@ -145,7 +149,9 @@ describe('POST /auth/refresh', () => {
   it('refuses an access token used in place of a refresh token', async () => {
     const user = await registerUser('ana');
 
-    const { status } = await request('POST', '/auth/refresh', { body: { refreshToken: user.token } });
+    const { status } = await request('POST', '/auth/refresh', {
+      body: { refreshToken: user.token },
+    });
 
     expect(status).toBe(401);
   });
@@ -159,7 +165,8 @@ describe('authentication guard', () => {
   });
 
   it('rejects a token that was not signed by this server', async () => {
-    const forged = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJ4IiwidXNlcm5hbWUiOiJ4In0.assinatura-invalida';
+    const forged =
+      'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJ4IiwidXNlcm5hbWUiOiJ4In0.assinatura-invalida';
 
     const { status } = await request('POST', '/auth/ws-ticket', { token: forged });
 

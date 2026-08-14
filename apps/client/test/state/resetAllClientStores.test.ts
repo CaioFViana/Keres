@@ -61,11 +61,17 @@ describe('resetAllClientStores', () => {
   });
 
   it('clears the pending conflicts and what had been postponed', () => {
-    useSyncConflictStore.setState({ conflicts: [{ id: 'c1' }], postponedConflictIds: ['c1'] } as never);
+    useSyncConflictStore.setState({
+      conflicts: [{ id: 'c1' }],
+      postponedConflictIds: ['c1'],
+    } as never);
 
     resetAllClientStores();
 
-    expect(useSyncConflictStore.getState()).toMatchObject({ conflicts: [], postponedConflictIds: [] });
+    expect(useSyncConflictStore.getState()).toMatchObject({
+      conflicts: [],
+      postponedConflictIds: [],
+    });
   });
 
   it('is safe to call twice', () => {

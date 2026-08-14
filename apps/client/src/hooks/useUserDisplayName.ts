@@ -9,10 +9,7 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 
 const remoteUserNameCache = new Map<string, Promise<string | undefined>>();
 
-export const useUserDisplayName = (
-  logUserId: string,
-  storyId: string | undefined,
-): string => {
+export const useUserDisplayName = (logUserId: string, storyId: string | undefined): string => {
   const { t } = useTranslation();
   const drizzle = useDrizzle();
   const { userId: localUserId, username: currentUsername, activeServer } = useUserSettingsStore();
@@ -67,10 +64,13 @@ export const useUserDisplayName = (
       if (storyServerId) {
         friendshipQuery = and(
           or(eq(friendships.senderId, logUserId), eq(friendships.receiverId, logUserId)),
-          eq(friendships.serverId, storyServerId)
+          eq(friendships.serverId, storyServerId),
         );
       } else {
-        friendshipQuery = or(eq(friendships.senderId, logUserId), eq(friendships.receiverId, logUserId));
+        friendshipQuery = or(
+          eq(friendships.senderId, logUserId),
+          eq(friendships.receiverId, logUserId),
+        );
       }
 
       const friend = await drizzle.query.friendships.findFirst({
@@ -90,7 +90,8 @@ export const useUserDisplayName = (
           const cacheKey = `${storyServer.id}:${logUserId}`;
           let request = remoteUserNameCache.get(cacheKey);
           if (!request) {
-            request = friendshipApiService.getUserDetails(storyServer, logUserId)
+            request = friendshipApiService
+              .getUserDetails(storyServer, logUserId)
               .then((user) => user?.username)
               .catch((error) => {
                 remoteUserNameCache.delete(cacheKey);

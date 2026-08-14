@@ -25,23 +25,28 @@ export const CreateSeeAlsoRelationDataSchema = SeeAlsoRelationSchema.omit({
   version: true,
   isDeleted: true,
   deletedAt: true,
-}).extend({
-  entityAId: z.string().min(1, "Entity A ID cannot be empty"),
-  entityBId: z.string().min(1, "Entity B ID cannot be empty"),
-}).refine(data => !(data.entityAType === data.entityBType && data.entityAId === data.entityBId), {
-  message: "An entity cannot be See-Also-linked to itself.",
-  path: ["entityBId"],
-});
+})
+  .extend({
+    entityAId: z.string().min(1, 'Entity A ID cannot be empty'),
+    entityBId: z.string().min(1, 'Entity B ID cannot be empty'),
+  })
+  .refine((data) => !(data.entityAType === data.entityBType && data.entityAId === data.entityBId), {
+    message: 'An entity cannot be See-Also-linked to itself.',
+    path: ['entityBId'],
+  });
 
-export const PartialSeeAlsoRelationSchema = SeeAlsoRelationSchema.partial().refine(data => {
-  if (data.entityAType && data.entityAId && data.entityBType && data.entityBId) {
-    return !(data.entityAType === data.entityBType && data.entityAId === data.entityBId);
-  }
-  return true;
-}, {
-  message: "An entity cannot be See-Also-linked to itself.",
-  path: ["entityBId"],
-});
+export const PartialSeeAlsoRelationSchema = SeeAlsoRelationSchema.partial().refine(
+  (data) => {
+    if (data.entityAType && data.entityAId && data.entityBType && data.entityBId) {
+      return !(data.entityAType === data.entityBType && data.entityAId === data.entityBId);
+    }
+    return true;
+  },
+  {
+    message: 'An entity cannot be See-Also-linked to itself.',
+    path: ['entityBId'],
+  },
+);
 
 export type CreateSeeAlsoRelationDataType = z.infer<typeof CreateSeeAlsoRelationDataSchema>;
 export type SeeAlsoRelationSchemaType = z.infer<typeof SeeAlsoRelationSchema>;

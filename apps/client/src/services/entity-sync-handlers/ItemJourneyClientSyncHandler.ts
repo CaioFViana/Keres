@@ -35,7 +35,7 @@ export class ItemJourneyClientSyncHandler implements ClientSyncEntityHandler {
       id: update.id,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
-      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null
+      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
     });
     console.log(`Applied create for ItemJourney ${update.id}`);
   }
@@ -50,7 +50,8 @@ export class ItemJourneyClientSyncHandler implements ClientSyncEntityHandler {
 
     const changes = update.changes as Partial<ItemJourney>;
 
-    await this.db.update(schema.itemJourneys)
+    await this.db
+      .update(schema.itemJourneys)
       .set({
         ...changes,
         updatedAt: new Date(),
@@ -69,7 +70,8 @@ export class ItemJourneyClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.itemJourneys)
+    await this.db
+      .update(schema.itemJourneys)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

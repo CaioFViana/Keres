@@ -55,7 +55,9 @@ export async function createTestDatabase(): Promise<TestDatabase> {
 /** Tabelas presentes no banco, para checar que as migrações realmente rodaram. */
 export function listTables(raw: Database.Database): string[] {
   return raw
-    .prepare<[], { name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+    .prepare<[], { name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    )
     .all()
     .map((row) => row.name)
     .sort();

@@ -12,31 +12,62 @@ export interface SeeAlsoEntityRef {
 }
 
 /** Ordenação canônica (A/B), mesma usada pelo servidor - ver SeeAlsoRelationSyncHandler.ts (API). */
-function sortEntityRefs(a: SeeAlsoEntityRef, b: SeeAlsoEntityRef): [SeeAlsoEntityRef, SeeAlsoEntityRef] {
-  return `${a.entityType}:${a.entityId}` <= `${b.entityType}:${b.entityId}`
-    ? [a, b]
-    : [b, a];
+function sortEntityRefs(
+  a: SeeAlsoEntityRef,
+  b: SeeAlsoEntityRef,
+): [SeeAlsoEntityRef, SeeAlsoEntityRef] {
+  return `${a.entityType}:${a.entityId}` <= `${b.entityType}:${b.entityId}` ? [a, b] : [b, a];
 }
 
 export interface SeeAlsoRelationService {
-  getRelationsForEntity(storyId: string, entityType: SeeAlsoEntityType, entityId: string): Promise<SeeAlsoRelationSelect[]>;
-  addSeeAlsoLink(currentUserId: string, storyId: string, a: SeeAlsoEntityRef, b: SeeAlsoEntityRef): Promise<SeeAlsoRelationSelect>;
+  getRelationsForEntity(
+    storyId: string,
+    entityType: SeeAlsoEntityType,
+    entityId: string,
+  ): Promise<SeeAlsoRelationSelect[]>;
+  addSeeAlsoLink(
+    currentUserId: string,
+    storyId: string,
+    a: SeeAlsoEntityRef,
+    b: SeeAlsoEntityRef,
+  ): Promise<SeeAlsoRelationSelect>;
   removeSeeAlsoLink(currentUserId: string, relationId: string): Promise<boolean>;
   /** Reconcilia o conjunto atual de vínculos de `entity` para exatamente `targets` (diff add/remove). */
-  setSeeAlsoTargets(currentUserId: string, storyId: string, entityType: SeeAlsoEntityType, entityId: string, targets: SeeAlsoEntityRef[]): Promise<void>;
+  setSeeAlsoTargets(
+    currentUserId: string,
+    storyId: string,
+    entityType: SeeAlsoEntityType,
+    entityId: string,
+    targets: SeeAlsoEntityRef[],
+  ): Promise<void>;
 }
 
 export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelationService => {
   const serverService = createServerService(db);
 
-  const findExistingPair = async (storyId: string, a: SeeAlsoEntityRef, b: SeeAlsoEntityRef, excludeId?: string): Promise<SeeAlsoRelationSelect | undefined> => {
+  const findExistingPair = async (
+    storyId: string,
+    a: SeeAlsoEntityRef,
+    b: SeeAlsoEntityRef,
+    excludeId?: string,
+  ): Promise<SeeAlsoRelationSelect | undefined> => {
     const candidate = await db.query.seeAlsoRelations.findFirst({
       where: and(
         eq(seeAlsoRelations.storyId, storyId),
         eq(seeAlsoRelations.isDeleted, false),
         or(
-          and(eq(seeAlsoRelations.entityAType, a.entityType), eq(seeAlsoRelations.entityAId, a.entityId), eq(seeAlsoRelations.entityBType, b.entityType), eq(seeAlsoRelations.entityBId, b.entityId)),
-          and(eq(seeAlsoRelations.entityAType, b.entityType), eq(seeAlsoRelations.entityAId, b.entityId), eq(seeAlsoRelations.entityBType, a.entityType), eq(seeAlsoRelations.entityBId, a.entityId)),
+          and(
+            eq(seeAlsoRelations.entityAType, a.entityType),
+            eq(seeAlsoRelations.entityAId, a.entityId),
+            eq(seeAlsoRelations.entityBType, b.entityType),
+            eq(seeAlsoRelations.entityBId, b.entityId),
+          ),
+          and(
+            eq(seeAlsoRelations.entityAType, b.entityType),
+            eq(seeAlsoRelations.entityAId, b.entityId),
+            eq(seeAlsoRelations.entityBType, a.entityType),
+            eq(seeAlsoRelations.entityBId, a.entityId),
+          ),
         ),
       ),
     });
@@ -48,15 +79,25 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
 
   return {
     async getRelationsForEntity(storyId, entityType, entityId) {
-      return db.select().from(seeAlsoRelations)
-        .where(and(
-          eq(seeAlsoRelations.storyId, storyId),
-          eq(seeAlsoRelations.isDeleted, false),
-          or(
-            and(eq(seeAlsoRelations.entityAType, entityType), eq(seeAlsoRelations.entityAId, entityId)),
-            and(eq(seeAlsoRelations.entityBType, entityType), eq(seeAlsoRelations.entityBId, entityId)),
+      return db
+        .select()
+        .from(seeAlsoRelations)
+        .where(
+          and(
+            eq(seeAlsoRelations.storyId, storyId),
+            eq(seeAlsoRelations.isDeleted, false),
+            or(
+              and(
+                eq(seeAlsoRelations.entityAType, entityType),
+                eq(seeAlsoRelations.entityAId, entityId),
+              ),
+              and(
+                eq(seeAlsoRelations.entityBType, entityType),
+                eq(seeAlsoRelations.entityBId, entityId),
+              ),
+            ),
           ),
-        ))
+        )
         .all();
     },
 
@@ -88,7 +129,15 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
       await db.insert(seeAlsoRelations).values(inserted).run();
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'SeeAlsoRelation', inserted.id, inserted);
+      await recordLocalOperation(
+        db,
+        storyId,
+        userIdToLog,
+        'create',
+        'SeeAlsoRelation',
+        inserted.id,
+        inserted,
+      );
 
       // Ambos os lados podem estar com a tela de detalhe montada - avisa os dois.
       entityEventEmitter.emit('see_also_relation_changed', storyId, entityA.entityId);
@@ -98,13 +147,21 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
     },
 
     async removeSeeAlsoLink(currentUserId, relationId) {
-      const relation = await db.query.seeAlsoRelations.findFirst({ where: eq(seeAlsoRelations.id, relationId) });
+      const relation = await db.query.seeAlsoRelations.findFirst({
+        where: eq(seeAlsoRelations.id, relationId),
+      });
       if (!relation || relation.isDeleted) {
         return false;
       }
 
-      const [removed] = await db.update(seeAlsoRelations)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${seeAlsoRelations.version} + 1` })
+      const [removed] = await db
+        .update(seeAlsoRelations)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${seeAlsoRelations.version} + 1`,
+        })
         .where(eq(seeAlsoRelations.id, relationId))
         .returning({ id: seeAlsoRelations.id, version: seeAlsoRelations.version });
 
@@ -112,12 +169,25 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
         throw new Error(`Failed to delete SeeAlsoRelation ${relationId}.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, relation.storyId, currentUserId);
-      await recordLocalOperation(db, relation.storyId, userIdToLog, 'delete', 'SeeAlsoRelation', relationId, {
-        id: relationId,
-        isDeleted: true,
-        version: removed.version,
-      });
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        relation.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(
+        db,
+        relation.storyId,
+        userIdToLog,
+        'delete',
+        'SeeAlsoRelation',
+        relationId,
+        {
+          id: relationId,
+          isDeleted: true,
+          version: removed.version,
+        },
+      );
 
       entityEventEmitter.emit('see_also_relation_changed', relation.storyId, relation.entityAId);
       entityEventEmitter.emit('see_also_relation_changed', relation.storyId, relation.entityBId);
@@ -126,14 +196,25 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
 
     async setSeeAlsoTargets(currentUserId, storyId, entityType, entityId, targets) {
       const current = await this.getRelationsForEntity(storyId, entityType, entityId);
-      const currentByKey = new Map(current.map((relation) => {
-        const other: SeeAlsoEntityRef = relation.entityAType === entityType && relation.entityAId === entityId
-          ? { entityType: relation.entityBType as SeeAlsoEntityType, entityId: relation.entityBId }
-          : { entityType: relation.entityAType as SeeAlsoEntityType, entityId: relation.entityAId };
-        return [`${other.entityType}:${other.entityId}`, relation];
-      }));
+      const currentByKey = new Map(
+        current.map((relation) => {
+          const other: SeeAlsoEntityRef =
+            relation.entityAType === entityType && relation.entityAId === entityId
+              ? {
+                  entityType: relation.entityBType as SeeAlsoEntityType,
+                  entityId: relation.entityBId,
+                }
+              : {
+                  entityType: relation.entityAType as SeeAlsoEntityType,
+                  entityId: relation.entityAId,
+                };
+          return [`${other.entityType}:${other.entityId}`, relation];
+        }),
+      );
 
-      const desiredKeys = new Set(targets.map((target) => `${target.entityType}:${target.entityId}`));
+      const desiredKeys = new Set(
+        targets.map((target) => `${target.entityType}:${target.entityId}`),
+      );
 
       for (const target of targets) {
         const key = `${target.entityType}:${target.entityId}`;

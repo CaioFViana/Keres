@@ -15,7 +15,10 @@ export async function promoteToAdmin(userId: string): Promise<void> {
 
 /** Marca o usuário como excluído, para exercitar a porta do `requireAdmin`. */
 export async function softDeleteUser(userId: string): Promise<void> {
-  await db.update(users).set({ isDeleted: true, deletedAt: new Date() }).where(eq(users.id, userId));
+  await db
+    .update(users)
+    .set({ isDeleted: true, deletedAt: new Date() })
+    .where(eq(users.id, userId));
 }
 
 /**

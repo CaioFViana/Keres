@@ -31,7 +31,7 @@ export const CreateCommentDataSchema = CommentSchema.omit({
   version: true,
   isDeleted: true,
   deletedAt: true,
-}).refine(data => (data.fieldId === null) !== (data.fieldKey === null), {
+}).refine((data) => (data.fieldId === null) !== (data.fieldKey === null), {
   message: 'Exactly one of fieldId or fieldKey must be set.',
   path: ['fieldKey'],
 });

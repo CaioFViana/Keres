@@ -1,10 +1,20 @@
-import { ChoiceCheckGroupType, CreateChoiceCheckGroupDataSchema, CreateStoryUpdate, DeleteStoryUpdate, PartialChoiceCheckGroupSchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  ChoiceCheckGroupType,
+  CreateChoiceCheckGroupDataSchema,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  PartialChoiceCheckGroupSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { choiceCheckGroups, choices } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<typeof CreateChoiceCheckGroupDataSchema, typeof PartialChoiceCheckGroupSchema> {
+export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateChoiceCheckGroupDataSchema,
+  typeof PartialChoiceCheckGroupSchema
+> {
   entityName = 'ChoiceCheckGroup';
 
   constructor() {
@@ -18,16 +28,22 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<typeof Cr
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 
   private async validateRelatedEntities(storyId: string, choiceId: string): Promise<void> {
     const choiceExists = await db.query.choices.findFirst({
-      where: and(eq(choices.id, choiceId), eq(choices.storyId, storyId), eq(choices.isDeleted, false)),
+      where: and(
+        eq(choices.id, choiceId),
+        eq(choices.storyId, storyId),
+        eq(choices.isDeleted, false),
+      ),
     });
     if (!choiceExists) {
-      throw new Error(`Validation Error: Choice with ID ${choiceId} not found, is deleted, or does not belong to story ${storyId}.`);
+      throw new Error(
+        `Validation Error: Choice with ID ${choiceId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
     }
   }
 
@@ -55,18 +71,29 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<typeof Cr
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.choiceId !== undefined) {
-      const newChoiceId: ChoiceCheckGroupType['choiceId'] = validatedChanges.choiceId ?? currentEntity.choiceId;
+      const newChoiceId: ChoiceCheckGroupType['choiceId'] =
+        validatedChanges.choiceId ?? currentEntity.choiceId;
       await this.validateRelatedEntities(storyId, newChoiceId);
     }
 
     await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
   }
 }

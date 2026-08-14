@@ -52,8 +52,9 @@ type FetchSlice<TKey extends string> = {
   [P in `fetch${Capitalize<TKey>}`]: () => Promise<void>;
 };
 
-export type EntityStore<TKey extends string, TEntity, TService> =
-  EntityStoreCore<TService> & CollectionSlice<TKey, TEntity> & FetchSlice<TKey>;
+export type EntityStore<TKey extends string, TEntity, TService> = EntityStoreCore<TService> &
+  CollectionSlice<TKey, TEntity> &
+  FetchSlice<TKey>;
 
 export interface EntityStoreConfig<TKey extends string, TEntity, TService> {
   /** Plural collection name, e.g. `'tags'`. Drives the public keys: `tags` / `fetchTags`. */
@@ -63,7 +64,12 @@ export interface EntityStoreConfig<TKey extends string, TEntity, TService> {
   /** Maps the shared query params onto this service's own fetch signature. */
   fetchEntities: (service: TService, params: EntityQueryParams) => Promise<TEntity[]>;
   /** Persists a favourite toggle. Omit for entities that have no favourite flag. */
-  updateFavorite?: (service: TService, userId: string, id: string, isFavorite: boolean) => Promise<unknown>;
+  updateFavorite?: (
+    service: TService,
+    userId: string,
+    id: string,
+    isFavorite: boolean,
+  ) => Promise<unknown>;
   /** Emitted after a successful favourite toggle so open screens refresh. */
   changeEvent?: string;
   defaultSort?: string | null;
@@ -148,8 +154,10 @@ export function createEntityStore<
         const localUserId = useUserSettingsStore.getState().userId;
         const favoriteService = state.db ? createFavoriteService(state.db) : null;
         const individualFavorites = !!(
-          config.favoriteEntityType && localUserId && favoriteService
-          && await favoriteService.getBehavior(storyId) !== 'global'
+          config.favoriteEntityType &&
+          localUserId &&
+          favoriteService &&
+          (await favoriteService.getBehavior(storyId)) !== 'global'
         );
         let entities = await config.fetchEntities(service, {
           storyId,
@@ -161,15 +169,17 @@ export function createEntityStore<
           advancedSearchCriteria: state.advancedSearchCriteria,
         });
         if (individualFavorites && favoriteService && localUserId && config.favoriteEntityType) {
-          entities = await favoriteService.decorateEntities(
+          entities = (await favoriteService.decorateEntities(
             storyId,
             config.favoriteEntityType,
             localUserId,
             entities as (TEntity & { isFavorite: boolean })[],
-          ) as TEntity[];
+          )) as TEntity[];
           if (state.favoriteFilterState !== 'all') {
             const expected = state.favoriteFilterState === 'favorite';
-            entities = entities.filter((entity) => (entity as TEntity & { isFavorite: boolean }).isFavorite === expected);
+            entities = entities.filter(
+              (entity) => (entity as TEntity & { isFavorite: boolean }).isFavorite === expected,
+            );
           }
         }
         setPartial({ [collectionKey]: entities, loading: false });
@@ -210,14 +220,20 @@ export function createEntityStore<
       // Optimistic update, reverted below if the write fails.
       setPartial({
         [collectionKey]: previous.map((entity) =>
-          entity.id === id ? { ...entity, isFavorite } : entity
+          entity.id === id ? { ...entity, isFavorite } : entity,
         ),
       });
 
       try {
         const favoriteService = createFavoriteService((get() as Store).db!);
-        if (await favoriteService.getBehavior(storyId) !== 'global') {
-          await favoriteService.setFavorite(storyId, id, config.favoriteEntityType, userId, isFavorite);
+        if ((await favoriteService.getBehavior(storyId)) !== 'global') {
+          await favoriteService.setFavorite(
+            storyId,
+            id,
+            config.favoriteEntityType,
+            userId,
+            isFavorite,
+          );
         } else {
           await config.updateFavorite(service, userId, id, isFavorite);
         }
@@ -255,7 +271,8 @@ export function createEntityStore<
       },
 
       setFilterTags: (tagIds: string[]) => setAndRefetch({ activeFilterTags: tagIds }),
-      setFavoriteFilter: (state: FavoriteFilterState) => setAndRefetch({ favoriteFilterState: state }),
+      setFavoriteFilter: (state: FavoriteFilterState) =>
+        setAndRefetch({ favoriteFilterState: state }),
       setSort: (sortBy: string | null, direction: SortDirection) =>
         setAndRefetch({ activeSort: sortBy, sortDirection: direction }),
       setAdvancedSearchCriteria: (criteria: AdvancedSearchCriteria) =>
@@ -293,6 +310,6 @@ export function createEntityStore<
           favoriteFilterState: state.favoriteFilterState,
           advancedSearchCriteria: state.advancedSearchCriteria,
         }) as unknown as Store,
-    })
+    }),
   );
 }

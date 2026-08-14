@@ -5,9 +5,15 @@ import { stories } from './stories';
 
 export const choices = pgTable('choices', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  sceneId: text('scene_id').notNull().references(() => scenes.id),
-  nextSceneId: text('next_scene_id').notNull().references(() => scenes.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  sceneId: text('scene_id')
+    .notNull()
+    .references(() => scenes.id),
+  nextSceneId: text('next_scene_id')
+    .notNull()
+    .references(() => scenes.id),
   text: text('text').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at').notNull().defaultNow(),

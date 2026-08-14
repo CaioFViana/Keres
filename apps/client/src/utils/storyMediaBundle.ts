@@ -1,4 +1,11 @@
-import { extensionForMimeType, FullStoryExportSchema, FullStoryExportType, GalleryType, migrateStoryExport, StoryExportVersionError } from '@keres/shared';
+import {
+  extensionForMimeType,
+  FullStoryExportSchema,
+  FullStoryExportType,
+  GalleryType,
+  migrateStoryExport,
+  StoryExportVersionError,
+} from '@keres/shared';
 import { File } from 'expo-file-system';
 import JSZip from 'jszip';
 import { mediaFileService } from '../services/MediaFileService';
@@ -53,7 +60,10 @@ export interface BuildZipResult {
  * simplesmente deixada de fora - o pacote continua útil com o resto, e quem chama recebe a
  * contagem para avisar a pessoa em vez de fingir que está tudo lá.
  */
-export async function buildStoryZipBytes(storyExport: FullStoryExportType, storyId: string): Promise<BuildZipResult> {
+export async function buildStoryZipBytes(
+  storyExport: FullStoryExportType,
+  storyId: string,
+): Promise<BuildZipResult> {
   const zip = new JSZip();
   zip.file(STORY_JSON_ENTRY, JSON.stringify(storyExport, null, 2), { compression: 'STORE' });
 
@@ -94,17 +104,26 @@ export interface ExtractedStoryZip {
  * extensão do arquivo dentro do .zip - a extensão existe só para o arquivo ter um nome
  * legível, `extensionForMimeType` já não é necessariamente 1:1 (heic/heif, jpg/jpeg).
  */
-export async function extractStoryZip(bytes: Uint8Array, sourceName: string): Promise<ExtractedStoryZip> {
+export async function extractStoryZip(
+  bytes: Uint8Array,
+  sourceName: string,
+): Promise<ExtractedStoryZip> {
   let zip: JSZip;
   try {
     zip = await JSZip.loadAsync(bytes);
   } catch (error) {
-    throw new StoryImportError('unreadable', `Could not open ${sourceName} as a zip file: ${(error as Error)?.message}`);
+    throw new StoryImportError(
+      'unreadable',
+      `Could not open ${sourceName} as a zip file: ${(error as Error)?.message}`,
+    );
   }
 
   const storyEntry = zip.file(STORY_JSON_ENTRY);
   if (!storyEntry) {
-    throw new StoryImportError('invalid_format', `${sourceName} does not contain a ${STORY_JSON_ENTRY} entry.`);
+    throw new StoryImportError(
+      'invalid_format',
+      `${sourceName} does not contain a ${STORY_JSON_ENTRY} entry.`,
+    );
   }
 
   let parsedJson: unknown;
@@ -113,7 +132,10 @@ export async function extractStoryZip(bytes: Uint8Array, sourceName: string): Pr
     // solto, senão a validação abaixo rejeitaria toda data como string.
     parsedJson = reviveDates(JSON.parse(stripUtf8Bom(await storyEntry.async('string'))));
   } catch {
-    throw new StoryImportError('invalid_format', `${sourceName}'s ${STORY_JSON_ENTRY} is not valid JSON.`);
+    throw new StoryImportError(
+      'invalid_format',
+      `${sourceName}'s ${STORY_JSON_ENTRY} is not valid JSON.`,
+    );
   }
 
   let migrated: unknown;
@@ -128,11 +150,16 @@ export async function extractStoryZip(bytes: Uint8Array, sourceName: string): Pr
 
   const validation = FullStoryExportSchema.safeParse(migrated);
   if (!validation.success) {
-    throw new StoryImportError('invalid_format', `${sourceName} is not a Keres story export: ${validation.error.message}`);
+    throw new StoryImportError(
+      'invalid_format',
+      `${sourceName} is not a Keres story export: ${validation.error.message}`,
+    );
   }
 
   const story = validation.data;
-  const mimeTypeByHash = new Map((story.galleryItems || []).map((item) => [item.hash, item.mimeType]));
+  const mimeTypeByHash = new Map(
+    (story.galleryItems || []).map((item) => [item.hash, item.mimeType]),
+  );
 
   const media: ExtractedZipMedia[] = [];
   const mediaEntries = zip.file(new RegExp(`^${MEDIA_DIR_PREFIX}`));

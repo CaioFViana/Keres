@@ -1,4 +1,9 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, GalleryRelation, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  GalleryRelation,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -51,7 +56,8 @@ export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler
 
     const changes = update.changes as Partial<GalleryRelation>;
 
-    await this.db.update(schema.galleryRelations)
+    await this.db
+      .update(schema.galleryRelations)
       .set({
         ...changes,
         updatedAt: new Date(),
@@ -70,7 +76,8 @@ export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler
       return;
     }
 
-    await this.db.update(schema.galleryRelations)
+    await this.db
+      .update(schema.galleryRelations)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

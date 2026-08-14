@@ -34,23 +34,56 @@ describe('MediaStorageService integration', () => {
     const storage = { has: vi.fn(), put: vi.fn(), get: vi.fn(), delete: vi.fn() };
     const service = new MediaStorageService(storage as any);
 
-    await expect(service.store(expectedHash, 'text/plain', bytes)).resolves.toEqual({ hash: expectedHash, sizeBytes: bytes.byteLength });
-    expect(storage.put).toHaveBeenCalledWith(`${expectedHash.slice(0, 2)}/${expectedHash}`, bytes, 'text/plain');
-    expect(await db.query.mediaBlobs.findFirst({ where: (fields, { eq }) => eq(fields.hash, expectedHash) })).toMatchObject({ mimeType: 'text/plain', sizeBytes: bytes.byteLength });
-    await expect(service.store(hash('a'), 'text/plain', bytes)).rejects.toThrow(/Media hash mismatch/i);
+    await expect(service.store(expectedHash, 'text/plain', bytes)).resolves.toEqual({
+      hash: expectedHash,
+      sizeBytes: bytes.byteLength,
+    });
+    expect(storage.put).toHaveBeenCalledWith(
+      `${expectedHash.slice(0, 2)}/${expectedHash}`,
+      bytes,
+      'text/plain',
+    );
+    expect(
+      await db.query.mediaBlobs.findFirst({
+        where: (fields, { eq }) => eq(fields.hash, expectedHash),
+      }),
+    ).toMatchObject({ mimeType: 'text/plain', sizeBytes: bytes.byteLength });
+    await expect(service.store(hash('a'), 'text/plain', bytes)).rejects.toThrow(
+      /Media hash mismatch/i,
+    );
   });
 
   it('reports present blobs in batches and returns typed content only for registered storage', async () => {
     const bytes = new Uint8Array([1, 2, 3]);
-    const storage = { has: vi.fn(async (key: string) => key === 'aa/a'.replace('a', hash('a').slice(0, 2))), put: vi.fn(), get: vi.fn(async () => new Blob([bytes], { type: 'image/png' })), delete: vi.fn() };
+    const storage = {
+      has: vi.fn(async (key: string) => key === 'aa/a'.replace('a', hash('a').slice(0, 2))),
+      put: vi.fn(),
+      get: vi.fn(async () => new Blob([bytes], { type: 'image/png' })),
+      delete: vi.fn(),
+    };
     const presentHash = hash('a');
     const missingHash = hash('b');
-    await db.insert(mediaBlobs).values({ hash: presentHash, mimeType: 'image/png', sizeBytes: 3, storagePath: `${presentHash.slice(0, 2)}/${presentHash}`, createdAt: new Date() });
-    await db.insert(mediaBlobs).values({ hash: missingHash, mimeType: 'image/png', sizeBytes: 4, storagePath: `${missingHash.slice(0, 2)}/${missingHash}`, createdAt: new Date() });
+    await db.insert(mediaBlobs).values({
+      hash: presentHash,
+      mimeType: 'image/png',
+      sizeBytes: 3,
+      storagePath: `${presentHash.slice(0, 2)}/${presentHash}`,
+      createdAt: new Date(),
+    });
+    await db.insert(mediaBlobs).values({
+      hash: missingHash,
+      mimeType: 'image/png',
+      sizeBytes: 4,
+      storagePath: `${missingHash.slice(0, 2)}/${missingHash}`,
+      createdAt: new Date(),
+    });
     storage.has.mockImplementation(async (key: string) => key.startsWith('aa/'));
     const service = new MediaStorageService(storage as any);
 
-    expect(await service.filterPresent([presentHash, missingHash, hash('c')])).toEqual({ present: [presentHash], missing: [missingHash, hash('c')] });
+    expect(await service.filterPresent([presentHash, missingHash, hash('c')])).toEqual({
+      present: [presentHash],
+      missing: [missingHash, hash('c')],
+    });
     expect(await service.read(presentHash)).toMatchObject({ mimeType: 'image/png', sizeBytes: 3 });
     expect(await service.read(hash('c'))).toBeNull();
   });
@@ -60,22 +93,74 @@ describe('MediaStorageService integration', () => {
     const storyId = newId();
     const referencedHash = hash('d');
     const orphanHash = hash('e');
-    const storage = { has: vi.fn(), put: vi.fn(), get: vi.fn(), delete: vi.fn(), cleanupTemporaryFiles: vi.fn(async () => 2) };
-    await db.insert(users).values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
-    await db.insert(stories).values({ id: storyId, userId, title: 'A Queda', type: 'linear', createdAt: new Date(), updatedAt: new Date(), version: 1, isDeleted: false } as never);
+    const storage = {
+      has: vi.fn(),
+      put: vi.fn(),
+      get: vi.fn(),
+      delete: vi.fn(),
+      cleanupTemporaryFiles: vi.fn(async () => 2),
+    };
+    await db
+      .insert(users)
+      .values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
+    await db.insert(stories).values({
+      id: storyId,
+      userId,
+      title: 'A Queda',
+      type: 'linear',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: 1,
+      isDeleted: false,
+    } as never);
     await db.insert(mediaBlobs).values([
-      { hash: referencedHash, mimeType: 'image/png', sizeBytes: 1, storagePath: `dd/${referencedHash}`, createdAt: new Date() },
-      { hash: orphanHash, mimeType: 'image/png', sizeBytes: 1, storagePath: `ee/${orphanHash}`, createdAt: new Date() },
+      {
+        hash: referencedHash,
+        mimeType: 'image/png',
+        sizeBytes: 1,
+        storagePath: `dd/${referencedHash}`,
+        createdAt: new Date(),
+      },
+      {
+        hash: orphanHash,
+        mimeType: 'image/png',
+        sizeBytes: 1,
+        storagePath: `ee/${orphanHash}`,
+        createdAt: new Date(),
+      },
     ]);
-    await db.insert(galleries).values({ id: newId(), storyId, mediaType: 'image', mimeType: 'image/png', fileName: 'kept.png', hash: referencedHash, sizeBytes: 1, title: null, isFavorite: false, extraNotes: null, createdAt: new Date(), updatedAt: new Date(), version: 1, isDeleted: false } as never);
+    await db.insert(galleries).values({
+      id: newId(),
+      storyId,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'kept.png',
+      hash: referencedHash,
+      sizeBytes: 1,
+      title: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: 1,
+      isDeleted: false,
+    } as never);
     const service = new MediaStorageService(storage as any);
 
     await service.deleteBlobIfUnreferenced(referencedHash);
     await service.deleteBlobIfUnreferenced(orphanHash);
     await service.deleteBlobIfUnreferenced(hash('f'));
     expect(storage.delete).toHaveBeenCalledWith(`ee/${orphanHash}`);
-    expect(await db.query.mediaBlobs.findFirst({ where: (fields, { eq }) => eq(fields.hash, referencedHash) })).toBeTruthy();
-    expect(await db.query.mediaBlobs.findFirst({ where: (fields, { eq }) => eq(fields.hash, orphanHash) })).toBeUndefined();
+    expect(
+      await db.query.mediaBlobs.findFirst({
+        where: (fields, { eq }) => eq(fields.hash, referencedHash),
+      }),
+    ).toBeTruthy();
+    expect(
+      await db.query.mediaBlobs.findFirst({
+        where: (fields, { eq }) => eq(fields.hash, orphanHash),
+      }),
+    ).toBeUndefined();
     expect(await service.cleanupTemporaryFiles()).toBe(2);
   });
 });

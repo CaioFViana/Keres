@@ -94,24 +94,40 @@ describe('TierApiService', () => {
     await TierApiService.list();
     await TierApiService.list(true);
 
-    expect(mocks.get).toHaveBeenNthCalledWith(1, '/admin/api/tiers', { params: { includeDeleted: false } });
-    expect(mocks.get).toHaveBeenNthCalledWith(2, '/admin/api/tiers', { params: { includeDeleted: true } });
+    expect(mocks.get).toHaveBeenNthCalledWith(1, '/admin/api/tiers', {
+      params: { includeDeleted: false },
+    });
+    expect(mocks.get).toHaveBeenNthCalledWith(2, '/admin/api/tiers', {
+      params: { includeDeleted: true },
+    });
   });
 
   it.each([
     ['get', () => TierApiService.get('tier-1'), 'get', ['/admin/api/tiers/tier-1']],
-    ['create', () => TierApiService.create({ name: 'Pro' } as any), 'post', ['/admin/api/tiers', { name: 'Pro' }]],
+    [
+      'create',
+      () => TierApiService.create({ name: 'Pro' } as any),
+      'post',
+      ['/admin/api/tiers', { name: 'Pro' }],
+    ],
     [
       'update',
       () => TierApiService.update('tier-1', { name: 'Pro+' } as any),
       'put',
       ['/admin/api/tiers/tier-1', { name: 'Pro+' }],
     ],
-    ['softDelete', () => TierApiService.softDelete('tier-1'), 'delete', ['/admin/api/tiers/tier-1']],
+    [
+      'softDelete',
+      () => TierApiService.softDelete('tier-1'),
+      'delete',
+      ['/admin/api/tiers/tier-1'],
+    ],
   ])('routes %s to the right verb and URL', async (_label, call, method, expectedArgs) => {
     await call();
 
-    expect(mocks[method as keyof typeof mocks]).toHaveBeenCalledWith(...(expectedArgs as [string, unknown?]));
+    expect(mocks[method as keyof typeof mocks]).toHaveBeenCalledWith(
+      ...(expectedArgs as [string, unknown?]),
+    );
   });
 });
 
@@ -119,21 +135,31 @@ describe('RegistrationSettingsApiService', () => {
   it('reads the settings from the singleton resource', async () => {
     mocks.get.mockResolvedValue({ data: { allowRegistration: false } });
 
-    await expect(RegistrationSettingsApiService.get()).resolves.toEqual({ allowRegistration: false });
+    await expect(RegistrationSettingsApiService.get()).resolves.toEqual({
+      allowRegistration: false,
+    });
     expect(mocks.get).toHaveBeenCalledWith('/admin/api/registration-settings');
   });
 
   it('updates with PUT, since the resource is a singleton', async () => {
     await RegistrationSettingsApiService.update({ allowRegistration: true } as any);
 
-    expect(mocks.put).toHaveBeenCalledWith('/admin/api/registration-settings', { allowRegistration: true });
+    expect(mocks.put).toHaveBeenCalledWith('/admin/api/registration-settings', {
+      allowRegistration: true,
+    });
   });
 });
 
 describe('LogsApiService', () => {
   it('browses persisted API logs with the filters as query parameters', async () => {
     mocks.get.mockResolvedValue({ data: { items: [], total: 0, page: 1, pageSize: 50 } });
-    const filters = { level: 'error' as const, storyId: 'story-1', userId: 'user-1', page: 2, pageSize: 50 };
+    const filters = {
+      level: 'error' as const,
+      storyId: 'story-1',
+      userId: 'user-1',
+      page: 2,
+      pageSize: 50,
+    };
 
     const result = await LogsApiService.list(filters);
 
@@ -164,7 +190,9 @@ describe('RecoveryApiService', () => {
 
     const result = await RecoveryApiService.browseOperationLog(filters);
 
-    expect(mocks.get).toHaveBeenCalledWith('/admin/api/recovery/operation-log', { params: filters });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/api/recovery/operation-log', {
+      params: filters,
+    });
     expect(result.pageSize).toBe(50);
   });
 });

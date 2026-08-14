@@ -20,7 +20,10 @@ import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commo
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
-type FriendshipListScreenNavigationProp = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;
+type FriendshipListScreenNavigationProp = NativeStackNavigationProp<
+  FriendshipStackParamList,
+  'FriendshipList'
+>;
 
 type FriendshipSection = {
   title: string;
@@ -51,7 +54,7 @@ const FriendshipListScreen = () => {
     try {
       const allServers = await serverService.getAllServers();
       const newServersMap = new Map<string, ServerSelect>();
-      allServers.forEach(server => newServersMap.set(server.id, server));
+      allServers.forEach((server) => newServersMap.set(server.id, server));
       setServersMap(newServersMap);
     } catch (error) {
       console.error('Error fetching servers:', error);
@@ -92,7 +95,7 @@ const FriendshipListScreen = () => {
 
   const runFriendshipAction = useFriendshipActionHandler(
     useCallback((serverId: string) => serversMap.get(serverId), [serversMap]),
-    fetchFriendshipsAndServers
+    fetchFriendshipsAndServers,
   );
 
   const handleAcceptFriendRequest = runFriendshipAction(
@@ -100,7 +103,7 @@ const FriendshipListScreen = () => {
     t('accept_request_confirmation_title'),
     t('accept_request_confirmation_message'),
     t('request_accepted_successfully'),
-    t('failed_to_accept_request')
+    t('failed_to_accept_request'),
   );
 
   const handleDeclineFriendRequest = runFriendshipAction(
@@ -108,7 +111,7 @@ const FriendshipListScreen = () => {
     t('decline_request_confirmation_title'),
     t('decline_request_confirmation_message'),
     t('request_declined_successfully'),
-    t('failed_to_decline_request')
+    t('failed_to_decline_request'),
   );
 
   const handleCancelSentFriendRequest = runFriendshipAction(
@@ -116,7 +119,7 @@ const FriendshipListScreen = () => {
     t('cancel_request_confirmation_title'),
     t('cancel_request_confirmation_message'),
     t('request_cancelled_successfully'),
-    t('failed_to_cancel_request')
+    t('failed_to_cancel_request'),
   );
 
   const handleUnfriendUser = runFriendshipAction(
@@ -124,7 +127,7 @@ const FriendshipListScreen = () => {
     t('unfriend_confirmation_title'),
     t('unfriend_confirmation_message'),
     t('unfriend_successful'),
-    t('failed_to_unfriend')
+    t('failed_to_unfriend'),
   );
 
   const handleBlacklistUser = runFriendshipAction(
@@ -132,7 +135,7 @@ const FriendshipListScreen = () => {
     t('blacklist_confirmation_title'),
     t('blacklist_confirmation_message'),
     t('blacklist_successful'),
-    t('failed_to_blacklist')
+    t('failed_to_blacklist'),
   );
 
   const handleUnblacklistUser = runFriendshipAction(
@@ -140,7 +143,7 @@ const FriendshipListScreen = () => {
     t('unblacklist_confirmation_title'),
     t('unblacklist_confirmation_message'),
     t('unblacklist_successful'),
-    t('failed_to_unblacklist')
+    t('failed_to_unblacklist'),
   );
 
   const sections = useMemo<FriendshipSection[]>(() => {
@@ -172,58 +175,80 @@ const FriendshipListScreen = () => {
         <View style={styles.friendshipInfo}>
           <Text style={[styles.friendshipText, { color: colors.text }]}>
             {item.status === FriendStatus.PENDING
-              ? (item.senderId === currentUsersServerId
+              ? item.senderId === currentUsersServerId
                 ? t('sent_to', { friendUsername: item.friendUsername })
-                : t('received_from', { friendUsername: item.friendUsername }))
-              : item.friendUsername
-            }
+                : t('received_from', { friendUsername: item.friendUsername })
+              : item.friendUsername}
           </Text>
           <Text style={[styles.friendshipText, { color: colors.textSecondary }]}>
-            {item.otherUserTag && `@${item.otherUserTag} · `}{t('server')}: {item.serverName || item.serverId} {item.serverUrl && `(${item.serverUrl})`}
+            {item.otherUserTag && `@${item.otherUserTag} · `}
+            {t('server')}: {item.serverName || item.serverId}{' '}
+            {item.serverUrl && `(${item.serverUrl})`}
           </Text>
         </View>
         <View style={styles.friendshipActions}>
           {item.status === FriendStatus.PENDING && item.receiverId === currentUsersServerId && (
             <>
-              <TouchableOpacity onPress={() => handleAcceptFriendRequest(item.id, item.serverId)} style={styles.actionButton}>
+              <TouchableOpacity
+                onPress={() => handleAcceptFriendRequest(item.id, item.serverId)}
+                style={styles.actionButton}
+              >
                 <Ionicons name="checkmark-circle-outline" size={24} color={colors.primary} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDeclineFriendRequest(item.id, item.serverId)} style={styles.actionButton}>
+              <TouchableOpacity
+                onPress={() => handleDeclineFriendRequest(item.id, item.serverId)}
+                style={styles.actionButton}
+              >
                 <Ionicons name="close-circle-outline" size={24} color={colors.error} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleBlacklistUser(item.id, item.serverId)} style={styles.actionButton}>
+              <TouchableOpacity
+                onPress={() => handleBlacklistUser(item.id, item.serverId)}
+                style={styles.actionButton}
+              >
                 <Ionicons name="ban-outline" size={24} color={colors.accent} />
               </TouchableOpacity>
             </>
           )}
 
           {item.status === FriendStatus.PENDING && item.senderId === currentUsersServerId && (
-            <TouchableOpacity onPress={() => handleCancelSentFriendRequest(item.id, item.serverId)} style={styles.actionButton}>
+            <TouchableOpacity
+              onPress={() => handleCancelSentFriendRequest(item.id, item.serverId)}
+              style={styles.actionButton}
+            >
               <Ionicons name="close-circle-outline" size={24} color={colors.secondary} />
             </TouchableOpacity>
           )}
 
           {item.status === FriendStatus.FRIEND && (
             <>
-              <TouchableOpacity onPress={() => handleUnfriendUser(item.id, item.serverId)} style={styles.actionButton}>
+              <TouchableOpacity
+                onPress={() => handleUnfriendUser(item.id, item.serverId)}
+                style={styles.actionButton}
+              >
                 <Ionicons name="person-remove-outline" size={24} color={colors.error} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleBlacklistUser(item.id, item.serverId)} style={styles.actionButton}>
+              <TouchableOpacity
+                onPress={() => handleBlacklistUser(item.id, item.serverId)}
+                style={styles.actionButton}
+              >
                 <Ionicons name="ban-outline" size={24} color={colors.accent} />
               </TouchableOpacity>
             </>
           )}
 
-          {item.status === FriendStatus.BLACKLISTED
+          {item.status === FriendStatus.BLACKLISTED &&
             // Only the side that issued the blacklist can undo it (server-enforced too, see
             // FriendshipService.unblacklistUser) - null `blockedById` is a legacy row from
             // before this column existed, shown to both sides since who blocked whom can't
             // be recovered for it.
-            && (item.blockedById === null || item.blockedById === currentUsersServerId) && (
-            <TouchableOpacity onPress={() => handleUnblacklistUser(item.id, item.serverId)} style={styles.actionButton}>
-              <Ionicons name="person-add-outline" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          )}
+            (item.blockedById === null || item.blockedById === currentUsersServerId) && (
+              <TouchableOpacity
+                onPress={() => handleUnblacklistUser(item.id, item.serverId)}
+                style={styles.actionButton}
+              >
+                <Ionicons name="person-add-outline" size={24} color={colors.primary} />
+              </TouchableOpacity>
+            )}
         </View>
       </TouchableOpacity>
     );
@@ -236,7 +261,12 @@ const FriendshipListScreen = () => {
         sections={sections}
         renderItem={renderFriendshipItem}
         renderSectionHeader={({ section }) => (
-          <Text style={[styles.sectionHeader, { color: colors.textSecondary, backgroundColor: colors.background }]}>
+          <Text
+            style={[
+              styles.sectionHeader,
+              { color: colors.textSecondary, backgroundColor: colors.background },
+            ]}
+          >
             {section.title}
           </Text>
         )}
@@ -306,7 +336,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

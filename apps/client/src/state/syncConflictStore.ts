@@ -21,7 +21,11 @@ interface SyncConflictState {
   open: (index?: number) => void;
   close: () => void;
   setActiveIndex: (index: number) => void;
-  keepLocal: (db: AppDrizzleClient, conflictId: string, chosenValues?: Record<string, any>) => Promise<void>;
+  keepLocal: (
+    db: AppDrizzleClient,
+    conflictId: string,
+    chosenValues?: Record<string, any>,
+  ) => Promise<void>;
   keepServer: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
   dismiss: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
   reset: () => void;
@@ -34,19 +38,22 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
   isResolving: false,
   postponedConflictIds: [],
 
-  reset: () => set({
-    conflicts: [],
-    activeIndex: 0,
-    isVisible: false,
-    isResolving: false,
-    postponedConflictIds: [],
-  }),
+  reset: () =>
+    set({
+      conflicts: [],
+      activeIndex: 0,
+      isVisible: false,
+      isResolving: false,
+      postponedConflictIds: [],
+    }),
 
   refresh: async (db, storyId) => {
     try {
       const conflicts = await createSyncConflictService(db).getPendingConflicts(storyId);
       set((state) => {
-        const hasUnseenConflict = conflicts.some(conflict => !state.postponedConflictIds.includes(conflict.id));
+        const hasUnseenConflict = conflicts.some(
+          (conflict) => !state.postponedConflictIds.includes(conflict.id),
+        );
         return {
           conflicts,
           activeIndex: Math.min(state.activeIndex, Math.max(conflicts.length - 1, 0)),
@@ -60,13 +67,13 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
 
   open: (index = 0) => set({ isVisible: true, activeIndex: index }),
 
-  close: () => set((state) => ({
-    isVisible: false,
-    postponedConflictIds: Array.from(new Set([
-      ...state.postponedConflictIds,
-      ...state.conflicts.map(conflict => conflict.id),
-    ])),
-  })),
+  close: () =>
+    set((state) => ({
+      isVisible: false,
+      postponedConflictIds: Array.from(
+        new Set([...state.postponedConflictIds, ...state.conflicts.map((conflict) => conflict.id)]),
+      ),
+    })),
 
   setActiveIndex: (index) => set({ activeIndex: index }),
 

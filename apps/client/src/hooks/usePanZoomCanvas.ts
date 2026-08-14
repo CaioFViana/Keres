@@ -46,7 +46,7 @@ interface Transform {
 export function usePanZoomCanvas(
   ref: React.ForwardedRef<PanZoomCanvasHandle>,
   layout: PanZoomLayout,
-  options: PanZoomCanvasOptions = {}
+  options: PanZoomCanvasOptions = {},
 ) {
   const minScale = options.minScale ?? DEFAULT_MIN_SCALE;
   const maxScale = options.maxScale ?? DEFAULT_MAX_SCALE;
@@ -83,35 +83,44 @@ export function usePanZoomCanvas(
     const scaledWidth = layout.width * transform.current.scale;
     const scaledHeight = layout.height * transform.current.scale;
 
-    transform.current.x = scaledWidth <= viewportWidth
-      ? (viewportWidth - scaledWidth) / 2
-      : Math.min(0, Math.max(viewportWidth - scaledWidth, transform.current.x));
+    transform.current.x =
+      scaledWidth <= viewportWidth
+        ? (viewportWidth - scaledWidth) / 2
+        : Math.min(0, Math.max(viewportWidth - scaledWidth, transform.current.x));
 
-    transform.current.y = scaledHeight <= viewportHeight
-      ? (viewportHeight - scaledHeight) / 2
-      : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
+    transform.current.y =
+      scaledHeight <= viewportHeight
+        ? (viewportHeight - scaledHeight) / 2
+        : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
   }, [layout.height, layout.width]);
 
   /** Aplica um zoom mantendo fixo o ponto do mapa que está sob `focus`. */
-  const zoomAround = useCallback((nextScale: number, focus: { x: number; y: number }) => {
-    const previous = transform.current.scale;
-    const clamped = Math.max(minScale, Math.min(maxScale, nextScale));
-    if (clamped === previous) return;
+  const zoomAround = useCallback(
+    (nextScale: number, focus: { x: number; y: number }) => {
+      const previous = transform.current.scale;
+      const clamped = Math.max(minScale, Math.min(maxScale, nextScale));
+      if (clamped === previous) return;
 
-    transform.current.x = focus.x - ((focus.x - transform.current.x) * clamped) / previous;
-    transform.current.y = focus.y - ((focus.y - transform.current.y) * clamped) / previous;
-    transform.current.scale = clamped;
-    clamp();
-    publish();
-  }, [clamp, maxScale, minScale, publish]);
+      transform.current.x = focus.x - ((focus.x - transform.current.x) * clamped) / previous;
+      transform.current.y = focus.y - ((focus.y - transform.current.y) * clamped) / previous;
+      transform.current.scale = clamped;
+      clamp();
+      publish();
+    },
+    [clamp, maxScale, minScale, publish],
+  );
 
   const fitToScreen = useCallback(() => {
     const { width: viewportWidth, height: viewportHeight } = viewport.current;
-    if (viewportWidth === 0 || viewportHeight === 0 || layout.width === 0 || layout.height === 0) return;
+    if (viewportWidth === 0 || viewportHeight === 0 || layout.width === 0 || layout.height === 0)
+      return;
 
     const scale = Math.max(
       minScale,
-      Math.min(maxScale, Math.min(viewportWidth / layout.width, viewportHeight / layout.height) * FIT_MARGIN)
+      Math.min(
+        maxScale,
+        Math.min(viewportWidth / layout.width, viewportHeight / layout.height) * FIT_MARGIN,
+      ),
     );
     transform.current = {
       scale,
@@ -122,15 +131,19 @@ export function usePanZoomCanvas(
     publish();
   }, [clamp, layout.height, layout.width, maxScale, minScale, publish]);
 
-  useImperativeHandle(ref, () => ({
-    fitToScreen,
-    zoomBy: (factor: number) => {
-      zoomAround(transform.current.scale * factor, {
-        x: viewport.current.width / 2,
-        y: viewport.current.height / 2,
-      });
-    },
-  }), [fitToScreen, zoomAround]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      fitToScreen,
+      zoomBy: (factor: number) => {
+        zoomAround(transform.current.scale * factor, {
+          x: viewport.current.width / 2,
+          y: viewport.current.height / 2,
+        });
+      },
+    }),
+    [fitToScreen, zoomAround],
+  );
 
   const handleLayout = useCallback(() => {
     containerRef.current?.measureInWindow((x, y, width, height) => {
@@ -146,55 +159,68 @@ export function usePanZoomCanvas(
   }, [fitToScreen, layout]);
 
   const panResponder = useMemo(
-    () => PanResponder.create({
-      // Não captura o início do toque: assim um toque simples chega ao nó e abre os
-      // detalhes. O arraste é roubado do nó depois, na fase de captura do movimento.
-      onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponderCapture: (event, gestureState) =>
-        event.nativeEvent.touches.length > 1 ||
-        Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD,
+    () =>
+      PanResponder.create({
+        // Não captura o início do toque: assim um toque simples chega ao nó e abre os
+        // detalhes. O arraste é roubado do nó depois, na fase de captura do movimento.
+        onStartShouldSetPanResponderCapture: () => false,
+        onMoveShouldSetPanResponderCapture: (event, gestureState) =>
+          event.nativeEvent.touches.length > 1 ||
+          Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD,
 
-      onPanResponderGrant: () => {
-        gesture.current = { lastDx: 0, lastDy: 0, pinchDistance: 0, pinchScale: transform.current.scale };
-      },
-
-      onPanResponderMove: (event, gestureState) => {
-        const touches = event.nativeEvent.touches;
-
-        if (touches.length >= 2) {
-          const [first, second] = touches;
-          const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
-          const focus = {
-            x: (first.pageX + second.pageX) / 2 - viewportOrigin.current.x,
-            y: (first.pageY + second.pageY) / 2 - viewportOrigin.current.y,
+        onPanResponderGrant: () => {
+          gesture.current = {
+            lastDx: 0,
+            lastDy: 0,
+            pinchDistance: 0,
+            pinchScale: transform.current.scale,
           };
+        },
 
-          if (gesture.current.pinchDistance === 0) {
-            gesture.current.pinchDistance = distance;
-            gesture.current.pinchScale = transform.current.scale;
-          } else if (distance > 0) {
-            zoomAround((gesture.current.pinchScale * distance) / gesture.current.pinchDistance, focus);
+        onPanResponderMove: (event, gestureState) => {
+          const touches = event.nativeEvent.touches;
+
+          if (touches.length >= 2) {
+            const [first, second] = touches;
+            const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
+            const focus = {
+              x: (first.pageX + second.pageX) / 2 - viewportOrigin.current.x,
+              y: (first.pageY + second.pageY) / 2 - viewportOrigin.current.y,
+            };
+
+            if (gesture.current.pinchDistance === 0) {
+              gesture.current.pinchDistance = distance;
+              gesture.current.pinchScale = transform.current.scale;
+            } else if (distance > 0) {
+              zoomAround(
+                (gesture.current.pinchScale * distance) / gesture.current.pinchDistance,
+                focus,
+              );
+            }
+            // Zera o arraste para o dedo que sai da pinça não dar um salto no mapa.
+            gesture.current.lastDx = gestureState.dx;
+            gesture.current.lastDy = gestureState.dy;
+            return;
           }
-          // Zera o arraste para o dedo que sai da pinça não dar um salto no mapa.
+
+          gesture.current.pinchDistance = 0;
+          transform.current.x += gestureState.dx - gesture.current.lastDx;
+          transform.current.y += gestureState.dy - gesture.current.lastDy;
           gesture.current.lastDx = gestureState.dx;
           gesture.current.lastDy = gestureState.dy;
-          return;
-        }
+          clamp();
+          publish();
+        },
 
-        gesture.current.pinchDistance = 0;
-        transform.current.x += gestureState.dx - gesture.current.lastDx;
-        transform.current.y += gestureState.dy - gesture.current.lastDy;
-        gesture.current.lastDx = gestureState.dx;
-        gesture.current.lastDy = gestureState.dy;
-        clamp();
-        publish();
-      },
-
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderRelease: () => { gesture.current.pinchDistance = 0; },
-      onPanResponderTerminate: () => { gesture.current.pinchDistance = 0; },
-    }),
-    [clamp, publish, zoomAround]
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderRelease: () => {
+          gesture.current.pinchDistance = 0;
+        },
+        onPanResponderTerminate: () => {
+          gesture.current.pinchDistance = 0;
+        },
+      }),
+    [clamp, publish, zoomAround],
   );
 
   return {

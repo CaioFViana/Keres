@@ -1,9 +1,17 @@
-import { CreateLocationDataSchema, CreateLocationDataType, CreateStoryUpdate, PartialLocationSchema } from '@keres/shared';
+import {
+  CreateLocationDataSchema,
+  CreateLocationDataType,
+  CreateStoryUpdate,
+  PartialLocationSchema,
+} from '@keres/shared';
 import { db } from '../../db';
 import { locations } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class LocationSyncHandler extends BaseSyncEntityHandler<typeof CreateLocationDataSchema, typeof PartialLocationSchema> {
+export class LocationSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateLocationDataSchema,
+  typeof PartialLocationSchema
+> {
   entityName = 'Location';
 
   constructor() {
@@ -17,7 +25,7 @@ export class LocationSyncHandler extends BaseSyncEntityHandler<typeof CreateLoca
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 

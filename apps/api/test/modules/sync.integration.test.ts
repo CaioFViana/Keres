@@ -35,7 +35,9 @@ describe('POST /sync/:storyId', () => {
   it('applies an operation and reports it as applied', async () => {
     const characterId = newId();
 
-    const { status, data } = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const { status, data } = await push(ana.token, storyId, [
+      createCharacter(characterId, 'Keres'),
+    ]);
 
     expect(status).toBe(200);
     expect(data.processedUpdates).toBe(1);
@@ -56,7 +58,9 @@ describe('POST /sync/:storyId', () => {
     const first = await push(ana.token, storyId, [createCharacter(newId(), 'Keres')]);
     const second = await push(ana.token, storyId, [createCharacter(newId(), 'Nyx')]);
 
-    expect(second.data.serverMaxOperationVersion).toBeGreaterThan(first.data.serverMaxOperationVersion);
+    expect(second.data.serverMaxOperationVersion).toBeGreaterThan(
+      first.data.serverMaxOperationVersion,
+    );
   });
 
   it('accepts an empty batch without moving anything', async () => {
@@ -71,7 +75,12 @@ describe('POST /sync/:storyId', () => {
    * A base de comparação de um `update` vai em `changes.version`, não no `version` do topo -
    * é de lá que `BaseSyncEntityHandler` a lê, e é o que `SyncEngineService` envia.
    */
-  const updateCharacter = (id: string, name: string, baseVersion: number, clientOperationId?: string) => ({
+  const updateCharacter = (
+    id: string,
+    name: string,
+    baseVersion: number,
+    clientOperationId?: string,
+  ) => ({
     type: 'update' as const,
     entity: 'Character',
     id,
@@ -118,7 +127,9 @@ describe('POST /sync/:storyId', () => {
     const staleVersion = created.data.applied[0].entityVersion;
     await push(ana.token, storyId, [updateCharacter(characterId, 'Primeiro', staleVersion)]);
 
-    const { data } = await push(ana.token, storyId, [updateCharacter(characterId, 'Segundo', staleVersion)]);
+    const { data } = await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Segundo', staleVersion),
+    ]);
 
     expect(data.conflicts[0].clientVersion).toBe(staleVersion);
     expect(data.conflicts[0].serverVersion).toBeGreaterThan(staleVersion);
@@ -136,7 +147,13 @@ describe('POST /sync/:storyId', () => {
     await push(ana.token, storyId, [updateCharacter(characterId, 'Primeiro', staleVersion)]);
 
     const { data } = await push(ana.token, storyId, [
-      { type: 'update', entity: 'Character', id: characterId, version: staleVersion, changes: { name: 'Segundo' } },
+      {
+        type: 'update',
+        entity: 'Character',
+        id: characterId,
+        version: staleVersion,
+        changes: { name: 'Segundo' },
+      },
     ]);
 
     expect(data.conflicts).toEqual([]);
@@ -148,7 +165,13 @@ describe('POST /sync/:storyId', () => {
 
     const { data } = await push(ana.token, storyId, [
       createCharacter(goodId, 'Keres'),
-      { type: 'update', entity: 'Character', id: newId(), version: 5, changes: { name: 'Fantasma' } },
+      {
+        type: 'update',
+        entity: 'Character',
+        id: newId(),
+        version: 5,
+        changes: { name: 'Fantasma' },
+      },
     ]);
 
     expect(data.applied).toHaveLength(1);
@@ -173,7 +196,11 @@ describe('GET /sync/:storyId/pull', () => {
   it('returns nothing new for a client that is already up to date', async () => {
     const { data: pushed } = await push(ana.token, storyId, [createCharacter(newId(), 'Keres')]);
 
-    const { status, data } = await pull(ana.token, storyId, pushed.data?.serverMaxOperationVersion ?? 0);
+    const { status, data } = await pull(
+      ana.token,
+      storyId,
+      pushed.data?.serverMaxOperationVersion ?? 0,
+    );
 
     expect(status).toBe(200);
     expect(data.serverMaxOperationVersion).toBeGreaterThanOrEqual(0);
@@ -202,7 +229,9 @@ describe('GET /sync/:storyId/pull', () => {
   });
 
   it('requires a session', async () => {
-    const { status } = await request('GET', `/sync/${storyId}/pull`, { query: { lastOperationVersion: 0 } });
+    const { status } = await request('GET', `/sync/${storyId}/pull`, {
+      query: { lastOperationVersion: 0 },
+    });
 
     expect(status).toBe(401);
   });

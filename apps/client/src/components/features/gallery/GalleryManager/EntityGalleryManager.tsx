@@ -3,7 +3,14 @@ import { GalleryOwnerEntity, MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { GallerySelect } from '../../../../db/schema';
 import { useEntityGalleryMedia } from '../../../../hooks/useEntityGalleryMedia';
 import { useResolvedMediaUri } from '../../../../hooks/useResolvedMediaUri';
@@ -42,9 +49,19 @@ interface GalleryThumbnailProps {
  * Extraído do `.map()` de `renderThumb` porque resolver a URI (`useResolvedMediaUri`) é um
  * hook - precisa de um componente próprio por item, não pode ser chamado dentro de um loop.
  */
-const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ item, styles, errorColor, textSecondaryColor, onPress, onRemove, editable }) => {
+const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
+  item,
+  styles,
+  errorColor,
+  textSecondaryColor,
+  onPress,
+  onRemove,
+  editable,
+}) => {
   const mediaType = item.mediaType as MediaType;
-  const resolvedUri = useResolvedMediaUri(mediaType === 'video' ? item.thumbnailPath : item.localPath);
+  const resolvedUri = useResolvedMediaUri(
+    mediaType === 'video' ? item.thumbnailPath : item.localPath,
+  );
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
 
@@ -59,7 +76,11 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ item, styles, error
         />
       ) : (
         <View style={styles.thumbFallback}>
-          <Ionicons name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'} size={28} color={textSecondaryColor} />
+          <Ionicons
+            name={MEDIA_TYPE_ICONS[mediaType] ?? 'document-outline'}
+            size={28}
+            color={textSecondaryColor}
+          />
         </View>
       )}
       {mediaType === 'video' && (
@@ -91,7 +112,12 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ item, styles, error
  * mais sentido escolher de uma lista já existente). Remover aqui só desfaz o vínculo - a
  * mídia continua na galeria e pode ser vinculada de novo a qualquer momento por lá.
  */
-const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ownerType, onPressMedia, editable = true }) => {
+const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
+  ownerId,
+  ownerType,
+  onPressMedia,
+  editable = true,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
@@ -104,7 +130,10 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ow
         return;
       }
       if (summary.added > 0 || summary.duplicates > 0) {
-        showNotification(t('media_linked_to_entity', { count: summary.added + summary.duplicates }), 'success');
+        showNotification(
+          t('media_linked_to_entity', { count: summary.added + summary.duplicates }),
+          'success',
+        );
       }
       if (summary.rejected > 0) {
         showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
@@ -115,12 +144,15 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ow
     }
   }, [addMedia, showNotification, t]);
 
-  const handleRemove = useCallback((galleryId: string) => {
-    removeMedia(galleryId).catch((err) => {
-      console.error('Failed to unlink media from entity:', err);
-      showNotification(t('media_save_failed'), 'error');
-    });
-  }, [removeMedia, showNotification, t]);
+  const handleRemove = useCallback(
+    (galleryId: string) => {
+      removeMedia(galleryId).catch((err) => {
+        console.error('Failed to unlink media from entity:', err);
+        showNotification(t('media_save_failed'), 'error');
+      });
+    },
+    [removeMedia, showNotification, t],
+  );
 
   const styles = StyleSheet.create({
     container: {
@@ -204,9 +236,17 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({ ownerId, ow
 
   return (
     <View style={styles.container}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+      >
         {editable && (
-          <TouchableOpacity style={styles.addTile} onPress={handleAdd} disabled={importing || !ownerId}>
+          <TouchableOpacity
+            style={styles.addTile}
+            onPress={handleAdd}
+            disabled={importing || !ownerId}
+          >
             {importing ? (
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (

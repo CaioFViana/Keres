@@ -7,7 +7,12 @@ import * as path from 'path';
  */
 
 /** Impede que um caminho relativo escape da raiz - `path.join` já normaliza os `..`. */
-function assertInsideRoot(root: string, resolved: string, relativePath: string, label: string): void {
+function assertInsideRoot(
+  root: string,
+  resolved: string,
+  relativePath: string,
+  label: string,
+): void {
   if (resolved !== root && !resolved.startsWith(root + path.sep)) {
     throw new Error(`Refusing to access path outside ${label}: "${relativePath}".`);
   }
@@ -38,7 +43,10 @@ export function resolveClientFile(
   for (const candidate of candidates) {
     const filePath = path.join(clientDist, candidate);
     // O `path.sep` importa: sem ele, "../client-dist-qualquer/x" passaria no prefixo.
-    if ((filePath === clientDist || filePath.startsWith(clientDist + path.sep)) && exists(filePath)) {
+    if (
+      (filePath === clientDist || filePath.startsWith(clientDist + path.sep)) &&
+      exists(filePath)
+    ) {
       return filePath;
     }
   }

@@ -29,7 +29,7 @@ const TagFormScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<TagFormScreenRouteProp>();
   const { t } = useTranslation();
-  const { userId } = useUserSettingsStore()
+  const { userId } = useUserSettingsStore();
   const { tagId } = route.params || {};
   const { selectedStory } = useStoryStore();
 
@@ -39,7 +39,6 @@ const TagFormScreen = () => {
   const tagService = useCallback(() => createTagService(drizzleDb), [drizzleDb]);
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
-
 
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
@@ -55,9 +54,9 @@ const TagFormScreen = () => {
       setDocumentTitle(isEditing ? t('edit_tag_title') : t('create_tag_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_tag_title') : t('create_tag_title'),
-        headerRight: () => <View/>
+        headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t])
+    }, [navigation, isEditing, t]),
   );
 
   useEffect(() => {
@@ -103,7 +102,10 @@ const TagFormScreen = () => {
     setLoading(true);
 
     try {
-      const tagData: Omit<Tag, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
+      const tagData: Omit<
+        Tag,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      > = {
         name: name.trim(),
         color: color,
         isFavorite: isFavorite,
@@ -178,7 +180,7 @@ const TagFormScreen = () => {
     },
     deleteButton: {
       backgroundColor: 'red',
-      marginBottom: 15
+      marginBottom: 15,
     },
     centered: {
       flex: 1,
@@ -196,54 +198,62 @@ const TagFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_tag_title') : t('create_tag_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {t('tag_form_description')}
-          </Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {isEditing ? t('edit_tag_title') : t('create_tag_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {t('tag_form_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
-          <TextInput
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('name')}</Text>
+      <TextInput
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('color')}</Text>
-          <ColorPickerInput
-            placeholder={t('select_tag_color')}
-            currentColor={color}
-            onSelectColor={setColor}
-            style={commonInputStyles.input}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('color')}</Text>
+      <ColorPickerInput
+        placeholder={t('select_tag_color')}
+        currentColor={color}
+        onSelectColor={setColor}
+        style={commonInputStyles.input}
+      />
 
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>{t('is_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
+          {t('is_favorite')}
+        </Text>
+        <ThemedSwitch
+          value={isFavorite}
+          onValueChange={setIsFavorite}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ""}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}            multiline
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+      <TextInput
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes || ''}
+        onChangeText={setExtraNotes}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
 
-          <Button onPress={handleSave} style={styles.saveButton}>
-            {isEditing ? t('save_changes') : t('create_tag')}
-          </Button>
+      <Button onPress={handleSave} style={styles.saveButton}>
+        {isEditing ? t('save_changes') : t('create_tag')}
+      </Button>
 
-          {isEditing && (
-            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_tag_title')}
-            </Button>
-          )}
+      {isEditing && (
+        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          {t('delete_tag_title')}
+        </Button>
+      )}
     </KeyboardAwareScreen>
   );
 };

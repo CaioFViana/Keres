@@ -30,7 +30,12 @@ jest.mock('../../src/services/storymanagement/CommentService', () => ({
 jest.mock('../../src/services/MediaSyncService', () => ({
   __esModule: true,
   createMediaSyncService: () => ({
-    syncStoryMedia: jest.fn(async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false })),
+    syncStoryMedia: jest.fn(async () => ({
+      uploaded: 0,
+      downloaded: 0,
+      failed: 0,
+      offline: false,
+    })),
   }),
 }));
 
@@ -84,7 +89,11 @@ function installAdapter() {
   seen = [];
   (axios.defaults as any).adapter = async (config: any) => {
     const url = `${config.url}`;
-    seen.push({ method: (config.method || 'get').toUpperCase(), url, body: config.data ? JSON.parse(config.data) : undefined });
+    seen.push({
+      method: (config.method || 'get').toUpperCase(),
+      url,
+      body: config.data ? JSON.parse(config.data) : undefined,
+    });
 
     const key = Object.keys(routes).find((fragment) => url.includes(fragment));
     if (key === undefined || routes[key] === null) {
@@ -113,7 +122,10 @@ async function seedLocalStory(overrides: Partial<typeof schema.stories.$inferIns
   });
 }
 
-async function seedOperation(id: string, overrides: Partial<typeof schema.operationLogs.$inferInsert> = {}) {
+async function seedOperation(
+  id: string,
+  overrides: Partial<typeof schema.operationLogs.$inferInsert> = {},
+) {
   await database.db.insert(schema.operationLogs).values({
     id,
     storyId: STORY_ID,
@@ -180,7 +192,10 @@ describe('downloadAndImportStory', () => {
   it('tells the user it worked', async () => {
     await engine.downloadAndImportStory(SERVER.id, STORY_ID, 'server-user', 'owner');
 
-    expect(mockShowNotification).toHaveBeenCalledWith(expect.stringContaining('downloaded and imported'), 'success');
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('downloaded and imported'),
+      'success',
+    );
   });
 
   it.each([
@@ -208,7 +223,10 @@ describe('downloadAndImportStory', () => {
     await engine.downloadAndImportStory(SERVER.id, STORY_ID, 'server-user', 'owner');
 
     expect(mockStoryService.importFullStory).not.toHaveBeenCalled();
-    expect(mockShowNotification).toHaveBeenCalledWith(expect.stringContaining('Failed to download'), 'error');
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to download'),
+      'error',
+    );
   });
 
   it('reports a failed import without pretending it worked', async () => {
@@ -217,7 +235,10 @@ describe('downloadAndImportStory', () => {
     await engine.downloadAndImportStory(SERVER.id, STORY_ID, 'server-user', 'owner');
 
     expect(mockShowNotification).not.toHaveBeenCalledWith(expect.any(String), 'success');
-    expect(mockShowNotification).toHaveBeenCalledWith(expect.stringContaining('Failed to download'), 'error');
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to download'),
+      'error',
+    );
   });
 });
 
@@ -294,8 +315,16 @@ describe('uploadNewStoryToServer', () => {
 
     await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
 
-    expect(mockFavoriteService.migrateUserIdentity).toHaveBeenCalledWith(STORY_ID, LOCAL_USER, 'server-user');
-    expect(mockCommentService.migrateAuthorIdentity).toHaveBeenCalledWith(STORY_ID, LOCAL_USER, 'server-user');
+    expect(mockFavoriteService.migrateUserIdentity).toHaveBeenCalledWith(
+      STORY_ID,
+      LOCAL_USER,
+      'server-user',
+    );
+    expect(mockCommentService.migrateAuthorIdentity).toHaveBeenCalledWith(
+      STORY_ID,
+      LOCAL_USER,
+      'server-user',
+    );
   });
 
   /**

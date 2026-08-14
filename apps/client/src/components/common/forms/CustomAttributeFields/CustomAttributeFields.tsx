@@ -8,7 +8,9 @@ export type CustomAttributeValues = Record<string, string | null>;
 
 /** Valores padrão de cada campo, pra pré-preencher o estado local de uma entidade NOVA (nunca
  *  sobrescreve uma entidade existente sendo editada - o form só chama isto uma vez, ao criar). */
-export function getDefaultCustomAttributeValues(fields: StorySchemaFieldSelect[]): CustomAttributeValues {
+export function getDefaultCustomAttributeValues(
+  fields: StorySchemaFieldSelect[],
+): CustomAttributeValues {
   const defaults: CustomAttributeValues = {};
   for (const field of fields) {
     defaults[field.id] = field.defaultValue ?? null;
@@ -18,7 +20,10 @@ export function getDefaultCustomAttributeValues(fields: StorySchemaFieldSelect[]
 
 /** Mensagem de erro do primeiro campo obrigatório vazio, ou `null` se todos estão preenchidos -
  *  mesma forma de validação simples já usada inline nos forms (`if (!name.trim())`). */
-export function validateRequiredCustomAttributes(fields: StorySchemaFieldSelect[], values: CustomAttributeValues): string | null {
+export function validateRequiredCustomAttributes(
+  fields: StorySchemaFieldSelect[],
+  values: CustomAttributeValues,
+): string | null {
   for (const field of fields) {
     if (!field.isRequired) continue;
     const value = values[field.id];
@@ -41,7 +46,12 @@ interface CustomAttributeFieldsProps {
  * posição em todo Form screen: depois dos campos nativos, antes de Tags/relações. Um único
  * componente reaproveitado por todos os 7 tipos de entidade em vez de lógica duplicada por tela.
  */
-const CustomAttributeFields: React.FC<CustomAttributeFieldsProps> = ({ storyId, fields, values, onChange }) => {
+const CustomAttributeFields: React.FC<CustomAttributeFieldsProps> = ({
+  storyId,
+  fields,
+  values,
+  onChange,
+}) => {
   const { colors } = useTheme();
 
   const styles = StyleSheet.create({

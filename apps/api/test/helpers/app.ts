@@ -85,9 +85,13 @@ export interface TestUser {
  * mesmo tier padrão, a mesma `tag` e a mesma senha hasheada que um usuário de verdade, e um
  * teste nunca passa por depender de um estado que a aplicação não produziria.
  */
-export async function registerUser(username = `user_${ulid().slice(-10).toLowerCase()}`): Promise<TestUser> {
+export async function registerUser(
+  username = `user_${ulid().slice(-10).toLowerCase()}`,
+): Promise<TestUser> {
   const password = 'senha-de-teste-123';
-  const { status, data } = await request('POST', '/auth/register', { body: { username, password } });
+  const { status, data } = await request('POST', '/auth/register', {
+    body: { username, password },
+  });
 
   if (status !== 200) {
     throw new Error(`Falha ao registrar o usuário de teste (${status}): ${JSON.stringify(data)}`);

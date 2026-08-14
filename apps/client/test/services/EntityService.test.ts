@@ -45,28 +45,56 @@ describe('getEntityName', () => {
   it('names a story by its title', async () => {
     await seedStory();
 
-    const name = await EntityService.getEntityName(database.db, OperationLogEntityType.Story, STORY_ID, STORY_ID, t);
+    const name = await EntityService.getEntityName(
+      database.db,
+      OperationLogEntityType.Story,
+      STORY_ID,
+      STORY_ID,
+      t,
+    );
 
     expect(name).toBe('story - A Queda');
   });
 
   it('names a character by its name', async () => {
     await seedStory();
-    await database.db.insert(schema.characters).values({ id: 'char-1', storyId: STORY_ID, name: 'Keres', ...base });
+    await database.db
+      .insert(schema.characters)
+      .values({ id: 'char-1', storyId: STORY_ID, name: 'Keres', ...base });
 
-    const name = await EntityService.getEntityName(database.db, OperationLogEntityType.Character, 'char-1', STORY_ID, t);
+    const name = await EntityService.getEntityName(
+      database.db,
+      OperationLogEntityType.Character,
+      'char-1',
+      STORY_ID,
+      t,
+    );
 
     expect(name).toBe('character - Keres');
   });
 
   it.each([
     ['note', OperationLogEntityType.Note, schema.notes, { title: 'Ideia' }, 'note - Ideia'],
-    ['location', OperationLogEntityType.Location, schema.locations, { name: 'Ávalon' }, 'location - Ávalon'],
-    ['world rule', OperationLogEntityType.WorldRule, schema.worldRules, { title: 'Magia' }, 'world_rule - Magia'],
+    [
+      'location',
+      OperationLogEntityType.Location,
+      schema.locations,
+      { name: 'Ávalon' },
+      'location - Ávalon',
+    ],
+    [
+      'world rule',
+      OperationLogEntityType.WorldRule,
+      schema.worldRules,
+      { title: 'Magia' },
+      'world_rule - Magia',
+    ],
     ['tag', OperationLogEntityType.Tag, schema.tags, { name: 'Vilões' }, 'tag - Vilões'],
   ])('names a %s', async (_label, entityType, table, columns, expected) => {
     await seedStory();
-    await database.db.insert(table as never).values({ id: 'e-1', storyId: STORY_ID, ...columns, ...base } as never);
+    await database.db
+      .insert(table as never)
+      .values({ id: 'e-1', storyId: STORY_ID, ...columns, ...base } as never);
 
     const name = await EntityService.getEntityName(database.db, entityType, 'e-1', STORY_ID, t);
 
@@ -76,7 +104,13 @@ describe('getEntityName', () => {
   it('falls back to the translated type when the entity is gone', async () => {
     await seedStory();
 
-    const name = await EntityService.getEntityName(database.db, OperationLogEntityType.Character, 'sumiu', STORY_ID, t);
+    const name = await EntityService.getEntityName(
+      database.db,
+      OperationLogEntityType.Character,
+      'sumiu',
+      STORY_ID,
+      t,
+    );
 
     expect(name).toBe('character');
   });
@@ -95,20 +129,44 @@ describe('getEntityName', () => {
       isDeleted: true,
     });
 
-    const name = await EntityService.getEntityName(database.db, OperationLogEntityType.Character, 'char-1', STORY_ID, t);
+    const name = await EntityService.getEntityName(
+      database.db,
+      OperationLogEntityType.Character,
+      'char-1',
+      STORY_ID,
+      t,
+    );
 
     expect(name).toBe('character');
   });
 
   it('does not confuse two entities that share an id across tables', async () => {
     await seedStory();
-    await database.db.insert(schema.characters).values({ id: 'mesmo-id', storyId: STORY_ID, name: 'Keres', ...base });
-    await database.db.insert(schema.tags).values({ id: 'mesmo-id', storyId: STORY_ID, name: 'Vilões', ...base });
+    await database.db
+      .insert(schema.characters)
+      .values({ id: 'mesmo-id', storyId: STORY_ID, name: 'Keres', ...base });
+    await database.db
+      .insert(schema.tags)
+      .values({ id: 'mesmo-id', storyId: STORY_ID, name: 'Vilões', ...base });
 
-    expect(await EntityService.getEntityName(database.db, OperationLogEntityType.Character, 'mesmo-id', STORY_ID, t))
-      .toBe('character - Keres');
-    expect(await EntityService.getEntityName(database.db, OperationLogEntityType.Tag, 'mesmo-id', STORY_ID, t))
-      .toBe('tag - Vilões');
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Character,
+        'mesmo-id',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('character - Keres');
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Tag,
+        'mesmo-id',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('tag - Vilões');
   });
 });
 
@@ -119,21 +177,29 @@ describe('getEntityIdentifier', () => {
     ['CHARACTER', 'char-1'],
   ])('resolves the entity type %s regardless of case', async (entityTypeString) => {
     await seedStory();
-    await database.db.insert(schema.characters).values({ id: 'char-1', storyId: STORY_ID, name: 'Keres', ...base });
+    await database.db
+      .insert(schema.characters)
+      .values({ id: 'char-1', storyId: STORY_ID, name: 'Keres', ...base });
 
-    expect(await EntityService.getEntityIdentifier(database.db, entityTypeString, 'char-1', STORY_ID, t)).toBe('Keres');
+    expect(
+      await EntityService.getEntityIdentifier(database.db, entityTypeString, 'char-1', STORY_ID, t),
+    ).toBe('Keres');
   });
 
   it('returns the bare name, without the type prefix', async () => {
     await seedStory();
 
-    expect(await EntityService.getEntityIdentifier(database.db, 'Story', STORY_ID, STORY_ID, t)).toBe('A Queda');
+    expect(
+      await EntityService.getEntityIdentifier(database.db, 'Story', STORY_ID, STORY_ID, t),
+    ).toBe('A Queda');
   });
 
   it('returns nothing for an entity that is not there', async () => {
     await seedStory();
 
-    expect(await EntityService.getEntityIdentifier(database.db, 'Character', 'sumiu', STORY_ID, t)).toBeUndefined();
+    expect(
+      await EntityService.getEntityIdentifier(database.db, 'Character', 'sumiu', STORY_ID, t),
+    ).toBeUndefined();
   });
 
   it('rejects an entity type it does not know, instead of guessing', async () => {

@@ -10,10 +10,18 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../../db';
 import { CommentSelect, servers, stories } from '../../../../db/schema';
-import { ResolvedUserProfile, useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
+import {
+  ResolvedUserProfile,
+  useUserProfileResolver,
+} from '../../../../hooks/useUserProfileResolver';
 import { useTheme } from '../../../../theme';
 import { AppAlert } from '../../../../utils/AppAlert';
-import { CommentCriticality, CRITICALITY_ICONS, CRITICALITY_LEVELS, DEFAULT_CRITICALITY } from '../../../../utils/commentCriticality';
+import {
+  CommentCriticality,
+  CRITICALITY_ICONS,
+  CRITICALITY_LEVELS,
+  DEFAULT_CRITICALITY,
+} from '../../../../utils/commentCriticality';
 
 interface CommentThreadModalProps {
   visible: boolean;
@@ -25,9 +33,16 @@ interface CommentThreadModalProps {
   canComment: boolean;
   isStoryOwner: boolean;
   currentUserId: string | null;
-  onSubmit: (input: { commentText: string; excerptText: string | null; criticality: number }) => Promise<void>;
+  onSubmit: (input: {
+    commentText: string;
+    excerptText: string | null;
+    criticality: number;
+  }) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
-  onUpdate: (commentId: string, changes: { commentText?: string; criticality?: number }) => Promise<void>;
+  onUpdate: (
+    commentId: string,
+    changes: { commentText?: string; criticality?: number },
+  ) => Promise<void>;
 }
 
 /**
@@ -36,8 +51,18 @@ interface CommentThreadModalProps {
  * tamanho de tela, que ficava com cara de app mobile mesmo no desktop.
  */
 const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
-  visible, onClose, storyId, fieldLabel, fieldValueSnapshot, comments,
-  canComment, isStoryOwner, currentUserId, onSubmit, onDelete, onUpdate,
+  visible,
+  onClose,
+  storyId,
+  fieldLabel,
+  fieldValueSnapshot,
+  comments,
+  canComment,
+  isStoryOwner,
+  currentUserId,
+  onSubmit,
+  onDelete,
+  onUpdate,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -52,27 +77,35 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
 
   const sortedComments = useMemo(
     () => [...comments].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
-    [comments]
+    [comments],
   );
 
   useEffect(() => {
     if (!visible) return;
     let cancelled = false;
     (async () => {
-      const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId), columns: { serverId: true } });
+      const story = await db.query.stories.findFirst({
+        where: eq(stories.id, storyId),
+        columns: { serverId: true },
+      });
       const storyServer = story?.serverId
         ? await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) })
         : undefined;
       const uniqueAuthorIds = Array.from(new Set(comments.map((comment) => comment.authorUserId)));
-      const resolved = await Promise.all(uniqueAuthorIds.map((authorId) => resolveProfile(authorId, storyServer)));
+      const resolved = await Promise.all(
+        uniqueAuthorIds.map((authorId) => resolveProfile(authorId, storyServer)),
+      );
       if (!cancelled) {
         setProfiles(Object.fromEntries(resolved.map((profile) => [profile.id, profile])));
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [visible, comments, db, storyId, resolveProfile]);
 
-  const excerptMismatch = excerptText.trim().length > 0 && !fieldValueSnapshot.includes(excerptText.trim());
+  const excerptMismatch =
+    excerptText.trim().length > 0 && !fieldValueSnapshot.includes(excerptText.trim());
 
   const handleSubmit = useCallback(async () => {
     const trimmedComment = commentText.trim();
@@ -95,11 +128,9 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     }
   }, [commentText, excerptText, criticality, onSubmit, t]);
 
-  const handleDelete = useCallback((commentId: string) => {
-    AppAlert.alert(
-      t('delete_comment_confirm'),
-      undefined,
-      [
+  const handleDelete = useCallback(
+    (commentId: string) => {
+      AppAlert.alert(t('delete_comment_confirm'), undefined, [
         { text: t('cancel'), style: 'cancel' },
         {
           text: t('delete'),
@@ -113,14 +144,22 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
             }
           },
         },
-      ]
-    );
-  }, [onDelete, t]);
+      ]);
+    },
+    [onDelete, t],
+  );
 
   const styles = StyleSheet.create({
     sheet: { flex: 1, paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
     keyboardContent: { flexGrow: 1 },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 15,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
     headerTitle: { fontSize: 17, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
     list: { paddingHorizontal: 15, flexGrow: 1 },
     commentRow: { flexDirection: 'row', marginVertical: 10 },
@@ -128,14 +167,34 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     commentHeaderRow: { flexDirection: 'row', alignItems: 'center' },
     authorName: { color: colors.text, fontWeight: '600', fontSize: 14 },
     timestamp: { color: colors.textSecondary, fontSize: 11, marginLeft: 8 },
-    excerptBlock: { borderLeftWidth: 2, borderLeftColor: colors.primary, paddingLeft: 8, marginTop: 4, marginBottom: 2 },
+    excerptBlock: {
+      borderLeftWidth: 2,
+      borderLeftColor: colors.primary,
+      paddingLeft: 8,
+      marginTop: 4,
+      marginBottom: 2,
+    },
     excerptText: { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 },
     commentText: { color: colors.text, fontSize: 14, marginTop: 2 },
     deleteButton: { marginTop: 4 },
     deleteText: { color: colors.error, fontSize: 12 },
-    emptyText: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 12, paddingHorizontal: 15 },
-    footer: { padding: 15, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-    snapshotBlock: { backgroundColor: colors.surface, borderRadius: 6, padding: 8, marginBottom: 8 },
+    emptyText: {
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      paddingVertical: 12,
+      paddingHorizontal: 15,
+    },
+    footer: {
+      padding: 15,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    snapshotBlock: {
+      backgroundColor: colors.surface,
+      borderRadius: 6,
+      padding: 8,
+      marginBottom: 8,
+    },
     snapshotLabel: { color: colors.textSecondary, fontSize: 11, marginBottom: 2 },
     snapshotText: { color: colors.text, fontSize: 13 },
     input: { width: '100%', marginBottom: 8 },
@@ -161,98 +220,130 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
       maxHeight="85%"
       keyboardAvoiding={false}
     >
-      <KeyboardAwareScreen contentContainerStyle={styles.keyboardContent} keyboardVerticalOffset={0}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle} numberOfLines={1}>{fieldLabel}</Text>
-        <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')} hitSlop={8}>
-          <Ionicons name="close" size={24} color={colors.text} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.list}>
-        {sortedComments.length === 0 ? (
-          <Text style={styles.emptyText}>{t('no_comments_yet')}</Text>
-        ) : sortedComments.map((comment) => {
-          const profile = profiles[comment.authorUserId];
-          const canManage = isStoryOwner || comment.authorUserId === currentUserId;
-          return (
-            <View key={comment.id} style={styles.commentRow}>
-              <Avatar seed={comment.authorUserId} color={profile?.avatarColor} icon={profile?.avatarIcon} size={32} />
-              <View style={styles.commentBody}>
-                <View style={styles.commentHeaderRow}>
-                  <Ionicons
-                    name={CRITICALITY_ICONS[comment.criticality as CommentCriticality] ?? CRITICALITY_ICONS[3]}
-                    size={16}
-                    color={colors.primary}
-                  />
-                  <Text style={styles.authorName}> {profile?.name || comment.authorUserId}</Text>
-                  <Text style={styles.timestamp}>{comment.createdAt.toLocaleString()}</Text>
-                </View>
-                {!!comment.excerptText && (
-                  <View style={styles.excerptBlock}>
-                    <Text style={styles.excerptText}>{comment.excerptText}</Text>
-                  </View>
-                )}
-                <Text style={styles.commentText}>{comment.commentText}</Text>
-                {canManage && (
-                  <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(comment.id)}>
-                    <Text style={styles.deleteText}>{t('delete')}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          );
-        })}
-      </View>
-
-      {canComment && (
-        <View style={styles.footer}>
-          <View style={styles.snapshotBlock}>
-            <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
-            <Text style={styles.snapshotText} numberOfLines={4}>{fieldValueSnapshot || t('common_na')}</Text>
-          </View>
-
-          <TextInput
-            style={[styles.input, styles.excerptInput]}
-            value={excerptText}
-            onChangeText={setExcerptText}
-            placeholder={t('excerpt_placeholder')}
-            multiline
-          />
-          {excerptMismatch && <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>}
-
-          <TextInput
-            style={[styles.input, styles.commentInput]}
-            value={commentText}
-            onChangeText={setCommentText}
-            placeholder={t('comment_text_placeholder')}
-            multiline
-          />
-
-          <View style={styles.actionRow}>
-            <View style={styles.criticalityRow}>
-              {CRITICALITY_LEVELS.map((level) => (
-                <TouchableOpacity
-                  key={level}
-                  style={[styles.criticalityButton, criticality === level && styles.criticalityButtonActive]}
-                  onPress={() => setCriticality(level)}
-                  accessibilityLabel={t(`comment_criticality_${level}`)}
-                >
-                  <Ionicons
-                    name={CRITICALITY_ICONS[level]}
-                    size={20}
-                    color={criticality === level ? colors.primary : colors.textSecondary}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Button onPress={handleSubmit} disabled={submitting || !commentText.trim()} style={styles.postButton}>
-              {submitting ? t('saving') : t('add_comment')}
-            </Button>
-          </View>
+      <KeyboardAwareScreen
+        contentContainerStyle={styles.keyboardContent}
+        keyboardVerticalOffset={0}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {fieldLabel}
+          </Text>
+          <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')} hitSlop={8}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
         </View>
-      )}
+
+        <View style={styles.list}>
+          {sortedComments.length === 0 ? (
+            <Text style={styles.emptyText}>{t('no_comments_yet')}</Text>
+          ) : (
+            sortedComments.map((comment) => {
+              const profile = profiles[comment.authorUserId];
+              const canManage = isStoryOwner || comment.authorUserId === currentUserId;
+              return (
+                <View key={comment.id} style={styles.commentRow}>
+                  <Avatar
+                    seed={comment.authorUserId}
+                    color={profile?.avatarColor}
+                    icon={profile?.avatarIcon}
+                    size={32}
+                  />
+                  <View style={styles.commentBody}>
+                    <View style={styles.commentHeaderRow}>
+                      <Ionicons
+                        name={
+                          CRITICALITY_ICONS[comment.criticality as CommentCriticality] ??
+                          CRITICALITY_ICONS[3]
+                        }
+                        size={16}
+                        color={colors.primary}
+                      />
+                      <Text style={styles.authorName}>
+                        {' '}
+                        {profile?.name || comment.authorUserId}
+                      </Text>
+                      <Text style={styles.timestamp}>{comment.createdAt.toLocaleString()}</Text>
+                    </View>
+                    {!!comment.excerptText && (
+                      <View style={styles.excerptBlock}>
+                        <Text style={styles.excerptText}>{comment.excerptText}</Text>
+                      </View>
+                    )}
+                    <Text style={styles.commentText}>{comment.commentText}</Text>
+                    {canManage && (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDelete(comment.id)}
+                      >
+                        <Text style={styles.deleteText}>{t('delete')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </View>
+
+        {canComment && (
+          <View style={styles.footer}>
+            <View style={styles.snapshotBlock}>
+              <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
+              <Text style={styles.snapshotText} numberOfLines={4}>
+                {fieldValueSnapshot || t('common_na')}
+              </Text>
+            </View>
+
+            <TextInput
+              style={[styles.input, styles.excerptInput]}
+              value={excerptText}
+              onChangeText={setExcerptText}
+              placeholder={t('excerpt_placeholder')}
+              multiline
+            />
+            {excerptMismatch && (
+              <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>
+            )}
+
+            <TextInput
+              style={[styles.input, styles.commentInput]}
+              value={commentText}
+              onChangeText={setCommentText}
+              placeholder={t('comment_text_placeholder')}
+              multiline
+            />
+
+            <View style={styles.actionRow}>
+              <View style={styles.criticalityRow}>
+                {CRITICALITY_LEVELS.map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={[
+                      styles.criticalityButton,
+                      criticality === level && styles.criticalityButtonActive,
+                    ]}
+                    onPress={() => setCriticality(level)}
+                    accessibilityLabel={t(`comment_criticality_${level}`)}
+                  >
+                    <Ionicons
+                      name={CRITICALITY_ICONS[level]}
+                      size={20}
+                      color={criticality === level ? colors.primary : colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Button
+                onPress={handleSubmit}
+                disabled={submitting || !commentText.trim()}
+                style={styles.postButton}
+              >
+                {submitting ? t('saving') : t('add_comment')}
+              </Button>
+            </View>
+          </View>
+        )}
       </KeyboardAwareScreen>
     </ResponsiveModal>
   );

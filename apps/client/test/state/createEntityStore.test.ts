@@ -5,7 +5,9 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 const mockFavoriteService = {
   getBehavior: jest.fn(async () => 'global' as string),
   setFavorite: jest.fn(async () => undefined),
-  decorateEntities: jest.fn(async (_storyId: string, _type: string, _userId: string, entities: any[]) => entities),
+  decorateEntities: jest.fn(
+    async (_storyId: string, _type: string, _userId: string, entities: any[]) => entities,
+  ),
 };
 
 jest.mock('../../src/services/storymanagement/FavoriteService', () => ({
@@ -40,7 +42,10 @@ const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
  * de escrever no banco e precisa desfazer sozinho quando a escrita falha).
  */
 function buildStore(overrides: Partial<Parameters<typeof createEntityStore>[0]> = {}) {
-  const fetchEntities = jest.fn(async (_service: unknown, _params: EntityQueryParams) => [tag('a'), tag('b')]);
+  const fetchEntities = jest.fn(async (_service: unknown, _params: EntityQueryParams) => [
+    tag('a'),
+    tag('b'),
+  ]);
   const updateFavorite = jest.fn(async () => undefined);
   const createService = jest.fn(() => ({ name: 'TagService' }));
 
@@ -70,7 +75,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockUserId = 'user-1';
   mockFavoriteService.getBehavior.mockResolvedValue('global');
-  mockFavoriteService.decorateEntities.mockImplementation(async (_s, _t, _u, entities: any[]) => entities);
+  mockFavoriteService.decorateEntities.mockImplementation(
+    async (_s, _t, _u, entities: any[]) => entities,
+  );
   jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
@@ -91,7 +98,13 @@ describe('store shape', () => {
   it('starts with no db, story or service', () => {
     const state = buildStore().store.getState();
 
-    expect(state).toMatchObject({ db: null, storyId: null, service: null, loading: false, error: null });
+    expect(state).toMatchObject({
+      db: null,
+      storyId: null,
+      service: null,
+      loading: false,
+      error: null,
+    });
   });
 
   it('starts with a neutral filter and sort selection', () => {
@@ -108,7 +121,10 @@ describe('store shape', () => {
   });
 
   it('honours the configured default sort', () => {
-    const state = buildStore({ defaultSort: 'name', defaultSortDirection: 'desc' } as any).store.getState();
+    const state = buildStore({
+      defaultSort: 'name',
+      defaultSortDirection: 'desc',
+    } as any).store.getState();
 
     expect(state).toMatchObject({ activeSort: 'name', sortDirection: 'desc' });
   });
@@ -157,7 +173,12 @@ describe('fetching', () => {
 
   it('passes the current filter and sort state to the service', async () => {
     const { store, fetchEntities } = readyStore();
-    store.setState({ searchTerm: 'ana', activeFilterTags: ['t1'], activeSort: 'name', sortDirection: 'desc' } as any);
+    store.setState({
+      searchTerm: 'ana',
+      activeFilterTags: ['t1'],
+      activeSort: 'name',
+      sortDirection: 'desc',
+    } as any);
 
     await (store.getState() as any).fetchTags();
 
@@ -191,7 +212,9 @@ describe('fetching', () => {
   });
 
   it('uses the configured error message when there is one', async () => {
-    const { store, fetchEntities } = readyStore({ errorMessages: { fetch: 'Não deu para carregar as tags.' } } as any);
+    const { store, fetchEntities } = readyStore({
+      errorMessages: { fetch: 'Não deu para carregar as tags.' },
+    } as any);
     fetchEntities.mockRejectedValue(new Error('banco fora'));
 
     await (store.getState() as any).fetchTags();
@@ -214,8 +237,16 @@ describe('fetching', () => {
 describe('filter and sort setters', () => {
   it.each([
     ['setFilterTags', (state: any) => state.setFilterTags(['t1']), { activeFilterTags: ['t1'] }],
-    ['setFavoriteFilter', (state: any) => state.setFavoriteFilter('favorite'), { favoriteFilterState: 'favorite' }],
-    ['setSort', (state: any) => state.setSort('name', 'desc'), { activeSort: 'name', sortDirection: 'desc' }],
+    [
+      'setFavoriteFilter',
+      (state: any) => state.setFavoriteFilter('favorite'),
+      { favoriteFilterState: 'favorite' },
+    ],
+    [
+      'setSort',
+      (state: any) => state.setSort('name', 'desc'),
+      { activeSort: 'name', sortDirection: 'desc' },
+    ],
     [
       'setAdvancedSearchCriteria',
       (state: any) => state.setAdvancedSearchCriteria({ name: 'ana' }),
@@ -280,7 +311,13 @@ describe('toggleFavorite', () => {
 
     await store.getState().toggleFavorite('a', true);
 
-    expect(mockFavoriteService.setFavorite).toHaveBeenCalledWith('story-1', 'a', 'Tag', 'user-1', true);
+    expect(mockFavoriteService.setFavorite).toHaveBeenCalledWith(
+      'story-1',
+      'a',
+      'Tag',
+      'user-1',
+      true,
+    );
     expect(updateFavorite).not.toHaveBeenCalled();
   });
 
@@ -336,7 +373,10 @@ describe('toggleFavorite', () => {
   });
 
   it('does nothing for an entity type that has no favourite flag', async () => {
-    const { store } = readyStore({ updateFavorite: undefined, favoriteEntityType: undefined } as any);
+    const { store } = readyStore({
+      updateFavorite: undefined,
+      favoriteEntityType: undefined,
+    } as any);
     store.setState({ tags: [tag('a')] } as any);
 
     await store.getState().toggleFavorite('a', true);
@@ -353,7 +393,12 @@ describe('resetStore', () => {
 
     store.getState().resetStore();
 
-    expect(store.getState()).toMatchObject({ db: null, storyId: null, service: null, searchTerm: '' });
+    expect(store.getState()).toMatchObject({
+      db: null,
+      storyId: null,
+      service: null,
+      searchTerm: '',
+    });
     expect((store.getState() as any).tags).toEqual([]);
   });
 

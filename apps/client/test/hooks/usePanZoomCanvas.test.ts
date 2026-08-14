@@ -59,7 +59,9 @@ describe('fitting on layout', () => {
   });
 
   it('does not zoom below the configured minimum for a huge drawing', async () => {
-    const { result } = await renderCanvas({ width: 100000, height: 100000 }, VIEWPORT, { minScale: 0.2 });
+    const { result } = await renderCanvas({ width: 100000, height: 100000 }, VIEWPORT, {
+      minScale: 0.2,
+    });
 
     expect(transformOf(result.current).scale).toBe(0.2);
   });
@@ -139,7 +141,9 @@ describe('the handle exposed to the screen', () => {
  */
 describe('keeping the drawing reachable', () => {
   it('centres a drawing smaller than the viewport, whatever the zoom', async () => {
-    const { result, ref } = await renderCanvas({ width: 100, height: 100 }, VIEWPORT, { maxScale: 1 });
+    const { result, ref } = await renderCanvas({ width: 100, height: 100 }, VIEWPORT, {
+      maxScale: 1,
+    });
 
     ref.current!.zoomBy(0.5);
 
@@ -193,19 +197,34 @@ describe('gesture decisions', () => {
   it('ignores a movement too small to be a drag', async () => {
     const config = await configOf();
 
-    expect(config.onMoveShouldSetPanResponderCapture({ nativeEvent: { touches: [{}] } }, { dx: 1, dy: 1 })).toBe(false);
+    expect(
+      config.onMoveShouldSetPanResponderCapture(
+        { nativeEvent: { touches: [{}] } },
+        { dx: 1, dy: 1 },
+      ),
+    ).toBe(false);
   });
 
   it('takes over once the finger moves past the drag threshold', async () => {
     const config = await configOf();
 
-    expect(config.onMoveShouldSetPanResponderCapture({ nativeEvent: { touches: [{}] } }, { dx: 20, dy: 0 })).toBe(true);
+    expect(
+      config.onMoveShouldSetPanResponderCapture(
+        { nativeEvent: { touches: [{}] } },
+        { dx: 20, dy: 0 },
+      ),
+    ).toBe(true);
   });
 
   it('takes over immediately for a second finger, however small the movement', async () => {
     const config = await configOf();
 
-    expect(config.onMoveShouldSetPanResponderCapture({ nativeEvent: { touches: [{}, {}] } }, { dx: 0, dy: 0 })).toBe(true);
+    expect(
+      config.onMoveShouldSetPanResponderCapture(
+        { nativeEvent: { touches: [{}, {}] } },
+        { dx: 0, dy: 0 },
+      ),
+    ).toBe(true);
   });
 
   /** Soltar o canvas no meio do arraste faria o mapa saltar na próxima interação. */
@@ -245,7 +264,10 @@ describe('panning', () => {
 
   it('treats the gesture delta as cumulative, not incremental', async () => {
     const oneStep = await moveWith([{ dx: -60, dy: 0 }]);
-    const twoSteps = await moveWith([{ dx: -30, dy: 0 }, { dx: -60, dy: 0 }]);
+    const twoSteps = await moveWith([
+      { dx: -30, dy: 0 },
+      { dx: -60, dy: 0 },
+    ]);
 
     expect(twoSteps.after.x).toBeCloseTo(oneStep.after.x, 3);
   });

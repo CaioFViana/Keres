@@ -1,4 +1,9 @@
-import { ChoiceCheck, CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import {
+  ChoiceCheck,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -34,7 +39,7 @@ export class ChoiceCheckClientSyncHandler implements ClientSyncEntityHandler {
       id: update.id,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
-      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null
+      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
     });
     console.log(`Applied create for ChoiceCheck ${update.id}`);
   }
@@ -49,7 +54,8 @@ export class ChoiceCheckClientSyncHandler implements ClientSyncEntityHandler {
 
     const changes = update.changes as Partial<ChoiceCheck>;
 
-    await this.db.update(schema.choiceChecks)
+    await this.db
+      .update(schema.choiceChecks)
       .set({
         ...changes,
         updatedAt: new Date(),
@@ -68,7 +74,8 @@ export class ChoiceCheckClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.choiceChecks)
+    await this.db
+      .update(schema.choiceChecks)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

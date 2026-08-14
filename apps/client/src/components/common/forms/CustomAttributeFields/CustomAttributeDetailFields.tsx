@@ -1,4 +1,9 @@
-import { AttributeType, CommentEntityType, decodeAttributeValue, StorySchemaEntityType } from '@keres/shared';
+import {
+  AttributeType,
+  CommentEntityType,
+  decodeAttributeValue,
+  StorySchemaEntityType,
+} from '@keres/shared';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
@@ -14,7 +19,11 @@ interface CustomAttributeDetailFieldsProps {
   entityId: string;
 }
 
-function formatValueForDisplay(type: AttributeType | string, decoded: string | number | boolean | null, t: (key: string) => string): string {
+function formatValueForDisplay(
+  type: AttributeType | string,
+  decoded: string | number | boolean | null,
+  t: (key: string) => string,
+): string {
   if (decoded === null) {
     return t('common_na');
   }
@@ -30,13 +39,23 @@ function formatValueForDisplay(type: AttributeType | string, decoded: string | n
  * pelos 7 tipos de entidade, na mesma posição em toda tela: depois dos campos nativos, antes de
  * galeria/relações.
  */
-const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = ({ storyId, entityType, entityId }) => {
+const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = ({
+  storyId,
+  entityType,
+  entityId,
+}) => {
   const { t } = useTranslation();
   const drizzleDb = useDrizzle();
   const fields = useStorySchemaFields(storyId, entityType);
   const [values, setValues] = useState<Record<string, string | null>>({});
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(storyId, entityType as CommentEntityType, entityId);
 
   const fetchValues = useCallback(async () => {
@@ -80,7 +99,9 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
             canComment={canComment}
             isStoryOwner={isStoryOwner}
             currentUserId={currentUserId}
-            onAddComment={(input) => addComment({ fieldId: field.id }, { ...input, contentSnapshot: displayValue })}
+            onAddComment={(input) =>
+              addComment({ fieldId: field.id }, { ...input, contentSnapshot: displayValue })
+            }
             onDeleteComment={deleteComment}
             onUpdateComment={updateComment}
           />

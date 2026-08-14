@@ -15,6 +15,21 @@ export type HelpBlock =
   | { type: 'faq'; items: { question: string; answer: string }[] }
   | { type: 'seeAlso'; pages: HelpPageId[] };
 
-export interface HelpFieldRow { key: string; label: string; whatToWrite: string; note?: string }
-export interface HelpPage { id: HelpPageId; title: string; summary: string; keywords: string[]; blocks: HelpBlock[] }
-export interface HelpSection { id: string; titleKey: string; pageIds: HelpPageId[] }
+export interface HelpFieldRow {
+  key: string;
+  label: string;
+  whatToWrite: string;
+  note?: string;
+}
+export interface HelpPage {
+  id: HelpPageId;
+  title: string;
+  summary: string;
+  keywords: string[];
+  blocks: HelpBlock[];
+}
+export interface HelpSection {
+  id: string;
+  titleKey: string;
+  pageIds: HelpPageId[];
+}

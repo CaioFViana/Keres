@@ -38,9 +38,10 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
 
   useEffect(() => {
     if (initialRelation) {
-      const relatedId = initialRelation.charId1 === currentCharacterId
-        ? initialRelation.charId2
-        : initialRelation.charId1;
+      const relatedId =
+        initialRelation.charId1 === currentCharacterId
+          ? initialRelation.charId2
+          : initialRelation.charId1;
       setRelatedCharId(relatedId);
       setRelationType(initialRelation.relationType);
     } else {
@@ -54,7 +55,8 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
     const newErrors: { relatedCharId?: string; relationType?: string } = {};
     if (!relatedCharId) newErrors.relatedCharId = t('related_character_required');
     if (!relationType) newErrors.relationType = t('relation_type_required');
-    if (relatedCharId && relatedCharId === currentCharacterId) newErrors.relatedCharId = t('cannot_relate_self');
+    if (relatedCharId && relatedCharId === currentCharacterId)
+      newErrors.relatedCharId = t('cannot_relate_self');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -68,11 +70,11 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   };
 
   const getCharacterName = (charId: string) => {
-    return characters.find(char => char.id === charId)?.name || t('select_character');
+    return characters.find((char) => char.id === charId)?.name || t('select_character');
   };
 
   const selectableCharacters = characters
-    .filter(char => char.id !== currentCharacterId)
+    .filter((char) => char.id !== currentCharacterId)
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleSelectCharacter = (charId: string) => {
@@ -164,47 +166,48 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
       contentStyle={styles.modalContent}
       maxHeight="86%"
     >
-          <Text style={styles.modalTitle}>
-            {initialRelation ? t('edit_character_relation') : t('add_character_relation_title')}
-          </Text>
-          <ScrollView keyboardShouldPersistTaps="handled">
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>{t('related_character')}</Text>
-              <TouchableOpacity
-                style={[styles.pickerContainer, initialRelation && { opacity: 0.6 }]}
-                onPress={initialRelation ? undefined : () => setShowCharacterPicker(true)}
-                disabled={!!initialRelation}
-              >
-                <Text style={styles.pickerText}>
-                  {relatedCharId ? getCharacterName(relatedCharId) : t('select_character')}
-                </Text>
-                <Ionicons name="caret-down" size={20} color={colors.textSecondary} style={styles.pickerButton} />
-              </TouchableOpacity>
-              {errors.relatedCharId && <Text style={styles.errorText}>{errors.relatedCharId}</Text>}
-            </View>
+      <Text style={styles.modalTitle}>
+        {initialRelation ? t('edit_character_relation') : t('add_character_relation_title')}
+      </Text>
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('related_character')}</Text>
+          <TouchableOpacity
+            style={[styles.pickerContainer, initialRelation && { opacity: 0.6 }]}
+            onPress={initialRelation ? undefined : () => setShowCharacterPicker(true)}
+            disabled={!!initialRelation}
+          >
+            <Text style={styles.pickerText}>
+              {relatedCharId ? getCharacterName(relatedCharId) : t('select_character')}
+            </Text>
+            <Ionicons
+              name="caret-down"
+              size={20}
+              color={colors.textSecondary}
+              style={styles.pickerButton}
+            />
+          </TouchableOpacity>
+          {errors.relatedCharId && <Text style={styles.errorText}>{errors.relatedCharId}</Text>}
+        </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>{t('relation_type')}</Text>
-              <SuggestionTextInput
-                value={relationType}
-                onChangeText={setRelationType}
-                type="characterRelation_type"
-                storyId={currentStoryId}
-                placeholder={t('select_relation_type')}
-                style={{ marginBottom: 5 }}
-              />
-              {errors.relationType && <Text style={styles.errorText}>{errors.relationType}</Text>}
-            </View>
-          </ScrollView>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>{t('relation_type')}</Text>
+          <SuggestionTextInput
+            value={relationType}
+            onChangeText={setRelationType}
+            type="characterRelation_type"
+            storyId={currentStoryId}
+            placeholder={t('select_relation_type')}
+            style={{ marginBottom: 5 }}
+          />
+          {errors.relationType && <Text style={styles.errorText}>{errors.relationType}</Text>}
+        </View>
+      </ScrollView>
 
-          <View style={styles.buttonContainer}>
-            <Button onPress={onClose}>
-              {t('cancel')}
-            </Button>
-            <Button onPress={handleSave}>
-              {t('save_changes')}
-            </Button>
-          </View>
+      <View style={styles.buttonContainer}>
+        <Button onPress={onClose}>{t('cancel')}</Button>
+        <Button onPress={handleSave}>{t('save_changes')}</Button>
+      </View>
       <ResponsiveModal
         visible={showCharacterPicker}
         onClose={() => setShowCharacterPicker(false)}
@@ -216,11 +219,16 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.characterPickerItem} onPress={() => handleSelectCharacter(item.id)}>
+            <TouchableOpacity
+              style={styles.characterPickerItem}
+              onPress={() => handleSelectCharacter(item.id)}
+            >
               <Text style={styles.characterPickerText}>{item.name}</Text>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={<Text style={styles.noCharactersText}>{t('no_characters_found')}</Text>}
+          ListEmptyComponent={
+            <Text style={styles.noCharactersText}>{t('no_characters_found')}</Text>
+          }
         />
         <Button onPress={() => setShowCharacterPicker(false)} style={styles.closeButton}>
           {t('close')}

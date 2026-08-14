@@ -13,7 +13,9 @@ describe('GET /user/details/:userId', () => {
   it('returns the public profile of another user', async () => {
     const bia = await registerUser('bia');
 
-    const { status, data } = await request('GET', `/user/details/${bia.userId}`, { token: ana.token });
+    const { status, data } = await request('GET', `/user/details/${bia.userId}`, {
+      token: ana.token,
+    });
 
     expect(status).toBe(200);
     expect(data).toMatchObject({ id: bia.userId, username: 'bia' });
@@ -76,7 +78,10 @@ describe('GET /user/by-tag/:tag', () => {
 
 describe('PUT /user/tag', () => {
   it('changes the tag and makes the user findable by it', async () => {
-    const { status } = await request('PUT', '/user/tag', { token: ana.token, body: { tag: 'aninha' } });
+    const { status } = await request('PUT', '/user/tag', {
+      token: ana.token,
+      body: { tag: 'aninha' },
+    });
 
     expect(status).toBe(200);
     const lookup = await request('GET', '/user/by-tag/aninha', { token: ana.token });
@@ -87,7 +92,10 @@ describe('PUT /user/tag', () => {
     await request('PUT', '/user/tag', { token: ana.token, body: { tag: 'aninha' } });
     const bia = await registerUser('bia');
 
-    const { status } = await request('PUT', '/user/tag', { token: bia.token, body: { tag: 'ana' } });
+    const { status } = await request('PUT', '/user/tag', {
+      token: bia.token,
+      body: { tag: 'ana' },
+    });
 
     expect(status).toBe(200);
   });
@@ -95,7 +103,10 @@ describe('PUT /user/tag', () => {
   it('refuses a tag another account already holds', async () => {
     const bia = await registerUser('bia');
 
-    const { status, data } = await request('PUT', '/user/tag', { token: bia.token, body: { tag: 'ana' } });
+    const { status, data } = await request('PUT', '/user/tag', {
+      token: bia.token,
+      body: { tag: 'ana' },
+    });
 
     expect(status).toBe(409);
     expect(data.message).toBe('Tag is already taken.');
@@ -116,9 +127,15 @@ describe('PUT /user/tag', () => {
 
 describe('PUT /user/profile', () => {
   it('updates only the fields that were sent', async () => {
-    await request('PUT', '/user/profile', { token: ana.token, body: { bio: 'Escritora', avatarColor: '#ff0000' } });
+    await request('PUT', '/user/profile', {
+      token: ana.token,
+      body: { bio: 'Escritora', avatarColor: '#ff0000' },
+    });
 
-    const { data } = await request('PUT', '/user/profile', { token: ana.token, body: { avatarIcon: 'book' } });
+    const { data } = await request('PUT', '/user/profile', {
+      token: ana.token,
+      body: { avatarIcon: 'book' },
+    });
 
     expect(data).toMatchObject({ bio: 'Escritora', avatarColor: '#ff0000', avatarIcon: 'book' });
   });
@@ -126,7 +143,10 @@ describe('PUT /user/profile', () => {
   it('clears a field when it is explicitly set to null', async () => {
     await request('PUT', '/user/profile', { token: ana.token, body: { bio: 'Escritora' } });
 
-    const { data } = await request('PUT', '/user/profile', { token: ana.token, body: { bio: null } });
+    const { data } = await request('PUT', '/user/profile', {
+      token: ana.token,
+      body: { bio: null },
+    });
 
     expect(data.bio).toBeNull();
   });
@@ -154,8 +174,12 @@ describe('PUT /user/password', () => {
       body: { currentPassword: ana.password, newPassword: 'nova-senha-123' },
     });
 
-    const withNew = await request('POST', '/auth/login', { body: { username: 'ana', password: 'nova-senha-123' } });
-    const withOld = await request('POST', '/auth/login', { body: { username: 'ana', password: ana.password } });
+    const withNew = await request('POST', '/auth/login', {
+      body: { username: 'ana', password: 'nova-senha-123' },
+    });
+    const withOld = await request('POST', '/auth/login', {
+      body: { username: 'ana', password: ana.password },
+    });
 
     expect(withNew.status).toBe(200);
     expect(withOld.status).toBe(401);
@@ -176,7 +200,9 @@ describe('PUT /user/password', () => {
       body: { currentPassword: 'chute', newPassword: 'nova-senha-123' },
     });
 
-    const { status } = await request('POST', '/auth/login', { body: { username: 'ana', password: ana.password } });
+    const { status } = await request('POST', '/auth/login', {
+      body: { username: 'ana', password: ana.password },
+    });
     expect(status).toBe(200);
   });
 

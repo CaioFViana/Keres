@@ -15,7 +15,9 @@ export class AdminApiLogService {
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [items, [{ total }]] = await Promise.all([
-      db.select().from(apiLogs)
+      db
+        .select()
+        .from(apiLogs)
         .where(where)
         .orderBy(desc(apiLogs.createdAt))
         .limit(filters.pageSize)

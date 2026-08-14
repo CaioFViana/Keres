@@ -1,4 +1,8 @@
-import { CreateCharacterDataSchema, CreateStoryUpdate, PartialCharacterSchema } from '@keres/shared';
+import {
+  CreateCharacterDataSchema,
+  CreateStoryUpdate,
+  PartialCharacterSchema,
+} from '@keres/shared';
 import { z } from 'zod';
 import { db } from '../../db';
 import { characters } from '../../db/schema';
@@ -6,7 +10,10 @@ import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 type CharacterCreateType = z.infer<typeof CreateCharacterDataSchema>;
 
-export class CharacterSyncHandler extends BaseSyncEntityHandler<typeof CreateCharacterDataSchema, typeof PartialCharacterSchema> {
+export class CharacterSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateCharacterDataSchema,
+  typeof PartialCharacterSchema
+> {
   entityName = 'Character';
 
   constructor() {
@@ -20,7 +27,7 @@ export class CharacterSyncHandler extends BaseSyncEntityHandler<typeof CreateCha
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 

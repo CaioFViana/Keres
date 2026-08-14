@@ -51,7 +51,8 @@ export class LocationClientSyncHandler implements ClientSyncEntityHandler {
 
     const locationChanges = update.changes as Partial<Location>;
 
-    await this.db.update(schema.locations)
+    await this.db
+      .update(schema.locations)
       .set({
         ...locationChanges,
         storyId: storyId,
@@ -72,7 +73,8 @@ export class LocationClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.locations)
+    await this.db
+      .update(schema.locations)
       .set({
         storyId: storyId,
         isDeleted: true,

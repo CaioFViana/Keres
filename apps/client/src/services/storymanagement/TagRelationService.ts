@@ -7,41 +7,64 @@ import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUti
 import { createServerService } from '../ServerService';
 
 export interface TagRelationService {
-  getTagsForEntity(storyId: string, entityId: string, entityType: TagRelationEntities): Promise<TagSelect[]>;
+  getTagsForEntity(
+    storyId: string,
+    entityId: string,
+    entityType: TagRelationEntities,
+  ): Promise<TagSelect[]>;
   getRelationsForTag(storyId: string, tagId: string): Promise<TagRelation[]>;
-  addTagToEntity(currentUserId: string, storyId: string, entityId: string, entityType: TagRelationEntities, tagId: string): Promise<void>;
-  removeTagFromEntity(currentUserId: string, storyId: string, entityId: string, entityType: TagRelationEntities, tagId: string): Promise<void>;
-  updateTagsForEntity(currentUserId: string, storyId: string, entityId: string, entityType: TagRelationEntities, newTagIds: string[]): Promise<void>;
+  addTagToEntity(
+    currentUserId: string,
+    storyId: string,
+    entityId: string,
+    entityType: TagRelationEntities,
+    tagId: string,
+  ): Promise<void>;
+  removeTagFromEntity(
+    currentUserId: string,
+    storyId: string,
+    entityId: string,
+    entityType: TagRelationEntities,
+    tagId: string,
+  ): Promise<void>;
+  updateTagsForEntity(
+    currentUserId: string,
+    storyId: string,
+    entityId: string,
+    entityType: TagRelationEntities,
+    newTagIds: string[],
+  ): Promise<void>;
 }
 
 export const createTagRelationService = (db: AppDrizzleClient): TagRelationService => {
   const serverService = createServerService(db);
   return {
     async getTagsForEntity(storyId, entityId, entityType): Promise<TagSelect[]> {
-      const relations = await db.select({ tagId: tagRelations.tagId })
+      const relations = await db
+        .select({ tagId: tagRelations.tagId })
         .from(tagRelations)
-        .where(and(
-          eq(tagRelations.storyId, storyId),
-          eq(tagRelations.relationId, entityId),
-          eq(tagRelations.relationType, entityType),
-          eq(tagRelations.isDeleted, false)
-        ))
+        .where(
+          and(
+            eq(tagRelations.storyId, storyId),
+            eq(tagRelations.relationId, entityId),
+            eq(tagRelations.relationType, entityType),
+            eq(tagRelations.isDeleted, false),
+          ),
+        )
         .execute();
 
-      const tagIds = relations.map(r => r.tagId);
+      const tagIds = relations.map((r) => r.tagId);
 
       if (tagIds.length === 0) {
         return [];
       }
 
-      const fetchedTags = await db.select()
+      const fetchedTags = await db
+        .select()
         .from(tags)
-        .where(and(
-          inArray(tags.id, tagIds),
-          eq(tags.isDeleted, false)
-        ))
+        .where(and(inArray(tags.id, tagIds), eq(tags.isDeleted, false)))
         .execute();
-      
+
       return fetchedTags;
     },
 
@@ -50,7 +73,7 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
         where: and(
           eq(tagRelations.storyId, storyId),
           eq(tagRelations.tagId, tagId),
-          eq(tagRelations.isDeleted, false)
+          eq(tagRelations.isDeleted, false),
         ),
       });
       return relations;
@@ -64,12 +87,14 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
           eq(tagRelations.relationId, relationId),
           eq(tagRelations.relationType, relationType),
           eq(tagRelations.tagId, tagId),
-          eq(tagRelations.isDeleted, false)
+          eq(tagRelations.isDeleted, false),
         ),
       });
 
       if (existingRelation) {
-        console.log(`Tag relation already exists and is active for entity ${relationId} with tag ${tagId}.`);
+        console.log(
+          `Tag relation already exists and is active for entity ${relationId} with tag ${tagId}.`,
+        );
         return;
       }
 
@@ -80,23 +105,37 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
           eq(tagRelations.relationId, relationId),
           eq(tagRelations.relationType, relationType),
           eq(tagRelations.tagId, tagId),
-          eq(tagRelations.isDeleted, true)
+          eq(tagRelations.isDeleted, true),
         ),
       });
 
       if (deletedRelation) {
         // Reactivate the deleted relation
-        const [updatedRelation] = await db.update(tagRelations)
-          .set({ isDeleted: false, deletedAt: null, updatedAt: new Date(), version: sql`${tagRelations.version} + 1` })
+        const [updatedRelation] = await db
+          .update(tagRelations)
+          .set({
+            isDeleted: false,
+            deletedAt: null,
+            updatedAt: new Date(),
+            version: sql`${tagRelations.version} + 1`,
+          })
           .where(eq(tagRelations.id, deletedRelation.id))
           .returning();
-        
+
         if (!updatedRelation) {
           throw new Error(`Failed to reactivate tag relation ${deletedRelation.id}.`);
         }
-        
+
         const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-        await recordLocalOperation(db, storyId, userIdToLog, 'update', 'TagRelation', updatedRelation.id, { isDeleted: false, version: updatedRelation.version });
+        await recordLocalOperation(
+          db,
+          storyId,
+          userIdToLog,
+          'update',
+          'TagRelation',
+          updatedRelation.id,
+          { isDeleted: false, version: updatedRelation.version },
+        );
         entityEventEmitter.emit('tag_relation_changed', storyId, relationId);
         return;
       }
@@ -112,7 +151,9 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
       const result = await db.insert(tagRelations).values(newRelation).returning().get();
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'TagRelation', result.id, { ...result });
+      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'TagRelation', result.id, {
+        ...result,
+      });
       entityEventEmitter.emit('tag_relation_changed', storyId, relationId);
     },
 
@@ -123,35 +164,57 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
           eq(tagRelations.relationId, entityId),
           eq(tagRelations.relationType, entityType),
           eq(tagRelations.tagId, tagId),
-          eq(tagRelations.isDeleted, false)
+          eq(tagRelations.isDeleted, false),
         ),
       });
 
       if (!relationToDelete) {
-        console.warn(`Tag relation for entity ${entityId} with tag ${tagId} not found or already deleted.`);
+        console.warn(
+          `Tag relation for entity ${entityId} with tag ${tagId} not found or already deleted.`,
+        );
         return;
       }
 
-      const [updatedRelation] = await db.update(tagRelations)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${tagRelations.version} + 1` })
+      const [updatedRelation] = await db
+        .update(tagRelations)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${tagRelations.version} + 1`,
+        })
         .where(eq(tagRelations.id, relationToDelete.id))
         .returning();
-      
+
       if (!updatedRelation) {
         throw new Error(`Failed to delete tag relation ${relationToDelete.id}.`);
       }
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'delete', 'TagRelation', updatedRelation.id, { isDeleted: true, version: updatedRelation.version });
+      await recordLocalOperation(
+        db,
+        storyId,
+        userIdToLog,
+        'delete',
+        'TagRelation',
+        updatedRelation.id,
+        { isDeleted: true, version: updatedRelation.version },
+      );
       entityEventEmitter.emit('tag_relation_changed', storyId, entityId);
     },
 
-    async updateTagsForEntity(currentUserId, storyId, entityId, entityType, newTagIds): Promise<void> {
+    async updateTagsForEntity(
+      currentUserId,
+      storyId,
+      entityId,
+      entityType,
+      newTagIds,
+    ): Promise<void> {
       const existingTags = await this.getTagsForEntity(storyId, entityId, entityType);
-      const existingTagIds = existingTags.map(tag => tag.id);
+      const existingTagIds = existingTags.map((tag) => tag.id);
 
-      const tagsToAdd = newTagIds.filter(tagId => !existingTagIds.includes(tagId));
-      const tagsToRemove = existingTagIds.filter(tagId => !newTagIds.includes(tagId));
+      const tagsToAdd = newTagIds.filter((tagId) => !existingTagIds.includes(tagId));
+      const tagsToRemove = existingTagIds.filter((tagId) => !newTagIds.includes(tagId));
 
       for (const tagId of tagsToAdd) {
         await this.addTagToEntity(currentUserId, storyId, entityId, entityType, tagId);

@@ -9,7 +9,11 @@ interface UseEntityNameResult {
   loading: boolean;
 }
 
-export function useEntityName(entityType: OperationLogEntityType, entityId: string, storyId: string): UseEntityNameResult {
+export function useEntityName(
+  entityType: OperationLogEntityType,
+  entityId: string,
+  storyId: string,
+): UseEntityNameResult {
   const [entityName, setEntityName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
   const db = useDrizzle();

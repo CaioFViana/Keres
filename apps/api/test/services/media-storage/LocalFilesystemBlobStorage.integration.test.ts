@@ -10,7 +10,10 @@ beforeAll(() => {
   vi.stubGlobal('Bun', {
     write: (filePath: string, bytes: ArrayBuffer) => writeFile(filePath, new Uint8Array(bytes)),
     file: (filePath: string) => ({
-      exists: async () => access(filePath).then(() => true).catch(() => false),
+      exists: async () =>
+        access(filePath)
+          .then(() => true)
+          .catch(() => false),
       arrayBuffer: async () => {
         const bytes = await readFile(filePath);
         return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
@@ -20,7 +23,11 @@ beforeAll(() => {
 });
 
 afterEach(async () => {
-  await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+  await Promise.all(
+    temporaryDirectories
+      .splice(0)
+      .map((directory) => rm(directory, { recursive: true, force: true })),
+  );
 });
 
 describe('LocalFilesystemBlobStorage integration', () => {
@@ -59,6 +66,8 @@ describe('LocalFilesystemBlobStorage integration', () => {
   it('rejects traversal keys before accessing disk', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'keres-media-integration-'));
     temporaryDirectories.push(root);
-    await expect(new LocalFilesystemBlobStorage(root).has('../outside')).rejects.toThrow('Invalid media storage key');
+    await expect(new LocalFilesystemBlobStorage(root).has('../outside')).rejects.toThrow(
+      'Invalid media storage key',
+    );
   });
 });

@@ -28,15 +28,23 @@ const CommentListScreen: React.FC = () => {
     useCallback(() => {
       navigation.setOptions({ title: t('comments_title') });
       setDocumentTitle(t('comments_title'));
-    }, [navigation, t])
+    }, [navigation, t]),
   );
 
-  const handlePressComment = useCallback((comment: CommentSelect) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, comment.entityType as NavigableEntityType, comment.entityId);
-    }
-  }, [navigation]);
+  const handlePressComment = useCallback(
+    (comment: CommentSelect) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(
+          drawerNavigation,
+          comment.entityType as NavigableEntityType,
+          comment.entityId,
+        );
+      }
+    },
+    [navigation],
+  );
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },

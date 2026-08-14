@@ -1,6 +1,11 @@
 type LogLevel = 'info' | 'warn' | 'error';
 
-type LogSink = (entry: { level: LogLevel; message: string; meta?: Record<string, unknown>; timestamp: string }) => void;
+type LogSink = (entry: {
+  level: LogLevel;
+  message: string;
+  meta?: Record<string, unknown>;
+  timestamp: string;
+}) => void;
 
 let sink: LogSink | null = null;
 
@@ -51,5 +56,8 @@ export const logger = {
   info: (message: string, meta?: Record<string, unknown>) => write('info', message, meta),
   warn: (message: string, meta?: Record<string, unknown>) => write('warn', message, meta),
   error: (message: string, error?: unknown, meta?: Record<string, unknown>) =>
-    write('error', message, { ...(error !== undefined ? { error: serializeError(error) } : {}), ...meta }),
+    write('error', message, {
+      ...(error !== undefined ? { error: serializeError(error) } : {}),
+      ...meta,
+    }),
 };

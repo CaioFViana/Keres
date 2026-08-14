@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
 import { TagSelect } from '../db/schema';
-import { createNoteRelationService, SaveNoteRelation } from '../services/storymanagement/NoteRelationService';
+import {
+  createNoteRelationService,
+  SaveNoteRelation,
+} from '../services/storymanagement/NoteRelationService';
 import { createNoteService } from '../services/storymanagement/NoteService';
 import { createTagRelationService } from '../services/storymanagement/TagRelationService';
 import { createTagService } from '../services/storymanagement/TagService';
@@ -33,7 +36,11 @@ export interface UseEntityRelationsOptions {
  * save/delete handlers with their alerts and change events - around 120 lines per
  * screen, across nineteen screens, differing only in the entity name.
  */
-export function useEntityRelations({ entityType, entityId, withNotes = true }: UseEntityRelationsOptions) {
+export function useEntityRelations({
+  entityType,
+  entityId,
+  withNotes = true,
+}: UseEntityRelationsOptions) {
   const drizzleDb = useDrizzle();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
@@ -165,7 +172,15 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
       entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       entityEventEmitter.off('tag_changed', handleTagChange);
     };
-  }, [withNotes, storyId, entityId, refreshNotes, refreshNoteRelations, refreshSelectedTags, refreshAvailableTags]);
+  }, [
+    withNotes,
+    storyId,
+    entityId,
+    refreshNotes,
+    refreshNoteRelations,
+    refreshSelectedTags,
+    refreshAvailableTags,
+  ]);
 
   /**
    * Writes the current tag selection to the entity. Takes an explicit id because on
@@ -197,9 +212,7 @@ export function useEntityRelations({ entityType, entityId, withNotes = true }: U
         const saved = await services.noteRelation.saveNoteRelation(userId, relation);
         setNoteRelations((prev) => {
           const index = prev.findIndex((r) => r.id === saved.id);
-          return index > -1
-            ? prev.map((r, i) => (i === index ? saved : r))
-            : [...prev, saved];
+          return index > -1 ? prev.map((r, i) => (i === index ? saved : r)) : [...prev, saved];
         });
         entityEventEmitter.emit('note_relation_changed', storyId, entityId);
         AppAlert.alert(t('success'), t('note_relation_saved_successfully'));

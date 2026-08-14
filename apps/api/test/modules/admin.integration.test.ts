@@ -72,13 +72,19 @@ describe('GET /admin/api/users', () => {
   });
 
   it('filters by search term', async () => {
-    const { data } = await request('GET', '/admin/api/users', { token: admin.token, query: { search: 'ana' } });
+    const { data } = await request('GET', '/admin/api/users', {
+      token: admin.token,
+      query: { search: 'ana' },
+    });
 
     expect(data.items.map((item: any) => item.username)).toEqual(['ana']);
   });
 
   it('filters by admin flag', async () => {
-    const { data } = await request('GET', '/admin/api/users', { token: admin.token, query: { isAdmin: true } });
+    const { data } = await request('GET', '/admin/api/users', {
+      token: admin.token,
+      query: { isAdmin: true },
+    });
 
     expect(data.items.map((item: any) => item.username)).toEqual(['root']);
   });
@@ -127,7 +133,9 @@ describe('admin user lifecycle', () => {
   });
 
   it('reads a single account by id', async () => {
-    const { status, data } = await request('GET', `/admin/api/users/${comum.userId}`, { token: admin.token });
+    const { status, data } = await request('GET', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+    });
 
     expect(status).toBe(200);
     expect(data.username).toBe('ana');
@@ -140,19 +148,27 @@ describe('admin user lifecycle', () => {
   });
 
   it('soft-deletes and restores an account', async () => {
-    const deleted = await request('DELETE', `/admin/api/users/${comum.userId}`, { token: admin.token });
+    const deleted = await request('DELETE', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+    });
     expect(deleted.status).toBe(200);
     expect(deleted.data.isDeleted).toBe(true);
 
-    const restored = await request('POST', `/admin/api/users/${comum.userId}/restore`, { token: admin.token });
+    const restored = await request('POST', `/admin/api/users/${comum.userId}/restore`, {
+      token: admin.token,
+    });
     expect(restored.status).toBe(200);
     expect(restored.data.isDeleted).toBe(false);
   });
 
   it('resets a password to a value the account can log in with', async () => {
-    const { status, data } = await request('POST', `/admin/api/users/${comum.userId}/reset-password`, {
-      token: admin.token,
-    });
+    const { status, data } = await request(
+      'POST',
+      `/admin/api/users/${comum.userId}/reset-password`,
+      {
+        token: admin.token,
+      },
+    );
 
     expect(status).toBe(200);
     const login = await request('POST', '/auth/login', {
@@ -162,11 +178,17 @@ describe('admin user lifecycle', () => {
   });
 
   it('promotes and demotes an account', async () => {
-    await request('PUT', `/admin/api/users/${comum.userId}`, { token: admin.token, body: { isAdmin: true } });
+    await request('PUT', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+      body: { isAdmin: true },
+    });
     const promoted = await request('GET', '/admin/api/users', { token: comum.token });
     expect(promoted.status).toBe(200);
 
-    await request('PUT', `/admin/api/users/${comum.userId}`, { token: admin.token, body: { isAdmin: false } });
+    await request('PUT', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+      body: { isAdmin: false },
+    });
     const demoted = await request('GET', '/admin/api/users', { token: comum.token });
     expect(demoted.status).toBe(403);
   });
@@ -174,7 +196,10 @@ describe('admin user lifecycle', () => {
 
 describe('tiers', () => {
   it('creates a tier and lists it', async () => {
-    const created = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Pro' } });
+    const created = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Pro' },
+    });
 
     expect(created.status).toBeLessThan(300);
     const { data } = await request('GET', '/admin/api/tiers', { token: admin.token });
@@ -182,11 +207,17 @@ describe('tiers', () => {
   });
 
   it('hides a soft-deleted tier unless the caller asks for it', async () => {
-    const { data: created } = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Pro' } });
+    const { data: created } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Pro' },
+    });
     await request('DELETE', `/admin/api/tiers/${created.id}`, { token: admin.token });
 
     const visible = await request('GET', '/admin/api/tiers', { token: admin.token });
-    const all = await request('GET', '/admin/api/tiers', { token: admin.token, query: { includeDeleted: true } });
+    const all = await request('GET', '/admin/api/tiers', {
+      token: admin.token,
+      query: { includeDeleted: true },
+    });
 
     expect(visible.data.some((tier: any) => tier.id === created.id)).toBe(false);
     expect(all.data.some((tier: any) => tier.id === created.id)).toBe(true);
@@ -201,7 +232,14 @@ describe('tiers', () => {
   it('reads and updates a tier without losing its configured limits', async () => {
     const { data: created } = await request('POST', '/admin/api/tiers', {
       token: admin.token,
-      body: { name: 'Pro', maxStories: 5, maxEntitiesPerStory: null, maxEntitiesTotal: null, maxStorageBytesPerStory: null, maxStorageBytesTotal: null },
+      body: {
+        name: 'Pro',
+        maxStories: 5,
+        maxEntitiesPerStory: null,
+        maxEntitiesTotal: null,
+        maxStorageBytesPerStory: null,
+        maxStorageBytesTotal: null,
+      },
     });
 
     const read = await request('GET', `/admin/api/tiers/${created.id}`, { token: admin.token });
@@ -217,26 +255,51 @@ describe('tiers', () => {
   });
 
   it('rejects duplicate tier names on creation and rename', async () => {
-    const first = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Free' } });
-    const duplicate = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Free' } });
-    const second = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Pro' } });
-    const rename = await request('PUT', `/admin/api/tiers/${second.data.id}`, { token: admin.token, body: { name: first.data.name } });
+    const first = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Free' },
+    });
+    const duplicate = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Free' },
+    });
+    const second = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Pro' },
+    });
+    const rename = await request('PUT', `/admin/api/tiers/${second.data.id}`, {
+      token: admin.token,
+      body: { name: first.data.name },
+    });
 
     expect(duplicate.status).toBe(409);
     expect(rename.status).toBe(409);
   });
 
   it('refuses to delete a tier that is used by registration defaults or active users', async () => {
-    const defaultTier = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Default' } });
+    const defaultTier = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Default' },
+    });
     await request('PUT', '/admin/api/registration-settings', {
       token: admin.token,
       body: { defaultTierId: defaultTier.data.id },
     });
-    const defaultDelete = await request('DELETE', `/admin/api/tiers/${defaultTier.data.id}`, { token: admin.token });
+    const defaultDelete = await request('DELETE', `/admin/api/tiers/${defaultTier.data.id}`, {
+      token: admin.token,
+    });
 
-    const assignedTier = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: 'Assigned' } });
-    await request('PUT', `/admin/api/users/${comum.userId}`, { token: admin.token, body: { tierId: assignedTier.data.id } });
-    const assignedDelete = await request('DELETE', `/admin/api/tiers/${assignedTier.data.id}`, { token: admin.token });
+    const assignedTier = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Assigned' },
+    });
+    await request('PUT', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+      body: { tierId: assignedTier.data.id },
+    });
+    const assignedDelete = await request('DELETE', `/admin/api/tiers/${assignedTier.data.id}`, {
+      token: admin.token,
+    });
 
     expect(defaultDelete.status).toBe(409);
     expect(defaultDelete.data.message).toMatch(/default tier/i);
@@ -245,8 +308,14 @@ describe('tiers', () => {
   });
 
   it('validates tier inputs before applying them', async () => {
-    const invalidCreate = await request('POST', '/admin/api/tiers', { token: admin.token, body: { name: '' } });
-    const invalidUpdate = await request('PUT', `/admin/api/tiers/${newId()}`, { token: admin.token, body: { maxStories: -1 } });
+    const invalidCreate = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: '' },
+    });
+    const invalidUpdate = await request('PUT', `/admin/api/tiers/${newId()}`, {
+      token: admin.token,
+      body: { maxStories: -1 },
+    });
 
     expect(invalidCreate.status).toBe(400);
     expect(invalidUpdate.status).toBe(400);
@@ -255,7 +324,9 @@ describe('tiers', () => {
 
 describe('registration settings', () => {
   it('creates the singleton row on first read, without a seed step', async () => {
-    const { status, data } = await request('GET', '/admin/api/registration-settings', { token: admin.token });
+    const { status, data } = await request('GET', '/admin/api/registration-settings', {
+      token: admin.token,
+    });
 
     expect(status).toBe(200);
     expect(data.isRegistrationOpen).toBe(true);

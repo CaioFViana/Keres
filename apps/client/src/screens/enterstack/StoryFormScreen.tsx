@@ -29,7 +29,7 @@ type StoryFormScreenRouteProp = NativeStackScreenProps<RootStackParamList, 'Stor
 type StoryFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'StoryForm'>;
 
 const StoryFormScreen = () => {
-  useBackButtonHandler({ showWebBackButton: true })
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const navigation = useNavigation<StoryFormScreenNavigationProp>();
@@ -115,7 +115,10 @@ const StoryFormScreen = () => {
     setError(null);
 
     try {
-      const storyData: Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'> = {
+      const storyData: Omit<
+        Story,
+        'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'
+      > = {
         userId: userId!, // Include userId here, asserted as non-null
         title: title.trim(),
         type,
@@ -185,7 +188,7 @@ const StoryFormScreen = () => {
           style: 'destructive',
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
@@ -196,7 +199,7 @@ const StoryFormScreen = () => {
 
   const languageOptions = getLanguageOptions(t);
 
-  const themeOptions = themeDisplayOptions.map(theme => ({
+  const themeOptions = themeDisplayOptions.map((theme) => ({
     label: t(theme.labelKey),
     value: theme.value,
   }));
@@ -210,7 +213,8 @@ const StoryFormScreen = () => {
     );
   }
 
-  if (error && !storyId) { // Only show error if creating a new story and something went wrong
+  if (error && !storyId) {
+    // Only show error if creating a new story and something went wrong
     return (
       <View style={[commonContainerStyles.container, styles.centered]}>
         <Text style={{ color: colors.error }}>{error}</Text>
@@ -220,100 +224,107 @@ const StoryFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}>
-          <Text style={[styles.title, { color: colors.text }]}>{storyId ? t('edit_story') : t('create_new_story_screen_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {storyId ? t('edit_story_description') : t('create_new_story_screen_description')}
-          </Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {storyId ? t('edit_story') : t('create_new_story_screen_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {storyId ? t('edit_story_description') : t('create_new_story_screen_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
-          <TextInput
-            placeholder={t('title_placeholder')}
-            value={title}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
+      <TextInput
+        placeholder={t('title_placeholder')}
+        value={title}
+        onChangeText={setTitle}
+        style={commonInputStyles.input}
+      />
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('type')}</Text>
-          <Select
-            options={storyTypeOptions}
-            value={type}
-            onValueChange={(value) => setType(value as 'linear' | 'branching')}
-            placeholder={t('select_story_type')}
-            disabled={!!storyId}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('type')}</Text>
+      <Select
+        options={storyTypeOptions}
+        value={type}
+        onValueChange={(value) => setType(value as 'linear' | 'branching')}
+        placeholder={t('select_story_type')}
+        disabled={!!storyId}
+      />
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-          <TextInput
-            placeholder={t('description_placeholder')}
-            value={description || ""}
-            onChangeText={setDescription}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
+      <TextInput
+        placeholder={t('description_placeholder')}
+        value={description || ''}
+        onChangeText={setDescription}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('genre')}</Text>
-          <TextInput
-            placeholder={t('genre_placeholder')}
-            value={genre || ""}
-            onChangeText={setGenre}
-            style={commonInputStyles.input}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('genre')}</Text>
+      <TextInput
+        placeholder={t('genre_placeholder')}
+        value={genre || ''}
+        onChangeText={setGenre}
+        style={commonInputStyles.input}
+      />
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('author')}</Text>
-          <TextInput
-            placeholder={t('author_placeholder')}
-            value={author || ""}
-            onChangeText={setAuthor}
-            style={commonInputStyles.input}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('author')}</Text>
+      <TextInput
+        placeholder={t('author_placeholder')}
+        value={author || ''}
+        onChangeText={setAuthor}
+        style={commonInputStyles.input}
+      />
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('language')}</Text>
-          <Select
-            options={languageOptions}
-            value={language}
-            onValueChange={setLanguage}
-            placeholder={t('select_language')}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('language')}</Text>
+      <Select
+        options={languageOptions}
+        value={language}
+        onValueChange={setLanguage}
+        placeholder={t('select_language')}
+      />
 
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('set_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
+          {t('set_favorite')}
+        </Text>
+        <ThemedSwitch
+          value={isFavorite}
+          onValueChange={setIsFavorite}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ""}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+      <TextInput
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes || ''}
+        onChangeText={setExtraNotes}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('theme')}</Text>
-          <Select
-            options={themeOptions}
-            value={theme}
-            onValueChange={(value) => {
-              setTheme(value);
-              applyTheme(value || 'default');
-            }}
-            placeholder={t('select_theme')}
-          />
+      <Text style={[styles.label, { color: colors.text }]}>{t('theme')}</Text>
+      <Select
+        options={themeOptions}
+        value={theme}
+        onValueChange={(value) => {
+          setTheme(value);
+          applyTheme(value || 'default');
+        }}
+        placeholder={t('select_theme')}
+      />
 
-          <Button onPress={handleSave} style={styles.saveButton}>
-            {storyId ? t('update_story') : t('create_story')}
-          </Button>
+      <Button onPress={handleSave} style={styles.saveButton}>
+        {storyId ? t('update_story') : t('create_story')}
+      </Button>
 
-          {storyId && (
-            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_story_title')}
-            </Button>
-          )}
+      {storyId && (
+        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          {t('delete_story_title')}
+        </Button>
+      )}
     </KeyboardAwareScreen>
   );
 };

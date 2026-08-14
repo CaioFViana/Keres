@@ -26,9 +26,10 @@ function toImportName(slug, language) {
 
 try {
   const slugs = fs.existsSync(contentDir)
-    ? fs.readdirSync(contentDir)
-      .filter(entry => fs.statSync(path.join(contentDir, entry)).isDirectory())
-      .sort()
+    ? fs
+        .readdirSync(contentDir)
+        .filter((entry) => fs.statSync(path.join(contentDir, entry)).isDirectory())
+        .sort()
     : [];
 
   let imports = '';
@@ -36,15 +37,20 @@ try {
 
   for (const slug of slugs) {
     const slugDir = path.join(contentDir, slug);
-    const languageFiles = fs.readdirSync(slugDir).filter(file => file.endsWith('.json')).sort();
+    const languageFiles = fs
+      .readdirSync(slugDir)
+      .filter((file) => file.endsWith('.json'))
+      .sort();
     if (languageFiles.length === 0) continue;
 
-    const languageLines = languageFiles.map(file => {
-      const language = path.basename(file, '.json');
-      const importName = toImportName(slug, language);
-      imports += `import ${importName} from '../content/${slug}/${file}';\n`;
-      return `        { language: '${language}', story: ${importName} },`;
-    }).join('\n');
+    const languageLines = languageFiles
+      .map((file) => {
+        const language = path.basename(file, '.json');
+        const importName = toImportName(slug, language);
+        imports += `import ${importName} from '../content/${slug}/${file}';\n`;
+        return `        { language: '${language}', story: ${importName} },`;
+      })
+      .join('\n');
 
     entries += `  {
     slug: '${slug}',
@@ -66,7 +72,9 @@ ${entries.trimEnd()}
 `;
 
   fs.writeFileSync(outputFilePath, fileContent);
-  console.log(`Example stories registry generated successfully at: ${outputFilePath} (${slugs.length} example stor${slugs.length === 1 ? 'y' : 'ies'})`);
+  console.log(
+    `Example stories registry generated successfully at: ${outputFilePath} (${slugs.length} example stor${slugs.length === 1 ? 'y' : 'ies'})`,
+  );
 } catch (error) {
   console.error('Error generating example stories registry:', error);
   process.exit(1);

@@ -3,7 +3,10 @@ import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import Svg, { Path, Rect as SvgRect, Text as SvgText } from 'react-native-svg';
 import { PanZoomCanvasHandle, usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
-import { CharacterRelationGraphLayout, RelationGraphNode } from '../../../../utils/characterRelationGraphLayout';
+import {
+  CharacterRelationGraphLayout,
+  RelationGraphNode,
+} from '../../../../utils/characterRelationGraphLayout';
 
 /**
  * Desenho interativo do mapa de relações entre personagens.
@@ -22,68 +25,85 @@ interface CharacterRelationGraphCanvasProps {
   onSelectNode: (node: RelationGraphNode) => void;
 }
 
-const CharacterRelationGraphCanvas = forwardRef<CharacterRelationGraphCanvasHandle, CharacterRelationGraphCanvasProps>(
-  ({ layout, showEdgeLabels, selectedNodeId, onSelectNode }, ref) => {
-    const { colors } = useTheme();
-    const { containerRef, handleLayout, panHandlers, animatedTransform } = usePanZoomCanvas(ref, layout);
+const CharacterRelationGraphCanvas = forwardRef<
+  CharacterRelationGraphCanvasHandle,
+  CharacterRelationGraphCanvasProps
+>(({ layout, showEdgeLabels, selectedNodeId, onSelectNode }, ref) => {
+  const { colors } = useTheme();
+  const { containerRef, handleLayout, panHandlers, animatedTransform } = usePanZoomCanvas(
+    ref,
+    layout,
+  );
 
-    const styles = useMemo(() => StyleSheet.create({
-      container: {
-        flex: 1,
-        overflow: 'hidden',
-        backgroundColor: colors.background,
-      },
-      content: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        transformOrigin: 'top left',
-      },
-      node: {
-        position: 'absolute',
-        borderRadius: 22,
-        overflow: 'hidden',
-        outlineWidth: 0,
-      },
-      nodeInner: {
-        flex: 1,
-        borderRadius: 21,
-        borderWidth: 1.2,
-        paddingHorizontal: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.primaryContainer,
-      },
-      nodeInnerIsolated: {
-        backgroundColor: colors.surface,
-        borderStyle: 'dashed',
-      },
-      nodeLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: colors.text,
-        textAlign: 'center',
-      },
-    }), [colors]);
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          overflow: 'hidden',
+          backgroundColor: colors.background,
+        },
+        content: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          transformOrigin: 'top left',
+        },
+        node: {
+          position: 'absolute',
+          borderRadius: 22,
+          overflow: 'hidden',
+          outlineWidth: 0,
+        },
+        nodeInner: {
+          flex: 1,
+          borderRadius: 21,
+          borderWidth: 1.2,
+          paddingHorizontal: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.primaryContainer,
+        },
+        nodeInnerIsolated: {
+          backgroundColor: colors.surface,
+          borderStyle: 'dashed',
+        },
+        nodeLabel: {
+          fontSize: 12,
+          fontWeight: '600',
+          color: colors.text,
+          textAlign: 'center',
+        },
+      }),
+    [colors],
+  );
 
-    return (
-      <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              width: layout.width,
-              height: layout.height,
-              transform: animatedTransform,
-            },
-          ]}
-        >
-          <Svg width={layout.width} height={layout.height}>
-            {layout.edges.map(edge => (
-              <Path key={edge.id} d={edge.path} fill="none" stroke={colors.border} strokeWidth={1.6} strokeOpacity={0.85} />
-            ))}
+  return (
+    <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            width: layout.width,
+            height: layout.height,
+            transform: animatedTransform,
+          },
+        ]}
+      >
+        <Svg width={layout.width} height={layout.height}>
+          {layout.edges.map((edge) => (
+            <Path
+              key={edge.id}
+              d={edge.path}
+              fill="none"
+              stroke={colors.border}
+              strokeWidth={1.6}
+              strokeOpacity={0.85}
+            />
+          ))}
 
-            {showEdgeLabels && layout.edges.map(edge => {
+          {showEdgeLabels &&
+            layout.edges.map((edge) => {
               const label = edge.label.trim();
               if (!label) return null;
               const clipped = label.length > 22 ? `${label.slice(0, 21)}…` : label;
@@ -111,38 +131,46 @@ const CharacterRelationGraphCanvas = forwardRef<CharacterRelationGraphCanvasHand
                 </React.Fragment>
               );
             })}
-          </Svg>
+        </Svg>
 
-          {layout.nodes.map(node => {
-            const isSelected = node.id === selectedNodeId;
-            const borderColor = isSelected ? colors.primary : (node.isIsolated ? colors.textSecondary : colors.border);
+        {layout.nodes.map((node) => {
+          const isSelected = node.id === selectedNodeId;
+          const borderColor = isSelected
+            ? colors.primary
+            : node.isIsolated
+              ? colors.textSecondary
+              : colors.border;
 
-            return (
-              <TouchableOpacity
-                key={node.id}
-                activeOpacity={0.75}
-                onPress={() => onSelectNode(node)}
-                style={[styles.node, { left: node.x, top: node.y, width: node.width, height: node.height }]}
+          return (
+            <TouchableOpacity
+              key={node.id}
+              activeOpacity={0.75}
+              onPress={() => onSelectNode(node)}
+              style={[
+                styles.node,
+                { left: node.x, top: node.y, width: node.width, height: node.height },
+              ]}
+            >
+              <View
+                style={[
+                  styles.nodeInner,
+                  node.isIsolated && styles.nodeInnerIsolated,
+                  { borderColor, borderWidth: isSelected ? 2.5 : 1.2 },
+                ]}
               >
-                <View
-                  style={[
-                    styles.nodeInner,
-                    node.isIsolated && styles.nodeInnerIsolated,
-                    { borderColor, borderWidth: isSelected ? 2.5 : 1.2 },
-                  ]}
-                >
-                  {node.labelLines.map((line, index) => (
-                    <Text key={index} style={styles.nodeLabel} numberOfLines={1}>{line}</Text>
-                  ))}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </Animated.View>
-      </View>
-    );
-  }
-);
+                {node.labelLines.map((line, index) => (
+                  <Text key={index} style={styles.nodeLabel} numberOfLines={1}>
+                    {line}
+                  </Text>
+                ))}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </Animated.View>
+    </View>
+  );
+});
 
 CharacterRelationGraphCanvas.displayName = 'CharacterRelationGraphCanvas';
 

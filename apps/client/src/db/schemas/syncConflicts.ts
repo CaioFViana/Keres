@@ -21,7 +21,9 @@ export const syncConflicts = sqliteTable('sync_conflicts', {
   /** Um dos valores de `SyncConflictReason` no pacote compartilhado. */
   reason: text('reason').notNull(),
   /** O que o usuário fez localmente e que ainda não passou. */
-  localOperationType: text('local_operation_type', { enum: ['create', 'update', 'delete', 'reorder'] }).notNull(),
+  localOperationType: text('local_operation_type', {
+    enum: ['create', 'update', 'delete', 'reorder'],
+  }).notNull(),
   /** JSON: ids das linhas de `operation_logs` agrupadas neste conflito. */
   localOperationIds: text('local_operation_ids').notNull(),
   /** JSON: os valores que o usuário quer preservar. */
@@ -34,8 +36,12 @@ export const syncConflicts = sqliteTable('sync_conflicts', {
   serverVersion: integer('server_version'),
   /** Mensagem técnica de origem, para diagnóstico. A tela usa `reason`. */
   message: text('message'),
-  status: text('status', { enum: ['pending', 'resolved', 'dismissed'] }).notNull().default('pending'),
-  resolution: text('resolution', { enum: ['keep_local', 'keep_server', 'merge', 'restore', 'discard'] }),
+  status: text('status', { enum: ['pending', 'resolved', 'dismissed'] })
+    .notNull()
+    .default('pending'),
+  resolution: text('resolution', {
+    enum: ['keep_local', 'keep_server', 'merge', 'restore', 'discard'],
+  }),
   detectedAt: integer('detected_at', { mode: 'timestamp' }).notNull(),
   resolvedAt: integer('resolved_at', { mode: 'timestamp' }),
 });

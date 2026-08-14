@@ -25,7 +25,7 @@ import i18n from './utils/i18n';
 // deprecated SafeAreaView from 'react-native' for its modal list mode, even though we
 // always use listMode="SCROLLVIEW" - the warning fires from building that unused JSX
 // branch, not from anything in our own screens, so there's nothing here to actually fix.
-LogBox.ignoreLogs(["SafeAreaView has been deprecated"]);
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
 // Create a wrapper component for safe area
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -35,7 +35,14 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const statusBarStyle = isColorLight(colors.background) ? 'dark' : 'light';
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: colors.background }}>
+    <View
+      style={{
+        flex: 1,
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        backgroundColor: colors.background,
+      }}
+    >
       <StatusBar style={statusBarStyle} />
       <WebScrollbarTheme />
       {children}
@@ -59,10 +66,8 @@ const ThemeInitializer = ({ children }: { children: React.ReactNode }) => {
   const drizzleClient = useDrizzle(); // Get drizzleClient from context
 
   return (
-    <ThemeProvider drizzleClient={drizzleClient}> 
-      <SafeAreaWrapper>
-        {children}
-      </SafeAreaWrapper>
+    <ThemeProvider drizzleClient={drizzleClient}>
+      <SafeAreaWrapper>{children}</SafeAreaWrapper>
     </ThemeProvider>
   );
 };
@@ -102,7 +107,6 @@ const DatabaseInitializer = () => {
         }
         setUserSettingsLoaded(true);
         console.log('DatabaseInitializer: User settings loaded and language applied.');
-
       } catch (e) {
         console.error('DatabaseInitializer: Failed to initialize database or load settings', e);
       }
@@ -110,8 +114,7 @@ const DatabaseInitializer = () => {
 
     if (db) {
       initialize();
-    }
-    else {
+    } else {
       console.log('DatabaseInitializer: db context is null, waiting...');
     }
   }, [db, initializeUserSettings]);

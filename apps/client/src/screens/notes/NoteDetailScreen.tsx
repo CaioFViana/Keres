@@ -1,6 +1,9 @@
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
@@ -77,7 +80,13 @@ const NoteDetailScreen = () => {
   const [note, setNote] = useState<NoteSelect | null>(null);
   const { canEdit } = useStoryRole(note?.storyId);
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(note?.storyId, 'Note', noteId);
   const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
   const [allNoteRelations, setAllNoteRelations] = useState<NoteRelation[]>([]);
@@ -127,9 +136,8 @@ const NoteDetailScreen = () => {
         setNote(fetchedNote);
         setHeaderTitle(fetchedNote.title || t('note_details_title'));
       } else if (fetchedNote && fetchedNote.isDeleted) {
-        navigation.goBack()
-      }
-      else {
+        navigation.goBack();
+      } else {
         setError(t('note_not_found'));
         setHeaderTitle(t('note_not_found'));
       }
@@ -148,7 +156,11 @@ const NoteDetailScreen = () => {
       return;
     }
     try {
-      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(note.storyId, noteId, 'Note');
+      const fetchedTags = await tagRelationServiceRef.current.getTagsForEntity(
+        note.storyId,
+        noteId,
+        'Note',
+      );
       setNoteTags(fetchedTags);
     } catch (err) {
       console.error('Failed to fetch tags for note:', err);
@@ -161,7 +173,10 @@ const NoteDetailScreen = () => {
       return;
     }
     try {
-      const relations = await noteRelationServiceRef.current.getRelationsForNote(note.storyId, noteId);
+      const relations = await noteRelationServiceRef.current.getRelationsForNote(
+        note.storyId,
+        noteId,
+      );
       setAllNoteRelations(relations);
     } catch (err) {
       console.error('Failed to fetch note relations:', err);
@@ -193,7 +208,13 @@ const NoteDetailScreen = () => {
     };
 
     for (const relation of allNoteRelations) {
-      const entityName = await EntityService.getEntityIdentifier(drizzleDb, relation.relationType, relation.relationId, note.storyId, t);
+      const entityName = await EntityService.getEntityIdentifier(
+        drizzleDb,
+        relation.relationType,
+        relation.relationId,
+        note.storyId,
+        t,
+      );
       if (entityName) {
         newGroupedEntities[relation.relationType.toLowerCase()].push(entityName);
       }
@@ -201,36 +222,46 @@ const NoteDetailScreen = () => {
     setGroupedEntities(newGroupedEntities);
   }, [allNoteRelations, drizzleDb, note?.storyId, t]);
 
-  const handleNoteChange = useCallback(async (changedStoryId: string, changedNoteId: string) => {
-    if (changedNoteId === noteId) {
-      if (noteServiceRef.current) {
-        const updatedNote = await noteServiceRef.current.getById(noteId);
-        if (!updatedNote || updatedNote.isDeleted) {
-          navigation.goBack();
-        } else {
-          setNote(updatedNote);
-          setHeaderTitle(updatedNote.title || t('note_details_title'));
+  const handleNoteChange = useCallback(
+    async (changedStoryId: string, changedNoteId: string) => {
+      if (changedNoteId === noteId) {
+        if (noteServiceRef.current) {
+          const updatedNote = await noteServiceRef.current.getById(noteId);
+          if (!updatedNote || updatedNote.isDeleted) {
+            navigation.goBack();
+          } else {
+            setNote(updatedNote);
+            setHeaderTitle(updatedNote.title || t('note_details_title'));
+          }
         }
+        fetchNoteRelations(); // Refetch relations if the note itself changed
       }
-      fetchNoteRelations(); // Refetch relations if the note itself changed
-    }
-  }, [noteId, navigation, setNote, setHeaderTitle, t, fetchNoteRelations]);
+    },
+    [noteId, navigation, setNote, setHeaderTitle, t, fetchNoteRelations],
+  );
 
-  const handleNoteRelationChange = useCallback((changedStoryId: string, changedRelationId: string) => {
-    // This event is emitted when any note_relation changes. We need to check if it affects *this* note.
-    // However, for simplicity and ensuring data consistency, we'll refetch all relations for this note.
-    // A more optimized approach would involve parsing changedRelationId if it contains noteId.
-    fetchNoteRelations();
-  }, [fetchNoteRelations]);
+  const handleNoteRelationChange = useCallback(
+    (changedStoryId: string, changedRelationId: string) => {
+      // This event is emitted when any note_relation changes. We need to check if it affects *this* note.
+      // However, for simplicity and ensuring data consistency, we'll refetch all relations for this note.
+      // A more optimized approach would involve parsing changedRelationId if it contains noteId.
+      fetchNoteRelations();
+    },
+    [fetchNoteRelations],
+  );
 
-  const handleTagRelationChange = useCallback((changedStoryId: string, changedEntityId: string) => {
-    if (changedEntityId === noteId) {
-      fetchTagsForNote();
-    }
-  }, [noteId, fetchTagsForNote]);
+  const handleTagRelationChange = useCallback(
+    (changedStoryId: string, changedEntityId: string) => {
+      if (changedEntityId === noteId) {
+        fetchTagsForNote();
+      }
+    },
+    [noteId, fetchTagsForNote],
+  );
 
   useEffect(() => {
-    if (noteServiceRef.current && selectedStory?.id) { // Ensure selectedStory.id is available
+    if (noteServiceRef.current && selectedStory?.id) {
+      // Ensure selectedStory.id is available
       fetchNote();
       fetchNoteRelations(); // Fetch relations when the screen loads
 
@@ -244,7 +275,15 @@ const NoteDetailScreen = () => {
         entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
       };
     }
-  }, [noteId, fetchNote, handleNoteChange, handleTagRelationChange, selectedStory?.id, fetchNoteRelations, handleNoteRelationChange]); // Add selectedStory?.id and fetchNoteRelations to dependencies
+  }, [
+    noteId,
+    fetchNote,
+    handleNoteChange,
+    handleTagRelationChange,
+    selectedStory?.id,
+    fetchNoteRelations,
+    handleNoteRelationChange,
+  ]); // Add selectedStory?.id and fetchNoteRelations to dependencies
 
   useEffect(() => {
     if (note) {
@@ -253,17 +292,18 @@ const NoteDetailScreen = () => {
     }
   }, [note, fetchTagsForNote, processNoteRelations]);
 
-
-  const renderHeaderRight = useCallback(() => (
-    canEdit ? (
-      <TouchableOpacity
-        onPress={() => navigation.navigate('NoteForm', { noteId: noteId })}
-        style={{ marginRight: 15 }}
-      >
-        <Ionicons name="pencil-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    ) : null
-  ), [navigation, noteId, colors.text, canEdit]);
+  const renderHeaderRight = useCallback(
+    () =>
+      canEdit ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('NoteForm', { noteId: noteId })}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="pencil-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ) : null,
+    [navigation, noteId, colors.text, canEdit],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -272,7 +312,7 @@ const NoteDetailScreen = () => {
         headerRight: renderHeaderRight,
       });
       setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight])
+    }, [navigation, headerTitle, renderHeaderRight]),
   );
 
   if (loading) {
@@ -284,11 +324,16 @@ const NoteDetailScreen = () => {
   }
 
   if (!note) {
-    return <ScreenError padded message={t('note_data_missing')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError padded message={t('note_data_missing')} onGoBack={() => navigation.goBack()} />
+    );
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    >
       <TagChipList tags={noteTags} />
 
       <CommentableDetailField
@@ -299,7 +344,12 @@ const NoteDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'body' }, { ...input, contentSnapshot: note.body || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'body' },
+            { ...input, contentSnapshot: note.body || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
@@ -314,7 +364,12 @@ const NoteDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: note.extraNotes || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'extraNotes' },
+            { ...input, contentSnapshot: note.extraNotes || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
@@ -333,7 +388,11 @@ const NoteDetailScreen = () => {
         groupedEntities={groupedEntities}
       />
 
-      <EntityMetadata version={note.version} createdAt={note.createdAt} updatedAt={note.updatedAt} />
+      <EntityMetadata
+        version={note.version}
+        createdAt={note.createdAt}
+        updatedAt={note.updatedAt}
+      />
       <FavoritedByList storyId={note.storyId} entityId={noteId} entityType="Note" />
 
       <View style={styles.buttonContainer}>

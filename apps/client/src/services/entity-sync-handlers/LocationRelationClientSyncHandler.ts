@@ -1,4 +1,9 @@
-import { CreateStoryUpdate, DeleteStoryUpdate, LocationRelation, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  LocationRelation,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
 import { AppDrizzleClient, LocationRelationSelect } from '../../db';
 import * as schema from '../../db/schema';
@@ -11,7 +16,7 @@ const getExistingConnection = async (
   storyId: string,
   locationAId: string,
   locationBId: string,
-  excludeRelationId?: string
+  excludeRelationId?: string,
 ): Promise<LocationRelationSelect | undefined> => {
   const candidate = await db.query.locationRelations.findFirst({
     where: and(
@@ -19,9 +24,15 @@ const getExistingConnection = async (
       eq(schema.locationRelations.relationType, 'connected_to'),
       eq(schema.locationRelations.isDeleted, false),
       or(
-        and(eq(schema.locationRelations.locationAId, locationAId), eq(schema.locationRelations.locationBId, locationBId)),
-        and(eq(schema.locationRelations.locationAId, locationBId), eq(schema.locationRelations.locationBId, locationAId))
-      )
+        and(
+          eq(schema.locationRelations.locationAId, locationAId),
+          eq(schema.locationRelations.locationBId, locationBId),
+        ),
+        and(
+          eq(schema.locationRelations.locationAId, locationBId),
+          eq(schema.locationRelations.locationBId, locationAId),
+        ),
+      ),
     ),
   });
   if (candidate && candidate.id !== excludeRelationId) {
@@ -35,14 +46,14 @@ const getExistingParentEdge = async (
   db: AppDrizzleClient,
   storyId: string,
   childId: string,
-  excludeRelationId?: string
+  excludeRelationId?: string,
 ): Promise<LocationRelationSelect | undefined> => {
   const candidate = await db.query.locationRelations.findFirst({
     where: and(
       eq(schema.locationRelations.storyId, storyId),
       eq(schema.locationRelations.locationBId, childId),
       eq(schema.locationRelations.relationType, 'contains'),
-      eq(schema.locationRelations.isDeleted, false)
+      eq(schema.locationRelations.isDeleted, false),
     ),
   });
   if (candidate && candidate.id !== excludeRelationId) {
@@ -69,17 +80,32 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
   /** Resolve conflito de duplicidade (par 'connected_to' ou pai único 'contains'): quem tem o
    *  `updatedAt` mais novo vence, o outro é soft-deletado. Retorna `true` se a operação
    *  recebida deve ser descartada (perdeu para uma linha local mais nova). */
-  private async resolveDuplicate(existing: LocationRelationSelect, incomingUpdatedAt: Date): Promise<boolean> {
+  private async resolveDuplicate(
+    existing: LocationRelationSelect,
+    incomingUpdatedAt: Date,
+  ): Promise<boolean> {
     if (incomingUpdatedAt > existing.updatedAt) {
-      await this.db.update(schema.locationRelations)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: existing.version + 1 })
+      await this.db
+        .update(schema.locationRelations)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: existing.version + 1,
+        })
         .where(eq(schema.locationRelations.id, existing.id));
       return false;
     }
     return true;
   }
 
-  private async findConflict(storyId: string, relationType: string, locationAId: string, locationBId: string, excludeRelationId?: string): Promise<LocationRelationSelect | undefined> {
+  private async findConflict(
+    storyId: string,
+    relationType: string,
+    locationAId: string,
+    locationBId: string,
+    excludeRelationId?: string,
+  ): Promise<LocationRelationSelect | undefined> {
     if (relationType === 'contains') {
       return getExistingParentEdge(this.db, storyId, locationBId, excludeRelationId);
     }
@@ -96,12 +122,21 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
 
     const relationData = update.data as LocationRelation;
 
-    const conflict = await this.findConflict(storyId, relationData.relationType, relationData.locationAId, relationData.locationBId);
+    const conflict = await this.findConflict(
+      storyId,
+      relationData.relationType,
+      relationData.locationAId,
+      relationData.locationBId,
+    );
     if (conflict) {
-      const incomingUpdatedAt = relationData.updatedAt ? new Date(relationData.updatedAt) : new Date();
+      const incomingUpdatedAt = relationData.updatedAt
+        ? new Date(relationData.updatedAt)
+        : new Date();
       const shouldDiscard = await this.resolveDuplicate(conflict, incomingUpdatedAt);
       if (shouldDiscard) {
-        console.log(`Sync conflict (create): Existing LocationRelation ${conflict.id} wins over incoming ${update.id}. Discarding.`);
+        console.log(
+          `Sync conflict (create): Existing LocationRelation ${conflict.id} wins over incoming ${update.id}. Discarding.`,
+        );
         return;
       }
     }
@@ -139,17 +174,26 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     const effectiveLocationAId = changes.locationAId || localRelation.locationAId;
     const effectiveLocationBId = changes.locationBId || localRelation.locationBId;
 
-    const conflict = await this.findConflict(storyId, effectiveRelationType, effectiveLocationAId, effectiveLocationBId, update.id);
+    const conflict = await this.findConflict(
+      storyId,
+      effectiveRelationType,
+      effectiveLocationAId,
+      effectiveLocationBId,
+      update.id,
+    );
     if (conflict) {
       const incomingUpdatedAt = changes.updatedAt ? new Date(changes.updatedAt) : new Date();
       const shouldDiscard = await this.resolveDuplicate(conflict, incomingUpdatedAt);
       if (shouldDiscard) {
-        console.warn(`Sync conflict (update): Existing LocationRelation ${conflict.id} wins over incoming ${update.id}. Discarding.`);
+        console.warn(
+          `Sync conflict (update): Existing LocationRelation ${conflict.id} wins over incoming ${update.id}. Discarding.`,
+        );
         return;
       }
     }
 
-    await this.db.update(schema.locationRelations)
+    await this.db
+      .update(schema.locationRelations)
       .set({
         ...changes,
         storyId,
@@ -169,7 +213,8 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
       return;
     }
 
-    await this.db.update(schema.locationRelations)
+    await this.db
+      .update(schema.locationRelations)
       .set({
         storyId,
         isDeleted: true,

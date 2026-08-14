@@ -16,7 +16,12 @@ import '../setup';
  * setup roda fora do contexto dos testes e uma conexão deixada aberta aqui seguraria o
  * processo do Vitest no ar.
  */
-const MIGRATIONS_FOLDER = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'drizzle');
+const MIGRATIONS_FOLDER = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  'drizzle',
+);
 
 export default async function setup(): Promise<void> {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });

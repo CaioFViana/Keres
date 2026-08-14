@@ -14,13 +14,17 @@ describe('GET /kerescheck', () => {
   it('returns a controlled response before accessing the database for protected routes', async () => {
     const app = await createApp();
 
-    const response = await app.handle(new Request('http://localhost/stories/', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'Unauthenticated story', type: 'linear' }),
-    }));
+    const response = await app.handle(
+      new Request('http://localhost/stories/', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: 'Unauthenticated story', type: 'linear' }),
+      }),
+    );
 
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ message: 'Unauthorized: User not authenticated.' });
+    await expect(response.json()).resolves.toEqual({
+      message: 'Unauthorized: User not authenticated.',
+    });
   });
 });

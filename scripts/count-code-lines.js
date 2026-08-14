@@ -10,7 +10,16 @@ const applications = [
 
 // Diretórios de dependências, saída de build, metadados ou código gerado.
 const ignoredDirectories = new Set([
-  '.git', '.expo', '.turbo', 'build', 'coverage', 'dist', 'drizzle', 'generated', 'node_modules', 'out',
+  '.git',
+  '.expo',
+  '.turbo',
+  'build',
+  'coverage',
+  'dist',
+  'drizzle',
+  'generated',
+  'node_modules',
+  'out',
 ]);
 const codeExtensions = new Set(['.ts', '.tsx', '.js', '.jsx']);
 
@@ -69,7 +78,8 @@ function countApplication(rootPath) {
   const visit = (directory, isTestDirectory = false) => {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       if (entry.isDirectory()) {
-        if (!ignoredDirectories.has(entry.name)) visit(path.join(directory, entry.name), isTestDirectory || entry.name === 'test');
+        if (!ignoredDirectories.has(entry.name))
+          visit(path.join(directory, entry.name), isTestDirectory || entry.name === 'test');
         continue;
       }
       if (!entry.isFile() || !codeExtensions.has(path.extname(entry.name))) continue;
@@ -83,16 +93,27 @@ function countApplication(rootPath) {
   return { code, tests };
 }
 
-const applicationsResults = applications.map(([name, relativePath]) => ({ name, ...countApplication(path.join(__dirname, '..', relativePath)) }));
+const applicationsResults = applications.map(([name, relativePath]) => ({
+  name,
+  ...countApplication(path.join(__dirname, '..', relativePath)),
+}));
 const results = applicationsResults.map(({ name, code }) => ({ name, ...code }));
-const tests = applicationsResults.reduce((sum, result) => ({
-  files: sum.files + result.tests.files,
-  lines: sum.lines + result.tests.lines,
-}), { files: 0, lines: 0 });
-const total = [...results, tests].reduce((sum, result) => ({ files: sum.files + result.files, lines: sum.lines + result.lines }), { files: 0, lines: 0 });
+const tests = applicationsResults.reduce(
+  (sum, result) => ({
+    files: sum.files + result.tests.files,
+    lines: sum.lines + result.tests.lines,
+  }),
+  { files: 0, lines: 0 },
+);
+const total = [...results, tests].reduce(
+  (sum, result) => ({ files: sum.files + result.files, lines: sum.lines + result.lines }),
+  { files: 0, lines: 0 },
+);
 
-console.table([...results, { name: 'Testes', ...tests }, { name: 'Total', ...total }].map(result => ({
-  Aplicação: result.name,
-  Arquivos: result.files,
-  'Linhas de código': result.lines,
-})));
+console.table(
+  [...results, { name: 'Testes', ...tests }, { name: 'Total', ...total }].map((result) => ({
+    Aplicação: result.name,
+    Arquivos: result.files,
+    'Linhas de código': result.lines,
+  })),
+);

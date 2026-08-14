@@ -20,16 +20,21 @@ export class FriendshipService {
    * that payload and its local user/avatar cache immediately.
    */
   async notifyProfileChanged(userId: string): Promise<void> {
-    const related = await db.select({
-      senderId: friendships.senderId,
-      receiverId: friendships.receiverId,
-    }).from(friendships).where(and(
-      or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)),
-      ne(friendships.status, FriendStatus.BLACKLISTED),
-    ));
-    const affectedUserIds = related.map((friendship) => (
-      friendship.senderId === userId ? friendship.receiverId : friendship.senderId
-    ));
+    const related = await db
+      .select({
+        senderId: friendships.senderId,
+        receiverId: friendships.receiverId,
+      })
+      .from(friendships)
+      .where(
+        and(
+          or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)),
+          ne(friendships.status, FriendStatus.BLACKLISTED),
+        ),
+      );
+    const affectedUserIds = related.map((friendship) =>
+      friendship.senderId === userId ? friendship.receiverId : friendship.senderId,
+    );
     this.notifyChanged(userId, ...affectedUserIds);
   }
   private async checkUserExistence(userId: string): Promise<void> {
@@ -40,7 +45,6 @@ export class FriendshipService {
       throw new AppError(404, `User with ID ${userId} not found.`);
     }
   }
-
 
   async sendFriendRequest(senderId: string, receiverId: string): Promise<Friendship> {
     if (senderId === receiverId) {
@@ -55,11 +59,14 @@ export class FriendshipService {
       where: and(
         eq(friendships.senderId, senderId),
         eq(friendships.receiverId, receiverId),
-        eq(friendships.status, FriendStatus.PENDING)
+        eq(friendships.status, FriendStatus.PENDING),
       ),
     });
     if (existingDirectPending) {
-      throw new AppError(409, 'Friend request already pending from you to you. Please approve the pending request.');
+      throw new AppError(
+        409,
+        'Friend request already pending from you to you. Please approve the pending request.',
+      );
     }
 
     // Check for an existing reverse pending request (receiver -> sender)
@@ -67,7 +74,7 @@ export class FriendshipService {
       where: and(
         eq(friendships.senderId, receiverId),
         eq(friendships.receiverId, senderId),
-        eq(friendships.status, FriendStatus.PENDING)
+        eq(friendships.status, FriendStatus.PENDING),
       ),
     });
     if (existingReversePending) {
@@ -78,7 +85,7 @@ export class FriendshipService {
     const existingEstablishedFriendship = await db.query.friendships.findFirst({
       where: or(
         and(eq(friendships.senderId, senderId), eq(friendships.receiverId, receiverId)),
-        and(eq(friendships.senderId, receiverId), eq(friendships.receiverId, senderId))
+        and(eq(friendships.senderId, receiverId), eq(friendships.receiverId, senderId)),
       ),
     });
 
@@ -86,7 +93,10 @@ export class FriendshipService {
       if (existingEstablishedFriendship.status === FriendStatus.FRIEND) {
         throw new AppError(409, 'Already friends.');
       } else if (existingEstablishedFriendship.status === FriendStatus.BLACKLISTED) {
-        throw new AppError(403, 'A blacklisted relationship exists between these users, cannot send request.');
+        throw new AppError(
+          403,
+          'A blacklisted relationship exists between these users, cannot send request.',
+        );
       }
       // If it's another status (e.g., PENDING, but not covered by above checks, though it should be)
       throw new AppError(409, 'An existing friendship relationship is preventing this request.');
@@ -102,20 +112,20 @@ export class FriendshipService {
     };
 
     const newFriendship = await db.insert(friendships).values(newFriendshipData).returning();
-    
+
     this.notifyChanged(senderId, receiverId);
     return newFriendship[0];
   }
   async acceptFriendRequest(userId: string, targetUserId: string): Promise<Friendship> {
-    await this.checkUserExistence(userId);       // userId is the one trying to accept
-    await this.checkUserExistence(targetUserId);  // targetUserId is the one who sent the request
+    await this.checkUserExistence(userId); // userId is the one trying to accept
+    await this.checkUserExistence(targetUserId); // targetUserId is the one who sent the request
 
     // Find the pending friendship where userId is the receiver and targetUserId is the sender
     const existingFriendship = await db.query.friendships.findFirst({
       where: and(
         eq(friendships.senderId, targetUserId), // targetUserId must be the sender
-        eq(friendships.receiverId, userId),     // userId must be the receiver
-        eq(friendships.status, FriendStatus.PENDING)
+        eq(friendships.receiverId, userId), // userId must be the receiver
+        eq(friendships.status, FriendStatus.PENDING),
       ),
     });
 
@@ -132,26 +142,26 @@ export class FriendshipService {
       throw new AppError(403, 'Unauthorized: The target user is not the sender of this request.');
     }
 
-
-    const updatedFriendship = await db.update(friendships)
+    const updatedFriendship = await db
+      .update(friendships)
       .set({ status: FriendStatus.FRIEND, updatedAt: new Date() })
       .where(eq(friendships.id, existingFriendship.id))
       .returning();
-    
+
     this.notifyChanged(userId, targetUserId);
     return updatedFriendship[0];
   }
 
   async declineFriendRequest(userId: string, targetUserId: string): Promise<void> {
-    await this.checkUserExistence(userId);       // userId is the one trying to decline
-    await this.checkUserExistence(targetUserId);  // targetUserId is the one who sent the request
+    await this.checkUserExistence(userId); // userId is the one trying to decline
+    await this.checkUserExistence(targetUserId); // targetUserId is the one who sent the request
 
     // Find the pending friendship where userId is the receiver and targetUserId is the sender
     const existingFriendship = await db.query.friendships.findFirst({
       where: and(
         eq(friendships.senderId, targetUserId), // targetUserId must be the sender
-        eq(friendships.receiverId, userId),     // userId must be the receiver
-        eq(friendships.status, FriendStatus.PENDING)
+        eq(friendships.receiverId, userId), // userId must be the receiver
+        eq(friendships.status, FriendStatus.PENDING),
       ),
     });
 
@@ -171,7 +181,10 @@ export class FriendshipService {
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
 
     // After declining a friend request, delete any associated story permissions
-    await storyPermissionService.deletePermissionsBetweenUsers(existingFriendship.senderId, existingFriendship.receiverId);
+    await storyPermissionService.deletePermissionsBetweenUsers(
+      existingFriendship.senderId,
+      existingFriendship.receiverId,
+    );
     this.notifyChanged(userId, targetUserId);
   }
 
@@ -184,9 +197,9 @@ export class FriendshipService {
       where: and(
         or(
           and(eq(friendships.senderId, userId), eq(friendships.receiverId, targetUserId)),
-          and(eq(friendships.senderId, targetUserId), eq(friendships.receiverId, userId))
+          and(eq(friendships.senderId, targetUserId), eq(friendships.receiverId, userId)),
         ),
-        eq(friendships.status, FriendStatus.FRIEND)
+        eq(friendships.status, FriendStatus.FRIEND),
       ),
     });
 
@@ -197,7 +210,10 @@ export class FriendshipService {
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
 
     // After unfriending, delete any associated story permissions
-    await storyPermissionService.deletePermissionsBetweenUsers(existingFriendship.senderId, existingFriendship.receiverId);
+    await storyPermissionService.deletePermissionsBetweenUsers(
+      existingFriendship.senderId,
+      existingFriendship.receiverId,
+    );
     this.notifyChanged(userId, targetUserId);
   }
 
@@ -212,7 +228,7 @@ export class FriendshipService {
     let existingFriendship = await db.query.friendships.findFirst({
       where: or(
         and(eq(friendships.senderId, blisterId), eq(friendships.receiverId, blacklistedUserId)),
-        and(eq(friendships.senderId, blacklistedUserId), eq(friendships.receiverId, blisterId))
+        and(eq(friendships.senderId, blacklistedUserId), eq(friendships.receiverId, blisterId)),
       ),
     });
 
@@ -224,14 +240,18 @@ export class FriendshipService {
       const originalStatus = existingFriendship.status;
 
       // Update existing friendship to blacklisted
-      const updatedFriendship = await db.update(friendships)
+      const updatedFriendship = await db
+        .update(friendships)
         .set({ status: FriendStatus.BLACKLISTED, blockedById: blisterId, updatedAt: new Date() })
         .where(eq(friendships.id, existingFriendship.id))
         .returning();
 
       // If the status changed from FRIEND to BLACKLISTED, delete associated story permissions
       if (originalStatus === FriendStatus.FRIEND) {
-        await storyPermissionService.deletePermissionsBetweenUsers(existingFriendship.senderId, existingFriendship.receiverId);
+        await storyPermissionService.deletePermissionsBetweenUsers(
+          existingFriendship.senderId,
+          existingFriendship.receiverId,
+        );
       }
       this.notifyChanged(blisterId, blacklistedUserId);
       return updatedFriendship[0];
@@ -263,10 +283,16 @@ export class FriendshipService {
     const existingFriendship = await db.query.friendships.findFirst({
       where: and(
         or(
-          and(eq(friendships.senderId, unblisterId), eq(friendships.receiverId, unblacklistedUserId)),
-          and(eq(friendships.senderId, unblacklistedUserId), eq(friendships.receiverId, unblisterId))
+          and(
+            eq(friendships.senderId, unblisterId),
+            eq(friendships.receiverId, unblacklistedUserId),
+          ),
+          and(
+            eq(friendships.senderId, unblacklistedUserId),
+            eq(friendships.receiverId, unblisterId),
+          ),
         ),
-        eq(friendships.status, FriendStatus.BLACKLISTED)
+        eq(friendships.status, FriendStatus.BLACKLISTED),
       ),
     });
 
@@ -295,7 +321,7 @@ export class FriendshipService {
       where: and(
         eq(friendships.senderId, senderId),
         eq(friendships.receiverId, targetUserId),
-        eq(friendships.status, FriendStatus.PENDING)
+        eq(friendships.status, FriendStatus.PENDING),
       ),
     });
 
@@ -306,7 +332,6 @@ export class FriendshipService {
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
     this.notifyChanged(senderId, targetUserId);
   }
-
 
   async getFriendships(userId: string): Promise<EnrichedFriendship[]> {
     await this.checkUserExistence(userId);
@@ -337,14 +362,16 @@ export class FriendshipService {
         `.as('otherUserId'),
       })
       .from(friendships)
-      .leftJoin(friendUserAlias, or(
-        and(eq(friendships.senderId, userId), eq(friendships.receiverId, friendUserAlias.id)),
-        and(eq(friendships.receiverId, userId), eq(friendships.senderId, friendUserAlias.id))
-      ))
+      .leftJoin(
+        friendUserAlias,
+        or(
+          and(eq(friendships.senderId, userId), eq(friendships.receiverId, friendUserAlias.id)),
+          and(eq(friendships.receiverId, userId), eq(friendships.senderId, friendUserAlias.id)),
+        ),
+      )
       .where(or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)));
 
-
-    const enrichedFriendships: EnrichedFriendship[] = friendshipsData.map(f => {
+    const enrichedFriendships: EnrichedFriendship[] = friendshipsData.map((f) => {
       return {
         id: f.id,
         senderId: f.senderId,

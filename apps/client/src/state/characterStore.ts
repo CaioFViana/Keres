@@ -1,7 +1,15 @@
-import { CharacterService, CharacterWithTags, createCharacterService } from '../services/storymanagement/CharacterService';
+import {
+  CharacterService,
+  CharacterWithTags,
+  createCharacterService,
+} from '../services/storymanagement/CharacterService';
 import { createEntityStore } from './createEntityStore';
 
-export const useCharacterStore = createEntityStore<'characters', CharacterWithTags, CharacterService>({
+export const useCharacterStore = createEntityStore<
+  'characters',
+  CharacterWithTags,
+  CharacterService
+>({
   collectionKey: 'characters',
   favoriteEntityType: 'Character',
   createService: createCharacterService,

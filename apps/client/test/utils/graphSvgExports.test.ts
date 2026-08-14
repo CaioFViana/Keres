@@ -1,5 +1,8 @@
 import { buildLocationGraphLayout } from '../../src/utils/locationGraphLayout';
-import { renderLocationGraphMapSvg, type LocationGraphSvgOptions } from '../../src/utils/locationGraphSvg';
+import {
+  renderLocationGraphMapSvg,
+  type LocationGraphSvgOptions,
+} from '../../src/utils/locationGraphSvg';
 import { buildStoryGraphLayout } from '../../src/utils/storyGraphLayout';
 import { renderStoryMapSvg, type StoryMapSvgOptions } from '../../src/utils/storyGraphSvg';
 
@@ -24,7 +27,9 @@ const storyOptions = (overrides: Partial<StoryMapSvgOptions> = {}): StoryMapSvgO
   ...overrides,
 });
 
-const locationOptions = (overrides: Partial<LocationGraphSvgOptions> = {}): LocationGraphSvgOptions => ({
+const locationOptions = (
+  overrides: Partial<LocationGraphSvgOptions> = {},
+): LocationGraphSvgOptions => ({
   title: 'A Queda',
   subtitle: '3 locais',
   labels: { isolated: 'Sem relações', contains: 'Contém', connectedTo: 'Conectado a' },
@@ -32,7 +37,13 @@ const locationOptions = (overrides: Partial<LocationGraphSvgOptions> = {}): Loca
   ...overrides,
 });
 
-const scene = (id: string, name: string, chapterId = 'c1', index = 0, extra: Record<string, unknown> = {}) => ({
+const scene = (
+  id: string,
+  name: string,
+  chapterId = 'c1',
+  index = 0,
+  extra: Record<string, unknown> = {},
+) => ({
   id,
   name,
   chapterId,
@@ -50,7 +61,9 @@ const storyLayout = (names: string[] = ['Abertura', 'Encontro']) => {
     nextSceneId: target.id,
     text: 'seguir',
   }));
-  return buildStoryGraphLayout(scenes as never, choices, [{ id: 'c1', name: 'Capítulo 1', index: 1 }]);
+  return buildStoryGraphLayout(scenes as never, choices, [
+    { id: 'c1', name: 'Capítulo 1', index: 1 },
+  ]);
 };
 
 const locationLayout = () =>
@@ -78,10 +91,15 @@ const RENDERERS = [
   {
     name: 'location map',
     render: () => renderLocationGraphMapSvg(locationLayout(), locationOptions()),
-    renderWith: (title: string) => renderLocationGraphMapSvg(locationLayout(), locationOptions({ title })),
+    renderWith: (title: string) =>
+      renderLocationGraphMapSvg(locationLayout(), locationOptions({ title })),
     renderNamed: (locationName: string) =>
-      renderLocationGraphMapSvg(buildLocationGraphLayout([{ id: 'a', name: locationName }], []), locationOptions()),
-    renderEmpty: () => renderLocationGraphMapSvg(buildLocationGraphLayout([], []), locationOptions()),
+      renderLocationGraphMapSvg(
+        buildLocationGraphLayout([{ id: 'a', name: locationName }], []),
+        locationOptions(),
+      ),
+    renderEmpty: () =>
+      renderLocationGraphMapSvg(buildLocationGraphLayout([], []), locationOptions()),
   },
 ];
 
@@ -164,7 +182,9 @@ describe('story map specifics', () => {
     const layout = storyLayout();
 
     expect(renderStoryMapSvg(layout, storyOptions({ showEdgeLabels: true }))).toContain('seguir');
-    expect(renderStoryMapSvg(layout, storyOptions({ showEdgeLabels: false }))).not.toContain('seguir');
+    expect(renderStoryMapSvg(layout, storyOptions({ showEdgeLabels: false }))).not.toContain(
+      'seguir',
+    );
   });
 
   it('shows the legend labels the caller passed', () => {
@@ -185,7 +205,9 @@ describe('location map specifics', () => {
     const isolated = buildLocationGraphLayout([{ id: 'a', name: 'Ávalon' }], []);
 
     expect(renderLocationGraphMapSvg(isolated, locationOptions())).toContain('Sem relações');
-    expect(renderLocationGraphMapSvg(locationLayout(), locationOptions())).not.toContain('Sem relações');
+    expect(renderLocationGraphMapSvg(locationLayout(), locationOptions())).not.toContain(
+      'Sem relações',
+    );
   });
 
   it('draws a path for every relation', () => {

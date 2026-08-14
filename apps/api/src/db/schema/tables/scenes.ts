@@ -9,9 +9,15 @@ import { itemJourneys } from './itemJourneys'; // Will be created later
 
 export const scenes = pgTable('scenes', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  chapterId: text('chapter_id').notNull().references(() => chapters.id),
-  locationId: text('location_id').notNull().references(() => locations.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  chapterId: text('chapter_id')
+    .notNull()
+    .references(() => chapters.id),
+  locationId: text('location_id')
+    .notNull()
+    .references(() => locations.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),

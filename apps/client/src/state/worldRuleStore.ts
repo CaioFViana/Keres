@@ -1,5 +1,8 @@
 import { WorldRuleWithTags } from '../db/schemas/worldRules';
-import { createWorldRuleService, WorldRuleService } from '../services/storymanagement/WorldRuleService';
+import {
+  createWorldRuleService,
+  WorldRuleService,
+} from '../services/storymanagement/WorldRuleService';
 import { createEntityStore } from './createEntityStore';
 
 export const worldRuleStore = createEntityStore<'worldRules', WorldRuleWithTags, WorldRuleService>({

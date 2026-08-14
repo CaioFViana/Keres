@@ -108,219 +108,272 @@ import worldRules_pt from '../content/world-rules/pt';
 import yourProfile_en from '../content/your-profile/en';
 import yourProfile_pt from '../content/your-profile/pt';
 
-export type GeneratedHelpPageId = "account-limits" | "activity-log" | "add-server" | "app-settings" | "branching-basics" | "change-password" | "chapters" | "character-relationships" | "characters" | "choice-conditions" | "choices" | "collaborators" | "comments" | "create-story" | "custom-attributes" | "data-and-backup" | "effects" | "example-stories" | "faq" | "favorites" | "first-story" | "friends" | "gallery" | "getting-around" | "glossary" | "how-keres-organizes" | "import-export" | "item-journeys" | "items" | "lists-and-search" | "location-map" | "locations" | "notes" | "scene-timing" | "scenes" | "see-also" | "story-analysis" | "story-dashboard" | "story-list" | "story-map" | "story-settings" | "story-state" | "story-type" | "suggestions" | "sync-basics" | "sync-conflicts" | "tags" | "troubleshooting" | "using-this-help" | "what-is-a-server" | "what-is-keres" | "world-rules" | "your-profile";
+export type GeneratedHelpPageId =
+  | 'account-limits'
+  | 'activity-log'
+  | 'add-server'
+  | 'app-settings'
+  | 'branching-basics'
+  | 'change-password'
+  | 'chapters'
+  | 'character-relationships'
+  | 'characters'
+  | 'choice-conditions'
+  | 'choices'
+  | 'collaborators'
+  | 'comments'
+  | 'create-story'
+  | 'custom-attributes'
+  | 'data-and-backup'
+  | 'effects'
+  | 'example-stories'
+  | 'faq'
+  | 'favorites'
+  | 'first-story'
+  | 'friends'
+  | 'gallery'
+  | 'getting-around'
+  | 'glossary'
+  | 'how-keres-organizes'
+  | 'import-export'
+  | 'item-journeys'
+  | 'items'
+  | 'lists-and-search'
+  | 'location-map'
+  | 'locations'
+  | 'notes'
+  | 'scene-timing'
+  | 'scenes'
+  | 'see-also'
+  | 'story-analysis'
+  | 'story-dashboard'
+  | 'story-list'
+  | 'story-map'
+  | 'story-settings'
+  | 'story-state'
+  | 'story-type'
+  | 'suggestions'
+  | 'sync-basics'
+  | 'sync-conflicts'
+  | 'tags'
+  | 'troubleshooting'
+  | 'using-this-help'
+  | 'what-is-a-server'
+  | 'what-is-keres'
+  | 'world-rules'
+  | 'your-profile';
 
 export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>> = {
-  "account-limits": {
-    "en": accountLimits_en,
-    "pt": accountLimits_pt,
+  'account-limits': {
+    en: accountLimits_en,
+    pt: accountLimits_pt,
   },
-  "activity-log": {
-    "en": activityLog_en,
-    "pt": activityLog_pt,
+  'activity-log': {
+    en: activityLog_en,
+    pt: activityLog_pt,
   },
-  "add-server": {
-    "en": addServer_en,
-    "pt": addServer_pt,
+  'add-server': {
+    en: addServer_en,
+    pt: addServer_pt,
   },
-  "app-settings": {
-    "en": appSettings_en,
-    "pt": appSettings_pt,
+  'app-settings': {
+    en: appSettings_en,
+    pt: appSettings_pt,
   },
-  "branching-basics": {
-    "en": branchingBasics_en,
-    "pt": branchingBasics_pt,
+  'branching-basics': {
+    en: branchingBasics_en,
+    pt: branchingBasics_pt,
   },
-  "change-password": {
-    "en": changePassword_en,
-    "pt": changePassword_pt,
+  'change-password': {
+    en: changePassword_en,
+    pt: changePassword_pt,
   },
-  "chapters": {
-    "en": chapters_en,
-    "pt": chapters_pt,
+  chapters: {
+    en: chapters_en,
+    pt: chapters_pt,
   },
-  "character-relationships": {
-    "en": characterRelationships_en,
-    "pt": characterRelationships_pt,
+  'character-relationships': {
+    en: characterRelationships_en,
+    pt: characterRelationships_pt,
   },
-  "characters": {
-    "en": characters_en,
-    "pt": characters_pt,
+  characters: {
+    en: characters_en,
+    pt: characters_pt,
   },
-  "choice-conditions": {
-    "en": choiceConditions_en,
-    "pt": choiceConditions_pt,
+  'choice-conditions': {
+    en: choiceConditions_en,
+    pt: choiceConditions_pt,
   },
-  "choices": {
-    "en": choices_en,
-    "pt": choices_pt,
+  choices: {
+    en: choices_en,
+    pt: choices_pt,
   },
-  "collaborators": {
-    "en": collaborators_en,
-    "pt": collaborators_pt,
+  collaborators: {
+    en: collaborators_en,
+    pt: collaborators_pt,
   },
-  "comments": {
-    "en": comments_en,
-    "pt": comments_pt,
+  comments: {
+    en: comments_en,
+    pt: comments_pt,
   },
-  "create-story": {
-    "en": createStory_en,
-    "pt": createStory_pt,
+  'create-story': {
+    en: createStory_en,
+    pt: createStory_pt,
   },
-  "custom-attributes": {
-    "en": customAttributes_en,
-    "pt": customAttributes_pt,
+  'custom-attributes': {
+    en: customAttributes_en,
+    pt: customAttributes_pt,
   },
-  "data-and-backup": {
-    "en": dataAndBackup_en,
-    "pt": dataAndBackup_pt,
+  'data-and-backup': {
+    en: dataAndBackup_en,
+    pt: dataAndBackup_pt,
   },
-  "effects": {
-    "en": effects_en,
-    "pt": effects_pt,
+  effects: {
+    en: effects_en,
+    pt: effects_pt,
   },
-  "example-stories": {
-    "en": exampleStories_en,
-    "pt": exampleStories_pt,
+  'example-stories': {
+    en: exampleStories_en,
+    pt: exampleStories_pt,
   },
-  "faq": {
-    "en": faq_en,
-    "pt": faq_pt,
+  faq: {
+    en: faq_en,
+    pt: faq_pt,
   },
-  "favorites": {
-    "en": favorites_en,
-    "pt": favorites_pt,
+  favorites: {
+    en: favorites_en,
+    pt: favorites_pt,
   },
-  "first-story": {
-    "en": firstStory_en,
-    "pt": firstStory_pt,
+  'first-story': {
+    en: firstStory_en,
+    pt: firstStory_pt,
   },
-  "friends": {
-    "en": friends_en,
-    "pt": friends_pt,
+  friends: {
+    en: friends_en,
+    pt: friends_pt,
   },
-  "gallery": {
-    "en": gallery_en,
-    "pt": gallery_pt,
+  gallery: {
+    en: gallery_en,
+    pt: gallery_pt,
   },
-  "getting-around": {
-    "en": gettingAround_en,
-    "pt": gettingAround_pt,
+  'getting-around': {
+    en: gettingAround_en,
+    pt: gettingAround_pt,
   },
-  "glossary": {
-    "en": glossary_en,
-    "pt": glossary_pt,
+  glossary: {
+    en: glossary_en,
+    pt: glossary_pt,
   },
-  "how-keres-organizes": {
-    "en": howKeresOrganizes_en,
-    "pt": howKeresOrganizes_pt,
+  'how-keres-organizes': {
+    en: howKeresOrganizes_en,
+    pt: howKeresOrganizes_pt,
   },
-  "import-export": {
-    "en": importExport_en,
-    "pt": importExport_pt,
+  'import-export': {
+    en: importExport_en,
+    pt: importExport_pt,
   },
-  "item-journeys": {
-    "en": itemJourneys_en,
-    "pt": itemJourneys_pt,
+  'item-journeys': {
+    en: itemJourneys_en,
+    pt: itemJourneys_pt,
   },
-  "items": {
-    "en": items_en,
-    "pt": items_pt,
+  items: {
+    en: items_en,
+    pt: items_pt,
   },
-  "lists-and-search": {
-    "en": listsAndSearch_en,
-    "pt": listsAndSearch_pt,
+  'lists-and-search': {
+    en: listsAndSearch_en,
+    pt: listsAndSearch_pt,
   },
-  "location-map": {
-    "en": locationMap_en,
-    "pt": locationMap_pt,
+  'location-map': {
+    en: locationMap_en,
+    pt: locationMap_pt,
   },
-  "locations": {
-    "en": locations_en,
-    "pt": locations_pt,
+  locations: {
+    en: locations_en,
+    pt: locations_pt,
   },
-  "notes": {
-    "en": notes_en,
-    "pt": notes_pt,
+  notes: {
+    en: notes_en,
+    pt: notes_pt,
   },
-  "scene-timing": {
-    "en": sceneTiming_en,
-    "pt": sceneTiming_pt,
+  'scene-timing': {
+    en: sceneTiming_en,
+    pt: sceneTiming_pt,
   },
-  "scenes": {
-    "en": scenes_en,
-    "pt": scenes_pt,
+  scenes: {
+    en: scenes_en,
+    pt: scenes_pt,
   },
-  "see-also": {
-    "en": seeAlso_en,
-    "pt": seeAlso_pt,
+  'see-also': {
+    en: seeAlso_en,
+    pt: seeAlso_pt,
   },
-  "story-analysis": {
-    "en": storyAnalysis_en,
-    "pt": storyAnalysis_pt,
+  'story-analysis': {
+    en: storyAnalysis_en,
+    pt: storyAnalysis_pt,
   },
-  "story-dashboard": {
-    "en": storyDashboard_en,
-    "pt": storyDashboard_pt,
+  'story-dashboard': {
+    en: storyDashboard_en,
+    pt: storyDashboard_pt,
   },
-  "story-list": {
-    "en": storyList_en,
-    "pt": storyList_pt,
+  'story-list': {
+    en: storyList_en,
+    pt: storyList_pt,
   },
-  "story-map": {
-    "en": storyMap_en,
-    "pt": storyMap_pt,
+  'story-map': {
+    en: storyMap_en,
+    pt: storyMap_pt,
   },
-  "story-settings": {
-    "en": storySettings_en,
-    "pt": storySettings_pt,
+  'story-settings': {
+    en: storySettings_en,
+    pt: storySettings_pt,
   },
-  "story-state": {
-    "en": storyState_en,
-    "pt": storyState_pt,
+  'story-state': {
+    en: storyState_en,
+    pt: storyState_pt,
   },
-  "story-type": {
-    "en": storyType_en,
-    "pt": storyType_pt,
+  'story-type': {
+    en: storyType_en,
+    pt: storyType_pt,
   },
-  "suggestions": {
-    "en": suggestions_en,
-    "pt": suggestions_pt,
+  suggestions: {
+    en: suggestions_en,
+    pt: suggestions_pt,
   },
-  "sync-basics": {
-    "en": syncBasics_en,
-    "pt": syncBasics_pt,
+  'sync-basics': {
+    en: syncBasics_en,
+    pt: syncBasics_pt,
   },
-  "sync-conflicts": {
-    "en": syncConflicts_en,
-    "pt": syncConflicts_pt,
+  'sync-conflicts': {
+    en: syncConflicts_en,
+    pt: syncConflicts_pt,
   },
-  "tags": {
-    "en": tags_en,
-    "pt": tags_pt,
+  tags: {
+    en: tags_en,
+    pt: tags_pt,
   },
-  "troubleshooting": {
-    "en": troubleshooting_en,
-    "pt": troubleshooting_pt,
+  troubleshooting: {
+    en: troubleshooting_en,
+    pt: troubleshooting_pt,
   },
-  "using-this-help": {
-    "en": usingThisHelp_en,
-    "pt": usingThisHelp_pt,
+  'using-this-help': {
+    en: usingThisHelp_en,
+    pt: usingThisHelp_pt,
   },
-  "what-is-a-server": {
-    "en": whatIsAServer_en,
-    "pt": whatIsAServer_pt,
+  'what-is-a-server': {
+    en: whatIsAServer_en,
+    pt: whatIsAServer_pt,
   },
-  "what-is-keres": {
-    "en": whatIsKeres_en,
-    "pt": whatIsKeres_pt,
+  'what-is-keres': {
+    en: whatIsKeres_en,
+    pt: whatIsKeres_pt,
   },
-  "world-rules": {
-    "en": worldRules_en,
-    "pt": worldRules_pt,
+  'world-rules': {
+    en: worldRules_en,
+    pt: worldRules_pt,
   },
-  "your-profile": {
-    "en": yourProfile_en,
-    "pt": yourProfile_pt,
+  'your-profile': {
+    en: yourProfile_en,
+    pt: yourProfile_pt,
   },
 };

@@ -13,7 +13,10 @@ describe('show', () => {
   it('puts the alert on screen with its title and message', () => {
     store().show('Excluir?', 'Isto não pode ser desfeito.');
 
-    expect(store().current).toMatchObject({ title: 'Excluir?', message: 'Isto não pode ser desfeito.' });
+    expect(store().current).toMatchObject({
+      title: 'Excluir?',
+      message: 'Isto não pode ser desfeito.',
+    });
   });
 
   /** Mesmo padrão do `Alert.alert` nativo: sem botões declarados, um "OK" que só fecha. */
@@ -31,7 +34,10 @@ describe('show', () => {
 
   it('keeps the buttons the caller declared', () => {
     const onPress = jest.fn();
-    store().show('Excluir?', undefined, [{ text: 'Cancelar', style: 'cancel' }, { text: 'Excluir', style: 'destructive', onPress }]);
+    store().show('Excluir?', undefined, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress },
+    ]);
 
     expect(store().current!.buttons).toHaveLength(2);
     expect(store().current!.buttons[1]).toMatchObject({ text: 'Excluir', style: 'destructive' });

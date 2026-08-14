@@ -25,7 +25,7 @@ export const CreateEffectDataSchema = EffectSchema.omit({
   deletedAt: true,
 }).extend({
   entityType: z.enum(['Scene', 'Choice']),
-  entityId: z.string().min(1, "Entity ID cannot be empty"),
+  entityId: z.string().min(1, 'Entity ID cannot be empty'),
   effectType: z.enum(['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset']),
   itemId: z.string().nullable().default(null),
   triggerName: z.string().nullable().default(null),

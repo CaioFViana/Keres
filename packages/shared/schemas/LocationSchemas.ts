@@ -26,7 +26,7 @@ export const CreateLocationDataSchema = LocationSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  name: z.string().min(1, "Location name cannot be empty"),
+  name: z.string().min(1, 'Location name cannot be empty'),
   isFavorite: z.boolean().default(false),
 });
 

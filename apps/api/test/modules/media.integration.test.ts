@@ -19,7 +19,13 @@ const md5 = (bytes: Uint8Array) => createHash('md5').update(Buffer.from(bytes)).
 
 const PNG_HASH = md5(PNG_BYTES);
 
-function upload(token: string, hash: string, bytes: Uint8Array, mimeType = 'image/png', story = storyId) {
+function upload(
+  token: string,
+  hash: string,
+  bytes: Uint8Array,
+  mimeType = 'image/png',
+  story = storyId,
+) {
   const form = new FormData();
   form.append('file', new File([Buffer.from(bytes)], 'retrato.png', { type: mimeType }));
   form.append('mimeType', mimeType);
@@ -106,7 +112,9 @@ describe('POST /media/:storyId/blobs/status', () => {
   });
 
   it('requires a session', async () => {
-    const { status } = await request('POST', `/media/${storyId}/blobs/status`, { body: { hashes: [] } });
+    const { status } = await request('POST', `/media/${storyId}/blobs/status`, {
+      body: { hashes: [] },
+    });
 
     expect(status).toBe(401);
   });
@@ -117,7 +125,11 @@ describe('POST /media/:storyId/blobs/:hash', () => {
     const { status, data } = await upload(ana.token, PNG_HASH, PNG_BYTES);
 
     expect(status).toBe(200);
-    expect(data).toMatchObject({ hash: PNG_HASH, sizeBytes: PNG_BYTES.length, mimeType: 'image/png' });
+    expect(data).toMatchObject({
+      hash: PNG_HASH,
+      sizeBytes: PNG_BYTES.length,
+      mimeType: 'image/png',
+    });
   });
 
   it('is idempotent, since the same bytes always have the same hash', async () => {
@@ -144,7 +156,12 @@ describe('POST /media/:storyId/blobs/:hash', () => {
   });
 
   it('rejects a media type the app cannot display', async () => {
-    const { status } = await upload(ana.token, md5(PNG_BYTES), PNG_BYTES, 'application/x-msdownload');
+    const { status } = await upload(
+      ana.token,
+      md5(PNG_BYTES),
+      PNG_BYTES,
+      'application/x-msdownload',
+    );
 
     expect(status).toBe(415);
   });

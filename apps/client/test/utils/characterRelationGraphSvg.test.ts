@@ -4,7 +4,9 @@ import {
   type CharacterRelationMapSvgOptions,
 } from '../../src/utils/characterRelationGraphSvg';
 
-const options = (overrides: Partial<CharacterRelationMapSvgOptions> = {}): CharacterRelationMapSvgOptions => ({
+const options = (
+  overrides: Partial<CharacterRelationMapSvgOptions> = {},
+): CharacterRelationMapSvgOptions => ({
   title: 'A Queda',
   subtitle: '3 personagens, 2 relações',
   showEdgeLabels: true,
@@ -110,8 +112,12 @@ describe('renderCharacterRelationMapSvg', () => {
   it('omits relation labels when the caller turns them off', () => {
     const layout = connected();
 
-    expect(renderCharacterRelationMapSvg(layout, options({ showEdgeLabels: true }))).toContain('aliado');
-    expect(renderCharacterRelationMapSvg(layout, options({ showEdgeLabels: false }))).not.toContain('aliado');
+    expect(renderCharacterRelationMapSvg(layout, options({ showEdgeLabels: true }))).toContain(
+      'aliado',
+    );
+    expect(renderCharacterRelationMapSvg(layout, options({ showEdgeLabels: false }))).not.toContain(
+      'aliado',
+    );
   });
 
   it('only shows the isolated legend when there is an isolated character', () => {
@@ -127,7 +133,9 @@ describe('renderCharacterRelationMapSvg', () => {
     const withoutLegend = connected();
 
     expect(heightOf(renderCharacterRelationMapSvg(isolated, options()))).toBeGreaterThan(
-      isolated.height + (heightOf(renderCharacterRelationMapSvg(withoutLegend, options())) - withoutLegend.height) - 1,
+      isolated.height +
+        (heightOf(renderCharacterRelationMapSvg(withoutLegend, options())) - withoutLegend.height) -
+        1,
     );
   });
 
@@ -163,6 +171,8 @@ describe('renderCharacterRelationMapSvg', () => {
   it('is deterministic for the same layout and options', () => {
     const layout = connected();
 
-    expect(renderCharacterRelationMapSvg(layout, options())).toBe(renderCharacterRelationMapSvg(layout, options()));
+    expect(renderCharacterRelationMapSvg(layout, options())).toBe(
+      renderCharacterRelationMapSvg(layout, options()),
+    );
   });
 });

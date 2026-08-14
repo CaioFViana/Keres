@@ -1,8 +1,21 @@
 import { and, eq, ne, sql } from 'drizzle-orm';
-import { AppDrizzleClient, characterRelations, characters, itemJourneys, items, SuggestionInsert, SuggestionSelect, suggestions } from '../../db';
+import {
+  AppDrizzleClient,
+  characterRelations,
+  characters,
+  itemJourneys,
+  items,
+  SuggestionInsert,
+  SuggestionSelect,
+  suggestions,
+} from '../../db';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { createAttributeValueService } from './AttributeValueService';
 
@@ -27,7 +40,12 @@ export type SuggestionType = string;
 export interface SuggestionServiceInterface {
   getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]>;
   getStoredSuggestions(type: SuggestionType, storyId: string): Promise<SuggestionSelect[]>;
-  createSuggestion(currentUserId: string, type: SuggestionType, value: string, storyId: string): Promise<SuggestionSelect>;
+  createSuggestion(
+    currentUserId: string,
+    type: SuggestionType,
+    value: string,
+    storyId: string,
+  ): Promise<SuggestionSelect>;
   updateSuggestion(currentUserId: string, id: string, value: string): Promise<void>;
   deleteSuggestion(currentUserId: string, id: string): Promise<void>;
 }
@@ -43,7 +61,12 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       eq(suggestions.isDeleted, false),
     ];
     if (excludeId) conditions.push(ne(suggestions.id, excludeId));
-    const existing = await db.select({ id: suggestions.id }).from(suggestions).where(and(...conditions)).limit(1).get();
+    const existing = await db
+      .select({ id: suggestions.id })
+      .from(suggestions)
+      .where(and(...conditions))
+      .limit(1)
+      .get();
     if (existing) throw new Error('Suggestion already exists for this field.');
   };
 
@@ -51,49 +74,88 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
     async getSuggestions(type, storyId) {
       if (!storyId) return [];
       const isCustomAttribute = type.startsWith(CUSTOM_ATTRIBUTE_TYPE_PREFIX);
-      const config = isCustomAttribute ? null : suggestionConfig[type as keyof typeof suggestionConfig];
+      const config = isCustomAttribute
+        ? null
+        : suggestionConfig[type as keyof typeof suggestionConfig];
       if (!isCustomAttribute && !config) return [];
 
       const counts = new Map<string, number>();
-      const stored = await db.select({ value: suggestions.value }).from(suggestions)
-        .where(and(eq(suggestions.type, type), eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false))).all();
+      const stored = await db
+        .select({ value: suggestions.value })
+        .from(suggestions)
+        .where(
+          and(
+            eq(suggestions.type, type),
+            eq(suggestions.storyId, storyId),
+            eq(suggestions.isDeleted, false),
+          ),
+        )
+        .all();
       stored.forEach(({ value }) => counts.set(value, counts.get(value) ?? 0));
 
       if (isCustomAttribute) {
         const fieldId = type.slice(CUSTOM_ATTRIBUTE_TYPE_PREFIX.length);
-        (await createAttributeValueService(db).getValueUsageCounts(fieldId)).forEach(([value, count]) => {
-          counts.set(value, (counts.get(value) ?? 0) + count);
-        });
+        (await createAttributeValueService(db).getValueUsageCounts(fieldId)).forEach(
+          ([value, count]) => {
+            counts.set(value, (counts.get(value) ?? 0) + count);
+          },
+        );
       } else {
         const nativeConfig = config!;
-        const dynamic = await db.select({ value: nativeConfig.column, count: sql<number>`count(*)` }).from(nativeConfig.schema)
-          .where(and(eq(nativeConfig.schema.storyId, storyId), eq(nativeConfig.schema.isDeleted, false))).groupBy(nativeConfig.column).all();
+        const dynamic = await db
+          .select({ value: nativeConfig.column, count: sql<number>`count(*)` })
+          .from(nativeConfig.schema)
+          .where(
+            and(eq(nativeConfig.schema.storyId, storyId), eq(nativeConfig.schema.isDeleted, false)),
+          )
+          .groupBy(nativeConfig.column)
+          .all();
         dynamic.forEach(({ value, count }) => {
-          if (value && typeof value === 'string') counts.set(value, (counts.get(value) ?? 0) + count);
+          if (value && typeof value === 'string')
+            counts.set(value, (counts.get(value) ?? 0) + count);
         });
       }
       return Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
     },
 
     async getStoredSuggestions(type, storyId) {
-      return db.select().from(suggestions).where(and(
-        eq(suggestions.type, type), eq(suggestions.storyId, storyId), eq(suggestions.isDeleted, false),
-      )).orderBy(suggestions.value).all();
+      return db
+        .select()
+        .from(suggestions)
+        .where(
+          and(
+            eq(suggestions.type, type),
+            eq(suggestions.storyId, storyId),
+            eq(suggestions.isDeleted, false),
+          ),
+        )
+        .orderBy(suggestions.value)
+        .all();
     },
 
     async createSuggestion(currentUserId, type, value, storyId) {
       const normalizedValue = value.trim();
-      if (!normalizedValue || !type || !storyId) throw new Error('Suggestion type, value, and story are required.');
+      if (!normalizedValue || !type || !storyId)
+        throw new Error('Suggestion type, value, and story are required.');
       await assertStoryIsWritable(db, storyId);
       await ensureUnique(storyId, type, normalizedValue);
       const now = new Date();
       const suggestion: SuggestionInsert = {
-        id: createULID(), storyId, type, value: normalizedValue, createdAt: now, updatedAt: now,
-        version: 1, isDeleted: false, deletedAt: null,
+        id: createULID(),
+        storyId,
+        type,
+        value: normalizedValue,
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
       };
       const created = await db.insert(suggestions).values(suggestion).returning().get();
       const userId = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userId, 'create', 'Suggestion', created.id, { ...created });
+      await recordLocalOperation(db, storyId, userId, 'create', 'Suggestion', created.id, {
+        ...created,
+      });
       entityEventEmitter.emit('suggestion_changed', storyId, created.id);
       return created;
     },
@@ -106,11 +168,25 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       await assertStoryIsWritable(db, current.storyId);
       if (normalizedValue === current.value) return;
       await ensureUnique(current.storyId, current.type, normalizedValue, id);
-      const [updated] = await db.update(suggestions).set({ value: normalizedValue, updatedAt: new Date(), version: sql`${suggestions.version} + 1` })
-        .where(eq(suggestions.id, id)).returning({ id: suggestions.id, storyId: suggestions.storyId, version: suggestions.version });
+      const [updated] = await db
+        .update(suggestions)
+        .set({
+          value: normalizedValue,
+          updatedAt: new Date(),
+          version: sql`${suggestions.version} + 1`,
+        })
+        .where(eq(suggestions.id, id))
+        .returning({
+          id: suggestions.id,
+          storyId: suggestions.storyId,
+          version: suggestions.version,
+        });
       if (!updated) throw new Error('Could not update suggestion.');
       const userId = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
-      await recordLocalOperation(db, updated.storyId, userId, 'update', 'Suggestion', id, { value: normalizedValue, version: updated.version });
+      await recordLocalOperation(db, updated.storyId, userId, 'update', 'Suggestion', id, {
+        value: normalizedValue,
+        version: updated.version,
+      });
       entityEventEmitter.emit('suggestion_changed', updated.storyId, id);
     },
 
@@ -118,11 +194,27 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       const current = await db.query.suggestions.findFirst({ where: eq(suggestions.id, id) });
       if (!current || current.isDeleted) return;
       await assertStoryIsWritable(db, current.storyId);
-      const [updated] = await db.update(suggestions).set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${suggestions.version} + 1` })
-        .where(eq(suggestions.id, id)).returning({ id: suggestions.id, storyId: suggestions.storyId, version: suggestions.version });
+      const [updated] = await db
+        .update(suggestions)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${suggestions.version} + 1`,
+        })
+        .where(eq(suggestions.id, id))
+        .returning({
+          id: suggestions.id,
+          storyId: suggestions.storyId,
+          version: suggestions.version,
+        });
       if (!updated) throw new Error('Could not delete suggestion.');
       const userId = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
-      await recordLocalOperation(db, updated.storyId, userId, 'delete', 'Suggestion', id, { id, isDeleted: true, version: updated.version });
+      await recordLocalOperation(db, updated.storyId, userId, 'delete', 'Suggestion', id, {
+        id,
+        isDeleted: true,
+        version: updated.version,
+      });
       entityEventEmitter.emit('suggestion_changed', updated.storyId, id);
     },
   };

@@ -9,7 +9,9 @@ import { CharacterSelect } from '../../../../db/schemas/characters'; // Characte
 import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
 import { useTheme } from '../../../../theme';
 import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
-import GenericRelationDisplay, { BaseRelation } from '@/src/components/features/relations/RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
+import GenericRelationDisplay, {
+  BaseRelation,
+} from '@/src/components/features/relations/RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 
 // Define the relation type for GenericRelationDisplay
@@ -37,23 +39,27 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
   const { colors } = useTheme();
   const navigation = useNavigation();
 
-  const handleItemPress = useCallback((item: Item) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Item', item.id);
-    }
-  }, [navigation]);
+  const handleItemPress = useCallback(
+    (item: Item) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(drawerNavigation, 'Item', item.id);
+      }
+    },
+    [navigation],
+  );
 
   const itemsAsRelations = useMemo(() => {
     // 1. Get scenes relevant to the current location
     const scenesInCurrentLocation = availableScenes.filter(
-      (scene) => scene.locationId === currentLocationId && !scene.isDeleted
+      (scene) => scene.locationId === currentLocationId && !scene.isDeleted,
     );
 
     // 2. Filter item journeys to those that happened in scenes in the current location
     const journeysInCurrentLocation = availableItemJourneys.filter(
       (journey) =>
-        scenesInCurrentLocation.some((scene) => scene.id === journey.sceneId) && !journey.isDeleted
+        scenesInCurrentLocation.some((scene) => scene.id === journey.sceneId) && !journey.isDeleted,
     );
 
     // 3. Group journeys by itemId
@@ -70,8 +76,8 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
     const relations: ItemInLocationRelation[] = [];
     Array.from(groupedByItem.entries())
       .sort(([, aJourneys], [, bJourneys]) => {
-        const aItem = availableItems.find(item => item.id === aJourneys[0].itemId);
-        const bItem = availableItems.find(item => item.id === bJourneys[0].itemId);
+        const aItem = availableItems.find((item) => item.id === aJourneys[0].itemId);
+        const bItem = availableItems.find((item) => item.id === bJourneys[0].itemId);
         return (aItem?.name || '').localeCompare(bItem?.name || '');
       })
       .forEach(([itemId, journeys]) => {
@@ -88,40 +94,50 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
     return relations;
   }, [currentLocationId, availableItemJourneys, availableItems, availableScenes]);
 
-  const getItemById = useCallback((itemId: string) => {
-    return availableItems.find(item => item.id === itemId);
-  }, [availableItems]);
+  const getItemById = useCallback(
+    (itemId: string) => {
+      return availableItems.find((item) => item.id === itemId);
+    },
+    [availableItems],
+  );
 
   const getItemDisplayName = useCallback((item: Item) => {
     return item.name;
   }, []);
 
-  const renderItemExtraContent = useCallback((relation: ItemInLocationRelation, relatedItem: Item) => {
-    return (
-      <View>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{relatedItem.name}</Text>
-        {relation.journeys.map((journey) => {
-          const scene = availableScenes.find(s => s.id === journey.sceneId);
-          const newOwner = availableCharacters.find(char => char.id === journey.newCharacterOwnerId);
-          return (
-            <View key={journey.id}>
-              <RelationAttributeLine label={t('scene')} value={scene?.name || t('unknown_scene')} />
-              {journey.newState && (
-                <RelationAttributeLine label={t('item_state')} value={journey.newState} />
-              )}
-              {newOwner && (
-                <RelationAttributeLine label={t('new_owner')} value={newOwner.name} />
-              )}
-              {journey.extraNotes && (
-                <RelationAttributeLine label={t('extra_notes')} value={journey.extraNotes} />
-              )}
-            </View>
-          );
-        })}
-      </View>
-    );
-  }, [availableScenes, availableCharacters, colors.text, t]);
-
+  const renderItemExtraContent = useCallback(
+    (relation: ItemInLocationRelation, relatedItem: Item) => {
+      return (
+        <View>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
+            {relatedItem.name}
+          </Text>
+          {relation.journeys.map((journey) => {
+            const scene = availableScenes.find((s) => s.id === journey.sceneId);
+            const newOwner = availableCharacters.find(
+              (char) => char.id === journey.newCharacterOwnerId,
+            );
+            return (
+              <View key={journey.id}>
+                <RelationAttributeLine
+                  label={t('scene')}
+                  value={scene?.name || t('unknown_scene')}
+                />
+                {journey.newState && (
+                  <RelationAttributeLine label={t('item_state')} value={journey.newState} />
+                )}
+                {newOwner && <RelationAttributeLine label={t('new_owner')} value={newOwner.name} />}
+                {journey.extraNotes && (
+                  <RelationAttributeLine label={t('extra_notes')} value={journey.extraNotes} />
+                )}
+              </View>
+            );
+          })}
+        </View>
+      );
+    },
+    [availableScenes, availableCharacters, colors.text, t],
+  );
 
   return (
     <GenericRelationDisplay<Item, ItemInLocationRelation>

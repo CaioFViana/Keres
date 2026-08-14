@@ -35,30 +35,38 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
   const { colors } = useTheme();
   const navigation = useNavigation();
 
-  const relatedScenes = useMemo(() => (
-    scenes
-      .filter(scene => !scene.isDeleted && matchesScene(scene))
-      .sort(sortScenes ?? ((a, b) => (a.name || '').localeCompare(b.name || '')))
-  ), [scenes, matchesScene, sortScenes]);
+  const relatedScenes = useMemo(
+    () =>
+      scenes
+        .filter((scene) => !scene.isDeleted && matchesScene(scene))
+        .sort(sortScenes ?? ((a, b) => (a.name || '').localeCompare(b.name || ''))),
+    [scenes, matchesScene, sortScenes],
+  );
 
-  const handleScenePress = useCallback((scene: SceneSelect) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Scene', scene.id);
-    }
-  }, [navigation]);
+  const handleScenePress = useCallback(
+    (scene: SceneSelect) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(drawerNavigation, 'Scene', scene.id);
+      }
+    },
+    [navigation],
+  );
 
   return (
     <GenericRelationDisplay<SceneSelect, SceneSelect>
       relations={relatedScenes}
-      getRelatedItem={sceneId => scenes.find(scene => scene.id === sceneId)}
-      getRelationItemId={scene => scene.id}
-      getItemDisplayName={scene => scene.name}
+      getRelatedItem={(sceneId) => scenes.find((scene) => scene.id === sceneId)}
+      getRelationItemId={(scene) => scene.id}
+      getItemDisplayName={(scene) => scene.name}
       noItemsMessage={noItemsMessage}
       renderItemExtraContent={(scene, relatedScene) => (
         <View>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{relatedScene.name}</Text>
-          {getDetails?.(scene).map(detail => (
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
+            {relatedScene.name}
+          </Text>
+          {getDetails?.(scene).map((detail) => (
             <RelationAttributeLine key={detail.label} label={detail.label} value={detail.value} />
           ))}
         </View>

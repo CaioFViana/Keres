@@ -31,7 +31,21 @@ export interface GlobalSearchFieldConfig {
 export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearchFieldConfig> = {
   Character: {
     titleField: 'name',
-    searchFields: ['name', 'title', 'gender', 'race', 'subrace', 'description', 'personality', 'motivation', 'qualities', 'weaknesses', 'biography', 'plannedTimeline', 'extraNotes'],
+    searchFields: [
+      'name',
+      'title',
+      'gender',
+      'race',
+      'subrace',
+      'description',
+      'personality',
+      'motivation',
+      'qualities',
+      'weaknesses',
+      'biography',
+      'plannedTimeline',
+      'extraNotes',
+    ],
   },
   Location: {
     titleField: 'name',

@@ -57,7 +57,10 @@ describe('RealtimeSessionService', () => {
 
     await service.openEvents(socket, ticket);
     service.emitUserEvent('user-1', { type: 'friendships.changed' });
-    await service.handleEventMessage(socket, JSON.stringify({ type: 'subscribe', storyId: 'story-2' }));
+    await service.handleEventMessage(
+      socket,
+      JSON.stringify({ type: 'subscribe', storyId: 'story-2' }),
+    );
     service.closeEvents(socket);
 
     expect(getReadableStoryIds).toHaveBeenCalledWith('user-1');

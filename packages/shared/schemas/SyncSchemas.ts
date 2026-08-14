@@ -10,50 +10,52 @@ export type StoryUpdateType = z.infer<typeof StoryUpdateTypeSchema>;
 
 // 2. Schema base para qualquer StoryUpdate
 // Contém campos comuns a todas as operações
-export const BaseStoryUpdateSchema = z.object({
-  entity: z.string().min(1, 'Entity name cannot be empty'), // Nome da entidade (ex: 'Story', 'Character')
-  // O ID é opcional aqui porque 'create' não terá um ID ainda
-  id: UlidSchema.optional(),
-  /**
-   * A versão da *entidade*, base do controle de concorrência otimista.
-   *
-   * O campo é direcional:
-   * - push (cliente -> servidor): é a versão que o cliente leu ANTES de aplicar a
-   *   mudança (a "base"). O servidor rejeita a operação se a sua própria versão
-   *   divergir dessa base, porque isso significa que alguém escreveu no meio.
-   * - pull (servidor -> cliente): é a versão da entidade DEPOIS da operação, para
-   *   que o cliente saiba em que base as próximas edições dele se apoiam.
-   *
-   * ATENÇÃO, para operações `update`: quem o servidor lê como base é `changes.version`,
-   * não este campo (ver `BaseSyncEntityHandler.checkVersionConflict`, alimentado por
-   * `update.changes.version`). Este aqui continua sendo preenchido e é o que a resposta
-   * de conflito ecoa, mas um push que traga só ele e omita `changes.version` não é
-   * comparado com nada: o servidor aceita a escrita, e a detecção de conflito daquela
-   * operação simplesmente não acontece. `SyncEngineService` duplica o valor nos dois
-   * lugares justamente por isso.
-   *
-   * Nunca deve receber a versão da *operação* (`operationVersion`): são contadores
-   * diferentes e confundi-los desliga a detecção de conflitos.
-   */
-  version: z.number().int().min(0).optional(),
-  // A versão da *operação* no log de operações do servidor
-  operationVersion: z.number().int().min(0).optional(),
-}).extend({
-  operationTime: z.string().datetime().optional(), // CHANGED: Expect ISO string, as per user's instruction
-  originatingUser: z.string().optional(),
-  /**
-   * Id da linha do log de operações *local do cliente*. Enviado no push e devolvido
-   * intacto na resposta, para que o cliente saiba exatamente quais operações foram
-   * aplicadas e quais conflitaram, em vez de tratar o lote como tudo-ou-nada.
-   */
-  clientOperationId: z.string().optional(),
-  /**
-   * Id da linha do log de operações *do servidor*. Preenchido no pull para que o
-   * cliente possa gravar a operação remota de forma idempotente (re-pulls não
-   * duplicam nem colidem no log local).
-   */
-  operationId: z.string().optional(),
-});
+export const BaseStoryUpdateSchema = z
+  .object({
+    entity: z.string().min(1, 'Entity name cannot be empty'), // Nome da entidade (ex: 'Story', 'Character')
+    // O ID é opcional aqui porque 'create' não terá um ID ainda
+    id: UlidSchema.optional(),
+    /**
+     * A versão da *entidade*, base do controle de concorrência otimista.
+     *
+     * O campo é direcional:
+     * - push (cliente -> servidor): é a versão que o cliente leu ANTES de aplicar a
+     *   mudança (a "base"). O servidor rejeita a operação se a sua própria versão
+     *   divergir dessa base, porque isso significa que alguém escreveu no meio.
+     * - pull (servidor -> cliente): é a versão da entidade DEPOIS da operação, para
+     *   que o cliente saiba em que base as próximas edições dele se apoiam.
+     *
+     * ATENÇÃO, para operações `update`: quem o servidor lê como base é `changes.version`,
+     * não este campo (ver `BaseSyncEntityHandler.checkVersionConflict`, alimentado por
+     * `update.changes.version`). Este aqui continua sendo preenchido e é o que a resposta
+     * de conflito ecoa, mas um push que traga só ele e omita `changes.version` não é
+     * comparado com nada: o servidor aceita a escrita, e a detecção de conflito daquela
+     * operação simplesmente não acontece. `SyncEngineService` duplica o valor nos dois
+     * lugares justamente por isso.
+     *
+     * Nunca deve receber a versão da *operação* (`operationVersion`): são contadores
+     * diferentes e confundi-los desliga a detecção de conflitos.
+     */
+    version: z.number().int().min(0).optional(),
+    // A versão da *operação* no log de operações do servidor
+    operationVersion: z.number().int().min(0).optional(),
+  })
+  .extend({
+    operationTime: z.string().datetime().optional(), // CHANGED: Expect ISO string, as per user's instruction
+    originatingUser: z.string().optional(),
+    /**
+     * Id da linha do log de operações *local do cliente*. Enviado no push e devolvido
+     * intacto na resposta, para que o cliente saiba exatamente quais operações foram
+     * aplicadas e quais conflitaram, em vez de tratar o lote como tudo-ou-nada.
+     */
+    clientOperationId: z.string().optional(),
+    /**
+     * Id da linha do log de operações *do servidor*. Preenchido no pull para que o
+     * cliente possa gravar a operação remota de forma idempotente (re-pulls não
+     * duplicam nem colidem no log local).
+     */
+    operationId: z.string().optional(),
+  });
 
 // 3. Schema para operações de criação
 export const CreateStoryUpdateSchema = BaseStoryUpdateSchema.extend({

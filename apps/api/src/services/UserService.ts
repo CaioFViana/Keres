@@ -89,7 +89,11 @@ export class UserService {
   }
 
   /** Auto-serviço: exige a senha atual, diferente do reset do painel admin que a ignora. */
-  async changeOwnPassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changeOwnPassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: { password: true },

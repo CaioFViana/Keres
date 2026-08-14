@@ -6,7 +6,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteListItem from '@/src/components/features/list-items/NoteListItem';
 import { useDrizzle } from '../../db';
 import { TagSelect } from '../../db/schema';
@@ -94,29 +97,44 @@ const NotesScreen = () => {
       setDocumentTitle(t('notes_title'));
       navigation.getParent()?.setOptions({
         title: t('notes_title'),
-        headerRight: canEdit ? () => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('NoteForm', { noteId: undefined })}
-            style={{ marginRight: 15 }}
-          >
-            <Ionicons name="add" size={30} color={colors.text} />
-          </TouchableOpacity>
-        ) : undefined,
+        headerRight: canEdit
+          ? () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('NoteForm', { noteId: undefined })}
+                style={{ marginRight: 15 }}
+              >
+                <Ionicons name="add" size={30} color={colors.text} />
+              </TouchableOpacity>
+            )
+          : undefined,
       });
-    }, [navigation, colors.text, t, canEdit])
+    }, [navigation, colors.text, t, canEdit]),
   );
 
-  const handleToggleFavorite = useCallback(async (noteId: string, isFavorite: boolean) => {
-    await toggleFavorite(noteId, isFavorite);
-  }, [toggleFavorite]);
+  const handleToggleFavorite = useCallback(
+    async (noteId: string, isFavorite: boolean) => {
+      await toggleFavorite(noteId, isFavorite);
+    },
+    [toggleFavorite],
+  );
 
-  const handleViewDetails = useCallback((noteId: string) => {
-    navigation.navigate('NoteDetail', { noteId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (noteId: string) => {
+      navigation.navigate('NoteDetail', { noteId });
+    },
+    [navigation],
+  );
 
-  const memoizedNoteListItem = useCallback(({ item }: { item: NoteWithTags }) => (
-    <NoteListItem note={item} onViewDetails={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
-  ), [handleViewDetails, handleToggleFavorite]);
+  const memoizedNoteListItem = useCallback(
+    ({ item }: { item: NoteWithTags }) => (
+      <NoteListItem
+        note={item}
+        onViewDetails={handleViewDetails}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    ),
+    [handleViewDetails, handleToggleFavorite],
+  );
 
   const memoizedTagFilterOptions = useMemo(() => {
     return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
@@ -126,7 +144,7 @@ const NotesScreen = () => {
     return [
       { label: t('sort_by_title'), value: 'title' },
       { label: t('sort_by_created_at'), value: 'createdAt' },
-      { label: t('sort_by_updated_at'), value: 'updatedAt' }
+      { label: t('sort_by_updated_at'), value: 'updatedAt' },
     ];
   }, [t]);
 

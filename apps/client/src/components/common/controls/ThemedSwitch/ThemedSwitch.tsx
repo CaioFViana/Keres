@@ -14,7 +14,12 @@ interface ThemedSwitchProps {
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 /** Switch acessível com cores controladas pelo tema, sem recorrer ao thumb nativo do Android. */
-const ThemedSwitch: React.FC<ThemedSwitchProps> = ({ value, onValueChange, disabled = false, style }) => {
+const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
+  value,
+  onValueChange,
+  disabled = false,
+  style,
+}) => {
   const { colors } = useTheme();
   const thumbPosition = useRef(new Animated.Value(value ? 1 : 0)).current;
 
@@ -58,14 +63,16 @@ const ThemedSwitch: React.FC<ThemedSwitchProps> = ({ value, onValueChange, disab
         style,
       ]}
     >
-      <Animated.View style={[
-        styles.thumb,
-        {
-          backgroundColor: thumbColor,
-          shadowColor: colors.shadow,
-          transform: [{ translateX }],
-        },
-      ]}>
+      <Animated.View
+        style={[
+          styles.thumb,
+          {
+            backgroundColor: thumbColor,
+            shadowColor: colors.shadow,
+            transform: [{ translateX }],
+          },
+        ]}
+      >
         <Ionicons
           name={value ? 'checkmark' : 'close'}
           size={17}

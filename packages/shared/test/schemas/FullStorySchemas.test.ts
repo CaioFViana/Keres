@@ -88,7 +88,9 @@ describe('FullStoryExportSchema', () => {
   });
 
   it('validates the entities inside the collections, not just their shape', () => {
-    const withBadChapter = buildExport({ chapters: [{ id: ulid('chapter1'), name: 'Sem storyId' }] });
+    const withBadChapter = buildExport({
+      chapters: [{ id: ulid('chapter1'), name: 'Sem storyId' }],
+    });
 
     expect(FullStoryExportSchema.safeParse(withBadChapter).success).toBe(false);
   });
@@ -120,7 +122,9 @@ describe('FullStoryExportSchema', () => {
   });
 
   it('rejects a story id that is not a ULID', () => {
-    const payload = buildExport({ story: { id: 'story-1', userId: USER_ID, title: 'A Queda', type: 'linear' } });
+    const payload = buildExport({
+      story: { id: 'story-1', userId: USER_ID, title: 'A Queda', type: 'linear' },
+    });
 
     expect(FullStoryExportSchema.safeParse(payload).success).toBe(false);
   });
@@ -130,6 +134,8 @@ describe('FullStoryExportSchema', () => {
     delete (payload as Record<string, unknown>).serverLastOperationVersion;
 
     expect(FullStoryExportSchema.safeParse(payload).success).toBe(false);
-    expect(FullStoryExportSchema.safeParse(buildExport({ serverLastOperationVersion: -1 })).success).toBe(false);
+    expect(
+      FullStoryExportSchema.safeParse(buildExport({ serverLastOperationVersion: -1 })).success,
+    ).toBe(false);
   });
 });

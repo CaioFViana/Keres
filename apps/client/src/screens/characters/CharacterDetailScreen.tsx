@@ -7,14 +7,19 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import ScenePresenceList, { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import ScenePresenceList, {
+  groupScenePresenceEntries,
+} from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import CharacterSceneManager from '@/src/components/features/characters/CharacterManager/CharacterSceneManager'; // The manager component
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import ItemCharacterManager from '@/src/components/features/items/ItemManager/ItemCharacterManager'; // Import ItemCharacterManager
@@ -30,12 +35,24 @@ import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { CharacterRelationServiceInterface, createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
-import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
+import {
+  CharacterRelationServiceInterface,
+  createCharacterRelationService,
+} from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import {
+  CharacterSceneServiceInterface,
+  createCharacterSceneService,
+} from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import { createItemJourneyService, ItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import {
+  createItemJourneyService,
+  ItemJourneyService,
+} from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
 import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import { createLocationService, LocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
+import {
+  createLocationService,
+  LocationService,
+} from '../../services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
 import { useTheme } from '../../theme';
@@ -98,7 +115,13 @@ const CharacterDetailScreen = () => {
   const [character, setCharacter] = useState<CharacterSelect | null>(null);
   const { canEdit } = useStoryRole(character?.storyId);
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(character?.storyId, 'Character', characterId);
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
@@ -178,7 +201,10 @@ const CharacterDetailScreen = () => {
       return;
     }
     try {
-      const fetchedRelations = await characterRelationServiceRef.current.getRelationsForCharacter(character.storyId, characterId);
+      const fetchedRelations = await characterRelationServiceRef.current.getRelationsForCharacter(
+        character.storyId,
+        characterId,
+      );
       setCharacterRelations(fetchedRelations);
     } catch (err) {
       console.error('Failed to fetch character relations:', err);
@@ -191,8 +217,10 @@ const CharacterDetailScreen = () => {
       return;
     }
     try {
-      const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(character.storyId);
-      setAllCharacters(fetchedCharacters.filter(c => !c.isDeleted));
+      const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(
+        character.storyId,
+      );
+      setAllCharacters(fetchedCharacters.filter((c) => !c.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all characters:', err);
     }
@@ -204,7 +232,10 @@ const CharacterDetailScreen = () => {
       return;
     }
     try {
-      const fetchedRelations = await characterSceneServiceRef.current.getRelationsForCharacter(character.storyId, characterId);
+      const fetchedRelations = await characterSceneServiceRef.current.getRelationsForCharacter(
+        character.storyId,
+        characterId,
+      );
       setCharacterSceneRelations(fetchedRelations);
     } catch (err) {
       console.error('Failed to fetch character scene relations:', err);
@@ -219,7 +250,7 @@ const CharacterDetailScreen = () => {
     try {
       const sceneService = createSceneService(drizzleDb);
       const fetchedScenes = await sceneService.getScenesByStoryId(character.storyId);
-      setAllScenes(fetchedScenes.filter(s => !s.isDeleted));
+      setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all scenes:', err);
     }
@@ -232,7 +263,7 @@ const CharacterDetailScreen = () => {
     }
     try {
       const fetchedItems = await itemServiceRef.current.getAllByStoryId(character.storyId);
-      setAllItems(fetchedItems.filter(i => !i.isDeleted));
+      setAllItems(fetchedItems.filter((i) => !i.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all items:', err);
     }
@@ -244,8 +275,10 @@ const CharacterDetailScreen = () => {
       return;
     }
     try {
-      const fetchedItemJourneys = await itemJourneyServiceRef.current.getAllByStoryId(character.storyId);
-      setAllItemJourneys(fetchedItemJourneys.filter(ij => !ij.isDeleted));
+      const fetchedItemJourneys = await itemJourneyServiceRef.current.getAllByStoryId(
+        character.storyId,
+      );
+      setAllItemJourneys(fetchedItemJourneys.filter((ij) => !ij.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all item journeys:', err);
     }
@@ -258,55 +291,73 @@ const CharacterDetailScreen = () => {
     }
     try {
       const fetchedLocations = await locationServiceRef.current.getAllByStoryId(character.storyId);
-      setAllLocations(fetchedLocations.filter(l => !l.isDeleted));
+      setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all locations:', err);
     }
   }, [character?.storyId]);
 
-  const handleCharacterChange = useCallback(async (changedStoryId: string, changedCharacterId: string) => {
-    if (changedCharacterId === characterId) {
-      if (characterServiceRef.current) {
-        const updatedCharacter = await characterServiceRef.current.getById(characterId);
-        if (!updatedCharacter || updatedCharacter.isDeleted) {
-          navigation.goBack();
-        } else {
-          setCharacter(updatedCharacter);
-          setHeaderTitle(updatedCharacter.name || t('character_details_title'));
+  const handleCharacterChange = useCallback(
+    async (changedStoryId: string, changedCharacterId: string) => {
+      if (changedCharacterId === characterId) {
+        if (characterServiceRef.current) {
+          const updatedCharacter = await characterServiceRef.current.getById(characterId);
+          if (!updatedCharacter || updatedCharacter.isDeleted) {
+            navigation.goBack();
+          } else {
+            setCharacter(updatedCharacter);
+            setHeaderTitle(updatedCharacter.name || t('character_details_title'));
+          }
         }
       }
-    }
-  }, [characterId, navigation, setCharacter, setHeaderTitle, t]);
+    },
+    [characterId, navigation, setCharacter, setHeaderTitle, t],
+  );
 
-  const handleCharacterRelationChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
-    if (changedCharacterId === characterId) {
-      fetchRelationsForCharacter();
-    }
-  }, [characterId, fetchRelationsForCharacter]);
+  const handleCharacterRelationChange = useCallback(
+    (changedStoryId: string, changedCharacterId: string) => {
+      if (changedCharacterId === characterId) {
+        fetchRelationsForCharacter();
+      }
+    },
+    [characterId, fetchRelationsForCharacter],
+  );
 
-  const handleCharacterSceneChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
-    if (changedCharacterId === characterId) {
-      fetchScenesForCharacter();
-    }
-  }, [characterId, fetchScenesForCharacter]);
+  const handleCharacterSceneChange = useCallback(
+    (changedStoryId: string, changedCharacterId: string) => {
+      if (changedCharacterId === characterId) {
+        fetchScenesForCharacter();
+      }
+    },
+    [characterId, fetchScenesForCharacter],
+  );
 
-  const handleItemChange = useCallback((changedStoryId: string, changedItemId: string) => {
-    if (character?.storyId === changedStoryId) {
-      fetchAllItemsInStory();
-    }
-  }, [character?.storyId, fetchAllItemsInStory]);
+  const handleItemChange = useCallback(
+    (changedStoryId: string, changedItemId: string) => {
+      if (character?.storyId === changedStoryId) {
+        fetchAllItemsInStory();
+      }
+    },
+    [character?.storyId, fetchAllItemsInStory],
+  );
 
-  const handleItemJourneyChange = useCallback((changedStoryId: string, changedItemJourneyId: string) => {
-    if (character?.storyId === changedStoryId) {
-      fetchAllItemJourneysInStory();
-    }
-  }, [character?.storyId, fetchAllItemJourneysInStory]);
+  const handleItemJourneyChange = useCallback(
+    (changedStoryId: string, changedItemJourneyId: string) => {
+      if (character?.storyId === changedStoryId) {
+        fetchAllItemJourneysInStory();
+      }
+    },
+    [character?.storyId, fetchAllItemJourneysInStory],
+  );
 
-  const handleLocationChange = useCallback((changedStoryId: string, changedLocationId: string) => {
-    if (character?.storyId === changedStoryId) {
-      fetchAllLocationsInStory();
-    }
-  }, [character?.storyId, fetchAllLocationsInStory]);
+  const handleLocationChange = useCallback(
+    (changedStoryId: string, changedLocationId: string) => {
+      if (character?.storyId === changedStoryId) {
+        fetchAllLocationsInStory();
+      }
+    },
+    [character?.storyId, fetchAllLocationsInStory],
+  );
 
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
@@ -328,8 +379,16 @@ const CharacterDetailScreen = () => {
         entityEventEmitter.off('location_changed', handleLocationChange);
       };
     }
-  }, [characterId, fetchCharacter, handleCharacterChange, handleCharacterRelationChange,
-    handleCharacterSceneChange, handleItemChange, handleItemJourneyChange, handleLocationChange]);
+  }, [
+    characterId,
+    fetchCharacter,
+    handleCharacterChange,
+    handleCharacterRelationChange,
+    handleCharacterSceneChange,
+    handleItemChange,
+    handleItemJourneyChange,
+    handleLocationChange,
+  ]);
 
   useEffect(() => {
     if (character) {
@@ -341,7 +400,16 @@ const CharacterDetailScreen = () => {
       fetchAllItemJourneysInStory(); // Fetch all item journeys
       fetchAllLocationsInStory(); // Fetch all locations
     }
-  }, [character, fetchRelationsForCharacter, fetchAllCharactersInStory, fetchScenesForCharacter, fetchAllScenesInStory, fetchAllItemsInStory, fetchAllItemJourneysInStory, fetchAllLocationsInStory]);
+  }, [
+    character,
+    fetchRelationsForCharacter,
+    fetchAllCharactersInStory,
+    fetchScenesForCharacter,
+    fetchAllScenesInStory,
+    fetchAllItemsInStory,
+    fetchAllItemJourneysInStory,
+    fetchAllLocationsInStory,
+  ]);
 
   const handleSaveRelation = async (relation: CharacterRelation) => {
     if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
@@ -349,10 +417,13 @@ const CharacterDetailScreen = () => {
       return;
     }
     try {
-      const savedRelation = await characterRelationServiceRef.current.saveCharacterRelation(userId, relation);
+      const savedRelation = await characterRelationServiceRef.current.saveCharacterRelation(
+        userId,
+        relation,
+      );
       // Update local state and emit event
-      setCharacterRelations(prev => {
-        const existingIndex = prev.findIndex(r => r.id === savedRelation.id);
+      setCharacterRelations((prev) => {
+        const existingIndex = prev.findIndex((r) => r.id === savedRelation.id);
         if (existingIndex > -1) {
           return prev.map((r, index) => (index === existingIndex ? savedRelation : r));
         } else {
@@ -368,14 +439,18 @@ const CharacterDetailScreen = () => {
   };
 
   const handleDeleteRelation = async (relationId: string) => {
-    if (!characterRelationServiceRef.current || !character?.storyId || !userId) { // Added !userId check
+    if (!characterRelationServiceRef.current || !character?.storyId || !userId) {
+      // Added !userId check
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
     try {
-      const success = await characterRelationServiceRef.current.deleteCharacterRelation(userId, relationId); // Pass userId
+      const success = await characterRelationServiceRef.current.deleteCharacterRelation(
+        userId,
+        relationId,
+      ); // Pass userId
       if (success) {
-        setCharacterRelations(prev => prev.filter(r => r.id !== relationId));
+        setCharacterRelations((prev) => prev.filter((r) => r.id !== relationId));
         entityEventEmitter.emit('character_relation_changed', character?.storyId, characterId);
         AppAlert.alert(t('success'), t('relation_deleted_successfully'));
       } else {
@@ -393,9 +468,12 @@ const CharacterDetailScreen = () => {
       return;
     }
     try {
-      const savedCharacterScene = await characterSceneServiceRef.current.saveCharacterScene(userId, characterScene);
-      setCharacterSceneRelations(prev => {
-        const existingIndex = prev.findIndex(cs => cs.id === savedCharacterScene.id);
+      const savedCharacterScene = await characterSceneServiceRef.current.saveCharacterScene(
+        userId,
+        characterScene,
+      );
+      setCharacterSceneRelations((prev) => {
+        const existingIndex = prev.findIndex((cs) => cs.id === savedCharacterScene.id);
         if (existingIndex > -1) {
           return prev.map((cs, index) => (index === existingIndex ? savedCharacterScene : cs));
         } else {
@@ -416,9 +494,12 @@ const CharacterDetailScreen = () => {
       return;
     }
     try {
-      const success = await characterSceneServiceRef.current.deleteCharacterScene(userId, characterSceneId);
+      const success = await characterSceneServiceRef.current.deleteCharacterScene(
+        userId,
+        characterSceneId,
+      );
       if (success) {
-        setCharacterSceneRelations(prev => prev.filter(cs => cs.id !== characterSceneId));
+        setCharacterSceneRelations((prev) => prev.filter((cs) => cs.id !== characterSceneId));
         entityEventEmitter.emit('character_scene_changed', character?.storyId, characterId);
         AppAlert.alert(t('success'), t('character_scene_deleted_successfully'));
       } else {
@@ -430,17 +511,18 @@ const CharacterDetailScreen = () => {
     }
   };
 
-
-  const renderHeaderRight = useCallback(() => (
-    canEdit ? (
-      <TouchableOpacity
-        onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
-        style={{ marginRight: 15 }}
-      >
-        <Ionicons name="pencil-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    ) : null
-  ), [navigation, characterId, colors.text, canEdit]);
+  const renderHeaderRight = useCallback(
+    () =>
+      canEdit ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CharacterForm', { characterId: characterId })}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="pencil-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ) : null,
+    [navigation, characterId, colors.text, canEdit],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -449,17 +531,19 @@ const CharacterDetailScreen = () => {
         headerRight: renderHeaderRight,
       });
       setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight])
+    }, [navigation, headerTitle, renderHeaderRight]),
   );
 
   const characterLocationEntries = useMemo(() => {
-    const pairs = characterSceneRelations.flatMap(relation => {
+    const pairs = characterSceneRelations.flatMap((relation) => {
       if (relation.characterId !== characterId || relation.isDeleted) return [];
-      const scene = allScenes.find(candidate => candidate.id === relation.sceneId);
+      const scene = allScenes.find((candidate) => candidate.id === relation.sceneId);
       const location = scene?.locationId
-        ? allLocations.find(candidate => candidate.id === scene.locationId)
+        ? allLocations.find((candidate) => candidate.id === scene.locationId)
         : undefined;
-      return scene && !scene.isDeleted && location && !location.isDeleted ? [{ item: location, scene }] : [];
+      return scene && !scene.isDeleted && location && !location.isDeleted
+        ? [{ item: location, scene }]
+        : [];
     });
     return groupScenePresenceEntries(pairs);
   }, [allLocations, allScenes, characterId, characterSceneRelations]);
@@ -473,33 +557,179 @@ const CharacterDetailScreen = () => {
   }
 
   if (!character) {
-    return <ScreenError padded message={t('character_data_missing')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError
+        padded
+        message={t('character_data_missing')}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    >
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
       <TagChipList tags={characterTags} />
 
       {(() => {
-        const commentableFieldProps = { storyId: character.storyId, canComment, isStoryOwner, currentUserId, onDeleteComment: deleteComment, onUpdateComment: updateComment };
+        const commentableFieldProps = {
+          storyId: character.storyId,
+          canComment,
+          isStoryOwner,
+          currentUserId,
+          onDeleteComment: deleteComment,
+          onUpdateComment: updateComment,
+        };
         return (
           <>
-            <CommentableDetailField {...commentableFieldProps} label={t('gender')} value={character.gender || t('common_na')} comments={commentsByField['gender'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'gender' }, { ...input, contentSnapshot: character.gender || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('race')} value={character.race || t('common_na')} comments={commentsByField['race'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'race' }, { ...input, contentSnapshot: character.race || t('common_na') })} />
-            {character.subrace && <CommentableDetailField {...commentableFieldProps} label={t('subrace')} value={character.subrace} comments={commentsByField['subrace'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'subrace' }, { ...input, contentSnapshot: character.subrace })} />}
-            <CommentableDetailField {...commentableFieldProps} label={t('description')} value={character.description || t('common_na')} comments={commentsByField['description'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'description' }, { ...input, contentSnapshot: character.description || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('personality')} value={character.personality || t('common_na')} comments={commentsByField['personality'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'personality' }, { ...input, contentSnapshot: character.personality || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('motivation')} value={character.motivation || t('common_na')} comments={commentsByField['motivation'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'motivation' }, { ...input, contentSnapshot: character.motivation || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('qualities')} value={character.qualities || t('common_na')} comments={commentsByField['qualities'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'qualities' }, { ...input, contentSnapshot: character.qualities || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('weaknesses')} value={character.weaknesses || t('common_na')} comments={commentsByField['weaknesses'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'weaknesses' }, { ...input, contentSnapshot: character.weaknesses || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('biography')} value={character.biography || t('common_na')} comments={commentsByField['biography'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'biography' }, { ...input, contentSnapshot: character.biography || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('planned_timeline')} value={character.plannedTimeline || t('common_na')} comments={commentsByField['plannedTimeline'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'plannedTimeline' }, { ...input, contentSnapshot: character.plannedTimeline || t('common_na') })} />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('gender')}
+              value={character.gender || t('common_na')}
+              comments={commentsByField['gender'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'gender' },
+                  { ...input, contentSnapshot: character.gender || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('race')}
+              value={character.race || t('common_na')}
+              comments={commentsByField['race'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'race' },
+                  { ...input, contentSnapshot: character.race || t('common_na') },
+                )
+              }
+            />
+            {character.subrace && (
+              <CommentableDetailField
+                {...commentableFieldProps}
+                label={t('subrace')}
+                value={character.subrace}
+                comments={commentsByField['subrace'] ?? []}
+                onAddComment={(input) =>
+                  addComment(
+                    { fieldKey: 'subrace' },
+                    { ...input, contentSnapshot: character.subrace },
+                  )
+                }
+              />
+            )}
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('description')}
+              value={character.description || t('common_na')}
+              comments={commentsByField['description'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'description' },
+                  { ...input, contentSnapshot: character.description || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('personality')}
+              value={character.personality || t('common_na')}
+              comments={commentsByField['personality'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'personality' },
+                  { ...input, contentSnapshot: character.personality || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('motivation')}
+              value={character.motivation || t('common_na')}
+              comments={commentsByField['motivation'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'motivation' },
+                  { ...input, contentSnapshot: character.motivation || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('qualities')}
+              value={character.qualities || t('common_na')}
+              comments={commentsByField['qualities'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'qualities' },
+                  { ...input, contentSnapshot: character.qualities || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('weaknesses')}
+              value={character.weaknesses || t('common_na')}
+              comments={commentsByField['weaknesses'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'weaknesses' },
+                  { ...input, contentSnapshot: character.weaknesses || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('biography')}
+              value={character.biography || t('common_na')}
+              comments={commentsByField['biography'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'biography' },
+                  { ...input, contentSnapshot: character.biography || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('planned_timeline')}
+              value={character.plannedTimeline || t('common_na')}
+              comments={commentsByField['plannedTimeline'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'plannedTimeline' },
+                  { ...input, contentSnapshot: character.plannedTimeline || t('common_na') },
+                )
+              }
+            />
 
-            <CustomAttributeDetailFields storyId={character.storyId} entityType="Character" entityId={characterId} />
+            <CustomAttributeDetailFields
+              storyId={character.storyId}
+              entityType="Character"
+              entityId={characterId}
+            />
 
-            <DetailField label={t('is_favorite')} value={character.isFavorite ? t('common_yes') : t('common_no')} />
-            <CommentableDetailField {...commentableFieldProps} label={t('extra_notes')} value={character.extraNotes || t('common_na')} comments={commentsByField['extraNotes'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: character.extraNotes || t('common_na') })} />
+            <DetailField
+              label={t('is_favorite')}
+              value={character.isFavorite ? t('common_yes') : t('common_no')}
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('extra_notes')}
+              value={character.extraNotes || t('common_na')}
+              comments={commentsByField['extraNotes'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'extraNotes' },
+                  { ...input, contentSnapshot: character.extraNotes || t('common_na') },
+                )
+              }
+            />
           </>
         );
       })()}
@@ -558,9 +788,18 @@ const CharacterDetailScreen = () => {
         currentEntityType="Character"
       />
 
-      <SeeAlsoManager storyId={character.storyId} entityType="Character" entityId={characterId} editable={false} />
+      <SeeAlsoManager
+        storyId={character.storyId}
+        entityType="Character"
+        entityId={characterId}
+        editable={false}
+      />
 
-      <EntityMetadata version={character.version} createdAt={character.createdAt} updatedAt={character.updatedAt} />
+      <EntityMetadata
+        version={character.version}
+        createdAt={character.createdAt}
+        updatedAt={character.updatedAt}
+      />
       <FavoritedByList storyId={character.storyId} entityId={characterId} entityType="Character" />
 
       <View style={styles.buttonContainer}>

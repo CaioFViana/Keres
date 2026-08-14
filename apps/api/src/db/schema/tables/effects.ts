@@ -5,11 +5,15 @@ import { stories } from './stories';
 
 export const effects = pgTable('effects', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
   // Polimórfico (Scene/Choice) - sem FK de banco, mesmo padrão de comments.entityType/entityId.
   entityType: text('entity_type', { enum: ['Scene', 'Choice'] }).notNull(),
   entityId: text('entity_id').notNull(),
-  effectType: text('effect_type', { enum: ['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset'] }).notNull(),
+  effectType: text('effect_type', {
+    enum: ['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset'],
+  }).notNull(),
   // Usado quando effectType = 'itemGrant' | 'itemTake'
   itemId: text('item_id').references(() => items.id),
   // Usado quando effectType = 'triggerSet' | 'triggerUnset'

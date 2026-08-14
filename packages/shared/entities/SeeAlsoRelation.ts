@@ -7,15 +7,15 @@ import { SeeAlsoEntityType } from '../metadata/SeeAlsoEntityType';
  * que têm um lado "dono" fixo. Não há `relationType`: existe apenas um tipo de vínculo.
  */
 export interface SeeAlsoRelation {
-  id: string
-  storyId: string
-  entityAType: SeeAlsoEntityType
-  entityAId: string
-  entityBType: SeeAlsoEntityType
-  entityBId: string
-  createdAt: Date
-  updatedAt: Date
-  version: number
-  isDeleted: boolean
-  deletedAt: Date | null
+  id: string;
+  storyId: string;
+  entityAType: SeeAlsoEntityType;
+  entityAId: string;
+  entityBType: SeeAlsoEntityType;
+  entityBId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  version: number;
+  isDeleted: boolean;
+  deletedAt: Date | null;
 }

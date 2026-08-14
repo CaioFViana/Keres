@@ -9,5 +9,7 @@ export function getHelpPage(pageId: string, language: string): HelpPage | undefi
 }
 
 export function getHelpPages(language: string): HelpPage[] {
-  return helpPageIds.map(pageId => getHelpPage(pageId, language)).filter((page): page is HelpPage => Boolean(page));
+  return helpPageIds
+    .map((pageId) => getHelpPage(pageId, language))
+    .filter((page): page is HelpPage => Boolean(page));
 }

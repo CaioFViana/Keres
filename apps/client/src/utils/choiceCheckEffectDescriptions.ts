@@ -13,7 +13,7 @@ function describeCheckCondition(
   check: ChoiceCheck,
   sceneNamesById: Record<string, string>,
   itemNamesById: Record<string, string>,
-  t: TFunction
+  t: TFunction,
 ): string {
   switch (check.type) {
     case 'sceneCount': {
@@ -41,22 +41,33 @@ export function describeChoiceCheck(
   check: ChoiceCheck,
   sceneNamesById: Record<string, string>,
   itemNamesById: Record<string, string>,
-  t: TFunction
+  t: TFunction,
 ): string {
-  const prefix = check.mode === 'block' ? t('check_condition_prefix_block') : t('check_condition_prefix_enable');
+  const prefix =
+    check.mode === 'block' ? t('check_condition_prefix_block') : t('check_condition_prefix_enable');
   return `${prefix} ${describeCheckCondition(check, sceneNamesById, itemNamesById, t)}`;
 }
 
-export function describeEffect(effect: Effect, itemNamesById: Record<string, string>, t: TFunction): string {
+export function describeEffect(
+  effect: Effect,
+  itemNamesById: Record<string, string>,
+  t: TFunction,
+): string {
   switch (effect.effectType) {
     case 'itemGrant':
-      return t('effect_description_item_grant', { item: (effect.itemId && itemNamesById[effect.itemId]) || t('common_na') });
+      return t('effect_description_item_grant', {
+        item: (effect.itemId && itemNamesById[effect.itemId]) || t('common_na'),
+      });
     case 'itemTake':
-      return t('effect_description_item_take', { item: (effect.itemId && itemNamesById[effect.itemId]) || t('common_na') });
+      return t('effect_description_item_take', {
+        item: (effect.itemId && itemNamesById[effect.itemId]) || t('common_na'),
+      });
     case 'triggerSet':
       return t('effect_description_trigger_set', { trigger: effect.triggerName || t('common_na') });
     case 'triggerUnset':
-      return t('effect_description_trigger_unset', { trigger: effect.triggerName || t('common_na') });
+      return t('effect_description_trigger_unset', {
+        trigger: effect.triggerName || t('common_na'),
+      });
     default:
       return '';
   }

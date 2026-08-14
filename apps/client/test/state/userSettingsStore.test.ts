@@ -66,7 +66,9 @@ describe('setUsername', () => {
   it('persists before updating what the screens read', async () => {
     await store().setUsername(db, 'nova-ana');
 
-    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, { localUsername: 'nova-ana' });
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      localUsername: 'nova-ana',
+    });
     expect(store().username).toBe('nova-ana');
   });
 
@@ -137,6 +139,11 @@ describe('resetSettings', () => {
 
     store().resetSettings();
 
-    expect(store()).toMatchObject({ userId: null, username: null, language: null, activeServer: null });
+    expect(store()).toMatchObject({
+      userId: null,
+      username: null,
+      language: null,
+      activeServer: null,
+    });
   });
 });

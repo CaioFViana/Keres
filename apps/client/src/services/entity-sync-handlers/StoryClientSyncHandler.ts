@@ -38,7 +38,7 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
       createdAt: new Date(storyData.createdAt),
       updatedAt: new Date(storyData.updatedAt),
       deletedAt: storyData.deletedAt ? new Date(storyData.deletedAt) : null,
-      lastServerSyncedLog: 0 // Initialize to 0 for newly created client-side story
+      lastServerSyncedLog: 0, // Initialize to 0 for newly created client-side story
     });
     console.log(`Applied create for Story ${update.id}`);
   }
@@ -55,7 +55,8 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     // Assuming update.changes contains partial story object with updated fields
     const storyChanges = update.changes as Partial<Story>;
 
-    await this.db.update(schema.stories)
+    await this.db
+      .update(schema.stories)
       .set({
         ...storyChanges,
         updatedAt: new Date(), // Always update updatedAt on change
@@ -77,7 +78,8 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
     }
 
     // Mark the story as deleted locally (tombstone pattern)
-    await this.db.update(schema.stories)
+    await this.db
+      .update(schema.stories)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

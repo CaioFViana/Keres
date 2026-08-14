@@ -13,7 +13,12 @@ interface IconPickerInputProps {
   style?: any;
 }
 
-const IconPickerInput: React.FC<IconPickerInputProps> = ({ onSelectIcon, currentIcon, placeholder, style }) => {
+const IconPickerInput: React.FC<IconPickerInputProps> = ({
+  onSelectIcon,
+  currentIcon,
+  placeholder,
+  style,
+}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const { colors } = useTheme();
   const commonInputStyles = getCommonInputStyles(colors);
@@ -59,10 +64,21 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({ onSelectIcon, current
   });
 
   return (
-    <View style={[styles.container, style, commonInputStyles.input, commonInputStyles.customComponentInput]}>
+    <View
+      style={[
+        styles.container,
+        style,
+        commonInputStyles.input,
+        commonInputStyles.customComponentInput,
+      ]}
+    >
       <Pressable style={styles.inputWrapper} onPress={() => setModalVisible(true)}>
         <View style={styles.iconPreview}>
-          <Ionicons name={(currentIcon as keyof typeof Ionicons.glyphMap) || 'help-outline'} size={20} color={colors.text} />
+          <Ionicons
+            name={(currentIcon as keyof typeof Ionicons.glyphMap) || 'help-outline'}
+            size={20}
+            color={colors.text}
+          />
         </View>
         <Text style={styles.label}>{currentIcon || placeholder}</Text>
       </Pressable>

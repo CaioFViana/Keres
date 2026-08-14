@@ -4,7 +4,8 @@ import { AppError, isUniqueViolation, postgresErrorCode } from '../../src/utils/
 const withCode = (code: string) => Object.assign(new Error(code), { code });
 
 /** Como o drizzle entrega um erro do `pg`: embrulhado, com o original em `cause`. */
-const wrappedByDrizzle = (cause: unknown) => new Error('Failed query: insert into "users" ...', { cause });
+const wrappedByDrizzle = (cause: unknown) =>
+  new Error('Failed query: insert into "users" ...', { cause });
 
 describe('AppError', () => {
   it('carries the status the route chose alongside a user-facing message', () => {

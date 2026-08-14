@@ -34,12 +34,10 @@ export const friendships = pgTable(
      */
     blockedById: text('blocked_by_id').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
+    updatedAt: timestamp('updated_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
   },
   (table) => ({
     // Unique constraint on senderId and receiverId to ensure only one pending request per direction
     unq: unique('sender_receiver_unq').on(table.senderId, table.receiverId),
-  })
+  }),
 );

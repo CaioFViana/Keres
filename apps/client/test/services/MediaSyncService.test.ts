@@ -76,11 +76,11 @@ function fakeClient(overrides: Record<string, any> = {}) {
 
 const offlineError = () => Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' });
 
-const setPlatform = (os: string) => Object.defineProperty(Platform, 'OS', { value: os, configurable: true });
+const setPlatform = (os: string) =>
+  Object.defineProperty(Platform, 'OS', { value: os, configurable: true });
 const originalOS = Platform.OS;
 
 const service = () => createMediaSyncService(db);
-
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -145,7 +145,9 @@ describe('uploading', () => {
 
     await service().syncStoryMedia(client, SERVER, STORY_ID);
 
-    expect((client as any).post).toHaveBeenCalledWith(`/media/${STORY_ID}/blobs/status`, { hashes: ['hash-a'] });
+    expect((client as any).post).toHaveBeenCalledWith(`/media/${STORY_ID}/blobs/status`, {
+      hashes: ['hash-a'],
+    });
   });
 
   /** Deduplicação global: o mesmo arquivo subido por outra pessoa já basta. */
@@ -157,7 +159,9 @@ describe('uploading', () => {
 
     const summary = await service().syncStoryMedia(client, SERVER, STORY_ID);
 
-    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith('a', { uploadState: 'uploaded' });
+    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith('a', {
+      uploadState: 'uploaded',
+    });
     expect(summary.uploaded).toBe(0);
     expect((client as any).post).toHaveBeenCalledTimes(1);
   });
@@ -174,7 +178,9 @@ describe('uploading', () => {
 
     expect(post.mock.calls[1][0]).toBe(`/media/${STORY_ID}/blobs/hash-a`);
     expect(summary.uploaded).toBe(1);
-    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith('a', { uploadState: 'uploaded' });
+    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith('a', {
+      uploadState: 'uploaded',
+    });
   });
 
   /** Registro sem arquivo (limpeza do sistema, reinstalação) vira caso de download. */
@@ -205,7 +211,9 @@ describe('uploading', () => {
 
     const summary = await service().syncStoryMedia(client, SERVER, STORY_ID);
 
-    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith('a', { uploadState: 'failed' });
+    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith('a', {
+      uploadState: 'failed',
+    });
     expect(summary).toMatchObject({ failed: 1, uploaded: 0, offline: false });
   });
 
@@ -222,14 +230,18 @@ describe('uploading', () => {
 
     expect(summary.offline).toBe(true);
     expect(summary.failed).toBe(0);
-    expect(mockGalleryService.setLocalFileState).not.toHaveBeenCalledWith('a', { uploadState: 'failed' });
+    expect(mockGalleryService.setLocalFileState).not.toHaveBeenCalledWith('a', {
+      uploadState: 'failed',
+    });
   });
 
   it('caps how many blobs it sends in a single cycle', async () => {
     const pending = Array.from({ length: 9 }, (_, index) => media(`m${index}`));
     mockGalleryService.getPendingUploads.mockResolvedValue(pending);
     const post = jest.fn(async (url: string) =>
-      url.endsWith('/status') ? { data: { present: [], missing: pending.map((m) => m.hash) } } : { data: {} },
+      url.endsWith('/status')
+        ? { data: { present: [], missing: pending.map((m) => m.hash) } }
+        : { data: {} },
     );
     const client = fakeClient({ post });
 
@@ -239,12 +251,17 @@ describe('uploading', () => {
   });
 
   it('sends each hash once, even when two entries share the same content', async () => {
-    mockGalleryService.getPendingUploads.mockResolvedValue([media('a'), media('b', { hash: 'hash-a' })]);
+    mockGalleryService.getPendingUploads.mockResolvedValue([
+      media('a'),
+      media('b', { hash: 'hash-a' }),
+    ]);
     const client = fakeClient();
 
     await service().syncStoryMedia(client, SERVER, STORY_ID);
 
-    expect((client as any).post).toHaveBeenCalledWith(`/media/${STORY_ID}/blobs/status`, { hashes: ['hash-a'] });
+    expect((client as any).post).toHaveBeenCalledWith(`/media/${STORY_ID}/blobs/status`, {
+      hashes: ['hash-a'],
+    });
   });
 });
 
@@ -303,7 +320,9 @@ describe('downloading', () => {
 
     const summary = await service().syncStoryMedia(fakeClient(), SERVER, STORY_ID);
 
-    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith('a', { downloadState: 'failed' });
+    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith('a', {
+      downloadState: 'failed',
+    });
     expect(summary.failed).toBe(1);
   });
 
@@ -332,7 +351,9 @@ describe('resilience', () => {
   it('never throws, whatever the gallery layer does', async () => {
     mockGalleryService.getPendingUploads.mockRejectedValue(new Error('banco fora'));
 
-    await expect(service().syncStoryMedia(fakeClient(), SERVER, STORY_ID)).resolves.toMatchObject({ failed: 0 });
+    await expect(service().syncStoryMedia(fakeClient(), SERVER, STORY_ID)).resolves.toMatchObject({
+      failed: 0,
+    });
   });
 
   it('flags offline when the very first call cannot reach the server', async () => {

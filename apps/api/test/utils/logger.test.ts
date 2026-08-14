@@ -56,7 +56,9 @@ describe('logger', () => {
   });
 
   it('logs an error with metadata but no error object', () => {
-    const entry = captureLine('error', () => logger.error('falhou', undefined, { storyId: 'story-1' }));
+    const entry = captureLine('error', () =>
+      logger.error('falhou', undefined, { storyId: 'story-1' }),
+    );
 
     expect(entry.meta).toEqual({ storyId: 'story-1' });
   });

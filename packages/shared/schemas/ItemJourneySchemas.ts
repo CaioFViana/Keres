@@ -24,10 +24,10 @@ export const CreateItemJourneyDataSchema = ItemJourneySchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  itemId: z.string().min(1, "Item ID cannot be empty"),
-  sceneId: z.string().min(1, "Scene ID cannot be empty"),
+  itemId: z.string().min(1, 'Item ID cannot be empty'),
+  sceneId: z.string().min(1, 'Scene ID cannot be empty'),
   newCharacterOwnerId: z.string().nullable().default(null),
-  newState: z.string().min(1, "New state cannot be empty"),
+  newState: z.string().min(1, 'New state cannot be empty'),
   extraNotes: z.string().nullable().default(null),
 });
 

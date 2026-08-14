@@ -19,7 +19,9 @@ export const useStoryListStore = create<StoryListState>((set, get) => ({
   setStories: (stories) => set({ stories }),
   fetchStories: async (storyService) => {
     try {
-      const fetchedStories = await storyService.getAllStories(useUserSettingsStore.getState().userId ?? undefined);
+      const fetchedStories = await storyService.getAllStories(
+        useUserSettingsStore.getState().userId ?? undefined,
+      );
       set({ stories: fetchedStories as Story[] });
     } catch (error) {
       console.error('Error fetching stories:', error);
@@ -29,7 +31,7 @@ export const useStoryListStore = create<StoryListState>((set, get) => ({
   updateStoryFavoriteStatus: (storyId, isFavorite) => {
     set((state) => ({
       stories: state.stories.map((story) =>
-        story.id === storyId ? { ...story, isFavorite } : story
+        story.id === storyId ? { ...story, isFavorite } : story,
       ),
     }));
     entityEventEmitter.emit('story_changed', storyId);
@@ -42,9 +44,7 @@ export const useStoryListStore = create<StoryListState>((set, get) => ({
   },
   updateStory: (updatedStory) => {
     set((state) => ({
-      stories: state.stories.map((story) =>
-        story.id === updatedStory.id ? updatedStory : story
-      ),
+      stories: state.stories.map((story) => (story.id === updatedStory.id ? updatedStory : story)),
     }));
     entityEventEmitter.emit('story_changed', updatedStory.id);
   },

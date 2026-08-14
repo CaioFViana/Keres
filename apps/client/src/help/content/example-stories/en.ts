@@ -1,2 +1,38 @@
 import { HelpPage } from '../../types';
-const page:HelpPage={id:'example-stories',title:'Example stories',summary:'Install a copy to explore features without changing your work.',keywords:['example','install','language'],blocks:[{type:'heading',level:2,text:'What it is'},{type:'paragraph',text:'Example stories are ready-made narratives included in the app for demonstration and practice.'},{type:'heading',level:2,text:'What it is for'},{type:'example',title:'Example',text:'Install a branching example to observe scenes, choices, and the map before creating them in your own story.'},{type:'heading',level:2,text:'How to do it'},{type:'path',segments:['Main menu','Example stories']},{type:'steps',items:['Open the catalog.', 'Choose an available language for the example.', 'Tap Install.', 'Open the created copy from your story list.']},{type:'heading',level:2,text:'What it affects elsewhere'},{type:'paragraph',text:'Installation creates your own independent copy. Editing or deleting it does not alter the catalog or another example.'},{type:'seeAlso',pages:['first-story','story-list','import-export']}]};export default page;
+const page: HelpPage = {
+  id: 'example-stories',
+  title: 'Example stories',
+  summary: 'Install a copy to explore features without changing your work.',
+  keywords: ['example', 'install', 'language'],
+  blocks: [
+    { type: 'heading', level: 2, text: 'What it is' },
+    {
+      type: 'paragraph',
+      text: 'Example stories are ready-made narratives included in the app for demonstration and practice.',
+    },
+    { type: 'heading', level: 2, text: 'What it is for' },
+    {
+      type: 'example',
+      title: 'Example',
+      text: 'Install a branching example to observe scenes, choices, and the map before creating them in your own story.',
+    },
+    { type: 'heading', level: 2, text: 'How to do it' },
+    { type: 'path', segments: ['Main menu', 'Example stories'] },
+    {
+      type: 'steps',
+      items: [
+        'Open the catalog.',
+        'Choose an available language for the example.',
+        'Tap Install.',
+        'Open the created copy from your story list.',
+      ],
+    },
+    { type: 'heading', level: 2, text: 'What it affects elsewhere' },
+    {
+      type: 'paragraph',
+      text: 'Installation creates your own independent copy. Editing or deleting it does not alter the catalog or another example.',
+    },
+    { type: 'seeAlso', pages: ['first-story', 'story-list', 'import-export'] },
+  ],
+};
+export default page;

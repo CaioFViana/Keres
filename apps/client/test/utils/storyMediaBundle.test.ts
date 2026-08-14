@@ -96,7 +96,9 @@ describe('extractStoryZip', () => {
   });
 
   it('revives dates so the schema accepts a package this app exported', async () => {
-    const bytes = await buildZip({ 'story.json': JSON.stringify(storyJson({ galleryItems: [galleryItem()] })) });
+    const bytes = await buildZip({
+      'story.json': JSON.stringify(storyJson({ galleryItems: [galleryItem()] })),
+    });
 
     const extracted = await extractStoryZip(bytes, 'a-queda.zip');
 
@@ -146,19 +148,25 @@ describe('extractStoryZip', () => {
   it('reports invalid_format when story.json is missing', async () => {
     const bytes = await buildZip({ 'leiame.txt': 'nada aqui' });
 
-    await expect(extractStoryZip(bytes, 'a-queda.zip')).rejects.toMatchObject({ reason: 'invalid_format' });
+    await expect(extractStoryZip(bytes, 'a-queda.zip')).rejects.toMatchObject({
+      reason: 'invalid_format',
+    });
   });
 
   it('reports invalid_format when story.json is not valid JSON', async () => {
     const bytes = await buildZip({ 'story.json': '{ isto não é json' });
 
-    await expect(extractStoryZip(bytes, 'a-queda.zip')).rejects.toMatchObject({ reason: 'invalid_format' });
+    await expect(extractStoryZip(bytes, 'a-queda.zip')).rejects.toMatchObject({
+      reason: 'invalid_format',
+    });
   });
 
   it('reports invalid_format when the JSON is valid but is not a Keres export', async () => {
     const bytes = await buildZip({ 'story.json': JSON.stringify({ hello: 'world' }) });
 
-    await expect(extractStoryZip(bytes, 'a-queda.zip')).rejects.toMatchObject({ reason: 'invalid_format' });
+    await expect(extractStoryZip(bytes, 'a-queda.zip')).rejects.toMatchObject({
+      reason: 'invalid_format',
+    });
   });
 
   it('reports future_format_version for a package produced by a newer app', async () => {
@@ -166,7 +174,9 @@ describe('extractStoryZip', () => {
       'story.json': JSON.stringify(storyJson({ formatVersion: CURRENT_STORY_FORMAT_VERSION + 1 })),
     });
 
-    await expect(extractStoryZip(bytes, 'a-queda.zip')).rejects.toMatchObject({ reason: 'future_format_version' });
+    await expect(extractStoryZip(bytes, 'a-queda.zip')).rejects.toMatchObject({
+      reason: 'future_format_version',
+    });
   });
 
   it('names the offending file in every failure message', async () => {

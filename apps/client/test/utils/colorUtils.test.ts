@@ -1,4 +1,9 @@
-import { getColorLuminance, getContrastTextColor, isColorLight, isValidHexColor } from '../../src/utils/colorUtils';
+import {
+  getColorLuminance,
+  getContrastTextColor,
+  isColorLight,
+  isValidHexColor,
+} from '../../src/utils/colorUtils';
 
 describe('color utilities', () => {
   it('validates supported hexadecimal colors', () => {

@@ -1,24 +1,43 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  assertStorage: vi.fn(), cleanup: vi.fn(), createApp: vi.fn(), listen: vi.fn(), loggerInfo: vi.fn(), reconcile: vi.fn(), runMigrations: vi.fn(), setLogSink: vi.fn(),
+  assertStorage: vi.fn(),
+  cleanup: vi.fn(),
+  createApp: vi.fn(),
+  listen: vi.fn(),
+  loggerInfo: vi.fn(),
+  reconcile: vi.fn(),
+  runMigrations: vi.fn(),
+  setLogSink: vi.fn(),
 }));
 
 vi.mock('../src/config/env', () => ({ env: { PORT: '3000' } }));
 vi.mock('../src/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
 vi.mock('../src/index', () => ({ createApp: mocks.createApp }));
 vi.mock('../src/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
-vi.mock('../src/services/MediaStorageConfigurationService', () => ({ assertMediaStorageConfiguration: mocks.assertStorage }));
-vi.mock('../src/services/MediaStorageService', () => ({ mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup } }));
+vi.mock('../src/services/MediaStorageConfigurationService', () => ({
+  assertMediaStorageConfiguration: mocks.assertStorage,
+}));
+vi.mock('../src/services/MediaStorageService', () => ({
+  mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
+}));
 vi.mock('../src/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
-vi.mock('../src/utils/logger', () => ({ logger: { info: mocks.loggerInfo }, setLogSink: mocks.setLogSink }));
+vi.mock('../src/utils/logger', () => ({
+  logger: { info: mocks.loggerInfo },
+  setLogSink: mocks.setLogSink,
+}));
 
 beforeAll(async () => {
   mocks.runMigrations.mockResolvedValue(undefined);
   mocks.assertStorage.mockResolvedValue(undefined);
   mocks.cleanup.mockResolvedValue(2);
   mocks.reconcile.mockResolvedValue(undefined);
-  mocks.createApp.mockResolvedValue({ listen: mocks.listen.mockImplementation((_port: string, callback: (address: { hostname: string; port: number }) => void) => callback({ hostname: '127.0.0.1', port: 3000 })) });
+  mocks.createApp.mockResolvedValue({
+    listen: mocks.listen.mockImplementation(
+      (_port: string, callback: (address: { hostname: string; port: number }) => void) =>
+        callback({ hostname: '127.0.0.1', port: 3000 }),
+    ),
+  });
   await import('../src/server');
 });
 

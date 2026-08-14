@@ -66,11 +66,16 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
     );
   }
 
-  const initialRouteName: keyof RootStackParamList = isColdInstallNeeded ? 'ColdInstall' : 'StorySelection';
+  const initialRouteName: keyof RootStackParamList = isColdInstallNeeded
+    ? 'ColdInstall'
+    : 'StorySelection';
 
   return (
     <SyncInitializer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRouteName}>
+      <RootStack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName={initialRouteName}
+      >
         <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
         <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
         <RootStack.Screen name="MainSystem" component={MainSystemStack} />

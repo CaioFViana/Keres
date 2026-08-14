@@ -14,9 +14,16 @@ interface CommentableDetailFieldProps {
   canComment: boolean;
   isStoryOwner: boolean;
   currentUserId: string | null;
-  onAddComment: (input: { commentText: string; excerptText: string | null; criticality: number }) => Promise<void>;
+  onAddComment: (input: {
+    commentText: string;
+    excerptText: string | null;
+    criticality: number;
+  }) => Promise<void>;
   onDeleteComment: (commentId: string) => Promise<void>;
-  onUpdateComment: (commentId: string, changes: { commentText?: string; criticality?: number }) => Promise<void>;
+  onUpdateComment: (
+    commentId: string,
+    changes: { commentText?: string; criticality?: number },
+  ) => Promise<void>;
 }
 
 /**
@@ -26,8 +33,16 @@ interface CommentableDetailFieldProps {
  * nesse caso não vale a pena mostrar o botão à toa, então cai de volta a um `DetailField` puro.
  */
 const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
-  storyId, label, value, comments, canComment, isStoryOwner, currentUserId,
-  onAddComment, onDeleteComment, onUpdateComment,
+  storyId,
+  label,
+  value,
+  comments,
+  canComment,
+  isStoryOwner,
+  currentUserId,
+  onAddComment,
+  onDeleteComment,
+  onUpdateComment,
 }) => {
   const { colors } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
@@ -40,7 +55,14 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   const styles = StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'flex-start' },
     field: { flex: 1 },
-    button: { flexDirection: 'row', alignItems: 'center', marginLeft: 8, marginTop: 18, paddingHorizontal: 4, paddingVertical: 2 },
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 8,
+      marginTop: 18,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+    },
     count: { fontSize: 12, color: colors.textSecondary, marginLeft: 3 },
   });
 

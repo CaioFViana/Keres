@@ -4,7 +4,7 @@ export const ChapterSchema = z.object({
   id: z.string(),
   storyId: z.string(),
   name: z.string(),
-  index: z.number().int().min(1, "Index must be a positive integer starting from 1"),
+  index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
   summary: z.string().nullable(),
   isFavorite: z.boolean(),
   extraNotes: z.string().nullable(),
@@ -24,8 +24,8 @@ export const CreateChapterDataSchema = ChapterSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  name: z.string().min(1, "Chapter name cannot be empty"),
-  index: z.number().int().min(1, "Index must be a positive integer starting from 1"),
+  name: z.string().min(1, 'Chapter name cannot be empty'),
+  index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
   isFavorite: z.boolean().default(false),
 });
 

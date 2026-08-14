@@ -7,9 +7,15 @@ import { stories } from './stories';
 
 export const choiceChecks = pgTable('choice_checks', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  groupId: text('group_id').notNull().references(() => choiceCheckGroups.id),
-  mode: text('mode', { enum: ['block', 'enable'] }).notNull().default('block'),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  groupId: text('group_id')
+    .notNull()
+    .references(() => choiceCheckGroups.id),
+  mode: text('mode', { enum: ['block', 'enable'] })
+    .notNull()
+    .default('block'),
   type: text('type', { enum: ['sceneCount', 'inventory', 'trigger'] }).notNull(),
   order: integer('order').notNull().default(0),
   // Usados apenas quando type = 'sceneCount'

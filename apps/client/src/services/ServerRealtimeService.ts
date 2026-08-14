@@ -21,7 +21,11 @@ export class ServerRealtimeService {
   private storyId: string | undefined;
   private activeTasks = new Set<Promise<unknown>>();
 
-  constructor(private readonly db: AppDrizzleClient, private readonly server: ServerSelect, private readonly userId: string) {}
+  constructor(
+    private readonly db: AppDrizzleClient,
+    private readonly server: ServerSelect,
+    private readonly userId: string,
+  ) {}
 
   start(storyId?: string): void {
     this.storyId = storyId;
@@ -61,7 +65,9 @@ export class ServerRealtimeService {
       client.setActiveServer(this.server);
       const { data } = await client.post<{ ticket: string }>('/auth/ws-ticket');
       if (this.stopped) return;
-      const wsUrl = this.server.url.replace(/^http/i, 'ws').replace(/\/$/, '') + `/ws/events?ticket=${encodeURIComponent(data.ticket)}`;
+      const wsUrl =
+        this.server.url.replace(/^http/i, 'ws').replace(/\/$/, '') +
+        `/ws/events?ticket=${encodeURIComponent(data.ticket)}`;
       const socket = new WebSocket(wsUrl);
       this.socket = socket;
       socket.onopen = () => {
@@ -74,28 +80,44 @@ export class ServerRealtimeService {
         // WebSocket events are intentionally ephemeral. Refresh once on every connection so
         // profile/friendship changes made while this device was offline are not left stale
         // merely because their notification was missed.
-        this.track(createFriendshipService(this.db)
-          .syncFriendshipsWithServer(this.userId, this.server)
-          .catch((error) => console.log('Realtime friendship refresh failed:', (error as Error)?.message || error)));
+        this.track(
+          createFriendshipService(this.db)
+            .syncFriendshipsWithServer(this.userId, this.server)
+            .catch((error) =>
+              console.log(
+                'Realtime friendship refresh failed:',
+                (error as Error)?.message || error,
+              ),
+            ),
+        );
       };
       socket.onmessage = (event) => {
         if (!this.stopped) {
-          this.track(this.handleEvent(event.data as string).catch((error) => {
-            console.log('Realtime event handling failed:', (error as Error)?.message || error);
-          }));
+          this.track(
+            this.handleEvent(event.data as string).catch((error) => {
+              console.log('Realtime event handling failed:', (error as Error)?.message || error);
+            }),
+          );
         }
       };
       socket.onerror = () => socket.close();
       socket.onclose = () => this.scheduleReconnect();
     } catch (error) {
-      console.log(`Realtime connection failed for ${this.server.name}; retrying after health check.`, (error as Error)?.message || error);
+      console.log(
+        `Realtime connection failed for ${this.server.name}; retrying after health check.`,
+        (error as Error)?.message || error,
+      );
       this.scheduleReconnect();
     }
   }
 
   private async handleEvent(raw: string): Promise<void> {
     let event: ServerEvent;
-    try { event = JSON.parse(raw) as ServerEvent; } catch { return; }
+    try {
+      event = JSON.parse(raw) as ServerEvent;
+    } catch {
+      return;
+    }
     console.log(`Realtime event from ${this.server.name}: ${event.type}`);
     if (event.type === 'story.changed') {
       SyncEngineService.getInstance().requestSync('websocket');
@@ -108,7 +130,12 @@ export class ServerRealtimeService {
       const localIds = new Set(localStories.map((story) => story.id));
       for (const preview of previews) {
         if (!localIds.has(preview.storyId)) {
-          await engine.downloadAndImportStory(this.server.id, preview.storyId, this.server.idUser, preview.role);
+          await engine.downloadAndImportStory(
+            this.server.id,
+            preview.storyId,
+            this.server.idUser,
+            preview.role,
+          );
         }
       }
     }
@@ -118,7 +145,11 @@ export class ServerRealtimeService {
     if (this.stopped || this.retryTimer) return;
     this.retryTimer = setTimeout(async () => {
       this.retryTimer = null;
-      try { await fetch(`${this.server.url.replace(/\/$/, '')}/kerescheck`); } catch { /* retry below */ }
+      try {
+        await fetch(`${this.server.url.replace(/\/$/, '')}/kerescheck`);
+      } catch {
+        /* retry below */
+      }
       if (!this.stopped) this.track(this.connect());
     }, RETRY_MS);
   }

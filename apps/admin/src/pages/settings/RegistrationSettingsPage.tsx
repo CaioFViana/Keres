@@ -11,8 +11,12 @@ export function RegistrationSettingsPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    RegistrationSettingsApiService.get().then(setSettings).catch((err) => setError(err.message));
-    TierApiService.list().then(setTiers).catch(() => {});
+    RegistrationSettingsApiService.get()
+      .then(setSettings)
+      .catch((err) => setError(err.message));
+    TierApiService.list()
+      .then(setTiers)
+      .catch(() => {});
   }, []);
 
   if (!settings) return <p>{error ? <span className="error-text">{error}</span> : 'Loading...'}</p>;
@@ -67,7 +71,12 @@ export function RegistrationSettingsPage() {
           <input
             type="number"
             value={settings.maxUsers ?? ''}
-            onChange={(e) => setSettings({ ...settings, maxUsers: e.target.value === '' ? null : Number(e.target.value) })}
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                maxUsers: e.target.value === '' ? null : Number(e.target.value),
+              })
+            }
           />
         </label>
 
@@ -79,7 +88,9 @@ export function RegistrationSettingsPage() {
           >
             <option value="">(none / unlimited)</option>
             {tiers.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
             ))}
           </select>
         </label>
@@ -87,7 +98,9 @@ export function RegistrationSettingsPage() {
         {error && <p className="error-text">{error}</p>}
         {message && <p className="success-text">{message}</p>}
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+          <button type="submit" disabled={saving}>
+            {saving ? 'Saving...' : 'Save'}
+          </button>
         </div>
       </form>
     </div>

@@ -7,7 +7,12 @@ import { Create, getChangedFields, prepareNewEntityData } from '../../utils/enti
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
-import { decorateFavorite, normalizeFavoriteCreate, normalizeFavoriteUpdate, persistInitialFavorite } from './favoriteBehaviorUtils';
+import {
+  decorateFavorite,
+  normalizeFavoriteCreate,
+  normalizeFavoriteUpdate,
+  persistInitialFavorite,
+} from './favoriteBehaviorUtils';
 
 export type { FavoriteFilterState };
 
@@ -23,14 +28,31 @@ export interface TagService {
   ): Promise<TagSelect[]>;
   getById(tagId: string): Promise<TagSelect | undefined>;
   createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect>;
-  updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void>;
+  updateTag(
+    currentUserId: string,
+    tagId: string,
+    tagData: Partial<
+      Omit<
+        TagInsert,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      >
+    >,
+  ): Promise<void>;
   deleteTag(currentUserId: string, tagId: string): Promise<void>;
 }
 
 export const createTagService = (db: AppDrizzleClient): TagService => {
   const serverService = createServerService(db); // Create serverService once
   return {
-    async getTagsByStoryId(storyId, searchTerm, activeFilterTags, sortBy, sortDirection, favoriteFilterState, advancedSearchCriteria): Promise<TagSelect[]> {
+    async getTagsByStoryId(
+      storyId,
+      searchTerm,
+      activeFilterTags,
+      sortBy,
+      sortDirection,
+      favoriteFilterState,
+      advancedSearchCriteria,
+    ): Promise<TagSelect[]> {
       const conditions: (SQL<boolean> | undefined)[] = [
         eq(tags.storyId, storyId) as SQL<boolean>, // Explicit cast to SQL<boolean>
         eq(tags.isDeleted, false) as SQL<boolean>,
@@ -56,11 +78,13 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         for (const key in advancedSearchCriteria) {
           if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
             const value = advancedSearchCriteria[key];
-            const fieldMeta = tagMetadata.find(meta => meta.name === key);
+            const fieldMeta = tagMetadata.find((meta) => meta.name === key);
 
             if (value !== undefined && value !== '' && fieldMeta) {
               if (fieldMeta.type === 'string') {
-                conditions.push(sql`${tags[key as keyof TagSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>);
+                conditions.push(
+                  sql`${tags[key as keyof TagSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
+                );
               } else if (fieldMeta.type === 'boolean') {
                 conditions.push(eq(tags[key as keyof TagSelect], value) as SQL<boolean>);
               } else if (fieldMeta.type === 'color') {
@@ -75,7 +99,11 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       // Filter out undefined conditions and use 'and' to combine them
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
-      let query = db.select().from(tags).where(and(...finalConditions)).$dynamic();
+      let query = db
+        .select()
+        .from(tags)
+        .where(and(...finalConditions))
+        .$dynamic();
 
       if (sortBy) {
         const orderBy = sortDirection === 'desc' ? desc : asc;
@@ -115,21 +143,51 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       const favorite = await normalizeFavoriteCreate(db, newTag.storyId, 'Tag', newTag);
       newTag = favorite.data;
       const result = await db.insert(tags).values(newTag).returning().get();
-      await persistInitialFavorite(db, newTag.storyId, newTag.id, 'Tag', currentUserId, favorite.individualFavorite);
+      await persistInitialFavorite(
+        db,
+        newTag.storyId,
+        newTag.id,
+        'Tag',
+        currentUserId,
+        favorite.individualFavorite,
+      );
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newTag.storyId, currentUserId);
-      await recordLocalOperation(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, { ...result });
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newTag.storyId,
+        currentUserId,
+      );
+      await recordLocalOperation(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, {
+        ...result,
+      });
       entityEventEmitter.emit('tag_changed', newTag.storyId, newTag.id); // Emit event after create
 
       return result;
     },
 
-    async updateTag(currentUserId: string, tagId: string, tagData: Partial<Omit<TagInsert, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<void> {
+    async updateTag(
+      currentUserId: string,
+      tagId: string,
+      tagData: Partial<
+        Omit<
+          TagInsert,
+          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+        >
+      >,
+    ): Promise<void> {
       const originalTag = await db.query.tags.findFirst({ where: eq(tags.id, tagId) });
       if (!originalTag) {
         throw new Error(`Tag with ID ${tagId} not found for update.`);
       }
-      tagData = await normalizeFavoriteUpdate(db, originalTag.storyId, tagId, 'Tag', currentUserId, tagData);
+      tagData = await normalizeFavoriteUpdate(
+        db,
+        originalTag.storyId,
+        tagId,
+        'Tag',
+        currentUserId,
+        tagData,
+      );
 
       const potentialNewState = { ...originalTag, ...tagData };
 
@@ -138,11 +196,14 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       delete changes.updatedAt;
 
       if (Object.keys(changes).length === 0) {
-        console.log(`No significant changes detected for tag ${tagId}. Skipping update and operation log.`);
+        console.log(
+          `No significant changes detected for tag ${tagId}. Skipping update and operation log.`,
+        );
         return;
       }
 
-      const [updatedTag] = await db.update(tags)
+      const [updatedTag] = await db
+        .update(tags)
         .set({ ...tagData, updatedAt: new Date(), version: sql`${tags.version} + 1` })
         .where(eq(tags.id, tagId))
         .returning({ id: tags.id, storyId: tags.storyId, version: tags.version }); // Return relevant fields
@@ -151,7 +212,12 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         throw new Error(`Failed to update tag ${tagId} or tag not found.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedTag.storyId, currentUserId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updatedTag.storyId,
+        currentUserId,
+      );
       // Log the diff already computed above, not the raw `tagData` input - the input has
       // every field the form sends, changed or not.
       await recordLocalOperation(db, updatedTag.storyId, userIdToLog, 'update', 'Tag', tagId, {
@@ -168,16 +234,32 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         return;
       }
 
-      const [updatedTag] = await db.update(tags)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${tags.version} + 1` })
+      const [updatedTag] = await db
+        .update(tags)
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${tags.version} + 1`,
+        })
         .where(eq(tags.id, tagId))
-        .returning({ id: tags.id, storyId: tags.storyId, isDeleted: tags.isDeleted, version: tags.version });
+        .returning({
+          id: tags.id,
+          storyId: tags.storyId,
+          isDeleted: tags.isDeleted,
+          version: tags.version,
+        });
 
       if (!updatedTag) {
         throw new Error(`Failed to delete tag ${tagId} or tag not found.`);
       }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, updatedTag.storyId, currentUserId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        updatedTag.storyId,
+        currentUserId,
+      );
       await recordLocalOperation(db, updatedTag.storyId, userIdToLog, 'delete', 'Tag', tagId, {
         id: updatedTag.id,
         isDeleted: updatedTag.isDeleted,

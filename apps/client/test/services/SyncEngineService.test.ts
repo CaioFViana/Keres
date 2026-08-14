@@ -8,7 +8,12 @@ jest.mock('../../src/state/notificationStore', () => ({
 
 // A reconciliação de mídia roda no fim de cada ciclo e transfere bytes por fora do Axios;
 // aqui só interessa que ela não interfira no que o ciclo de metadados fez.
-const mockSyncStoryMedia = jest.fn(async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }));
+const mockSyncStoryMedia = jest.fn(async () => ({
+  uploaded: 0,
+  downloaded: 0,
+  failed: 0,
+  offline: false,
+}));
 jest.mock('../../src/services/MediaSyncService', () => ({
   createMediaSyncService: () => ({ syncStoryMedia: mockSyncStoryMedia }),
 }));
@@ -37,7 +42,12 @@ interface SeenRequest {
 let seen: SeenRequest[];
 
 /** Resposta do pull; cada teste ajusta o que o servidor "tem". */
-let pullResponse: { updates: any[]; publicFavorites?: any[]; serverMaxOperationVersion: number; role: string };
+let pullResponse: {
+  updates: any[];
+  publicFavorites?: any[];
+  serverMaxOperationVersion: number;
+  role: string;
+};
 /** Resposta do push. */
 let pushResponse: any;
 /** Quando definido, o adapter falha como se o servidor estivesse fora do ar. */
@@ -57,7 +67,10 @@ function installAdapter() {
     seen.push({ method, url, body: config.data ? JSON.parse(config.data) : undefined });
 
     const isPull = url.includes('/pull');
-    if ((isPull && offlineOn === 'pull') || (!isPull && method === 'POST' && offlineOn === 'push')) {
+    if (
+      (isPull && offlineOn === 'pull') ||
+      (!isPull && method === 'POST' && offlineOn === 'push')
+    ) {
       const error: any = new Error('Network Error');
       error.code = 'ERR_NETWORK';
       error.config = config;
@@ -94,7 +107,9 @@ async function seedServer() {
   });
 }
 
-async function seedPendingOperation(overrides: Partial<typeof schema.operationLogs.$inferInsert> = {}) {
+async function seedPendingOperation(
+  overrides: Partial<typeof schema.operationLogs.$inferInsert> = {},
+) {
   const row = {
     id: `op-${Math.random().toString(36).slice(2)}`,
     storyId: STORY_ID,
@@ -132,7 +147,8 @@ const remoteCreate = (id: string, name: string, operationVersion: number) => ({
   },
 });
 
-const readStory = () => database.db.query.stories.findFirst({ where: eq(schema.stories.id, STORY_ID) });
+const readStory = () =>
+  database.db.query.stories.findFirst({ where: eq(schema.stories.id, STORY_ID) });
 
 /**
  * Um único ciclo de sincronização, sem timers. O retorno é o sinal de "servidor inalcançável"
@@ -145,7 +161,13 @@ async function runOneCycle(): Promise<boolean> {
 beforeEach(async () => {
   database = await createTestDatabase();
   pullResponse = { updates: [], publicFavorites: [], serverMaxOperationVersion: 0, role: 'owner' };
-  pushResponse = { message: 'ok', processedUpdates: 0, serverMaxOperationVersion: 0, applied: [], conflicts: [] };
+  pushResponse = {
+    message: 'ok',
+    processedUpdates: 0,
+    serverMaxOperationVersion: 0,
+    applied: [],
+    conflicts: [],
+  };
   offlineOn = null;
   installAdapter();
 
@@ -181,7 +203,11 @@ describe('pull', () => {
 
   it('writes a remote creation into the local database', async () => {
     await seedStory();
-    pullResponse = { updates: [remoteCreate('char-remoto', 'Keres', 5)], serverMaxOperationVersion: 5, role: 'owner' };
+    pullResponse = {
+      updates: [remoteCreate('char-remoto', 'Keres', 5)],
+      serverMaxOperationVersion: 5,
+      role: 'owner',
+    };
 
     await runOneCycle();
 
@@ -199,7 +225,11 @@ describe('pull', () => {
    */
   it('advances the cursor only to the highest operation it actually received', async () => {
     await seedStory();
-    pullResponse = { updates: [remoteCreate('char-remoto', 'Keres', 5)], serverMaxOperationVersion: 99, role: 'owner' };
+    pullResponse = {
+      updates: [remoteCreate('char-remoto', 'Keres', 5)],
+      serverMaxOperationVersion: 99,
+      role: 'owner',
+    };
 
     await runOneCycle();
 
@@ -217,7 +247,11 @@ describe('pull', () => {
 
   it('does not re-apply what it already has on a second cycle', async () => {
     await seedStory();
-    pullResponse = { updates: [remoteCreate('char-remoto', 'Keres', 5)], serverMaxOperationVersion: 5, role: 'owner' };
+    pullResponse = {
+      updates: [remoteCreate('char-remoto', 'Keres', 5)],
+      serverMaxOperationVersion: 5,
+      role: 'owner',
+    };
     await runOneCycle();
 
     pullResponse = { updates: [], serverMaxOperationVersion: 5, role: 'owner' };
@@ -264,7 +298,9 @@ describe('pull', () => {
 
     await runOneCycle();
 
-    const server = await database.db.query.servers.findFirst({ where: eq(schema.servers.id, SERVER.id) });
+    const server = await database.db.query.servers.findFirst({
+      where: eq(schema.servers.id, SERVER.id),
+    });
     expect(server!.lastSyncDate).toBeInstanceOf(Date);
   });
 });
@@ -303,14 +339,17 @@ describe('push', () => {
    * Uma operação em conflito fica fora do push até o usuário decidir. Sem isso ela seria
    * reenviada e recusada em todo ciclo, para sempre.
    */
-  it.each(['conflicted', 'abandoned'] as const)('does not push an operation marked %s', async (conflictState) => {
-    await seedStory({ lastOperationLog: 1 });
-    await seedPendingOperation({ conflictState });
+  it.each(['conflicted', 'abandoned'] as const)(
+    'does not push an operation marked %s',
+    async (conflictState) => {
+      await seedStory({ lastOperationLog: 1 });
+      await seedPendingOperation({ conflictState });
 
-    await runOneCycle();
+      await runOneCycle();
 
-    expect(seen.filter((request) => request.method === 'POST')).toEqual([]);
-  });
+      expect(seen.filter((request) => request.method === 'POST')).toEqual([]);
+    },
+  );
 
   it('marks an accepted operation as synced, so it is never sent twice', async () => {
     await seedStory({ lastOperationLog: 1 });

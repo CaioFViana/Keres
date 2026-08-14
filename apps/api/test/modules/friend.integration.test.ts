@@ -97,7 +97,9 @@ describe('sending a friend request', () => {
   });
 
   it('refuses a request to somebody who does not exist', async () => {
-    const { status, data } = await request('POST', `/friend/request/${newId()}`, { token: ana.token });
+    const { status, data } = await request('POST', `/friend/request/${newId()}`, {
+      token: ana.token,
+    });
 
     expect(status).toBe(404);
     expect(data.message).toMatch(/not found/i);

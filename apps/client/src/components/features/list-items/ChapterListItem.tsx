@@ -13,7 +13,11 @@ interface ChapterListItemProps {
   onViewDetails: (chapterId: string) => void;
 }
 
-const ChapterListItem: React.FC<ChapterListItemProps> = ({ chapter, onToggleFavorite, onViewDetails }) => {
+const ChapterListItem: React.FC<ChapterListItemProps> = ({
+  chapter,
+  onToggleFavorite,
+  onViewDetails,
+}) => {
   const { colors } = useTheme();
 
   const summaryText = truncate(chapter.summary, 150);

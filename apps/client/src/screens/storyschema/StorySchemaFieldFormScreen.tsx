@@ -23,8 +23,14 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 
-type StorySchemaFieldFormScreenRouteProp = RouteProp<StorySchemaStackParamList, 'StorySchemaFieldForm'>;
-type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<StorySchemaStackParamList, 'StorySchemaFieldForm'>;
+type StorySchemaFieldFormScreenRouteProp = RouteProp<
+  StorySchemaStackParamList,
+  'StorySchemaFieldForm'
+>;
+type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<
+  StorySchemaStackParamList,
+  'StorySchemaFieldForm'
+>;
 
 const ATTRIBUTE_TYPE_OPTIONS = Object.values(AttributeType);
 
@@ -58,8 +64,10 @@ const StorySchemaFieldFormScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: isEditing ? t('edit_attribute_title') : t('create_attribute_title') });
-    }, [navigation, isEditing, t])
+      navigation.setOptions({
+        title: isEditing ? t('edit_attribute_title') : t('create_attribute_title'),
+      });
+    }, [navigation, isEditing, t]),
   );
 
   useEffect(() => {
@@ -163,7 +171,13 @@ const StorySchemaFieldFormScreen = () => {
     scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
     label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5, color: colors.text },
     hint: { fontSize: 13, color: colors.textSecondary, marginTop: -2, marginBottom: 5 },
-    switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 15, marginBottom: 5 },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 15,
+      marginBottom: 5,
+    },
     saveButton: { marginTop: 30 },
   });
 
@@ -172,66 +186,69 @@ const StorySchemaFieldFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={styles.label}>{t('attribute_display_name')}</Text>
-          <TextInput
-            placeholder={t('attribute_display_name_placeholder')}
-            value={name}
-            onChangeText={handleNameChange}
-            style={commonInputStyles.input}
-          />
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={styles.label}>{t('attribute_display_name')}</Text>
+      <TextInput
+        placeholder={t('attribute_display_name_placeholder')}
+        value={name}
+        onChangeText={handleNameChange}
+        style={commonInputStyles.input}
+      />
 
-          <Text style={styles.label}>{t('attribute_internal_key')}</Text>
-          <Text style={styles.hint}>{t('attribute_internal_key_hint')}</Text>
-          <TextInput
-            placeholder={t('attribute_internal_key_placeholder')}
-            value={key}
-            onChangeText={handleKeyChange}
-            autoCapitalize="none"
-            editable={!isEditing}
-            style={[commonInputStyles.input, isEditing && { opacity: 0.6 }]}
-          />
+      <Text style={styles.label}>{t('attribute_internal_key')}</Text>
+      <Text style={styles.hint}>{t('attribute_internal_key_hint')}</Text>
+      <TextInput
+        placeholder={t('attribute_internal_key_placeholder')}
+        value={key}
+        onChangeText={handleKeyChange}
+        autoCapitalize="none"
+        editable={!isEditing}
+        style={[commonInputStyles.input, isEditing && { opacity: 0.6 }]}
+      />
 
-          <Text style={styles.label}>{t('description')}</Text>
-          <TextInput
-            placeholder={t('attribute_description_placeholder')}
-            value={description || ''}
-            onChangeText={setDescription}
-            style={[commonInputStyles.input, { minHeight: 3 * 20, textAlignVertical: 'top' }]}
-            multiline
-          />
+      <Text style={styles.label}>{t('description')}</Text>
+      <TextInput
+        placeholder={t('attribute_description_placeholder')}
+        value={description || ''}
+        onChangeText={setDescription}
+        style={[commonInputStyles.input, { minHeight: 3 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
 
-          <Text style={styles.label}>{t('attribute_type_label')}</Text>
-          <Select
-            options={typeOptions}
-            value={type}
-            onValueChange={(value) => setType((value as AttributeType) || AttributeType.TEXT)}
-            placeholder={t('attribute_type_label')}
-            disabled={isEditing}
-          />
+      <Text style={styles.label}>{t('attribute_type_label')}</Text>
+      <Select
+        options={typeOptions}
+        value={type}
+        onValueChange={(value) => setType((value as AttributeType) || AttributeType.TEXT)}
+        placeholder={t('attribute_type_label')}
+        disabled={isEditing}
+      />
 
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { marginTop: 0 }]}>{t('attribute_required')}</Text>
-            <ThemedSwitch
-              value={isRequired}
-              onValueChange={setIsRequired}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { marginTop: 0 }]}>{t('attribute_required')}</Text>
+        <ThemedSwitch
+          value={isRequired}
+          onValueChange={setIsRequired}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
 
-          <Text style={styles.label}>{t('attribute_default_value')}</Text>
-          <AttributeValueInput
-            type={type}
-            value={defaultValue || ''}
-            onChange={setDefaultValue}
-            placeholder={t('attribute_default_value')}
-            storyId={storyId}
-            suggestionFieldId={fieldId}
-          />
+      <Text style={styles.label}>{t('attribute_default_value')}</Text>
+      <AttributeValueInput
+        type={type}
+        value={defaultValue || ''}
+        onChange={setDefaultValue}
+        placeholder={t('attribute_default_value')}
+        storyId={storyId}
+        suggestionFieldId={fieldId}
+      />
 
-          <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
-            {saving ? t('saving') : t('save')}
-          </Button>
+      <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
+        {saving ? t('saving') : t('save')}
+      </Button>
     </KeyboardAwareScreen>
   );
 };

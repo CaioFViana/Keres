@@ -4,7 +4,9 @@ import { stories } from './stories';
 
 export const notes = pgTable('notes', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
   title: text('title').notNull(),
   body: text('body'),
   isFavorite: boolean('is_favorite').notNull().default(false),

@@ -20,8 +20,14 @@ describe('S3BlobStorage (SeaweedFS)', () => {
 
   afterAll(() => {
     for (const key of [
-      'MEDIA_STORAGE_DRIVER', 'MEDIA_S3_ENDPOINT', 'MEDIA_S3_REGION', 'MEDIA_S3_BUCKET',
-      'MEDIA_S3_ACCESS_KEY_ID', 'MEDIA_S3_SECRET_ACCESS_KEY', 'MEDIA_S3_PREFIX', 'MEDIA_S3_FORCE_PATH_STYLE',
+      'MEDIA_STORAGE_DRIVER',
+      'MEDIA_S3_ENDPOINT',
+      'MEDIA_S3_REGION',
+      'MEDIA_S3_BUCKET',
+      'MEDIA_S3_ACCESS_KEY_ID',
+      'MEDIA_S3_SECRET_ACCESS_KEY',
+      'MEDIA_S3_PREFIX',
+      'MEDIA_S3_FORCE_PATH_STYLE',
     ]) {
       delete process.env[key];
     }
@@ -30,9 +36,15 @@ describe('S3BlobStorage (SeaweedFS)', () => {
   it('writes, reads, detects and deletes a real gallery image through the S3 API', async () => {
     const storage = new S3BlobStorage();
     const key = `test/${crypto.randomUUID()}`;
-    const imagePath = path.resolve(import.meta.dirname, '../../../../client/assets/images/favicon.png');
+    const imagePath = path.resolve(
+      import.meta.dirname,
+      '../../../../client/assets/images/favicon.png',
+    );
     const image = await readFile(imagePath);
-    const bytes = image.buffer.slice(image.byteOffset, image.byteOffset + image.byteLength) as ArrayBuffer;
+    const bytes = image.buffer.slice(
+      image.byteOffset,
+      image.byteOffset + image.byteLength,
+    ) as ArrayBuffer;
 
     expect(await storage.has(key)).toBe(false);
     await storage.put(key, bytes, 'image/png');

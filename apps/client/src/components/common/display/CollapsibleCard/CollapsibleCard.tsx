@@ -1,7 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, useAnimatedReaction } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  useAnimatedReaction,
+} from 'react-native-reanimated';
 import { useTheme } from '../../../../theme';
 
 interface CollapsibleCardProps {
@@ -12,7 +17,11 @@ interface CollapsibleCardProps {
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, initialExpanded = true }) => {
+const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
+  title,
+  children,
+  initialExpanded = true,
+}) => {
   const [expanded, setExpanded] = React.useState(initialExpanded);
   const { colors } = useTheme();
 
@@ -21,7 +30,7 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
   const opacity = useSharedValue(initialExpanded ? 1 : 0);
 
   const toggleExpanded = () => {
-    setExpanded(prev => !prev);
+    setExpanded((prev) => !prev);
   };
 
   React.useEffect(() => {
@@ -41,7 +50,7 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
         animatedHeight.value = withTiming(0, { duration: 300 });
       }
     },
-    [expanded] // expanded is a state variable, not a shared value
+    [expanded], // expanded is a state variable, not a shared value
   );
 
   const animatedContainerStyle = useAnimatedStyle(() => {
@@ -53,7 +62,9 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
   const animatedContentStyle = useAnimatedStyle(() => {
     return {
       opacity: opacity.value,
-      transform: [{ translateY: withTiming(expanded ? 0 : -contentHeight.value * 0.1, { duration: 300 }) }],
+      transform: [
+        { translateY: withTiming(expanded ? 0 : -contentHeight.value * 0.1, { duration: 300 }) },
+      ],
     };
   });
 
@@ -92,37 +103,38 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
       zIndex: -1,
       width: '100%',
       // Apply the same padding here as in childrenWrapper to get an accurate measurement
-      padding: 15, 
+      padding: 15,
     },
     animatedWrapper: {
       overflow: 'hidden',
     },
     childrenWrapper: {
       padding: 15, // Apply padding to the inner content
-    }
+    },
   });
 
-  const onLayout = React.useCallback((event: LayoutChangeEvent) => {
-    // measuredHeight will now include the 15px padding from measurementContent
-    const measuredHeight = event.nativeEvent.layout.height + 5; // Add a small additional buffer
-    if (contentHeight.value !== measuredHeight) {
-      contentHeight.value = measuredHeight;
-      if (expanded) {
-        animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
+  const onLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      // measuredHeight will now include the 15px padding from measurementContent
+      const measuredHeight = event.nativeEvent.layout.height + 5; // Add a small additional buffer
+      if (contentHeight.value !== measuredHeight) {
+        contentHeight.value = measuredHeight;
+        if (expanded) {
+          animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
+        }
       }
-    }
-  }, [expanded, animatedHeight, contentHeight]);
-
+    },
+    [expanded, animatedHeight, contentHeight],
+  );
 
   return (
     <View style={styles.container}>
-      <AnimatedTouchableOpacity onPress={toggleExpanded} style={[styles.header, animatedHeaderStyle]}>
+      <AnimatedTouchableOpacity
+        onPress={toggleExpanded}
+        style={[styles.header, animatedHeaderStyle]}
+      >
         <Text style={styles.titleText}>{title}</Text>
-        <Ionicons
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={24}
-          color={colors.text}
-        />
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={24} color={colors.text} />
       </AnimatedTouchableOpacity>
 
       {/* This View is for measuring the content's natural height */}
@@ -132,9 +144,7 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({ title, children, init
 
       <Animated.View style={[styles.animatedWrapper, animatedContainerStyle]}>
         <Animated.View style={animatedContentStyle}>
-          <View style={styles.childrenWrapper}>
-            {children}
-          </View>
+          <View style={styles.childrenWrapper}>{children}</View>
         </Animated.View>
       </Animated.View>
     </View>

@@ -23,7 +23,9 @@ function mapAttributeTypeToFieldType(type: string): FieldType {
  * `entityFieldMetadata` (o registro estático) nunca é mutado, isto só é concatenado a ele no
  * ponto de uso. `name` usa o `fieldId` (não a `key` legível) pra sobreviver a uma renomeação.
  */
-export function buildCustomAttributeFieldMetadata(fields: StorySchemaFieldSelect[]): EntityFieldMetadata[] {
+export function buildCustomAttributeFieldMetadata(
+  fields: StorySchemaFieldSelect[],
+): EntityFieldMetadata[] {
   return fields.map((field) => ({
     name: `custom:${field.id}`,
     label: field.name,
@@ -31,7 +33,8 @@ export function buildCustomAttributeFieldMetadata(fields: StorySchemaFieldSelect
     type: mapAttributeTypeToFieldType(field.type),
     isSearchable: true,
     isSuggestion: field.type === AttributeType.SUGGESTION,
-    suggestionsSource: field.type === AttributeType.SUGGESTION ? customAttributeSuggestionType(field.id) : undefined,
+    suggestionsSource:
+      field.type === AttributeType.SUGGESTION ? customAttributeSuggestionType(field.id) : undefined,
   }));
 }
 

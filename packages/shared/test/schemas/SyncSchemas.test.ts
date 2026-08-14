@@ -46,16 +46,25 @@ describe('StoryUpdateSchema', () => {
   });
 
   it('requires an id on update and delete operations', () => {
-    expect(UpdateStoryUpdateSchema.safeParse({ type: 'update', entity: 'Character', changes: {} }).success).toBe(false);
-    expect(DeleteStoryUpdateSchema.safeParse({ type: 'delete', entity: 'Character' }).success).toBe(false);
+    expect(
+      UpdateStoryUpdateSchema.safeParse({ type: 'update', entity: 'Character', changes: {} })
+        .success,
+    ).toBe(false);
+    expect(DeleteStoryUpdateSchema.safeParse({ type: 'delete', entity: 'Character' }).success).toBe(
+      false,
+    );
   });
 
   it('allows a create operation without an id, since the entity does not exist yet', () => {
-    expect(CreateStoryUpdateSchema.safeParse({ type: 'create', entity: 'Character', data: {} }).success).toBe(true);
+    expect(
+      CreateStoryUpdateSchema.safeParse({ type: 'create', entity: 'Character', data: {} }).success,
+    ).toBe(true);
   });
 
   it('rejects an empty entity name', () => {
-    expect(CreateStoryUpdateSchema.safeParse({ type: 'create', entity: '', data: {} }).success).toBe(false);
+    expect(
+      CreateStoryUpdateSchema.safeParse({ type: 'create', entity: '', data: {} }).success,
+    ).toBe(false);
   });
 
   it('keeps entity version and operation version as independent counters', () => {
@@ -75,7 +84,9 @@ describe('StoryUpdateSchema', () => {
   it('rejects negative versions', () => {
     const base = { type: 'update' as const, entity: 'Chapter', id: CHAPTER_ID, changes: {} };
     expect(UpdateStoryUpdateSchema.safeParse({ ...base, version: -1 }).success).toBe(false);
-    expect(UpdateStoryUpdateSchema.safeParse({ ...base, operationVersion: -1 }).success).toBe(false);
+    expect(UpdateStoryUpdateSchema.safeParse({ ...base, operationVersion: -1 }).success).toBe(
+      false,
+    );
   });
 
   it('pins a chapter reorder to the Chapter entity and 1-based indices', () => {
@@ -88,14 +99,20 @@ describe('StoryUpdateSchema', () => {
 
     expect(ChapterReorderingStoryUpdateSchema.parse(reorder)).toMatchObject(reorder);
     expect(
-      ChapterReorderingStoryUpdateSchema.safeParse({ ...reorder, reorderItems: [{ id: ulid('scene1'), newIndex: 0 }] })
-        .success,
+      ChapterReorderingStoryUpdateSchema.safeParse({
+        ...reorder,
+        reorderItems: [{ id: ulid('scene1'), newIndex: 0 }],
+      }).success,
     ).toBe(false);
-    expect(ChapterReorderingStoryUpdateSchema.safeParse({ ...reorder, entity: 'Scene' }).success).toBe(false);
+    expect(
+      ChapterReorderingStoryUpdateSchema.safeParse({ ...reorder, entity: 'Scene' }).success,
+    ).toBe(false);
   });
 
   it('rejects an operation type outside the union', () => {
-    expect(StoryUpdateSchema.safeParse({ type: 'upsert', entity: 'Character', data: {} }).success).toBe(false);
+    expect(
+      StoryUpdateSchema.safeParse({ type: 'upsert', entity: 'Character', data: {} }).success,
+    ).toBe(false);
   });
 
   it('validates every element of a push batch', () => {
@@ -109,8 +126,13 @@ describe('StoryUpdateSchema', () => {
 
   it('requires operationTime to be an ISO datetime string', () => {
     const base = { type: 'create' as const, entity: 'Character', data: {} };
-    expect(CreateStoryUpdateSchema.safeParse({ ...base, operationTime: '2026-08-11T18:00:00.000Z' }).success).toBe(true);
-    expect(CreateStoryUpdateSchema.safeParse({ ...base, operationTime: '11/08/2026' }).success).toBe(false);
+    expect(
+      CreateStoryUpdateSchema.safeParse({ ...base, operationTime: '2026-08-11T18:00:00.000Z' })
+        .success,
+    ).toBe(true);
+    expect(
+      CreateStoryUpdateSchema.safeParse({ ...base, operationTime: '11/08/2026' }).success,
+    ).toBe(false);
   });
 });
 
@@ -120,7 +142,9 @@ describe('SyncPushResultSchema', () => {
       message: 'ok',
       processedUpdates: 2,
       serverMaxOperationVersion: 42,
-      applied: [{ operationVersion: 41, entity: 'Character', entityId: STORY_ID, entityVersion: 2 }],
+      applied: [
+        { operationVersion: 41, entity: 'Character', entityId: STORY_ID, entityVersion: 2 },
+      ],
       conflicts: [
         {
           entity: 'Chapter',

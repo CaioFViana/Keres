@@ -12,7 +12,10 @@ afterEach(() => warnSpy.mockRestore());
 
 describe('JWT utilities', () => {
   it('decodes valid payloads and rejects malformed tokens', () => {
-    expect(decodeJwt(tokenWithPayload({ exp: 123, userId: 'user-1' }))).toMatchObject({ exp: 123, userId: 'user-1' });
+    expect(decodeJwt(tokenWithPayload({ exp: 123, userId: 'user-1' }))).toMatchObject({
+      exp: 123,
+      userId: 'user-1',
+    });
     expect(decodeJwt('not-a-token')).toBeNull();
   });
 

@@ -1,5 +1,8 @@
 import { FavoriteEntityType } from '@keres/shared';
-import { globalSearchFieldConfig, GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import {
+  globalSearchFieldConfig,
+  GlobalSearchEntityType,
+} from '@keres/shared/metadata/globalSearchFields';
 import { and, eq, inArray, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import { attributeValues, storySchemaFields } from '../../db/schema';
@@ -17,7 +20,11 @@ export interface GlobalSearchResult {
 }
 
 export interface GlobalSearchService {
-  searchAllEntities(storyId: string, term: string, localUserId: string): Promise<GlobalSearchResult[]>;
+  searchAllEntities(
+    storyId: string,
+    term: string,
+    localUserId: string,
+  ): Promise<GlobalSearchResult[]>;
 }
 
 const NATIVE_RESULT_LIMIT_PER_ENTITY = 15;
@@ -43,7 +50,11 @@ function buildSnippet(fieldLabel: string, value: unknown): string {
 }
 
 /** First configured search field whose value actually contains `term` (case-insensitive) - used to pick which field to show in the snippet. */
-function findMatchingField(row: Record<string, any>, searchFields: string[], term: string): { field: string; value: any } | null {
+function findMatchingField(
+  row: Record<string, any>,
+  searchFields: string[],
+  term: string,
+): { field: string; value: any } | null {
   const lowerTerm = term.toLowerCase();
   for (const field of searchFields) {
     const value = row[field];
@@ -56,7 +67,11 @@ function findMatchingField(row: Record<string, any>, searchFields: string[], ter
 
 export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchService => {
   return {
-    async searchAllEntities(storyId: string, term: string, localUserId: string): Promise<GlobalSearchResult[]> {
+    async searchAllEntities(
+      storyId: string,
+      term: string,
+      localUserId: string,
+    ): Promise<GlobalSearchResult[]> {
       const trimmedTerm = term.trim();
       if (trimmedTerm.length < MIN_SEARCH_TERM_LENGTH) {
         return [];
@@ -70,12 +85,21 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
         const table = getEntityTable(entityType);
         if (!table) return;
 
-        const rows = await db.select().from(table)
-          .where(and(
-            eq((table as any).storyId, storyId),
-            eq((table as any).isDeleted, false),
-            or(...searchFields.map(field => sql`${(table as any)[field]} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>))
-          ))
+        const rows = await db
+          .select()
+          .from(table)
+          .where(
+            and(
+              eq((table as any).storyId, storyId),
+              eq((table as any).isDeleted, false),
+              or(
+                ...searchFields.map(
+                  (field) =>
+                    sql`${(table as any)[field]} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+                ),
+              ),
+            ),
+          )
           .limit(NATIVE_RESULT_LIMIT_PER_ENTITY)
           .all();
 
@@ -94,14 +118,17 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
 
       // Custom Story Schema attributes - one query across every entity type at once.
       const attributeQuery = (async () => {
-        const rows = await db.select({ attribute: attributeValues, field: storySchemaFields })
+        const rows = await db
+          .select({ attribute: attributeValues, field: storySchemaFields })
           .from(attributeValues)
           .innerJoin(storySchemaFields, eq(attributeValues.fieldId, storySchemaFields.id))
-          .where(and(
-            eq(attributeValues.storyId, storyId),
-            eq(attributeValues.isDeleted, false),
-            sql`${attributeValues.value} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>
-          ))
+          .where(
+            and(
+              eq(attributeValues.storyId, storyId),
+              eq(attributeValues.isDeleted, false),
+              sql`${attributeValues.value} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+            ),
+          )
           .limit(ATTRIBUTE_RESULT_LIMIT)
           .all();
 
@@ -114,18 +141,26 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
         }
 
         const titlesByEntityKey = new Map<string, string>();
-        await Promise.all(Array.from(idsByEntityType.entries()).map(async ([entityType, idSet]) => {
-          const table = getEntityTable(entityType);
-          if (!table) return;
-          const { titleField } = globalSearchFieldConfig[entityType];
-          const titleRows = await db.select({ id: (table as any).id, title: (table as any)[titleField] })
-            .from(table)
-            .where(and(inArray((table as any).id, Array.from(idSet)), eq((table as any).isDeleted, false)))
-            .all();
-          for (const titleRow of titleRows as { id: string; title: unknown }[]) {
-            titlesByEntityKey.set(`${entityType}:${titleRow.id}`, String(titleRow.title ?? ''));
-          }
-        }));
+        await Promise.all(
+          Array.from(idsByEntityType.entries()).map(async ([entityType, idSet]) => {
+            const table = getEntityTable(entityType);
+            if (!table) return;
+            const { titleField } = globalSearchFieldConfig[entityType];
+            const titleRows = await db
+              .select({ id: (table as any).id, title: (table as any)[titleField] })
+              .from(table)
+              .where(
+                and(
+                  inArray((table as any).id, Array.from(idSet)),
+                  eq((table as any).isDeleted, false),
+                ),
+              )
+              .all();
+            for (const titleRow of titleRows as { id: string; title: unknown }[]) {
+              titlesByEntityKey.set(`${entityType}:${titleRow.id}`, String(titleRow.title ?? ''));
+            }
+          }),
+        );
 
         for (const row of rows) {
           const entityType = row.attribute.entityType as GlobalSearchEntityType;
@@ -147,30 +182,40 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
       await Promise.all([...nativeQueries, attributeQuery]);
 
       const favoriteService = createFavoriteService(db);
-      await Promise.all(Array.from(FAVORITABLE_ENTITY_TYPES).map(async (entityType) => {
-        const matchingResults = Array.from(results.values()).filter((result) => result.entityType === entityType);
-        if (matchingResults.length === 0) return;
+      await Promise.all(
+        Array.from(FAVORITABLE_ENTITY_TYPES).map(async (entityType) => {
+          const matchingResults = Array.from(results.values()).filter(
+            (result) => result.entityType === entityType,
+          );
+          if (matchingResults.length === 0) return;
 
-        const table = getEntityTable(entityType);
-        if (!table || !(table as any).isFavorite) return;
-        const rows = await db.select({
-          id: (table as any).id,
-          isFavorite: (table as any).isFavorite,
-        })
-          .from(table)
-          .where(inArray((table as any).id, matchingResults.map((result) => result.id)))
-          .all() as { id: string; isFavorite: boolean }[];
-        const decorated = await favoriteService.decorateEntities(
-          storyId,
-          entityType as FavoriteEntityType,
-          localUserId,
-          rows,
-        );
-        const favoriteById = new Map(decorated.map((row) => [row.id, row.isFavorite]));
-        for (const result of matchingResults) {
-          result.isFavorite = favoriteById.get(result.id) ?? false;
-        }
-      }));
+          const table = getEntityTable(entityType);
+          if (!table || !(table as any).isFavorite) return;
+          const rows = (await db
+            .select({
+              id: (table as any).id,
+              isFavorite: (table as any).isFavorite,
+            })
+            .from(table)
+            .where(
+              inArray(
+                (table as any).id,
+                matchingResults.map((result) => result.id),
+              ),
+            )
+            .all()) as { id: string; isFavorite: boolean }[];
+          const decorated = await favoriteService.decorateEntities(
+            storyId,
+            entityType as FavoriteEntityType,
+            localUserId,
+            rows,
+          );
+          const favoriteById = new Map(decorated.map((row) => [row.id, row.isFavorite]));
+          for (const result of matchingResults) {
+            result.isFavorite = favoriteById.get(result.id) ?? false;
+          }
+        }),
+      );
 
       return Array.from(results.values());
     },

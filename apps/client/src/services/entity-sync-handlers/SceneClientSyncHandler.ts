@@ -49,7 +49,8 @@ export class SceneClientSyncHandler implements ClientSyncEntityHandler {
 
     const changes = update.changes as Partial<Scene>;
 
-    await this.db.update(schema.scenes)
+    await this.db
+      .update(schema.scenes)
       .set({
         ...changes,
         updatedAt: new Date(),
@@ -68,7 +69,8 @@ export class SceneClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.scenes)
+    await this.db
+      .update(schema.scenes)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

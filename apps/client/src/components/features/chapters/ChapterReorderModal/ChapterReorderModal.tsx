@@ -10,7 +10,7 @@ interface ChapterReorderModalProps {
   isVisible: boolean;
   onClose: () => void;
   chapters: ChapterSelect[];
-  onReorderConfirm: (newOrder: { id: string, newIndex: number }[]) => Promise<void>;
+  onReorderConfirm: (newOrder: { id: string; newIndex: number }[]) => Promise<void>;
 }
 
 const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
@@ -29,7 +29,7 @@ const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
   }, [chapters, isVisible]);
 
   const moveChapter = useCallback((index: number, direction: 'up' | 'down') => {
-    setReorderedChapters(prevChapters => {
+    setReorderedChapters((prevChapters) => {
       const newChapters = [...prevChapters];
       const chapterToMove = newChapters[index];
       let targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -113,35 +113,50 @@ const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
     },
   });
 
-  const renderItem = useCallback(({ item, index }: { item: ChapterSelect, index: number }) => (
-    <View style={styles.chapterItem}>
-      <Text style={styles.chapterName}>{item.name}</Text>
-      <View style={styles.controls}>
-        <TouchableOpacity
-          onPress={() => moveChapter(index, 'up')}
-          disabled={index === 0}
-          style={styles.controlButton}
-        >
-          <Ionicons name="arrow-up" size={24} color={index === 0 ? colors.textSecondary : colors.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => moveChapter(index, 'down')}
-          disabled={index === reorderedChapters.length - 1}
-          style={styles.controlButton}
-        >
-          <Ionicons name="arrow-down" size={24} color={index === reorderedChapters.length - 1 ? colors.textSecondary : colors.primary} />
-        </TouchableOpacity>
+  const renderItem = useCallback(
+    ({ item, index }: { item: ChapterSelect; index: number }) => (
+      <View style={styles.chapterItem}>
+        <Text style={styles.chapterName}>{item.name}</Text>
+        <View style={styles.controls}>
+          <TouchableOpacity
+            onPress={() => moveChapter(index, 'up')}
+            disabled={index === 0}
+            style={styles.controlButton}
+          >
+            <Ionicons
+              name="arrow-up"
+              size={24}
+              color={index === 0 ? colors.textSecondary : colors.primary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => moveChapter(index, 'down')}
+            disabled={index === reorderedChapters.length - 1}
+            style={styles.controlButton}
+          >
+            <Ionicons
+              name="arrow-down"
+              size={24}
+              color={index === reorderedChapters.length - 1 ? colors.textSecondary : colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  ), [reorderedChapters, moveChapter, colors.primary, colors.textSecondary, styles.chapterItem, styles.chapterName, styles.controlButton, styles.controls]);
+    ),
+    [
+      reorderedChapters,
+      moveChapter,
+      colors.primary,
+      colors.textSecondary,
+      styles.chapterItem,
+      styles.chapterName,
+      styles.controlButton,
+      styles.controls,
+    ],
+  );
 
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="fade" transparent={true} visible={isVisible} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
@@ -157,10 +172,14 @@ const ChapterReorderModal: React.FC<ChapterReorderModalProps> = ({
           />
           <View style={styles.buttonContainer}>
             <View style={styles.buttonWrapper}>
-              <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>{t('common_cancel')}</Button>
+              <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
+                {t('common_cancel')}
+              </Button>
             </View>
             <View style={styles.buttonWrapper}>
-              <Button onPress={handleConfirm} style={{ backgroundColor: colors.primary }}>{t('common_confirm')}</Button>
+              <Button onPress={handleConfirm} style={{ backgroundColor: colors.primary }}>
+                {t('common_confirm')}
+              </Button>
             </View>
           </View>
         </View>

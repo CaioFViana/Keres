@@ -1,7 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Easing, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle, useWindowDimensions } from 'react-native';
+import {
+  Animated,
+  Easing,
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+  useWindowDimensions,
+} from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../../theme';
 import { getContrastTextColor } from '../../../../utils/colorUtils';
@@ -36,22 +47,30 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
 
-  const getOptionByValue = useCallback((value: string) => {
-    return options.find(opt => opt.value === value);
-  }, [options]);
+  const getOptionByValue = useCallback(
+    (value: string) => {
+      return options.find((opt) => opt.value === value);
+    },
+    [options],
+  );
 
   const selectedOptionDetails = useMemo(() => {
-    return selectedValues
-      .map(value => getOptionByValue(value))
-      .filter(Boolean) as { label: string; value: string; color?: string }[]; // Explicit cast
+    return selectedValues.map((value) => getOptionByValue(value)).filter(Boolean) as {
+      label: string;
+      value: string;
+      color?: string;
+    }[]; // Explicit cast
   }, [selectedValues, getOptionByValue]);
 
-  const toggleOption = useCallback((value: string) => {
-    const newSelection = selectedValues.includes(value)
-      ? selectedValues.filter(v => v !== value)
-      : [...selectedValues, value];
-    onSelectionChange(newSelection);
-  }, [selectedValues, onSelectionChange]);
+  const toggleOption = useCallback(
+    (value: string) => {
+      const newSelection = selectedValues.includes(value)
+        ? selectedValues.filter((v) => v !== value)
+        : [...selectedValues, value];
+      onSelectionChange(newSelection);
+    },
+    [selectedValues, onSelectionChange],
+  );
 
   const openModal = useCallback(() => {
     setModalVisible(true);
@@ -177,7 +196,10 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
             const pillBackgroundColor = option.color || colors.primaryContainer;
             const pillTextColor = getContrastTextColor(pillBackgroundColor);
             return (
-              <View key={option.value} style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}>
+              <View
+                key={option.value}
+                style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}
+              >
                 <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
               </View>
             );
@@ -185,7 +207,12 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         ) : (
           <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
         )}
-        <Ionicons name="add-circle" size={24} color={colors.primary} style={{ marginLeft: 'auto' }} />
+        <Ionicons
+          name="add-circle"
+          size={24}
+          color={colors.primary}
+          style={{ marginLeft: 'auto' }}
+        />
       </TouchableOpacity>
 
       <ResponsiveModal
@@ -214,25 +241,30 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
           </View>
           <ScrollView keyboardShouldPersistTaps="handled">
             {options.length > 0 ? (
-              options.map(option => (
+              options.map((option) =>
                 (() => {
                   return (
-                <TouchableOpacity
-                  key={option.value}
-                  style={styles.optionContainer}
-                  onPress={() => toggleOption(option.value)}
-                >
-                  <View style={styles.optionLeading}>
-                    <View style={[styles.optionColor, { backgroundColor: option.color || colors.primaryContainer }]} />
-                    <Text style={styles.optionText}>{option.label}</Text>
-                  </View>
-                  {selectedValues.includes(option.value) && (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
+                    <TouchableOpacity
+                      key={option.value}
+                      style={styles.optionContainer}
+                      onPress={() => toggleOption(option.value)}
+                    >
+                      <View style={styles.optionLeading}>
+                        <View
+                          style={[
+                            styles.optionColor,
+                            { backgroundColor: option.color || colors.primaryContainer },
+                          ]}
+                        />
+                        <Text style={styles.optionText}>{option.label}</Text>
+                      </View>
+                      {selectedValues.includes(option.value) && (
+                        <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                      )}
+                    </TouchableOpacity>
                   );
-                })()
-              ))
+                })(),
+              )
             ) : (
               <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
             )}

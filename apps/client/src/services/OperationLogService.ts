@@ -18,8 +18,17 @@ export type EntityType = string; // e.g., 'Story', 'Character', etc.
  * apart again.
  */
 export interface OperationLogService {
-  getRecentOperationLogs(storyId: string, limit: number, localUserId?: string): Promise<OperationLogSelect[]>;
-  getPaginatedOperationLogs(storyId: string, page: number, pageSize: number, localUserId?: string): Promise<{ logs: OperationLogSelect[]; total: number }>;
+  getRecentOperationLogs(
+    storyId: string,
+    limit: number,
+    localUserId?: string,
+  ): Promise<OperationLogSelect[]>;
+  getPaginatedOperationLogs(
+    storyId: string,
+    page: number,
+    pageSize: number,
+    localUserId?: string,
+  ): Promise<{ logs: OperationLogSelect[]; total: number }>;
   getOperationLogById(logId: string, localUserId?: string): Promise<OperationLogSelect | undefined>;
   getFavoriteBehavior(storyId: string): Promise<FavoriteBehavior>;
 }
@@ -36,12 +45,19 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
       ? await favoriteService.resolveUserId(storyId, localUserId)
       : undefined;
     return viewerId
-      ? and(storyWhere, or(ne(operationLogs.entityType, 'Favorite'), eq(operationLogs.userId, viewerId)))
+      ? and(
+          storyWhere,
+          or(ne(operationLogs.entityType, 'Favorite'), eq(operationLogs.userId, viewerId)),
+        )
       : and(storyWhere, ne(operationLogs.entityType, 'Favorite'));
   };
 
   return {
-    async getRecentOperationLogs(storyId: string, limit: number, localUserId?: string): Promise<OperationLogSelect[]> {
+    async getRecentOperationLogs(
+      storyId: string,
+      limit: number,
+      localUserId?: string,
+    ): Promise<OperationLogSelect[]> {
       if (!storyId) {
         console.warn('getRecentOperationLogs: storyId is required.');
         return [];
@@ -55,7 +71,12 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
       });
     },
 
-    async getPaginatedOperationLogs(storyId: string, page: number, pageSize: number, localUserId?: string): Promise<{ logs: OperationLogSelect[]; total: number }> {
+    async getPaginatedOperationLogs(
+      storyId: string,
+      page: number,
+      pageSize: number,
+      localUserId?: string,
+    ): Promise<{ logs: OperationLogSelect[]; total: number }> {
       if (!storyId) {
         console.warn('getPaginatedOperationLogs: storyId is required.');
         return { logs: [], total: 0 };
@@ -71,7 +92,8 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
         offset: offset,
       });
 
-      const totalResult = await db.select({ count: sql<number>`count(*)` })
+      const totalResult = await db
+        .select({ count: sql<number>`count(*)` })
         .from(operationLogs)
         .where(where)
         .get();
@@ -81,7 +103,10 @@ export const createOperationLogService = (db: AppDrizzleClient): OperationLogSer
       return { logs, total };
     },
 
-    async getOperationLogById(logId: string, localUserId?: string): Promise<OperationLogSelect | undefined> {
+    async getOperationLogById(
+      logId: string,
+      localUserId?: string,
+    ): Promise<OperationLogSelect | undefined> {
       if (!logId) {
         console.warn('getOperationLogById: logId is required.');
         return undefined;

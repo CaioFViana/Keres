@@ -5,7 +5,9 @@ import { scenes } from './scenes';
 
 export const chapters = pgTable('chapters', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),

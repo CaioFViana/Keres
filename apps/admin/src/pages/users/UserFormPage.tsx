@@ -23,7 +23,9 @@ export function UserFormPage() {
   const [resetPasswordMessage, setResetPasswordMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    TierApiService.list().then(setTiers).catch(() => {});
+    TierApiService.list()
+      .then(setTiers)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -101,13 +103,23 @@ export function UserFormPage() {
             </label>
             <label>
               Password
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
             </label>
           </>
         )}
         <label>
           Tag
-          <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder={isNew ? username || '(defaults to username)' : ''} />
+          <input
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            placeholder={isNew ? username || '(defaults to username)' : ''}
+          />
         </label>
         {!isNew && (
           <label>
@@ -120,7 +132,9 @@ export function UserFormPage() {
           <select value={tierId} onChange={(e) => setTierId(e.target.value)}>
             <option value="">(none / default)</option>
             {tiers.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
             ))}
           </select>
         </label>
@@ -130,15 +144,22 @@ export function UserFormPage() {
         </label>
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-          <button type="button" onClick={() => navigate('/users')}>Cancel</button>
+          <button type="submit" disabled={saving}>
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+          <button type="button" onClick={() => navigate('/users')}>
+            Cancel
+          </button>
         </div>
       </form>
 
       {!isNew && (
         <div className="form-card">
           <h3>Password</h3>
-          <p className="hint">Resets the password to this server's configured default value. The user is not notified - share the new password with them yourself.</p>
+          <p className="hint">
+            Resets the password to this server's configured default value. The user is not notified
+            - share the new password with them yourself.
+          </p>
           <button type="button" onClick={onResetPassword} disabled={resettingPassword}>
             {resettingPassword ? 'Resetting...' : 'Reset password'}
           </button>

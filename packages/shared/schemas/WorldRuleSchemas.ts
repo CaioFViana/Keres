@@ -23,7 +23,7 @@ export const CreateWorldRuleDataSchema = WorldRuleSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  title: z.string().min(1, "World Rule title cannot be empty"),
+  title: z.string().min(1, 'World Rule title cannot be empty'),
   isFavorite: z.boolean().default(false),
 });
 

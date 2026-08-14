@@ -69,13 +69,16 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
     const existing = await this.getById(update.id);
     const hashChanged = !!changes.hash && !!existing && changes.hash !== existing.hash;
 
-    await this.db.update(schema.galleries)
+    await this.db
+      .update(schema.galleries)
       .set({
         ...changes,
         updatedAt: new Date(),
         createdAt: changes.createdAt ? new Date(changes.createdAt) : undefined,
         deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
-        ...(hashChanged ? { localPath: null, downloadState: 'pending', uploadState: 'uploaded' } : {}),
+        ...(hashChanged
+          ? { localPath: null, downloadState: 'pending', uploadState: 'uploaded' }
+          : {}),
       })
       .where(eq(schema.galleries.id, update.id));
     console.log(`Applied update for Gallery ${update.id} in story ${storyId}`);
@@ -89,7 +92,8 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.galleries)
+    await this.db
+      .update(schema.galleries)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

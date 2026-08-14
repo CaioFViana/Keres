@@ -33,7 +33,11 @@ const NoteRelationManager: React.FC<NoteRelationManagerProps> = ({
   const [noteModalVisible, setNoteModalVisible] = useState(false);
   const [selectedNoteContent, setSelectedNoteContent] = useState<Note | null>(null);
 
-  const createNoteRelationObject = (selectedNoteId: string, storyId: string, relationId: string): NoteRelation => {
+  const createNoteRelationObject = (
+    selectedNoteId: string,
+    storyId: string,
+    relationId: string,
+  ): NoteRelation => {
     return {
       id: createULID(),
       storyId: storyId,
@@ -54,8 +58,12 @@ const NoteRelationManager: React.FC<NoteRelationManagerProps> = ({
 
   const getNoteSearchableName = (note: Note) => note.title;
 
-  const filterAvailableNotes = (note: Note, relations: NoteRelation[], getRelationItemId: (relation: NoteRelation) => string) => {
-    return !note.isDeleted && !relations.some(rel => getRelationItemId(rel) === note.id);
+  const filterAvailableNotes = (
+    note: Note,
+    relations: NoteRelation[],
+    getRelationItemId: (relation: NoteRelation) => string,
+  ) => {
+    return !note.isDeleted && !relations.some((rel) => getRelationItemId(rel) === note.id);
   };
 
   const handleNotePress = useCallback((note: Note) => {
@@ -63,15 +71,21 @@ const NoteRelationManager: React.FC<NoteRelationManagerProps> = ({
     setNoteModalVisible(true);
   }, []);
 
-  const renderNoteRelationExtraContent = useCallback((relation: NoteRelation, availableItems: Note[]) => {
-    const note = availableItems.find(n => n.id === relation.noteId);
-    if (!note) return null;
-    return (
-      <TouchableOpacity style={{ flex: 1, paddingVertical: 10 }} onPress={() => handleNotePress(note)}>
-        <Text style={{ fontSize: 16, color: colors.text }}>{note.title}</Text>
-      </TouchableOpacity>
-    );
-  }, [handleNotePress, colors.text]);
+  const renderNoteRelationExtraContent = useCallback(
+    (relation: NoteRelation, availableItems: Note[]) => {
+      const note = availableItems.find((n) => n.id === relation.noteId);
+      if (!note) return null;
+      return (
+        <TouchableOpacity
+          style={{ flex: 1, paddingVertical: 10 }}
+          onPress={() => handleNotePress(note)}
+        >
+          <Text style={{ fontSize: 16, color: colors.text }}>{note.title}</Text>
+        </TouchableOpacity>
+      );
+    },
+    [handleNotePress, colors.text],
+  );
 
   const modalStyles = StyleSheet.create({
     modalOverlay: {
@@ -109,7 +123,6 @@ const NoteRelationManager: React.FC<NoteRelationManagerProps> = ({
       fontWeight: 'bold',
     },
   });
-
 
   return (
     <>

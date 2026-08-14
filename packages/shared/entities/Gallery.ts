@@ -9,20 +9,20 @@ import type { MediaType } from '../schemas/GallerySchemas';
  * faz parte desta interface.
  */
 export interface Gallery {
-  id: string
-  storyId: string
-  mediaType: MediaType
-  mimeType: string
-  fileName: string
+  id: string;
+  storyId: string;
+  mediaType: MediaType;
+  mimeType: string;
+  fileName: string;
   /** Checksum do conteúdo em hex (ver `MediaHashSchema`). */
-  hash: string
-  sizeBytes: number
-  title: string | null
-  isFavorite: boolean
-  extraNotes: string | null
-  createdAt: Date
-  updatedAt: Date
-  version: number
-  isDeleted: boolean // Added for conflict resolution (tombstones)
-  deletedAt: Date | null // Added for conflict resolution (tombstones)
+  hash: string;
+  sizeBytes: number;
+  title: string | null;
+  isFavorite: boolean;
+  extraNotes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  version: number;
+  isDeleted: boolean; // Added for conflict resolution (tombstones)
+  deletedAt: Date | null; // Added for conflict resolution (tombstones)
 }

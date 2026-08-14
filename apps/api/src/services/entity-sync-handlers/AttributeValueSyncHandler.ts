@@ -11,7 +11,10 @@ import { db } from '../../db';
 import { attributeValues } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class AttributeValueSyncHandler extends BaseSyncEntityHandler<typeof CreateAttributeValueDataSchema, typeof PartialAttributeValueSchema> {
+export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateAttributeValueDataSchema,
+  typeof PartialAttributeValueSchema
+> {
   entityName = 'AttributeValue';
 
   constructor() {
@@ -25,7 +28,7 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<typeof Crea
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 
@@ -36,12 +39,14 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<typeof Crea
       where: and(
         eq(attributeValues.entityId, validatedData.entityId),
         eq(attributeValues.fieldId, validatedData.fieldId),
-        eq(attributeValues.isDeleted, false)
+        eq(attributeValues.isDeleted, false),
       ),
     });
 
     if (existingValue) {
-      throw new Error(`Conflict: An attribute value already exists for entity ${validatedData.entityId} / field ${validatedData.fieldId}.`);
+      throw new Error(
+        `Conflict: An attribute value already exists for entity ${validatedData.entityId} / field ${validatedData.fieldId}.`,
+      );
     }
 
     await db.insert(attributeValues).values({
@@ -59,11 +64,21 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<typeof Crea
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
   }
 }

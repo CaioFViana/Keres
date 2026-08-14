@@ -48,7 +48,9 @@ describe('resolveClientFile', () => {
   it('serves a file request directly when the file exists', () => {
     const target = under(CLIENT_DIST, '_expo', 'static', 'js', 'entry-abc.js');
 
-    expect(resolveClientFile(CLIENT_DIST, '/_expo/static/js/entry-abc.js', existing(target))).toBe(target);
+    expect(resolveClientFile(CLIENT_DIST, '/_expo/static/js/entry-abc.js', existing(target))).toBe(
+      target,
+    );
   });
 
   it('prefers the directory index for an extensionless route', () => {
@@ -64,13 +66,15 @@ describe('resolveClientFile', () => {
   });
 
   it('falls back to the root index.html so a refresh on a client route still boots the app', () => {
-    expect(resolveClientFile(CLIENT_DIST, '/characters/01ARZ3NDEKTSV4RRFFQ69G5FAV', existing())).toBe(
-      under(CLIENT_DIST, 'index.html'),
-    );
+    expect(
+      resolveClientFile(CLIENT_DIST, '/characters/01ARZ3NDEKTSV4RRFFQ69G5FAV', existing()),
+    ).toBe(under(CLIENT_DIST, 'index.html'));
   });
 
   it('falls back to index.html for a missing asset rather than resolving outside the export', () => {
-    expect(resolveClientFile(CLIENT_DIST, '/missing.png', existing())).toBe(under(CLIENT_DIST, 'index.html'));
+    expect(resolveClientFile(CLIENT_DIST, '/missing.png', existing())).toBe(
+      under(CLIENT_DIST, 'index.html'),
+    );
   });
 
   it.each([
@@ -79,6 +83,8 @@ describe('resolveClientFile', () => {
   ])('never serves %s, even if that file exists', (_label, requestPath) => {
     const escaped = path.join(CLIENT_DIST, requestPath);
 
-    expect(resolveClientFile(CLIENT_DIST, requestPath, existing(escaped))).toBe(under(CLIENT_DIST, 'index.html'));
+    expect(resolveClientFile(CLIENT_DIST, requestPath, existing(escaped))).toBe(
+      under(CLIENT_DIST, 'index.html'),
+    );
   });
 });

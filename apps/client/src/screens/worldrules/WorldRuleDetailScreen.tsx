@@ -1,6 +1,9 @@
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
@@ -56,7 +59,13 @@ const WorldRuleDetailScreen = () => {
   const [worldRule, setWorldRule] = useState<WorldRuleWithTags | null>(null);
   const { canEdit } = useStoryRole(worldRule?.storyId);
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(worldRule?.storyId, 'WorldRule', worldRuleId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,9 +110,8 @@ const WorldRuleDetailScreen = () => {
         setWorldRule(fetchedWorldRule);
         setHeaderTitle(fetchedWorldRule.title || t('world_rule_details_title'));
       } else if (fetchedWorldRule && fetchedWorldRule.isDeleted) {
-        navigation.goBack()
-      }
-      else {
+        navigation.goBack();
+      } else {
         setError(t('world_rule_not_found'));
         setHeaderTitle(t('world_rule_not_found'));
       }
@@ -111,34 +119,39 @@ const WorldRuleDetailScreen = () => {
       console.error('Failed to fetch world rule details:', err);
       setError(t('failed_to_load_world_rule'));
       setHeaderTitle(t('error'));
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, t]);
 
-  const handleWorldRuleChange = useCallback(async (changedStoryId: string, changedWorldRuleId: string) => {
-    if (changedWorldRuleId === worldRuleId) {
-      if (worldRuleServiceRef.current) {
-        const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
-        if (!updatedWorldRule || updatedWorldRule.isDeleted) {
-          navigation.goBack();
-        } else {
-          setWorldRule(updatedWorldRule);
-          setHeaderTitle(updatedWorldRule.title || t('world_rule_details_title'));
+  const handleWorldRuleChange = useCallback(
+    async (changedStoryId: string, changedWorldRuleId: string) => {
+      if (changedWorldRuleId === worldRuleId) {
+        if (worldRuleServiceRef.current) {
+          const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
+          if (!updatedWorldRule || updatedWorldRule.isDeleted) {
+            navigation.goBack();
+          } else {
+            setWorldRule(updatedWorldRule);
+            setHeaderTitle(updatedWorldRule.title || t('world_rule_details_title'));
+          }
         }
       }
-    }
-  }, [worldRuleId, navigation, setWorldRule, setHeaderTitle, t]);
+    },
+    [worldRuleId, navigation, setWorldRule, setHeaderTitle, t],
+  );
 
-  const handleTagRelationChange = useCallback(async (changedStoryId: string, changedEntityId: string) => {
-    if (changedEntityId === worldRuleId && worldRuleServiceRef.current) {
-      const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
-      if (updatedWorldRule && !updatedWorldRule.isDeleted) {
-        setWorldRule(updatedWorldRule);
+  const handleTagRelationChange = useCallback(
+    async (changedStoryId: string, changedEntityId: string) => {
+      if (changedEntityId === worldRuleId && worldRuleServiceRef.current) {
+        const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
+        if (updatedWorldRule && !updatedWorldRule.isDeleted) {
+          setWorldRule(updatedWorldRule);
+        }
       }
-    }
-  }, [worldRuleId, setWorldRule]);
+    },
+    [worldRuleId, setWorldRule],
+  );
 
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
@@ -154,16 +167,18 @@ const WorldRuleDetailScreen = () => {
     }
   }, [worldRuleId, fetchWorldRule, handleWorldRuleChange, handleTagRelationChange]);
 
-  const renderHeaderRight = useCallback(() => (
-    canEdit ? (
-      <TouchableOpacity
-        onPress={() => navigation.navigate('WorldRuleForm', { worldRuleId: worldRuleId })}
-        style={{ marginRight: 15 }}
-      >
-        <Ionicons name="pencil-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    ) : null
-  ), [navigation, worldRuleId, colors.text, canEdit]);
+  const renderHeaderRight = useCallback(
+    () =>
+      canEdit ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('WorldRuleForm', { worldRuleId: worldRuleId })}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="pencil-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ) : null,
+    [navigation, worldRuleId, colors.text, canEdit],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -172,7 +187,7 @@ const WorldRuleDetailScreen = () => {
         headerRight: renderHeaderRight,
       });
       setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight])
+    }, [navigation, headerTitle, renderHeaderRight]),
   );
 
   if (loading) {
@@ -184,11 +199,20 @@ const WorldRuleDetailScreen = () => {
   }
 
   if (!worldRule) {
-    return <ScreenError padded message={t('world_rule_data_missing')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError
+        padded
+        message={t('world_rule_data_missing')}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    >
       <TagChipList tags={worldRule.tags} />
 
       <CommentableDetailField
@@ -199,12 +223,21 @@ const WorldRuleDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'description' }, { ...input, contentSnapshot: worldRule.description || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'description' },
+            { ...input, contentSnapshot: worldRule.description || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
 
-      <CustomAttributeDetailFields storyId={worldRule.storyId} entityType="WorldRule" entityId={worldRuleId} />
+      <CustomAttributeDetailFields
+        storyId={worldRule.storyId}
+        entityType="WorldRule"
+        entityId={worldRuleId}
+      />
 
       <CommentableDetailField
         storyId={worldRule.storyId}
@@ -214,7 +247,12 @@ const WorldRuleDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: worldRule.extraNotes || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'extraNotes' },
+            { ...input, contentSnapshot: worldRule.extraNotes || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
@@ -230,9 +268,18 @@ const WorldRuleDetailScreen = () => {
         currentEntityType="WorldRule"
       />
 
-      <SeeAlsoManager storyId={worldRule.storyId} entityType="WorldRule" entityId={worldRuleId} editable={false} />
+      <SeeAlsoManager
+        storyId={worldRule.storyId}
+        entityType="WorldRule"
+        entityId={worldRuleId}
+        editable={false}
+      />
 
-      <EntityMetadata version={worldRule.version} createdAt={worldRule.createdAt} updatedAt={worldRule.updatedAt} />
+      <EntityMetadata
+        version={worldRule.version}
+        createdAt={worldRule.createdAt}
+        updatedAt={worldRule.updatedAt}
+      />
       <FavoritedByList storyId={worldRule.storyId} entityId={worldRuleId} entityType="WorldRule" />
 
       <View style={styles.buttonContainer}>

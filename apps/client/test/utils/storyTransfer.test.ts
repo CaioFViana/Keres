@@ -27,7 +27,9 @@ describe('export file names', () => {
   });
 
   it('collapses punctuation and whitespace into single dashes', () => {
-    expect(buildExportFileName('  A   Queda:  parte 2!! ', DATE)).toBe('a-queda-parte-2-2026-08-11.json');
+    expect(buildExportFileName('  A   Queda:  parte 2!! ', DATE)).toBe(
+      'a-queda-parte-2-2026-08-11.json',
+    );
   });
 
   it.each([

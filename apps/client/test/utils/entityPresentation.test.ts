@@ -1,5 +1,9 @@
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
-import { CRITICALITY_ICONS, CRITICALITY_LEVELS, DEFAULT_CRITICALITY } from '../../src/utils/commentCriticality';
+import {
+  CRITICALITY_ICONS,
+  CRITICALITY_LEVELS,
+  DEFAULT_CRITICALITY,
+} from '../../src/utils/commentCriticality';
 import { ENTITY_TYPE_ICONS } from '../../src/utils/entityTypeIcons';
 
 /**

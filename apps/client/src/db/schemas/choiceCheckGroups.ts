@@ -5,7 +5,9 @@ import { choices } from './choices';
 export const choiceCheckGroups = sqliteTable('choice_check_groups', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
-  choiceId: text('choice_id').notNull().references(() => choices.id),
+  choiceId: text('choice_id')
+    .notNull()
+    .references(() => choices.id),
   combinator: text('combinator', { enum: ['AND', 'OR'] }).notNull(),
   order: integer('order').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),

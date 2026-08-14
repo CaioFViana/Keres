@@ -35,7 +35,7 @@ export class ItemClientSyncHandler implements ClientSyncEntityHandler {
       id: update.id,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
-      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null
+      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
     });
     console.log(`Applied create for Item ${update.id}`);
   }
@@ -50,7 +50,8 @@ export class ItemClientSyncHandler implements ClientSyncEntityHandler {
 
     const changes = update.changes as Partial<Item>;
 
-    await this.db.update(schema.items)
+    await this.db
+      .update(schema.items)
       .set({
         ...changes,
         updatedAt: new Date(),
@@ -69,7 +70,8 @@ export class ItemClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.items)
+    await this.db
+      .update(schema.items)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

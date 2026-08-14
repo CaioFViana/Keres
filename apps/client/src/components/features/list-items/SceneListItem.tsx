@@ -14,7 +14,12 @@ interface SceneListItemProps {
   onViewDetails: (sceneId: string) => void;
 }
 
-const SceneListItem: React.FC<SceneListItemProps> = ({ scene, storyType, onToggleFavorite, onViewDetails }) => {
+const SceneListItem: React.FC<SceneListItemProps> = ({
+  scene,
+  storyType,
+  onToggleFavorite,
+  onViewDetails,
+}) => {
   const { colors } = useTheme();
 
   const summaryText = truncate(scene.summary, 150);

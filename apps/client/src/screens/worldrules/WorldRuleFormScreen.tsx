@@ -1,12 +1,22 @@
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { WorldRule } from '@keres/shared/entities/WorldRule';
-import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
+import {
+  RouteProp,
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native'; // Import StackActions
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import Button from '@/src/components/common/controls/Button/Button';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
@@ -36,7 +46,7 @@ const WorldRuleFormScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<WorldRuleFormScreenRouteProp>();
   const { t } = useTranslation();
-  const { userId } = useUserSettingsStore()
+  const { userId } = useUserSettingsStore();
   const { worldRuleId: initialWorldRuleId } = route.params || {}; // Renamed to initialWorldRuleId
   const { selectedStory } = useStoryStore();
 
@@ -53,7 +63,9 @@ const WorldRuleFormScreen = () => {
     }
   }, [drizzleDb]);
 
-  const [currentWorldRuleId, setCurrentWorldRuleId] = useState<string | undefined>(initialWorldRuleId); // State to manage worldRuleId
+  const [currentWorldRuleId, setCurrentWorldRuleId] = useState<string | undefined>(
+    initialWorldRuleId,
+  ); // State to manage worldRuleId
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -83,9 +95,9 @@ const WorldRuleFormScreen = () => {
       setDocumentTitle(isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'));
       navigation.getParent()?.setOptions({
         title: isEditing ? t('edit_world_rule_title') : t('create_world_rule_title'),
-        headerRight: () => <View/>
+        headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t])
+    }, [navigation, isEditing, t]),
   );
 
   useEffect(() => {
@@ -106,7 +118,9 @@ const WorldRuleFormScreen = () => {
             setIsFavorite(fetchedWorldRule.isFavorite);
             setExtraNotes(fetchedWorldRule.extraNotes);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentWorldRuleId!);
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
+              currentWorldRuleId!,
+            );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('World rule not found:', currentWorldRuleId);
@@ -150,7 +164,10 @@ const WorldRuleFormScreen = () => {
     setLoading(true);
 
     try {
-      const worldRuleData: Omit<WorldRule, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = {
+      const worldRuleData: Omit<
+        WorldRule,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      > = {
         title: title.trim(),
         description: description,
         isFavorite: isFavorite,
@@ -159,28 +176,41 @@ const WorldRuleFormScreen = () => {
       let savedWorldRule: WorldRule;
 
       if (isEditing) {
-        savedWorldRule = await worldRuleServiceRef.current!.updateWorldRule(userId, currentWorldRuleId!, worldRuleData);
+        savedWorldRule = await worldRuleServiceRef.current!.updateWorldRule(
+          userId,
+          currentWorldRuleId!,
+          worldRuleData,
+        );
         AppAlert.alert(t('success'), t('world_rule_updated_successfully'));
       } else {
-        savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, { ...worldRuleData, storyId: selectedStory.id });
+        savedWorldRule = await worldRuleServiceRef.current!.createWorldRule(userId, {
+          ...worldRuleData,
+          storyId: selectedStory.id,
+        });
         AppAlert.alert(t('success'), t('world_rule_created_successfully'));
         setCurrentWorldRuleId(savedWorldRule.id);
       }
 
       if (savedWorldRule.id) {
         await persistTagRelations(savedWorldRule.id);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'WorldRule', savedWorldRule.id, customValues);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(
+          userId,
+          selectedStory.id,
+          'WorldRule',
+          savedWorldRule.id,
+          customValues,
+        );
       }
-
 
       entityEventEmitter.emit('worldrule_changed', selectedStory.id, savedWorldRule.id);
 
       if (!isEditing && savedWorldRule.id) {
-        navigation.dispatch(StackActions.replace('WorldRuleForm', { worldRuleId: savedWorldRule.id }));
+        navigation.dispatch(
+          StackActions.replace('WorldRuleForm', { worldRuleId: savedWorldRule.id }),
+        );
       } else {
         navigation.goBack();
       }
-
     } catch (err) {
       console.error('Failed to save world rule:', err);
       AppAlert.alert(t('error'), t('failed_to_save_world_rule'));
@@ -212,9 +242,12 @@ const WorldRuleFormScreen = () => {
     });
   };
 
-  const handleTagSelectionChange = useCallback((newSelection: string[]) => {
-    setSelectedTagIds(newSelection);
-  }, [setSelectedTagIds]);
+  const handleTagSelectionChange = useCallback(
+    (newSelection: string[]) => {
+      setSelectedTagIds(newSelection);
+    },
+    [setSelectedTagIds],
+  );
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -246,7 +279,7 @@ const WorldRuleFormScreen = () => {
     },
     deleteButton: {
       backgroundColor: 'red',
-      marginBottom: 15
+      marginBottom: 15,
     },
     centered: {
       flex: 1,
@@ -274,94 +307,110 @@ const WorldRuleFormScreen = () => {
   }
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_world_rule_title') : t('create_world_rule_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
-            {t('world_rule_form_description')}
-          </Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {isEditing ? t('edit_world_rule_title') : t('create_world_rule_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {t('world_rule_form_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
-          <TextInput
-            placeholder={t('world_rule_title_placeholder')}
-            value={title}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
+      <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
+      <TextInput
+        placeholder={t('world_rule_title_placeholder')}
+        value={title}
+        onChangeText={setTitle}
+        style={commonInputStyles.input}
+      />
+
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
+          {t('is_favorite')}
+        </Text>
+        <ThemedSwitch
+          value={isFavorite}
+          onValueChange={setIsFavorite}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
+      <TextInput
+        placeholder={t('world_rule_description_placeholder')}
+        value={description || ''}
+        onChangeText={setDescription}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+      <TextInput
+        placeholder={t('world_rule_extra_notes_placeholder')}
+        value={extraNotes || ''}
+        onChangeText={setExtraNotes}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+      />
+
+      <CustomAttributeFields
+        storyId={selectedStory?.id || ''}
+        fields={customFields}
+        values={customValues}
+        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+      />
+
+      <View style={styles.tagSection}>
+        <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+        <MultiSelectPill
+          options={availableTags.map((tag) => ({
+            label: tag.name,
+            value: tag.id,
+            color: tag.color || colors.primaryContainer,
+          }))}
+          selectedValues={selectedTagIds}
+          onSelectionChange={handleTagSelectionChange}
+          placeholder={t('select_tags_for_world_rule')}
+          label={t('world_rule_tags')}
+        />
+      </View>
+
+      {currentWorldRuleId && selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+          <NoteManager
+            noteRelations={worldRuleNoteRelations}
+            availableNotes={allNotes}
+            onSave={saveNoteRelation}
+            onDelete={deleteNoteRelation}
+            editable={true}
+            currentStoryId={selectedStory.id}
+            currentEntityId={currentWorldRuleId}
+            currentEntityType="WorldRule"
           />
+        </View>
+      )}
 
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>{t('is_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-          <TextInput
-            placeholder={t('world_rule_description_placeholder')}
-            value={description || ""}
-            onChangeText={setDescription}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+      {currentWorldRuleId && selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <SeeAlsoManager
+            storyId={selectedStory.id}
+            entityType="WorldRule"
+            entityId={currentWorldRuleId}
+            editable={true}
           />
-          
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('world_rule_extra_notes_placeholder')}
-            value={extraNotes || ""}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-          />
+        </View>
+      )}
 
-          <CustomAttributeFields
-            storyId={selectedStory?.id || ''}
-            fields={customFields}
-            values={customValues}
-            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
-          />
+      <Button onPress={handleSave} style={styles.saveButton}>
+        {isEditing ? t('save_changes') : t('create_world_rule')}
+      </Button>
 
-          <View style={styles.tagSection}>
-            <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-            <MultiSelectPill
-              options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
-              selectedValues={selectedTagIds}
-              onSelectionChange={handleTagSelectionChange}
-              placeholder={t('select_tags_for_world_rule')}
-              label={t('world_rule_tags')}
-            />
-          </View>
-
-          {currentWorldRuleId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
-              <NoteManager
-                noteRelations={worldRuleNoteRelations}
-                availableNotes={allNotes}
-                onSave={saveNoteRelation}
-                onDelete={deleteNoteRelation}
-                editable={true}
-                currentStoryId={selectedStory.id}
-                currentEntityId={currentWorldRuleId}
-                currentEntityType="WorldRule"
-              />
-            </View>
-          )}
-
-          {currentWorldRuleId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <SeeAlsoManager storyId={selectedStory.id} entityType="WorldRule" entityId={currentWorldRuleId} editable={true} />
-            </View>
-          )}
-
-          <Button onPress={handleSave} style={styles.saveButton}>
-            {isEditing ? t('save_changes') : t('create_world_rule')}
-          </Button>
-
-          {isEditing && (
-            <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
-              {t('delete_world_rule_title')}
-            </Button>
-          )}
+      {isEditing && (
+        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          {t('delete_world_rule_title')}
+        </Button>
+      )}
     </KeyboardAwareScreen>
   );
 };

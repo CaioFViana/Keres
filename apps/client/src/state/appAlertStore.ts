@@ -21,7 +21,12 @@ interface AppAlertContent {
 
 interface AppAlertState {
   current: AppAlertContent | null;
-  show: (title: string, message?: string, buttons?: AppAlertButton[], options?: AppAlertOptions) => void;
+  show: (
+    title: string,
+    message?: string,
+    buttons?: AppAlertButton[],
+    options?: AppAlertOptions,
+  ) => void;
   /** Fecha sem acionar nenhum botão - toque fora (se `cancelable`) ou tecla Esc. */
   dismiss: () => void;
 }

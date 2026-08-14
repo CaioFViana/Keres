@@ -24,17 +24,21 @@ export const useDrizzle = () => {
 };
 
 export function initializeDrizzle(dbInstance: SQLiteDatabase) {
-  if (!db) { // Use the exported 'db' variable
+  if (!db) {
+    // Use the exported 'db' variable
     db = drizzle(dbInstance, { schema });
   }
   return db; // Return the initialized client
 }
 
-export async function resetDatabase(dbInstance: SQLiteDatabase) { // Renamed parameter to avoid conflict
+export async function resetDatabase(dbInstance: SQLiteDatabase) {
+  // Renamed parameter to avoid conflict
   console.log('Resetting database...');
   // Get all table names
-  const tableNamesResult = await dbInstance.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';");
-  const tableNames = tableNamesResult.map(row => row.name);
+  const tableNamesResult = await dbInstance.getAllAsync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';",
+  );
+  const tableNames = tableNamesResult.map((row) => row.name);
 
   // Drop all tables
   for (const tableName of tableNames) {
@@ -47,4 +51,3 @@ export async function resetDatabase(dbInstance: SQLiteDatabase) { // Renamed par
 
 export * from './schema';
 export { schema };
-

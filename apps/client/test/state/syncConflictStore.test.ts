@@ -83,7 +83,11 @@ describe('refresh', () => {
   });
 
   it('keeps the open index inside the list when conflicts disappear', async () => {
-    mockService.getPendingConflicts.mockResolvedValue([conflict('c1'), conflict('c2'), conflict('c3')]);
+    mockService.getPendingConflicts.mockResolvedValue([
+      conflict('c1'),
+      conflict('c2'),
+      conflict('c3'),
+    ]);
     await store().refresh(db);
     store().setActiveIndex(2);
 

@@ -32,9 +32,7 @@ export const friendships = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
   },
-  (table) => [
-    unique('sender_receiver_unq').on(table.senderId, table.receiverId),
-  ]
+  (table) => [unique('sender_receiver_unq').on(table.senderId, table.receiverId)],
 );
 
 export type FriendshipInsert = InferInsertModel<typeof friendships>;

@@ -7,7 +7,9 @@ import { scenes } from './scenes';
 export const choiceChecks = sqliteTable('choice_checks', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
-  groupId: text('group_id').notNull().references(() => choiceCheckGroups.id),
+  groupId: text('group_id')
+    .notNull()
+    .references(() => choiceCheckGroups.id),
   mode: text('mode', { enum: ['block', 'enable'] }).notNull(),
   type: text('type', { enum: ['sceneCount', 'inventory', 'trigger'] }).notNull(),
   order: integer('order').notNull(),

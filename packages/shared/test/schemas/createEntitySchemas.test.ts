@@ -36,7 +36,11 @@ describe('create-entity schemas', () => {
     ['Scene', CreateSceneDataSchema, sceneBase],
     ['Tag', CreateTagDataSchema, { name: 'Vilões' }],
     ['Note', CreateNoteDataSchema, { title: 'Ideia', body: null, extraNotes: null }],
-    ['WorldRule', CreateWorldRuleDataSchema, { title: 'Magia', description: null, extraNotes: null }],
+    [
+      'WorldRule',
+      CreateWorldRuleDataSchema,
+      { title: 'Magia', description: null, extraNotes: null },
+    ],
     ['Story', CreateStoryDataSchema, { title: 'A Queda', type: 'linear' }],
   ])('%s defaults isFavorite to false when the client omits it', (_label, schema, payload) => {
     const parsed = schema.parse(payload) as { isFavorite: boolean };
@@ -72,7 +76,10 @@ describe('create-entity schemas', () => {
   });
 
   it('defaults a tag to a null colour instead of dropping the key', () => {
-    expect(CreateTagDataSchema.parse({ name: 'Vilões' })).toMatchObject({ color: null, extraNotes: null });
+    expect(CreateTagDataSchema.parse({ name: 'Vilões' })).toMatchObject({
+      color: null,
+      extraNotes: null,
+    });
   });
 });
 
@@ -86,7 +93,11 @@ describe('StoryCreateInputSchema', () => {
   });
 
   it('applies the sharing-safe defaults for a brand new story', () => {
-    const parsed = StoryCreateInputSchema.parse({ id: ulid('story1'), title: 'A Queda', type: 'linear' });
+    const parsed = StoryCreateInputSchema.parse({
+      id: ulid('story1'),
+      title: 'A Queda',
+      type: 'linear',
+    });
 
     expect(parsed).toMatchObject({
       favoriteBehavior: 'individual',

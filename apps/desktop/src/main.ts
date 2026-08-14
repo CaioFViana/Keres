@@ -44,7 +44,7 @@ const APP_ICON = app.isPackaged
 
 const SCHEME = 'app';
 
-const APP_NAME = "Keres"
+const APP_NAME = 'Keres';
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -78,7 +78,11 @@ function withIsolationHeaders(response: Response): Response {
 async function handleAppRequest(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const relativePath = decodeURIComponent(url.pathname);
-  const filePath = resolveClientFile(CLIENT_DIST, relativePath === '/' ? '/index.html' : relativePath, existsSync);
+  const filePath = resolveClientFile(
+    CLIENT_DIST,
+    relativePath === '/' ? '/index.html' : relativePath,
+    existsSync,
+  );
   const response = await net.fetch(pathToFileURL(filePath).toString());
   return withIsolationHeaders(response);
 }
@@ -99,7 +103,7 @@ async function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js'),
-    }
+    },
   });
   win.webContents.on('render-process-gone', (_e, details) => {
     console.error('[desktop] renderer process gone:', details.reason);
@@ -136,12 +140,14 @@ function assertTrustedRenderer(event: Electron.IpcMainInvokeEvent): void {
 }
 
 async function secureStorageAvailable(): Promise<boolean> {
-  if (!await safeStorage.isAsyncEncryptionAvailable()) return false;
+  if (!(await safeStorage.isAsyncEncryptionAvailable())) return false;
   // Electron exposes the synchronous backend name for AppImage-style environments.
   // Flatpak uses the Secret portal through the asynchronous API instead.
-  return process.platform !== 'linux'
-    || Boolean(process.env.FLATPAK_ID)
-    || safeStorage.getSelectedStorageBackend() !== 'basic_text';
+  return (
+    process.platform !== 'linux' ||
+    Boolean(process.env.FLATPAK_ID) ||
+    safeStorage.getSelectedStorageBackend() !== 'basic_text'
+  );
 }
 
 async function readAuthVault(): Promise<EncryptedTokenVault> {
@@ -169,10 +175,12 @@ export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:read', async (event, serverId: string): Promise<TokenPair | null> => {
     assertTrustedRenderer(event);
     assertValidServerId(serverId);
-    if (!await secureStorageAvailable()) return null;
+    if (!(await secureStorageAvailable())) return null;
     const encrypted = (await readAuthVault())[serverId];
     if (!encrypted) return null;
-    const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(Buffer.from(encrypted, 'base64'));
+    const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(
+      Buffer.from(encrypted, 'base64'),
+    );
     const tokens = JSON.parse(result) as TokenPair;
     if (shouldReEncrypt) await saveTokens(serverId, tokens);
     return tokens;
@@ -197,15 +205,17 @@ export function registerAuthIpcHandlers() {
 }
 
 async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
-  if (!await secureStorageAvailable()) {
+  if (!(await secureStorageAvailable())) {
     throw new Error('Secure credential storage is unavailable on this device.');
   }
   const vault = await readAuthVault();
-  vault[serverId] = (await safeStorage.encryptStringAsync(JSON.stringify(tokens))).toString('base64');
+  vault[serverId] = (await safeStorage.encryptStringAsync(JSON.stringify(tokens))).toString(
+    'base64',
+  );
   await writeAuthVault(vault);
 }
 
-Menu.setApplicationMenu(null)
+Menu.setApplicationMenu(null);
 
 const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT, relativePath);
 
@@ -243,7 +253,9 @@ export function registerMediaIpcHandlers() {
       return results;
     }
     for (const storyId of storyDirs) {
-      const entries = await fs.readdir(path.join(mediaDir, storyId), { withFileTypes: true }).catch(() => []);
+      const entries = await fs
+        .readdir(path.join(mediaDir, storyId), { withFileTypes: true })
+        .catch(() => []);
       for (const entry of entries) {
         if (entry.isFile()) {
           results.push(`media/${storyId}/${entry.name}`);

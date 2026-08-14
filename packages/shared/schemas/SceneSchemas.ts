@@ -33,8 +33,8 @@ export const CreateSceneDataSchema = SceneSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  name: z.string().min(1, "Scene name cannot be empty"),
-  index: z.number().int().min(0, "Index must be a non-negative integer"),
+  name: z.string().min(1, 'Scene name cannot be empty'),
+  index: z.number().int().min(0, 'Index must be a non-negative integer'),
   isFavorite: z.boolean().default(false),
   isStart: z.boolean().default(false),
   isFinish: z.boolean().default(false),

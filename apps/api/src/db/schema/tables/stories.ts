@@ -23,10 +23,11 @@ import { seeAlsoRelations } from './seeAlsoRelations';
 import { comments } from './comments';
 import { storyTypeEnum } from '../enums';
 
-
 export const stories = pgTable('stories', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
   title: text('title').notNull(),
   type: storyTypeEnum('type').notNull(),
   description: text('description'),
@@ -34,7 +35,11 @@ export const stories = pgTable('stories', {
   language: text('language'),
   author: text('author'),
   isFavorite: boolean('is_favorite').notNull().default(false),
-  favoriteBehavior: text('favorite_behavior', { enum: ['global', 'individual', 'individual_public'] }).notNull().default('individual'),
+  favoriteBehavior: text('favorite_behavior', {
+    enum: ['global', 'individual', 'individual_public'],
+  })
+    .notNull()
+    .default('individual'),
   extraNotes: text('extra_notes'),
   theme: text('theme'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),

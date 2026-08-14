@@ -34,7 +34,9 @@ export async function reconcileRootAdmin(): Promise<void> {
       .update(users)
       .set({ password: hashedPassword, isAdmin: true, updatedAt: new Date() })
       .where(eq(users.id, existing.id));
-    logger.info(`Root admin '${env.ROOT_ADMIN_USERNAME}' reconciled (isAdmin enforced, password refreshed from env).`);
+    logger.info(
+      `Root admin '${env.ROOT_ADMIN_USERNAME}' reconciled (isAdmin enforced, password refreshed from env).`,
+    );
     return;
   }
 

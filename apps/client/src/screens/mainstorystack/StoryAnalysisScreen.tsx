@@ -5,11 +5,17 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import { createStoryAnalysisService, StoryAnalysisReport } from '../../services/storymanagement/StoryAnalysisService';
+import {
+  createStoryAnalysisService,
+  StoryAnalysisReport,
+} from '../../services/storymanagement/StoryAnalysisService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -25,7 +31,15 @@ import { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAn
 
 type StoryAnalysisNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'StoryAnalysis'>;
 
-const CATEGORY_ORDER: StoryAnalysisCategory[] = ['scenes', 'choices', 'characters', 'locations', 'items', 'tags', 'storySchema'];
+const CATEGORY_ORDER: StoryAnalysisCategory[] = [
+  'scenes',
+  'choices',
+  'characters',
+  'locations',
+  'items',
+  'tags',
+  'storySchema',
+];
 
 const CATEGORY_TITLE_KEYS: Record<StoryAnalysisCategory, string> = {
   scenes: 'analysis_category_scenes',
@@ -69,14 +83,18 @@ const StoryAnalysisScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  useFocusEffect(useCallback(() => {
-    loadReport();
-  }, [loadReport]));
+  useFocusEffect(
+    useCallback(() => {
+      loadReport();
+    }, [loadReport]),
+  );
 
-  useFocusEffect(useCallback(() => {
-    navigation.setOptions({ title: t('story_analysis_title') });
-    setDocumentTitle(t('story_analysis_title'));
-  }, [navigation, t]));
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions({ title: t('story_analysis_title') });
+      setDocumentTitle(t('story_analysis_title'));
+    }, [navigation, t]),
+  );
 
   const findingsByCategory = useMemo(() => {
     const grouped = new Map<StoryAnalysisCategory, StoryAnalysisFinding[]>();
@@ -87,10 +105,13 @@ const StoryAnalysisScreen = () => {
     return grouped;
   }, [report]);
 
-  const handleFindingPress = useCallback((finding: StoryAnalysisFinding) => {
-    if (!finding.entityId) return;
-    navigateToEntityDetail(navigation, finding.entityType, finding.entityId);
-  }, [navigation]);
+  const handleFindingPress = useCallback(
+    (finding: StoryAnalysisFinding) => {
+      if (!finding.entityId) return;
+      navigateToEntityDetail(navigation, finding.entityType, finding.entityId);
+    },
+    [navigation],
+  );
 
   const styles = StyleSheet.create({
     scrollContent: {
@@ -157,16 +178,24 @@ const StoryAnalysisScreen = () => {
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollContent}>
-      <Text style={styles.subtitle}>{t('story_analysis_subtitle', { count: report.findings.length })}</Text>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollContent}
+    >
+      <Text style={styles.subtitle}>
+        {t('story_analysis_subtitle', { count: report.findings.length })}
+      </Text>
 
-      {CATEGORY_ORDER.map(category => {
+      {CATEGORY_ORDER.map((category) => {
         const findings = findingsByCategory.get(category);
         if (!findings || findings.length === 0) return null;
 
         return (
-          <CollapsibleCard key={category} title={`${t(CATEGORY_TITLE_KEYS[category])} (${findings.length})`}>
-            {findings.map(finding => (
+          <CollapsibleCard
+            key={category}
+            title={`${t(CATEGORY_TITLE_KEYS[category])} (${findings.length})`}
+          >
+            {findings.map((finding) => (
               <TouchableOpacity
                 key={finding.id}
                 style={styles.findingRow}
@@ -180,10 +209,16 @@ const StoryAnalysisScreen = () => {
                   color={finding.severity === 'error' ? colors.error : colors.text}
                 />
                 <View style={styles.findingTextGroup}>
-                  {!!finding.entityName && <Text style={styles.findingEntityName}>{finding.entityName}</Text>}
-                  <Text style={styles.findingMessage}>{t(finding.messageKey, finding.messageParams)}</Text>
+                  {!!finding.entityName && (
+                    <Text style={styles.findingEntityName}>{finding.entityName}</Text>
+                  )}
+                  <Text style={styles.findingMessage}>
+                    {t(finding.messageKey, finding.messageParams)}
+                  </Text>
                 </View>
-                {!!finding.entityId && <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
+                {!!finding.entityId && (
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                )}
               </TouchableOpacity>
             ))}
           </CollapsibleCard>

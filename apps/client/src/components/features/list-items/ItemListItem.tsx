@@ -27,10 +27,18 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onViewDetails }) => {
 
   const renderExpandedContent = (currentItem: ItemSelect) => (
     <View>
-      {currentItem.description && <Text style={styles.summaryText}>{truncate(currentItem.description, 200)}</Text>}
-      {currentItem.category && <Text style={styles.detailText}>Category: {currentItem.category}</Text>}
-      {currentItem.initialState && <Text style={styles.detailText}>Initial State: {currentItem.initialState}</Text>}
-      {currentItem.characterOwnerId && <Text style={styles.detailText}>Owner: {truncate(currentItem.characterOwnerId, 50)}</Text>}
+      {currentItem.description && (
+        <Text style={styles.summaryText}>{truncate(currentItem.description, 200)}</Text>
+      )}
+      {currentItem.category && (
+        <Text style={styles.detailText}>Category: {currentItem.category}</Text>
+      )}
+      {currentItem.initialState && (
+        <Text style={styles.detailText}>Initial State: {currentItem.initialState}</Text>
+      )}
+      {currentItem.characterOwnerId && (
+        <Text style={styles.detailText}>Owner: {truncate(currentItem.characterOwnerId, 50)}</Text>
+      )}
     </View>
   );
 

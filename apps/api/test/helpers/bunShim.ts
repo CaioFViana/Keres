@@ -36,7 +36,10 @@ export function installBunShim(): void {
     },
     write: (filePath: string, bytes: ArrayBuffer) => writeFile(filePath, new Uint8Array(bytes)),
     file: (filePath: string) => ({
-      exists: async () => access(filePath).then(() => true).catch(() => false),
+      exists: async () =>
+        access(filePath)
+          .then(() => true)
+          .catch(() => false),
       text: async () => readFile(filePath, 'utf8'),
       arrayBuffer: async () => {
         const buffer = await readFile(filePath);

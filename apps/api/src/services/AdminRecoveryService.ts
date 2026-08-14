@@ -109,13 +109,16 @@ export class AdminRecoveryService {
     if (filters.storyId) conditions.push(eq(operationLog.storyId, filters.storyId));
     if (filters.entityType) conditions.push(eq(operationLog.entityType, filters.entityType));
     if (filters.userId) conditions.push(eq(operationLog.userId, filters.userId));
-    if (filters.operationType) conditions.push(eq(operationLog.operationType, filters.operationType));
+    if (filters.operationType)
+      conditions.push(eq(operationLog.operationType, filters.operationType));
     if (filters.from) conditions.push(gte(operationLog.createdAt, filters.from));
     if (filters.to) conditions.push(lte(operationLog.createdAt, filters.to));
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [items, [{ total }]] = await Promise.all([
-      db.select().from(operationLog)
+      db
+        .select()
+        .from(operationLog)
         .where(where)
         .orderBy(desc(operationLog.createdAt))
         .limit(filters.pageSize)

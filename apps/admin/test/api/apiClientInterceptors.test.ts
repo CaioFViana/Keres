@@ -22,7 +22,13 @@ function respondWith(response: { status: number; data?: unknown }) {
         }),
       );
     }
-    return { data: response.data, status: response.status, statusText: 'OK', headers: {}, config } as any;
+    return {
+      data: response.data,
+      status: response.status,
+      statusText: 'OK',
+      headers: {},
+      config,
+    } as any;
   };
 }
 
@@ -109,7 +115,9 @@ describe('response interceptor', () => {
   it('falls back to the axios message when the API sent no message', async () => {
     respondWith({ status: 500, data: {} });
 
-    await expect(apiClient.get('/admin/api/users')).rejects.toThrow('Request failed with status code 500');
+    await expect(apiClient.get('/admin/api/users')).rejects.toThrow(
+      'Request failed with status code 500',
+    );
   });
 
   it('reports a network failure instead of an empty error', async () => {

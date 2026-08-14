@@ -6,10 +6,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 
-
 // Generic types for items and relations, similar to RelationManager
-export type BaseItem = { id: string; }; // Simpler BaseItem for display
-export type BaseRelation = { id: string; isDeleted: boolean; }; // isDeleted is useful for filtering
+export type BaseItem = { id: string }; // Simpler BaseItem for display
+export type BaseRelation = { id: string; isDeleted: boolean }; // isDeleted is useful for filtering
 
 interface GenericRelationDisplayProps<TItem extends BaseItem, TRelation extends BaseRelation> {
   relations: TRelation[];
@@ -44,7 +43,7 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
     ...relationSectionStyleDefs(colors),
   });
 
-  const filteredRelations = relations.filter(rel => !rel.isDeleted);
+  const filteredRelations = relations.filter((rel) => !rel.isDeleted);
 
   return (
     <View style={styles.container}>
@@ -54,7 +53,7 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
             <Text style={{ color: colors.textSecondary }}>{t(noItemsMessage)}</Text>
           ) : (
             <View>
-              {filteredRelations.map(relation => {
+              {filteredRelations.map((relation) => {
                 const relatedItem = getRelatedItem(getRelationItemId(relation));
                 if (!relatedItem) return null;
 
@@ -84,7 +83,12 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
                     activeOpacity={0.7}
                   >
                     {content}
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={styles.chevron} />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color={colors.textSecondary}
+                      style={styles.chevron}
+                    />
                   </TouchableOpacity>
                 );
               })}

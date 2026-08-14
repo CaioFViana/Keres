@@ -1,10 +1,20 @@
-import { CreateCharacterSceneDataSchema, CreateCharacterSceneDataType, CreateStoryUpdate, DeleteStoryUpdate, PartialCharacterSceneSchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateCharacterSceneDataSchema,
+  CreateCharacterSceneDataType,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  PartialCharacterSceneSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, characterScenes, scenes } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<typeof CreateCharacterSceneDataSchema, typeof PartialCharacterSceneSchema> {
+export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateCharacterSceneDataSchema,
+  typeof PartialCharacterSceneSchema
+> {
   entityName = 'CharacterScene';
 
   constructor() {
@@ -18,17 +28,27 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<typeof Crea
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 
-  private async validateRelatedEntities(storyId: string, characterId: string, sceneId: string): Promise<void> {
+  private async validateRelatedEntities(
+    storyId: string,
+    characterId: string,
+    sceneId: string,
+  ): Promise<void> {
     const characterExists = await db.query.characters.findFirst({
-      where: and(eq(characters.id, characterId), eq(characters.storyId, storyId), eq(characters.isDeleted, false)),
+      where: and(
+        eq(characters.id, characterId),
+        eq(characters.storyId, storyId),
+        eq(characters.isDeleted, false),
+      ),
     });
 
     if (!characterExists) {
-      throw new Error(`Validation Error: Character with ID ${characterId} not found, is deleted, or does not belong to story ${storyId}.`);
+      throw new Error(
+        `Validation Error: Character with ID ${characterId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
     }
 
     const sceneExists = await db.query.scenes.findFirst({
@@ -36,7 +56,9 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<typeof Crea
     });
 
     if (!sceneExists) {
-      throw new Error(`Validation Error: Scene with ID ${sceneId} not found, is deleted, or does not belong to story ${storyId}.`);
+      throw new Error(
+        `Validation Error: Scene with ID ${sceneId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
     }
   }
 
@@ -52,12 +74,14 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<typeof Crea
         eq(characterScenes.characterId, validatedData.characterId),
         eq(characterScenes.sceneId, validatedData.sceneId),
         eq(characterScenes.storyId, storyId),
-        eq(characterScenes.isDeleted, false)
+        eq(characterScenes.isDeleted, false),
       ),
     });
 
     if (existingCharacterScene) {
-      throw new Error(`Conflict: CharacterScene for Character ID ${validatedData.characterId} and Scene ID ${validatedData.sceneId} already exists and is not deleted.`);
+      throw new Error(
+        `Conflict: CharacterScene for Character ID ${validatedData.characterId} and Scene ID ${validatedData.sceneId} already exists and is not deleted.`,
+      );
     }
 
     await db.insert(characterScenes).values({
@@ -73,7 +97,12 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<typeof Crea
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // If characterId or sceneId are being updated, validate them
@@ -86,7 +115,12 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<typeof Crea
     await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
   }
 }

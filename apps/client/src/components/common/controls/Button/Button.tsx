@@ -38,11 +38,7 @@ const Button: React.FC<ButtonProps> = ({ onPress, children, style, disabled }) =
       onPress={onPress}
       disabled={disabled}
     >
-      {typeof children === 'string' ? (
-        <Text style={styles.buttonText}>{children}</Text>
-      ) : (
-        children
-      )}
+      {typeof children === 'string' ? <Text style={styles.buttonText}>{children}</Text> : children}
     </TouchableOpacity>
   );
 };

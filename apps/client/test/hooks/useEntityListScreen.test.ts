@@ -130,7 +130,9 @@ describe('search', () => {
       jest.advanceTimersByTime(1000);
     });
 
-    expect(store.setSearchTerm.mock.calls.filter(([term]: [string]) => term !== '')).toEqual([['ana']]);
+    expect(store.setSearchTerm.mock.calls.filter(([term]: [string]) => term !== '')).toEqual([
+      ['ana'],
+    ]);
   });
 
   it('commits immediately on submit, skipping the wait', async () => {

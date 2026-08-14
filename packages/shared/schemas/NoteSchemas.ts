@@ -23,7 +23,7 @@ export const CreateNoteDataSchema = NoteSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  title: z.string().min(1, "Note title cannot be empty"),
+  title: z.string().min(1, 'Note title cannot be empty'),
   isFavorite: z.boolean().default(false),
 });
 

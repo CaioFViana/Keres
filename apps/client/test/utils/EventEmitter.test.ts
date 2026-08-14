@@ -90,7 +90,9 @@ describe('entityEventEmitter', () => {
         throw new Error('listener falhou');
       });
 
-      await expect(entityEventEmitter.emitAsync('sync_finished')).rejects.toThrow('listener falhou');
+      await expect(entityEventEmitter.emitAsync('sync_finished')).rejects.toThrow(
+        'listener falhou',
+      );
     });
   });
 });

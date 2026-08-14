@@ -14,12 +14,15 @@ const AppAlertHost: React.FC = () => {
   const current = useAppAlertStore((state) => state.current);
   const dismiss = useAppAlertStore((state) => state.dismiss);
 
-  const handlePress = useCallback((button: AppAlertButton) => {
-    // Fecha antes de acionar o botão: o próprio `onPress` costuma abrir outro alerta (erro
-    // de exclusão, por exemplo), que precisa substituir este, não empilhar sobre ele.
-    dismiss();
-    button.onPress?.();
-  }, [dismiss]);
+  const handlePress = useCallback(
+    (button: AppAlertButton) => {
+      // Fecha antes de acionar o botão: o próprio `onPress` costuma abrir outro alerta (erro
+      // de exclusão, por exemplo), que precisa substituir este, não empilhar sobre ele.
+      dismiss();
+      button.onPress?.();
+    },
+    [dismiss],
+  );
 
   const styles = StyleSheet.create({
     backdrop: {
@@ -112,16 +115,18 @@ const AppAlertHost: React.FC = () => {
 
           <View style={styles.buttonRow}>
             {current.buttons.map((button, index) => {
-              const variantStyle = button.style === 'destructive'
-                ? styles.destructiveButton
-                : button.style === 'cancel'
-                  ? styles.cancelButton
-                  : styles.defaultButton;
-              const variantTextStyle = button.style === 'destructive'
-                ? styles.destructiveButtonText
-                : button.style === 'cancel'
-                  ? styles.cancelButtonText
-                  : styles.defaultButtonText;
+              const variantStyle =
+                button.style === 'destructive'
+                  ? styles.destructiveButton
+                  : button.style === 'cancel'
+                    ? styles.cancelButton
+                    : styles.defaultButton;
+              const variantTextStyle =
+                button.style === 'destructive'
+                  ? styles.destructiveButtonText
+                  : button.style === 'cancel'
+                    ? styles.cancelButtonText
+                    : styles.defaultButtonText;
 
               return (
                 <TouchableOpacity

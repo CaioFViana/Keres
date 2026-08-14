@@ -64,9 +64,14 @@ export class RealtimeSessionService {
 
   subscribeToStory(socket: RealtimeSocket, userId: string, storyId: string): void {
     const key = `storyUpdate:${storyId}`;
-    const callback = (event: { maxOperationVersion?: number }) => socket.send(JSON.stringify({
-      type: 'story.changed', storyId, maxOperationVersion: event.maxOperationVersion,
-    }));
+    const callback = (event: { maxOperationVersion?: number }) =>
+      socket.send(
+        JSON.stringify({
+          type: 'story.changed',
+          storyId,
+          maxOperationVersion: event.maxOperationVersion,
+        }),
+      );
     socket.storyCallbacks ??= new Map();
     const previous = socket.storyCallbacks.get(storyId);
     if (previous) this.dependencies.eventBus.off(key, previous);
@@ -89,7 +94,9 @@ export class RealtimeSessionService {
     for (const storyId of await this.dependencies.getReadableStoryIds(user.userId)) {
       this.subscribeToStory(socket, user.userId, storyId);
     }
-    socket.send(JSON.stringify({ type: 'server.heartbeat', sentAt: new Date(this.now()).toISOString() }));
+    socket.send(
+      JSON.stringify({ type: 'server.heartbeat', sentAt: new Date(this.now()).toISOString() }),
+    );
   }
 
   async handleEventMessage(socket: RealtimeSocket, message: unknown): Promise<void> {
@@ -97,18 +104,22 @@ export class RealtimeSessionService {
     if (!userId) return;
     let request: { type?: string; storyId?: string };
     try {
-      request = typeof message === 'string' ? JSON.parse(message) : message as { type?: string; storyId?: string };
+      request =
+        typeof message === 'string'
+          ? JSON.parse(message)
+          : (message as { type?: string; storyId?: string });
     } catch {
       return;
     }
     if (request.type !== 'subscribe' || !request.storyId) return;
-    if (!await this.dependencies.canReadStory(userId, request.storyId, 'reader')) return;
+    if (!(await this.dependencies.canReadStory(userId, request.storyId, 'reader'))) return;
     this.subscribeToStory(socket, userId, request.storyId);
   }
 
   closeEvents(socket: RealtimeSocket): void {
     const userId = socket.realtimeUserId;
-    if (userId && socket.realtimeCallback) this.dependencies.eventBus.off(`userUpdate:${userId}`, socket.realtimeCallback);
+    if (userId && socket.realtimeCallback)
+      this.dependencies.eventBus.off(`userUpdate:${userId}`, socket.realtimeCallback);
     for (const [storyId, callback] of socket.storyCallbacks ?? new Map()) {
       this.dependencies.eventBus.off(`storyUpdate:${storyId}`, callback);
     }

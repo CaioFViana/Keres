@@ -6,8 +6,12 @@ import { storyPermissionTypeEnum } from '../enums';
 
 export const storyPermissions = pgTable('story_permissions', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  userId: text('user_id').notNull().references(() => users.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
   permissionType: storyPermissionTypeEnum('permission_type').notNull(),
   version: integer('version').notNull().default(1),
   createdAt: timestamp('created_at').notNull().defaultNow(),

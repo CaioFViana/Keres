@@ -12,7 +12,14 @@ import { getEntityTable, toEntityColumns } from './entityTableRegistry';
  * mudam em toda escrita e portanto apareceriam como "divergentes" em todo conflito sem
  * que o usuário tenha qualquer decisão a tomar sobre eles.
  */
-const BOOKKEEPING_FIELDS = new Set(['id', 'storyId', 'version', 'createdAt', 'updatedAt', 'deletedAt']);
+const BOOKKEEPING_FIELDS = new Set([
+  'id',
+  'storyId',
+  'version',
+  'createdAt',
+  'updatedAt',
+  'deletedAt',
+]);
 
 export type ConflictResolution = 'keep_local' | 'keep_server' | 'merge' | 'restore' | 'discard';
 
@@ -105,15 +112,15 @@ function valuesDiffer(a: any, b: any): boolean {
  */
 export function findContestedFields(
   localValues: Record<string, any>,
-  serverValues: Record<string, any> | null
+  serverValues: Record<string, any> | null,
 ): string[] {
   if (!serverValues) {
-    return Object.keys(localValues).filter(key => !BOOKKEEPING_FIELDS.has(key));
+    return Object.keys(localValues).filter((key) => !BOOKKEEPING_FIELDS.has(key));
   }
   return Object.keys(localValues)
-    .filter(key => !BOOKKEEPING_FIELDS.has(key))
-    .filter(key => key in serverValues)
-    .filter(key => valuesDiffer(localValues[key], serverValues[key]));
+    .filter((key) => !BOOKKEEPING_FIELDS.has(key))
+    .filter((key) => key in serverValues)
+    .filter((key) => valuesDiffer(localValues[key], serverValues[key]));
 }
 
 /** Une os payloads das operações locais pendentes num único conjunto de valores desejados. */
@@ -162,14 +169,16 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
    */
   const blockOperations = async (operationIds: string[]) => {
     if (operationIds.length === 0) return;
-    await db.update(schema.operationLogs)
+    await db
+      .update(schema.operationLogs)
       .set({ conflictState: 'conflicted' })
       .where(inArray(schema.operationLogs.id, operationIds));
   };
 
   const abandonOperations = async (operationIds: string[]) => {
     if (operationIds.length === 0) return;
-    await db.update(schema.operationLogs)
+    await db
+      .update(schema.operationLogs)
       .set({ conflictState: 'abandoned', isSynced: true })
       .where(inArray(schema.operationLogs.id, operationIds));
   };
@@ -182,7 +191,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
   };
 
   const closeConflict = async (conflictId: string, resolution: ConflictResolution) => {
-    await db.update(schema.syncConflicts)
+    await db
+      .update(schema.syncConflicts)
       .set({ status: 'resolved', resolution, resolvedAt: new Date() })
       .where(eq(schema.syncConflicts.id, conflictId));
   };
@@ -198,7 +208,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     conflict: PendingConflict,
     operationType: 'create' | 'update' | 'delete',
     values: Record<string, any>,
-    baseVersion: number
+    baseVersion: number,
   ) => {
     const story = await db.query.stories.findFirst({
       where: eq(schema.stories.id, conflict.storyId),
@@ -220,16 +230,24 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       conflictState: null,
     });
 
-    await db.update(schema.stories)
+    await db
+      .update(schema.stories)
       .set({ lastOperationLog: nextOperationVersion })
       .where(eq(schema.stories.id, conflict.storyId));
   };
 
   /** Leitura genérica da entidade local, usada ao recriar algo removido no servidor. */
-  const readLocalEntity = async (entityType: string, entityId: string): Promise<Record<string, any> | undefined> => {
+  const readLocalEntity = async (
+    entityType: string,
+    entityId: string,
+  ): Promise<Record<string, any> | undefined> => {
     const table = getEntityTable(entityType);
     if (!table) return undefined;
-    const rows = await db.select().from(table).where(eq((table as any).id, entityId)).limit(1);
+    const rows = await db
+      .select()
+      .from(table)
+      .where(eq((table as any).id, entityId))
+      .limit(1);
     return rows.at(0) as Record<string, any> | undefined;
   };
 
@@ -238,7 +256,7 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     entityType: string,
     entityId: string,
     values: Record<string, any>,
-    version: number
+    version: number,
   ) => {
     const table = getEntityTable(entityType);
     if (!table) {
@@ -247,7 +265,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     }
 
     const columns = toEntityColumns(entityType, values);
-    await db.update(table)
+    await db
+      .update(table)
       .set({ ...columns, version, updatedAt: new Date() })
       .where(eq((table as any).id, entityId));
   };
@@ -263,22 +282,31 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
           eq(schema.syncConflicts.storyId, input.storyId),
           eq(schema.syncConflicts.entityType, input.entityType),
           eq(schema.syncConflicts.entityId, input.entityId),
-          eq(schema.syncConflicts.status, 'pending')
+          eq(schema.syncConflicts.status, 'pending'),
         ),
       });
 
       if (existing) {
-        const mergedOperationIds = Array.from(new Set([
-          ...parseJson<string[]>(existing.localOperationIds, []),
-          ...input.localOperationIds,
-        ]));
-        await db.update(schema.syncConflicts)
+        const mergedOperationIds = Array.from(
+          new Set([
+            ...parseJson<string[]>(existing.localOperationIds, []),
+            ...input.localOperationIds,
+          ]),
+        );
+        await db
+          .update(schema.syncConflicts)
           .set({
             reason: input.reason,
             localOperationType: input.localOperationType,
             localOperationIds: JSON.stringify(mergedOperationIds),
-            localValues: JSON.stringify({ ...parseJson<Record<string, any>>(existing.localValues, {}), ...input.localValues }),
-            serverValues: input.serverValues === undefined ? existing.serverValues : JSON.stringify(input.serverValues),
+            localValues: JSON.stringify({
+              ...parseJson<Record<string, any>>(existing.localValues, {}),
+              ...input.localValues,
+            }),
+            serverValues:
+              input.serverValues === undefined
+                ? existing.serverValues
+                : JSON.stringify(input.serverValues),
             clientVersion: input.clientVersion ?? existing.clientVersion,
             serverVersion: input.serverVersion ?? existing.serverVersion,
             message: input.message ?? existing.message,
@@ -297,9 +325,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         localOperationType: input.localOperationType,
         localOperationIds: JSON.stringify(input.localOperationIds),
         localValues: JSON.stringify(input.localValues),
-        serverValues: input.serverValues === undefined || input.serverValues === null
-          ? null
-          : JSON.stringify(input.serverValues),
+        serverValues:
+          input.serverValues === undefined || input.serverValues === null
+            ? null
+            : JSON.stringify(input.serverValues),
         clientVersion: input.clientVersion ?? null,
         serverVersion: input.serverVersion ?? null,
         message: input.message ?? null,
@@ -313,7 +342,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     async getPendingConflicts(storyId?: string): Promise<PendingConflict[]> {
       const rows = await db.query.syncConflicts.findMany({
         where: storyId
-          ? and(eq(schema.syncConflicts.status, 'pending'), eq(schema.syncConflicts.storyId, storyId))
+          ? and(
+              eq(schema.syncConflicts.status, 'pending'),
+              eq(schema.syncConflicts.storyId, storyId),
+            )
           : eq(schema.syncConflicts.status, 'pending'),
         orderBy: asc(schema.syncConflicts.detectedAt),
       });
@@ -323,7 +355,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     async countPendingConflicts(storyId?: string): Promise<number> {
       const rows = await db.query.syncConflicts.findMany({
         where: storyId
-          ? and(eq(schema.syncConflicts.status, 'pending'), eq(schema.syncConflicts.storyId, storyId))
+          ? and(
+              eq(schema.syncConflicts.status, 'pending'),
+              eq(schema.syncConflicts.storyId, storyId),
+            )
           : eq(schema.syncConflicts.status, 'pending'),
         columns: { id: true },
       });
@@ -347,9 +382,23 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       if (conflict.isLocalDelete) {
         // O usuário excluiu; manter a decisão dele significa reenviar a exclusão sobre a
         // versão atual do servidor.
-        await writeEntity(conflict.entityType, conflict.entityId, { isDeleted: true, deletedAt: new Date() }, baseVersion + 1);
-        await recordRebasedOperation(conflict, 'delete', { id: conflict.entityId, isDeleted: true }, baseVersion);
-      } else if (conflict.localOperationType === 'create' || conflict.reason === 'not_found' || conflict.reason === 'limit_exceeded') {
+        await writeEntity(
+          conflict.entityType,
+          conflict.entityId,
+          { isDeleted: true, deletedAt: new Date() },
+          baseVersion + 1,
+        );
+        await recordRebasedOperation(
+          conflict,
+          'delete',
+          { id: conflict.entityId, isDeleted: true },
+          baseVersion,
+        );
+      } else if (
+        conflict.localOperationType === 'create' ||
+        conflict.reason === 'not_found' ||
+        conflict.reason === 'limit_exceeded'
+      ) {
         // A entidade não existe no servidor - por a operação local original já ser um
         // `create` (qualquer que seja o motivo recusado - `not_found` de uma dependência
         // ausente, `limit_exceeded` do teto do plano, ou até `unknown` de uma falha de
@@ -360,14 +409,34 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // tentativa uma chance real de passar - exatamente o loop que deixava uma
         // GalleryRelation presa pra sempre quando seu dono ainda não existia no servidor.
         const local = await readLocalEntity(conflict.entityType, conflict.entityId);
-        await recordRebasedOperation(conflict, 'create', { ...(local ?? {}), ...values, isDeleted: false }, 0);
-        await writeEntity(conflict.entityType, conflict.entityId, { ...values, isDeleted: false, deletedAt: null }, 1);
+        await recordRebasedOperation(
+          conflict,
+          'create',
+          { ...(local ?? {}), ...values, isDeleted: false },
+          0,
+        );
+        await writeEntity(
+          conflict.entityType,
+          conflict.entityId,
+          { ...values, isDeleted: false, deletedAt: null },
+          1,
+        );
       } else {
         // Inclui o caso `deleted_on_server`: mandar `isDeleted: false` restaura a entidade
         // no servidor junto com os valores que o usuário escreveu.
         const restoreFields = conflict.isDeletedOnServer ? { isDeleted: false } : {};
-        await writeEntity(conflict.entityType, conflict.entityId, { ...values, ...restoreFields, deletedAt: null }, baseVersion + 1);
-        await recordRebasedOperation(conflict, 'update', { ...values, ...restoreFields }, baseVersion);
+        await writeEntity(
+          conflict.entityType,
+          conflict.entityId,
+          { ...values, ...restoreFields, deletedAt: null },
+          baseVersion + 1,
+        );
+        await recordRebasedOperation(
+          conflict,
+          'update',
+          { ...values, ...restoreFields },
+          baseVersion,
+        );
       }
 
       await closeConflict(conflictId, chosenValues ? 'merge' : 'keep_local');
@@ -391,14 +460,14 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
           conflict.entityType,
           conflict.entityId,
           { isDeleted: true, deletedAt: new Date() },
-          (conflict.serverVersion ?? 0) + 1
+          (conflict.serverVersion ?? 0) + 1,
         );
       } else {
         await writeEntity(
           conflict.entityType,
           conflict.entityId,
           conflict.serverValues,
-          conflict.serverVersion ?? conflict.serverValues.version ?? 1
+          conflict.serverVersion ?? conflict.serverValues.version ?? 1,
         );
       }
 
@@ -416,7 +485,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       if (conflict) {
         await abandonOperations(conflict.localOperationIds);
       }
-      await db.update(schema.syncConflicts)
+      await db
+        .update(schema.syncConflicts)
         .set({ status: 'dismissed', resolvedAt: new Date() })
         .where(eq(schema.syncConflicts.id, conflictId));
       if (conflict) {

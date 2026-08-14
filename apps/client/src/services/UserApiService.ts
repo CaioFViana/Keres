@@ -31,13 +31,20 @@ export class UserApiService {
     return response.data;
   }
 
-  async updateProfile(server: ServerSelect, profile: UpdateUserProfileType): Promise<UserPublicInfo> {
+  async updateProfile(
+    server: ServerSelect,
+    profile: UpdateUserProfileType,
+  ): Promise<UserPublicInfo> {
     const response = await this.clientFor(server).put('/user/profile', profile);
     return response.data;
   }
 
   /** Self-service password change on `server` - requires the current password, unlike the admin panel's reset. */
-  async changeOwnPassword(server: ServerSelect, currentPassword: string, newPassword: string): Promise<void> {
+  async changeOwnPassword(
+    server: ServerSelect,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     await this.clientFor(server).put('/user/password', { currentPassword, newPassword });
   }
 

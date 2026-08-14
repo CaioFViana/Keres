@@ -85,7 +85,10 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
     try {
       const summary = await importPickedMediaAssets(services.gallery, storyId, userId, assets);
       for (const galleryId of summary.galleryIds) {
-        await services.relation.linkGalleryToOwner(userId, storyId, galleryId, { ownerId, ownerType });
+        await services.relation.linkGalleryToOwner(userId, storyId, galleryId, {
+          ownerId,
+          ownerType,
+        });
       }
       await refresh();
       return summary;
@@ -95,13 +98,19 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
   }, [services, storyId, userId, ownerId, ownerType, refresh]);
 
   /** Remove só o vínculo com esta entidade; a mídia continua existindo na galeria. */
-  const removeMedia = useCallback(async (galleryId: string) => {
-    if (!services || !storyId || !userId || !ownerId) {
-      return;
-    }
-    await services.relation.unlinkGalleryFromOwner(userId, storyId, galleryId, { ownerId, ownerType });
-    setMedia((prev) => prev.filter((item) => item.id !== galleryId));
-  }, [services, storyId, userId, ownerId, ownerType]);
+  const removeMedia = useCallback(
+    async (galleryId: string) => {
+      if (!services || !storyId || !userId || !ownerId) {
+        return;
+      }
+      await services.relation.unlinkGalleryFromOwner(userId, storyId, galleryId, {
+        ownerId,
+        ownerType,
+      });
+      setMedia((prev) => prev.filter((item) => item.id !== galleryId));
+    },
+    [services, storyId, userId, ownerId, ownerType],
+  );
 
   return { media, loading, importing, storyId, addMedia, removeMedia, refresh };
 }

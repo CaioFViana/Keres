@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const SuggestionSchema = z.object({
   id: z.string(),
   storyId: z.string(),
-  type: z.string().min(1, "Suggestion type cannot be empty"),
-  value: z.string().min(1, "Suggestion value cannot be empty"),
+  type: z.string().min(1, 'Suggestion type cannot be empty'),
+  value: z.string().min(1, 'Suggestion value cannot be empty'),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),
@@ -21,8 +21,8 @@ export const CreateSuggestionDataSchema = SuggestionSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  type: z.string().min(1, "Suggestion type cannot be empty"),
-  value: z.string().min(1, "Suggestion value cannot be empty"),
+  type: z.string().min(1, 'Suggestion type cannot be empty'),
+  value: z.string().min(1, 'Suggestion value cannot be empty'),
 });
 
 export const PartialSuggestionSchema = SuggestionSchema.partial();

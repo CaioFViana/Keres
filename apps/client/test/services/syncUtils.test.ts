@@ -53,7 +53,9 @@ describe('recordLocalOperation', () => {
   it('records the operation with everything the push needs', async () => {
     await seedStory();
 
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-1', { name: 'Keres' });
+    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-1', {
+      name: 'Keres',
+    });
 
     const [log] = await database.db.query.operationLogs.findMany();
     expect(log).toMatchObject({
@@ -71,7 +73,15 @@ describe('recordLocalOperation', () => {
   it('numbers the first operation of a story as 1', async () => {
     await seedStory();
 
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-1', {});
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
 
     const [log] = await database.db.query.operationLogs.findMany();
     expect(log.operationVersion).toBe(1);
@@ -80,7 +90,15 @@ describe('recordLocalOperation', () => {
   it('numbers each operation one past the story cursor', async () => {
     await seedStory({ lastOperationLog: 7 });
 
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'update', 'Character', 'char-1', {});
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'update',
+      'Character',
+      'char-1',
+      {},
+    );
 
     const [log] = await database.db.query.operationLogs.findMany();
     expect(log.operationVersion).toBe(8);
@@ -89,8 +107,24 @@ describe('recordLocalOperation', () => {
   it('advances the story cursor, so the next operation does not reuse the number', async () => {
     await seedStory();
 
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-1', {});
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'update', 'Character', 'char-1', {});
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'update',
+      'Character',
+      'char-1',
+      {},
+    );
 
     const logs = await database.db.query.operationLogs.findMany();
     expect(logs.map((log) => log.operationVersion).sort()).toEqual([1, 2]);
@@ -100,8 +134,24 @@ describe('recordLocalOperation', () => {
   it('gives every operation its own id', async () => {
     await seedStory();
 
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-1', {});
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-2', {});
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-2',
+      {},
+    );
 
     const logs = await database.db.query.operationLogs.findMany();
     expect(new Set(logs.map((log) => log.id)).size).toBe(2);
@@ -110,7 +160,15 @@ describe('recordLocalOperation', () => {
   it('touches the story updatedAt, so the list screens reorder', async () => {
     await seedStory({ updatedAt: new Date(0) });
 
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-1', {});
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
 
     expect((await readStory())!.updatedAt.getTime()).toBeGreaterThan(0);
   });
@@ -120,7 +178,15 @@ describe('recordLocalOperation', () => {
     const listener = jest.fn();
     entityEventEmitter.on('operation_log_updated', listener);
 
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-1', {});
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
     entityEventEmitter.off('operation_log_updated', listener);
 
     expect(listener).toHaveBeenCalledWith(STORY_ID);
@@ -130,7 +196,15 @@ describe('recordLocalOperation', () => {
     await seedStory();
     const payload = { name: 'Keres', tags: ['a', 'b'], nested: { deep: true }, missing: null };
 
-    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'update', 'Character', 'char-1', payload);
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'update',
+      'Character',
+      'char-1',
+      payload,
+    );
 
     const [log] = await database.db.query.operationLogs.findMany();
     expect(JSON.parse(log.payload)).toEqual(payload);
@@ -144,7 +218,15 @@ describe('recordLocalOperation', () => {
   });
 
   it('starts numbering at 1 for a story it cannot find, rather than failing', async () => {
-    await recordLocalOperation(database.db, 'nao-existe', 'user-1', 'create', 'Character', 'char-1', {});
+    await recordLocalOperation(
+      database.db,
+      'nao-existe',
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
 
     const [log] = await database.db.query.operationLogs.findMany();
     expect(log.operationVersion).toBe(1);
@@ -163,22 +245,29 @@ describe('assertStoryIsWritable', () => {
     await expect(assertStoryIsWritable(database.db, STORY_ID)).resolves.toBeUndefined();
   });
 
-  it.each(['owner', 'writer'] as const)('allows a linked story where the user is %s', async (myRole) => {
-    await seedStory({ serverId: 'server-1', myRole });
+  it.each(['owner', 'writer'] as const)(
+    'allows a linked story where the user is %s',
+    async (myRole) => {
+      await seedStory({ serverId: 'server-1', myRole });
 
-    await expect(assertStoryIsWritable(database.db, STORY_ID)).resolves.toBeUndefined();
-  });
+      await expect(assertStoryIsWritable(database.db, STORY_ID)).resolves.toBeUndefined();
+    },
+  );
 
   it('refuses a linked story where the user is only a reader', async () => {
     await seedStory({ serverId: 'server-1', myRole: 'reader' });
 
-    await expect(assertStoryIsWritable(database.db, STORY_ID)).rejects.toBeInstanceOf(StoryReadOnlyError);
+    await expect(assertStoryIsWritable(database.db, STORY_ID)).rejects.toBeInstanceOf(
+      StoryReadOnlyError,
+    );
   });
 
   it('fails closed while the role has not resolved yet', async () => {
     await seedStory({ serverId: 'server-1', myRole: null });
 
-    await expect(assertStoryIsWritable(database.db, STORY_ID)).rejects.toBeInstanceOf(StoryReadOnlyError);
+    await expect(assertStoryIsWritable(database.db, STORY_ID)).rejects.toBeInstanceOf(
+      StoryReadOnlyError,
+    );
   });
 
   it('allows a story it cannot find, since there is nothing to protect', async () => {
@@ -188,12 +277,21 @@ describe('assertStoryIsWritable', () => {
 
 describe('getUserIdForOperation', () => {
   const serverService = (idUser: string | null) =>
-    ({ getServerById: jest.fn(async () => (idUser === null ? undefined : { id: 'server-1', idUser })) }) as never;
+    ({
+      getServerById: jest.fn(async () =>
+        idUser === null ? undefined : { id: 'server-1', idUser },
+      ),
+    }) as never;
 
   it('uses the server account id for a synced story', async () => {
     await seedStory({ serverId: 'server-1' });
 
-    const userId = await getUserIdForOperation(database.db, serverService('server-user'), STORY_ID, 'local-user');
+    const userId = await getUserIdForOperation(
+      database.db,
+      serverService('server-user'),
+      STORY_ID,
+      'local-user',
+    );
 
     expect(userId).toBe('server-user');
   });
@@ -201,7 +299,12 @@ describe('getUserIdForOperation', () => {
   it('falls back to the local id for a story that was never synced', async () => {
     await seedStory({ serverId: null });
 
-    const userId = await getUserIdForOperation(database.db, serverService('server-user'), STORY_ID, 'local-user');
+    const userId = await getUserIdForOperation(
+      database.db,
+      serverService('server-user'),
+      STORY_ID,
+      'local-user',
+    );
 
     expect(userId).toBe('local-user');
   });
@@ -209,13 +312,23 @@ describe('getUserIdForOperation', () => {
   it('falls back to the local id when the server is not signed in', async () => {
     await seedStory({ serverId: 'server-1' });
 
-    const userId = await getUserIdForOperation(database.db, serverService(null), STORY_ID, 'local-user');
+    const userId = await getUserIdForOperation(
+      database.db,
+      serverService(null),
+      STORY_ID,
+      'local-user',
+    );
 
     expect(userId).toBe('local-user');
   });
 
   it('falls back to the local id for a story it cannot find', async () => {
-    const userId = await getUserIdForOperation(database.db, serverService('server-user'), 'nao-existe', 'local-user');
+    const userId = await getUserIdForOperation(
+      database.db,
+      serverService('server-user'),
+      'nao-existe',
+      'local-user',
+    );
 
     expect(userId).toBe('local-user');
   });

@@ -52,14 +52,14 @@ const SyncConflictModal: React.FC = () => {
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
 
-  const conflicts = useSyncConflictStore(state => state.conflicts);
-  const activeIndex = useSyncConflictStore(state => state.activeIndex);
-  const isVisible = useSyncConflictStore(state => state.isVisible);
-  const isResolving = useSyncConflictStore(state => state.isResolving);
-  const close = useSyncConflictStore(state => state.close);
-  const setActiveIndex = useSyncConflictStore(state => state.setActiveIndex);
-  const keepLocal = useSyncConflictStore(state => state.keepLocal);
-  const keepServer = useSyncConflictStore(state => state.keepServer);
+  const conflicts = useSyncConflictStore((state) => state.conflicts);
+  const activeIndex = useSyncConflictStore((state) => state.activeIndex);
+  const isVisible = useSyncConflictStore((state) => state.isVisible);
+  const isResolving = useSyncConflictStore((state) => state.isResolving);
+  const close = useSyncConflictStore((state) => state.close);
+  const setActiveIndex = useSyncConflictStore((state) => state.setActiveIndex);
+  const keepLocal = useSyncConflictStore((state) => state.keepLocal);
+  const keepServer = useSyncConflictStore((state) => state.keepServer);
 
   const conflict: PendingConflict | undefined = conflicts[activeIndex];
 
@@ -86,8 +86,8 @@ const SyncConflictModal: React.FC = () => {
   }, [conflictId, contestedFieldsKey]);
 
   const hasServerChoice = useMemo(
-    () => Object.values(fieldChoices).some(choice => choice === 'server'),
-    [fieldChoices]
+    () => Object.values(fieldChoices).some((choice) => choice === 'server'),
+    [fieldChoices],
   );
 
   const handleKeepMine = useCallback(async () => {
@@ -99,7 +99,7 @@ const SyncConflictModal: React.FC = () => {
           Object.entries(conflict.localValues).map(([field, localValue]) => [
             field,
             fieldChoices[field] === 'server' ? conflict.serverValues?.[field] : localValue,
-          ])
+          ]),
         )
       : undefined;
     await keepLocal(drizzleDb, conflict.id, chosenValues);
@@ -249,10 +249,15 @@ const SyncConflictModal: React.FC = () => {
     return null;
   }
 
-  const entityLabel = t(ENTITY_LABEL_KEYS[conflict.entityType] || conflict.entityType, { defaultValue: conflict.entityType });
+  const entityLabel = t(ENTITY_LABEL_KEYS[conflict.entityType] || conflict.entityType, {
+    defaultValue: conflict.entityType,
+  });
   const entityName = formatValue(
-    conflict.localValues.name ?? conflict.localValues.title ?? conflict.serverValues?.name ?? conflict.serverValues?.title,
-    conflict.entityId
+    conflict.localValues.name ??
+      conflict.localValues.title ??
+      conflict.serverValues?.name ??
+      conflict.serverValues?.title,
+    conflict.entityId,
   );
 
   const emptyLabel = t('conflict_empty_value');
@@ -276,10 +281,11 @@ const SyncConflictModal: React.FC = () => {
    * entidade, a decisão é binária, e oferecer rádios com "(vazio)" do outro lado só
    * atrapalharia.
    */
-  const showFieldPicker = !conflict.isDeletedOnServer
-    && !conflict.isLocalDelete
-    && conflict.serverValues !== null
-    && conflict.contestedFields.length > 0;
+  const showFieldPicker =
+    !conflict.isDeletedOnServer &&
+    !conflict.isLocalDelete &&
+    conflict.serverValues !== null &&
+    conflict.contestedFields.length > 0;
 
   const fieldPickerFallbackText = isLimitExceeded
     ? t('conflict_limit_exceeded_note')
@@ -314,7 +320,11 @@ const SyncConflictModal: React.FC = () => {
               <Text style={styles.title}>{t('conflict_modal_title')}</Text>
               <Text style={styles.subtitle}>{`${entityLabel} — ${entityName}`}</Text>
             </View>
-            <TouchableOpacity onPress={close} style={styles.closeButton} accessibilityLabel={t('conflict_postpone')}>
+            <TouchableOpacity
+              onPress={close}
+              style={styles.closeButton}
+              accessibilityLabel={t('conflict_postpone')}
+            >
               <Ionicons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -329,7 +339,7 @@ const SyncConflictModal: React.FC = () => {
             ) : (
               <>
                 <Text style={styles.sectionTitle}>{t('conflict_choose_per_field')}</Text>
-                {conflict.contestedFields.map(field => {
+                {conflict.contestedFields.map((field) => {
                   const choice = fieldChoices[field] || 'local';
                   const fieldLabel = t(field, { defaultValue: field });
                   return (
@@ -338,7 +348,7 @@ const SyncConflictModal: React.FC = () => {
 
                       <TouchableOpacity
                         style={[styles.option, choice === 'local' && styles.optionSelected]}
-                        onPress={() => setFieldChoices(prev => ({ ...prev, [field]: 'local' }))}
+                        onPress={() => setFieldChoices((prev) => ({ ...prev, [field]: 'local' }))}
                       >
                         <Ionicons
                           name={choice === 'local' ? 'radio-button-on' : 'radio-button-off'}
@@ -347,13 +357,15 @@ const SyncConflictModal: React.FC = () => {
                         />
                         <View style={styles.optionTextWrapper}>
                           <Text style={styles.optionLabel}>{t('conflict_side_mine')}</Text>
-                          <Text style={styles.optionValue}>{formatValue(conflict.localValues[field], emptyLabel)}</Text>
+                          <Text style={styles.optionValue}>
+                            {formatValue(conflict.localValues[field], emptyLabel)}
+                          </Text>
                         </View>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         style={[styles.option, choice === 'server' && styles.optionSelected]}
-                        onPress={() => setFieldChoices(prev => ({ ...prev, [field]: 'server' }))}
+                        onPress={() => setFieldChoices((prev) => ({ ...prev, [field]: 'server' }))}
                       >
                         <Ionicons
                           name={choice === 'server' ? 'radio-button-on' : 'radio-button-off'}
@@ -362,7 +374,9 @@ const SyncConflictModal: React.FC = () => {
                         />
                         <View style={styles.optionTextWrapper}>
                           <Text style={styles.optionLabel}>{t('conflict_side_server')}</Text>
-                          <Text style={styles.optionValue}>{formatValue(conflict.serverValues?.[field], emptyLabel)}</Text>
+                          <Text style={styles.optionValue}>
+                            {formatValue(conflict.serverValues?.[field], emptyLabel)}
+                          </Text>
                         </View>
                       </TouchableOpacity>
                     </View>
@@ -376,7 +390,11 @@ const SyncConflictModal: React.FC = () => {
             <Button onPress={handleKeepMine} disabled={isResolving}>
               {keepMineLabel}
             </Button>
-            <Button onPress={handleKeepServer} disabled={isResolving} style={styles.secondaryButton}>
+            <Button
+              onPress={handleKeepServer}
+              disabled={isResolving}
+              style={styles.secondaryButton}
+            >
               <Text style={styles.secondaryButtonText}>{keepServerLabel}</Text>
             </Button>
           </View>
@@ -387,10 +405,17 @@ const SyncConflictModal: React.FC = () => {
                 onPress={() => setActiveIndex(Math.max(0, activeIndex - 1))}
                 disabled={activeIndex === 0}
               >
-                <Ionicons name="chevron-back" size={24} color={activeIndex === 0 ? colors.border : colors.text} />
+                <Ionicons
+                  name="chevron-back"
+                  size={24}
+                  color={activeIndex === 0 ? colors.border : colors.text}
+                />
               </TouchableOpacity>
               <Text style={styles.pagerLabel}>
-                {t('conflict_pager_position', { current: activeIndex + 1, total: conflicts.length })}
+                {t('conflict_pager_position', {
+                  current: activeIndex + 1,
+                  total: conflicts.length,
+                })}
               </Text>
               <TouchableOpacity
                 onPress={() => setActiveIndex(Math.min(conflicts.length - 1, activeIndex + 1))}

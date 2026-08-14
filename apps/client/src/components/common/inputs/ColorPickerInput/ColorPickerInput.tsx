@@ -6,7 +6,6 @@ import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/ColorPickerModal';
 
-
 interface ColorPickerInputProps {
   onSelectColor: (color: string) => void;
   currentColor: string;
@@ -40,7 +39,7 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
       borderColor: colors.border,
       borderRadius: 5,
       backgroundColor: colors.surface,
-      minHeight: 50
+      minHeight: 50,
     },
     colorSwatchButton: {
       width: 50,
@@ -74,11 +73,22 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
   });
 
   return (
-    <View style={[styles.container, style, commonInputStyles.input, commonInputStyles.customComponentInput]}>
+    <View
+      style={[
+        styles.container,
+        style,
+        commonInputStyles.input,
+        commonInputStyles.customComponentInput,
+      ]}
+    >
       <View style={[styles.inputWrapper]}>
         <Pressable style={styles.colorSwatchButton} onPress={() => setModalVisible(true)}>
-            {/* Display color palette icon */}
-            <Ionicons name={currentColor ? "color-palette" : "color-palette-outline"} size={20} color={colors.text} />
+          {/* Display color palette icon */}
+          <Ionicons
+            name={currentColor ? 'color-palette' : 'color-palette-outline'}
+            size={20}
+            color={colors.text}
+          />
         </Pressable>
         <TextInput
           style={[commonInputStyles.input, styles.textInput]}

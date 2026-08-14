@@ -3,7 +3,10 @@ import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAtt
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
@@ -16,14 +19,21 @@ import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createLocationService, LocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
+import {
+  createLocationService,
+  LocationService,
+} from '@/src/services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService, SceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { formatChapterUniverseDuration, formatSceneUniverseDuration, hasSceneUniverseDuration } from '@/src/utils/sceneTiming';
+import {
+  formatChapterUniverseDuration,
+  formatSceneUniverseDuration,
+  hasSceneUniverseDuration,
+} from '@/src/utils/sceneTiming';
 import { Ionicons } from '@expo/vector-icons';
 import { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -72,7 +82,13 @@ const ChapterDetailScreen = () => {
   const [chapter, setChapter] = useState<ChapterSelect | null>(null);
   const { canEdit } = useStoryRole(chapter?.storyId);
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(chapter?.storyId, 'Chapter', chapterId);
 
   const {
@@ -148,7 +164,7 @@ const ChapterDetailScreen = () => {
     }
     try {
       const fetchedScenes = await sceneServiceRef.current.getScenesByStoryId(selectedStory.id);
-      setAllScenes(fetchedScenes.filter(s => !s.isDeleted));
+      setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all scenes:', err);
     }
@@ -161,37 +177,46 @@ const ChapterDetailScreen = () => {
     }
     try {
       const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllLocations(fetchedLocations.filter(l => !l.isDeleted));
+      setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all locations:', err);
     }
   }, [selectedStory?.id]);
 
-  const handleChapterChange = useCallback(async (changedStoryId: string, changedChapterId: string) => {
-    if (changedChapterId === chapterId) {
-      if (chapterServiceRef.current) {
-        const updatedChapter = await chapterServiceRef.current.getById(chapterId);
-        if (!updatedChapter || updatedChapter.isDeleted) {
-          navigation.goBack();
-        } else {
-          setChapter(updatedChapter);
-          setHeaderTitle(updatedChapter.name || t('chapter_details_title'));
+  const handleChapterChange = useCallback(
+    async (changedStoryId: string, changedChapterId: string) => {
+      if (changedChapterId === chapterId) {
+        if (chapterServiceRef.current) {
+          const updatedChapter = await chapterServiceRef.current.getById(chapterId);
+          if (!updatedChapter || updatedChapter.isDeleted) {
+            navigation.goBack();
+          } else {
+            setChapter(updatedChapter);
+            setHeaderTitle(updatedChapter.name || t('chapter_details_title'));
+          }
         }
       }
-    }
-  }, [chapterId, navigation, setChapter, setHeaderTitle, t]);
+    },
+    [chapterId, navigation, setChapter, setHeaderTitle, t],
+  );
 
-  const handleSceneChange = useCallback((changedStoryId: string, changedSceneId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllScenesInStory();
-    }
-  }, [selectedStory?.id, fetchAllScenesInStory]);
+  const handleSceneChange = useCallback(
+    (changedStoryId: string, changedSceneId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllScenesInStory();
+      }
+    },
+    [selectedStory?.id, fetchAllScenesInStory],
+  );
 
-  const handleLocationChange = useCallback((changedStoryId: string, changedLocationId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllLocationsInStory();
-    }
-  }, [selectedStory?.id, fetchAllLocationsInStory]);
+  const handleLocationChange = useCallback(
+    (changedStoryId: string, changedLocationId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllLocationsInStory();
+      }
+    },
+    [selectedStory?.id, fetchAllLocationsInStory],
+  );
 
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
@@ -216,16 +241,18 @@ const ChapterDetailScreen = () => {
     }
   }, [chapter, fetchAllScenesInStory, fetchAllLocationsInStory]);
 
-  const renderHeaderRight = useCallback(() => (
-    canEdit ? (
-      <TouchableOpacity
-        onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
-        style={{ marginRight: 15 }}
-      >
-        <Ionicons name="pencil-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    ) : null
-  ), [navigation, chapterId, colors.text, canEdit]);
+  const renderHeaderRight = useCallback(
+    () =>
+      canEdit ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ChapterForm', { chapterId: chapterId })}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="pencil-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ) : null,
+    [navigation, chapterId, colors.text, canEdit],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -234,7 +261,7 @@ const ChapterDetailScreen = () => {
         headerRight: renderHeaderRight,
       });
       setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight])
+    }, [navigation, headerTitle, renderHeaderRight]),
   );
 
   if (loading) {
@@ -246,11 +273,20 @@ const ChapterDetailScreen = () => {
   }
 
   if (!chapter) {
-    return <ScreenError padded message={t('chapter_data_missing')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError
+        padded
+        message={t('chapter_data_missing')}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    >
       <TagChipList tags={chapterTags} />
       <CommentableDetailField
         storyId={chapter.storyId}
@@ -260,7 +296,12 @@ const ChapterDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'summary' }, { ...input, contentSnapshot: chapter.summary || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'summary' },
+            { ...input, contentSnapshot: chapter.summary || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
@@ -277,9 +318,16 @@ const ChapterDetailScreen = () => {
         />
       )}
 
-      <CustomAttributeDetailFields storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} />
+      <CustomAttributeDetailFields
+        storyId={chapter.storyId}
+        entityType="Chapter"
+        entityId={chapterId}
+      />
 
-      <DetailField label={t('is_favorite')} value={chapter.isFavorite ? t('common_yes') : t('common_no')} />
+      <DetailField
+        label={t('is_favorite')}
+        value={chapter.isFavorite ? t('common_yes') : t('common_no')}
+      />
       <CommentableDetailField
         storyId={chapter.storyId}
         label={t('extra_notes')}
@@ -288,25 +336,36 @@ const ChapterDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: chapter.extraNotes || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'extraNotes' },
+            { ...input, contentSnapshot: chapter.extraNotes || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
 
-
       <RelatedScenesList
         scenes={allScenes}
-        matchesScene={scene => scene.chapterId === chapterId}
+        matchesScene={(scene) => scene.chapterId === chapterId}
         sortScenes={(a, b) => a.index - b.index}
         title={t('scenes_in_chapter_title')}
         noItemsMessage="no_scenes_in_chapter"
-        getDetails={scene => {
+        getDetails={(scene) => {
           const details = scene.summary ? [{ label: t('summary'), value: scene.summary }] : [];
           if (hasSceneUniverseDuration(scene)) {
-            details.push({ label: t('in_universe_duration'), value: formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming) });
+            details.push({
+              label: t('in_universe_duration'),
+              value: formatSceneUniverseDuration(scene, t, selectedStory?.normalizeSceneTiming),
+            });
           }
-          const locationName = allLocations.find(location => location.id === scene.locationId)?.name;
-          return locationName ? [...details, { label: t('location'), value: locationName }] : details;
+          const locationName = allLocations.find(
+            (location) => location.id === scene.locationId,
+          )?.name;
+          return locationName
+            ? [...details, { label: t('location'), value: locationName }]
+            : details;
         }}
       />
 
@@ -321,9 +380,18 @@ const ChapterDetailScreen = () => {
         currentEntityType="Chapter"
       />
 
-      <SeeAlsoManager storyId={chapter.storyId} entityType="Chapter" entityId={chapterId} editable={false} />
+      <SeeAlsoManager
+        storyId={chapter.storyId}
+        entityType="Chapter"
+        entityId={chapterId}
+        editable={false}
+      />
 
-      <EntityMetadata version={chapter.version} createdAt={chapter.createdAt} updatedAt={chapter.updatedAt} />
+      <EntityMetadata
+        version={chapter.version}
+        createdAt={chapter.createdAt}
+        updatedAt={chapter.updatedAt}
+      />
       <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />
 
       <View style={styles.buttonContainer}>
@@ -332,6 +400,5 @@ const ChapterDetailScreen = () => {
     </ScrollView>
   );
 };
-
 
 export default ChapterDetailScreen;

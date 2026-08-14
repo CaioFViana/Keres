@@ -6,37 +6,78 @@ import { flush, render } from '../helpers/react';
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
-  listUsers: vi.fn(), getUser: vi.fn(), createUser: vi.fn(), updateUser: vi.fn(), softDelete: vi.fn(), restoreUser: vi.fn(), resetPassword: vi.fn(),
-  listTiers: vi.fn(), createTier: vi.fn(), updateTier: vi.fn(), softDeleteTier: vi.fn(),
-  getSettings: vi.fn(), updateSettings: vi.fn(),
-  listDeleted: vi.fn(), restoreDeleted: vi.fn(), browseOperationLog: vi.fn(),
+  listUsers: vi.fn(),
+  getUser: vi.fn(),
+  createUser: vi.fn(),
+  updateUser: vi.fn(),
+  softDelete: vi.fn(),
+  restoreUser: vi.fn(),
+  resetPassword: vi.fn(),
+  listTiers: vi.fn(),
+  createTier: vi.fn(),
+  updateTier: vi.fn(),
+  softDeleteTier: vi.fn(),
+  getSettings: vi.fn(),
+  updateSettings: vi.fn(),
+  listDeleted: vi.fn(),
+  restoreDeleted: vi.fn(),
+  browseOperationLog: vi.fn(),
   listLogs: vi.fn(),
 }));
 
 vi.mock('../../src/api/AdminAuthService', () => ({ login: mocks.login }));
-vi.mock('../../src/api/AdminUserApiService', () => ({ AdminUserApiService: {
-  list: mocks.listUsers, get: mocks.getUser, create: mocks.createUser, update: mocks.updateUser,
-  softDelete: mocks.softDelete, restore: mocks.restoreUser, resetPassword: mocks.resetPassword,
-} }));
-vi.mock('../../src/api/TierApiService', () => ({ TierApiService: {
-  list: mocks.listTiers, create: mocks.createTier, update: mocks.updateTier, softDelete: mocks.softDeleteTier,
-} }));
-vi.mock('../../src/api/RegistrationSettingsApiService', () => ({ RegistrationSettingsApiService: {
-  get: mocks.getSettings, update: mocks.updateSettings,
-} }));
-vi.mock('../../src/api/RecoveryApiService', () => ({ RecoveryApiService: {
-  listDeleted: mocks.listDeleted, restore: mocks.restoreDeleted, browseOperationLog: mocks.browseOperationLog,
-} }));
+vi.mock('../../src/api/AdminUserApiService', () => ({
+  AdminUserApiService: {
+    list: mocks.listUsers,
+    get: mocks.getUser,
+    create: mocks.createUser,
+    update: mocks.updateUser,
+    softDelete: mocks.softDelete,
+    restore: mocks.restoreUser,
+    resetPassword: mocks.resetPassword,
+  },
+}));
+vi.mock('../../src/api/TierApiService', () => ({
+  TierApiService: {
+    list: mocks.listTiers,
+    create: mocks.createTier,
+    update: mocks.updateTier,
+    softDelete: mocks.softDeleteTier,
+  },
+}));
+vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
+  RegistrationSettingsApiService: {
+    get: mocks.getSettings,
+    update: mocks.updateSettings,
+  },
+}));
+vi.mock('../../src/api/RecoveryApiService', () => ({
+  RecoveryApiService: {
+    listDeleted: mocks.listDeleted,
+    restore: mocks.restoreDeleted,
+    browseOperationLog: mocks.browseOperationLog,
+  },
+}));
 vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
 
-const renderRoute = (route: string) => render(<MemoryRouter initialEntries={[route]}><App /></MemoryRouter>);
+const renderRoute = (route: string) =>
+  render(
+    <MemoryRouter initialEntries={[route]}>
+      <App />
+    </MemoryRouter>,
+  );
 
 beforeEach(() => {
   vi.clearAllMocks();
   clearToken();
   mocks.listUsers.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
   mocks.listTiers.mockResolvedValue([]);
-  mocks.getSettings.mockResolvedValue({ isRegistrationOpen: true, autoManage: false, maxUsers: null, defaultTierId: null });
+  mocks.getSettings.mockResolvedValue({
+    isRegistrationOpen: true,
+    autoManage: false,
+    maxUsers: null,
+    defaultTierId: null,
+  });
   mocks.listDeleted.mockResolvedValue([]);
   mocks.browseOperationLog.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
@@ -89,5 +130,4 @@ describe('admin routes', () => {
     expect(mocks.listLogs).toHaveBeenCalled();
     await Promise.all(views.map((view) => view.unmount()));
   });
-
 });

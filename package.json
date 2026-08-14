@@ -21,6 +21,8 @@
     "desktop:package": "cd apps/desktop && bun run package",
     "typecheck": "bun run --cwd packages/shared typecheck && bun run --cwd apps/client typecheck && bun run --cwd apps/api typecheck && bun run --cwd apps/admin typecheck && bun run --cwd apps/desktop typecheck",
     "lint": "bun run --cwd packages/shared lint && bun run --cwd apps/client lint && bun run --cwd apps/api lint && bun run --cwd apps/admin lint && bun run --cwd apps/desktop lint",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "code:lines": "node scripts/count-code-lines.js"
   },
   "workspaces": [
@@ -30,5 +32,8 @@
   "patchedDependencies": {
     "expo-sqlite@16.0.10": "patches/expo-sqlite@16.0.10.patch",
     "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.8"
   }
 }

@@ -18,26 +18,97 @@ let storyId: string;
 let firstSceneId: string;
 let secondSceneId: string;
 
-const create = (entity: string, id: string, data: Record<string, unknown>) => ({ type: 'create', entity, id, data } as CreateStoryUpdate);
-const remove = (entity: string, id: string, version: number) => ({ type: 'delete', entity, id, version } as DeleteStoryUpdate);
+const create = (entity: string, id: string, data: Record<string, unknown>) =>
+  ({ type: 'create', entity, id, data }) as CreateStoryUpdate;
+const remove = (entity: string, id: string, version: number) =>
+  ({ type: 'delete', entity, id, version }) as DeleteStoryUpdate;
 
 beforeEach(async () => {
   await truncateAll();
   userId = newId();
   storyId = newId();
   const now = new Date();
-  await db.insert(users).values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
-  await db.insert(stories).values({ id: storyId, userId, title: 'A Queda', type: 'branching', createdAt: now, updatedAt: now, version: 1, isDeleted: false } as never);
+  await db
+    .insert(users)
+    .values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
+  await db.insert(stories).values({
+    id: storyId,
+    userId,
+    title: 'A Queda',
+    type: 'branching',
+    createdAt: now,
+    updatedAt: now,
+    version: 1,
+    isDeleted: false,
+  } as never);
 
   const chapterId = newId();
   const locationId = newId();
   firstSceneId = newId();
   secondSceneId = newId();
-  await new ChapterSyncHandler().create(userId, storyId, create('Chapter', chapterId, { name: 'Prólogo', index: 1, summary: null, isFavorite: false, extraNotes: null }));
-  await new LocationSyncHandler().create(userId, storyId, create('Location', locationId, { name: 'Olímpo', description: null, climate: null, culture: null, politics: null, isFavorite: false, extraNotes: null }));
+  await new ChapterSyncHandler().create(
+    userId,
+    storyId,
+    create('Chapter', chapterId, {
+      name: 'Prólogo',
+      index: 1,
+      summary: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new LocationSyncHandler().create(
+    userId,
+    storyId,
+    create('Location', locationId, {
+      name: 'Olímpo',
+      description: null,
+      climate: null,
+      culture: null,
+      politics: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
   const scenes = new SceneSyncHandler();
-  await scenes.create(userId, storyId, create('Scene', firstSceneId, { chapterId, locationId, name: 'Chegada', index: 0, summary: null, gap: null, gapType: null, duration: null, durationType: null, isStart: true, isFinish: false, isFavorite: false, extraNotes: null }));
-  await scenes.create(userId, storyId, create('Scene', secondSceneId, { chapterId, locationId, name: 'Partida', index: 1, summary: null, gap: null, gapType: null, duration: null, durationType: null, isStart: false, isFinish: true, isFavorite: false, extraNotes: null }));
+  await scenes.create(
+    userId,
+    storyId,
+    create('Scene', firstSceneId, {
+      chapterId,
+      locationId,
+      name: 'Chegada',
+      index: 0,
+      summary: null,
+      gap: null,
+      gapType: null,
+      duration: null,
+      durationType: null,
+      isStart: true,
+      isFinish: false,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await scenes.create(
+    userId,
+    storyId,
+    create('Scene', secondSceneId, {
+      chapterId,
+      locationId,
+      name: 'Partida',
+      index: 1,
+      summary: null,
+      gap: null,
+      gapType: null,
+      duration: null,
+      durationType: null,
+      isStart: false,
+      isFinish: true,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
 });
 
 describe('choice and inventory sync entity handlers', () => {
@@ -53,20 +124,92 @@ describe('choice and inventory sync entity handlers', () => {
     const groupId = newId();
     const checkId = newId();
 
-    await item.create(userId, storyId, create('Item', itemId, { characterOwnerId: null, name: 'Chave de ônix', category: 'chave', description: null, initialState: null, isFavorite: false, extraNotes: null }));
-    await effect.create(userId, storyId, create('Effect', effectId, { entityType: 'Scene', entityId: firstSceneId, effectType: 'itemGrant', itemId, triggerName: null }));
-    await choice.create(userId, storyId, create('Choice', choiceId, { sceneId: firstSceneId, nextSceneId: secondSceneId, text: 'Abrir o portão', notes: null }));
-    await group.create(userId, storyId, create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }));
-    await check.create(userId, storyId, create('ChoiceCheck', checkId, { groupId, mode: 'enable', type: 'inventory', order: 0, sceneId: null, minVisits: null, itemId, itemPresence: 'has', triggerName: null, triggerState: null }));
+    await item.create(
+      userId,
+      storyId,
+      create('Item', itemId, {
+        characterOwnerId: null,
+        name: 'Chave de ônix',
+        category: 'chave',
+        description: null,
+        initialState: null,
+        isFavorite: false,
+        extraNotes: null,
+      }),
+    );
+    await effect.create(
+      userId,
+      storyId,
+      create('Effect', effectId, {
+        entityType: 'Scene',
+        entityId: firstSceneId,
+        effectType: 'itemGrant',
+        itemId,
+        triggerName: null,
+      }),
+    );
+    await choice.create(
+      userId,
+      storyId,
+      create('Choice', choiceId, {
+        sceneId: firstSceneId,
+        nextSceneId: secondSceneId,
+        text: 'Abrir o portão',
+        notes: null,
+      }),
+    );
+    await group.create(
+      userId,
+      storyId,
+      create('ChoiceCheckGroup', groupId, { choiceId, combinator: 'AND', order: 0 }),
+    );
+    await check.create(
+      userId,
+      storyId,
+      create('ChoiceCheck', checkId, {
+        groupId,
+        mode: 'enable',
+        type: 'inventory',
+        order: 0,
+        sceneId: null,
+        minVisits: null,
+        itemId,
+        itemPresence: 'has',
+        triggerName: null,
+        triggerState: null,
+      }),
+    );
 
     expect(await item.findById(itemId)).toMatchObject({ name: 'Chave de ônix', version: 1 });
-    expect(await effect.findById(effectId)).toMatchObject({ entityId: firstSceneId, itemId, effectType: 'itemGrant' });
-    expect(await choice.findById(choiceId)).toMatchObject({ sceneId: firstSceneId, nextSceneId: secondSceneId });
+    expect(await effect.findById(effectId)).toMatchObject({
+      entityId: firstSceneId,
+      itemId,
+      effectType: 'itemGrant',
+    });
+    expect(await choice.findById(choiceId)).toMatchObject({
+      sceneId: firstSceneId,
+      nextSceneId: secondSceneId,
+    });
     expect(await group.findById(groupId)).toMatchObject({ choiceId, combinator: 'AND' });
-    expect(await check.findById(checkId)).toMatchObject({ groupId, itemId, itemPresence: 'has', mode: 'enable' });
+    expect(await check.findById(checkId)).toMatchObject({
+      groupId,
+      itemId,
+      itemPresence: 'has',
+      mode: 'enable',
+    });
 
     const currentChoice = await choice.findById(choiceId);
-    await choice.update(userId, storyId, { type: 'update', entity: 'Choice', id: choiceId, changes: { text: 'Usar a chave', version: 1 } } as UpdateStoryUpdate, currentChoice);
+    await choice.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'Choice',
+        id: choiceId,
+        changes: { text: 'Usar a chave', version: 1 },
+      } as UpdateStoryUpdate,
+      currentChoice,
+    );
     expect(await choice.findById(choiceId)).toMatchObject({ text: 'Usar a chave', version: 2 });
 
     for (const [entity, id, handler] of [

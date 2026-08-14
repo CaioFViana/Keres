@@ -18,9 +18,7 @@ export const attributeValues = sqliteTable(
     isDeleted: integer('is_deleted', { mode: 'boolean' }).default(false).notNull(),
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
-  (table) => [
-    unique('entity_field_unq').on(table.entityId, table.fieldId),
-  ]
+  (table) => [unique('entity_field_unq').on(table.entityId, table.fieldId)],
 );
 
 export type AttributeValueInsert = InferInsertModel<typeof attributeValues>;

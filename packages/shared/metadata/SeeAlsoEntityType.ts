@@ -14,4 +14,4 @@ export const SEE_ALSO_ENTITY_TYPES = [
   'Choice',
 ] as const;
 
-export type SeeAlsoEntityType = typeof SEE_ALSO_ENTITY_TYPES[number];
+export type SeeAlsoEntityType = (typeof SEE_ALSO_ENTITY_TYPES)[number];

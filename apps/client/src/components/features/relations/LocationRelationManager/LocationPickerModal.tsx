@@ -17,7 +17,13 @@ interface LocationPickerModalProps {
 /** Picker genérico de Location, reaproveitado pelos 3 tipos de ação em LocationRelationManager
  *  (definir pai, adicionar filho, adicionar conexão) - só muda a lista de candidatos já filtrada
  *  pelo chamador (auto-referência/ciclo/já-conectado excluídos antes de chegar aqui). */
-const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ isVisible, onClose, onSelect, title, candidates }) => {
+const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
+  isVisible,
+  onClose,
+  onSelect,
+  title,
+  candidates,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -58,22 +64,27 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ isVisible, on
   });
 
   return (
-    <ResponsiveModal visible={isVisible} onClose={onClose} contentStyle={styles.modalContent} maxHeight="78%">
-          <Text style={styles.title}>{title}</Text>
-          <FlatList
-            data={sortedCandidates}
-            keyExtractor={(item) => item.id}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.item} onPress={() => onSelect(item.id)}>
-                <Text style={styles.itemText}>{item.name}</Text>
-              </TouchableOpacity>
-            )}
-            ListEmptyComponent={<Text style={styles.emptyText}>{t('no_locations_available')}</Text>}
-          />
-          <Button onPress={onClose} style={styles.closeButton}>
-            {t('close')}
-          </Button>
+    <ResponsiveModal
+      visible={isVisible}
+      onClose={onClose}
+      contentStyle={styles.modalContent}
+      maxHeight="78%"
+    >
+      <Text style={styles.title}>{title}</Text>
+      <FlatList
+        data={sortedCandidates}
+        keyExtractor={(item) => item.id}
+        keyboardShouldPersistTaps="handled"
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.item} onPress={() => onSelect(item.id)}>
+            <Text style={styles.itemText}>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={<Text style={styles.emptyText}>{t('no_locations_available')}</Text>}
+      />
+      <Button onPress={onClose} style={styles.closeButton}>
+        {t('close')}
+      </Button>
     </ResponsiveModal>
   );
 };

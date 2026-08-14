@@ -5,9 +5,15 @@ import { stories } from './stories';
 
 export const choiceCheckGroups = pgTable('choice_check_groups', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  choiceId: text('choice_id').notNull().references(() => choices.id),
-  combinator: text('combinator', { enum: ['AND', 'OR'] }).notNull().default('AND'),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  choiceId: text('choice_id')
+    .notNull()
+    .references(() => choices.id),
+  combinator: text('combinator', { enum: ['AND', 'OR'] })
+    .notNull()
+    .default('AND'),
   order: integer('order').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

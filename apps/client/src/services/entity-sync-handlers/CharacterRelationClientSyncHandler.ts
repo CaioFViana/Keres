@@ -1,5 +1,8 @@
 import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { CharacterRelation, ServerCharacterRelationPayload } from '@keres/shared/entities/CharacterRelation'; // Import the CharacterRelation entity interface
+import {
+  CharacterRelation,
+  ServerCharacterRelationPayload,
+} from '@keres/shared/entities/CharacterRelation'; // Import the CharacterRelation entity interface
 import { and, eq, or, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -11,15 +14,21 @@ const getExistingRelationForPair = async (
   storyId: string,
   charIdA: string,
   charIdB: string,
-  excludeRelationId?: string
+  excludeRelationId?: string,
 ): Promise<CharacterRelation | undefined> => {
   const conditions = [
     eq(schema.characterRelations.storyId, storyId),
     eq(schema.characterRelations.isDeleted, false),
     or(
-      and(eq(schema.characterRelations.charId1, charIdA), eq(schema.characterRelations.charId2, charIdB)),
-      and(eq(schema.characterRelations.charId1, charIdB), eq(schema.characterRelations.charId2, charIdA))
-    )
+      and(
+        eq(schema.characterRelations.charId1, charIdA),
+        eq(schema.characterRelations.charId2, charIdB),
+      ),
+      and(
+        eq(schema.characterRelations.charId1, charIdB),
+        eq(schema.characterRelations.charId2, charIdA),
+      ),
+    ),
   ];
 
   if (excludeRelationId) {
@@ -75,13 +84,27 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
     if (existingDuplicate) {
       // If the incoming data is newer, mark the existing one as deleted and apply the new one.
       // Otherwise, the existing one wins, and we discard the incoming create.
-      if (mappedRelationData.updatedAt && existingDuplicate.updatedAt && new Date(mappedRelationData.updatedAt) > existingDuplicate.updatedAt) {
-        console.log(`Sync conflict (create): Incoming CharacterRelation ${update.id} is newer than existing duplicate ${existingDuplicate.id}. Marking existing as deleted.`);
-        await this.db.update(schema.characterRelations)
-          .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: existingDuplicate.version + 1 })
+      if (
+        mappedRelationData.updatedAt &&
+        existingDuplicate.updatedAt &&
+        new Date(mappedRelationData.updatedAt) > existingDuplicate.updatedAt
+      ) {
+        console.log(
+          `Sync conflict (create): Incoming CharacterRelation ${update.id} is newer than existing duplicate ${existingDuplicate.id}. Marking existing as deleted.`,
+        );
+        await this.db
+          .update(schema.characterRelations)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: existingDuplicate.version + 1,
+          })
           .where(eq(schema.characterRelations.id, existingDuplicate.id));
       } else {
-        console.log(`Sync conflict (create): Existing CharacterRelation ${existingDuplicate.id} is newer or same as incoming ${update.id}. Discarding incoming create.`);
+        console.log(
+          `Sync conflict (create): Existing CharacterRelation ${existingDuplicate.id} is newer or same as incoming ${update.id}. Discarding incoming create.`,
+        );
         return; // Discard the incoming create
       }
     }
@@ -116,11 +139,13 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
 
     const serverRelationChanges = update.changes as Partial<ServerCharacterRelationPayload>;
     const mappedRelationChanges: Partial<CharacterRelation> = { ...serverRelationChanges };
-    
+
     // Determine the effective charIds after this update, for duplicate checking
-    const effectiveCharId1 = mappedRelationChanges.charId1 || serverRelationChanges.character1Id || localRelation.charId1;
-    const effectiveCharId2 = mappedRelationChanges.charId2 || serverRelationChanges.character2Id || localRelation.charId2;
-    
+    const effectiveCharId1 =
+      mappedRelationChanges.charId1 || serverRelationChanges.character1Id || localRelation.charId1;
+    const effectiveCharId2 =
+      mappedRelationChanges.charId2 || serverRelationChanges.character2Id || localRelation.charId2;
+
     // Remove server-specific fields after mapping
     if (serverRelationChanges.character1Id !== undefined) {
       mappedRelationChanges.charId1 = serverRelationChanges.character1Id;
@@ -138,32 +163,49 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
       storyId,
       effectiveCharId1,
       effectiveCharId2,
-      update.id // Exclude the relation currently being updated
+      update.id, // Exclude the relation currently being updated
     );
 
     if (existingDuplicate) {
       // Assuming the incoming update carries an 'updatedAt' timestamp or we use current time
-      const incomingUpdatedAt = mappedRelationChanges.updatedAt ? new Date(mappedRelationChanges.updatedAt) : new Date();
+      const incomingUpdatedAt = mappedRelationChanges.updatedAt
+        ? new Date(mappedRelationChanges.updatedAt)
+        : new Date();
 
       if (incomingUpdatedAt > existingDuplicate.updatedAt) {
-        console.log(`Sync conflict (update): Incoming CharacterRelation ${update.id} is newer than existing duplicate ${existingDuplicate.id}. Marking existing as deleted.`);
-        await this.db.update(schema.characterRelations)
-          .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: existingDuplicate.version + 1 })
+        console.log(
+          `Sync conflict (update): Incoming CharacterRelation ${update.id} is newer than existing duplicate ${existingDuplicate.id}. Marking existing as deleted.`,
+        );
+        await this.db
+          .update(schema.characterRelations)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: existingDuplicate.version + 1,
+          })
           .where(eq(schema.characterRelations.id, existingDuplicate.id));
       } else {
-        console.warn(`Sync conflict (update): Existing CharacterRelation ${existingDuplicate.id} is newer or same as incoming ${update.id}. Discarding incoming update for ${update.id} as it would create a duplicate.`);
+        console.warn(
+          `Sync conflict (update): Existing CharacterRelation ${existingDuplicate.id} is newer or same as incoming ${update.id}. Discarding incoming update for ${update.id} as it would create a duplicate.`,
+        );
         return; // Discard the incoming update
       }
     }
 
-    await this.db.update(schema.characterRelations)
+    await this.db
+      .update(schema.characterRelations)
       .set({
         ...mappedRelationChanges,
         storyId: storyId,
         updatedAt: new Date(update.operationTime || new Date()), // Use incoming updatedAt if present, else new Date
         // Ensure date fields are correctly converted if they come as strings
-        createdAt: mappedRelationChanges.createdAt ? new Date(mappedRelationChanges.createdAt) : undefined,
-        deletedAt: mappedRelationChanges.deletedAt ? new Date(mappedRelationChanges.deletedAt) : undefined,
+        createdAt: mappedRelationChanges.createdAt
+          ? new Date(mappedRelationChanges.createdAt)
+          : undefined,
+        deletedAt: mappedRelationChanges.deletedAt
+          ? new Date(mappedRelationChanges.deletedAt)
+          : undefined,
       })
       .where(eq(schema.characterRelations.id, update.id));
     console.log(`Applied update for CharacterRelation ${update.id}`);
@@ -177,7 +219,8 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
       return;
     }
 
-    await this.db.update(schema.characterRelations)
+    await this.db
+      .update(schema.characterRelations)
       .set({
         storyId: storyId,
         isDeleted: true,

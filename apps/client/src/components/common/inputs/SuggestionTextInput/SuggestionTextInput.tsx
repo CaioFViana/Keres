@@ -1,9 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useDrizzle } from '../../../../db';
-import { createSuggestionService, SuggestionServiceInterface, SuggestionType } from '../../../../services/storymanagement/SuggestionService';
+import {
+  createSuggestionService,
+  SuggestionServiceInterface,
+  SuggestionType,
+} from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import Button from '@/src/components/common/controls/Button/Button'; // Reusing existing Button
@@ -96,7 +108,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      marginBottom: 10
+      marginBottom: 10,
     },
     inputWrapper: {
       flexDirection: 'row',
@@ -105,7 +117,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
       borderColor: colors.border,
       borderRadius: 5,
       backgroundColor: colors.surface,
-      minHeight: 50
+      minHeight: 50,
     },
     inputField: {
       flex: 1,
@@ -166,16 +178,30 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
   });
 
   return (
-    <View style={[styles.container, style, commonInputStyles.input, commonInputStyles.customComponentInput]}>
+    <View
+      style={[
+        styles.container,
+        style,
+        commonInputStyles.input,
+        commonInputStyles.customComponentInput,
+      ]}
+    >
       <View style={styles.inputWrapper}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          style={[commonInputStyles.input, { flex: 1, borderWidth: 0, backgroundColor: 'transparent', marginBottom: 0 }]}
+          style={[
+            commonInputStyles.input,
+            { flex: 1, borderWidth: 0, backgroundColor: 'transparent', marginBottom: 0 },
+          ]}
           {...rest}
         />
-        <TouchableOpacity style={styles.suggestionButton} onPress={handleToggleSuggestions} disabled={loadingSuggestions}>
+        <TouchableOpacity
+          style={styles.suggestionButton}
+          onPress={handleToggleSuggestions}
+          disabled={loadingSuggestions}
+        >
           {loadingSuggestions ? (
             <ActivityIndicator size="small" color={colors.onPrimary} />
           ) : (
@@ -207,12 +233,17 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
             keyExtractor={(item) => item[0]}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSelectSuggestion(item)}>
+              <TouchableOpacity
+                style={styles.suggestionItem}
+                onPress={() => handleSelectSuggestion(item)}
+              >
                 <Text style={styles.suggestionText}>{item[0]}</Text>
                 {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
               </TouchableOpacity>
             )}
-            ListEmptyComponent={<Text style={styles.noSuggestionsText}>{t('no_suggestions_available')}</Text>}
+            ListEmptyComponent={
+              <Text style={styles.noSuggestionsText}>{t('no_suggestions_available')}</Text>
+            }
           />
         )}
         <Button onPress={closeSuggestions} style={styles.closeButton}>

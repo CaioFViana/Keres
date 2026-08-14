@@ -31,7 +31,7 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
   incomingChoicesForScene = [],
   sceneNamesById = {},
 }) => {
-  const { t }= useTranslation()
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ScenesScreenNavigationProp>();
 
@@ -135,28 +135,34 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
   };
 
   const handleChoiceDetailNavigation = (choiceId: string) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    const drawerNavigation =
+      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
     if (drawerNavigation) {
       navigateToEntityDetail(drawerNavigation, 'Choice', choiceId);
     }
   };
 
-  const renderChoiceCard = (
-    choice: Choice,
-    direction: 'outgoing' | 'incoming'
-  ) => {
+  const renderChoiceCard = (choice: Choice, direction: 'outgoing' | 'incoming') => {
     const relatedSceneId = direction === 'outgoing' ? choice.nextSceneId : choice.sceneId;
     return (
       <View key={choice.id} style={styles.choiceCard}>
         <TouchableOpacity
           style={styles.choiceMain}
-          onPress={() => direction === 'outgoing' ? handleChoiceNavigation(choice) : handleIncomingChoiceNavigation(choice)}
+          onPress={() =>
+            direction === 'outgoing'
+              ? handleChoiceNavigation(choice)
+              : handleIncomingChoiceNavigation(choice)
+          }
           activeOpacity={0.7}
         >
           <View style={{ flex: 1 }}>
             <Text style={styles.choiceButtonText}>{choice.text}</Text>
             <View style={styles.choiceTargetRow}>
-              <Ionicons name={direction === 'outgoing' ? 'arrow-forward' : 'arrow-back'} size={13} color={colors.textSecondary} />
+              <Ionicons
+                name={direction === 'outgoing' ? 'arrow-forward' : 'arrow-back'}
+                size={13}
+                color={colors.textSecondary}
+              />
               <Text style={styles.choiceTargetText}>
                 {sceneNamesById[relatedSceneId] ?? t('common_na')}
               </Text>
@@ -212,13 +218,16 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
         </View>
       </View>
     );
-  } else if (storyType === 'branching' && (choicesForScene.length > 0 || incomingChoicesForScene.length > 0)) {
+  } else if (
+    storyType === 'branching' &&
+    (choicesForScene.length > 0 || incomingChoicesForScene.length > 0)
+  ) {
     return (
       <View style={styles.container}>
         {choicesForScene.length > 0 && (
           <>
             <Text style={styles.navigationTitle}>{t('story_map_outgoing_choices')}</Text>
-            {choicesForScene.map(choice => renderChoiceCard(choice, 'outgoing'))}
+            {choicesForScene.map((choice) => renderChoiceCard(choice, 'outgoing'))}
           </>
         )}
         {incomingChoicesForScene.length > 0 && (
@@ -226,7 +235,7 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
             <Text style={[styles.navigationTitle, choicesForScene.length > 0 && { marginTop: 6 }]}>
               {t('story_map_incoming_choices')}
             </Text>
-            {incomingChoicesForScene.map(choice => renderChoiceCard(choice, 'incoming'))}
+            {incomingChoicesForScene.map((choice) => renderChoiceCard(choice, 'incoming'))}
           </>
         )}
       </View>

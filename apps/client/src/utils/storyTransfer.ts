@@ -1,4 +1,9 @@
-import { FullStoryExportSchema, FullStoryExportType, migrateStoryExport, StoryExportVersionError } from '@keres/shared';
+import {
+  FullStoryExportSchema,
+  FullStoryExportType,
+  migrateStoryExport,
+  StoryExportVersionError,
+} from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -25,7 +30,10 @@ export { StoryImportError };
  * Montado com escapes em vez de escrito direto no literal para o arquivo-fonte não carregar
  * caracteres invisíveis que qualquer edição futura pode quebrar sem ninguém notar.
  */
-const COMBINING_MARKS = new RegExp('[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']', 'g');
+const COMBINING_MARKS = new RegExp(
+  '[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']',
+  'g',
+);
 
 /** Título reduzido a algo que qualquer sistema de arquivos aceita. */
 function slugify(storyTitle: string): string {
@@ -61,7 +69,10 @@ export function buildStoryMapFileName(storyTitle: string, now: Date = new Date()
 }
 
 /** Nome do arquivo de imagem do mapa de relações, no mesmo padrão da exportação de dados. */
-export function buildCharacterRelationMapFileName(storyTitle: string, now: Date = new Date()): string {
+export function buildCharacterRelationMapFileName(
+  storyTitle: string,
+  now: Date = new Date(),
+): string {
   return `${slugify(storyTitle)}-relacoes-${now.toISOString().slice(0, 10)}.svg`;
 }
 
@@ -93,7 +104,7 @@ async function deliverFile(
   contents: string | Uint8Array,
   fileName: string,
   mimeType: string,
-  uti: string
+  uti: string,
 ): Promise<ExportDeliveryResult> {
   if (Platform.OS === 'web') {
     triggerBrowserDownload(contents, fileName, mimeType);
@@ -118,15 +129,20 @@ async function deliverFile(
 /** Entrega o pacote de dados da história como `.json` (metadados só, sem os bytes da mídia). */
 export function deliverStoryExport(
   storyExport: FullStoryExportType,
-  fileName: string
+  fileName: string,
 ): Promise<ExportDeliveryResult> {
-  return deliverFile(JSON.stringify(storyExport, null, 2), fileName, 'application/json', 'public.json');
+  return deliverFile(
+    JSON.stringify(storyExport, null, 2),
+    fileName,
+    'application/json',
+    'public.json',
+  );
 }
 
 /** Entrega o pacote `.zip` (dados + mídia) já montado por `buildStoryZipBytes`. */
 export function deliverStoryZipExport(
   zipBytes: Uint8Array,
-  fileName: string
+  fileName: string,
 ): Promise<ExportDeliveryResult> {
   return deliverFile(zipBytes, fileName, 'application/zip', 'public.zip-archive');
 }
@@ -137,7 +153,11 @@ export function deliverSvgMap(svg: string, fileName: string): Promise<ExportDeli
 }
 
 /** Download no navegador via link temporário — não existe share sheet na web. */
-function triggerBrowserDownload(contents: string | Uint8Array, fileName: string, mimeType: string): void {
+function triggerBrowserDownload(
+  contents: string | Uint8Array,
+  fileName: string,
+  mimeType: string,
+): void {
   // `Uint8Array`'s tipo genérico aceita `ArrayBufferLike` (inclui `SharedArrayBuffer`), mas
   // `Blob` só aceita partes apoiadas em `ArrayBuffer`; nunca é de fato um `SharedArrayBuffer`
   // aqui (só web usa este caminho, com bytes vindos de `File.bytes()`/JSZip).
@@ -188,8 +208,7 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
   }
 
   const asset = result.assets[0];
-  const isZip = asset.name?.toLowerCase().endsWith('.zip')
-    ?? (asset.mimeType === 'application/zip');
+  const isZip = asset.name?.toLowerCase().endsWith('.zip') ?? asset.mimeType === 'application/zip';
 
   if (isZip) {
     let bytes: Uint8Array;
@@ -198,7 +217,10 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
         ? new Uint8Array(await asset.file.arrayBuffer()) // web: o seletor já entrega o Blob
         : await new File(asset.uri).bytes();
     } catch (error) {
-      throw new StoryImportError('unreadable', `Could not read ${asset.name}: ${(error as Error)?.message}`);
+      throw new StoryImportError(
+        'unreadable',
+        `Could not read ${asset.name}: ${(error as Error)?.message}`,
+      );
     }
 
     const { story, media } = await extractStoryZip(bytes, asset.name || 'file.zip');
@@ -211,7 +233,10 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
       ? await asset.file.text() // web: o seletor já entrega o Blob
       : await new File(asset.uri).text();
   } catch (error) {
-    throw new StoryImportError('unreadable', `Could not read ${asset.name}: ${(error as Error)?.message}`);
+    throw new StoryImportError(
+      'unreadable',
+      `Could not read ${asset.name}: ${(error as Error)?.message}`,
+    );
   }
 
   let parsedJson: unknown;
@@ -236,7 +261,10 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
 
   const validation = FullStoryExportSchema.safeParse(migrated);
   if (!validation.success) {
-    throw new StoryImportError('invalid_format', `${asset.name} is not a Keres story export: ${validation.error.message}`);
+    throw new StoryImportError(
+      'invalid_format',
+      `${asset.name} is not a Keres story export: ${validation.error.message}`,
+    );
   }
 
   return { story: validation.data, media: [] };

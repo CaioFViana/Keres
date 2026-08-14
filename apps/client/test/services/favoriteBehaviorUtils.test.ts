@@ -4,7 +4,9 @@
 const mockFavoriteService = {
   getBehavior: jest.fn(async () => 'global' as string),
   setFavorite: jest.fn(async () => undefined),
-  decorateEntities: jest.fn(async (_storyId: string, _type: string, _userId: string, entities: any[]) => entities),
+  decorateEntities: jest.fn(
+    async (_storyId: string, _type: string, _userId: string, entities: any[]) => entities,
+  ),
 };
 jest.mock('../../src/services/storymanagement/FavoriteService', () => ({
   __esModule: true,
@@ -33,7 +35,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockUserId = 'local-user';
   mockFavoriteService.getBehavior.mockResolvedValue('global');
-  mockFavoriteService.decorateEntities.mockImplementation(async (_s, _t, _u, entities: any[]) => entities);
+  mockFavoriteService.decorateEntities.mockImplementation(
+    async (_s, _t, _u, entities: any[]) => entities,
+  );
 });
 
 /**
@@ -46,40 +50,73 @@ describe('normalizeFavoriteUpdate', () => {
   it('leaves the changes alone when the update does not touch the favourite', async () => {
     const changes: { name: string; isFavorite?: boolean } = { name: 'Keres' };
 
-    expect(await normalizeFavoriteUpdate(db, STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', changes)).toBe(changes);
+    expect(
+      await normalizeFavoriteUpdate(db, STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', changes),
+    ).toBe(changes);
     expect(mockFavoriteService.setFavorite).not.toHaveBeenCalled();
   });
 
   it('keeps isFavorite on the entity when the story is global', async () => {
     mockFavoriteService.getBehavior.mockResolvedValue('global');
 
-    const result = await normalizeFavoriteUpdate(db, STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', {
-      name: 'Keres',
-      isFavorite: true,
-    });
+    const result = await normalizeFavoriteUpdate(
+      db,
+      STORY_ID,
+      ENTITY_ID,
+      ENTITY_TYPE,
+      'local-user',
+      {
+        name: 'Keres',
+        isFavorite: true,
+      },
+    );
 
     expect(result).toMatchObject({ name: 'Keres', isFavorite: true });
     expect(mockFavoriteService.setFavorite).not.toHaveBeenCalled();
   });
 
-  it.each(['individual', 'individual_public'])('moves it to the per-user table when the story is %s', async (behavior) => {
-    mockFavoriteService.getBehavior.mockResolvedValue(behavior);
+  it.each(['individual', 'individual_public'])(
+    'moves it to the per-user table when the story is %s',
+    async (behavior) => {
+      mockFavoriteService.getBehavior.mockResolvedValue(behavior);
 
-    const result = await normalizeFavoriteUpdate(db, STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', {
-      name: 'Keres',
-      isFavorite: true,
-    });
+      const result = await normalizeFavoriteUpdate(
+        db,
+        STORY_ID,
+        ENTITY_ID,
+        ENTITY_TYPE,
+        'local-user',
+        {
+          name: 'Keres',
+          isFavorite: true,
+        },
+      );
 
-    expect(mockFavoriteService.setFavorite).toHaveBeenCalledWith(STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', true);
-    expect(result).toEqual({ name: 'Keres' });
-  });
+      expect(mockFavoriteService.setFavorite).toHaveBeenCalledWith(
+        STORY_ID,
+        ENTITY_ID,
+        ENTITY_TYPE,
+        'local-user',
+        true,
+      );
+      expect(result).toEqual({ name: 'Keres' });
+    },
+  );
 
   it('records unfavouriting as well', async () => {
     mockFavoriteService.getBehavior.mockResolvedValue('individual');
 
-    await normalizeFavoriteUpdate(db, STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', { isFavorite: false });
+    await normalizeFavoriteUpdate(db, STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', {
+      isFavorite: false,
+    });
 
-    expect(mockFavoriteService.setFavorite).toHaveBeenCalledWith(STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', false);
+    expect(mockFavoriteService.setFavorite).toHaveBeenCalledWith(
+      STORY_ID,
+      ENTITY_ID,
+      ENTITY_TYPE,
+      'local-user',
+      false,
+    );
   });
 
   it('does not mutate the changes the caller passed in', async () => {
@@ -106,7 +143,10 @@ describe('normalizeFavoriteCreate', () => {
   it('strips the favourite from the entity and hands it back to the caller', async () => {
     mockFavoriteService.getBehavior.mockResolvedValue('individual');
 
-    const result = await normalizeFavoriteCreate(db, STORY_ID, ENTITY_TYPE, { name: 'Keres', isFavorite: true });
+    const result = await normalizeFavoriteCreate(db, STORY_ID, ENTITY_TYPE, {
+      name: 'Keres',
+      isFavorite: true,
+    });
 
     expect(result.data).toEqual({ name: 'Keres', isFavorite: false });
     expect(result.individualFavorite).toBe(true);
@@ -127,11 +167,24 @@ describe('persistInitialFavorite', () => {
   it('writes the favourite once the entity has its real id', async () => {
     await persistInitialFavorite(db, STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', true);
 
-    expect(mockFavoriteService.setFavorite).toHaveBeenCalledWith(STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', true);
+    expect(mockFavoriteService.setFavorite).toHaveBeenCalledWith(
+      STORY_ID,
+      ENTITY_ID,
+      ENTITY_TYPE,
+      'local-user',
+      true,
+    );
   });
 
   it.each([false, undefined])('writes nothing for %s', async (individualFavorite) => {
-    await persistInitialFavorite(db, STORY_ID, ENTITY_ID, ENTITY_TYPE, 'local-user', individualFavorite);
+    await persistInitialFavorite(
+      db,
+      STORY_ID,
+      ENTITY_ID,
+      ENTITY_TYPE,
+      'local-user',
+      individualFavorite,
+    );
 
     expect(mockFavoriteService.setFavorite).not.toHaveBeenCalled();
   });
@@ -146,7 +199,12 @@ describe('decorateFavorite', () => {
     const result = await decorateFavorite(db, ENTITY_TYPE, entity);
 
     expect(result!.isFavorite).toBe(true);
-    expect(mockFavoriteService.decorateEntities).toHaveBeenCalledWith(STORY_ID, ENTITY_TYPE, 'local-user', [entity]);
+    expect(mockFavoriteService.decorateEntities).toHaveBeenCalledWith(
+      STORY_ID,
+      ENTITY_TYPE,
+      'local-user',
+      [entity],
+    );
   });
 
   it('returns nothing for an entity that is not there', async () => {

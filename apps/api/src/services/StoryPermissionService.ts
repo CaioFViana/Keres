@@ -14,9 +14,9 @@ export class StoryPermissionService {
       where: and(
         or(
           and(eq(friendships.senderId, userId1), eq(friendships.receiverId, userId2)),
-          and(eq(friendships.senderId, userId2), eq(friendships.receiverId, userId1))
+          and(eq(friendships.senderId, userId2), eq(friendships.receiverId, userId1)),
         ),
-        eq(friendships.status, FriendStatus.FRIEND)
+        eq(friendships.status, FriendStatus.FRIEND),
       ),
     });
     return !!friendship;
@@ -24,36 +24,38 @@ export class StoryPermissionService {
 
   async deletePermissionsBetweenUsers(userA: string, userB: string): Promise<void> {
     // 1. Select the IDs of permissions to delete where userB is target and userA is story owner
-    const permissionsToDelete1 = await db.select({ id: storyPermissions.id })
+    const permissionsToDelete1 = await db
+      .select({ id: storyPermissions.id })
       .from(storyPermissions)
       .innerJoin(stories, eq(storyPermissions.storyId, stories.id))
       .where(
         and(
           eq(storyPermissions.userId, userB), // targetUser
-          eq(stories.userId, userA) // owner of the story
-        )
+          eq(stories.userId, userA), // owner of the story
+        ),
       )
       .execute();
 
-    const idsToDelete1 = permissionsToDelete1.map(p => p.id);
+    const idsToDelete1 = permissionsToDelete1.map((p) => p.id);
 
     if (idsToDelete1.length > 0) {
       await db.delete(storyPermissions).where(inArray(storyPermissions.id, idsToDelete1)).execute();
     }
 
     // 2. Select the IDs of permissions to delete where userA is target and userB is story owner
-    const permissionsToDelete2 = await db.select({ id: storyPermissions.id })
+    const permissionsToDelete2 = await db
+      .select({ id: storyPermissions.id })
       .from(storyPermissions)
       .innerJoin(stories, eq(storyPermissions.storyId, stories.id))
       .where(
         and(
           eq(storyPermissions.userId, userA), // targetUser
-          eq(stories.userId, userB) // owner of the story
-        )
+          eq(stories.userId, userB), // owner of the story
+        ),
       )
       .execute();
 
-    const idsToDelete2 = permissionsToDelete2.map(p => p.id);
+    const idsToDelete2 = permissionsToDelete2.map((p) => p.id);
 
     if (idsToDelete2.length > 0) {
       await db.delete(storyPermissions).where(inArray(storyPermissions.id, idsToDelete2)).execute();
@@ -64,14 +66,17 @@ export class StoryPermissionService {
     ownerUserId: string,
     storyId: string,
     targetUserId: string,
-    permissionType: 'reader' | 'writer'
+    permissionType: 'reader' | 'writer',
   ) {
     // `AppError` e não `Error`: são recusas deliberadas, com mensagem que o usuário precisa
     // ler. Um `Error` simples aqui não bate com o prefixo "Unauthorized" que
     // `withOwnershipCheck` traduz, cai no fallback do `onError` e chega ao cliente como
     // "Internal server error." - indistinguível de uma falha de verdade.
     if (ownerUserId === targetUserId) {
-      throw new AppError(400, 'The story owner already has full permissions and cannot be assigned additional permissions.');
+      throw new AppError(
+        400,
+        'The story owner already has full permissions and cannot be assigned additional permissions.',
+      );
     }
 
     // New: Check if ownerUserId and targetUserId are friends
@@ -231,7 +236,11 @@ export class StoryPermissionService {
     return !!story;
   }
 
-  async hasPermission(userId: string, storyId: string, minimumPermissionType: 'reader' | 'writer'): Promise<boolean> {
+  async hasPermission(
+    userId: string,
+    storyId: string,
+    minimumPermissionType: 'reader' | 'writer',
+  ): Promise<boolean> {
     // Check if the user is the owner of the story
     const owner = await this.isStoryOwner(userId, storyId);
     if (owner) {
@@ -256,11 +265,20 @@ export class StoryPermissionService {
   }
 
   async getReadableStoryIds(userId: string): Promise<string[]> {
-    const owned = await db.select({ id: stories.id }).from(stories)
+    const owned = await db
+      .select({ id: stories.id })
+      .from(stories)
       .where(and(eq(stories.userId, userId), eq(stories.isDeleted, false)));
-    const shared = await db.select({ storyId: storyPermissions.storyId }).from(storyPermissions)
+    const shared = await db
+      .select({ storyId: storyPermissions.storyId })
+      .from(storyPermissions)
       .where(and(eq(storyPermissions.userId, userId), eq(storyPermissions.isDeleted, false)));
-    return [...new Set([...owned.map((story) => story.id), ...shared.map((permission) => permission.storyId)])];
+    return [
+      ...new Set([
+        ...owned.map((story) => story.id),
+        ...shared.map((permission) => permission.storyId),
+      ]),
+    ];
   }
 }
 

@@ -8,7 +8,12 @@ interface SceneExtraActions {
   reorderScenes: (chapterId: string, newOrder: { id: string; newIndex: number }[]) => Promise<void>;
 }
 
-export const useSceneStore = createEntityStore<'scenes', SceneSelect, SceneService, SceneExtraActions>({
+export const useSceneStore = createEntityStore<
+  'scenes',
+  SceneSelect,
+  SceneService,
+  SceneExtraActions
+>({
   collectionKey: 'scenes',
   favoriteEntityType: 'Scene',
   createService: createSceneService,

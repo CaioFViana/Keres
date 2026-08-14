@@ -17,7 +17,8 @@ const rel = (
   relationType: LocationRelationKind = 'contains',
 ): GraphLocationRelation => ({ id, locationAId, locationBId, relationType });
 
-const byId = (layout: { nodes: { id: string }[] }) => new Map(layout.nodes.map((node) => [node.id, node as any]));
+const byId = (layout: { nodes: { id: string }[] }) =>
+  new Map(layout.nodes.map((node) => [node.id, node as any]));
 
 describe('buildLocationGraphLayout', () => {
   it('returns an empty canvas of just the padding when there are no locations', () => {
@@ -50,7 +51,10 @@ describe('buildLocationGraphLayout', () => {
   });
 
   it('stacks a contains child one layer below its parent', () => {
-    const layout = buildLocationGraphLayout([location('reino'), location('cidade')], [rel('r1', 'reino', 'cidade')]);
+    const layout = buildLocationGraphLayout(
+      [location('reino'), location('cidade')],
+      [rel('r1', 'reino', 'cidade')],
+    );
     const nodes = byId(layout);
 
     expect(nodes.get('reino').depth).toBe(0);
@@ -77,7 +81,10 @@ describe('buildLocationGraphLayout', () => {
     const nodes = byId(layout);
 
     const centre = (node: any) => node.x + node.width / 2;
-    expect(centre(nodes.get('reino'))).toBeCloseTo((centre(nodes.get('a')) + centre(nodes.get('b'))) / 2, 1);
+    expect(centre(nodes.get('reino'))).toBeCloseTo(
+      (centre(nodes.get('a')) + centre(nodes.get('b'))) / 2,
+      1,
+    );
   });
 
   it('orders siblings by name, so the drawing is stable', () => {
@@ -108,7 +115,9 @@ describe('buildLocationGraphLayout', () => {
 
     const kinds = layout.edges.map((edge) => edge.relationType).sort();
     expect(kinds).toEqual(['connected_to', 'contains']);
-    expect(layout.edges.every((edge) => /^M [-\d.]+ [-\d.]+ L [-\d.]+ [-\d.]+$/.test(edge.path))).toBe(true);
+    expect(
+      layout.edges.every((edge) => /^M [-\d.]+ [-\d.]+ L [-\d.]+ [-\d.]+$/.test(edge.path)),
+    ).toBe(true);
   });
 
   it('does not let a connected_to edge change where nodes land', () => {
@@ -116,7 +125,10 @@ describe('buildLocationGraphLayout', () => {
     const tree = [rel('r1', 'reino', 'cidade'), rel('r2', 'reino', 'vila')];
 
     const withoutConnection = buildLocationGraphLayout(locations, tree);
-    const withConnection = buildLocationGraphLayout(locations, [...tree, rel('r3', 'cidade', 'vila', 'connected_to')]);
+    const withConnection = buildLocationGraphLayout(locations, [
+      ...tree,
+      rel('r3', 'cidade', 'vila', 'connected_to'),
+    ]);
 
     expect(withConnection.nodes.map(({ id, x, y }) => ({ id, x, y }))).toEqual(
       withoutConnection.nodes.map(({ id, x, y }) => ({ id, x, y })),
@@ -132,7 +144,9 @@ describe('buildLocationGraphLayout', () => {
 
     const ids = layout.nodes.map((node) => node.id);
     expect(ids.sort()).toEqual(['a', 'b', 'c']);
-    expect(layout.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y))).toBe(true);
+    expect(layout.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y))).toBe(
+      true,
+    );
   });
 
   /**
@@ -157,7 +171,9 @@ describe('buildLocationGraphLayout', () => {
     const roots = layout.nodes.filter((node) => node.depth === 0).map((node) => node.id);
 
     expect(roots).toEqual(['a']);
-    expect(buildLocationGraphLayout([location('a'), location('m'), location('z')], cycle)).toEqual(layout);
+    expect(buildLocationGraphLayout([location('a'), location('m'), location('z')], cycle)).toEqual(
+      layout,
+    );
   });
 
   it('keeps drawing the healthy locations when only part of the story is cyclic', () => {
@@ -181,7 +197,9 @@ describe('buildLocationGraphLayout', () => {
   });
 
   it('never overlaps two nodes', () => {
-    const locations = Array.from({ length: 16 }, (_, index) => location(`l${index}`, `Local ${index}`));
+    const locations = Array.from({ length: 16 }, (_, index) =>
+      location(`l${index}`, `Local ${index}`),
+    );
     const relations = [
       rel('r1', 'l0', 'l1'),
       rel('r2', 'l0', 'l2'),
@@ -197,7 +215,10 @@ describe('buildLocationGraphLayout', () => {
         const a = layout.nodes[i];
         const b = layout.nodes[j];
         const overlaps =
-          a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+          a.x < b.x + b.width &&
+          b.x < a.x + a.width &&
+          a.y < b.y + b.height &&
+          b.y < a.y + a.height;
         expect(overlaps ? `${a.id}/${b.id}` : 'ok').toBe('ok');
       }
     }
@@ -205,7 +226,10 @@ describe('buildLocationGraphLayout', () => {
 
   it('keeps every node inside the reported canvas, respecting the padding', () => {
     const locations = Array.from({ length: 12 }, (_, index) => location(`l${index}`));
-    const layout = buildLocationGraphLayout(locations, [rel('r1', 'l0', 'l1'), rel('r2', 'l0', 'l2')]);
+    const layout = buildLocationGraphLayout(locations, [
+      rel('r1', 'l0', 'l1'),
+      rel('r2', 'l0', 'l2'),
+    ]);
 
     for (const node of layout.nodes) {
       expect(node.x).toBeGreaterThanOrEqual(GRAPH_PADDING);
@@ -216,7 +240,10 @@ describe('buildLocationGraphLayout', () => {
   });
 
   it('gives every node the same fixed box size and wraps long names', () => {
-    const layout = buildLocationGraphLayout([location('a', 'A Cidadela Branca de Minas Tirith')], []);
+    const layout = buildLocationGraphLayout(
+      [location('a', 'A Cidadela Branca de Minas Tirith')],
+      [],
+    );
 
     expect(layout.nodes[0]).toMatchObject({ width: NODE_WIDTH, height: NODE_HEIGHT });
     expect(layout.nodes[0].labelLines.length).toBeLessThanOrEqual(2);
@@ -224,9 +251,15 @@ describe('buildLocationGraphLayout', () => {
 
   it('is deterministic for the same input', () => {
     const locations = Array.from({ length: 10 }, (_, index) => location(`l${index}`));
-    const relations = [rel('r1', 'l0', 'l1'), rel('r2', 'l1', 'l2'), rel('r3', 'l5', 'l6', 'connected_to')];
+    const relations = [
+      rel('r1', 'l0', 'l1'),
+      rel('r2', 'l1', 'l2'),
+      rel('r3', 'l5', 'l6', 'connected_to'),
+    ];
 
-    expect(buildLocationGraphLayout(locations, relations)).toEqual(buildLocationGraphLayout(locations, relations));
+    expect(buildLocationGraphLayout(locations, relations)).toEqual(
+      buildLocationGraphLayout(locations, relations),
+    );
   });
 
   it('handles a deep chain without blowing the call stack', () => {

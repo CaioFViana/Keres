@@ -5,7 +5,9 @@ import { scenes } from './scenes'; // Will be created later
 
 export const locations = pgTable('locations', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
   name: text('name').notNull(),
   description: text('description'),
   climate: text('climate'),

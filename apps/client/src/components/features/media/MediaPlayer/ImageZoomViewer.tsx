@@ -64,20 +64,23 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
   }, [animatedScale, animatedX, animatedY]);
 
   /** Centraliza a imagem "encaixada na tela" - o mesmo cálculo de `resizeMode: contain`. */
-  const fitToScreen = useCallback((box: { width: number; height: number }) => {
-    const { width: viewportWidth, height: viewportHeight } = viewport.current;
-    const fitScale = Math.min(viewportWidth / box.width, viewportHeight / box.height);
-    const fittedWidth = box.width * fitScale;
-    const fittedHeight = box.height * fitScale;
+  const fitToScreen = useCallback(
+    (box: { width: number; height: number }) => {
+      const { width: viewportWidth, height: viewportHeight } = viewport.current;
+      const fitScale = Math.min(viewportWidth / box.width, viewportHeight / box.height);
+      const fittedWidth = box.width * fitScale;
+      const fittedHeight = box.height * fitScale;
 
-    setContent({ width: fittedWidth, height: fittedHeight });
-    transform.current = {
-      scale: 1,
-      x: (viewportWidth - fittedWidth) / 2,
-      y: (viewportHeight - fittedHeight) / 2,
-    };
-    publish();
-  }, [publish]);
+      setContent({ width: fittedWidth, height: fittedHeight });
+      transform.current = {
+        scale: 1,
+        x: (viewportWidth - fittedWidth) / 2,
+        y: (viewportHeight - fittedHeight) / 2,
+      };
+      publish();
+    },
+    [publish],
+  );
 
   useEffect(() => {
     if (!visible || !uri) {
@@ -97,7 +100,7 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
         if (!cancelled) {
           fitToScreen({ width: viewport.current.width, height: viewport.current.height });
         }
-      }
+      },
     );
     return () => {
       cancelled = true;
@@ -112,124 +115,147 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
     const scaledWidth = content.width * transform.current.scale;
     const scaledHeight = content.height * transform.current.scale;
 
-    transform.current.x = scaledWidth <= viewportWidth
-      ? (viewportWidth - scaledWidth) / 2
-      : Math.min(0, Math.max(viewportWidth - scaledWidth, transform.current.x));
+    transform.current.x =
+      scaledWidth <= viewportWidth
+        ? (viewportWidth - scaledWidth) / 2
+        : Math.min(0, Math.max(viewportWidth - scaledWidth, transform.current.x));
 
-    transform.current.y = scaledHeight <= viewportHeight
-      ? (viewportHeight - scaledHeight) / 2
-      : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
+    transform.current.y =
+      scaledHeight <= viewportHeight
+        ? (viewportHeight - scaledHeight) / 2
+        : Math.min(0, Math.max(viewportHeight - scaledHeight, transform.current.y));
   }, [content]);
 
   /** Aplica um zoom mantendo fixo o ponto da imagem que está sob `focus`. */
-  const zoomAround = useCallback((nextScale: number, focus: { x: number; y: number }) => {
-    const previous = transform.current.scale;
-    const clamped = Math.max(MIN_SCALE, Math.min(MAX_SCALE, nextScale));
-    if (clamped === previous) return;
+  const zoomAround = useCallback(
+    (nextScale: number, focus: { x: number; y: number }) => {
+      const previous = transform.current.scale;
+      const clamped = Math.max(MIN_SCALE, Math.min(MAX_SCALE, nextScale));
+      if (clamped === previous) return;
 
-    transform.current.x = focus.x - ((focus.x - transform.current.x) * clamped) / previous;
-    transform.current.y = focus.y - ((focus.y - transform.current.y) * clamped) / previous;
-    transform.current.scale = clamped;
-    clamp();
-    publish();
-  }, [clamp, publish]);
+      transform.current.x = focus.x - ((focus.x - transform.current.x) * clamped) / previous;
+      transform.current.y = focus.y - ((focus.y - transform.current.y) * clamped) / previous;
+      transform.current.scale = clamped;
+      clamp();
+      publish();
+    },
+    [clamp, publish],
+  );
 
-  const handleDoubleTap = useCallback((focus: { x: number; y: number }) => {
-    const isZoomed = transform.current.scale > MIN_SCALE + 0.01;
-    if (isZoomed) {
-      // Volta ao encaixe original, centralizado.
-      if (content) {
-        transform.current = {
-          scale: 1,
-          x: (viewport.current.width - content.width) / 2,
-          y: (viewport.current.height - content.height) / 2,
-        };
-        publish();
+  const handleDoubleTap = useCallback(
+    (focus: { x: number; y: number }) => {
+      const isZoomed = transform.current.scale > MIN_SCALE + 0.01;
+      if (isZoomed) {
+        // Volta ao encaixe original, centralizado.
+        if (content) {
+          transform.current = {
+            scale: 1,
+            x: (viewport.current.width - content.width) / 2,
+            y: (viewport.current.height - content.height) / 2,
+          };
+          publish();
+        }
+      } else {
+        zoomAround(DOUBLE_TAP_SCALE, focus);
       }
-    } else {
-      zoomAround(DOUBLE_TAP_SCALE, focus);
-    }
-  }, [content, publish, zoomAround]);
+    },
+    [content, publish, zoomAround],
+  );
 
   const panResponder = useMemo(
-    () => PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (event, gestureState) =>
-        event.nativeEvent.touches.length > 1 ||
-        Math.hypot(gestureState.dx, gestureState.dy) > TAP_MOVE_THRESHOLD,
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (event, gestureState) =>
+          event.nativeEvent.touches.length > 1 ||
+          Math.hypot(gestureState.dx, gestureState.dy) > TAP_MOVE_THRESHOLD,
 
-      onPanResponderGrant: (event) => {
-        gesture.current = { lastDx: 0, lastDy: 0, pinchDistance: 0, pinchScale: transform.current.scale };
-        const touch = event.nativeEvent.touches[0];
-        tapCandidate.current = { startX: touch?.pageX ?? 0, startY: touch?.pageY ?? 0, moved: false };
-      },
-
-      onPanResponderMove: (event, gestureState) => {
-        const touches = event.nativeEvent.touches;
-
-        if (touches.length >= 2) {
-          const [first, second] = touches;
-          const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
-          const focus = {
-            x: (first.pageX + second.pageX) / 2,
-            y: (first.pageY + second.pageY) / 2,
+        onPanResponderGrant: (event) => {
+          gesture.current = {
+            lastDx: 0,
+            lastDy: 0,
+            pinchDistance: 0,
+            pinchScale: transform.current.scale,
           };
+          const touch = event.nativeEvent.touches[0];
+          tapCandidate.current = {
+            startX: touch?.pageX ?? 0,
+            startY: touch?.pageY ?? 0,
+            moved: false,
+          };
+        },
 
-          if (gesture.current.pinchDistance === 0) {
-            gesture.current.pinchDistance = distance;
-            gesture.current.pinchScale = transform.current.scale;
-          } else if (distance > 0) {
-            zoomAround((gesture.current.pinchScale * distance) / gesture.current.pinchDistance, focus);
+        onPanResponderMove: (event, gestureState) => {
+          const touches = event.nativeEvent.touches;
+
+          if (touches.length >= 2) {
+            const [first, second] = touches;
+            const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
+            const focus = {
+              x: (first.pageX + second.pageX) / 2,
+              y: (first.pageY + second.pageY) / 2,
+            };
+
+            if (gesture.current.pinchDistance === 0) {
+              gesture.current.pinchDistance = distance;
+              gesture.current.pinchScale = transform.current.scale;
+            } else if (distance > 0) {
+              zoomAround(
+                (gesture.current.pinchScale * distance) / gesture.current.pinchDistance,
+                focus,
+              );
+            }
+            gesture.current.lastDx = gestureState.dx;
+            gesture.current.lastDy = gestureState.dy;
+            tapCandidate.current.moved = true;
+            return;
+          }
+
+          if (Math.hypot(gestureState.dx, gestureState.dy) > TAP_MOVE_THRESHOLD) {
+            tapCandidate.current.moved = true;
+          }
+
+          gesture.current.pinchDistance = 0;
+          // Arrastar só faz sentido ampliado; sem isto um arraste em tamanho normal
+          // descentralizaria a imagem sem motivo.
+          if (transform.current.scale > MIN_SCALE + 0.01) {
+            transform.current.x += gestureState.dx - gesture.current.lastDx;
+            transform.current.y += gestureState.dy - gesture.current.lastDy;
+            clamp();
+            publish();
           }
           gesture.current.lastDx = gestureState.dx;
           gesture.current.lastDy = gestureState.dy;
-          tapCandidate.current.moved = true;
-          return;
-        }
+        },
 
-        if (Math.hypot(gestureState.dx, gestureState.dy) > TAP_MOVE_THRESHOLD) {
-          tapCandidate.current.moved = true;
-        }
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderRelease: (event) => {
+          gesture.current.pinchDistance = 0;
 
-        gesture.current.pinchDistance = 0;
-        // Arrastar só faz sentido ampliado; sem isto um arraste em tamanho normal
-        // descentralizaria a imagem sem motivo.
-        if (transform.current.scale > MIN_SCALE + 0.01) {
-          transform.current.x += gestureState.dx - gesture.current.lastDx;
-          transform.current.y += gestureState.dy - gesture.current.lastDy;
-          clamp();
-          publish();
-        }
-        gesture.current.lastDx = gestureState.dx;
-        gesture.current.lastDy = gestureState.dy;
-      },
+          if (tapCandidate.current.moved) {
+            return;
+          }
 
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderRelease: (event) => {
-        gesture.current.pinchDistance = 0;
+          const now = Date.now();
+          const focus = { x: tapCandidate.current.startX, y: tapCandidate.current.startY };
+          const previousTap = lastTap.current;
 
-        if (tapCandidate.current.moved) {
-          return;
-        }
-
-        const now = Date.now();
-        const focus = { x: tapCandidate.current.startX, y: tapCandidate.current.startY };
-        const previousTap = lastTap.current;
-
-        if (
-          previousTap &&
-          now - previousTap.time < DOUBLE_TAP_MAX_DELAY &&
-          Math.hypot(focus.x - previousTap.x, focus.y - previousTap.y) < 40
-        ) {
-          lastTap.current = null;
-          handleDoubleTap(focus);
-        } else {
-          lastTap.current = { time: now, x: focus.x, y: focus.y };
-        }
-      },
-      onPanResponderTerminate: () => { gesture.current.pinchDistance = 0; },
-    }),
-    [clamp, handleDoubleTap, publish, zoomAround]
+          if (
+            previousTap &&
+            now - previousTap.time < DOUBLE_TAP_MAX_DELAY &&
+            Math.hypot(focus.x - previousTap.x, focus.y - previousTap.y) < 40
+          ) {
+            lastTap.current = null;
+            handleDoubleTap(focus);
+          } else {
+            lastTap.current = { time: now, x: focus.x, y: focus.y };
+          }
+        },
+        onPanResponderTerminate: () => {
+          gesture.current.pinchDistance = 0;
+        },
+      }),
+    [clamp, handleDoubleTap, publish, zoomAround],
   );
 
   const styles = StyleSheet.create({
@@ -255,7 +281,13 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
   });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
       <View style={styles.backdrop} {...panResponder.panHandlers}>
         <TouchableOpacity style={styles.closeButton} onPress={onClose} hitSlop={12}>
           <Ionicons name="close" size={26} color="#ffffff" />

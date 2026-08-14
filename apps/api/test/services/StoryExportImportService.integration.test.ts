@@ -2,7 +2,17 @@ import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { chapters, choiceCheckGroups, choiceChecks, choices, effects, locations, scenes, stories, users } from '../../src/db/schema';
+import {
+  chapters,
+  choiceCheckGroups,
+  choiceChecks,
+  choices,
+  effects,
+  locations,
+  scenes,
+  stories,
+  users,
+} from '../../src/db/schema';
 import { StoryExportImportService } from '../../src/services/StoryExportImportService';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
@@ -272,7 +282,10 @@ describe('id remapping on a plain import', () => {
     const storyId = await service.importStory(IMPORTER_ID, buildExport());
 
     const [importedChapter] = await db.select().from(chapters).where(eq(chapters.storyId, storyId));
-    const [importedLocation] = await db.select().from(locations).where(eq(locations.storyId, storyId));
+    const [importedLocation] = await db
+      .select()
+      .from(locations)
+      .where(eq(locations.storyId, storyId));
     expect(importedChapter.id).not.toBe(ORIGINAL_CHAPTER_ID);
     expect(importedLocation.id).not.toBe(ORIGINAL_LOCATION_ID);
   });
@@ -282,7 +295,10 @@ describe('id remapping on a plain import', () => {
     const storyId = await service.importStory(IMPORTER_ID, buildExport());
 
     const [importedChapter] = await db.select().from(chapters).where(eq(chapters.storyId, storyId));
-    const [importedLocation] = await db.select().from(locations).where(eq(locations.storyId, storyId));
+    const [importedLocation] = await db
+      .select()
+      .from(locations)
+      .where(eq(locations.storyId, storyId));
     const [importedScene] = await db.select().from(scenes).where(eq(scenes.storyId, storyId));
 
     expect(importedScene.chapterId).toBe(importedChapter.id);
@@ -333,9 +349,9 @@ describe('id preservation when uploading a local story', () => {
   it('refuses to overwrite a story the same user already has', async () => {
     await service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID);
 
-    await expect(service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID)).rejects.toThrow(
-      /already exists for this user/,
-    );
+    await expect(
+      service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID),
+    ).rejects.toThrow(/already exists for this user/);
   });
 });
 
@@ -343,7 +359,9 @@ describe('rejected packages', () => {
   it('rejects a package from a newer app with a status the client can act on', async () => {
     const fromTheFuture = buildExport({ formatVersion: CURRENT_STORY_FORMAT_VERSION + 1 });
 
-    await expect(service.importStory(IMPORTER_ID, fromTheFuture)).rejects.toMatchObject({ status: 422 });
+    await expect(service.importStory(IMPORTER_ID, fromTheFuture)).rejects.toMatchObject({
+      status: 422,
+    });
   });
 
   it('rejects a package that is not a story export at all', async () => {
@@ -430,8 +448,14 @@ describe('choice checks and effects', () => {
     );
 
     const [importedChoice] = await db.select().from(choices).where(eq(choices.storyId, storyId));
-    const [importedGroup] = await db.select().from(choiceCheckGroups).where(eq(choiceCheckGroups.storyId, storyId));
-    const [importedCheck] = await db.select().from(choiceChecks).where(eq(choiceChecks.storyId, storyId));
+    const [importedGroup] = await db
+      .select()
+      .from(choiceCheckGroups)
+      .where(eq(choiceCheckGroups.storyId, storyId));
+    const [importedCheck] = await db
+      .select()
+      .from(choiceChecks)
+      .where(eq(choiceChecks.storyId, storyId));
     const [importedEffect] = await db.select().from(effects).where(eq(effects.storyId, storyId));
 
     expect(importedGroup.choiceId).toBe(importedChoice.id);
@@ -447,7 +471,10 @@ describe('choice checks and effects', () => {
     expect(exported.effects).toHaveLength(1);
 
     const second = await service.importStory(IMPORTER_ID, exported);
-    const [reImportedGroup] = await db.select().from(choiceCheckGroups).where(eq(choiceCheckGroups.storyId, second));
+    const [reImportedGroup] = await db
+      .select()
+      .from(choiceCheckGroups)
+      .where(eq(choiceCheckGroups.storyId, second));
     const [reImportedChoice] = await db.select().from(choices).where(eq(choices.storyId, second));
     expect(reImportedGroup.choiceId).toBe(reImportedChoice.id);
   });

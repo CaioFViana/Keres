@@ -92,18 +92,35 @@ interface TreeBox {
 
 export function buildLocationGraphLayout(
   locations: GraphLocation[],
-  relations: GraphLocationRelation[]
+  relations: GraphLocationRelation[],
 ): LocationGraphLayout {
   if (locations.length === 0) {
-    return { nodes: [], edges: [], width: GRAPH_PADDING * 2, height: GRAPH_PADDING * 2, treeCount: 0, isolatedCount: 0 };
+    return {
+      nodes: [],
+      edges: [],
+      width: GRAPH_PADDING * 2,
+      height: GRAPH_PADDING * 2,
+      treeCount: 0,
+      isolatedCount: 0,
+    };
   }
 
-  const locationById = new Map(locations.map(location => [location.id, location]));
+  const locationById = new Map(locations.map((location) => [location.id, location]));
 
   // Relações penduradas numa Location já excluída mas ainda não limpa - mesmo tratamento que o
   // resto do app dá a esse tipo de linha órfã: ignorada, não quebra o desenho.
-  const containsEdges = relations.filter(r => r.relationType === 'contains' && locationById.has(r.locationAId) && locationById.has(r.locationBId));
-  const connectedEdges = relations.filter(r => r.relationType === 'connected_to' && locationById.has(r.locationAId) && locationById.has(r.locationBId));
+  const containsEdges = relations.filter(
+    (r) =>
+      r.relationType === 'contains' &&
+      locationById.has(r.locationAId) &&
+      locationById.has(r.locationBId),
+  );
+  const connectedEdges = relations.filter(
+    (r) =>
+      r.relationType === 'connected_to' &&
+      locationById.has(r.locationAId) &&
+      locationById.has(r.locationBId),
+  );
 
   const parentOf = new Map<string, string>();
   const childrenOf = new Map<string, string[]>();
@@ -137,21 +154,21 @@ export function buildLocationGraphLayout(
   // apontando para ela, ou um ciclo) é desenhada uma vez só, não uma vez por caminho.
   const placed = new Set<string>();
   const treeBoxes = treeRoots
-    .map(root => layoutTree(root, childrenOf, locationById, placed))
+    .map((root) => layoutTree(root, childrenOf, locationById, placed))
     // Maiores primeiro deixa o empacotamento em prateleiras mais compacto (first-fit decreasing).
-    .sort((a, b) => (b.width * b.height) - (a.width * a.height));
+    .sort((a, b) => b.width * b.height - a.width * a.height);
 
   const packed = packTrees(treeBoxes);
   const isolatedGraphNodes = layoutIsolatedGrid(
     isolatedRoots,
     packed.width,
-    packed.nodes.length > 0 ? packed.height + CLUSTER_GAP : 0
+    packed.nodes.length > 0 ? packed.height + CLUSTER_GAP : 0,
   );
 
   const nodes = [...packed.nodes, ...isolatedGraphNodes];
   const { width, height } = normalizeToPadding(nodes);
 
-  const nodesById = new Map(nodes.map(node => [node.id, node]));
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const edges: LocationGraphEdge[] = [];
   for (const edge of containsEdges) {
     const source = nodesById.get(edge.locationAId);
@@ -190,9 +207,9 @@ export function buildLocationGraphLayout(
 function collectRoots(
   locations: GraphLocation[],
   parentOf: Map<string, string>,
-  childrenOf: Map<string, string[]>
+  childrenOf: Map<string, string[]>,
 ): GraphLocation[] {
-  const roots = locations.filter(location => !parentOf.has(location.id));
+  const roots = locations.filter((location) => !parentOf.has(location.id));
   const reachable = new Set<string>();
 
   // Iterativo, não recursivo: a profundidade aqui é a da árvore de Locations do usuário, e
@@ -210,7 +227,7 @@ function collectRoots(
   for (const root of roots) markReachable(root.id);
 
   const unreachable = [...locations]
-    .filter(location => !reachable.has(location.id))
+    .filter((location) => !reachable.has(location.id))
     .sort((a, b) => a.id.localeCompare(b.id));
   for (const orphan of unreachable) {
     if (reachable.has(orphan.id)) continue;
@@ -233,7 +250,7 @@ function layoutTree(
   root: GraphLocation,
   childrenOf: Map<string, string[]>,
   locationById: Map<string, GraphLocation>,
-  placed: Set<string>
+  placed: Set<string>,
 ): TreeBox {
   const positioned: PositionedNode[] = [];
 
@@ -247,11 +264,18 @@ function layoutTree(
     }
     placed.add(nodeId);
 
-    const childIds = [...(childrenOf.get(nodeId) ?? [])]
-      .sort((a, b) => (locationById.get(a)?.name ?? '').localeCompare(locationById.get(b)?.name ?? ''));
+    const childIds = [...(childrenOf.get(nodeId) ?? [])].sort((a, b) =>
+      (locationById.get(a)?.name ?? '').localeCompare(locationById.get(b)?.name ?? ''),
+    );
 
     if (childIds.length === 0) {
-      positioned.push({ id: nodeId, location, depth, x: xOffset, y: depth * (NODE_HEIGHT + LAYER_GAP) });
+      positioned.push({
+        id: nodeId,
+        location,
+        depth,
+        x: xOffset,
+        y: depth * (NODE_HEIGHT + LAYER_GAP),
+      });
       return NODE_WIDTH;
     }
 
@@ -264,28 +288,41 @@ function layoutTree(
     }
     const subtreeWidth = Math.max(childX - NODE_GAP - xOffset, NODE_WIDTH);
     const center = (childCenters[0] + childCenters[childCenters.length - 1]) / 2;
-    positioned.push({ id: nodeId, location, depth, x: center - NODE_WIDTH / 2, y: depth * (NODE_HEIGHT + LAYER_GAP) });
+    positioned.push({
+      id: nodeId,
+      location,
+      depth,
+      x: center - NODE_WIDTH / 2,
+      y: depth * (NODE_HEIGHT + LAYER_GAP),
+    });
     return subtreeWidth;
   }
 
   const totalWidth = measureAndPlace(root.id, 0, 0);
-  const nodes = positioned.map(p => buildNode(p));
+  const nodes = positioned.map((p) => buildNode(p));
 
   return {
     nodes,
     width: Math.max(totalWidth, NODE_WIDTH),
-    height: maxOf(nodes.map(node => node.y + node.height)),
+    height: maxOf(nodes.map((node) => node.y + node.height)),
   };
 }
 
 /** Empacota as árvores em prateleiras (shelf packing) - mesma técnica de `characterRelationGraphLayout`. */
-function packTrees(trees: TreeBox[]): { nodes: LocationGraphNode[]; width: number; height: number } {
+function packTrees(trees: TreeBox[]): {
+  nodes: LocationGraphNode[];
+  width: number;
+  height: number;
+} {
   if (trees.length === 0) {
     return { nodes: [], width: 0, height: 0 };
   }
 
   const totalArea = trees.reduce((sum, tree) => sum + tree.width * tree.height, 0);
-  const rowTargetWidth = Math.max(maxOf(trees.map(tree => tree.width)), Math.sqrt(totalArea) * 1.4);
+  const rowTargetWidth = Math.max(
+    maxOf(trees.map((tree) => tree.width)),
+    Math.sqrt(totalArea) * 1.4,
+  );
 
   const nodes: LocationGraphNode[] = [];
   let rowX = 0;
@@ -312,7 +349,11 @@ function packTrees(trees: TreeBox[]): { nodes: LocationGraphNode[]; width: numbe
   return { nodes, width: packedWidth, height: rowY + rowHeight };
 }
 
-function layoutIsolatedGrid(isolated: GraphLocation[], canvasWidth: number, startY: number): LocationGraphNode[] {
+function layoutIsolatedGrid(
+  isolated: GraphLocation[],
+  canvasWidth: number,
+  startY: number,
+): LocationGraphNode[] {
   if (isolated.length === 0) return [];
 
   const columnStep = NODE_WIDTH + NODE_GAP;
@@ -324,13 +365,16 @@ function layoutIsolatedGrid(isolated: GraphLocation[], canvasWidth: number, star
   return sorted.map((location, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
-    return buildNode({
-      id: location.id,
-      location,
-      depth: 0,
-      x: column * columnStep,
-      y: startY + row * (NODE_HEIGHT + NODE_GAP),
-    }, true);
+    return buildNode(
+      {
+        id: location.id,
+        location,
+        depth: 0,
+        x: column * columnStep,
+        y: startY + row * (NODE_HEIGHT + NODE_GAP),
+      },
+      true,
+    );
   });
 }
 
@@ -353,16 +397,16 @@ function normalizeToPadding(nodes: LocationGraphNode[]): { width: number; height
     return { width: GRAPH_PADDING * 2, height: GRAPH_PADDING * 2 };
   }
 
-  const shiftX = GRAPH_PADDING - minOf(nodes.map(node => node.x));
-  const shiftY = GRAPH_PADDING - minOf(nodes.map(node => node.y));
+  const shiftX = GRAPH_PADDING - minOf(nodes.map((node) => node.x));
+  const shiftY = GRAPH_PADDING - minOf(nodes.map((node) => node.y));
   for (const node of nodes) {
     node.x += shiftX;
     node.y += shiftY;
   }
 
   return {
-    width: round(maxOf(nodes.map(node => node.x + node.width)) + GRAPH_PADDING),
-    height: round(maxOf(nodes.map(node => node.y + node.height)) + GRAPH_PADDING),
+    width: round(maxOf(nodes.map((node) => node.x + node.width)) + GRAPH_PADDING),
+    height: round(maxOf(nodes.map((node) => node.y + node.height)) + GRAPH_PADDING),
   };
 }
 
@@ -379,7 +423,12 @@ function pointOnNodeBoundary(node: LocationGraphNode, towards: GraphPoint): Grap
   return { x: centerX + dx * scale, y: centerY + dy * scale };
 }
 
-function buildEdge(relation: GraphLocationRelation, relationType: LocationRelationKind, source: LocationGraphNode, target: LocationGraphNode): LocationGraphEdge {
+function buildEdge(
+  relation: GraphLocationRelation,
+  relationType: LocationRelationKind,
+  source: LocationGraphNode,
+  target: LocationGraphNode,
+): LocationGraphEdge {
   const sourceCenter = { x: source.x + source.width / 2, y: source.y + source.height / 2 };
   const targetCenter = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
   const start = pointOnNodeBoundary(source, targetCenter);

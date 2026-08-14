@@ -25,7 +25,9 @@ export function TiersPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = () => {
-    TierApiService.list(true).then(setTiers).catch((err) => setError(err.message));
+    TierApiService.list(true)
+      .then(setTiers)
+      .catch((err) => setError(err.message));
   };
   useEffect(load, []);
 
@@ -103,7 +105,11 @@ export function TiersPage() {
           <h3>{editingId === 'new' ? 'New tier' : 'Edit tier'}</h3>
           <label>
             Name
-            <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
+            <input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              required
+            />
           </label>
           {limitInput('Max stories', 'maxStories')}
           {limitInput('Max entities per story', 'maxEntitiesPerStory')}
@@ -112,7 +118,9 @@ export function TiersPage() {
           {limitInput('Max storage bytes total', 'maxStorageBytesTotal')}
           <div className="form-actions">
             <button type="submit">Save</button>
-            <button type="button" onClick={cancel}>Cancel</button>
+            <button type="button" onClick={cancel}>
+              Cancel
+            </button>
           </div>
         </form>
       )}

@@ -15,7 +15,10 @@ beforeEach(() => {
 
 describe('requireAdmin', () => {
   it('rejects requests that have no authenticated user before querying the database', async () => {
-    await expect(requireAdmin(null)).rejects.toMatchObject({ status: 401, message: 'Unauthorized' });
+    await expect(requireAdmin(null)).rejects.toMatchObject({
+      status: 401,
+      message: 'Unauthorized',
+    });
     expect(mocks.findFirst).not.toHaveBeenCalled();
   });
 

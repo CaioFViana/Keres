@@ -105,13 +105,19 @@ describe('env', () => {
     expect((await loadEnv({ DATABASE_URL: value })).DATABASE_URL).toBe(value);
   });
 
-  it.each(['JWT_SECRET', 'JWT_SECRET_REFRESH'])('rejects a %s shorter than 32 characters', async (key) => {
-    await expect(loadEnv({ [key]: 'too-short' })).rejects.toThrow();
-  });
+  it.each(['JWT_SECRET', 'JWT_SECRET_REFRESH'])(
+    'rejects a %s shorter than 32 characters',
+    async (key) => {
+      await expect(loadEnv({ [key]: 'too-short' })).rejects.toThrow();
+    },
+  );
 
-  it.each(['DATABASE_URL', 'JWT_SECRET', 'JWT_SECRET_REFRESH'])('requires %s to be present', async (key) => {
-    await expect(loadEnv({ [key]: undefined })).rejects.toThrow();
-  });
+  it.each(['DATABASE_URL', 'JWT_SECRET', 'JWT_SECRET_REFRESH'])(
+    'requires %s to be present',
+    async (key) => {
+      await expect(loadEnv({ [key]: undefined })).rejects.toThrow();
+    },
+  );
 
   it('turns empty S3 fields into "not configured" instead of invalid values', async () => {
     const env = await loadEnv();
@@ -162,7 +168,9 @@ describe('env', () => {
   });
 
   it('rejects a root admin password below the minimum, so boot fails loudly', async () => {
-    await expect(loadEnv({ ROOT_ADMIN_USERNAME: 'root', ROOT_ADMIN_PASSWORD: 'short' })).rejects.toThrow();
+    await expect(
+      loadEnv({ ROOT_ADMIN_USERNAME: 'root', ROOT_ADMIN_PASSWORD: 'short' }),
+    ).rejects.toThrow();
   });
 
   it('skips root admin reconciliation entirely when the credentials are absent', async () => {

@@ -61,10 +61,17 @@ const FriendshipStack = createNativeStackNavigator<FriendshipStackParamList>();
 
 type StorySelectionMainDrawerNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList>;
 
-const DrawerToggleButton = ({ navigation }: { navigation: StorySelectionMainDrawerNavigationProp }) => {
+const DrawerToggleButton = ({
+  navigation,
+}: {
+  navigation: StorySelectionMainDrawerNavigationProp;
+}) => {
   const { colors } = useTheme();
   return (
-    <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={{ marginLeft: 15 }}>
+    <TouchableOpacity
+      onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+      style={{ marginLeft: 15 }}
+    >
       <Ionicons name="menu" size={30} color={colors.text} />
     </TouchableOpacity>
   );
@@ -74,9 +81,11 @@ const StorySelectionMainStackNavigator = () => {
   const { t } = useTranslation();
 
   return (
-    <StorySelectionMainStack.Navigator screenOptions={{
-      headerShown: false, // Header is managed by the Drawer Navigator
-    }}>
+    <StorySelectionMainStack.Navigator
+      screenOptions={{
+        headerShown: false, // Header is managed by the Drawer Navigator
+      }}
+    >
       <StorySelectionMainStack.Screen
         name="StorySelectionScreen"
         component={StorySelectionScreen}
@@ -93,9 +102,11 @@ const ServerManagementStackNavigator = () => {
   const { t } = useTranslation();
 
   return (
-    <ServerManagementStack.Navigator screenOptions={{
-      headerShown: false, // Header is managed by the Drawer Navigator
-    }}>
+    <ServerManagementStack.Navigator
+      screenOptions={{
+        headerShown: false, // Header is managed by the Drawer Navigator
+      }}
+    >
       <ServerManagementStack.Screen
         name="ServerManagement"
         component={ServerManagementScreen}
@@ -105,7 +116,7 @@ const ServerManagementStackNavigator = () => {
         name="ServerRegistration"
         component={ServerRegistrationScreen}
         options={({ route }) => ({
-          headerTitle: route.params?.serverId ? t('edit_server') : t('register_new_server')
+          headerTitle: route.params?.serverId ? t('edit_server') : t('register_new_server'),
         })}
       />
       <ServerManagementStack.Screen
@@ -126,9 +137,11 @@ const FriendshipStackNavigator = () => {
   const { t } = useTranslation();
 
   return (
-    <FriendshipStack.Navigator screenOptions={{
-      headerShown: false, // Header is managed by the Drawer Navigator
-    }}>
+    <FriendshipStack.Navigator
+      screenOptions={{
+        headerShown: false, // Header is managed by the Drawer Navigator
+      }}
+    >
       <FriendshipStack.Screen
         name="FriendshipList"
         component={FriendshipListScreen}
@@ -175,11 +188,22 @@ const StorySelectionNavigator = () => {
         },
         headerTintColor: colors.text,
         headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation} />,
-        headerRight: screenHelpPage[route.name] ? () => (
-          <TouchableOpacity onPress={() => navigation.navigate('HelpDrawer', { screen: 'HelpPage', params: { pageId: screenHelpPage[route.name] } })} style={{ marginRight: 15 }} accessibilityLabel={t('help_title')}>
-            <Ionicons name="help-circle-outline" size={26} color={colors.text} />
-          </TouchableOpacity>
-        ) : undefined,
+        headerRight: screenHelpPage[route.name]
+          ? () => (
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('HelpDrawer', {
+                    screen: 'HelpPage',
+                    params: { pageId: screenHelpPage[route.name] },
+                  })
+                }
+                style={{ marginRight: 15 }}
+                accessibilityLabel={t('help_title')}
+              >
+                <Ionicons name="help-circle-outline" size={26} color={colors.text} />
+              </TouchableOpacity>
+            )
+          : undefined,
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
         drawerType: isWide ? 'permanent' : 'front',
@@ -270,7 +294,12 @@ const StorySelectionNavigator = () => {
         name="HelpDrawer"
         component={HelpStackNavigator}
         options={{ title: t('help_title'), drawerLabel: t('help_title') }}
-        listeners={({ navigation }) => ({ drawerItemPress: (e) => { e.preventDefault(); navigation.navigate('HelpDrawer', { screen: 'HelpIndex' }); } })}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
+          },
+        })}
       />
     </Drawer.Navigator>
   );

@@ -48,7 +48,7 @@ const TagChipList: React.FC<TagChipListProps> = ({ tags, onRemoveTag }) => {
 
   return (
     <View style={styles.container}>
-      {tags.map(tag => {
+      {tags.map((tag) => {
         const chipBackgroundColor = tag.color || colors.primaryContainer;
         const chipTextColor = getContrastTextColor(chipBackgroundColor);
 

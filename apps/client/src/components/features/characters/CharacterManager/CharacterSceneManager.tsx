@@ -31,14 +31,22 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
   const { t } = useTranslation();
   const navigation = useNavigation();
 
-  const handleScenePress = useCallback((scene: SceneSelect) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Scene', scene.id);
-    }
-  }, [navigation]);
+  const handleScenePress = useCallback(
+    (scene: SceneSelect) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(drawerNavigation, 'Scene', scene.id);
+      }
+    },
+    [navigation],
+  );
 
-  const createCharacterSceneRelationObject = (selectedSceneId: string, storyId: string, characterId: string): CharacterScene => {
+  const createCharacterSceneRelationObject = (
+    selectedSceneId: string,
+    storyId: string,
+    characterId: string,
+  ): CharacterScene => {
     return {
       id: createULID(),
       storyId: storyId,
@@ -58,8 +66,12 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
 
   const getSceneSearchableValue = (scene: SceneSelect) => scene.name;
 
-  const filterAvailableScenes = (scene: SceneSelect, relations: CharacterScene[], getRelationItemId: (relation: CharacterScene) => string) => {
-    return !scene.isDeleted && !relations.some(rel => getRelationItemId(rel) === scene.id);
+  const filterAvailableScenes = (
+    scene: SceneSelect,
+    relations: CharacterScene[],
+    getRelationItemId: (relation: CharacterScene) => string,
+  ) => {
+    return !scene.isDeleted && !relations.some((rel) => getRelationItemId(rel) === scene.id);
   };
 
   return (

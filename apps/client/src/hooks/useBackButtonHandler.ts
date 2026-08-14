@@ -1,5 +1,10 @@
 import { createElement, useCallback, useEffect } from 'react';
-import { NavigationProp, ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native';
+import {
+  NavigationProp,
+  ParamListBase,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import { BackHandler, Platform } from 'react-native';
 import NavigationBackButton from '@/src/components/common/navigation/NavigationBackButton/NavigationBackButton';
 import NavigationDrawerButton from '@/src/components/common/navigation/NavigationDrawerButton/NavigationDrawerButton';
@@ -29,7 +34,9 @@ interface BackButtonHandlerOptions {
  * it attempts to go back in the parent navigator (DrawerNavigator). If the parent cannot go back,
  * it returns false to allow other BackHandlers (like the app exit handler) to process the event.
  */
-export const useBackButtonHandler = ({ showWebBackButton = false }: BackButtonHandlerOptions = {}) => {
+export const useBackButtonHandler = ({
+  showWebBackButton = false,
+}: BackButtonHandlerOptions = {}) => {
   const navigation = useNavigation();
   const { isWide } = useResponsiveLayout();
 
@@ -53,7 +60,7 @@ export const useBackButtonHandler = ({ showWebBackButton = false }: BackButtonHa
             ? () => null
             : () => createElement(NavigationDrawerButton, { navigation: drawerNavigation }),
       });
-    }, [isWide, navigation, showWebBackButton])
+    }, [isWide, navigation, showWebBackButton]),
   );
 
   useEffect(() => {
@@ -66,7 +73,8 @@ export const useBackButtonHandler = ({ showWebBackButton = false }: BackButtonHa
         // 2. If the current nested stack cannot go back, delegate to the parent navigator (DrawerNavigator).
         const parentNavigation = navigation.getParent(); // This is the DrawerNavigator's navigation object
 
-        if (parentNavigation && parentNavigation.canGoBack()) { // Check if parent can go back
+        if (parentNavigation && parentNavigation.canGoBack()) {
+          // Check if parent can go back
           parentNavigation.goBack(); // Attempt to go back in the parent (DrawerNavigator)
           return true; // Event handled
         }

@@ -33,39 +33,47 @@ export const createFriendshipService = (db: AppDrizzleClient) => {
 };
 
 export class FriendshipService {
-  constructor(private db: AppDrizzleClient) { }
+  constructor(private db: AppDrizzleClient) {}
 
   async getAllFriendships(): Promise<FriendshipWithServer[]> {
-    const rows = await this.db.select({
-      id: friendships.id,
-      serverId: friendships.serverId,
-      senderId: friendships.senderId,
-      receiverId: friendships.receiverId,
-      friendUsername: friendships.friendUsername,
-      status: friendships.status,
-      blockedById: friendships.blockedById,
-      createdAt: friendships.createdAt,
-      updatedAt: friendships.updatedAt,
-      // Add server details
-      serverName: servers.name,
-      serverUrl: servers.url,
-      serverOwnUserId: servers.idUser,
-    })
+    const rows = await this.db
+      .select({
+        id: friendships.id,
+        serverId: friendships.serverId,
+        senderId: friendships.senderId,
+        receiverId: friendships.receiverId,
+        friendUsername: friendships.friendUsername,
+        status: friendships.status,
+        blockedById: friendships.blockedById,
+        createdAt: friendships.createdAt,
+        updatedAt: friendships.updatedAt,
+        // Add server details
+        serverName: servers.name,
+        serverUrl: servers.url,
+        serverOwnUserId: servers.idUser,
+      })
       .from(friendships)
       .leftJoin(servers, eq(friendships.serverId, servers.id))
       .all();
 
-    const otherUserIds = rows.map((f) => (f.senderId === f.serverOwnUserId ? f.receiverId : f.senderId));
+    const otherUserIds = rows.map((f) =>
+      f.senderId === f.serverOwnUserId ? f.receiverId : f.senderId,
+    );
     const uniqueOtherUserIds = Array.from(new Set(otherUserIds));
-    const profileRows = uniqueOtherUserIds.length > 0
-      ? await this.db.select({
-          idUser: users.idUser,
-          tag: users.tag,
-          avatarColor: users.avatarColor,
-          avatarIcon: users.avatarIcon,
-          bio: users.bio,
-        }).from(users).where(inArray(users.idUser, uniqueOtherUserIds)).all()
-      : [];
+    const profileRows =
+      uniqueOtherUserIds.length > 0
+        ? await this.db
+            .select({
+              idUser: users.idUser,
+              tag: users.tag,
+              avatarColor: users.avatarColor,
+              avatarIcon: users.avatarIcon,
+              bio: users.bio,
+            })
+            .from(users)
+            .where(inArray(users.idUser, uniqueOtherUserIds))
+            .all()
+        : [];
     const profileByUserId = new Map(profileRows.map((p) => [p.idUser, p]));
 
     const result: FriendshipWithServer[] = rows.map((f, index) => {
@@ -84,12 +92,16 @@ export class FriendshipService {
     return result;
   }
 
-  async getFriendshipById(id: string): Promise<FriendshipSelect | undefined> { // Changed return type
+  async getFriendshipById(id: string): Promise<FriendshipSelect | undefined> {
+    // Changed return type
     const friendship = await this.db.select().from(friendships).where(eq(friendships.id, id)).get();
     return friendship; // No cast needed
   }
 
-  async addFriendship(data: Omit<FriendshipInsert, 'id' | 'createdAt' | 'updatedAt'>): Promise<FriendshipSelect> { // Removed version, isDeleted, deletedAt from Omit
+  async addFriendship(
+    data: Omit<FriendshipInsert, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<FriendshipSelect> {
+    // Removed version, isDeleted, deletedAt from Omit
     const newFriendship: FriendshipInsert = {
       id: createULID(),
       createdAt: new Date(),
@@ -101,10 +113,14 @@ export class FriendshipService {
     return newFriendship as FriendshipSelect; // Cast for consistency if needed, but should be fine
   }
 
-  async bulkAddFriendships(friendshipData: FriendshipInsert[], tx?: AppDrizzleTransaction): Promise<void> {
+  async bulkAddFriendships(
+    friendshipData: FriendshipInsert[],
+    tx?: AppDrizzleTransaction,
+  ): Promise<void> {
     const dbClient = tx || this.db;
     if (friendshipData.length > 0) {
-      await dbClient.insert(friendships)
+      await dbClient
+        .insert(friendships)
         .values(friendshipData)
         .onConflictDoUpdate({
           target: friendships.id, // Conflict on the primary key 'id'
@@ -124,7 +140,11 @@ export class FriendshipService {
   }
 
   async updateFriendship(id: string, data: Partial<FriendshipInsert>): Promise<void> {
-    await this.db.update(friendships).set({ ...data, updatedAt: new Date() }).where(eq(friendships.id, id)).run();
+    await this.db
+      .update(friendships)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(friendships.id, id))
+      .run();
     entityEventEmitter.emit('friendship_changed'); // Emit event after updating
   }
 
@@ -224,7 +244,10 @@ export class FriendshipService {
     const updated = await friendshipApiService.blacklistUser(server, targetUserId);
     // `blockedById` comes from the server's response, not assumed to be `currentUserId` -
     // the server is the source of truth for who it recorded as the blocker.
-    await this.updateFriendship(friendshipId, { status: FriendStatus.BLACKLISTED, blockedById: updated.blockedById });
+    await this.updateFriendship(friendshipId, {
+      status: FriendStatus.BLACKLISTED,
+      blockedById: updated.blockedById,
+    });
   }
 
   async unblacklistUser(friendshipId: string, currentUserId: string): Promise<void> {
@@ -303,7 +326,9 @@ export class FriendshipService {
       deletedAt: null,
     });
 
-    await dbClient.insert(users).values(Array.from(usersById.values()))
+    await dbClient
+      .insert(users)
+      .values(Array.from(usersById.values()))
       .onConflictDoUpdate({
         target: users.idUser,
         set: {
@@ -324,14 +349,16 @@ export class FriendshipService {
 
     const sync = this.performFriendshipSync(server);
     friendshipSyncInFlight.set(server.id, sync);
-    void sync.finally(() => {
-      if (friendshipSyncInFlight.get(server.id) === sync) {
-        friendshipSyncInFlight.delete(server.id);
-      }
-    }).catch(() => {
-      // The original promise is returned to, and handled by, each caller. This catch only
-      // handles the promise created by finally() so it cannot become an unhandled rejection.
-    });
+    void sync
+      .finally(() => {
+        if (friendshipSyncInFlight.get(server.id) === sync) {
+          friendshipSyncInFlight.delete(server.id);
+        }
+      })
+      .catch(() => {
+        // The original promise is returned to, and handled by, each caller. This catch only
+        // handles the promise created by finally() so it cannot become an unhandled rejection.
+      });
     return sync;
   }
 
@@ -364,13 +391,17 @@ export class FriendshipService {
         // from `server`, so diffing against every locally-stored friendship (including
         // other servers') would delete other servers' friendships on every sync cycle.
         const previousLocalFriendshipMap = new Map<string, FriendshipSelect>();
-        const localFriendshipsBeforeSync = await tx.select().from(friendships).where(eq(friendships.serverId, serverId)).all();
-        localFriendshipsBeforeSync.forEach(f => previousLocalFriendshipMap.set(f.id, f));
+        const localFriendshipsBeforeSync = await tx
+          .select()
+          .from(friendships)
+          .where(eq(friendships.serverId, serverId))
+          .all();
+        localFriendshipsBeforeSync.forEach((f) => previousLocalFriendshipMap.set(f.id, f));
 
-        const serverFriendshipIds = new Set(serverFriendships.map(sf => sf.id));
+        const serverFriendshipIds = new Set(serverFriendships.map((sf) => sf.id));
 
         const friendshipsToDelete = localFriendshipsBeforeSync.filter(
-          localF => !serverFriendshipIds.has(localF.id)
+          (localF) => !serverFriendshipIds.has(localF.id),
         );
 
         if (friendshipsToDelete.length > 0) {
@@ -401,7 +432,12 @@ export class FriendshipService {
           friendshipsToInsertOrUpdate.push(friendshipInsert);
 
           // Notification logic
-          if (!previousStatus && sf.status === FriendStatus.PENDING && sf.receiverId === server.idUser) { // Only notify receiver
+          if (
+            !previousStatus &&
+            sf.status === FriendStatus.PENDING &&
+            sf.receiverId === server.idUser
+          ) {
+            // Only notify receiver
             showNotification(`New friend request from ${sf.friendUsername}`, 'info');
           } else if (previousStatus === FriendStatus.PENDING && sf.status === FriendStatus.FRIEND) {
             showNotification(`Friend request from ${sf.friendUsername} accepted!`, 'success');
@@ -415,7 +451,10 @@ export class FriendshipService {
 
       entityEventEmitter.emit('friendship_changed'); // Emit event after sync to notify of potential changes
     } catch (error) {
-      console.log('FriendshipService: Error syncing friendships with server:', (error as Error)?.message || error);
+      console.log(
+        'FriendshipService: Error syncing friendships with server:',
+        (error as Error)?.message || error,
+      );
       throw error;
     }
   }

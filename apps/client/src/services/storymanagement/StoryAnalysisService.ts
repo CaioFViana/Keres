@@ -47,33 +47,130 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         attributeValues,
       ] = await Promise.all([
         db.query.stories.findFirst({ where: eq(schema.stories.id, storyId) }),
-        db.select({ id: schema.characters.id, name: schema.characters.name }).from(schema.characters).where(belongsToStory(schema.characters)),
-        db.select({ characterId: schema.characterScenes.characterId }).from(schema.characterScenes).where(belongsToStory(schema.characterScenes)),
-        db.select({ charId1: schema.characterRelations.charId1, charId2: schema.characterRelations.charId2 }).from(schema.characterRelations).where(belongsToStory(schema.characterRelations)),
-        db.select({ id: schema.locations.id, name: schema.locations.name }).from(schema.locations).where(belongsToStory(schema.locations)),
-        db.select({ locationAId: schema.locationRelations.locationAId, locationBId: schema.locationRelations.locationBId }).from(schema.locationRelations).where(belongsToStory(schema.locationRelations)),
-        db.select({ id: schema.scenes.id, name: schema.scenes.name, locationId: schema.scenes.locationId, isStart: schema.scenes.isStart, isFinish: schema.scenes.isFinish }).from(schema.scenes).where(belongsToStory(schema.scenes)),
-        db.select({ id: schema.choices.id, sceneId: schema.choices.sceneId, nextSceneId: schema.choices.nextSceneId, text: schema.choices.text }).from(schema.choices).where(belongsToStory(schema.choices)),
-        db.select({ id: schema.choiceCheckGroups.id, choiceId: schema.choiceCheckGroups.choiceId, combinator: schema.choiceCheckGroups.combinator }).from(schema.choiceCheckGroups).where(belongsToStory(schema.choiceCheckGroups)),
-        db.select({
-          id: schema.choiceChecks.id, groupId: schema.choiceChecks.groupId, mode: schema.choiceChecks.mode, type: schema.choiceChecks.type,
-          sceneId: schema.choiceChecks.sceneId, minVisits: schema.choiceChecks.minVisits,
-          itemId: schema.choiceChecks.itemId, itemPresence: schema.choiceChecks.itemPresence,
-          triggerName: schema.choiceChecks.triggerName, triggerState: schema.choiceChecks.triggerState,
-        }).from(schema.choiceChecks).where(belongsToStory(schema.choiceChecks)),
-        db.select({
-          entityType: schema.effects.entityType, entityId: schema.effects.entityId, effectType: schema.effects.effectType,
-          itemId: schema.effects.itemId, triggerName: schema.effects.triggerName,
-        }).from(schema.effects).where(belongsToStory(schema.effects)),
-        db.select({ id: schema.items.id, name: schema.items.name }).from(schema.items).where(belongsToStory(schema.items)),
-        db.select({ itemId: schema.itemJourneys.itemId }).from(schema.itemJourneys).where(belongsToStory(schema.itemJourneys)),
-        db.select({ id: schema.tags.id, name: schema.tags.name }).from(schema.tags).where(belongsToStory(schema.tags)),
-        db.select({ tagId: schema.tagRelations.tagId }).from(schema.tagRelations).where(belongsToStory(schema.tagRelations)),
-        db.select({ id: schema.chapters.id, name: schema.chapters.name }).from(schema.chapters).where(belongsToStory(schema.chapters)),
-        db.select({ id: schema.notes.id, name: schema.notes.title }).from(schema.notes).where(belongsToStory(schema.notes)),
-        db.select({ id: schema.worldRules.id, name: schema.worldRules.title }).from(schema.worldRules).where(belongsToStory(schema.worldRules)),
-        db.select({ id: schema.storySchemaFields.id, entityType: schema.storySchemaFields.entityType, name: schema.storySchemaFields.name, type: schema.storySchemaFields.type, isRequired: schema.storySchemaFields.isRequired }).from(schema.storySchemaFields).where(belongsToStory(schema.storySchemaFields)),
-        db.select({ fieldId: schema.attributeValues.fieldId, entityId: schema.attributeValues.entityId, value: schema.attributeValues.value }).from(schema.attributeValues).where(belongsToStory(schema.attributeValues)),
+        db
+          .select({ id: schema.characters.id, name: schema.characters.name })
+          .from(schema.characters)
+          .where(belongsToStory(schema.characters)),
+        db
+          .select({ characterId: schema.characterScenes.characterId })
+          .from(schema.characterScenes)
+          .where(belongsToStory(schema.characterScenes)),
+        db
+          .select({
+            charId1: schema.characterRelations.charId1,
+            charId2: schema.characterRelations.charId2,
+          })
+          .from(schema.characterRelations)
+          .where(belongsToStory(schema.characterRelations)),
+        db
+          .select({ id: schema.locations.id, name: schema.locations.name })
+          .from(schema.locations)
+          .where(belongsToStory(schema.locations)),
+        db
+          .select({
+            locationAId: schema.locationRelations.locationAId,
+            locationBId: schema.locationRelations.locationBId,
+          })
+          .from(schema.locationRelations)
+          .where(belongsToStory(schema.locationRelations)),
+        db
+          .select({
+            id: schema.scenes.id,
+            name: schema.scenes.name,
+            locationId: schema.scenes.locationId,
+            isStart: schema.scenes.isStart,
+            isFinish: schema.scenes.isFinish,
+          })
+          .from(schema.scenes)
+          .where(belongsToStory(schema.scenes)),
+        db
+          .select({
+            id: schema.choices.id,
+            sceneId: schema.choices.sceneId,
+            nextSceneId: schema.choices.nextSceneId,
+            text: schema.choices.text,
+          })
+          .from(schema.choices)
+          .where(belongsToStory(schema.choices)),
+        db
+          .select({
+            id: schema.choiceCheckGroups.id,
+            choiceId: schema.choiceCheckGroups.choiceId,
+            combinator: schema.choiceCheckGroups.combinator,
+          })
+          .from(schema.choiceCheckGroups)
+          .where(belongsToStory(schema.choiceCheckGroups)),
+        db
+          .select({
+            id: schema.choiceChecks.id,
+            groupId: schema.choiceChecks.groupId,
+            mode: schema.choiceChecks.mode,
+            type: schema.choiceChecks.type,
+            sceneId: schema.choiceChecks.sceneId,
+            minVisits: schema.choiceChecks.minVisits,
+            itemId: schema.choiceChecks.itemId,
+            itemPresence: schema.choiceChecks.itemPresence,
+            triggerName: schema.choiceChecks.triggerName,
+            triggerState: schema.choiceChecks.triggerState,
+          })
+          .from(schema.choiceChecks)
+          .where(belongsToStory(schema.choiceChecks)),
+        db
+          .select({
+            entityType: schema.effects.entityType,
+            entityId: schema.effects.entityId,
+            effectType: schema.effects.effectType,
+            itemId: schema.effects.itemId,
+            triggerName: schema.effects.triggerName,
+          })
+          .from(schema.effects)
+          .where(belongsToStory(schema.effects)),
+        db
+          .select({ id: schema.items.id, name: schema.items.name })
+          .from(schema.items)
+          .where(belongsToStory(schema.items)),
+        db
+          .select({ itemId: schema.itemJourneys.itemId })
+          .from(schema.itemJourneys)
+          .where(belongsToStory(schema.itemJourneys)),
+        db
+          .select({ id: schema.tags.id, name: schema.tags.name })
+          .from(schema.tags)
+          .where(belongsToStory(schema.tags)),
+        db
+          .select({ tagId: schema.tagRelations.tagId })
+          .from(schema.tagRelations)
+          .where(belongsToStory(schema.tagRelations)),
+        db
+          .select({ id: schema.chapters.id, name: schema.chapters.name })
+          .from(schema.chapters)
+          .where(belongsToStory(schema.chapters)),
+        db
+          .select({ id: schema.notes.id, name: schema.notes.title })
+          .from(schema.notes)
+          .where(belongsToStory(schema.notes)),
+        db
+          .select({ id: schema.worldRules.id, name: schema.worldRules.title })
+          .from(schema.worldRules)
+          .where(belongsToStory(schema.worldRules)),
+        db
+          .select({
+            id: schema.storySchemaFields.id,
+            entityType: schema.storySchemaFields.entityType,
+            name: schema.storySchemaFields.name,
+            type: schema.storySchemaFields.type,
+            isRequired: schema.storySchemaFields.isRequired,
+          })
+          .from(schema.storySchemaFields)
+          .where(belongsToStory(schema.storySchemaFields)),
+        db
+          .select({
+            fieldId: schema.attributeValues.fieldId,
+            entityId: schema.attributeValues.entityId,
+            value: schema.attributeValues.value,
+          })
+          .from(schema.attributeValues)
+          .where(belongsToStory(schema.attributeValues)),
       ]);
 
       if (!story) {

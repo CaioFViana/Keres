@@ -73,12 +73,15 @@ describe('parity with the global search entity types', () => {
     expect([...ENTITY_TYPES].sort()).toEqual(searchable);
   });
 
-  it.each(Object.keys(globalSearchFieldConfig))('navigates a %s search result somewhere', (entityType) => {
-    const { navigate, drawer } = fakeDrawer();
+  it.each(Object.keys(globalSearchFieldConfig))(
+    'navigates a %s search result somewhere',
+    (entityType) => {
+      const { navigate, drawer } = fakeDrawer();
 
-    navigateToEntityDetail(drawer, entityType as NavigableEntityType, 'id-1');
+      navigateToEntityDetail(drawer, entityType as NavigableEntityType, 'id-1');
 
-    expect(navigate).toHaveBeenCalledTimes(1);
-    expect(navigate.mock.calls[0][0]).toBeTruthy();
-  });
+      expect(navigate).toHaveBeenCalledTimes(1);
+      expect(navigate.mock.calls[0][0]).toBeTruthy();
+    },
+  );
 });

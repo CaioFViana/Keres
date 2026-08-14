@@ -1,4 +1,11 @@
-import { AxiosError, AxiosInstance, AxiosRequestConfig, create as createAxios, InternalAxiosRequestConfig, isAxiosError } from 'axios';
+import {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  create as createAxios,
+  InternalAxiosRequestConfig,
+  isAxiosError,
+} from 'axios';
 import { Platform } from 'react-native';
 import { ServerSelect } from '../db/schema'; // Import ServerSelect
 import { useConnectivityStore } from '../state/connectivityStore';
@@ -20,10 +27,12 @@ export function isOfflineError(error: unknown): boolean {
     return false;
   }
   const code = (error as AxiosError).code;
-  return code === NO_RESPONSE_ERROR
-    || code === TIMEOUT_ERROR
-    || code === 'ERR_NETWORK'
-    || code === 'ECONNABORTED';
+  return (
+    code === NO_RESPONSE_ERROR ||
+    code === TIMEOUT_ERROR ||
+    code === 'ERR_NETWORK' ||
+    code === 'ECONNABORTED'
+  );
 }
 
 // Define the structure for how the API client obtains and manages tokens
@@ -31,7 +40,10 @@ export interface TokenProvider {
   getAccessToken(): string | null;
   getRefreshToken(): string | null;
   getServerUrl(): string | null;
-  refreshAccessToken(serverId: string, refreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null>;
+  refreshAccessToken(
+    serverId: string,
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string } | null>;
   clearAuth(serverId: string): void;
 }
 
@@ -52,9 +64,16 @@ let tokenProvider: TokenProvider | null = null;
 // different servers at the same time: a token refresh for server A can never leak
 // into a request meant for server B, because each instance only ever looks up the
 // token for the serverId it was explicitly configured with (see applyInterceptors).
-const serverTokenCache = new Map<string, { jwtToken: string | null; refreshToken: string | null }>();
+const serverTokenCache = new Map<
+  string,
+  { jwtToken: string | null; refreshToken: string | null }
+>();
 
-export function updateServerTokenCache(serverId: string, jwtToken: string | null, refreshToken: string | null): void {
+export function updateServerTokenCache(
+  serverId: string,
+  jwtToken: string | null,
+  refreshToken: string | null,
+): void {
   serverTokenCache.set(serverId, { jwtToken, refreshToken });
 }
 
@@ -76,7 +95,11 @@ export function getServerAccessToken(serverId: string): string | null {
 
 interface RefreshState {
   isRefreshing: boolean;
-  failedQueue: { resolve: (value?: any) => void; reject: (reason?: any) => void; config: InternalAxiosRequestConfig }[];
+  failedQueue: {
+    resolve: (value?: any) => void;
+    reject: (reason?: any) => void;
+    config: InternalAxiosRequestConfig;
+  }[];
 }
 
 // Refresh-in-flight state, keyed by serverId. Keeps the "only one refresh at a time"
@@ -90,7 +113,10 @@ export function clearAllServerAuthState(serverIds: string[]): void {
     serverTokenCache.delete(serverId);
     const refreshState = refreshStateByServerId.get(serverId);
     if (refreshState) {
-      processQueue(refreshState, new AxiosError('Authentication cleared by application reset.', 'AUTH_RESET'));
+      processQueue(
+        refreshState,
+        new AxiosError('Authentication cleared by application reset.', 'AUTH_RESET'),
+      );
       refreshStateByServerId.delete(serverId);
     }
   }
@@ -106,7 +132,7 @@ function getRefreshState(serverId: string): RefreshState {
 }
 
 function processQueue(state: RefreshState, error: AxiosError | null, token: string | null = null) {
-  state.failedQueue.forEach(prom => {
+  state.failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -146,17 +172,21 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
   // Request interceptor to add any necessary headers (e.g., auth tokens)
   instance.interceptors.request.use(
     (config) => {
-      const accessToken = (currentServer && serverTokenCache.get(currentServer.id)?.jwtToken) || null;
-      if (accessToken && !config.headers.Authorization &&
-          !config.url?.includes('/auth/login') &&
-          !config.url?.includes('/auth/refresh')) {
+      const accessToken =
+        (currentServer && serverTokenCache.get(currentServer.id)?.jwtToken) || null;
+      if (
+        accessToken &&
+        !config.headers.Authorization &&
+        !config.url?.includes('/auth/login') &&
+        !config.url?.includes('/auth/refresh')
+      ) {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
       return config;
     },
     (error) => {
       return Promise.reject(error);
-    }
+    },
   );
 
   // Response interceptor for centralized error handling and token refresh
@@ -191,7 +221,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
               refreshState.failedQueue.push({ resolve, reject, config: originalRequest });
             })
               .then(() => instance(originalRequest))
-              .catch(err => Promise.reject(err));
+              .catch((err) => Promise.reject(err));
           }
 
           refreshState.isRefreshing = true;
@@ -202,34 +232,63 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
             console.log('No refresh token available for token refresh. Clearing auth.');
             refreshState.isRefreshing = false;
             tokenProvider.clearAuth(serverId);
-            processQueue(refreshState, new AxiosError('Token refresh failed: No refresh token available.', 'TOKEN_REFRESH_FAILED', originalRequest));
-            return Promise.reject(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
+            processQueue(
+              refreshState,
+              new AxiosError(
+                'Token refresh failed: No refresh token available.',
+                'TOKEN_REFRESH_FAILED',
+                originalRequest,
+              ),
+            );
+            return Promise.reject(
+              new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest),
+            );
           }
 
           try {
             const refreshResult = await tokenProvider.refreshAccessToken(serverId, refreshToken);
 
             if (refreshResult) {
-                const newAccessToken = refreshResult.accessToken;
-                // Update the original request with the new access token
-                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+              const newAccessToken = refreshResult.accessToken;
+              // Update the original request with the new access token
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
-                // Update the shared cache so every instance configured for this server sees the new token
-                updateServerTokenCache(serverId, newAccessToken, refreshResult.refreshToken);
+              // Update the shared cache so every instance configured for this server sees the new token
+              updateServerTokenCache(serverId, newAccessToken, refreshResult.refreshToken);
 
-                processQueue(refreshState, null, newAccessToken); // Resolve all queued requests
-                return instance(originalRequest); // Retry the original request
+              processQueue(refreshState, null, newAccessToken); // Resolve all queued requests
+              return instance(originalRequest); // Retry the original request
             } else {
-                console.log('Token refresh failed: refreshAccessToken returned null.');
-                tokenProvider.clearAuth(serverId);
-                processQueue(refreshState, new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
-                return Promise.reject(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest));
+              console.log('Token refresh failed: refreshAccessToken returned null.');
+              tokenProvider.clearAuth(serverId);
+              processQueue(
+                refreshState,
+                new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest),
+              );
+              return Promise.reject(
+                new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest),
+              );
             }
           } catch (refreshError: any) {
             console.log('Error refreshing token:', refreshError);
             tokenProvider.clearAuth(serverId);
-            processQueue(refreshState, new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest, refreshError.response));
-            return Promise.reject(new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest, refreshError.response));
+            processQueue(
+              refreshState,
+              new AxiosError(
+                'Token refresh failed',
+                'TOKEN_REFRESH_FAILED',
+                originalRequest,
+                refreshError.response,
+              ),
+            );
+            return Promise.reject(
+              new AxiosError(
+                'Token refresh failed',
+                'TOKEN_REFRESH_FAILED',
+                originalRequest,
+                refreshError.response,
+              ),
+            );
           } finally {
             refreshState.isRefreshing = false;
           }
@@ -243,7 +302,15 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
         if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
           // Expected while offline - keep it to a one-liner (never log the raw XHR object).
           console.log(`API timeout: ${requestLabel}`);
-          return Promise.reject(new AxiosError('Request timed out. Please check your internet connection or server availability.', TIMEOUT_ERROR, originalRequest, error.request, error.response));
+          return Promise.reject(
+            new AxiosError(
+              'Request timed out. Please check your internet connection or server availability.',
+              TIMEOUT_ERROR,
+              originalRequest,
+              error.request,
+              error.response,
+            ),
+          );
         } else if (error.response) {
           console.log('API Response Error:', error.response.status, error.response.data);
           // O `onError` global da API (apps/api/src/index.ts) sempre escolhe uma mensagem
@@ -252,19 +319,43 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
           // unexpected error occurred", que não ajuda ninguém a entender o que aconteceu.
           const serverMessage = (error.response.data as { message?: string } | undefined)?.message;
           const errorMessage = serverMessage || 'An unexpected error occurred.';
-          return Promise.reject(new AxiosError(`Server Error: ${error.response.status} - ${errorMessage}`, `SERVER_ERROR_${error.response.status}`, originalRequest, error.request, error.response));
+          return Promise.reject(
+            new AxiosError(
+              `Server Error: ${error.response.status} - ${errorMessage}`,
+              `SERVER_ERROR_${error.response.status}`,
+              originalRequest,
+              error.request,
+              error.response,
+            ),
+          );
         } else if (error.request) {
           // Server unreachable. This is the normal offline path, not an exceptional
           // condition, so log a short line rather than dumping the whole XHR object.
           console.log(`API unreachable: ${requestLabel}`);
-          return Promise.reject(new AxiosError('No response received from the server. Please check your network connection.', NO_RESPONSE_ERROR, originalRequest, error.request, error.response));
+          return Promise.reject(
+            new AxiosError(
+              'No response received from the server. Please check your network connection.',
+              NO_RESPONSE_ERROR,
+              originalRequest,
+              error.request,
+              error.response,
+            ),
+          );
         } else {
           console.log('API Request Setup Error:', error.message);
-          return Promise.reject(new AxiosError(`Request setup error: ${error.message}`, 'REQUEST_SETUP_ERROR', originalRequest, error.request, error.response));
+          return Promise.reject(
+            new AxiosError(
+              `Request setup error: ${error.message}`,
+              'REQUEST_SETUP_ERROR',
+              originalRequest,
+              error.request,
+              error.response,
+            ),
+          );
         }
       }
       return Promise.reject(error);
-    }
+    },
   );
 }
 
@@ -288,8 +379,12 @@ apiClient.setTokenProvider = (provider: TokenProvider | null) => {
 export function createKeresAxiosInstance(config?: AxiosRequestConfig): KeresAxiosInstance {
   const instance = createAxios(config) as KeresAxiosInstance;
   applyInterceptors(instance); // Also sets instance.setActiveServer, scoped to this instance
-  instance.setBaseUrl = (url: string) => { instance.defaults.baseURL = url; };
-  instance.setTokenProvider = (provider: TokenProvider | null) => { tokenProvider = provider; };
+  instance.setBaseUrl = (url: string) => {
+    instance.defaults.baseURL = url;
+  };
+  instance.setTokenProvider = (provider: TokenProvider | null) => {
+    tokenProvider = provider;
+  };
   return instance;
 }
 

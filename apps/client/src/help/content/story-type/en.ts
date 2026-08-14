@@ -1,7 +1,37 @@
 import { HelpPage } from '../../types';
-const page: HelpPage = { id:'story-type', title:'Linear or branching?', summary:'Choose whether the story has one sequence or choice-based paths.', keywords:['linear','branching','convert','choices'], blocks:[
-{type:'heading',level:2,text:'What it is'}, {type:'paragraph',text:'Type defines how scenes can connect. A Linear story follows chapter organization; a Branching story allows choices between scenes.'},
-{type:'heading',level:2,text:'What it is for'}, {type:'example',title:'Example',text:'In a linear investigation, the revelation follows the search. In a branching story, the reader can follow the suspect or return home and reach different scenes.'},
-{type:'heading',level:2,text:'How to do it'}, {type:'steps',items:['When creating a story, choose Type in the form.', 'To change an existing story, open Story menu › Story settings.', 'Choose the conversion and read the confirmation.', 'When converting Branching to Linear, the app first lists incompatible chapters; review that list before confirming.']},
-{type:'heading',level:2,text:'What it affects elsewhere'}, {type:'paragraph',text:'In Branching stories, Choices and the story map are available. Conversion can require chapter and scene adjustments; it is not performed before confirmation.'}, {type:'seeAlso',pages:['create-story','choices','story-map','story-settings']}] };
+const page: HelpPage = {
+  id: 'story-type',
+  title: 'Linear or branching?',
+  summary: 'Choose whether the story has one sequence or choice-based paths.',
+  keywords: ['linear', 'branching', 'convert', 'choices'],
+  blocks: [
+    { type: 'heading', level: 2, text: 'What it is' },
+    {
+      type: 'paragraph',
+      text: 'Type defines how scenes can connect. A Linear story follows chapter organization; a Branching story allows choices between scenes.',
+    },
+    { type: 'heading', level: 2, text: 'What it is for' },
+    {
+      type: 'example',
+      title: 'Example',
+      text: 'In a linear investigation, the revelation follows the search. In a branching story, the reader can follow the suspect or return home and reach different scenes.',
+    },
+    { type: 'heading', level: 2, text: 'How to do it' },
+    {
+      type: 'steps',
+      items: [
+        'When creating a story, choose Type in the form.',
+        'To change an existing story, open Story menu › Story settings.',
+        'Choose the conversion and read the confirmation.',
+        'When converting Branching to Linear, the app first lists incompatible chapters; review that list before confirming.',
+      ],
+    },
+    { type: 'heading', level: 2, text: 'What it affects elsewhere' },
+    {
+      type: 'paragraph',
+      text: 'In Branching stories, Choices and the story map are available. Conversion can require chapter and scene adjustments; it is not performed before confirmation.',
+    },
+    { type: 'seeAlso', pages: ['create-story', 'choices', 'story-map', 'story-settings'] },
+  ],
+};
 export default page;

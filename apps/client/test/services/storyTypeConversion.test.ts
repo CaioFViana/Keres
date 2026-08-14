@@ -6,7 +6,8 @@ import {
   type Edge,
 } from '../../src/services/storymanagement/storyTypeConversion';
 
-const chapter = (id: string, index: number, name = `Capítulo ${index}`) => ({ id, index, name }) as any;
+const chapter = (id: string, index: number, name = `Capítulo ${index}`) =>
+  ({ id, index, name }) as any;
 const scene = (id: string, chapterId: string, index: number) => ({ id, chapterId, index }) as any;
 const edge = (sceneId: string, nextSceneId: string): Edge => ({ sceneId, nextSceneId });
 
@@ -35,13 +36,19 @@ describe('groupScenesByChapter', () => {
   });
 
   it('drops chapters with no scenes, since they cannot take part in a chain', () => {
-    const grouped = groupScenesByChapter([chapter('c1', 1), chapter('vazio', 2)], [scene('s1', 'c1', 1)]);
+    const grouped = groupScenesByChapter(
+      [chapter('c1', 1), chapter('vazio', 2)],
+      [scene('s1', 'c1', 1)],
+    );
 
     expect(grouped.map((entry) => entry.chapter.id)).toEqual(['c1']);
   });
 
   it('ignores a scene whose chapter is not in the list', () => {
-    const grouped = groupScenesByChapter([chapter('c1', 1)], [scene('s1', 'c1', 1), scene('orfa', 'sumiu', 1)]);
+    const grouped = groupScenesByChapter(
+      [chapter('c1', 1)],
+      [scene('s1', 'c1', 1), scene('orfa', 'sumiu', 1)],
+    );
 
     expect(grouped[0].scenes.map((s) => s.id)).toEqual(['s1']);
   });
@@ -60,26 +67,35 @@ describe('classifyEdges', () => {
     );
 
   it('groups intra-chapter edges under their own chapter', () => {
-    const { intraEdgesByChapter } = classifyEdges(twoChapters(), [edge('s1', 's2'), edge('s3', 's4')]);
+    const { intraEdgesByChapter } = classifyEdges(twoChapters(), [
+      edge('s1', 's2'),
+      edge('s3', 's4'),
+    ]);
 
     expect(intraEdgesByChapter.get('c1')).toEqual([edge('s1', 's2')]);
     expect(intraEdgesByChapter.get('c2')).toEqual([edge('s3', 's4')]);
   });
 
   it('accepts the edge that links the end of a chapter to the start of the next', () => {
-    const { illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [edge('s2', 's3')]);
+    const { illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [
+      edge('s2', 's3'),
+    ]);
 
     expect(illegitimateCrossChapterSourceChapters.size).toBe(0);
   });
 
   it('rejects a cross-chapter edge that does not leave from the last scene', () => {
-    const { illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [edge('s1', 's3')]);
+    const { illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [
+      edge('s1', 's3'),
+    ]);
 
     expect([...illegitimateCrossChapterSourceChapters]).toEqual(['c1']);
   });
 
   it('rejects a cross-chapter edge that does not land on the first scene', () => {
-    const { illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [edge('s2', 's4')]);
+    const { illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [
+      edge('s2', 's4'),
+    ]);
 
     expect([...illegitimateCrossChapterSourceChapters]).toEqual(['c1']);
   });
@@ -96,7 +112,9 @@ describe('classifyEdges', () => {
   });
 
   it('rejects an edge going back to an earlier chapter', () => {
-    const { illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [edge('s4', 's1')]);
+    const { illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [
+      edge('s4', 's1'),
+    ]);
 
     expect([...illegitimateCrossChapterSourceChapters]).toEqual(['c2']);
   });
@@ -113,10 +131,10 @@ describe('classifyEdges', () => {
   });
 
   it('ignores a choice pointing at a scene that no longer exists', () => {
-    const { intraEdgesByChapter, illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), [
-      edge('s1', 'sumiu'),
-      edge('sumiu', 's1'),
-    ]);
+    const { intraEdgesByChapter, illegitimateCrossChapterSourceChapters } = classifyEdges(
+      twoChapters(),
+      [edge('s1', 'sumiu'), edge('sumiu', 's1')],
+    );
 
     expect(intraEdgesByChapter.size).toBe(0);
     expect(illegitimateCrossChapterSourceChapters.size).toBe(0);
@@ -132,7 +150,10 @@ describe('classifyEdges', () => {
   });
 
   it('reports nothing for a story with no choices', () => {
-    const { intraEdgesByChapter, illegitimateCrossChapterSourceChapters } = classifyEdges(twoChapters(), []);
+    const { intraEdgesByChapter, illegitimateCrossChapterSourceChapters } = classifyEdges(
+      twoChapters(),
+      [],
+    );
 
     expect(intraEdgesByChapter.size).toBe(0);
     expect(illegitimateCrossChapterSourceChapters.size).toBe(0);

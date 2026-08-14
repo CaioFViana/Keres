@@ -14,7 +14,11 @@ interface CharacterListItemProps {
   onViewDetails: (characterId: string) => void;
 }
 
-const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onToggleFavorite, onViewDetails }) => {
+const CharacterListItem: React.FC<CharacterListItemProps> = ({
+  character,
+  onToggleFavorite,
+  onViewDetails,
+}) => {
   const { colors } = useTheme();
 
   const descriptionSummary = truncate(character.description, 150);
@@ -41,9 +45,7 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onTogg
         </Text>
       )}
       {descriptionSummary && <Text style={styles.descriptionText}>{descriptionSummary}</Text>}
-      {char.tags && char.tags.length > 0 && (
-        <TagList tags={char.tags} />
-      )}
+      {char.tags && char.tags.length > 0 && <TagList tags={char.tags} />}
     </View>
   );
 
@@ -59,4 +61,3 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({ character, onTogg
 };
 
 export default CharacterListItem;
-

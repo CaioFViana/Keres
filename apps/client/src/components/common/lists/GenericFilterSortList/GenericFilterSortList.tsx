@@ -1,7 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, FlatList, Keyboard, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Keyboard,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { useTheme } from '../../../../theme';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import Select from '@/src/components/common/inputs/Select/Select';
@@ -89,7 +99,8 @@ const GenericFilterSortList = <T,>({
   const [selectedSort, setSelectedSort] = useState<string | null>(currentSortValue || null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(currentSortDirection);
   const [selectedFilter, setSelectedFilter] = useState<string[]>(selectedFilterValues || []);
-  const [internalFavoriteFilterState, setInternalFavoriteFilterState] = useState<FavoriteFilterState>(currentFavoriteFilterState || 'all');
+  const [internalFavoriteFilterState, setInternalFavoriteFilterState] =
+    useState<FavoriteFilterState>(currentFavoriteFilterState || 'all');
   const [isAdvancedSearchModalVisible, setIsAdvancedSearchModalVisible] = useState(false);
 
   // Calculate if there are any searchable fields for the current entity - either native
@@ -99,8 +110,10 @@ const GenericFilterSortList = <T,>({
   const hasAdvancedSearchFields = useMemo(() => {
     if (!entityName) return false;
     const metadata = entityFieldMetadata[entityName];
-    const hasNativeSearchableFields = !!metadata && metadata.some(field => field.isSearchable);
-    const supportsCustomAttributes = (STORY_SCHEMA_ENTITY_TYPES as readonly string[]).includes(entityName);
+    const hasNativeSearchableFields = !!metadata && metadata.some((field) => field.isSearchable);
+    const supportsCustomAttributes = (STORY_SCHEMA_ENTITY_TYPES as readonly string[]).includes(
+      entityName,
+    );
     return hasNativeSearchableFields || supportsCustomAttributes;
   }, [entityName]);
 
@@ -132,7 +145,7 @@ const GenericFilterSortList = <T,>({
   }, [onSearchSubmit]);
 
   const handleFilterSelection = (values: string | string[] | null) => {
-    const newValues = Array.isArray(values) ? values : (values ? [values] : []);
+    const newValues = Array.isArray(values) ? values : values ? [values] : [];
     setSelectedFilter(newValues);
     onFilterChange(newValues);
   };
@@ -180,15 +193,22 @@ const GenericFilterSortList = <T,>({
   };
 
   const handleOpenAdvancedSearchModal = useCallback(() => {
-    if (hasAdvancedSearchFields) { // Only open if there are fields
+    if (hasAdvancedSearchFields) {
+      // Only open if there are fields
       setIsAdvancedSearchModalVisible(true);
     }
   }, [hasAdvancedSearchFields]);
-  const handleCloseAdvancedSearchModal = useCallback(() => setIsAdvancedSearchModalVisible(false), []);
-  const handleAdvancedSearchSubmit = useCallback((criteria: { [key: string]: any }) => {
-    onAdvancedSearch && onAdvancedSearch(criteria);
-    setIsAdvancedSearchModalVisible(false);
-  }, [onAdvancedSearch]);
+  const handleCloseAdvancedSearchModal = useCallback(
+    () => setIsAdvancedSearchModalVisible(false),
+    [],
+  );
+  const handleAdvancedSearchSubmit = useCallback(
+    (criteria: { [key: string]: any }) => {
+      onAdvancedSearch && onAdvancedSearch(criteria);
+      setIsAdvancedSearchModalVisible(false);
+    },
+    [onAdvancedSearch],
+  );
 
   const usesColoredFilterOptions = !!filterOptions?.some((option) => !!option.color);
 
@@ -212,7 +232,10 @@ const GenericFilterSortList = <T,>({
           <View style={[styles(colors).selectContainer, { flex: 1 }]}>
             {usesColoredFilterOptions ? (
               <MultiSelectPill
-                options={(filterOptions || []).map((option) => ({ ...option, color: option.color || undefined }))}
+                options={(filterOptions || []).map((option) => ({
+                  ...option,
+                  color: option.color || undefined,
+                }))}
                 selectedValues={selectedFilter}
                 onSelectionChange={handleFilterSelection}
                 placeholder={t('filter_by_tags')}
@@ -245,7 +268,11 @@ const GenericFilterSortList = <T,>({
             style={styles(colors).advancedSearchButton}
             disabled={!hasAdvancedSearchFields} // Disable if no fields are searchable
           >
-            <Ionicons name="search-outline" size={24} color={hasAdvancedSearchFields ? colors.text : colors.textSecondary} />
+            <Ionicons
+              name="search-outline"
+              size={24}
+              color={hasAdvancedSearchFields ? colors.text : colors.textSecondary}
+            />
           </TouchableOpacity>
         </View>
         <View style={styles(colors).filterSortRow}>
@@ -266,14 +293,13 @@ const GenericFilterSortList = <T,>({
                 { marginRight: 10 },
               ]}
             >
-              <Ionicons
-                name={getFavoriteButtonIcon()}
-                size={24}
-                color={colors.text}
-              />
+              <Ionicons name={getFavoriteButtonIcon()} size={24} color={colors.text} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={handleSortDirectionToggle} style={styles(colors).sortDirectionButton}>
+          <TouchableOpacity
+            onPress={handleSortDirectionToggle}
+            style={styles(colors).sortDirectionButton}
+          >
             <Ionicons
               name={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
               size={24}
@@ -284,7 +310,11 @@ const GenericFilterSortList = <T,>({
       </View>
       <View style={styles(colors).resultsRow}>
         {isLoading && (
-          <ActivityIndicator size="small" color={colors.primary} style={styles(colors).resultsLoadingIndicator} />
+          <ActivityIndicator
+            size="small"
+            color={colors.primary}
+            style={styles(colors).resultsLoadingIndicator}
+          />
         )}
         <Text style={styles(colors).resultsCountText}>
           {t('total_results_found', { count: data.length })}
@@ -296,24 +326,30 @@ const GenericFilterSortList = <T,>({
         keyExtractor={keyExtractor}
         numColumns={numColumns}
         columnWrapperStyle={numColumns > 1 ? columnWrapperStyle : undefined}
-        ListEmptyComponent={emptyListComponent || <Text style={styles(colors).emptyText}>{t('no_items_found')}</Text>}
+        ListEmptyComponent={
+          emptyListComponent || <Text style={styles(colors).emptyText}>{t('no_items_found')}</Text>
+        }
         style={styles(colors).list}
       />
-      {storyId && entityName && onAdvancedSearch && hasAdvancedSearchFields && ( // Only render modal if there are searchable fields
-        <AdvancedSearchModal
-          entityName={entityName}
-          storyId={storyId}
-          isVisible={isAdvancedSearchModalVisible}
-          onClose={handleCloseAdvancedSearchModal}
-          onSearch={handleAdvancedSearchSubmit}
-          initialCriteria={currentAdvancedSearchCriteria}
-        />
-      )}
+      {storyId &&
+        entityName &&
+        onAdvancedSearch &&
+        hasAdvancedSearchFields && ( // Only render modal if there are searchable fields
+          <AdvancedSearchModal
+            entityName={entityName}
+            storyId={storyId}
+            isVisible={isAdvancedSearchModalVisible}
+            onClose={handleCloseAdvancedSearchModal}
+            onSearch={handleAdvancedSearchSubmit}
+            initialCriteria={currentAdvancedSearchCriteria}
+          />
+        )}
     </View>
   );
 };
 
-const styles = (colors: any) => StyleSheet.create({
+const styles = (colors: any) =>
+  StyleSheet.create({
     container: {
       flex: 1,
       padding: 10,
@@ -322,11 +358,11 @@ const styles = (colors: any) => StyleSheet.create({
     searchContainer: {
       marginBottom: 0,
       paddingTop: 5,
-      paddingBottom: 0
+      paddingBottom: 0,
     },
     searchBar: {
       width: '100%',
-      marginBottom: 10
+      marginBottom: 10,
     },
     filterSortControlsWrapper: {
       flexDirection: 'column',
@@ -343,7 +379,7 @@ const styles = (colors: any) => StyleSheet.create({
     },
     selectContainerSort: {
       flex: 1,
-      paddingRight: 10
+      paddingRight: 10,
     },
     sortDirectionButton: {
       padding: 12,

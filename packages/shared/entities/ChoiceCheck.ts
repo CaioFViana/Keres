@@ -10,21 +10,21 @@
  * choice; em `enable`, a condição verdadeira é o que a habilita.
  */
 export interface ChoiceCheck {
-  id: string
-  storyId: string
-  groupId: string
-  mode: 'block' | 'enable'
-  type: 'sceneCount' | 'inventory' | 'trigger'
-  order: number
-  sceneId: string | null
-  minVisits: number | null
-  itemId: string | null
-  itemPresence: 'has' | 'lacks' | null
-  triggerName: string | null
-  triggerState: 'set' | 'unset' | null
-  createdAt: Date
-  updatedAt: Date
-  version: number
-  isDeleted: boolean // Added for conflict resolution (tombstones)
-  deletedAt: Date | null // Added for conflict resolution (tombstones)
+  id: string;
+  storyId: string;
+  groupId: string;
+  mode: 'block' | 'enable';
+  type: 'sceneCount' | 'inventory' | 'trigger';
+  order: number;
+  sceneId: string | null;
+  minVisits: number | null;
+  itemId: string | null;
+  itemPresence: 'has' | 'lacks' | null;
+  triggerName: string | null;
+  triggerState: 'set' | 'unset' | null;
+  createdAt: Date;
+  updatedAt: Date;
+  version: number;
+  isDeleted: boolean; // Added for conflict resolution (tombstones)
+  deletedAt: Date | null; // Added for conflict resolution (tombstones)
 }

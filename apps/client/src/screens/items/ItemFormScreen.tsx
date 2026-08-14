@@ -3,7 +3,13 @@ import Select from '@/src/components/common/inputs/Select/Select';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { Item } from '@keres/shared/entities/Item'; // Import Item entity
-import { RouteProp, StackActions, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import {
+  RouteProp,
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +17,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, { CustomAttributeValues, getDefaultCustomAttributeValues, validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
@@ -44,7 +54,12 @@ const ItemFormScreen = () => {
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
-  const { characters, fetchCharacters, setDbAndStoryId: setCharacterDbAndStoryId, initializeService: initializeCharacterService } = useCharacterStore();
+  const {
+    characters,
+    fetchCharacters,
+    setDbAndStoryId: setCharacterDbAndStoryId,
+    initializeService: initializeCharacterService,
+  } = useCharacterStore();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -66,7 +81,13 @@ const ItemFormScreen = () => {
       initializeCharacterService();
       fetchCharacters();
     }
-  }, [drizzleDb, selectedStory?.id, setCharacterDbAndStoryId, initializeCharacterService, fetchCharacters]);
+  }, [
+    drizzleDb,
+    selectedStory?.id,
+    setCharacterDbAndStoryId,
+    initializeCharacterService,
+    fetchCharacters,
+  ]);
 
   const [currentItemId, setCurrentItemId] = useState<string | undefined>(initialItemId); // Changed
   const [name, setName] = useState('');
@@ -103,7 +124,7 @@ const ItemFormScreen = () => {
         title: isEditing ? t('edit_item_title') : t('create_item_title'), // Changed
         headerRight: () => <View />,
       });
-    }, [navigation, isEditing, t])
+    }, [navigation, isEditing, t]),
   );
 
   useEffect(() => {
@@ -125,7 +146,9 @@ const ItemFormScreen = () => {
             setExtraNotes(fetchedItem.extraNotes);
             setCharacterOwnerId(fetchedItem.characterOwnerId);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(currentItemId!);
+            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
+              currentItemId!,
+            );
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Item not found:', currentItemId);
@@ -148,7 +171,8 @@ const ItemFormScreen = () => {
   }, [isEditing, customFields]);
 
   const handleSave = async () => {
-    if (!name.trim()) { // Changed from text.trim()
+    if (!name.trim()) {
+      // Changed from text.trim()
       AppAlert.alert(t('error'), t('item_name_required')); // Changed
       return;
     }
@@ -165,7 +189,11 @@ const ItemFormScreen = () => {
     setLoading(true);
 
     try {
-      const itemData: Omit<Item, 'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'> = { // Changed
+      const itemData: Omit<
+        Item,
+        'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      > = {
+        // Changed
         name: name.trim(),
         category: category,
         description: description,
@@ -177,12 +205,16 @@ const ItemFormScreen = () => {
 
       let savedItemId: string | undefined = currentItemId; // Changed
 
-      if (isEditing && currentItemId) { // Changed
+      if (isEditing && currentItemId) {
+        // Changed
         const savedItem = await itemServiceRef.current!.updateItem(userId, currentItemId, itemData); // Changed
         savedItemId = savedItem.id;
         AppAlert.alert(t('success'), t('item_updated_successfully')); // Changed
       } else {
-        const savedItem = await itemServiceRef.current!.createItem(userId, { ...itemData, storyId: selectedStory.id }); // Changed
+        const savedItem = await itemServiceRef.current!.createItem(userId, {
+          ...itemData,
+          storyId: selectedStory.id,
+        }); // Changed
         savedItemId = savedItem.id;
         setCurrentItemId(savedItem.id);
         AppAlert.alert(t('success'), t('item_created_successfully')); // Changed
@@ -190,11 +222,18 @@ const ItemFormScreen = () => {
 
       if (savedItemId) {
         await persistTagRelations(savedItemId);
-        await createAttributeValueService(drizzleDb).saveValuesForEntity(userId, selectedStory.id, 'Item', savedItemId, customValues);
+        await createAttributeValueService(drizzleDb).saveValuesForEntity(
+          userId,
+          selectedStory.id,
+          'Item',
+          savedItemId,
+          customValues,
+        );
       }
       entityEventEmitter.emit('item_changed', selectedStory.id, savedItemId); // Changed
 
-      if (!isEditing && savedItemId) { // Changed
+      if (!isEditing && savedItemId) {
+        // Changed
         navigation.dispatch(StackActions.replace('ItemForm', { itemId: savedItemId })); // Changed
       } else {
         navigation.goBack();
@@ -230,18 +269,25 @@ const ItemFormScreen = () => {
     });
   };
 
-  const characterOptions = useMemo(() =>
-    characters
-      .filter(char => !char.isDeleted) // Explicitly filter out deleted characters
-      .map(char => ({ label: char.name, value: char.id })), 
-    [characters]
+  const characterOptions = useMemo(
+    () =>
+      characters
+        .filter((char) => !char.isDeleted) // Explicitly filter out deleted characters
+        .map((char) => ({ label: char.name, value: char.id })),
+    [characters],
   );
 
   const styles = StyleSheet.create({
     scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
     title: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
     label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5 },
-    switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 15, marginBottom: 5 },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 15,
+      marginBottom: 5,
+    },
     saveButton: { marginTop: 20, marginBottom: 0 },
     deleteButton: { backgroundColor: 'red', marginBottom: 15 },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -259,119 +305,143 @@ const ItemFormScreen = () => {
   }
 
   return (
-      <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? t('edit_item_title') : t('create_item_title')}</Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{t('item_form_description')}</Text>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {isEditing ? t('edit_item_title') : t('create_item_title')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        {t('item_form_description')}
+      </Text>
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('item_name')}</Text>
-          <TextInput
-            placeholder={t('item_name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
+      <Text style={[styles.label, { color: colors.text }]}>{t('item_name')}</Text>
+      <TextInput
+        placeholder={t('item_name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
+      <TextInput
+        placeholder={t('description_placeholder')}
+        value={description || ''}
+        onChangeText={setDescription}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('category')}</Text>
+      <SuggestionTextInput
+        placeholder={t('category_placeholder')}
+        value={category || ''}
+        onChangeText={setCategory}
+        type="item_category"
+        style={commonInputStyles.input}
+        storyId={selectedStory?.id || ''}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('initial_state')}</Text>
+      <SuggestionTextInput
+        placeholder={t('initial_state_placeholder')}
+        value={initialState || ''}
+        onChangeText={setInitialState}
+        type="item_initial_state"
+        style={commonInputStyles.input}
+        storyId={selectedStory?.id || ''}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
+      <TextInput
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes || ''}
+        onChangeText={setExtraNotes}
+        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('character_owner')}</Text>
+      <Select
+        options={characterOptions}
+        value={characterOwnerId}
+        onValueChange={setCharacterOwnerId}
+        placeholder={t('select_character_owner')}
+        multiple={false}
+      />
+
+      <View style={styles.switchContainer}>
+        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
+          {t('is_favorite')}
+        </Text>
+        <ThemedSwitch
+          value={isFavorite}
+          onValueChange={setIsFavorite}
+          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
+        />
+      </View>
+
+      <CustomAttributeFields
+        storyId={selectedStory?.id || ''}
+        fields={customFields}
+        values={customValues}
+        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+      />
+
+      {currentItemId && selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
+          <MultiSelectPill
+            options={availableTags.map((tag) => ({
+              label: tag.name,
+              value: tag.id,
+              color: tag.color || colors.primaryContainer,
+            }))}
+            selectedValues={selectedTagIds}
+            onSelectionChange={setSelectedTagIds}
+            placeholder={t('select_tags_for_item')}
+            label={t('item_tags')}
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-          <TextInput
-            placeholder={t('description_placeholder')}
-            value={description || ''}
-            onChangeText={setDescription}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
+      {currentItemId && selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+          <NoteManager
+            noteRelations={itemNoteRelations}
+            availableNotes={allNotes}
+            onSave={saveNoteRelation}
+            onDelete={deleteNoteRelation}
+            editable={true}
+            currentStoryId={selectedStory.id}
+            currentEntityId={currentItemId}
+            currentEntityType="Item"
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('category')}</Text>
-          <SuggestionTextInput
-            placeholder={t('category_placeholder')}
-            value={category || ''}
-            onChangeText={setCategory}
-            type="item_category"
-            style={commonInputStyles.input}
-            storyId={selectedStory?.id || ''}
+      {currentItemId && selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <SeeAlsoManager
+            storyId={selectedStory.id}
+            entityType="Item"
+            entityId={currentItemId}
+            editable={true}
           />
+        </View>
+      )}
 
-          <Text style={[styles.label, { color: colors.text }]}>{t('initial_state')}</Text>
-          <SuggestionTextInput
-            placeholder={t('initial_state_placeholder')}
-            value={initialState || ''}
-            onChangeText={setInitialState}
-            type="item_initial_state"
-            style={commonInputStyles.input}
-            storyId={selectedStory?.id || ''}
-          />
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-          <TextInput
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-            multiline
-          />
-
-          <Text style={[styles.label, { color: colors.text }]}>{t('character_owner')}</Text>
-          <Select
-            options={characterOptions}
-            value={characterOwnerId}
-            onValueChange={setCharacterOwnerId}
-            placeholder={t('select_character_owner')}
-            multiple={false}
-          />
-
-          <View style={styles.switchContainer}>
-            <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5}]}>{t('is_favorite')}</Text>
-            <ThemedSwitch
-              value={isFavorite}
-              onValueChange={setIsFavorite}
-              style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-            />
-          </View>
-
-          <CustomAttributeFields
-            storyId={selectedStory?.id || ''}
-            fields={customFields}
-            values={customValues}
-            onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
-          />
-
-          {currentItemId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
-              <MultiSelectPill
-                options={availableTags.map(tag => ({ label: tag.name, value: tag.id, color: tag.color || colors.primaryContainer }))}
-                selectedValues={selectedTagIds}
-                onSelectionChange={setSelectedTagIds}
-                placeholder={t('select_tags_for_item')}
-                label={t('item_tags')}
-              />
-            </View>
-          )}
-
-          {currentItemId && selectedStory?.id && (
-            <View style={styles.noteSection}>
-              <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
-              <NoteManager
-                noteRelations={itemNoteRelations}
-                availableNotes={allNotes}
-                onSave={saveNoteRelation}
-                onDelete={deleteNoteRelation}
-                editable={true}
-                currentStoryId={selectedStory.id}
-                currentEntityId={currentItemId}
-                currentEntityType="Item"
-              />
-            </View>
-          )}
-
-          {currentItemId && selectedStory?.id && (
-            <View style={styles.tagSection}>
-              <SeeAlsoManager storyId={selectedStory.id} entityType="Item" entityId={currentItemId} editable={true} />
-            </View>
-          )}
-
-          <Button onPress={handleSave} style={styles.saveButton}>{t('save_item')}</Button>
-          {isEditing && (<Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>{t('delete_item_title')}</Button>)}
-      </KeyboardAwareScreen>
+      <Button onPress={handleSave} style={styles.saveButton}>
+        {t('save_item')}
+      </Button>
+      {isEditing && (
+        <Button onPress={handleDelete} style={[styles.saveButton, styles.deleteButton]}>
+          {t('delete_item_title')}
+        </Button>
+      )}
+    </KeyboardAwareScreen>
   );
 };
 

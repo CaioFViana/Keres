@@ -28,9 +28,7 @@ const ChoiceListItem: React.FC<ChoiceListItemProps> = ({ choice, onViewDetails }
   );
 
   const renderExpandedContent = (cho: ChoiceSelect) => (
-    <View>
-      {cho.text && <Text style={styles.summaryText}>{cho.text}</Text>}
-    </View>
+    <View>{cho.text && <Text style={styles.summaryText}>{cho.text}</Text>}</View>
   );
 
   return (

@@ -25,9 +25,12 @@ export class RegistrationSettingsService {
 
     // Corrida entre dois requests concorrentes na primeira leitura: o insert perdedor não
     // retorna linha (onConflictDoNothing), então busca a que o outro acabou de criar.
-    return created ?? (await db.query.registrationSettings.findFirst({
-      where: eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID),
-    }))!;
+    return (
+      created ??
+      (await db.query.registrationSettings.findFirst({
+        where: eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID),
+      }))!
+    );
   }
 
   async update(patch: UpdateRegistrationSettings) {

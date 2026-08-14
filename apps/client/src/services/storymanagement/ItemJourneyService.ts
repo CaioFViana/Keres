@@ -3,7 +3,11 @@ import { OperationLogEntityType } from '@keres/shared/metadata/OperationLogEntit
 import { and, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient, itemJourneys } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { assertStoryIsWritable, getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export interface ItemJourneyService {
@@ -11,8 +15,30 @@ export interface ItemJourneyService {
   getAllByStoryId(storyId: string): Promise<ItemJourney[]>;
   getItemJourneysBySceneId(storyId: string, sceneId: string): Promise<ItemJourney[]>;
   getItemJourneysByItemId(storyId: string, itemId: string): Promise<ItemJourney[]>;
-  createItemJourney(userId: string, itemJourneyData: Omit<ItemJourney, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>): Promise<ItemJourney>;
-  updateItemJourney(userId: string, id: string, itemJourneyData: Partial<Omit<ItemJourney, 'id' | 'storyId' | 'itemId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>): Promise<ItemJourney>;
+  createItemJourney(
+    userId: string,
+    itemJourneyData: Omit<
+      ItemJourney,
+      'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+    >,
+  ): Promise<ItemJourney>;
+  updateItemJourney(
+    userId: string,
+    id: string,
+    itemJourneyData: Partial<
+      Omit<
+        ItemJourney,
+        | 'id'
+        | 'storyId'
+        | 'itemId'
+        | 'createdAt'
+        | 'updatedAt'
+        | 'version'
+        | 'isDeleted'
+        | 'deletedAt'
+      >
+    >,
+  ): Promise<ItemJourney>;
   deleteItemJourney(userId: string, id: string): Promise<void>;
 }
 
@@ -37,7 +63,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
         where: and(
           eq(itemJourneys.storyId, storyId),
           eq(itemJourneys.sceneId, sceneId),
-          eq(itemJourneys.isDeleted, false)
+          eq(itemJourneys.isDeleted, false),
         ),
         orderBy: [itemJourneys.createdAt],
       });
@@ -48,7 +74,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
         where: and(
           eq(itemJourneys.storyId, storyId),
           eq(itemJourneys.itemId, itemId),
-          eq(itemJourneys.isDeleted, false)
+          eq(itemJourneys.isDeleted, false),
         ),
         orderBy: [itemJourneys.createdAt],
       });
@@ -56,7 +82,10 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
 
     async createItemJourney(
       userId: string,
-      itemJourneyData: Omit<ItemJourney, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
+      itemJourneyData: Omit<
+        ItemJourney,
+        'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      >,
     ): Promise<ItemJourney> {
       await assertStoryIsWritable(db, itemJourneyData.storyId);
       const newItemJourney: ItemJourney = {
@@ -71,8 +100,21 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
 
       await db.insert(itemJourneys).values(newItemJourney).run();
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, newItemJourney.storyId, userId);
-      await recordLocalOperation(db, newItemJourney.storyId, userIdToLog, 'create', OperationLogEntityType.ItemJourney, newItemJourney.id, newItemJourney);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newItemJourney.storyId,
+        userId,
+      );
+      await recordLocalOperation(
+        db,
+        newItemJourney.storyId,
+        userIdToLog,
+        'create',
+        OperationLogEntityType.ItemJourney,
+        newItemJourney.id,
+        newItemJourney,
+      );
 
       return newItemJourney;
     },
@@ -80,9 +122,23 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
     async updateItemJourney(
       userId: string,
       id: string,
-      itemJourneyData: Partial<Omit<ItemJourney, 'id' | 'storyId' | 'itemId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>>
+      itemJourneyData: Partial<
+        Omit<
+          ItemJourney,
+          | 'id'
+          | 'storyId'
+          | 'itemId'
+          | 'createdAt'
+          | 'updatedAt'
+          | 'version'
+          | 'isDeleted'
+          | 'deletedAt'
+        >
+      >,
     ): Promise<ItemJourney> {
-      const originalItemJourney = await db.query.itemJourneys.findFirst({ where: eq(itemJourneys.id, id) });
+      const originalItemJourney = await db.query.itemJourneys.findFirst({
+        where: eq(itemJourneys.id, id),
+      });
       if (!originalItemJourney) {
         throw new Error(`ItemJourney with ID ${id} not found for update.`);
       }
@@ -102,18 +158,33 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
       if (!updatedItemJourney) {
         throw new Error(`ItemJourney with ID ${id} not found or already deleted.`);
       }
-      
+
       const changes = getChangedFields(originalItemJourney, updatedItemJourney);
       if (Object.keys(changes).length > 0) {
-        const userIdToLog = await getUserIdForOperation(db, serverService, updatedItemJourney.storyId, userId);
-        await recordLocalOperation(db, updatedItemJourney.storyId, userIdToLog, 'update', OperationLogEntityType.ItemJourney, updatedItemJourney.id, changes);
+        const userIdToLog = await getUserIdForOperation(
+          db,
+          serverService,
+          updatedItemJourney.storyId,
+          userId,
+        );
+        await recordLocalOperation(
+          db,
+          updatedItemJourney.storyId,
+          userIdToLog,
+          'update',
+          OperationLogEntityType.ItemJourney,
+          updatedItemJourney.id,
+          changes,
+        );
       }
 
       return updatedItemJourney;
     },
 
     async deleteItemJourney(userId: string, id: string): Promise<void> {
-      const itemJourneyToDelete = await db.query.itemJourneys.findFirst({ where: eq(itemJourneys.id, id) });
+      const itemJourneyToDelete = await db.query.itemJourneys.findFirst({
+        where: eq(itemJourneys.id, id),
+      });
       if (!itemJourneyToDelete) {
         console.warn(`Attempted to delete non-existent ItemJourney ${id}.`);
         return;
@@ -122,12 +193,30 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
 
       await db
         .update(itemJourneys)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date(), version: sql`${itemJourneys.version} + 1` })
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${itemJourneys.version} + 1`,
+        })
         .where(eq(itemJourneys.id, id))
         .run();
-      
-      const userIdToLog = await getUserIdForOperation(db, serverService, itemJourneyToDelete.storyId, userId);
-      await recordLocalOperation(db, itemJourneyToDelete.storyId, userIdToLog, 'delete', OperationLogEntityType.ItemJourney, id, { id });
+
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        itemJourneyToDelete.storyId,
+        userId,
+      );
+      await recordLocalOperation(
+        db,
+        itemJourneyToDelete.storyId,
+        userIdToLog,
+        'delete',
+        OperationLogEntityType.ItemJourney,
+        id,
+        { id },
+      );
     },
   };
 };

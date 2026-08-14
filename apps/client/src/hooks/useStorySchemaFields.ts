@@ -10,7 +10,10 @@ import { entityEventEmitter } from '../utils/EventEmitter';
  * por `order` - usado tanto pelos Form/Detail screens (via `CustomAttributeFields`/
  * `CustomAttributeDetailFields`) quanto pela tela de gerenciamento de schemas.
  */
-export function useStorySchemaFields(storyId: string | undefined | null, entityType: StorySchemaEntityType): StorySchemaFieldSelect[] {
+export function useStorySchemaFields(
+  storyId: string | undefined | null,
+  entityType: StorySchemaEntityType,
+): StorySchemaFieldSelect[] {
   const drizzleDb = useDrizzle();
   const [fields, setFields] = useState<StorySchemaFieldSelect[]>([]);
 

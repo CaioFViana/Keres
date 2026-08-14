@@ -7,7 +7,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import ChapterReorderModal from '@/src/components/features/chapters/ChapterReorderModal/ChapterReorderModal'; // Import the modal
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import ChapterListItem from '@/src/components/features/list-items/ChapterListItem';
 import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -59,24 +62,37 @@ const ChapterListScreen = () => {
 
   const [isReorderModalVisible, setIsReorderModalVisible] = useState(false);
 
-  const handleToggleFavorite = useCallback(async (chapterId: string, isFavorite: boolean) => {
-    await toggleFavorite(chapterId, isFavorite);
-  }, [toggleFavorite]);
+  const handleToggleFavorite = useCallback(
+    async (chapterId: string, isFavorite: boolean) => {
+      await toggleFavorite(chapterId, isFavorite);
+    },
+    [toggleFavorite],
+  );
 
-  const handleViewDetails = useCallback((chapterId: string) => {
-    navigation.navigate('ChapterDetail', { chapterId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (chapterId: string) => {
+      navigation.navigate('ChapterDetail', { chapterId });
+    },
+    [navigation],
+  );
 
-  const memoizedChapterListItem = useCallback(({ item }: { item: ChapterSelect }) => (
-    <ChapterListItem chapter={item} onViewDetails={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
-  ), [handleViewDetails, handleToggleFavorite]);
+  const memoizedChapterListItem = useCallback(
+    ({ item }: { item: ChapterSelect }) => (
+      <ChapterListItem
+        chapter={item}
+        onViewDetails={handleViewDetails}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    ),
+    [handleViewDetails, handleToggleFavorite],
+  );
 
   const memoizedSortOptions = useMemo(() => {
     return [
       { label: t('sort_by_name'), value: 'name' },
       { label: t('sort_by_index'), value: 'index' },
       { label: t('sort_by_created_at'), value: 'createdAt' },
-      { label: t('sort_by_updated_at'), value: 'updatedAt' }
+      { label: t('sort_by_updated_at'), value: 'updatedAt' },
     ];
   }, [t]);
 
@@ -84,10 +100,13 @@ const ChapterListScreen = () => {
     setIsReorderModalVisible(true);
   }, []);
 
-  const handleReorderConfirm = useCallback(async (newOrder: { id: string, newIndex: number }[]) => {
-    await reorderChapters(newOrder);
-    setIsReorderModalVisible(false);
-  }, [reorderChapters]);
+  const handleReorderConfirm = useCallback(
+    async (newOrder: { id: string; newIndex: number }[]) => {
+      await reorderChapters(newOrder);
+      setIsReorderModalVisible(false);
+    },
+    [reorderChapters],
+  );
 
   const styles = StyleSheet.create({
     container: {
@@ -111,10 +130,7 @@ const ChapterListScreen = () => {
         headerRight: () => (
           <View style={styles.headerRightContainer}>
             {canEdit && (
-              <TouchableOpacity
-                onPress={handleReorderPress}
-                style={styles.headerButton}
-              >
+              <TouchableOpacity onPress={handleReorderPress} style={styles.headerButton}>
                 <Ionicons name="swap-vertical" size={24} color={colors.text} />
               </TouchableOpacity>
             )}
@@ -129,7 +145,15 @@ const ChapterListScreen = () => {
           </View>
         ),
       });
-    }, [navigation, colors.text, t, handleReorderPress, styles.headerButton, styles.headerRightContainer, canEdit])
+    }, [
+      navigation,
+      colors.text,
+      t,
+      handleReorderPress,
+      styles.headerButton,
+      styles.headerRightContainer,
+      canEdit,
+    ]),
   );
 
   if (loading && chapters.length === 0) {

@@ -28,13 +28,13 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
 
 const SettingsScreen = () => {
-  useBackButtonHandler()
+  useBackButtonHandler();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleClient = useDrizzle(); // Initialize useDrizzle
-  const db = useSQLiteContext(); 
+  const db = useSQLiteContext();
   const navigation = useNavigation<SettingsScreenNavigationProp>();
   const { username, language, setUsername, setLanguage, resetSettings } = useUserSettingsStore();
   const { darkMode, setDarkMode, resetTheme } = useThemeStore();
@@ -69,17 +69,17 @@ const SettingsScreen = () => {
             try {
               // Credentials live outside SQLite, so retain the server IDs before dropping
               // any tables. The reset signal synchronously closes every realtime socket.
-              const savedServers = await drizzleClient.select({ id: servers.id }).from(servers).all();
+              const savedServers = await drizzleClient
+                .select({ id: servers.id })
+                .from(servers)
+                .all();
               const serverIds = savedServers.map((server) => server.id);
               const realtimeShutdown = entityEventEmitter.emitAsync('application_resetting');
 
               // Clearing the user first prevents SyncInitializer effects from rebuilding a
               // WebSocket while the remaining asynchronous cleanup is still in progress.
               resetSettings();
-              await Promise.all([
-                realtimeShutdown,
-                SyncEngineService.getInstance().reset(),
-              ]);
+              await Promise.all([realtimeShutdown, SyncEngineService.getInstance().reset()]);
               await authTokenManager.clearAllAuth(serverIds);
               setAuthDb(null);
               await mediaFileService.deleteAllMedia();
@@ -103,51 +103,51 @@ const SettingsScreen = () => {
           style: 'destructive',
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
   const languageOptions = getLanguageOptions(t);
 
   return (
-    <KeyboardAwareScreen style={commonContainerStyles.container} contentContainerStyle={{ flexGrow: 1 }}>
-        <View>
-          <View style={styles.settingItem}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                value={username || 'Keres User'}
-                onChangeText={handleUsernameChange}
-                placeholder={t('enter_username')}
-                style={[commonInputStyles.input, styles.input]}
-              />
-            </View>
-          </View>
-
-          <View style={styles.settingItem}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('select_language')}</Text>
-            <View style={styles.selectWrapper}>
-              <Select
-                options={languageOptions}
-                value={language || 'en'}
-                onValueChange={handleLanguageChange as (value: string | null) => void}
-                placeholder={t('select_language')}
-              />
-            </View>
-          </View>
-
-          <View style={styles.settingItem}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('dark_mode')}</Text>
-            <ThemedSwitch
-              value={darkMode}
-              onValueChange={handleDarkModeToggle}
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
+      <View>
+        <View style={styles.settingItem}>
+          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              value={username || 'Keres User'}
+              onChangeText={handleUsernameChange}
+              placeholder={t('enter_username')}
+              style={[commonInputStyles.input, styles.input]}
             />
           </View>
-
-          <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
-            {t('reset_application')}
-          </Button>
         </View>
+
+        <View style={styles.settingItem}>
+          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('select_language')}</Text>
+          <View style={styles.selectWrapper}>
+            <Select
+              options={languageOptions}
+              value={language || 'en'}
+              onValueChange={handleLanguageChange as (value: string | null) => void}
+              placeholder={t('select_language')}
+            />
+          </View>
+        </View>
+
+        <View style={styles.settingItem}>
+          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('dark_mode')}</Text>
+          <ThemedSwitch value={darkMode} onValueChange={handleDarkModeToggle} />
+        </View>
+
+        <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
+          {t('reset_application')}
+        </Button>
+      </View>
     </KeyboardAwareScreen>
   );
 };
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', // Made font bold
   },
   input: {
-    marginBottom: 0
+    marginBottom: 0,
   },
   inputWrapper: {
     flex: 2,

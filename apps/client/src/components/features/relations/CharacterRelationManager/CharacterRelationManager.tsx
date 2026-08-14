@@ -43,19 +43,23 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
   const [editingRelation, setEditingRelation] = useState<CharacterRelation | null>(null);
 
   const getCharacterName = (charId: string) => {
-    return characters.find(char => char.id === charId)?.name || `Unknown Character (${charId})`;
+    return characters.find((char) => char.id === charId)?.name || `Unknown Character (${charId})`;
   };
 
-  const handleCharacterPress = useCallback((charId: string) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Character', charId);
-    }
-  }, [navigation]);
+  const handleCharacterPress = useCallback(
+    (charId: string) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(drawerNavigation, 'Character', charId);
+      }
+    },
+    [navigation],
+  );
 
   // Filter relations relevant to the current character
   const filteredRelations = characterRelations.filter(
-    rel => rel.charId1 === currentCharacterId || rel.charId2 === currentCharacterId
+    (rel) => rel.charId1 === currentCharacterId || rel.charId2 === currentCharacterId,
   );
 
   const handleAddRelation = () => {
@@ -83,15 +87,11 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
           style: 'destructive',
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
-  const handleModalSave = (
-    relatedCharId: string,
-    relationType: string,
-    idFromModal?: string
-  ) => {
+  const handleModalSave = (relatedCharId: string, relationType: string, idFromModal?: string) => {
     // Order IDs alphabetically to prevent duplicates (A-B vs B-A)
     const [orderedChar1Id, orderedChar2Id] = [currentCharacterId, relatedCharId].sort();
 
@@ -140,9 +140,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
         <View>
           {editable && (
             <View style={styles.buttonContainer}>
-              <Button onPress={handleAddRelation}>
-                {t('add_character_relation')}
-              </Button>
+              <Button onPress={handleAddRelation}>{t('add_character_relation')}</Button>
             </View>
           )}
 
@@ -151,7 +149,8 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
           ) : (
             <View>
               {filteredRelations.map((item) => {
-                const relatedChar = item.charId1 === currentCharacterId ? item.charId2 : item.charId1;
+                const relatedChar =
+                  item.charId1 === currentCharacterId ? item.charId2 : item.charId1;
                 return (
                   <View key={item.id} style={styles.relationItem}>
                     <TouchableOpacity
@@ -162,7 +161,12 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
                       <Text style={styles.relationText}>{getCharacterName(relatedChar)}</Text>
                       <Text style={styles.relationTypeText}>{item.relationType}</Text>
                     </TouchableOpacity>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={{ marginHorizontal: 4 }} />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color={colors.textSecondary}
+                      style={{ marginHorizontal: 4 }}
+                    />
                     {editable && (
                       <View style={styles.actionsRow}>
                         <TouchableOpacity onPress={() => handleEditRelation(item)}>

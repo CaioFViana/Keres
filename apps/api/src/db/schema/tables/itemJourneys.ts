@@ -7,9 +7,15 @@ import { stories } from './stories';
 
 export const itemJourneys = pgTable('item_journeys', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  itemId: text('item_id').notNull().references(() => items.id),
-  sceneId: text('scene_id').notNull().references(() => scenes.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  itemId: text('item_id')
+    .notNull()
+    .references(() => items.id),
+  sceneId: text('scene_id')
+    .notNull()
+    .references(() => scenes.id),
   newCharacterOwnerId: text('new_character_owner_id').references(() => characters.id),
   newState: text('new_state').notNull(),
 

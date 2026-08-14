@@ -26,46 +26,53 @@ interface LocationGraphCanvasProps {
 const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphCanvasProps>(
   ({ layout, selectedNodeId, onSelectNode }, ref) => {
     const { colors } = useTheme();
-    const { containerRef, handleLayout, panHandlers, animatedTransform } = usePanZoomCanvas(ref, layout);
+    const { containerRef, handleLayout, panHandlers, animatedTransform } = usePanZoomCanvas(
+      ref,
+      layout,
+    );
 
-    const styles = useMemo(() => StyleSheet.create({
-      container: {
-        flex: 1,
-        overflow: 'hidden',
-        backgroundColor: colors.background,
-      },
-      content: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        transformOrigin: 'top left',
-      },
-      node: {
-        position: 'absolute',
-        borderRadius: 8,
-        overflow: 'hidden',
-        outlineWidth: 0,
-      },
-      nodeInner: {
-        flex: 1,
-        borderRadius: 7,
-        borderWidth: 1.2,
-        paddingHorizontal: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.primaryContainer,
-      },
-      nodeInnerIsolated: {
-        backgroundColor: colors.surface,
-        borderStyle: 'dashed',
-      },
-      nodeLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: colors.text,
-        textAlign: 'center',
-      },
-    }), [colors]);
+    const styles = useMemo(
+      () =>
+        StyleSheet.create({
+          container: {
+            flex: 1,
+            overflow: 'hidden',
+            backgroundColor: colors.background,
+          },
+          content: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            transformOrigin: 'top left',
+          },
+          node: {
+            position: 'absolute',
+            borderRadius: 8,
+            overflow: 'hidden',
+            outlineWidth: 0,
+          },
+          nodeInner: {
+            flex: 1,
+            borderRadius: 7,
+            borderWidth: 1.2,
+            paddingHorizontal: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.primaryContainer,
+          },
+          nodeInnerIsolated: {
+            backgroundColor: colors.surface,
+            borderStyle: 'dashed',
+          },
+          nodeLabel: {
+            fontSize: 12,
+            fontWeight: '600',
+            color: colors.text,
+            textAlign: 'center',
+          },
+        }),
+      [colors],
+    );
 
     return (
       <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
@@ -80,7 +87,7 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
           ]}
         >
           <Svg width={layout.width} height={layout.height}>
-            {layout.edges.map(edge => (
+            {layout.edges.map((edge) => (
               <Path
                 key={edge.id}
                 d={edge.path}
@@ -93,16 +100,23 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
             ))}
           </Svg>
 
-          {layout.nodes.map(node => {
+          {layout.nodes.map((node) => {
             const isSelected = node.id === selectedNodeId;
-            const borderColor = isSelected ? colors.primary : (node.isIsolated ? colors.textSecondary : colors.border);
+            const borderColor = isSelected
+              ? colors.primary
+              : node.isIsolated
+                ? colors.textSecondary
+                : colors.border;
 
             return (
               <TouchableOpacity
                 key={node.id}
                 activeOpacity={0.75}
                 onPress={() => onSelectNode(node)}
-                style={[styles.node, { left: node.x, top: node.y, width: node.width, height: node.height }]}
+                style={[
+                  styles.node,
+                  { left: node.x, top: node.y, width: node.width, height: node.height },
+                ]}
               >
                 <View
                   style={[
@@ -112,7 +126,9 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
                   ]}
                 >
                   {node.labelLines.map((line, index) => (
-                    <Text key={index} style={styles.nodeLabel} numberOfLines={1}>{line}</Text>
+                    <Text key={index} style={styles.nodeLabel} numberOfLines={1}>
+                      {line}
+                    </Text>
                   ))}
                 </View>
               </TouchableOpacity>
@@ -121,7 +137,7 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
         </Animated.View>
       </View>
     );
-  }
+  },
 );
 
 LocationGraphCanvas.displayName = 'LocationGraphCanvas';

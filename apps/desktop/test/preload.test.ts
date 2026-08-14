@@ -15,7 +15,9 @@ beforeAll(async () => {
 });
 
 const exposed = (name: string) =>
-  electronMocks.exposeInMainWorld.mock.calls.find(([worldName]) => worldName === name)?.[1] as Record<string, (...args: any[]) => any>;
+  electronMocks.exposeInMainWorld.mock.calls.find(
+    ([worldName]) => worldName === name,
+  )?.[1] as Record<string, (...args: any[]) => any>;
 
 describe('preload bridge', () => {
   it('exposes only the media operations the renderer needs', () => {

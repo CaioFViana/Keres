@@ -1,4 +1,7 @@
-import { NoteRelationEntities, NoteRelation as NoteRelationInterface } from '@keres/shared/entities/Note';
+import {
+  NoteRelationEntities,
+  NoteRelation as NoteRelationInterface,
+} from '@keres/shared/entities/Note';
 import { and, eq, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -6,11 +9,18 @@ import { createULID, getChangedFields } from '../../utils/entityUtils';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
-export type NewNoteRelation = Omit<NoteRelationInterface, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>;
+export type NewNoteRelation = Omit<
+  NoteRelationInterface,
+  'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+>;
 export type SaveNoteRelation = NewNoteRelation & { id?: string };
 
 export interface NoteRelationServiceInterface {
-  getRelationsForEntity(storyId: string, entityId: string, entityType: NoteRelationEntities): Promise<NoteRelationInterface[]>;
+  getRelationsForEntity(
+    storyId: string,
+    entityId: string,
+    entityType: NoteRelationEntities,
+  ): Promise<NoteRelationInterface[]>;
   getRelationsForNote(storyId: string, noteId: string): Promise<NoteRelationInterface[]>;
   saveNoteRelation(userId: string, relation: SaveNoteRelation): Promise<NoteRelationInterface>;
   deleteNoteRelation(userId: string, relationId: string): Promise<boolean>;
@@ -22,14 +32,14 @@ const getExistingNoteRelationForPair = async (
   noteId: string,
   relationId: string,
   relationType: NoteRelationEntities,
-  excludeRelationId?: string
+  excludeRelationId?: string,
 ): Promise<NoteRelationInterface | undefined> => {
   const conditions = [
     eq(schema.noteRelations.storyId, storyId),
     eq(schema.noteRelations.noteId, noteId),
     eq(schema.noteRelations.relationId, relationId),
     eq(schema.noteRelations.relationType, relationType),
-    eq(schema.noteRelations.isDeleted, false)
+    eq(schema.noteRelations.isDeleted, false),
   ];
 
   if (excludeRelationId) {
@@ -41,18 +51,24 @@ const getExistingNoteRelationForPair = async (
   });
 };
 
-export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRelationServiceInterface {
+export function createNoteRelationService(
+  drizzleDb: AppDrizzleClient,
+): NoteRelationServiceInterface {
   const serverService = createServerService(drizzleDb);
 
   return {
-    async getRelationsForEntity(storyId: string, entityId: string, entityType: NoteRelationEntities): Promise<NoteRelationInterface[]> {
+    async getRelationsForEntity(
+      storyId: string,
+      entityId: string,
+      entityType: NoteRelationEntities,
+    ): Promise<NoteRelationInterface[]> {
       try {
         const relations = await drizzleDb.query.noteRelations.findMany({
           where: and(
             eq(schema.noteRelations.storyId, storyId),
             eq(schema.noteRelations.relationId, entityId),
             eq(schema.noteRelations.relationType, entityType),
-            eq(schema.noteRelations.isDeleted, false)
+            eq(schema.noteRelations.isDeleted, false),
           ),
         });
         return relations;
@@ -68,7 +84,7 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
           where: and(
             eq(schema.noteRelations.storyId, storyId),
             eq(schema.noteRelations.noteId, noteId),
-            eq(schema.noteRelations.isDeleted, false)
+            eq(schema.noteRelations.isDeleted, false),
           ),
         });
         return relations;
@@ -78,7 +94,10 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
       }
     },
 
-    async saveNoteRelation(userId: string, relation: SaveNoteRelation): Promise<NoteRelationInterface> {
+    async saveNoteRelation(
+      userId: string,
+      relation: SaveNoteRelation,
+    ): Promise<NoteRelationInterface> {
       try {
         let resultRelation: NoteRelationInterface;
 
@@ -94,10 +113,12 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
               relation.noteId,
               relation.relationId,
               relation.relationType as NoteRelationEntities,
-              relation.id
+              relation.id,
             );
             if (duplicateExisting) {
-                throw new Error(`A note relation for note ${relation.noteId} and entity ${relation.relationId} (${relation.relationType}) already exists with ID ${duplicateExisting.id}.`);
+              throw new Error(
+                `A note relation for note ${relation.noteId} and entity ${relation.relationId} (${relation.relationType}) already exists with ID ${duplicateExisting.id}.`,
+              );
             }
 
             const potentialNewState = { ...existingRelation, ...relation };
@@ -106,11 +127,14 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
             delete changes.updatedAt;
 
             if (Object.keys(changes).length === 0) {
-              console.log(`NoteRelation ${relation.id}: No significant changes detected. Skipping update and operation log.`);
+              console.log(
+                `NoteRelation ${relation.id}: No significant changes detected. Skipping update and operation log.`,
+              );
               return existingRelation;
             }
 
-            const [updatedRelation] = await drizzleDb.update(schema.noteRelations)
+            const [updatedRelation] = await drizzleDb
+              .update(schema.noteRelations)
               .set({
                 noteId: relation.noteId,
                 relationId: relation.relationId,
@@ -126,8 +150,21 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
             }
             resultRelation = updatedRelation;
 
-            const userIdToLog = await getUserIdForOperation(drizzleDb, serverService, resultRelation.storyId, userId);
-            await recordLocalOperation(drizzleDb, resultRelation.storyId, userIdToLog, 'update', 'NoteRelation', resultRelation.id, getChangedFields(existingRelation, resultRelation));
+            const userIdToLog = await getUserIdForOperation(
+              drizzleDb,
+              serverService,
+              resultRelation.storyId,
+              userId,
+            );
+            await recordLocalOperation(
+              drizzleDb,
+              resultRelation.storyId,
+              userIdToLog,
+              'update',
+              'NoteRelation',
+              resultRelation.id,
+              getChangedFields(existingRelation, resultRelation),
+            );
             return resultRelation;
           }
         }
@@ -137,16 +174,18 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
           relation.storyId,
           relation.noteId,
           relation.relationId,
-          relation.relationType as NoteRelationEntities
+          relation.relationType as NoteRelationEntities,
         );
         if (duplicateExisting) {
-            throw new Error(`A note relation for note ${relation.noteId} and entity ${relation.relationId} (${relation.relationType}) already exists with ID ${duplicateExisting.id}.`);
+          throw new Error(
+            `A note relation for note ${relation.noteId} and entity ${relation.relationId} (${relation.relationType}) already exists with ID ${duplicateExisting.id}.`,
+          );
         }
-        
+
         const newId = createULID();
         const now = new Date();
         const noteRelationToInsert: NoteRelationInterface = {
-          ...relation as NewNoteRelation,
+          ...(relation as NewNoteRelation),
           id: newId,
           createdAt: now,
           updatedAt: now,
@@ -155,19 +194,32 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
           deletedAt: null,
         };
 
-        const [insertedRelation] = await drizzleDb.insert(schema.noteRelations)
-                                         .values(noteRelationToInsert)
-                                         .returning();
+        const [insertedRelation] = await drizzleDb
+          .insert(schema.noteRelations)
+          .values(noteRelationToInsert)
+          .returning();
         if (!insertedRelation) {
-            throw new Error('Failed to retrieve inserted note relation after insert operation.');
+          throw new Error('Failed to retrieve inserted note relation after insert operation.');
         }
         resultRelation = insertedRelation;
-        
-        const userIdToLog = await getUserIdForOperation(drizzleDb, serverService, resultRelation.storyId, userId);
-        await recordLocalOperation(drizzleDb, resultRelation.storyId, userIdToLog, 'create', 'NoteRelation', resultRelation.id, resultRelation);
-        
-        return resultRelation;
 
+        const userIdToLog = await getUserIdForOperation(
+          drizzleDb,
+          serverService,
+          resultRelation.storyId,
+          userId,
+        );
+        await recordLocalOperation(
+          drizzleDb,
+          resultRelation.storyId,
+          userIdToLog,
+          'create',
+          'NoteRelation',
+          resultRelation.id,
+          resultRelation,
+        );
+
+        return resultRelation;
       } catch (error) {
         console.error('Error saving note relation:', error);
         throw error;
@@ -186,17 +238,36 @@ export function createNoteRelationService(drizzleDb: AppDrizzleClient): NoteRela
         }
 
         const now = new Date();
-        const [updatedRelation] = await drizzleDb.update(schema.noteRelations)
-          .set({ isDeleted: true, deletedAt: now, updatedAt: now, version: existingRelation.version + 1 })
+        const [updatedRelation] = await drizzleDb
+          .update(schema.noteRelations)
+          .set({
+            isDeleted: true,
+            deletedAt: now,
+            updatedAt: now,
+            version: existingRelation.version + 1,
+          })
           .where(eq(schema.noteRelations.id, relationId))
           .returning();
 
         if (!updatedRelation) {
           throw new Error(`Failed to delete note relation ${relationId} or relation not found.`);
         }
-        
-        const userIdToLog = await getUserIdForOperation(drizzleDb, serverService, updatedRelation.storyId, userId);
-        await recordLocalOperation(drizzleDb, updatedRelation.storyId, userIdToLog, 'delete', 'NoteRelation', relationId, { id: relationId, isDeleted: true, version: updatedRelation.version });
+
+        const userIdToLog = await getUserIdForOperation(
+          drizzleDb,
+          serverService,
+          updatedRelation.storyId,
+          userId,
+        );
+        await recordLocalOperation(
+          drizzleDb,
+          updatedRelation.storyId,
+          userIdToLog,
+          'delete',
+          'NoteRelation',
+          relationId,
+          { id: relationId, isDeleted: true, version: updatedRelation.version },
+        );
 
         return true;
       } catch (error) {

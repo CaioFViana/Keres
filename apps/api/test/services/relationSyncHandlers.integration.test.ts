@@ -25,16 +25,29 @@ let noteId: string;
 let tagId: string;
 let galleryId: string;
 
-const create = (entity: string, id: string, data: Record<string, unknown>) => ({ type: 'create', entity, id, data } as CreateStoryUpdate);
-const remove = (entity: string, id: string, version: number) => ({ type: 'delete', entity, id, version } as DeleteStoryUpdate);
+const create = (entity: string, id: string, data: Record<string, unknown>) =>
+  ({ type: 'create', entity, id, data }) as CreateStoryUpdate;
+const remove = (entity: string, id: string, version: number) =>
+  ({ type: 'delete', entity, id, version }) as DeleteStoryUpdate;
 
 beforeEach(async () => {
   await truncateAll();
   userId = newId();
   storyId = newId();
   const now = new Date();
-  await db.insert(users).values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
-  await db.insert(stories).values({ id: storyId, userId, title: 'A Queda', type: 'linear', createdAt: now, updatedAt: now, version: 1, isDeleted: false } as never);
+  await db
+    .insert(users)
+    .values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
+  await db.insert(stories).values({
+    id: storyId,
+    userId,
+    title: 'A Queda',
+    type: 'linear',
+    createdAt: now,
+    updatedAt: now,
+    version: 1,
+    isDeleted: false,
+  } as never);
 
   characterA = newId();
   characterB = newId();
@@ -47,22 +60,89 @@ beforeEach(async () => {
   const locations = new LocationSyncHandler();
   await characters.create(userId, storyId, create('Character', characterA, { name: 'Keres' }));
   await characters.create(userId, storyId, create('Character', characterB, { name: 'Nyx' }));
-  await locations.create(userId, storyId, create('Location', locationA, { name: 'Olímpo', description: null, climate: null, culture: null, politics: null, isFavorite: false, extraNotes: null }));
-  await locations.create(userId, storyId, create('Location', locationB, { name: 'Submundo', description: null, climate: null, culture: null, politics: null, isFavorite: false, extraNotes: null }));
-  await new NoteSyncHandler().create(userId, storyId, create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }));
-  await new TagSyncHandler().create(userId, storyId, create('Tag', tagId, { name: 'Divindade', color: null, isFavorite: false, extraNotes: null }));
-  await new GallerySyncHandler().create(userId, storyId, create('Gallery', galleryId, { mediaType: 'image', mimeType: 'image/png', fileName: 'nyx.png', hash: 'a'.repeat(32), sizeBytes: 1, title: null, isFavorite: false, extraNotes: null }));
+  await locations.create(
+    userId,
+    storyId,
+    create('Location', locationA, {
+      name: 'Olímpo',
+      description: null,
+      climate: null,
+      culture: null,
+      politics: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await locations.create(
+    userId,
+    storyId,
+    create('Location', locationB, {
+      name: 'Submundo',
+      description: null,
+      climate: null,
+      culture: null,
+      politics: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new NoteSyncHandler().create(
+    userId,
+    storyId,
+    create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
+  );
+  await new TagSyncHandler().create(
+    userId,
+    storyId,
+    create('Tag', tagId, { name: 'Divindade', color: null, isFavorite: false, extraNotes: null }),
+  );
+  await new GallerySyncHandler().create(
+    userId,
+    storyId,
+    create('Gallery', galleryId, {
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'nyx.png',
+      hash: 'a'.repeat(32),
+      sizeBytes: 1,
+      title: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
 });
 
 describe('relation sync entity handlers', () => {
   it('creates, updates, and tombstones a normalized character relation', async () => {
     const handler = new CharacterRelationSyncHandler();
     const id = newId();
-    await handler.create(userId, storyId, create('CharacterRelation', id, { character1Id: characterB, character2Id: characterA, relationType: 'siblings' }));
+    await handler.create(
+      userId,
+      storyId,
+      create('CharacterRelation', id, {
+        character1Id: characterB,
+        character2Id: characterA,
+        relationType: 'siblings',
+      }),
+    );
     const created = await handler.findById(id);
 
-    expect(created).toMatchObject({ character1Id: [characterA, characterB].sort()[0], relationType: 'siblings', version: 1 });
-    await handler.update(userId, storyId, { type: 'update', entity: 'CharacterRelation', id, changes: { relationType: 'rivals', version: 1 } } as UpdateStoryUpdate, created);
+    expect(created).toMatchObject({
+      character1Id: [characterA, characterB].sort()[0],
+      relationType: 'siblings',
+      version: 1,
+    });
+    await handler.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'CharacterRelation',
+        id,
+        changes: { relationType: 'rivals', version: 1 },
+      } as UpdateStoryUpdate,
+      created,
+    );
     const updated = await handler.findById(id);
     expect(updated).toMatchObject({ relationType: 'rivals', version: 2 });
     await handler.delete(userId, storyId, remove('CharacterRelation', id, 2), updated);
@@ -70,18 +150,37 @@ describe('relation sync entity handlers', () => {
   });
 
   it.each([
-    ['TagRelation', () => new TagRelationSyncHandler(), () => ({ tagId, relationId: characterA, relationType: 'Character' })],
-    ['NoteRelation', () => new NoteRelationSyncHandler(), () => ({ noteId, relationId: characterA, relationType: 'Character' })],
-    ['GalleryRelation', () => new GalleryRelationSyncHandler(), () => ({ galleryId, ownerId: characterA, ownerType: 'Character' })],
-    ['LocationRelation', () => new LocationRelationSyncHandler(), () => ({ locationAId: locationB, locationBId: locationA, relationType: 'connected_to' })],
-  ])('creates and tombstones %s only when its referenced entities belong to the story', async (entity, build, data) => {
-    const handler = build() as any;
-    const id = newId();
-    await handler.create(userId, storyId, create(entity, id, data()));
-    const created = await handler.findById(id);
+    [
+      'TagRelation',
+      () => new TagRelationSyncHandler(),
+      () => ({ tagId, relationId: characterA, relationType: 'Character' }),
+    ],
+    [
+      'NoteRelation',
+      () => new NoteRelationSyncHandler(),
+      () => ({ noteId, relationId: characterA, relationType: 'Character' }),
+    ],
+    [
+      'GalleryRelation',
+      () => new GalleryRelationSyncHandler(),
+      () => ({ galleryId, ownerId: characterA, ownerType: 'Character' }),
+    ],
+    [
+      'LocationRelation',
+      () => new LocationRelationSyncHandler(),
+      () => ({ locationAId: locationB, locationBId: locationA, relationType: 'connected_to' }),
+    ],
+  ])(
+    'creates and tombstones %s only when its referenced entities belong to the story',
+    async (entity, build, data) => {
+      const handler = build() as any;
+      const id = newId();
+      await handler.create(userId, storyId, create(entity, id, data()));
+      const created = await handler.findById(id);
 
-    expect(created).toMatchObject({ id, storyId, version: 1, isDeleted: false });
-    await handler.delete(userId, storyId, remove(entity, id, 1), created);
-    expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 2 });
-  });
+      expect(created).toMatchObject({ id, storyId, version: 1, isDeleted: false });
+      await handler.delete(userId, storyId, remove(entity, id, 1), created);
+      expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 2 });
+    },
+  );
 });

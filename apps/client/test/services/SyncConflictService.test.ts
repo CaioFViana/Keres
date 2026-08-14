@@ -58,7 +58,10 @@ async function seedCharacter(overrides: Partial<typeof schema.characters.$inferI
   });
 }
 
-async function seedOperation(id: string, overrides: Partial<typeof schema.operationLogs.$inferInsert> = {}) {
+async function seedOperation(
+  id: string,
+  overrides: Partial<typeof schema.operationLogs.$inferInsert> = {},
+) {
   await database.db.insert(schema.operationLogs).values({
     id,
     storyId: STORY_ID,
@@ -80,7 +83,9 @@ const readCharacter = () =>
 const readOperation = (id: string) =>
   database.db.query.operationLogs.findFirst({ where: eq(schema.operationLogs.id, id) });
 const pushableOperations = async () =>
-  (await database.db.query.operationLogs.findMany()).filter((op) => op.conflictState === null && !op.isSynced);
+  (await database.db.query.operationLogs.findMany()).filter(
+    (op) => op.conflictState === null && !op.isSynced,
+  );
 
 beforeEach(async () => {
   database = await createTestDatabase();
@@ -146,7 +151,10 @@ describe('recordConflict', () => {
 
     await service.recordConflict(baseConflict({ localValues: { title: 'Segundo' } }));
 
-    expect((await service.getPendingConflicts())[0].localValues).toEqual({ name: 'Primeiro', title: 'Segundo' });
+    expect((await service.getPendingConflicts())[0].localValues).toEqual({
+      name: 'Primeiro',
+      title: 'Segundo',
+    });
   });
 
   it('keeps conflicts of different entities apart', async () => {
@@ -193,7 +201,9 @@ describe('listing', () => {
 describe('resolveKeepLocal', () => {
   it('writes the local values over the entity, rebased on the server version', async () => {
     await seedCharacter();
-    await service.recordConflict(baseConflict({ localValues: { name: 'Meu nome' }, serverVersion: 3 }));
+    await service.recordConflict(
+      baseConflict({ localValues: { name: 'Meu nome' }, serverVersion: 3 }),
+    );
     const [pending] = await service.getPendingConflicts();
 
     await service.resolveKeepLocal(pending.id);
@@ -259,7 +269,9 @@ describe('resolveKeepLocal', () => {
    */
   it('resends as a create when the server never had the entity', async () => {
     await seedCharacter();
-    await service.recordConflict(baseConflict({ reason: 'not_found', serverValues: null, serverVersion: null }));
+    await service.recordConflict(
+      baseConflict({ reason: 'not_found', serverValues: null, serverVersion: null }),
+    );
     const [pending] = await service.getPendingConflicts();
 
     await service.resolveKeepLocal(pending.id);
@@ -281,7 +293,9 @@ describe('resolveKeepLocal', () => {
 
   it('keeps a local deletion as a deletion', async () => {
     await seedCharacter();
-    await service.recordConflict(baseConflict({ localOperationType: 'delete', localValues: { isDeleted: true } }));
+    await service.recordConflict(
+      baseConflict({ localOperationType: 'delete', localValues: { isDeleted: true } }),
+    );
     const [pending] = await service.getPendingConflicts();
 
     await service.resolveKeepLocal(pending.id);
@@ -298,7 +312,9 @@ describe('resolveKeepLocal', () => {
 describe('resolveKeepServer', () => {
   it('overwrites the entity with what the server has', async () => {
     await seedCharacter({ name: 'Meu nome' });
-    await service.recordConflict(baseConflict({ serverValues: { name: 'Nome do servidor' }, serverVersion: 3 }));
+    await service.recordConflict(
+      baseConflict({ serverValues: { name: 'Nome do servidor' }, serverVersion: 3 }),
+    );
     const [pending] = await service.getPendingConflicts();
 
     await service.resolveKeepServer(pending.id);
@@ -324,13 +340,18 @@ describe('resolveKeepServer', () => {
 
     await service.resolveKeepServer(pending.id);
 
-    expect(await readOperation(operationId)).toMatchObject({ conflictState: 'abandoned', isSynced: true });
+    expect(await readOperation(operationId)).toMatchObject({
+      conflictState: 'abandoned',
+      isSynced: true,
+    });
   });
 
   /** Aceitar que o servidor não tem a entidade é removê-la aqui - sem gravar operação. */
   it('deletes the entity locally when the server does not have it', async () => {
     await seedCharacter();
-    await service.recordConflict(baseConflict({ reason: 'not_found', serverValues: null, serverVersion: 2 }));
+    await service.recordConflict(
+      baseConflict({ reason: 'not_found', serverValues: null, serverVersion: 2 }),
+    );
     const [pending] = await service.getPendingConflicts();
 
     await service.resolveKeepServer(pending.id);
@@ -377,7 +398,9 @@ describe('dismissConflict', () => {
 
 describe('findContestedFields', () => {
   it('lists the fields the two sides disagree on', () => {
-    expect(findContestedFields({ name: 'Meu', title: 'Igual' }, { name: 'Servidor', title: 'Igual' })).toEqual(['name']);
+    expect(
+      findContestedFields({ name: 'Meu', title: 'Igual' }, { name: 'Servidor', title: 'Igual' }),
+    ).toEqual(['name']);
   });
 
   /**
@@ -390,7 +413,10 @@ describe('findContestedFields', () => {
   });
 
   it('treats every local field as contested when the server has nothing', () => {
-    expect(findContestedFields({ name: 'Meu', title: 'Meu' }, null).sort()).toEqual(['name', 'title']);
+    expect(findContestedFields({ name: 'Meu', title: 'Meu' }, null).sort()).toEqual([
+      'name',
+      'title',
+    ]);
   });
 
   it('ignores the bookkeeping fields, which are not the user content', () => {
@@ -408,29 +434,41 @@ describe('findContestedFields', () => {
 });
 
 describe('mergeLocalOperationPayloads', () => {
-  const operation = (payload: Record<string, unknown>) => ({ payload: JSON.stringify(payload) }) as never;
+  const operation = (payload: Record<string, unknown>) =>
+    ({ payload: JSON.stringify(payload) }) as never;
 
   it('unites the payloads into one set of desired values', () => {
-    const merged = mergeLocalOperationPayloads([operation({ name: 'A' }), operation({ title: 'B' })]);
+    const merged = mergeLocalOperationPayloads([
+      operation({ name: 'A' }),
+      operation({ title: 'B' }),
+    ]);
 
     expect(merged).toEqual({ name: 'A', title: 'B' });
   });
 
   /** Operações mais novas vêm depois e ganham: é a última intenção do usuário. */
   it('lets the newest operation win a field', () => {
-    const merged = mergeLocalOperationPayloads([operation({ name: 'Antigo' }), operation({ name: 'Novo' })]);
+    const merged = mergeLocalOperationPayloads([
+      operation({ name: 'Antigo' }),
+      operation({ name: 'Novo' }),
+    ]);
 
     expect(merged.name).toBe('Novo');
   });
 
   it('drops the bookkeeping fields', () => {
-    const merged = mergeLocalOperationPayloads([operation({ name: 'A', version: 3, id: 'char-1' })]);
+    const merged = mergeLocalOperationPayloads([
+      operation({ name: 'A', version: 3, id: 'char-1' }),
+    ]);
 
     expect(merged).toEqual({ name: 'A' });
   });
 
   it('survives an unreadable payload', () => {
-    const merged = mergeLocalOperationPayloads([{ payload: 'nao e json' } as never, operation({ name: 'A' })]);
+    const merged = mergeLocalOperationPayloads([
+      { payload: 'nao e json' } as never,
+      operation({ name: 'A' }),
+    ]);
 
     expect(merged).toEqual({ name: 'A' });
   });

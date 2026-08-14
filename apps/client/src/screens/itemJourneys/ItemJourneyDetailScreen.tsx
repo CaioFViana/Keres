@@ -6,7 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
@@ -35,7 +38,10 @@ export type ItemJourneyDetailScreenParamList = {
   ItemJourneyDetail: { itemJourneyId: string };
 };
 
-type ItemJourneyDetailScreenRouteProp = RouteProp<ItemJourneyDetailScreenParamList, 'ItemJourneyDetail'>;
+type ItemJourneyDetailScreenRouteProp = RouteProp<
+  ItemJourneyDetailScreenParamList,
+  'ItemJourneyDetail'
+>;
 
 const ItemJourneyDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -50,9 +56,24 @@ const ItemJourneyDetailScreen = () => {
   const drizzleDb = useDrizzle();
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
 
-  const { items, fetchItems, setDbAndStoryId: setItemDbAndStoryId, initializeService: initializeItemService } = useItemStore();
-  const { scenes, fetchScenes, setDbAndStoryId: setSceneDbAndStoryId, initializeService: initializeSceneService } = useSceneStore();
-  const { characters, fetchCharacters, setDbAndStoryId: setCharacterDbAndStoryId, initializeService: initializeCharacterService } = useCharacterStore();
+  const {
+    items,
+    fetchItems,
+    setDbAndStoryId: setItemDbAndStoryId,
+    initializeService: initializeItemService,
+  } = useItemStore();
+  const {
+    scenes,
+    fetchScenes,
+    setDbAndStoryId: setSceneDbAndStoryId,
+    initializeService: initializeSceneService,
+  } = useSceneStore();
+  const {
+    characters,
+    fetchCharacters,
+    setDbAndStoryId: setCharacterDbAndStoryId,
+    initializeService: initializeCharacterService,
+  } = useCharacterStore();
 
   useEffect(() => {
     if (drizzleDb && !itemJourneyServiceRef.current) {
@@ -74,16 +95,30 @@ const ItemJourneyDetailScreen = () => {
       initializeCharacterService();
       fetchCharacters();
     }
-  }, [drizzleDb, selectedStory?.id,
-    setItemDbAndStoryId, initializeItemService, fetchItems,
-    setSceneDbAndStoryId, initializeSceneService, fetchScenes,
-    setCharacterDbAndStoryId, initializeCharacterService, fetchCharacters
+  }, [
+    drizzleDb,
+    selectedStory?.id,
+    setItemDbAndStoryId,
+    initializeItemService,
+    fetchItems,
+    setSceneDbAndStoryId,
+    initializeSceneService,
+    fetchScenes,
+    setCharacterDbAndStoryId,
+    initializeCharacterService,
+    fetchCharacters,
   ]);
 
   const [itemJourney, setItemJourney] = useState<ItemJourneySelect | null>(null);
   const { canEdit } = useStoryRole(itemJourney?.storyId);
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(itemJourney?.storyId, 'ItemJourney', itemJourneyId);
 
   const {
@@ -102,7 +137,13 @@ const ItemJourneyDetailScreen = () => {
     mainTitle: { fontSize: 28, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
     subTitle: { fontSize: 20, fontWeight: '600', color: colors.textSecondary, marginBottom: 15 },
     buttonContainer: { marginTop: 20 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginTop: 15, marginBottom: 5 },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 15,
+      marginBottom: 5,
+    },
     relationLink: { flexDirection: 'row', alignItems: 'center' },
   });
 
@@ -117,8 +158,10 @@ const ItemJourneyDetailScreen = () => {
       if (fetchedItemJourney && !fetchedItemJourney.isDeleted) {
         setItemJourney(fetchedItemJourney);
         // Display item name + new state as title
-        const relatedItem = items.find(item => item.id === fetchedItemJourney.itemId);
-        setHeaderTitle(`${relatedItem?.name || t('unknown_item')} - ${fetchedItemJourney.newState}`);
+        const relatedItem = items.find((item) => item.id === fetchedItemJourney.itemId);
+        setHeaderTitle(
+          `${relatedItem?.name || t('unknown_item')} - ${fetchedItemJourney.newState}`,
+        );
       } else if (fetchedItemJourney && fetchedItemJourney.isDeleted) {
         navigation.goBack();
       } else {
@@ -134,18 +177,23 @@ const ItemJourneyDetailScreen = () => {
     }
   }, [itemJourneyId, navigation, t, items]);
 
-  const handleItemJourneyChange = useCallback(async (changedStoryId: string, changedItemJourneyId: string) => {
-    if (changedItemJourneyId === itemJourneyId && itemJourneyServiceRef.current) {
-      const updatedItemJourney = await itemJourneyServiceRef.current.getById(itemJourneyId);
-      if (!updatedItemJourney || updatedItemJourney.isDeleted) {
-        navigation.goBack();
-      } else {
-        setItemJourney(updatedItemJourney);
-        const relatedItem = items.find(item => item.id === updatedItemJourney.itemId);
-        setHeaderTitle(`${relatedItem?.name || t('unknown_item')} - ${updatedItemJourney.newState}`);
+  const handleItemJourneyChange = useCallback(
+    async (changedStoryId: string, changedItemJourneyId: string) => {
+      if (changedItemJourneyId === itemJourneyId && itemJourneyServiceRef.current) {
+        const updatedItemJourney = await itemJourneyServiceRef.current.getById(itemJourneyId);
+        if (!updatedItemJourney || updatedItemJourney.isDeleted) {
+          navigation.goBack();
+        } else {
+          setItemJourney(updatedItemJourney);
+          const relatedItem = items.find((item) => item.id === updatedItemJourney.itemId);
+          setHeaderTitle(
+            `${relatedItem?.name || t('unknown_item')} - ${updatedItemJourney.newState}`,
+          );
+        }
       }
-    }
-  }, [itemJourneyId, navigation, t, items]);
+    },
+    [itemJourneyId, navigation, t, items],
+  );
 
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
@@ -156,13 +204,14 @@ const ItemJourneyDetailScreen = () => {
     };
   }, [itemJourneyId, fetchItemJourney, handleItemJourneyChange]);
 
-  const relatedItem = items.find(item => item.id === itemJourney?.itemId);
-  const relatedScene = scenes.find(scene => scene.id === itemJourney?.sceneId);
-  const newCharacterOwner = characters.find(char => char.id === itemJourney?.newCharacterOwnerId);
+  const relatedItem = items.find((item) => item.id === itemJourney?.itemId);
+  const relatedScene = scenes.find((scene) => scene.id === itemJourney?.sceneId);
+  const newCharacterOwner = characters.find((char) => char.id === itemJourney?.newCharacterOwnerId);
 
   const handleItemPress = useCallback(() => {
     if (!relatedItem) return;
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    const drawerNavigation =
+      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
     if (drawerNavigation) {
       navigateToEntityDetail(drawerNavigation, 'Item', relatedItem.id);
     }
@@ -170,7 +219,8 @@ const ItemJourneyDetailScreen = () => {
 
   const handleScenePress = useCallback(() => {
     if (!relatedScene) return;
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    const drawerNavigation =
+      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
     if (drawerNavigation) {
       navigateToEntityDetail(drawerNavigation, 'Scene', relatedScene.id);
     }
@@ -178,25 +228,31 @@ const ItemJourneyDetailScreen = () => {
 
   const handleNewOwnerPress = useCallback(() => {
     if (!newCharacterOwner) return;
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+    const drawerNavigation =
+      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
     if (drawerNavigation) {
       navigateToEntityDetail(drawerNavigation, 'Character', newCharacterOwner.id);
     }
   }, [navigation, newCharacterOwner]);
 
-  const renderHeaderRight = useCallback(() => (
-    canEdit ? (
-      <TouchableOpacity onPress={() => navigation.navigate('ItemJourneyForm', { itemJourneyId })} style={{ marginRight: 15 }}>
-        <Ionicons name="pencil-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    ) : null
-  ), [navigation, itemJourneyId, colors.text, canEdit]);
+  const renderHeaderRight = useCallback(
+    () =>
+      canEdit ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ItemJourneyForm', { itemJourneyId })}
+          style={{ marginRight: 15 }}
+        >
+          <Ionicons name="pencil-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
+      ) : null,
+    [navigation, itemJourneyId, colors.text, canEdit],
+  );
 
   useFocusEffect(
     useCallback(() => {
       navigation.getParent()?.setOptions({ title: headerTitle, headerRight: renderHeaderRight });
       setDocumentTitle(headerTitle);
-    }, [navigation, headerTitle, renderHeaderRight])
+    }, [navigation, headerTitle, renderHeaderRight]),
   );
 
   if (loading) {
@@ -206,11 +262,20 @@ const ItemJourneyDetailScreen = () => {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
   if (!itemJourney) {
-    return <ScreenError padded message={t('item_journey_data_missing')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError
+        padded
+        message={t('item_journey_data_missing')}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
+    >
       <TagChipList tags={itemJourneyTags} />
 
       {relatedItem && (
@@ -229,7 +294,12 @@ const ItemJourneyDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'newState' }, { ...input, contentSnapshot: itemJourney.newState || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'newState' },
+            { ...input, contentSnapshot: itemJourney.newState || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
@@ -241,12 +311,21 @@ const ItemJourneyDetailScreen = () => {
         canComment={canComment}
         isStoryOwner={isStoryOwner}
         currentUserId={currentUserId}
-        onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: itemJourney.extraNotes || t('common_na') })}
+        onAddComment={(input) =>
+          addComment(
+            { fieldKey: 'extraNotes' },
+            { ...input, contentSnapshot: itemJourney.extraNotes || t('common_na') },
+          )
+        }
         onDeleteComment={deleteComment}
         onUpdateComment={updateComment}
       />
       {relatedScene && (
-        <TouchableOpacity onPress={handleScenePress} style={styles.relationLink} activeOpacity={0.7}>
+        <TouchableOpacity
+          onPress={handleScenePress}
+          style={styles.relationLink}
+          activeOpacity={0.7}
+        >
           <View style={{ flex: 1 }}>
             <DetailField label={t('scene')} value={relatedScene.name} />
           </View>
@@ -254,7 +333,11 @@ const ItemJourneyDetailScreen = () => {
         </TouchableOpacity>
       )}
       {newCharacterOwner && (
-        <TouchableOpacity onPress={handleNewOwnerPress} style={styles.relationLink} activeOpacity={0.7}>
+        <TouchableOpacity
+          onPress={handleNewOwnerPress}
+          style={styles.relationLink}
+          activeOpacity={0.7}
+        >
           <View style={{ flex: 1 }}>
             <DetailField label={t('new_character_owner')} value={newCharacterOwner.name} />
           </View>
@@ -273,9 +356,18 @@ const ItemJourneyDetailScreen = () => {
         currentEntityType="ItemJourney"
       />
 
-      <SeeAlsoManager storyId={itemJourney.storyId} entityType="ItemJourney" entityId={itemJourneyId} editable={false} />
+      <SeeAlsoManager
+        storyId={itemJourney.storyId}
+        entityType="ItemJourney"
+        entityId={itemJourneyId}
+        editable={false}
+      />
 
-      <EntityMetadata version={itemJourney.version} createdAt={itemJourney.createdAt} updatedAt={itemJourney.updatedAt} />
+      <EntityMetadata
+        version={itemJourney.version}
+        createdAt={itemJourney.createdAt}
+        updatedAt={itemJourney.updatedAt}
+      />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

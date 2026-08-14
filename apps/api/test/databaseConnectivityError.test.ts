@@ -8,12 +8,17 @@ const withCode = (code: string, cause?: unknown) => Object.assign(new Error(code
  * `onError`. Errar para o lado do 500 esconde uma queda de banco atrás de um erro genérico.
  */
 describe('isDatabaseConnectivityError', () => {
-  it.each(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENETUNREACH', 'EAI_AGAIN', '57P03'])(
-    'treats %s as the database being unreachable',
-    (code) => {
-      expect(isDatabaseConnectivityError(withCode(code))).toBe(true);
-    },
-  );
+  it.each([
+    'ECONNREFUSED',
+    'ENOTFOUND',
+    'ETIMEDOUT',
+    'EHOSTUNREACH',
+    'ENETUNREACH',
+    'EAI_AGAIN',
+    '57P03',
+  ])('treats %s as the database being unreachable', (code) => {
+    expect(isDatabaseConnectivityError(withCode(code))).toBe(true);
+  });
 
   it('unwraps the root network error that drizzle/pg hide under .cause', () => {
     const wrapped = new Error('query failed', { cause: withCode('ECONNREFUSED') });
@@ -22,7 +27,9 @@ describe('isDatabaseConnectivityError', () => {
   });
 
   it('unwraps several layers of cause', () => {
-    const deep = new Error('a', { cause: new Error('b', { cause: new Error('c', { cause: withCode('ETIMEDOUT') }) }) });
+    const deep = new Error('a', {
+      cause: new Error('b', { cause: new Error('c', { cause: withCode('ETIMEDOUT') }) }),
+    });
 
     expect(isDatabaseConnectivityError(deep)).toBe(true);
   });

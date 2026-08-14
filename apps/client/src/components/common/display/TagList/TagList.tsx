@@ -38,13 +38,17 @@ const TagList: React.FC<TagListProps> = ({ tags }) => {
 
   return (
     <View style={styles.tagContainer}>
-      {tags.map(tag => {
+      {tags.map((tag) => {
         const tagColorFromDb = tag.color;
-        const tagBackgroundColor = (tagColorFromDb && isValidHexColor(tagColorFromDb)) ? tagColorFromDb : colors.surface;
+        const tagBackgroundColor =
+          tagColorFromDb && isValidHexColor(tagColorFromDb) ? tagColorFromDb : colors.surface;
         const tagTextColor = getContrastTextColor(tagBackgroundColor);
 
         return (
-          <Text key={tag.id} style={[styles.tag, { backgroundColor: tagBackgroundColor, color: tagTextColor }]}>
+          <Text
+            key={tag.id}
+            style={[styles.tag, { backgroundColor: tagBackgroundColor, color: tagTextColor }]}
+          >
             {tag.name}
           </Text>
         );

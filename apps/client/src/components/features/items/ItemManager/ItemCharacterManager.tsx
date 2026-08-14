@@ -37,22 +37,33 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
   const { colors } = useTheme();
   const navigation = useNavigation();
 
-  const handleItemPress = useCallback((item: Item) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Item', item.id);
-    }
-  }, [navigation]);
+  const handleItemPress = useCallback(
+    (item: Item) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(drawerNavigation, 'Item', item.id);
+      }
+    },
+    [navigation],
+  );
 
   const displayItems = useMemo(() => {
-    const ownedItems = allItems.filter(item => item.characterOwnerId === currentCharacterId && !item.isDeleted);
-    const ownedItemJourneys = allItemJourneys.filter(journey => journey.newCharacterOwnerId === currentCharacterId && !journey.isDeleted);
+    const ownedItems = allItems.filter(
+      (item) => item.characterOwnerId === currentCharacterId && !item.isDeleted,
+    );
+    const ownedItemJourneys = allItemJourneys.filter(
+      (journey) => journey.newCharacterOwnerId === currentCharacterId && !journey.isDeleted,
+    );
     return [...ownedItems, ...ownedItemJourneys];
   }, [allItems, allItemJourneys, currentCharacterId]);
 
-  const getItemForDisplay = useCallback((itemId: string) => {
-    return allItems.find(item => item.id === itemId);
-  }, [allItems]);
+  const getItemForDisplay = useCallback(
+    (itemId: string) => {
+      return allItems.find((item) => item.id === itemId);
+    },
+    [allItems],
+  );
 
   const getDisplayItemId = useCallback((entity: Item | ItemJourney) => {
     if (isItem(entity)) {
@@ -61,36 +72,51 @@ const ItemCharacterManager: React.FC<ItemCharacterManagerProps> = ({
     return entity.itemId;
   }, []);
 
-  const renderItemExtraContent = useCallback((entity: Item | ItemJourney, actualItem: Item) => {
-    return (
-      <View>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{actualItem.name}</Text>
-        {isItem(entity) && (
-          <>
-            {actualItem.initialState && <RelationAttributeLine label={t('initial_state')} value={actualItem.initialState} />}
-            {actualItem.extraNotes && <RelationAttributeLine label={t('extra_notes')} value={actualItem.extraNotes} />}
-          </>
-        )}
-        {isItemJourney(entity) && (
-          <>
-            {entity.newState && <RelationAttributeLine label={t('item_state')} value={entity.newState} />}
-            {allScenes?.find(scene => scene.id === entity.sceneId)?.name && (
-              <RelationAttributeLine label={t('scene')} value={allScenes.find(scene => scene.id === entity.sceneId)!.name} />
-            )}
-            {entity.extraNotes && <RelationAttributeLine label={t('extra_notes')} value={entity.extraNotes} />}
-          </>
-        )}
-      </View>
-    );
-  }, [allScenes, colors.text, t]);
-
+  const renderItemExtraContent = useCallback(
+    (entity: Item | ItemJourney, actualItem: Item) => {
+      return (
+        <View>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
+            {actualItem.name}
+          </Text>
+          {isItem(entity) && (
+            <>
+              {actualItem.initialState && (
+                <RelationAttributeLine label={t('initial_state')} value={actualItem.initialState} />
+              )}
+              {actualItem.extraNotes && (
+                <RelationAttributeLine label={t('extra_notes')} value={actualItem.extraNotes} />
+              )}
+            </>
+          )}
+          {isItemJourney(entity) && (
+            <>
+              {entity.newState && (
+                <RelationAttributeLine label={t('item_state')} value={entity.newState} />
+              )}
+              {allScenes?.find((scene) => scene.id === entity.sceneId)?.name && (
+                <RelationAttributeLine
+                  label={t('scene')}
+                  value={allScenes.find((scene) => scene.id === entity.sceneId)!.name}
+                />
+              )}
+              {entity.extraNotes && (
+                <RelationAttributeLine label={t('extra_notes')} value={entity.extraNotes} />
+              )}
+            </>
+          )}
+        </View>
+      );
+    },
+    [allScenes, colors.text, t],
+  );
 
   return (
     <GenericRelationDisplay<Item, Item | ItemJourney>
       relations={displayItems}
       getRelatedItem={getItemForDisplay}
       getRelationItemId={getDisplayItemId}
-      getItemDisplayName={item => item.name}
+      getItemDisplayName={(item) => item.name}
       noItemsMessage={'no_items_assigned_to_character'}
       renderItemExtraContent={renderItemExtraContent}
       title={t('items_title')}

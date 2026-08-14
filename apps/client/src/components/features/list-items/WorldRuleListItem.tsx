@@ -14,7 +14,11 @@ interface WorldRuleListItemProps {
   onViewDetails: (worldRuleId: string) => void;
 }
 
-const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({ worldRule, onToggleFavorite, onViewDetails }) => {
+const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({
+  worldRule,
+  onToggleFavorite,
+  onViewDetails,
+}) => {
   const { colors } = useTheme();
 
   const descriptionSummary = truncate(worldRule.description, 150);
@@ -32,9 +36,7 @@ const WorldRuleListItem: React.FC<WorldRuleListItemProps> = ({ worldRule, onTogg
   const renderExpandedContent = (rule: WorldRuleWithTags) => (
     <View>
       {descriptionSummary && <Text style={styles.descriptionText}>{descriptionSummary}</Text>}
-      {rule.tags && rule.tags.length > 0 && (
-        <TagList tags={rule.tags} />
-      )}
+      {rule.tags && rule.tags.length > 0 && <TagList tags={rule.tags} />}
     </View>
   );
 

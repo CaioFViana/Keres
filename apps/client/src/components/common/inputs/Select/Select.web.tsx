@@ -32,7 +32,8 @@ interface SelectPropsMulti {
 type SelectProps = SelectPropsSingle | SelectPropsMulti;
 
 // Matches React Native Web's default 'System' font resolution (see textStyle in RNW's Text component)
-const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+const FONT_FAMILY =
+  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
 interface DropdownPosition {
   top: number;
@@ -40,7 +41,15 @@ interface DropdownPosition {
   width: number;
 }
 
-const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placeholder, multiple = false, disabled = false, allowDeselect = false }) => {
+const Select: React.FC<SelectProps> = ({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  multiple = false,
+  disabled = false,
+  allowDeselect = false,
+}) => {
   const { colors } = useTheme();
 
   const [open, setOpen] = useState(false);
@@ -77,14 +86,19 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
     };
   }, [open]);
 
-  const selectedValues: string[] = multiple ? (value as string[]) : value !== null ? [value as string] : [];
+  const selectedValues: string[] = multiple
+    ? (value as string[])
+    : value !== null
+      ? [value as string]
+      : [];
 
-  const getLabel = (optionValue: string) => options.find(option => option.value === optionValue)?.label ?? optionValue;
+  const getLabel = (optionValue: string) =>
+    options.find((option) => option.value === optionValue)?.label ?? optionValue;
 
   const toggleOpen = () => {
     if (disabled) return;
     if (!open) updatePosition();
-    setOpen(previous => !previous);
+    setOpen((previous) => !previous);
   };
 
   const handleSingleSelect = (optionValue: string) => {
@@ -104,7 +118,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
     const currentValue = value as string[];
 
     if (currentValue.includes(optionValue)) {
-      handleMultiChange(currentValue.filter(item => item !== optionValue));
+      handleMultiChange(currentValue.filter((item) => item !== optionValue));
     } else {
       handleMultiChange([...currentValue, optionValue]);
     }
@@ -114,7 +128,7 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
     event.stopPropagation();
     const handleMultiChange = onValueChange as (value: string[]) => void;
     const currentValue = value as string[];
-    handleMultiChange(currentValue.filter(item => item !== optionValue));
+    handleMultiChange(currentValue.filter((item) => item !== optionValue));
   };
 
   const containerStyle: React.CSSProperties = {
@@ -218,7 +232,11 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
       fontFamily: FONT_FAMILY,
       fontSize: 16,
       color: isHovered ? colors.onPrimary : isSelected ? colors.onPrimaryContainer : colors.text,
-      backgroundColor: isHovered ? colors.primary : isSelected ? colors.primaryContainer : 'transparent',
+      backgroundColor: isHovered
+        ? colors.primary
+        : isSelected
+          ? colors.primaryContainer
+          : 'transparent',
       borderBottomColor: colors.border,
       borderBottomWidth: 1,
       borderBottomStyle: 'solid',
@@ -230,29 +248,34 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
     <div style={containerStyle}>
       <div ref={controlRef} style={controlStyle} onClick={toggleOpen}>
         <div style={contentStyle}>
-          {selectedValues.length === 0 && (
-            <span style={placeholderStyle}>{placeholder}</span>
-          )}
+          {selectedValues.length === 0 && <span style={placeholderStyle}>{placeholder}</span>}
           {multiple
-            ? selectedValues.map(selectedValue => (
+            ? selectedValues.map((selectedValue) => (
                 <span key={selectedValue} style={badgeStyle}>
                   {getLabel(selectedValue)}
                   {!disabled && (
-                    <span onClick={event => handleRemoveBadge(event, selectedValue)} style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+                    <span
+                      onClick={(event) => handleRemoveBadge(event, selectedValue)}
+                      style={{ cursor: 'pointer', fontWeight: 'bold' }}
+                    >
                       ×
                     </span>
                   )}
                 </span>
               ))
-            : selectedValues.length > 0 && <span style={textStyle}>{getLabel(selectedValues[0])}</span>}
+            : selectedValues.length > 0 && (
+                <span style={textStyle}>{getLabel(selectedValues[0])}</span>
+              )}
         </div>
         <span style={chevronStyle}>{open ? '▲' : '▼'}</span>
       </div>
 
-      {open && !disabled && position &&
+      {open &&
+        !disabled &&
+        position &&
         createPortal(
           <div ref={dropdownRef} style={dropdownStyle}>
-            {options.map(option => {
+            {options.map((option) => {
               const isSelected = selectedValues.includes(option.value);
               return (
                 <div
@@ -260,14 +283,16 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
                   style={getItemStyle(option.value, isSelected)}
                   onMouseEnter={() => setHoveredValue(option.value)}
                   onMouseLeave={() => setHoveredValue(null)}
-                  onClick={() => (multiple ? handleMultiSelect(option.value) : handleSingleSelect(option.value))}
+                  onClick={() =>
+                    multiple ? handleMultiSelect(option.value) : handleSingleSelect(option.value)
+                  }
                 >
                   {option.label}
                 </div>
               );
             })}
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );

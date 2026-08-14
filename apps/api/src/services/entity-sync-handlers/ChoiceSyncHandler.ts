@@ -1,10 +1,20 @@
-import { CreateChoiceDataSchema, CreateChoiceDataType, CreateStoryUpdate, DeleteStoryUpdate, PartialChoiceSchema, UpdateStoryUpdate } from '@keres/shared'; // Added DeleteStoryUpdate
+import {
+  CreateChoiceDataSchema,
+  CreateChoiceDataType,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  PartialChoiceSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared'; // Added DeleteStoryUpdate
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { choices, scenes, stories } from '../../db/schema'; // Import stories
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoiceDataSchema, typeof PartialChoiceSchema> {
+export class ChoiceSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateChoiceDataSchema,
+  typeof PartialChoiceSchema
+> {
   entityName = 'Choice';
 
   constructor() {
@@ -18,11 +28,15 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 
-  private async validateRelatedEntities(storyId: string, sceneId: string, nextSceneId: string): Promise<void> {
+  private async validateRelatedEntities(
+    storyId: string,
+    sceneId: string,
+    nextSceneId: string,
+  ): Promise<void> {
     const sceneExists = await db.query.scenes.findFirst({
       where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
     });
@@ -32,11 +46,17 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
     }
 
     const nextSceneExists = await db.query.scenes.findFirst({
-      where: and(eq(scenes.id, nextSceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
+      where: and(
+        eq(scenes.id, nextSceneId),
+        eq(scenes.storyId, storyId),
+        eq(scenes.isDeleted, false),
+      ),
     });
 
     if (!nextSceneExists) {
-      throw new Error(`Next Scene with ID ${nextSceneId} not found or does not belong to story ${storyId}.`);
+      throw new Error(
+        `Next Scene with ID ${nextSceneId} not found or does not belong to story ${storyId}.`,
+      );
     }
   }
 
@@ -55,7 +75,9 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
     // Linear stories never have Choice rows - they're deleted on conversion to linear, and
     // only (re)created by converting to branching. See StoryService.convertStoryType.
     if (await this._isStoryLinear(storyId)) {
-      throw new Error('Cannot create choices directly in a linear story. Convert the story to branching first.');
+      throw new Error(
+        'Cannot create choices directly in a linear story. Convert the story to branching first.',
+      );
     }
 
     // Validate incoming data against the create schema
@@ -80,35 +102,51 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<typeof CreateChoice
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     // If story is linear, prevent direct updates of choices
     if (await this._isStoryLinear(storyId)) {
-      throw new Error('Cannot update choices directly in a linear story. Convert the story to branching first.');
+      throw new Error(
+        'Cannot update choices directly in a linear story. Convert the story to branching first.',
+      );
     }
 
     const validatedChanges = this.updateSchema.parse(update.changes);
 
-    const newSceneId = validatedChanges.sceneId !== undefined ? validatedChanges.sceneId : currentEntity.sceneId;
-    const newNextSceneId = validatedChanges.nextSceneId !== undefined ? validatedChanges.nextSceneId : currentEntity.nextSceneId;
+    const newSceneId =
+      validatedChanges.sceneId !== undefined ? validatedChanges.sceneId : currentEntity.sceneId;
+    const newNextSceneId =
+      validatedChanges.nextSceneId !== undefined
+        ? validatedChanges.nextSceneId
+        : currentEntity.nextSceneId;
 
     await this.validateRelatedEntities(storyId, newSceneId, newNextSceneId);
 
-    await db.update(choices)
+    await db
+      .update(choices)
       .set({
         ...validatedChanges,
         updatedAt: new Date(),
         version: currentEntity.version + 1,
       })
-      .where(and(
-        eq(choices.id, update.id!),
-        eq(choices.version, currentEntity.version)
-      ));
+      .where(and(eq(choices.id, update.id!), eq(choices.version, currentEntity.version)));
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     // If story is linear, prevent direct deletion of choices
     if (await this._isStoryLinear(storyId)) {
-      throw new Error('Cannot delete choices directly in a linear story. Convert the story to branching first.');
+      throw new Error(
+        'Cannot delete choices directly in a linear story. Convert the story to branching first.',
+      );
     }
 
     await super.delete(userId, storyId, update, currentEntity);

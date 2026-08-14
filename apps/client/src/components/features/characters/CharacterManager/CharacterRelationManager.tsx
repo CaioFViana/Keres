@@ -25,7 +25,11 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
   currentSceneId,
 }) => {
   const { t } = useTranslation();
-  const createCharacterSceneRelationObject = (selectedCharacterId: string, storyId: string, sceneId: string): CharacterScene => {
+  const createCharacterSceneRelationObject = (
+    selectedCharacterId: string,
+    storyId: string,
+    sceneId: string,
+  ): CharacterScene => {
     return {
       id: createULID(),
       storyId: storyId,
@@ -45,8 +49,14 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
 
   const getCharacterSearchableName = (character: Character) => character.name;
 
-  const filterAvailableCharacters = (character: Character, relations: CharacterScene[], getRelationItemId: (relation: CharacterScene) => string) => {
-    return !character.isDeleted && !relations.some(rel => getRelationItemId(rel) === character.id);
+  const filterAvailableCharacters = (
+    character: Character,
+    relations: CharacterScene[],
+    getRelationItemId: (relation: CharacterScene) => string,
+  ) => {
+    return (
+      !character.isDeleted && !relations.some((rel) => getRelationItemId(rel) === character.id)
+    );
   };
 
   return (

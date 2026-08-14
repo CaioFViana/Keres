@@ -6,7 +6,10 @@ import React, { useCallback, useEffect, useState } from 'react'; // Import useEf
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
-import { MainSystemDrawerParamList, OperationLogStackParamList } from '../../navigation/MainSystemStack'; // Use MainSystemDrawerParamList
+import {
+  MainSystemDrawerParamList,
+  OperationLogStackParamList,
+} from '../../navigation/MainSystemStack'; // Use MainSystemDrawerParamList
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import entityEventEmitter
@@ -31,20 +34,27 @@ const OperationLogScreen: React.FC = () => {
       navigation.setOptions({
         title: t('operation_logs_title'),
       });
-    }, [navigation, t])
+    }, [navigation, t]),
   );
 
-  const handlePressLogItem = useCallback((logId: string) => {
-    // Navigate to the OperationLogDetail screen within the OperationLogStack
-    // This now works because OperationLogScreenNavigationProp is a CompositeNavigationProp
-    navigation.navigate('OperationLogStack', { screen: 'OperationLogDetail', params: { logId: logId } });
-  }, [navigation]);
+  const handlePressLogItem = useCallback(
+    (logId: string) => {
+      // Navigate to the OperationLogDetail screen within the OperationLogStack
+      // This now works because OperationLogScreenNavigationProp is a CompositeNavigationProp
+      navigation.navigate('OperationLogStack', {
+        screen: 'OperationLogDetail',
+        params: { logId: logId },
+      });
+    },
+    [navigation],
+  );
 
   // Listen for operation_log_updated event to trigger refetch
   useEffect(() => {
     const handleOperationLogUpdated = (updatedStoryId: string) => {
-      if (selectedStory?.id === updatedStoryId) { // Only refetch if it's for the current story
-        setShouldRefetch(prev => !prev); // Toggle to trigger refetch in OperationLogList
+      if (selectedStory?.id === updatedStoryId) {
+        // Only refetch if it's for the current story
+        setShouldRefetch((prev) => !prev); // Toggle to trigger refetch in OperationLogList
       }
     };
 

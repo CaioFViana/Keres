@@ -7,7 +7,10 @@ let bia: TestUser;
 let storyId: string;
 
 const grant = (token: string, targetUserId: string, permissionType: string, story = storyId) =>
-  request('POST', '/story-permissions/', { token, body: { storyId: story, targetUserId, permissionType } });
+  request('POST', '/story-permissions/', {
+    token,
+    body: { storyId: story, targetUserId, permissionType },
+  });
 
 const revoke = (token: string, targetUserId: string, story = storyId) =>
   request('DELETE', `/story-permissions/story/${story}/user/${targetUserId}`, { token });
@@ -22,11 +25,15 @@ const pull = (token: string, story = storyId) =>
 async function befriend(a: TestUser, b: TestUser) {
   const requested = await request('POST', `/friend/request/${b.userId}`, { token: a.token });
   if (requested.status >= 400) {
-    throw new Error(`Falha ao pedir amizade (${requested.status}): ${JSON.stringify(requested.data)}`);
+    throw new Error(
+      `Falha ao pedir amizade (${requested.status}): ${JSON.stringify(requested.data)}`,
+    );
   }
   const accepted = await request('PUT', `/friend/accept/${a.userId}`, { token: b.token });
   if (accepted.status >= 400) {
-    throw new Error(`Falha ao aceitar amizade (${accepted.status}): ${JSON.stringify(accepted.data)}`);
+    throw new Error(
+      `Falha ao aceitar amizade (${accepted.status}): ${JSON.stringify(accepted.data)}`,
+    );
   }
 }
 
@@ -63,13 +70,16 @@ describe('POST /story-permissions/', () => {
     ]);
   });
 
-  it.each(['reader', 'writer'])('reports the granted %s role back to the collaborator', async (permissionType) => {
-    await grant(ana.token, bia.userId, permissionType);
+  it.each(['reader', 'writer'])(
+    'reports the granted %s role back to the collaborator',
+    async (permissionType) => {
+      await grant(ana.token, bia.userId, permissionType);
 
-    const { data } = await pull(bia.token);
+      const { data } = await pull(bia.token);
 
-    expect(data.role).toBe(permissionType);
-  });
+      expect(data.role).toBe(permissionType);
+    },
+  );
 
   it('updates an existing grant instead of duplicating it', async () => {
     await grant(ana.token, bia.userId, 'reader');
@@ -153,7 +163,10 @@ describe('DELETE /story-permissions/story/:storyId/user/:targetUserId', () => {
   });
 
   it('requires a session', async () => {
-    const { status } = await request('DELETE', `/story-permissions/story/${storyId}/user/${bia.userId}`);
+    const { status } = await request(
+      'DELETE',
+      `/story-permissions/story/${storyId}/user/${bia.userId}`,
+    );
 
     expect(status).toBe(401);
   });
@@ -226,7 +239,14 @@ describe('what a collaborator can do with the story', () => {
 
     const { status, data } = await request('POST', `/sync/${storyId}`, {
       token: bia.token,
-      body: [{ type: 'create', entity: 'Character', id: characterId, data: { id: characterId, storyId, name: 'Nyx' } }],
+      body: [
+        {
+          type: 'create',
+          entity: 'Character',
+          id: characterId,
+          data: { id: characterId, storyId, name: 'Nyx' },
+        },
+      ],
     });
 
     expect(status === 403 || data?.applied?.length === 0).toBe(true);
@@ -248,7 +268,14 @@ describe('what a collaborator can do with the story', () => {
 
     const { data } = await request('POST', `/sync/${storyId}`, {
       token: bia.token,
-      body: [{ type: 'create', entity: 'Character', id: characterId, data: { id: characterId, storyId, name: 'Nyx' } }],
+      body: [
+        {
+          type: 'create',
+          entity: 'Character',
+          id: characterId,
+          data: { id: characterId, storyId, name: 'Nyx' },
+        },
+      ],
     });
 
     expect(data.conflicts).toEqual([]);
@@ -261,7 +288,14 @@ describe('what a collaborator can do with the story', () => {
 
     const { status, data } = await request('POST', `/sync/${storyId}`, {
       token: bia.token,
-      body: [{ type: 'create', entity: 'Character', id: characterId, data: { id: characterId, storyId, name: 'Nyx' } }],
+      body: [
+        {
+          type: 'create',
+          entity: 'Character',
+          id: characterId,
+          data: { id: characterId, storyId, name: 'Nyx' },
+        },
+      ],
     });
 
     if (status === 200) {

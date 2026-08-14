@@ -87,7 +87,9 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.clearAllMocks();
-  electronMocks.handle.mockImplementation((channel: string, handler: Handler) => handlers.set(channel, handler));
+  electronMocks.handle.mockImplementation((channel: string, handler: Handler) =>
+    handlers.set(channel, handler),
+  );
 });
 
 afterAll(async () => {
@@ -114,7 +116,9 @@ describe('auth channels', () => {
   it.each(['auth:status', 'auth:read', 'auth:write', 'auth:remove'])(
     'rejects %s coming from an untrusted origin',
     async (channel) => {
-      await expect(invoke(channel, untrustedEvent, 'server-1', TOKENS)).rejects.toThrow('Unauthorized IPC sender.');
+      await expect(invoke(channel, untrustedEvent, 'server-1', TOKENS)).rejects.toThrow(
+        'Unauthorized IPC sender.',
+      );
     },
   );
 
@@ -202,7 +206,9 @@ describe('auth channels', () => {
     ['no refresh token', { accessToken: 'a' }],
     ['an empty access token', { accessToken: '', refreshToken: 'r' }],
   ])('rejects a write with %s', async (_label, tokens) => {
-    await expect(invoke('auth:write', trustedEvent, 'server-1', tokens)).rejects.toThrow('Invalid token payload.');
+    await expect(invoke('auth:write', trustedEvent, 'server-1', tokens)).rejects.toThrow(
+      'Invalid token payload.',
+    );
   });
 
   it('removes only the entry it was asked to remove', async () => {
@@ -226,7 +232,9 @@ describe('auth channels', () => {
     ['an id longer than the limit', 'a'.repeat(129)],
   ])('refuses %s as a vault key', async (_label, serverId) => {
     for (const channel of ['auth:read', 'auth:write', 'auth:remove']) {
-      await expect(invoke(channel, trustedEvent, serverId, TOKENS)).rejects.toThrow('Invalid server identifier.');
+      await expect(invoke(channel, trustedEvent, serverId, TOKENS)).rejects.toThrow(
+        'Invalid server identifier.',
+      );
     }
   });
 });
@@ -304,7 +312,9 @@ describe('media channels', () => {
     ['media:delete-file', ['../escapou.png']],
     ['media:delete-directory', ['..']],
   ])('refuses %s outside the media root', async (channel, args) => {
-    await expect(invoke(channel, null, ...(args as any[]))).rejects.toThrow(/outside media storage/);
+    await expect(invoke(channel, null, ...(args as any[]))).rejects.toThrow(
+      /outside media storage/,
+    );
   });
 
   it('does not create anything outside the root when a traversal is refused', async () => {

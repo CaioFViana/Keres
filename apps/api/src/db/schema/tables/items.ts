@@ -6,7 +6,9 @@ import { itemJourneys } from './itemJourneys'; // Will be created later
 
 export const items = pgTable('items', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
   characterOwnerId: text('character_owner_id').references(() => characters.id),
   name: text('name').notNull(),
   category: text('category'),

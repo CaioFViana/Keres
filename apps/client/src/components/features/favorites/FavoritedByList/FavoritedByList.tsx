@@ -8,7 +8,10 @@ import { servers, stories } from '../../../../db/schema';
 import { createFavoriteService } from '../../../../services/storymanagement/FavoriteService';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
-import { ResolvedUserProfile, useUserProfileResolver } from '../../../../hooks/useUserProfileResolver';
+import {
+  ResolvedUserProfile,
+  useUserProfileResolver,
+} from '../../../../hooks/useUserProfileResolver';
 import Avatar from '../../../common/display/Avatar/Avatar';
 import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
 
@@ -49,8 +52,12 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
         ? await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) })
         : undefined;
       const userIds = await favoriteService.getFavoriterIds(storyId, entityId, entityType);
-      const resolved = await Promise.all(userIds.map((userId) => resolveProfile(userId, storyServer)));
-      resolved.sort((a, b) => Number(b.isCurrentUser) - Number(a.isCurrentUser) || a.name.localeCompare(b.name));
+      const resolved = await Promise.all(
+        userIds.map((userId) => resolveProfile(userId, storyServer)),
+      );
+      resolved.sort(
+        (a, b) => Number(b.isCurrentUser) - Number(a.isCurrentUser) || a.name.localeCompare(b.name),
+      );
       setProfiles(resolved);
     } catch (error) {
       console.error('Failed to load users who favorited the entity:', error);
@@ -62,8 +69,16 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
 
   useEffect(() => {
     fetchFavoriters();
-    const handleFavoriteChange = (changedStoryId: string, changedEntityType: FavoriteEntityType, changedEntityId: string) => {
-      if (changedStoryId === storyId && changedEntityType === entityType && changedEntityId === entityId) {
+    const handleFavoriteChange = (
+      changedStoryId: string,
+      changedEntityType: FavoriteEntityType,
+      changedEntityId: string,
+    ) => {
+      if (
+        changedStoryId === storyId &&
+        changedEntityType === entityType &&
+        changedEntityId === entityId
+      ) {
         fetchFavoriters();
       }
     };
@@ -103,19 +118,25 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
         <ActivityIndicator style={styles.loading} color={colors.primary} />
       ) : profiles.length === 0 ? (
         <Text style={styles.emptyText}>{t('favorited_by_empty')}</Text>
-      ) : profiles.map((profile, index) => (
-        <View key={profile.id} style={[styles.row, index === profiles.length - 1 && styles.rowLast]}>
-          <Avatar
-            seed={profile.id}
-            color={profile.avatarColor}
-            icon={profile.avatarIcon}
-            size={32}
-          />
-          <Text style={styles.name}>
-            {profile.name}{profile.isCurrentUser ? ` ${t('you_suffix')}` : ''}
-          </Text>
-        </View>
-      ))}
+      ) : (
+        profiles.map((profile, index) => (
+          <View
+            key={profile.id}
+            style={[styles.row, index === profiles.length - 1 && styles.rowLast]}
+          >
+            <Avatar
+              seed={profile.id}
+              color={profile.avatarColor}
+              icon={profile.avatarIcon}
+              size={32}
+            />
+            <Text style={styles.name}>
+              {profile.name}
+              {profile.isCurrentUser ? ` ${t('you_suffix')}` : ''}
+            </Text>
+          </View>
+        ))
+      )}
     </CollapsibleCard>
   );
 };

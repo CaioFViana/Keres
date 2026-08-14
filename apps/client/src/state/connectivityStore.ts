@@ -44,7 +44,9 @@ export const useConnectivityStore = create<ConnectivityState>((set, get) => ({
     // Only announce an actual recovery. Reaching a server for the first time after
     // startup ('unknown' -> 'online') is the expected case and needs no message.
     if (previous === 'offline') {
-      useNotificationStore.getState().showNotification(label('server_reconnected', serverName), 'success');
+      useNotificationStore
+        .getState()
+        .showNotification(label('server_reconnected', serverName), 'success');
     }
   },
 
@@ -58,7 +60,9 @@ export const useConnectivityStore = create<ConnectivityState>((set, get) => ({
       statusByServerId: { ...state.statusByServerId, [serverId]: 'offline' },
     }));
 
-    useNotificationStore.getState().showNotification(label('server_unreachable', serverName), 'warning');
+    useNotificationStore
+      .getState()
+      .showNotification(label('server_unreachable', serverName), 'warning');
   },
 
   isOffline: (serverId) => get().statusByServerId[serverId] === 'offline',

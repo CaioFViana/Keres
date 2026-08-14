@@ -22,7 +22,7 @@ export const CreateChoiceCheckGroupDataSchema = ChoiceCheckGroupSchema.omit({
   isDeleted: true,
   deletedAt: true,
 }).extend({
-  choiceId: z.string().min(1, "Choice ID cannot be empty"),
+  choiceId: z.string().min(1, 'Choice ID cannot be empty'),
   combinator: z.enum(['AND', 'OR']).default('AND'),
   order: z.number().default(0),
 });

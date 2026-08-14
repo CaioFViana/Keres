@@ -8,7 +8,9 @@ import { itemJourneys } from './itemJourneys';
 
 export const characters = pgTable('characters', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
   name: text('name').notNull(),
   title: text('title'),
   gender: text('gender'),

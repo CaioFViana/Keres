@@ -1,6 +1,9 @@
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
 import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
@@ -9,7 +12,9 @@ import LocationItemManager from '@/src/components/features/locations/LocationMan
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
-import ScenePresenceList, { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import ScenePresenceList, {
+  groupScenePresenceEntries,
+} from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
@@ -28,11 +33,23 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
-import { CharacterSceneServiceInterface, createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import { CharacterService, createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
-import { createItemJourneyService, ItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import {
+  CharacterSceneServiceInterface,
+  createCharacterSceneService,
+} from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import {
+  CharacterService,
+  createCharacterService,
+} from '../../services/storymanagement/CharacterService'; // Import CharacterService
+import {
+  createItemJourneyService,
+  ItemJourneyService,
+} from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
 import { createItemService, ItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import { createLocationRelationService, LocationRelationService } from '../../services/storymanagement/LocationRelationService';
+import {
+  createLocationRelationService,
+  LocationRelationService,
+} from '../../services/storymanagement/LocationRelationService';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
 import { useStoryStore } from '../../state/storyStore';
@@ -74,7 +91,13 @@ const LocationDetailsScreen = () => {
   const [location, setLocation] = useState<LocationSelect | null>(null);
   const { canEdit } = useStoryRole(location?.storyId);
   const {
-    commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment, updateComment,
+    commentsByField,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    addComment,
+    deleteComment,
+    updateComment,
   } = useEntityComments(location?.storyId, 'Location', locationId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +117,6 @@ const LocationDetailsScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Location', entityId: locationId });
-
 
   useEffect(() => {
     if (drizzleDb) {
@@ -123,16 +145,22 @@ const LocationDetailsScreen = () => {
     useCallback(() => {
       navigation.getParent()?.setOptions({
         title: headerTitle,
-        headerRight: () => (
+        headerRight: () =>
           location && canEdit ? (
-            <TouchableOpacity onPress={() => navigation.navigate('LocationForm', { locationId: location.id })}>
-              <Ionicons name="pencil-outline" size={24} color={colors.primary} style={{ marginRight: 15 }} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('LocationForm', { locationId: location.id })}
+            >
+              <Ionicons
+                name="pencil-outline"
+                size={24}
+                color={colors.primary}
+                style={{ marginRight: 15 }}
+              />
             </TouchableOpacity>
-          ) : null
-        ),
+          ) : null,
       });
       setDocumentTitle(headerTitle);
-    }, [navigation, location, headerTitle, colors, canEdit])
+    }, [navigation, location, headerTitle, colors, canEdit]),
   );
 
   const fetchLocationDetails = useCallback(async () => {
@@ -150,8 +178,7 @@ const LocationDetailsScreen = () => {
         setHeaderTitle(fetchedLocation.name || t('location_details_title'));
       } else if (fetchedLocation && fetchedLocation.isDeleted) {
         navigation.goBack();
-      }
-      else {
+      } else {
         setError(t('location_not_found'));
         setHeaderTitle(t('location_not_found'));
       }
@@ -171,7 +198,7 @@ const LocationDetailsScreen = () => {
     }
     try {
       const fetchedCharacters = await characterServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllCharacters(fetchedCharacters.filter(c => !c.isDeleted));
+      setAllCharacters(fetchedCharacters.filter((c) => !c.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all characters:', err);
     }
@@ -186,7 +213,7 @@ const LocationDetailsScreen = () => {
       // Assuming createSceneService exists and is imported
       const sceneService = createSceneService(drizzleDb); // Need to import createSceneService
       const fetchedScenes = await sceneService.getScenesByStoryId(selectedStory.id);
-      setAllScenes(fetchedScenes.filter(s => !s.isDeleted));
+      setAllScenes(fetchedScenes.filter((s) => !s.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all scenes:', err);
     }
@@ -198,7 +225,9 @@ const LocationDetailsScreen = () => {
       return;
     }
     try {
-      const fetchedRelations = await characterSceneServiceRef.current.getRelationsByStoryId(selectedStory.id);
+      const fetchedRelations = await characterSceneServiceRef.current.getRelationsByStoryId(
+        selectedStory.id,
+      );
       setCharacterSceneRelations(fetchedRelations.filter((cs: CharacterScene) => !cs.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all character scene relations:', err);
@@ -212,7 +241,7 @@ const LocationDetailsScreen = () => {
     }
     try {
       const fetchedItems = await itemServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllItems(fetchedItems.filter(i => !i.isDeleted));
+      setAllItems(fetchedItems.filter((i) => !i.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all items:', err);
     }
@@ -224,8 +253,10 @@ const LocationDetailsScreen = () => {
       return;
     }
     try {
-      const fetchedItemJourneys = await itemJourneyServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllItemJourneys(fetchedItemJourneys.filter(ij => !ij.isDeleted));
+      const fetchedItemJourneys = await itemJourneyServiceRef.current.getAllByStoryId(
+        selectedStory.id,
+      );
+      setAllItemJourneys(fetchedItemJourneys.filter((ij) => !ij.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all item journeys:', err);
     }
@@ -238,7 +269,7 @@ const LocationDetailsScreen = () => {
     }
     try {
       const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
-      setAllLocations(fetchedLocations.filter(l => !l.isDeleted));
+      setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
     } catch (err) {
       console.error('Failed to fetch all locations:', err);
     }
@@ -250,100 +281,162 @@ const LocationDetailsScreen = () => {
       return;
     }
     try {
-      const fetchedRelations = await locationRelationServiceRef.current.getAllRelationsForStory(selectedStory.id);
+      const fetchedRelations = await locationRelationServiceRef.current.getAllRelationsForStory(
+        selectedStory.id,
+      );
       setAllLocationRelations(fetchedRelations);
     } catch (err) {
       console.error('Failed to fetch all location relations:', err);
     }
   }, [selectedStory?.id]);
 
-  const handleLocationChange = useCallback(async (changedStoryId: string, changedLocationId: string) => {
-    if (changedLocationId === locationId) {
-      if (locationServiceRef.current) {
-        const updatedLocation = await locationServiceRef.current.getById(locationId);
-        if (!updatedLocation || updatedLocation.isDeleted) {
-          navigation.goBack();
-        } else {
-          setLocation(updatedLocation);
+  const handleLocationChange = useCallback(
+    async (changedStoryId: string, changedLocationId: string) => {
+      if (changedLocationId === locationId) {
+        if (locationServiceRef.current) {
+          const updatedLocation = await locationServiceRef.current.getById(locationId);
+          if (!updatedLocation || updatedLocation.isDeleted) {
+            navigation.goBack();
+          } else {
+            setLocation(updatedLocation);
+          }
         }
       }
-    }
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllLocationsInStory();
-    }
-  }, [locationId, navigation, setLocation, selectedStory?.id, fetchAllLocationsInStory]);
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllLocationsInStory();
+      }
+    },
+    [locationId, navigation, setLocation, selectedStory?.id, fetchAllLocationsInStory],
+  );
 
-  const handleLocationRelationChange = useCallback((changedStoryId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllLocationRelationsInStory();
-    }
-  }, [selectedStory?.id, fetchAllLocationRelationsInStory]);
+  const handleLocationRelationChange = useCallback(
+    (changedStoryId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllLocationRelationsInStory();
+      }
+    },
+    [selectedStory?.id, fetchAllLocationRelationsInStory],
+  );
 
-  const handleCharacterChange = useCallback((changedStoryId: string, changedCharacterId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllCharactersInStory();
-    }
-  }, [selectedStory?.id, fetchAllCharactersInStory]);
+  const handleCharacterChange = useCallback(
+    (changedStoryId: string, changedCharacterId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllCharactersInStory();
+      }
+    },
+    [selectedStory?.id, fetchAllCharactersInStory],
+  );
 
-  const handleCharacterSceneChange = useCallback((changedStoryId: string, changedCharacterSceneId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllCharacterSceneRelations();
-    }
-  }, [selectedStory?.id, fetchAllCharacterSceneRelations]);
+  const handleCharacterSceneChange = useCallback(
+    (changedStoryId: string, changedCharacterSceneId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllCharacterSceneRelations();
+      }
+    },
+    [selectedStory?.id, fetchAllCharacterSceneRelations],
+  );
 
-  const handleSceneChange = useCallback((changedStoryId: string, changedSceneId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllScenesInStory();
-    }
-  }, [selectedStory?.id, fetchAllScenesInStory]);
+  const handleSceneChange = useCallback(
+    (changedStoryId: string, changedSceneId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllScenesInStory();
+      }
+    },
+    [selectedStory?.id, fetchAllScenesInStory],
+  );
 
-  const handleItemChange = useCallback((changedStoryId: string, changedItemId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllItemsInStory();
-    }
-  }, [selectedStory?.id, fetchAllItemsInStory]);
+  const handleItemChange = useCallback(
+    (changedStoryId: string, changedItemId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllItemsInStory();
+      }
+    },
+    [selectedStory?.id, fetchAllItemsInStory],
+  );
 
-  const handleItemJourneyChange = useCallback((changedStoryId: string, changedItemJourneyId: string) => {
-    if (selectedStory?.id === changedStoryId) {
-      fetchAllItemJourneysInStory();
-    }
-  }, [selectedStory?.id, fetchAllItemJourneysInStory]);
+  const handleItemJourneyChange = useCallback(
+    (changedStoryId: string, changedItemJourneyId: string) => {
+      if (selectedStory?.id === changedStoryId) {
+        fetchAllItemJourneysInStory();
+      }
+    },
+    [selectedStory?.id, fetchAllItemJourneysInStory],
+  );
 
-  const handleSetParent = useCallback(async (newParentId: string | null) => {
-    if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-    try {
-      await locationRelationServiceRef.current.setParent(userId, selectedStory.id, locationId, newParentId);
-    } catch (err) {
-      AppAlert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
-    }
-  }, [selectedStory?.id, userId, locationId, t]);
+  const handleSetParent = useCallback(
+    async (newParentId: string | null) => {
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+      try {
+        await locationRelationServiceRef.current.setParent(
+          userId,
+          selectedStory.id,
+          locationId,
+          newParentId,
+        );
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, locationId, t],
+  );
 
-  const handleAddChild = useCallback(async (childId: string) => {
-    if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-    try {
-      await locationRelationServiceRef.current.setParent(userId, selectedStory.id, childId, locationId);
-    } catch (err) {
-      AppAlert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
-    }
-  }, [selectedStory?.id, userId, locationId, t]);
+  const handleAddChild = useCallback(
+    async (childId: string) => {
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+      try {
+        await locationRelationServiceRef.current.setParent(
+          userId,
+          selectedStory.id,
+          childId,
+          locationId,
+        );
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, locationId, t],
+  );
 
-  const handleAddConnection = useCallback(async (otherLocationId: string) => {
-    if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-    try {
-      await locationRelationServiceRef.current.addConnection(userId, selectedStory.id, locationId, otherLocationId);
-    } catch (err) {
-      AppAlert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_save_relation'));
-    }
-  }, [selectedStory?.id, userId, locationId, t]);
+  const handleAddConnection = useCallback(
+    async (otherLocationId: string) => {
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+      try {
+        await locationRelationServiceRef.current.addConnection(
+          userId,
+          selectedStory.id,
+          locationId,
+          otherLocationId,
+        );
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, locationId, t],
+  );
 
-  const handleRemoveLocationRelation = useCallback(async (relationId: string) => {
-    if (!locationRelationServiceRef.current || !userId) return;
-    try {
-      await locationRelationServiceRef.current.removeRelation(userId, relationId);
-    } catch (err) {
-      AppAlert.alert(t('error'), err instanceof Error ? err.message : t('failed_to_remove_relation'));
-    }
-  }, [userId, t]);
+  const handleRemoveLocationRelation = useCallback(
+    async (relationId: string) => {
+      if (!locationRelationServiceRef.current || !userId) return;
+      try {
+        await locationRelationServiceRef.current.removeRelation(userId, relationId);
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_remove_relation'),
+        );
+      }
+    },
+    [userId, t],
+  );
 
   // Notes, note relations and tags are kept fresh by useEntityRelations.
   useEffect(() => {
@@ -367,8 +460,17 @@ const LocationDetailsScreen = () => {
         entityEventEmitter.off('location_relation_changed', handleLocationRelationChange);
       };
     }
-  }, [locationId, fetchLocationDetails, handleLocationChange, handleCharacterChange,
-    handleCharacterSceneChange, handleSceneChange, handleItemChange, handleItemJourneyChange, handleLocationRelationChange]);
+  }, [
+    locationId,
+    fetchLocationDetails,
+    handleLocationChange,
+    handleCharacterChange,
+    handleCharacterSceneChange,
+    handleSceneChange,
+    handleItemChange,
+    handleItemJourneyChange,
+    handleLocationRelationChange,
+  ]);
 
   useEffect(() => {
     if (location) {
@@ -380,7 +482,16 @@ const LocationDetailsScreen = () => {
       fetchAllLocationsInStory(); // Fetch all locations
       fetchAllLocationRelationsInStory(); // Fetch all Location relations
     }
-  }, [location, fetchAllCharactersInStory, fetchAllScenesInStory, fetchAllCharacterSceneRelations, fetchAllItemsInStory, fetchAllItemJourneysInStory, fetchAllLocationsInStory, fetchAllLocationRelationsInStory]);
+  }, [
+    location,
+    fetchAllCharactersInStory,
+    fetchAllScenesInStory,
+    fetchAllCharacterSceneRelations,
+    fetchAllItemsInStory,
+    fetchAllItemJourneysInStory,
+    fetchAllLocationsInStory,
+    fetchAllLocationRelationsInStory,
+  ]);
 
   const styles = StyleSheet.create({
     scrollViewContent: {
@@ -409,13 +520,15 @@ const LocationDetailsScreen = () => {
   const locationCharacterEntries = useMemo(() => {
     const scenesById = new Map(
       allScenes
-        .filter(scene => scene.locationId === locationId && !scene.isDeleted)
-        .map(scene => [scene.id, scene])
+        .filter((scene) => scene.locationId === locationId && !scene.isDeleted)
+        .map((scene) => [scene.id, scene]),
     );
-    const pairs = characterSceneRelations.flatMap(relation => {
+    const pairs = characterSceneRelations.flatMap((relation) => {
       const scene = scenesById.get(relation.sceneId);
-      const character = allCharacters.find(candidate => candidate.id === relation.characterId);
-      return scene && character && !relation.isDeleted && !character.isDeleted ? [{ item: character, scene }] : [];
+      const character = allCharacters.find((candidate) => candidate.id === relation.characterId);
+      return scene && character && !relation.isDeleted && !character.isDeleted
+        ? [{ item: character, scene }]
+        : [];
     });
     return groupScenePresenceEntries(pairs);
   }, [allCharacters, allScenes, characterSceneRelations, locationId]);
@@ -429,25 +542,96 @@ const LocationDetailsScreen = () => {
   }
 
   if (!location) {
-    return <ScreenError padded message={t('location_not_found')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError padded message={t('location_not_found')} onGoBack={() => navigation.goBack()} />
+    );
   }
 
   return (
-    <ScrollView style={commonContainerStyles.container} contentContainerStyle={styles.scrollViewContent}>
+    <ScrollView
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.scrollViewContent}
+    >
       <TagChipList tags={locationTags} />
 
       {(() => {
-        const commentableFieldProps = { storyId: location.storyId, canComment, isStoryOwner, currentUserId, onDeleteComment: deleteComment, onUpdateComment: updateComment };
+        const commentableFieldProps = {
+          storyId: location.storyId,
+          canComment,
+          isStoryOwner,
+          currentUserId,
+          onDeleteComment: deleteComment,
+          onUpdateComment: updateComment,
+        };
         return (
           <>
-            <CommentableDetailField {...commentableFieldProps} label={t('description')} value={location.description || t('common_na')} comments={commentsByField['description'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'description' }, { ...input, contentSnapshot: location.description || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('field_climate')} value={location.climate || t('common_na')} comments={commentsByField['climate'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'climate' }, { ...input, contentSnapshot: location.climate || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('field_culture')} value={location.culture || t('common_na')} comments={commentsByField['culture'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'culture' }, { ...input, contentSnapshot: location.culture || t('common_na') })} />
-            <CommentableDetailField {...commentableFieldProps} label={t('field_politics')} value={location.politics || t('common_na')} comments={commentsByField['politics'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'politics' }, { ...input, contentSnapshot: location.politics || t('common_na') })} />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('description')}
+              value={location.description || t('common_na')}
+              comments={commentsByField['description'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'description' },
+                  { ...input, contentSnapshot: location.description || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('field_climate')}
+              value={location.climate || t('common_na')}
+              comments={commentsByField['climate'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'climate' },
+                  { ...input, contentSnapshot: location.climate || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('field_culture')}
+              value={location.culture || t('common_na')}
+              comments={commentsByField['culture'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'culture' },
+                  { ...input, contentSnapshot: location.culture || t('common_na') },
+                )
+              }
+            />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('field_politics')}
+              value={location.politics || t('common_na')}
+              comments={commentsByField['politics'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'politics' },
+                  { ...input, contentSnapshot: location.politics || t('common_na') },
+                )
+              }
+            />
 
-            <CustomAttributeDetailFields storyId={location.storyId} entityType="Location" entityId={locationId} />
+            <CustomAttributeDetailFields
+              storyId={location.storyId}
+              entityType="Location"
+              entityId={locationId}
+            />
 
-            <CommentableDetailField {...commentableFieldProps} label={t('extra_notes')} value={location.extraNotes || t('common_na')} comments={commentsByField['extraNotes'] ?? []} onAddComment={(input) => addComment({ fieldKey: 'extraNotes' }, { ...input, contentSnapshot: location.extraNotes || t('common_na') })} />
+            <CommentableDetailField
+              {...commentableFieldProps}
+              label={t('extra_notes')}
+              value={location.extraNotes || t('common_na')}
+              comments={commentsByField['extraNotes'] ?? []}
+              onAddComment={(input) =>
+                addComment(
+                  { fieldKey: 'extraNotes' },
+                  { ...input, contentSnapshot: location.extraNotes || t('common_na') },
+                )
+              }
+            />
           </>
         );
       })()}
@@ -481,10 +665,12 @@ const LocationDetailsScreen = () => {
 
       <RelatedScenesList
         scenes={allScenes}
-        matchesScene={scene => scene.locationId === locationId}
+        matchesScene={(scene) => scene.locationId === locationId}
         title={t('scenes_in_location_title')}
         noItemsMessage="no_scenes_in_location"
-        getDetails={scene => scene.summary ? [{ label: t('summary'), value: scene.summary }] : []}
+        getDetails={(scene) =>
+          scene.summary ? [{ label: t('summary'), value: scene.summary }] : []
+        }
       />
 
       <LocationItemManager
@@ -506,9 +692,18 @@ const LocationDetailsScreen = () => {
         currentEntityType="Location"
       />
 
-      <SeeAlsoManager storyId={location.storyId} entityType="Location" entityId={locationId} editable={false} />
+      <SeeAlsoManager
+        storyId={location.storyId}
+        entityType="Location"
+        entityId={locationId}
+        editable={false}
+      />
 
-      <EntityMetadata version={location.version} createdAt={location.createdAt} updatedAt={location.updatedAt} />
+      <EntityMetadata
+        version={location.version}
+        createdAt={location.createdAt}
+        updatedAt={location.updatedAt}
+      />
       <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />
     </ScrollView>
   );

@@ -35,7 +35,11 @@ export function decodeSeeAlsoValue(value: string): SeeAlsoEntityRef | null {
  * história, exceto a própria entidade atual (uma entidade não pode se auto-referenciar).
  * Mesma estrutura de `useGalleryOwnerOptions`, generalizada para os 8 tipos.
  */
-export function useSeeAlsoEntityOptions(storyId: string | undefined, excludeEntityType: SeeAlsoEntityType, excludeEntityId: string | undefined) {
+export function useSeeAlsoEntityOptions(
+  storyId: string | undefined,
+  excludeEntityType: SeeAlsoEntityType,
+  excludeEntityId: string | undefined,
+) {
   const db = useDrizzle();
   const { t } = useTranslation();
   const [options, setOptions] = useState<SeeAlsoEntityOption[]>([]);
@@ -49,33 +53,53 @@ export function useSeeAlsoEntityOptions(storyId: string | undefined, excludeEnti
 
     setLoading(true);
     try {
-      const [characters, locations, chapters, scenes, items, itemJourneys, worldRules, choices] = await Promise.all([
-        db.select({ id: schema.characters.id, name: schema.characters.name })
-          .from(schema.characters)
-          .where(and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false))),
-        db.select({ id: schema.locations.id, name: schema.locations.name })
-          .from(schema.locations)
-          .where(and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false))),
-        db.select({ id: schema.chapters.id, name: schema.chapters.name })
-          .from(schema.chapters)
-          .where(and(eq(schema.chapters.storyId, storyId), eq(schema.chapters.isDeleted, false))),
-        db.select({ id: schema.scenes.id, name: schema.scenes.name })
-          .from(schema.scenes)
-          .where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false))),
-        db.select({ id: schema.items.id, name: schema.items.name })
-          .from(schema.items)
-          .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false))),
-        // ItemJourney não tem "name" próprio - newState é o campo mais próximo de um título.
-        db.select({ id: schema.itemJourneys.id, name: schema.itemJourneys.newState })
-          .from(schema.itemJourneys)
-          .where(and(eq(schema.itemJourneys.storyId, storyId), eq(schema.itemJourneys.isDeleted, false))),
-        db.select({ id: schema.worldRules.id, name: schema.worldRules.title })
-          .from(schema.worldRules)
-          .where(and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false))),
-        db.select({ id: schema.choices.id, name: schema.choices.text })
-          .from(schema.choices)
-          .where(and(eq(schema.choices.storyId, storyId), eq(schema.choices.isDeleted, false))),
-      ]);
+      const [characters, locations, chapters, scenes, items, itemJourneys, worldRules, choices] =
+        await Promise.all([
+          db
+            .select({ id: schema.characters.id, name: schema.characters.name })
+            .from(schema.characters)
+            .where(
+              and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false)),
+            ),
+          db
+            .select({ id: schema.locations.id, name: schema.locations.name })
+            .from(schema.locations)
+            .where(
+              and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false)),
+            ),
+          db
+            .select({ id: schema.chapters.id, name: schema.chapters.name })
+            .from(schema.chapters)
+            .where(and(eq(schema.chapters.storyId, storyId), eq(schema.chapters.isDeleted, false))),
+          db
+            .select({ id: schema.scenes.id, name: schema.scenes.name })
+            .from(schema.scenes)
+            .where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false))),
+          db
+            .select({ id: schema.items.id, name: schema.items.name })
+            .from(schema.items)
+            .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false))),
+          // ItemJourney não tem "name" próprio - newState é o campo mais próximo de um título.
+          db
+            .select({ id: schema.itemJourneys.id, name: schema.itemJourneys.newState })
+            .from(schema.itemJourneys)
+            .where(
+              and(
+                eq(schema.itemJourneys.storyId, storyId),
+                eq(schema.itemJourneys.isDeleted, false),
+              ),
+            ),
+          db
+            .select({ id: schema.worldRules.id, name: schema.worldRules.title })
+            .from(schema.worldRules)
+            .where(
+              and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
+            ),
+          db
+            .select({ id: schema.choices.id, name: schema.choices.text })
+            .from(schema.choices)
+            .where(and(eq(schema.choices.storyId, storyId), eq(schema.choices.isDeleted, false))),
+        ]);
 
       const byType: Record<SeeAlsoEntityType, { id: string; name: string | null }[]> = {
         Character: characters,
@@ -118,7 +142,7 @@ export function useSeeAlsoEntityOptions(storyId: string | undefined, excludeEnti
 
   const optionsByValue = useMemo(
     () => new Map(options.map((option) => [option.value, option])),
-    [options]
+    [options],
   );
 
   const groupedOptions: GroupedMultiSelectGroup[] = useMemo(() => {

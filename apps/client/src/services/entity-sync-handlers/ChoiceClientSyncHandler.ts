@@ -49,7 +49,8 @@ export class ChoiceClientSyncHandler implements ClientSyncEntityHandler {
 
     const changes = update.changes as Partial<Choice>;
 
-    await this.db.update(schema.choices)
+    await this.db
+      .update(schema.choices)
       .set({
         ...changes,
         updatedAt: new Date(),
@@ -68,7 +69,8 @@ export class ChoiceClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.choices)
+    await this.db
+      .update(schema.choices)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

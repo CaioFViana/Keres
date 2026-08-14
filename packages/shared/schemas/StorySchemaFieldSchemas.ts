@@ -13,7 +13,9 @@ export const StorySchemaFieldSchema = z.object({
   storyId: z.string(),
   entityType: StorySchemaEntityTypeSchema,
   name: z.string().min(1, 'Display name cannot be empty'),
-  key: z.string().regex(AttributeKeyRegex, 'Internal key must be lowercase snake_case starting with a letter'),
+  key: z
+    .string()
+    .regex(AttributeKeyRegex, 'Internal key must be lowercase snake_case starting with a letter'),
   description: z.string().nullable(),
   type: AttributeTypeSchema,
   isRequired: z.boolean(),

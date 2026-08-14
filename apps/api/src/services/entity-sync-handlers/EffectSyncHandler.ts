@@ -1,25 +1,27 @@
-import { CreateEffectDataSchema, CreateStoryUpdate, DeleteStoryUpdate, PartialEffectSchema, UpdateStoryUpdate } from '@keres/shared';
+import {
+  CreateEffectDataSchema,
+  CreateStoryUpdate,
+  DeleteStoryUpdate,
+  PartialEffectSchema,
+  UpdateStoryUpdate,
+} from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { effects, items } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class EffectSyncHandler extends BaseSyncEntityHandler<typeof CreateEffectDataSchema, typeof PartialEffectSchema> {
+export class EffectSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateEffectDataSchema,
+  typeof PartialEffectSchema
+> {
   entityName = 'Effect';
 
   constructor() {
-    super(
-      'effects',
-      'id',
-      'version',
-      CreateEffectDataSchema,
-      PartialEffectSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      }
-    );
+    super('effects', 'id', 'version', CreateEffectDataSchema, PartialEffectSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   // Sem validação de existência para entityId (Scene ou Choice) - polimórfico, sem FK de
@@ -30,7 +32,9 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<typeof CreateEffect
         where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
       });
       if (!itemExists) {
-        throw new Error(`Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`);
+        throw new Error(
+          `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
+        );
       }
     }
   }
@@ -61,7 +65,12 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<typeof CreateEffect
     });
   }
 
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, currentEntity: any): Promise<void> {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.itemId !== undefined) {
@@ -71,7 +80,12 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<typeof CreateEffect
     await super.update(userId, storyId, update, currentEntity);
   }
 
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, currentEntity: any): Promise<void> {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    currentEntity: any,
+  ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity);
   }
 }

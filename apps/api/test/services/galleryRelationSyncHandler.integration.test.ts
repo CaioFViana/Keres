@@ -17,7 +17,8 @@ let userId: string;
 let storyId: string;
 let galleryId: string;
 let owners: Record<string, string>;
-const create = (entity: string, id: string, data: Record<string, unknown>) => ({ type: 'create', entity, id, data } as CreateStoryUpdate);
+const create = (entity: string, id: string, data: Record<string, unknown>) =>
+  ({ type: 'create', entity, id, data }) as CreateStoryUpdate;
 
 beforeEach(async () => {
   await truncateAll();
@@ -31,34 +32,168 @@ beforeEach(async () => {
   const itemId = newId();
   const noteId = newId();
   galleryId = newId();
-  owners = { Character: characterId, Location: locationId, Scene: sceneId, Item: itemId, Note: noteId };
-  await db.insert(users).values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
-  await db.insert(stories).values({ id: storyId, userId, title: 'A Queda', type: 'linear', createdAt: now, updatedAt: now, version: 1, isDeleted: false } as never);
-  await new ChapterSyncHandler().create(userId, storyId, create('Chapter', chapterId, { name: 'Prólogo', index: 1, summary: null, isFavorite: false, extraNotes: null }));
-  await new LocationSyncHandler().create(userId, storyId, create('Location', locationId, { name: 'Olimpo', description: null, climate: null, culture: null, politics: null, isFavorite: false, extraNotes: null }));
-  await new CharacterSyncHandler().create(userId, storyId, create('Character', characterId, { name: 'Keres' }));
-  await new SceneSyncHandler().create(userId, storyId, create('Scene', sceneId, { chapterId, locationId, name: 'Chegada', index: 0, summary: null, gap: null, gapType: null, duration: null, durationType: null, isStart: true, isFinish: false, isFavorite: false, extraNotes: null }));
-  await new ItemSyncHandler().create(userId, storyId, create('Item', itemId, { characterOwnerId: characterId, name: 'Chave', category: null, description: null, initialState: null, isFavorite: false, extraNotes: null }));
-  await new NoteSyncHandler().create(userId, storyId, create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }));
-  await new GallerySyncHandler().create(userId, storyId, create('Gallery', galleryId, { mediaType: 'image', mimeType: 'image/png', fileName: 'nyx.png', hash: 'a'.repeat(32), sizeBytes: 1, title: null, isFavorite: false, extraNotes: null }));
+  owners = {
+    Character: characterId,
+    Location: locationId,
+    Scene: sceneId,
+    Item: itemId,
+    Note: noteId,
+  };
+  await db
+    .insert(users)
+    .values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
+  await db.insert(stories).values({
+    id: storyId,
+    userId,
+    title: 'A Queda',
+    type: 'linear',
+    createdAt: now,
+    updatedAt: now,
+    version: 1,
+    isDeleted: false,
+  } as never);
+  await new ChapterSyncHandler().create(
+    userId,
+    storyId,
+    create('Chapter', chapterId, {
+      name: 'Prólogo',
+      index: 1,
+      summary: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new LocationSyncHandler().create(
+    userId,
+    storyId,
+    create('Location', locationId, {
+      name: 'Olimpo',
+      description: null,
+      climate: null,
+      culture: null,
+      politics: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new CharacterSyncHandler().create(
+    userId,
+    storyId,
+    create('Character', characterId, { name: 'Keres' }),
+  );
+  await new SceneSyncHandler().create(
+    userId,
+    storyId,
+    create('Scene', sceneId, {
+      chapterId,
+      locationId,
+      name: 'Chegada',
+      index: 0,
+      summary: null,
+      gap: null,
+      gapType: null,
+      duration: null,
+      durationType: null,
+      isStart: true,
+      isFinish: false,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new ItemSyncHandler().create(
+    userId,
+    storyId,
+    create('Item', itemId, {
+      characterOwnerId: characterId,
+      name: 'Chave',
+      category: null,
+      description: null,
+      initialState: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
+  await new NoteSyncHandler().create(
+    userId,
+    storyId,
+    create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
+  );
+  await new GallerySyncHandler().create(
+    userId,
+    storyId,
+    create('Gallery', galleryId, {
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'nyx.png',
+      hash: 'a'.repeat(32),
+      sizeBytes: 1,
+      title: null,
+      isFavorite: false,
+      extraNotes: null,
+    }),
+  );
 });
 
 describe('gallery relation sync handler', () => {
-  it.each(['Character', 'Location', 'Note', 'Scene', 'Item'] as const)('links a gallery to a valid %s owner', async (ownerType) => {
-    const handler = new GalleryRelationSyncHandler();
-    const id = newId();
-    await handler.create(userId, storyId, create('GalleryRelation', id, { galleryId, ownerId: owners[ownerType], ownerType }));
-    expect(await handler.findById(id)).toMatchObject({ galleryId, ownerId: owners[ownerType], ownerType, isDeleted: false });
-  });
+  it.each(['Character', 'Location', 'Note', 'Scene', 'Item'] as const)(
+    'links a gallery to a valid %s owner',
+    async (ownerType) => {
+      const handler = new GalleryRelationSyncHandler();
+      const id = newId();
+      await handler.create(
+        userId,
+        storyId,
+        create('GalleryRelation', id, { galleryId, ownerId: owners[ownerType], ownerType }),
+      );
+      expect(await handler.findById(id)).toMatchObject({
+        galleryId,
+        ownerId: owners[ownerType],
+        ownerType,
+        isDeleted: false,
+      });
+    },
+  );
 
   it('rejects duplicates and can retarget a relation to another valid owner', async () => {
     const handler = new GalleryRelationSyncHandler();
     const id = newId();
-    await handler.create(userId, storyId, create('GalleryRelation', id, { galleryId, ownerId: owners.Character, ownerType: 'Character' }));
-    await expect(handler.create(userId, storyId, create('GalleryRelation', newId(), { galleryId, ownerId: owners.Character, ownerType: 'Character' }))).rejects.toThrow(/already linked/i);
+    await handler.create(
+      userId,
+      storyId,
+      create('GalleryRelation', id, {
+        galleryId,
+        ownerId: owners.Character,
+        ownerType: 'Character',
+      }),
+    );
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('GalleryRelation', newId(), {
+          galleryId,
+          ownerId: owners.Character,
+          ownerType: 'Character',
+        }),
+      ),
+    ).rejects.toThrow(/already linked/i);
 
     const current = await handler.findById(id);
-    await handler.update(userId, storyId, { type: 'update', entity: 'GalleryRelation', id, changes: { ownerId: owners.Item, ownerType: 'Item', version: 1 } } as UpdateStoryUpdate, current);
-    expect(await handler.findById(id)).toMatchObject({ ownerId: owners.Item, ownerType: 'Item', version: 2 });
+    await handler.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'GalleryRelation',
+        id,
+        changes: { ownerId: owners.Item, ownerType: 'Item', version: 1 },
+      } as UpdateStoryUpdate,
+      current,
+    );
+    expect(await handler.findById(id)).toMatchObject({
+      ownerId: owners.Item,
+      ownerType: 'Item',
+      version: 2,
+    });
   });
 });

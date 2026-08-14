@@ -24,10 +24,10 @@ const MainDashboardScreen = () => {
   const { selectedStory } = useStoryStore();
   const { isWide } = useResponsiveLayout();
   const db = useDrizzle(); // Get the Drizzle client
-  const navigation = useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
+  const navigation =
+    useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
   const { showNotification } = useNotificationStore();
   const { t } = useTranslation();
-
 
   const [characterCount, setCharacterCount] = useState<number | undefined>(undefined);
   const [locationCount, setLocationCount] = useState<number | undefined>(undefined);
@@ -48,7 +48,7 @@ const MainDashboardScreen = () => {
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(selectedStory?.title || t('dashboard_title'));
-    }, [selectedStory?.title, t])
+    }, [selectedStory?.title, t]),
   );
 
   useEffect(() => {
@@ -65,16 +65,18 @@ const MainDashboardScreen = () => {
             CommonActions.reset({
               index: 0,
               routes: [{ name: 'StorySelection' }],
-            })
+            }),
           );
         } else {
-          console.error("Could not find root stack navigation to dispatch reset action. This is unexpected.");
+          console.error(
+            'Could not find root stack navigation to dispatch reset action. This is unexpected.',
+          );
           // Fallback to current navigation context if parent not found
           navigation.dispatch(
             CommonActions.reset({
               index: 0,
               routes: [{ name: 'StorySelection' }],
-            })
+            }),
           );
         }
         return true; // Event handled
@@ -135,7 +137,6 @@ const MainDashboardScreen = () => {
         setTagCount(tags);
         setCustomAttributeCount(customAttributes);
         setForkCount(forks);
-
       } catch (error) {
         console.error('Error fetching entity counts:', error);
       }
@@ -173,7 +174,7 @@ const MainDashboardScreen = () => {
     useCallback(() => {
       fetchCounts();
       runAnalysis();
-    }, [fetchCounts, runAnalysis])
+    }, [fetchCounts, runAnalysis]),
   );
 
   useEffect(() => {
@@ -270,7 +271,6 @@ const MainDashboardScreen = () => {
 
       <SummaryCard
         title={t('story_overview')}
-
         characterCount={characterCount}
         locationCount={locationCount}
         chapterCount={chapterCount}
@@ -286,12 +286,13 @@ const MainDashboardScreen = () => {
         branchingStoryForkCount={forkCount}
         analysisSummary={
           selectedStory?.id && analysisIssueCount !== undefined
-            ? { issueCount: analysisIssueCount, onPress: () => navigation.navigate('StoryAnalysis', { storyId: selectedStory.id }) }
+            ? {
+                issueCount: analysisIssueCount,
+                onPress: () => navigation.navigate('StoryAnalysis', { storyId: selectedStory.id }),
+              }
             : undefined
         }
       />
-
-      
 
       {selectedStory?.id && (
         <>

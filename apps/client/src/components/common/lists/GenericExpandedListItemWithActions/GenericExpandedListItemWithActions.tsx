@@ -5,7 +5,7 @@ import GenericListItem from '@/src/components/common/lists/GenericListItem/Gener
 import FavoriteButton from '@/src/components/common/lists/GenericExpandedListItemWithActions/Buttons/FavoriteButton';
 import ViewDetailsButton from '@/src/components/common/lists/GenericExpandedListItemWithActions/Buttons/ViewDetailsButton';
 
-interface GenericExpandedListItemWithActionsProps<T extends { id: string; isFavorite?: boolean; }> {
+interface GenericExpandedListItemWithActionsProps<T extends { id: string; isFavorite?: boolean }> {
   item: T;
   onToggleFavorite?: (itemId: string, isFavorite: boolean) => void;
   onViewDetails?: (itemId: string) => void;
@@ -14,7 +14,7 @@ interface GenericExpandedListItemWithActionsProps<T extends { id: string; isFavo
   initialExpanded?: boolean;
 }
 
-const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?: boolean; }>({
+const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?: boolean }>({
   item,
   onToggleFavorite,
   onViewDetails,
@@ -28,9 +28,7 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
 
   const rightActions = (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      {onViewDetails && (
-        <ViewDetailsButton onPress={() => onViewDetails(item.id)} />
-      )}
+      {onViewDetails && <ViewDetailsButton onPress={() => onViewDetails(item.id)} />}
       {item.isFavorite !== undefined && onToggleFavorite && (
         <FavoriteButton
           isFavorite={item.isFavorite}

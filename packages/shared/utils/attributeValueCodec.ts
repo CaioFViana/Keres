@@ -10,7 +10,7 @@ import { AttributeType } from '../metadata/AttributeType';
  */
 export function encodeAttributeValue(
   type: AttributeType,
-  raw: string | number | boolean | null | undefined
+  raw: string | number | boolean | null | undefined,
 ): string | null {
   if (raw === null || raw === undefined || raw === '') {
     return null;
@@ -27,7 +27,10 @@ export function encodeAttributeValue(
   }
 }
 
-export function decodeAttributeValue(type: AttributeType, stored: string | null | undefined): string | number | boolean | null {
+export function decodeAttributeValue(
+  type: AttributeType,
+  stored: string | null | undefined,
+): string | number | boolean | null {
   if (stored === null || stored === undefined || stored === '') {
     return null;
   }

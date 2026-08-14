@@ -31,18 +31,24 @@ const CommentList: React.FC<CommentListProps> = ({ storyId, pageSize = 20, onPre
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  const fetchComments = useCallback(async (targetPage: number) => {
-    setLoading(true);
-    try {
-      const result = await commentService.getAllCommentsForStory(storyId, { page: targetPage, pageSize });
-      setComments((current) => (targetPage === 0 ? result.items : [...current, ...result.items]));
-      setTotal(result.total);
-    } catch (error) {
-      console.error('Failed to load comments:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [commentService, storyId, pageSize]);
+  const fetchComments = useCallback(
+    async (targetPage: number) => {
+      setLoading(true);
+      try {
+        const result = await commentService.getAllCommentsForStory(storyId, {
+          page: targetPage,
+          pageSize,
+        });
+        setComments((current) => (targetPage === 0 ? result.items : [...current, ...result.items]));
+        setTotal(result.total);
+      } catch (error) {
+        console.error('Failed to load comments:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [commentService, storyId, pageSize],
+  );
 
   useEffect(() => {
     setPage(0);
@@ -101,11 +107,13 @@ const CommentList: React.FC<CommentListProps> = ({ storyId, pageSize = 20, onPre
           renderItem={({ item }) => <CommentListItem comment={item} onPress={onPressItem} />}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={() => (loading ? (
-            <View style={styles.footer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
-          ) : null)}
+          ListFooterComponent={() =>
+            loading ? (
+              <View style={styles.footer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : null
+          }
         />
       )}
     </View>

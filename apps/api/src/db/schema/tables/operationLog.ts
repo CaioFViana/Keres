@@ -6,8 +6,12 @@ import { operationTypeEnum } from '../enums';
 
 export const operationLog = pgTable('operation_log', {
   id: text('id').primaryKey(),
-  storyId: text('story_id').notNull().references(() => stories.id),
-  userId: text('user_id').notNull().references(() => users.id),
+  storyId: text('story_id')
+    .notNull()
+    .references(() => stories.id),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
   operationVersion: integer('operation_version').notNull(), // Unique per storyId
   operationType: operationTypeEnum('operation_type').notNull(),
   entityType: text('entity_type').notNull(),

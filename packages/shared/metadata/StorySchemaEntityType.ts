@@ -17,4 +17,4 @@ export const STORY_SCHEMA_ENTITY_TYPES = [
   'WorldRule',
 ] as const;
 
-export type StorySchemaEntityType = typeof STORY_SCHEMA_ENTITY_TYPES[number];
+export type StorySchemaEntityType = (typeof STORY_SCHEMA_ENTITY_TYPES)[number];

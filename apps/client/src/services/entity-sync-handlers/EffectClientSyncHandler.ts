@@ -34,7 +34,7 @@ export class EffectClientSyncHandler implements ClientSyncEntityHandler {
       id: update.id,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
-      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null
+      deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
     });
     console.log(`Applied create for Effect ${update.id}`);
   }
@@ -49,7 +49,8 @@ export class EffectClientSyncHandler implements ClientSyncEntityHandler {
 
     const changes = update.changes as Partial<Effect>;
 
-    await this.db.update(schema.effects)
+    await this.db
+      .update(schema.effects)
       .set({
         ...changes,
         updatedAt: new Date(),
@@ -68,7 +69,8 @@ export class EffectClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.effects)
+    await this.db
+      .update(schema.effects)
       .set({
         isDeleted: true,
         deletedAt: new Date(),

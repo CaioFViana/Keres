@@ -74,13 +74,16 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
   }, [groups]);
 
   const selectedOptionDetails = useMemo(
-    () => selectedValues.map((value) => optionsByValue.get(value)).filter(Boolean) as GroupedMultiSelectOption[],
-    [selectedValues, optionsByValue]
+    () =>
+      selectedValues
+        .map((value) => optionsByValue.get(value))
+        .filter(Boolean) as GroupedMultiSelectOption[],
+    [selectedValues, optionsByValue],
   );
 
   const activeGroup = useMemo(
     () => groups.find((group) => group.key === activeGroupKey) || null,
-    [groups, activeGroupKey]
+    [groups, activeGroupKey],
   );
 
   const visibleOptions = useMemo(() => {
@@ -90,12 +93,15 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
     return activeGroup.options.filter((option) => option.label.toLowerCase().includes(query));
   }, [activeGroup, search]);
 
-  const toggleOption = useCallback((value: string) => {
-    const newSelection = selectedValues.includes(value)
-      ? selectedValues.filter((v) => v !== value)
-      : [...selectedValues, value];
-    onSelectionChange(newSelection);
-  }, [selectedValues, onSelectionChange]);
+  const toggleOption = useCallback(
+    (value: string) => {
+      const newSelection = selectedValues.includes(value)
+        ? selectedValues.filter((v) => v !== value)
+        : [...selectedValues, value];
+      onSelectionChange(newSelection);
+    },
+    [selectedValues, onSelectionChange],
+  );
 
   const openModal = useCallback(() => {
     setModalVisible(true);
@@ -276,8 +282,13 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
       <TouchableOpacity onPress={openModal} style={styles.pillContainer}>
         {selectedOptionDetails.length > 0 ? (
           selectedOptionDetails.map((option) => (
-            <View key={option.value} style={[styles.pill, { backgroundColor: colors.primaryContainer }]}>
-              <Text style={[styles.pillText, { color: getContrastTextColor(colors.primaryContainer) }]}>
+            <View
+              key={option.value}
+              style={[styles.pill, { backgroundColor: colors.primaryContainer }]}
+            >
+              <Text
+                style={[styles.pillText, { color: getContrastTextColor(colors.primaryContainer) }]}
+              >
                 {option.label}
               </Text>
             </View>
@@ -285,7 +296,12 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
         ) : (
           <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
         )}
-        <Ionicons name="add-circle" size={24} color={colors.primary} style={{ marginLeft: 'auto' }} />
+        <Ionicons
+          name="add-circle"
+          size={24}
+          color={colors.primary}
+          style={{ marginLeft: 'auto' }}
+        />
       </TouchableOpacity>
 
       <Modal transparent visible={modalVisible} onRequestClose={closeModal} animationType="fade">
@@ -314,7 +330,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                     </TouchableOpacity>
                   )}
                   <Text style={styles.modalTitle} numberOfLines={1}>
-                    {activeGroup ? activeGroup.label : (label || t('select_tags'))}
+                    {activeGroup ? activeGroup.label : label || t('select_tags')}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
@@ -336,7 +352,9 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
               <ScrollView keyboardShouldPersistTaps="handled">
                 {!activeGroup ? (
                   groups.map((group) => {
-                    const selectedCount = group.options.filter((option) => selectedValues.includes(option.value)).length;
+                    const selectedCount = group.options.filter((option) =>
+                      selectedValues.includes(option.value),
+                    ).length;
                     const disabled = group.options.length === 0;
                     return (
                       <TouchableOpacity
@@ -346,15 +364,27 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                         disabled={disabled}
                       >
                         {group.icon && (
-                          <View style={[styles.groupIcon, { backgroundColor: group.color || colors.primaryContainer }]}>
-                            <Ionicons name={group.icon} size={18} color={getContrastTextColor(group.color || colors.primaryContainer)} />
+                          <View
+                            style={[
+                              styles.groupIcon,
+                              { backgroundColor: group.color || colors.primaryContainer },
+                            ]}
+                          >
+                            <Ionicons
+                              name={group.icon}
+                              size={18}
+                              color={getContrastTextColor(group.color || colors.primaryContainer)}
+                            />
                           </View>
                         )}
                         <View style={styles.groupTextWrap}>
                           <Text style={styles.groupLabel}>{group.label}</Text>
                           <Text style={styles.groupCount}>
                             {selectedCount > 0
-                              ? t('grouped_select_count_selected', { selected: selectedCount, total: group.options.length })
+                              ? t('grouped_select_count_selected', {
+                                  selected: selectedCount,
+                                  total: group.options.length,
+                                })
                               : t('grouped_select_count_total', { total: group.options.length })}
                           </Text>
                         </View>
@@ -376,7 +406,9 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                     </TouchableOpacity>
                   ))
                 ) : (
-                  <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
+                  <Text style={styles.noOptionsText}>
+                    {noOptionsText || t('no_tags_available')}
+                  </Text>
                 )}
               </ScrollView>
             </>

@@ -51,7 +51,8 @@ export class ChapterClientSyncHandler implements ClientSyncEntityHandler {
 
     const chapterChanges = update.changes as Partial<Chapter>;
 
-    await this.db.update(schema.chapters)
+    await this.db
+      .update(schema.chapters)
       .set({
         ...chapterChanges,
         storyId: storyId, // Ensure storyId is set for the update context
@@ -72,7 +73,8 @@ export class ChapterClientSyncHandler implements ClientSyncEntityHandler {
       return;
     }
 
-    await this.db.update(schema.chapters)
+    await this.db
+      .update(schema.chapters)
       .set({
         storyId: storyId,
         isDeleted: true,

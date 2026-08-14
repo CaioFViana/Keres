@@ -14,7 +14,10 @@ interface SceneReorderModalProps {
   onClose: () => void;
   storyId: string; // Add storyId prop
   scenes: SceneSelect[];
-  onReorderConfirm: (chapterId: string, newOrder: { id: string, newIndex: number }[]) => Promise<void>; // Update signature
+  onReorderConfirm: (
+    chapterId: string,
+    newOrder: { id: string; newIndex: number }[],
+  ) => Promise<void>; // Update signature
 }
 
 const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
@@ -27,7 +30,12 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle(); // Get drizzleDb from useDrizzle
-  const { chapters, fetchChapters, setDbAndStoryId: setChapterDbAndStoryId, initializeService: initializeChapterService } = useChapterStore();
+  const {
+    chapters,
+    fetchChapters,
+    setDbAndStoryId: setChapterDbAndStoryId,
+    initializeService: initializeChapterService,
+  } = useChapterStore();
 
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [reorderedScenes, setReorderedScenes] = useState<SceneSelect[]>([]);
@@ -52,7 +60,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
     if (!selectedChapterId) {
       return [];
     }
-    return scenes.filter(scene => scene.chapterId === selectedChapterId);
+    return scenes.filter((scene) => scene.chapterId === selectedChapterId);
   }, [scenes, selectedChapterId]);
 
   useEffect(() => {
@@ -61,7 +69,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
   }, [filteredScenes, isVisible]);
 
   const moveScene = useCallback((index: number, direction: 'up' | 'down') => {
-    setReorderedScenes(prevScenes => {
+    setReorderedScenes((prevScenes) => {
       const newScenes = [...prevScenes];
       const sceneToMove = newScenes[index];
       let targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -94,7 +102,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
   }, [selectedChapterId, reorderedScenes, onReorderConfirm, onClose]);
 
   const chapterOptions = useMemo(() => {
-    return chapters.map(chapter => ({ label: chapter.name, value: chapter.id }));
+    return chapters.map((chapter) => ({ label: chapter.name, value: chapter.id }));
   }, [chapters]);
 
   const styles = StyleSheet.create({
@@ -161,38 +169,53 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
       textAlign: 'center',
       color: colors.textSecondary,
       marginTop: 20,
-    }
+    },
   });
 
-  const renderItem = useCallback(({ item, index }: { item: SceneSelect, index: number }) => (
-    <View style={styles.sceneItem}>
-      <Text style={styles.sceneName}>{item.name}</Text>
-      <View style={styles.controls}>
-        <TouchableOpacity
-          onPress={() => moveScene(index, 'up')}
-          disabled={index === 0}
-          style={styles.controlButton}
-        >
-          <Ionicons name="arrow-up" size={24} color={index === 0 ? colors.textSecondary : colors.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => moveScene(index, 'down')}
-          disabled={index === reorderedScenes.length - 1}
-          style={styles.controlButton}
-        >
-          <Ionicons name="arrow-down" size={24} color={index === reorderedScenes.length - 1 ? colors.textSecondary : colors.primary} />
-        </TouchableOpacity>
+  const renderItem = useCallback(
+    ({ item, index }: { item: SceneSelect; index: number }) => (
+      <View style={styles.sceneItem}>
+        <Text style={styles.sceneName}>{item.name}</Text>
+        <View style={styles.controls}>
+          <TouchableOpacity
+            onPress={() => moveScene(index, 'up')}
+            disabled={index === 0}
+            style={styles.controlButton}
+          >
+            <Ionicons
+              name="arrow-up"
+              size={24}
+              color={index === 0 ? colors.textSecondary : colors.primary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => moveScene(index, 'down')}
+            disabled={index === reorderedScenes.length - 1}
+            style={styles.controlButton}
+          >
+            <Ionicons
+              name="arrow-down"
+              size={24}
+              color={index === reorderedScenes.length - 1 ? colors.textSecondary : colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  ), [reorderedScenes, moveScene, colors.primary, colors.textSecondary, styles.controlButton, styles.controls, styles.sceneItem, styles.sceneName]);
+    ),
+    [
+      reorderedScenes,
+      moveScene,
+      colors.primary,
+      colors.textSecondary,
+      styles.controlButton,
+      styles.controls,
+      styles.sceneItem,
+      styles.sceneName,
+    ],
+  );
 
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="fade" transparent={true} visible={isVisible} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
@@ -220,14 +243,26 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
             data={reorderedScenes}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
-            ListEmptyComponent={!selectedChapterId ? <Text style={styles.emptyListText}>{t('select_chapter_to_view_scenes')}</Text> : null}
+            ListEmptyComponent={
+              !selectedChapterId ? (
+                <Text style={styles.emptyListText}>{t('select_chapter_to_view_scenes')}</Text>
+              ) : null
+            }
           />
           <View style={styles.buttonContainer}>
             <View style={styles.buttonWrapper}>
-              <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>{t('common_cancel')}</Button>
+              <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
+                {t('common_cancel')}
+              </Button>
             </View>
             <View style={styles.buttonWrapper}>
-              <Button onPress={handleConfirm} style={{ backgroundColor: colors.primary }} disabled={!selectedChapterId || reorderedScenes.length === 0}>{t('common_confirm')}</Button>
+              <Button
+                onPress={handleConfirm}
+                style={{ backgroundColor: colors.primary }}
+                disabled={!selectedChapterId || reorderedScenes.length === 0}
+              >
+                {t('common_confirm')}
+              </Button>
             </View>
           </View>
         </View>

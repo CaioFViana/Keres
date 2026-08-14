@@ -6,7 +6,10 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import ItemListItem from '@/src/components/features/list-items/ItemListItem';
 import { ItemSelect } from '../../db/schemas/items';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -50,27 +53,35 @@ const ItemListScreen = () => {
 
   const { canEdit } = useStoryRole(storyId);
 
-  const handleViewDetails = useCallback((itemId: string) => {
-    navigation.navigate('ItemDetail', { itemId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (itemId: string) => {
+      navigation.navigate('ItemDetail', { itemId });
+    },
+    [navigation],
+  );
 
-  const memoizedItemListItem = useCallback(({ item }: { item: ItemSelect }) => (
-    <ItemListItem item={item} onViewDetails={handleViewDetails} />
-  ), [handleViewDetails]);
+  const memoizedItemListItem = useCallback(
+    ({ item }: { item: ItemSelect }) => (
+      <ItemListItem item={item} onViewDetails={handleViewDetails} />
+    ),
+    [handleViewDetails],
+  );
 
-  const memoizedSortOptions = useMemo(() => ([
-    { label: t('sort_by_name'), value: 'name' },
-    { label: t('sort_by_category'), value: 'category' },
-    { label: t('sort_by_created_at'), value: 'createdAt' },
-    { label: t('sort_by_updated_at'), value: 'updatedAt' }
-  ]), [t]);
-
+  const memoizedSortOptions = useMemo(
+    () => [
+      { label: t('sort_by_name'), value: 'name' },
+      { label: t('sort_by_category'), value: 'category' },
+      { label: t('sort_by_created_at'), value: 'createdAt' },
+      { label: t('sort_by_updated_at'), value: 'updatedAt' },
+    ],
+    [t],
+  );
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     headerRightContainer: { flexDirection: 'row', marginRight: 15 },
     headerButton: { marginLeft: 15 },
-    filterContainer: { flexDirection: 'row', padding:0, paddingBottom: 10, zIndex: 1000 },
+    filterContainer: { flexDirection: 'row', padding: 0, paddingBottom: 10, zIndex: 1000 },
   });
 
   useFocusEffect(
@@ -78,15 +89,20 @@ const ItemListScreen = () => {
       setDocumentTitle(t('items_title'));
       navigation.getParent()?.setOptions({
         title: t('items_title'),
-        headerRight: canEdit ? () => (
-          <View style={styles.headerRightContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('ItemForm', {})} style={styles.headerButton}>
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-        ) : undefined,
+        headerRight: canEdit
+          ? () => (
+              <View style={styles.headerRightContainer}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ItemForm', {})}
+                  style={styles.headerButton}
+                >
+                  <Ionicons name="add" size={30} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+            )
+          : undefined,
       });
-    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit])
+    }, [navigation, colors.text, t, styles.headerButton, styles.headerRightContainer, canEdit]),
   );
 
   // Temporarily simplified filter component for Items

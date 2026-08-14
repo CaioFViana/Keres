@@ -35,7 +35,9 @@ export const ENTITY_TABLES = {
 export type SyncableEntityName = keyof typeof ENTITY_TABLES;
 
 export function getEntityTable(entityType: string) {
-  return (ENTITY_TABLES as Record<string, (typeof ENTITY_TABLES)[SyncableEntityName] | undefined>)[entityType];
+  return (ENTITY_TABLES as Record<string, (typeof ENTITY_TABLES)[SyncableEntityName] | undefined>)[
+    entityType
+  ];
 }
 
 /** Campos de data: chegam como string no JSON e as tabelas locais esperam `Date`. */
@@ -51,7 +53,10 @@ const PROTECTED_FIELDS = new Set(['id', 'storyId']);
  * Normaliza um objeto vindo de JSON para algo que o drizzle aceite num `.set()`:
  * converte datas, descarta campos protegidos e ignora chaves que não existem na tabela.
  */
-export function toEntityColumns(entityType: string, values: Record<string, any>): Record<string, any> {
+export function toEntityColumns(
+  entityType: string,
+  values: Record<string, any>,
+): Record<string, any> {
   const table = getEntityTable(entityType);
   if (!table) {
     return {};

@@ -40,12 +40,11 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
 
   useEffect(() => {
     const stopRealtimeForReset = async () => {
-      const realtimeStops = Array.from(realtimeByServerRef.current.values()).map((realtime) => realtime.stop());
+      const realtimeStops = Array.from(realtimeByServerRef.current.values()).map((realtime) =>
+        realtime.stop(),
+      );
       realtimeByServerRef.current.clear();
-      await Promise.allSettled([
-        ...realtimeStops,
-        ...Array.from(activeReconciliationsRef.current),
-      ]);
+      await Promise.allSettled([...realtimeStops, ...Array.from(activeReconciliationsRef.current)]);
     };
     entityEventEmitter.on('application_resetting', stopRealtimeForReset);
     return () => entityEventEmitter.off('application_resetting', stopRealtimeForReset);
@@ -76,7 +75,10 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       localStories = await storyService.getAllStories();
       servers = await serverService.getAllServers();
     } catch (error) {
-      console.error('SyncInitializer: Failed to read local stories/servers, skipping this sync cycle.', error);
+      console.error(
+        'SyncInitializer: Failed to read local stories/servers, skipping this sync cycle.',
+        error,
+      );
       return false;
     }
 
@@ -97,29 +99,45 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         server = await serverService.refreshServerToken(server);
         await friendshipService.syncFriendshipsWithServer(userId, server); // Call friendship sync
 
-        const serverStoryPreviews = await SyncEngineService.getInstance().fetchServerStoryPreviews(server);
+        const serverStoryPreviews =
+          await SyncEngineService.getInstance().fetchServerStoryPreviews(server);
 
-        const localStoryIds = new Set(localStories.map(s => s.id));
+        const localStoryIds = new Set(localStories.map((s) => s.id));
         const newStoriesOnServer = serverStoryPreviews.filter(
-          (preview: ServerStoryPreview) => !localStoryIds.has(preview.storyId)
+          (preview: ServerStoryPreview) => !localStoryIds.has(preview.storyId),
         );
 
         if (newStoriesOnServer.length > 0) {
           console.log(`Found ${newStoriesOnServer.length} new stories on server ${server.name}:`);
           for (const storyPreview of newStoriesOnServer) {
-            console.log(`  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`);
+            console.log(
+              `  - Story ID: ${storyPreview.storyId}, Last Operation Version: ${storyPreview.lastOperationVersion}`,
+            );
             try {
-              await SyncEngineService.getInstance().downloadAndImportStory(server.id, storyPreview.storyId, server.idUser, storyPreview.role);
+              await SyncEngineService.getInstance().downloadAndImportStory(
+                server.id,
+                storyPreview.storyId,
+                server.idUser,
+                storyPreview.role,
+              );
               console.log(`Successfully downloaded and imported story ${storyPreview.storyId}.`);
               fetchStoryList(storyService); // Refresh the story list after import
             } catch (downloadError) {
               if (isOfflineError(downloadError)) {
-                console.log(`Server unreachable while downloading story ${storyPreview.storyId}, will retry.`);
+                console.log(
+                  `Server unreachable while downloading story ${storyPreview.storyId}, will retry.`,
+                );
                 sawUnreachableServer = true;
                 continue;
               }
-              console.log(`Failed to download and import story ${storyPreview.storyId}:`, (downloadError as Error)?.message || downloadError);
-              showNotification(t('failed_to_download_story') + `: ${storyPreview.storyId}`, 'error');
+              console.log(
+                `Failed to download and import story ${storyPreview.storyId}:`,
+                (downloadError as Error)?.message || downloadError,
+              );
+              showNotification(
+                t('failed_to_download_story') + `: ${storyPreview.storyId}`,
+                'error',
+              );
             }
           }
         } else {
@@ -132,7 +150,10 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           sawUnreachableServer = true;
           continue;
         }
-        console.log(`Error during sync with server ${server.name} at ${server.url}:`, (error as Error)?.message || error);
+        console.log(
+          `Error during sync with server ${server.name} at ${server.url}:`,
+          (error as Error)?.message || error,
+        );
         showNotification(t('failed_to_sync_with_server') + `: ${server.name}`, 'error');
       }
     }
@@ -181,13 +202,22 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         realtime.start(server.id === selectedStory?.serverId ? selectedStory.id : undefined);
       }
     };
-    connectServers().catch((error) => console.log('SyncInitializer: failed to start realtime connections.', error));
+    connectServers().catch((error) =>
+      console.log('SyncInitializer: failed to start realtime connections.', error),
+    );
     return () => {
       disposed = true;
       for (const realtime of realtimeConnections.values()) void realtime.stop();
       realtimeConnections.clear();
     };
-  }, [drizzleClient, userId, selectedStory?.id, selectedStory?.serverId, serverConnectionRevision, serverRegistryRevision]);
+  }, [
+    drizzleClient,
+    userId,
+    selectedStory?.id,
+    selectedStory?.serverId,
+    serverConnectionRevision,
+    serverRegistryRevision,
+  ]);
 
   // A local operation is ready to push immediately. Remote application also emits
   // this event, but requestSync coalesces it into at most one follow-up pull.
@@ -210,9 +240,12 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     }
 
     const refreshConflicts = () => {
-      useSyncConflictStore.getState().refresh(drizzleClient, selectedStory?.id).catch((error) => {
-        console.log('SyncInitializer: failed to refresh sync conflicts.', error);
-      });
+      useSyncConflictStore
+        .getState()
+        .refresh(drizzleClient, selectedStory?.id)
+        .catch((error) => {
+          console.log('SyncInitializer: failed to refresh sync conflicts.', error);
+        });
     };
 
     refreshConflicts();
@@ -231,7 +264,9 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
 
     const manageStorySync = async () => {
       if (!drizzleClient || !serverService || !selectedStory?.id) {
-        console.log('SyncInitializer: No active story or DB/ServerService, stopping sync for selected story.');
+        console.log(
+          'SyncInitializer: No active story or DB/ServerService, stopping sync for selected story.',
+        );
         SyncEngineService.getInstance().stopSync();
         useUserSettingsStore.getState().clearActiveServer(); // Clear active server
         return;
@@ -242,24 +277,33 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         try {
           const server = await serverService.getServerById(selectedStory.serverId);
           if (server?.url) {
-            console.log(`SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`);
+            console.log(
+              `SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`,
+            );
             SyncEngineService.getInstance().configure(selectedStory.id, server);
             SyncEngineService.getInstance().requestSync('initial');
             realtimeByServerRef.current.get(server.id)?.subscribeToStory(selectedStory.id);
             useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store
           } else {
-            console.warn(`SyncInitializer: Selected story ${selectedStory.id} has serverId ${selectedStory.serverId}, but server URL not found. Stopping sync.`);
+            console.warn(
+              `SyncInitializer: Selected story ${selectedStory.id} has serverId ${selectedStory.serverId}, but server URL not found. Stopping sync.`,
+            );
             SyncEngineService.getInstance().stopSync();
             useUserSettingsStore.getState().clearActiveServer(); // Clear active server
           }
         } catch (error) {
-          console.error(`SyncInitializer: Error fetching server details for story ${selectedStory.id}:`, error);
+          console.error(
+            `SyncInitializer: Error fetching server details for story ${selectedStory.id}:`,
+            error,
+          );
           showNotification(t('failed_to_sync_with_server') + `: ${selectedStory.id}`, 'error');
           SyncEngineService.getInstance().stopSync();
           useUserSettingsStore.getState().clearActiveServer(); // Clear active server
         }
       } else {
-        console.log(`SyncInitializer: Selected story ${selectedStory.id} is not linked to a server. Stopping sync.`);
+        console.log(
+          `SyncInitializer: Selected story ${selectedStory.id} is not linked to a server. Stopping sync.`,
+        );
         SyncEngineService.getInstance().stopSync();
         useUserSettingsStore.getState().clearActiveServer(); // Clear active server
       }
@@ -281,7 +325,14 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     };
     // serverId matters as much as id here: linking an existing story to a server changes
     // serverId while id stays put, and sync must reconfigure when that happens.
-  }, [selectedStory?.id, selectedStory?.serverId, drizzleClient, showNotification, t, serverRegistryRevision]);
+  }, [
+    selectedStory?.id,
+    selectedStory?.serverId,
+    drizzleClient,
+    showNotification,
+    t,
+    serverRegistryRevision,
+  ]);
 
   return <>{children}</>;
 };

@@ -1,9 +1,17 @@
-import { CreateStoryUpdate, CreateWorldRuleDataSchema, CreateWorldRuleDataType, PartialWorldRuleSchema } from '@keres/shared';
+import {
+  CreateStoryUpdate,
+  CreateWorldRuleDataSchema,
+  CreateWorldRuleDataType,
+  PartialWorldRuleSchema,
+} from '@keres/shared';
 import { db } from '../../db';
 import { worldRules } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWorldRuleDataSchema, typeof PartialWorldRuleSchema> {
+export class WorldRuleSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateWorldRuleDataSchema,
+  typeof PartialWorldRuleSchema
+> {
   entityName = 'WorldRule';
 
   constructor() {
@@ -17,7 +25,7 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<typeof CreateWor
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 

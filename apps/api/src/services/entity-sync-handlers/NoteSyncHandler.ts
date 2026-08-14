@@ -1,9 +1,17 @@
-import { CreateNoteDataSchema, CreateNoteDataType, CreateStoryUpdate, PartialNoteSchema } from '@keres/shared';
+import {
+  CreateNoteDataSchema,
+  CreateNoteDataType,
+  CreateStoryUpdate,
+  PartialNoteSchema,
+} from '@keres/shared';
 import { db } from '../../db';
 import { notes } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
-export class NoteSyncHandler extends BaseSyncEntityHandler<typeof CreateNoteDataSchema, typeof PartialNoteSchema> {
+export class NoteSyncHandler extends BaseSyncEntityHandler<
+  typeof CreateNoteDataSchema,
+  typeof PartialNoteSchema
+> {
   entityName = 'Note';
 
   constructor() {
@@ -17,7 +25,7 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<typeof CreateNoteData
         storyIdColumnName: 'storyId',
         isDeletedColumnName: 'isDeleted',
         deletedAtColumnName: 'deletedAt',
-      }
+      },
     );
   }
 

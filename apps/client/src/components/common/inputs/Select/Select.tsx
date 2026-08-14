@@ -34,7 +34,15 @@ interface SelectPropsMulti {
 
 type SelectProps = SelectPropsSingle | SelectPropsMulti;
 
-const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placeholder, multiple = false, disabled = false, allowDeselect = false }) => {
+const Select: React.FC<SelectProps> = ({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  multiple = false,
+  disabled = false,
+  allowDeselect = false,
+}) => {
   const { colors } = useTheme();
 
   const [open, setOpen] = useState(false);
@@ -46,12 +54,23 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
     setInternalValue(value);
   }, [value]);
 
-  const dropdownItems: ItemType<string>[] = options.map(option => ({
+  const dropdownItems: ItemType<string>[] = options.map((option) => ({
     label: option.label,
     value: option.value,
-    icon: option.color ? () => (
-      <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 1, borderColor: colors.border, backgroundColor: option.color ?? undefined }} />
-    ) : undefined,
+    icon: option.color
+      ? () => (
+          <View
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 6,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: option.color ?? undefined,
+            }}
+          />
+        )
+      : undefined,
   }));
 
   const dropdownStyles = StyleSheet.create({
@@ -187,7 +206,11 @@ const Select: React.FC<SelectProps> = ({ options, value, onValueChange, placehol
             let finalValue: string | null = newValue as string | null;
 
             // If allowDeselect is true and the newly selected item is the same as the currently selected one, deselect it
-            if (allowDeselect && currentSelectedValue !== null && newValue === currentSelectedValue) {
+            if (
+              allowDeselect &&
+              currentSelectedValue !== null &&
+              newValue === currentSelectedValue
+            ) {
               finalValue = null;
             }
 

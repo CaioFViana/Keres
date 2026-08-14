@@ -10,7 +10,12 @@ interface TriStateToggleButtonProps {
   style?: any; // For external styling
 }
 
-const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({ label, value, onChange, style }) => {
+const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({
+  label,
+  value,
+  onChange,
+  style,
+}) => {
   const { colors } = useTheme();
 
   const handlePress = useCallback(() => {
@@ -36,7 +41,8 @@ const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({ label, valu
         iconColor: colors.onPrimary,
         backgroundColor: colors.error,
       };
-    } else { // undefined
+    } else {
+      // undefined
       return {
         iconName: 'square-outline' as const, // Indifferent symbol
         iconColor: colors.text,
@@ -55,7 +61,7 @@ const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({ label, valu
       borderRadius: 8,
       borderWidth: 1,
       borderColor: colors.border,
-    }
+    },
   });
 
   return (

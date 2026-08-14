@@ -6,7 +6,10 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import { ScreenError, ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagListItem from '@/src/components/features/list-items/TagListItem';
 import { TagSelect } from '../../db/schemas/tags';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -64,26 +67,39 @@ const TagsScreen = () => {
           </TouchableOpacity>
         ),
       });
-    }, [navigation, colors.text, t])
+    }, [navigation, colors.text, t]),
   );
 
-  const handleToggleFavorite = useCallback(async (tagId: string, isFavorite: boolean) => {
-    await toggleFavorite(tagId, isFavorite);
-  }, [toggleFavorite]);
+  const handleToggleFavorite = useCallback(
+    async (tagId: string, isFavorite: boolean) => {
+      await toggleFavorite(tagId, isFavorite);
+    },
+    [toggleFavorite],
+  );
 
-  const handleViewDetails = useCallback((tagId: string) => {
-    navigation.navigate('TagDetail', { tagId });
-  }, [navigation]);
+  const handleViewDetails = useCallback(
+    (tagId: string) => {
+      navigation.navigate('TagDetail', { tagId });
+    },
+    [navigation],
+  );
 
-  const memoizedTagListItem = useCallback(({ item }: { item: TagSelect }) => (
-    <TagListItem tag={item} onViewDetails={handleViewDetails} onToggleFavorite={handleToggleFavorite} />
-  ), [handleViewDetails, handleToggleFavorite]);
+  const memoizedTagListItem = useCallback(
+    ({ item }: { item: TagSelect }) => (
+      <TagListItem
+        tag={item}
+        onViewDetails={handleViewDetails}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    ),
+    [handleViewDetails, handleToggleFavorite],
+  );
 
   const memoizedSortOptions = useMemo(() => {
     return [
       { label: t('sort_by_name'), value: 'name' },
       { label: t('sort_by_created_at'), value: 'createdAt' },
-      { label: t('sort_by_updated_at'), value: 'updatedAt' }
+      { label: t('sort_by_updated_at'), value: 'updatedAt' },
     ];
   }, [t]);
 

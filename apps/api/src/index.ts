@@ -42,7 +42,9 @@ const adminDistIndexPath = path.join(adminDistPath, 'index.html');
 const adminUiAvailable = existsSync(adminDistIndexPath);
 
 if (!adminUiAvailable) {
-  logger.warn(`Admin UI not built - /admin will 404. Run 'bun run build' in apps/api (or apps/admin) to enable it.`);
+  logger.warn(
+    `Admin UI not built - /admin will 404. Run 'bun run build' in apps/api (or apps/admin) to enable it.`,
+  );
 }
 
 /** pg/network error codes that mean "couldn't reach or lost the database", not an app bug. */
@@ -79,151 +81,185 @@ export interface JWTPayload {
 /** Cria a aplicação sem migrar banco, reconciliar admin ou abrir uma porta. */
 export async function createApp() {
   return new Elysia()
-  .use(
-    swagger({
-      path: '/swagger',
-      documentation: {
-        info: {
-          title: 'Keres API Documentation',
-          version: '1.0.0',
-        },
-        components: {
-          securitySchemes: {
-            bearerAuth: {
-              type: 'http',
-              scheme: 'bearer',
-              bearerFormat: 'JWT',
+    .use(
+      swagger({
+        path: '/swagger',
+        documentation: {
+          info: {
+            title: 'Keres API Documentation',
+            version: '1.0.0',
+          },
+          components: {
+            securitySchemes: {
+              bearerAuth: {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT',
+              },
             },
           },
+          security: [
+            {
+              bearerAuth: [],
+            },
+          ],
         },
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-      },
-    }),
-  )
-  .use(cookie())
-  .use(bearer())
-  .use(
-    jwt({
-      name: 'jwt',
-      secret: env.JWT_SECRET,
-      exp: '1h', // Access token expiration
-      schema: t.Object({ // Define schema for JWT payload
-        userId: t.String(),
-        username: t.String(),
-      })
-    }),
-  ).use(cors())
-  .derive(async ({ jwt, headers, set, cookie }) => {
-    let token: string | null | undefined = headers['authorization']?.startsWith('Bearer ') ? headers['authorization'].slice(7) : null;
+      }),
+    )
+    .use(cookie())
+    .use(bearer())
+    .use(
+      jwt({
+        name: 'jwt',
+        secret: env.JWT_SECRET,
+        exp: '1h', // Access token expiration
+        schema: t.Object({
+          // Define schema for JWT payload
+          userId: t.String(),
+          username: t.String(),
+        }),
+      }),
+    )
+    .use(cors())
+    .derive(async ({ jwt, headers, set, cookie }) => {
+      let token: string | null | undefined = headers['authorization']?.startsWith('Bearer ')
+        ? headers['authorization'].slice(7)
+        : null;
 
-    if (!token && typeof cookie['access_token'].value === 'string') {
-      token = cookie['access_token'].value;
-    }
+      if (!token && typeof cookie['access_token'].value === 'string') {
+        token = cookie['access_token'].value;
+      }
 
-    if (!token) {
-      // If no token, user is not authenticated.
-      // We don't throw an error here, but rather return null for the user,
-      // allowing routes to decide if authentication is mandatory.
-      return { user: null };
-    }
+      if (!token) {
+        // If no token, user is not authenticated.
+        // We don't throw an error here, but rather return null for the user,
+        // allowing routes to decide if authentication is mandatory.
+        return { user: null };
+      }
 
-    try {
-      const payload = await jwt.verify(token);
-      if (!payload) {
+      try {
+        const payload = await jwt.verify(token);
+        if (!payload) {
+          set.status = 401;
+          throw new Error('Invalid token');
+        }
+        // In a real application, you would fetch user details from the database
+        // and return a more complete user object. For now, just return the payload.
+        return { user: payload as JWTPayload }; // Cast to our defined payload type
+      } catch {
         set.status = 401;
         throw new Error('Invalid token');
       }
-      // In a real application, you would fetch user details from the database
-      // and return a more complete user object. For now, just return the payload.
-      return { user: payload as JWTPayload }; // Cast to our defined payload type
-    } catch {
-      set.status = 401;
-      throw new Error('Invalid token');
-    }
-  })
-  .onError(({ code, error, set, path, request, user, params }) => {
-    const err = error instanceof Error ? error : new Error(String(error));
-    const label = `${request.method} ${path}`;
-    const userId = (user as JWTPayload | null)?.userId ?? null;
-    // Só rotas com um :storyId nos params carregam isto - não força o campo quando não é
-    // significativo (ex: nem toda rota é escopada a uma história).
-    const storyId = (params as { storyId?: string } | undefined)?.storyId ?? null;
+    })
+    .onError(({ code, error, set, path, request, user, params }) => {
+      const err = error instanceof Error ? error : new Error(String(error));
+      const label = `${request.method} ${path}`;
+      const userId = (user as JWTPayload | null)?.userId ?? null;
+      // Só rotas com um :storyId nos params carregam isto - não força o campo quando não é
+      // significativo (ex: nem toda rota é escopada a uma história).
+      const storyId = (params as { storyId?: string } | undefined)?.storyId ?? null;
 
-    // A route that deliberately rejected with AppError (any status, including 500)
-    // already chose a safe, user-facing message - relay it as-is.
-    if (err instanceof AppError) {
-      set.status = err.status;
-      logger.warn(`Rejected request: ${label}`, { status: err.status, message: err.message, userId, storyId });
-      return { message: err.message };
-    }
+      // A route that deliberately rejected with AppError (any status, including 500)
+      // already chose a safe, user-facing message - relay it as-is.
+      if (err instanceof AppError) {
+        set.status = err.status;
+        logger.warn(`Rejected request: ${label}`, {
+          status: err.status,
+          message: err.message,
+          userId,
+          storyId,
+        });
+        return { message: err.message };
+      }
 
-    // Route handlers that deliberately picked a non-500 status before throwing a plain
-    // Error (401/403/404/409...) already chose a safe message too - relay it as-is.
-    // 500 is excluded here because Elysia defaults untouched status to 500 for any
-    // unclassified thrown error, so it can't tell "the app chose 500" from "nothing did".
-    if (typeof set.status === 'number' && set.status !== 500) {
-      logger.warn(`Rejected request: ${label}`, { status: set.status, message: err.message, userId, storyId });
-      return { message: err.message };
-    }
+      // Route handlers that deliberately picked a non-500 status before throwing a plain
+      // Error (401/403/404/409...) already chose a safe message too - relay it as-is.
+      // 500 is excluded here because Elysia defaults untouched status to 500 for any
+      // unclassified thrown error, so it can't tell "the app chose 500" from "nothing did".
+      if (typeof set.status === 'number' && set.status !== 500) {
+        logger.warn(`Rejected request: ${label}`, {
+          status: set.status,
+          message: err.message,
+          userId,
+          storyId,
+        });
+        return { message: err.message };
+      }
 
-    if (isDatabaseConnectivityError(err)) {
-      set.status = 503;
-      logger.error(`Database unreachable while handling ${label}`, err, { code, userId, storyId });
-      return { message: 'Service temporarily unavailable. Please try again shortly.' };
-    }
+      if (isDatabaseConnectivityError(err)) {
+        set.status = 503;
+        logger.error(`Database unreachable while handling ${label}`, err, {
+          code,
+          userId,
+          storyId,
+        });
+        return { message: 'Service temporarily unavailable. Please try again shortly.' };
+      }
 
-    // Anything else is unexpected - never leak internals (SQL, stack traces) to the client.
-    set.status = 500;
-    logger.error(`Unhandled error while handling ${label}`, err, { code, userId, storyId });
-    return { message: 'Internal server error.' };
-  })
-  .get('/', ({ redirect }) => {
-    redirect('/swagger')
-  }, {
-    detail: {
-      summary: 'Redirect to Swagger UI',
-      description: 'Redirects the user to the API documentation provided by Swagger UI.',
-      tags: ['Documentation'],
-    },
-  })
-  .get('/kerescheck', ({ set }) => {
-    set.status = 200;
-    return { version: env.SERVER_VERSION };
-  }, {
-    detail: {
-      summary: 'Check API Status',
-      description: 'Returns the current version of the Keres API, useful for health checks.',
-      tags: ['Health Check'],
-    },
-  })
-  .group('/admin/api', (app) => app.use(adminRoutes))
-  .use(adminUiAvailable ? await staticPlugin({ assets: adminDistPath, prefix: '/admin', alwaysStatic: true }) : new Elysia())
-  .get('/admin/*', ({ set }) => {
-    if (!adminUiAvailable) {
-      set.status = 404;
-      return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
-    }
-    // Fallback de SPA: qualquer rota do painel que não seja um arquivo estático real (ex:
-    // /admin/users, uma rota de cliente do React Router) recebe o mesmo index.html, que
-    // então resolve a rota no navegador. Sem isto, um F5 em /admin/users daria 404.
-    return Bun.file(adminDistIndexPath);
-  }, {
-    detail: {
-      summary: 'Admin panel (single-page app)',
-      description: 'Serves the built apps/admin SPA and its client-side routes.',
-      tags: ['Admin'],
-    },
-  })
-  .group('/auth', (app) => app.use(authRoutes))
-  .group('/sync', (app) => app.use(syncRoute))
-  .group('/stories', (app) => app.use(storyRoutes))
-  .group('/media', (app) => app.use(mediaRoutes))
-  .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
-  .group('/friend', (app) => app.use(friendRoutes))
-  .group('/user', (app) => app.use(userRoutes)) // Add userRoutes
+      // Anything else is unexpected - never leak internals (SQL, stack traces) to the client.
+      set.status = 500;
+      logger.error(`Unhandled error while handling ${label}`, err, { code, userId, storyId });
+      return { message: 'Internal server error.' };
+    })
+    .get(
+      '/',
+      ({ redirect }) => {
+        redirect('/swagger');
+      },
+      {
+        detail: {
+          summary: 'Redirect to Swagger UI',
+          description: 'Redirects the user to the API documentation provided by Swagger UI.',
+          tags: ['Documentation'],
+        },
+      },
+    )
+    .get(
+      '/kerescheck',
+      ({ set }) => {
+        set.status = 200;
+        return { version: env.SERVER_VERSION };
+      },
+      {
+        detail: {
+          summary: 'Check API Status',
+          description: 'Returns the current version of the Keres API, useful for health checks.',
+          tags: ['Health Check'],
+        },
+      },
+    )
+    .group('/admin/api', (app) => app.use(adminRoutes))
+    .use(
+      adminUiAvailable
+        ? await staticPlugin({ assets: adminDistPath, prefix: '/admin', alwaysStatic: true })
+        : new Elysia(),
+    )
+    .get(
+      '/admin/*',
+      ({ set }) => {
+        if (!adminUiAvailable) {
+          set.status = 404;
+          return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
+        }
+        // Fallback de SPA: qualquer rota do painel que não seja um arquivo estático real (ex:
+        // /admin/users, uma rota de cliente do React Router) recebe o mesmo index.html, que
+        // então resolve a rota no navegador. Sem isto, um F5 em /admin/users daria 404.
+        return Bun.file(adminDistIndexPath);
+      },
+      {
+        detail: {
+          summary: 'Admin panel (single-page app)',
+          description: 'Serves the built apps/admin SPA and its client-side routes.',
+          tags: ['Admin'],
+        },
+      },
+    )
+    .group('/auth', (app) => app.use(authRoutes))
+    .group('/sync', (app) => app.use(syncRoute))
+    .group('/stories', (app) => app.use(storyRoutes))
+    .group('/media', (app) => app.use(mediaRoutes))
+    .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
+    .group('/friend', (app) => app.use(friendRoutes))
+    .group('/user', (app) => app.use(userRoutes)) // Add userRoutes
     .group('/ws', (app) => app.use(wsRoutes));
 }

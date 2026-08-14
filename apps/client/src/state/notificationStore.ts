@@ -40,7 +40,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       }
 
       const currentNotifications = [...state.currentNotifications];
-      const emptyLaneIndex = currentNotifications.findIndex(n => n === null);
+      const emptyLaneIndex = currentNotifications.findIndex((n) => n === null);
 
       if (emptyLaneIndex !== -1) {
         // If an empty lane is found, place the new notification there

@@ -17,20 +17,23 @@ export interface ScenePresenceEntry<TItem extends RelatedEntity> {
 }
 
 export function groupScenePresenceEntries<TItem extends RelatedEntity>(
-  pairs: { item: TItem; scene: SceneSelect }[]
+  pairs: { item: TItem; scene: SceneSelect }[],
 ): ScenePresenceEntry<TItem>[] {
   const grouped = new Map<string, ScenePresenceEntry<TItem>>();
 
   for (const { item, scene } of pairs) {
     const entry = grouped.get(item.id) || { item, scenes: [] };
     if (!grouped.has(item.id)) grouped.set(item.id, entry);
-    if (!entry.scenes.some(existingScene => existingScene.id === scene.id)) {
+    if (!entry.scenes.some((existingScene) => existingScene.id === scene.id)) {
       entry.scenes.push(scene);
     }
   }
 
   return Array.from(grouped.values())
-    .map(entry => ({ ...entry, scenes: entry.scenes.sort((a, b) => a.name.localeCompare(b.name)) }))
+    .map((entry) => ({
+      ...entry,
+      scenes: entry.scenes.sort((a, b) => a.name.localeCompare(b.name)),
+    }))
     .sort((a, b) => a.item.name.localeCompare(b.item.name));
 }
 
@@ -53,30 +56,38 @@ const ScenePresenceList = <TItem extends RelatedEntity>({
   const { colors } = useTheme();
   const navigation = useNavigation();
 
-  const relations = useMemo(() => entries.map(entry => ({
-    id: entry.item.id,
-    isDeleted: false,
-    ...entry,
-  })), [entries]);
+  const relations = useMemo(
+    () =>
+      entries.map((entry) => ({
+        id: entry.item.id,
+        isDeleted: false,
+        ...entry,
+      })),
+    [entries],
+  );
 
-  const handleItemPress = useCallback((item: TItem) => {
-    const drawerNavigation = navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, entityType, item.id);
-    }
-  }, [entityType, navigation]);
+  const handleItemPress = useCallback(
+    (item: TItem) => {
+      const drawerNavigation =
+        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+      if (drawerNavigation) {
+        navigateToEntityDetail(drawerNavigation, entityType, item.id);
+      }
+    },
+    [entityType, navigation],
+  );
 
   return (
-    <GenericRelationDisplay<TItem, typeof relations[number]>
+    <GenericRelationDisplay<TItem, (typeof relations)[number]>
       relations={relations}
-      getRelatedItem={itemId => entries.find(entry => entry.item.id === itemId)?.item}
-      getRelationItemId={relation => relation.item.id}
-      getItemDisplayName={item => item.name}
+      getRelatedItem={(itemId) => entries.find((entry) => entry.item.id === itemId)?.item}
+      getRelationItemId={(relation) => relation.item.id}
+      getItemDisplayName={(item) => item.name}
       noItemsMessage={noItemsMessage}
       renderItemExtraContent={(relation, item) => (
         <View>
           <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{item.name}</Text>
-          {relation.scenes.map(scene => (
+          {relation.scenes.map((scene) => (
             <RelationAttributeLine key={scene.id} label={sceneLabel} value={scene.name} />
           ))}
         </View>

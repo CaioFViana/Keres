@@ -1,6 +1,7 @@
-import { getHelpPage } from '../../content';
 import { HelpPage } from '../../types';
-
-const page = getHelpPage('story-type', 'pt');
-if (!page) throw new Error('Missing help content for story-type/pt.');
-export default page as HelpPage;
+const page: HelpPage = { id:'story-type', title:'Linear ou ramificada?', summary:'Escolha se a história tem uma única sequência ou caminhos de escolha.', keywords:['linear','ramificada','converter','escolhas'], blocks:[
+{type:'heading',level:2,text:'O que é'}, {type:'paragraph',text:'Tipo define como as cenas podem se ligar. Uma história Linear segue a organização dos capítulos; uma Ramificada permite escolhas entre cenas.'},
+{type:'heading',level:2,text:'Para que serve'}, {type:'example',title:'Exemplo',text:'Em uma investigação linear, a revelação vem depois da busca. Em uma história ramificada, o leitor pode seguir a suspeita ou voltar para casa, chegando a cenas diferentes.'},
+{type:'heading',level:2,text:'Como fazer'}, {type:'steps',items:['Ao criar, escolha Tipo no formulário.', 'Para mudar uma história existente, abra Menu da história › Configurações da história.', 'Escolha a conversão desejada e leia a confirmação.', 'Ao converter uma Ramificada em Linear, o aplicativo lista primeiro os capítulos incompatíveis; revise essa lista antes de confirmar.']},
+{type:'heading',level:2,text:'O que isso afeta em outros lugares'}, {type:'paragraph',text:'Em histórias Ramificadas, Escolhas e o mapa da história ficam disponíveis. A conversão pode exigir ajuste de capítulos e cenas; ela não é feita antes da confirmação.'}, {type:'seeAlso',pages:['create-story','choices','story-map','story-settings']}] };
+export default page;

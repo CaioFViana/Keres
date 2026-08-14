@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { HelpIndexScreen, HelpPageScreen } from '../screens/help/HelpScreens';
+import { HelpIndexScreen } from '../screens/help/HelpIndexScreen';
+import { HelpPageScreen } from '../screens/help/HelpPageScreen';
 
 export type HelpStackParamList = { HelpIndex: undefined; HelpPage: { pageId: string } };
 const Stack = createNativeStackNavigator<HelpStackParamList>();

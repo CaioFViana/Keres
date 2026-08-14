@@ -50,4 +50,24 @@ describe('help catalog', () => {
   it('gives every section an icon for the help index', () => {
     expect(helpSections.every((section) => section.icon.length > 0)).toBe(true);
   });
+  it('follows the reader-facing explanation sequence in both languages', () => {
+    const headings = {
+      pt: ['O que é', 'Para que serve', 'Como fazer', 'O que isso afeta em outros lugares'],
+      en: ['What it is', 'What it is for', 'How to do it', 'What it affects elsewhere'],
+    };
+
+    for (const id of helpPageIds) {
+      for (const [language, expected] of Object.entries(headings)) {
+        const page = getHelpPage(id, language);
+        const actual =
+          page?.blocks.filter((block) => block.type === 'heading').map((block) => block.text) ?? [];
+        expect(actual).toEqual(expect.arrayContaining(expected));
+        expect(actual.indexOf(expected[0])).toBeLessThan(actual.indexOf(expected[1]));
+        expect(actual.indexOf(expected[1])).toBeLessThan(actual.indexOf(expected[2]));
+        expect(actual.indexOf(expected[2])).toBeLessThan(actual.indexOf(expected[3]));
+        expect(page?.blocks.some((block) => block.type === 'example')).toBe(true);
+        expect(page?.blocks.some((block) => block.type === 'steps')).toBe(true);
+      }
+    }
+  });
 });

@@ -355,7 +355,6 @@
   "eons": "Éons",
   "error": "Erro",
   "error_fetching_summary": "Erro ao buscar resumo:",
-  "example_stories_already_installed": "Esta história de exemplo já está instalada.",
   "example_stories_author": "Por {{author}}",
   "example_stories_description": "Instale uma história de exemplo pronta para conhecer os recursos do sistema. Depois de instalada, ela vira uma história normal - você pode editá-la ou excluí-la como qualquer outra.",
   "example_stories_empty": "Nenhuma história de exemplo está disponível nesta versão do app.",

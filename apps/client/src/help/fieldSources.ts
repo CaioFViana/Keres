@@ -69,3 +69,328 @@ export const fieldSources: Record<string, string[]> = {
 };
 
 export const visibleEntityProperties = fieldSources;
+
+export type EntityPropertyClassification = {
+  /** Campos apresentados ao leitor em uma tela, fluxo ou artigo de ajuda. */
+  documented: string[];
+  /** Chaves de identidade, sincronização ou ligação interna que não são campos editáveis. */
+  invisible: string[];
+};
+
+/**
+ * Cobertura do modelo compartilhado. Esta lista torna explícita a decisão para
+ * cada propriedade: ela é explicada ao leitor ou é detalhe interno do sistema.
+ */
+export const entityPropertyClassifications: Record<string, EntityPropertyClassification> = {
+  AdminUserInfo: {
+    documented: [
+      'username',
+      'tag',
+      'avatarColor',
+      'avatarIcon',
+      'bio',
+      'isAdmin',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'tierId', 'isDeleted', 'deletedAt'],
+  },
+  AttributeValue: {
+    documented: ['value', 'createdAt', 'updatedAt'],
+    invisible: [
+      'id',
+      'storyId',
+      'entityType',
+      'entityId',
+      'fieldId',
+      'version',
+      'isDeleted',
+      'deletedAt',
+    ],
+  },
+  Chapter: {
+    documented: ['name', 'index', 'summary', 'isFavorite', 'extraNotes', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Character: {
+    documented: [
+      'name',
+      'title',
+      'gender',
+      'race',
+      'subrace',
+      'description',
+      'personality',
+      'motivation',
+      'qualities',
+      'weaknesses',
+      'biography',
+      'plannedTimeline',
+      'isFavorite',
+      'extraNotes',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  CharacterRelation: {
+    documented: ['charId1', 'charId2', 'relationType', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  ServerCharacterRelationPayload: {
+    documented: ['character1Id', 'character2Id', 'relationType', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  CharacterScene: {
+    documented: ['characterId', 'sceneId', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Choice: {
+    documented: ['sceneId', 'nextSceneId', 'text', 'notes', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  ChoiceCheck: {
+    documented: [
+      'mode',
+      'type',
+      'order',
+      'sceneId',
+      'minVisits',
+      'itemId',
+      'itemPresence',
+      'triggerName',
+      'triggerState',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'groupId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  ChoiceCheckGroup: {
+    documented: ['choiceId', 'combinator', 'order', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  ClientSettings: {
+    documented: ['localUsername', 'language', 'darkMode', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Comment: {
+    documented: [
+      'entityType',
+      'entityId',
+      'fieldId',
+      'fieldKey',
+      'contentSnapshot',
+      'excerptText',
+      'authorUserId',
+      'commentText',
+      'criticality',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Effect: {
+    documented: [
+      'entityType',
+      'entityId',
+      'effectType',
+      'itemId',
+      'triggerName',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  EnrichedFriendship: {
+    documented: [
+      'createdAt',
+      'updatedAt',
+      'friendUsername',
+      'otherUserId',
+      'otherUserTag',
+      'otherUserAvatarColor',
+      'otherUserAvatarIcon',
+      'otherUserBio',
+    ],
+    invisible: [],
+  },
+  Favorite: {
+    documented: ['entityId', 'entityType', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'userId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Gallery: {
+    documented: [
+      'mediaType',
+      'mimeType',
+      'fileName',
+      'sizeBytes',
+      'title',
+      'isFavorite',
+      'extraNotes',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'hash', 'version', 'isDeleted', 'deletedAt'],
+  },
+  GalleryRelation: {
+    documented: ['galleryId', 'ownerId', 'ownerType', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Item: {
+    documented: [
+      'characterOwnerId',
+      'name',
+      'category',
+      'description',
+      'initialState',
+      'isFavorite',
+      'extraNotes',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  ItemJourney: {
+    documented: [
+      'itemId',
+      'sceneId',
+      'newCharacterOwnerId',
+      'newState',
+      'extraNotes',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Location: {
+    documented: [
+      'name',
+      'description',
+      'climate',
+      'culture',
+      'politics',
+      'isFavorite',
+      'extraNotes',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  LocationRelation: {
+    documented: ['locationAId', 'locationBId', 'relationType', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Note: {
+    documented: ['title', 'body', 'isFavorite', 'extraNotes', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  NoteRelation: {
+    documented: ['noteId', 'relationId', 'relationType', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  RegistrationSettings: {
+    documented: ['isRegistrationOpen', 'maxUsers', 'autoManage', 'defaultTierId', 'updatedAt'],
+    invisible: ['id'],
+  },
+  Scene: {
+    documented: [
+      'chapterId',
+      'locationId',
+      'name',
+      'index',
+      'summary',
+      'gap',
+      'gapType',
+      'duration',
+      'durationType',
+      'isStart',
+      'isFinish',
+      'isFavorite',
+      'extraNotes',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  SeeAlsoRelation: {
+    documented: ['entityAType', 'entityAId', 'entityBType', 'entityBId', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Story: {
+    documented: [
+      'title',
+      'type',
+      'description',
+      'genre',
+      'language',
+      'author',
+      'isFavorite',
+      'favoriteBehavior',
+      'extraNotes',
+      'theme',
+      'normalizeSceneTiming',
+      'allowReaderComments',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: [
+      'id',
+      'userId',
+      'serverId',
+      'lastOperationLog',
+      'lastServerSyncedLog',
+      'version',
+      'isDeleted',
+      'deletedAt',
+    ],
+  },
+  StorySchemaField: {
+    documented: [
+      'entityType',
+      'name',
+      'key',
+      'description',
+      'type',
+      'isRequired',
+      'defaultValue',
+      'order',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Suggestion: {
+    documented: ['type', 'value', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Tag: {
+    documented: ['name', 'color', 'isFavorite', 'extraNotes', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  TagRelation: {
+    documented: ['tagId', 'relationId', 'relationType', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Tier: {
+    documented: [
+      'name',
+      'isDefault',
+      'maxStories',
+      'maxEntitiesPerStory',
+      'maxEntitiesTotal',
+      'maxStorageBytesPerStory',
+      'maxStorageBytesTotal',
+      'createdAt',
+      'updatedAt',
+    ],
+    invisible: ['id', 'isDeleted', 'deletedAt'],
+  },
+  UserPublicInfo: {
+    documented: ['username', 'tag', 'avatarColor', 'avatarIcon', 'bio'],
+    invisible: ['id'],
+  },
+  WorldRule: {
+    documented: ['title', 'description', 'isFavorite', 'extraNotes', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+  },
+};

@@ -2,36 +2,49 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'glossary',
   title: 'Glossário',
-  summary: 'Consulte termos que aparecem na interface.',
-  keywords: ['glossário', 'ajuda'],
+  summary: 'Consulte o significado dos termos que aparecem na interface.',
+  keywords: ['glossário', 'cena', 'capítulo', 'marcador', 'etiqueta'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'O glossário resume palavras como cena, capítulo, escolha, marcador, etiqueta e colaborador.',
+      text: 'Este glossário resume palavras da interface; cada página indicada abaixo explica o recurso em mais detalhe.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'Consulte glossário quando essa parte do trabalho precisar de uma decisão ou revisão.',
+      text: 'Ao ler “Marcador” numa condição, consulte aqui o resumo e abra Inventário e marcadores para configurar esse recurso.',
+    },
+    { type: 'heading', level: 3, text: 'Termos principais' },
+    {
+      type: 'table',
+      headers: ['Termo', 'Significado'],
+      rows: [
+        ['Cena', 'Um momento da história, ligado a um local e opcionalmente a um capítulo.'],
+        ['Escolha', 'Uma decisão que leva de uma cena a outra em história ramificada.'],
+        ['Marcador', 'Um nome que registra que algo aconteceu no estado do leitor.'],
+        ['Etiqueta', 'Uma palavra curta para agrupar elementos.'],
+        [
+          'Colaborador',
+          'Uma pessoa com acesso de dono, escritor ou leitor a uma história sincronizada.',
+        ],
+      ],
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'steps',
       items: [
-        'Abra a tela correspondente pelo menu.',
-        'Leia as informações ou escolha a ação necessária.',
-        'Confirme a alteração quando a tela pedir.',
-        'Volte à história ou à lista para conferir o resultado.',
+        'Pesquise o termo nesta Ajuda.',
+        'Abra a página indicada em Veja também para aprender a usar o recurso.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'O resultado pode aparecer em colaboração, sincronização, listas ou detalhes relacionados, conforme a ação realizada.',
+      text: 'O glossário não altera sua história; ele apenas ajuda a interpretar os nomes usados nas telas.',
     },
-    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['scenes', 'choices', 'tags', 'collaborators', 'story-state'] },
   ],
 };
 export default page;

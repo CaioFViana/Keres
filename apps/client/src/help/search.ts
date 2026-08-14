@@ -1,4 +1,18 @@
 import { HelpPage } from './types';
+
+interface IndexedHelpPage {
+  page: HelpPage;
+  order: number;
+  title: string;
+  keywords: string;
+  summary: string;
+  body: string;
+  flattenedPage: string;
+}
+
+export interface HelpSearchIndex {
+  entries: IndexedHelpPage[];
+}
 const normalize = (value: string) =>
   value
     .normalize('NFD')
@@ -50,15 +64,31 @@ export function flattenHelpPage(page: HelpPage): string {
   });
   return [page.title, page.summary, ...page.keywords, ...blockText].join(' ');
 }
-export function searchHelp(pages: HelpPage[], query: string) {
+
+/** Prepara o conteúdo uma vez para que a busca não re-achete as 53 páginas a cada tecla. */
+export function createHelpSearchIndex(pages: HelpPage[]): HelpSearchIndex {
+  return {
+    entries: pages.map((page, order) => {
+      const flattenedPage = flattenHelpPage(page);
+      return {
+        page,
+        order,
+        title: normalize(page.title),
+        keywords: normalize(page.keywords.join(' ')),
+        summary: normalize(page.summary),
+        body: normalize(flattenedPage),
+        flattenedPage,
+      };
+    }),
+  };
+}
+
+/** Busca um índice já preparado; o chamador deve preservá-lo enquanto o idioma não mudar. */
+export function searchHelp(index: HelpSearchIndex, query: string) {
   const needle = normalize(query.trim());
   if (!needle) return [];
-  return pages
-    .map((page, order) => {
-      const title = normalize(page.title),
-        keywords = normalize(page.keywords.join(' ')),
-        summary = normalize(page.summary);
-      const body = normalize(flattenHelpPage(page));
+  return index.entries
+    .map(({ page, order, title, keywords, summary, body, flattenedPage }) => {
       const rank = title.includes(needle)
         ? 0
         : keywords.includes(needle)
@@ -68,7 +98,6 @@ export function searchHelp(pages: HelpPage[], query: string) {
             : body.includes(needle)
               ? 3
               : -1;
-      const flattenedPage = flattenHelpPage(page);
       const bodyMatch = findNormalizedMatch(flattenedPage, needle);
       const excerptStart = bodyMatch > 56 ? bodyMatch - 56 : 0;
       const excerpt =

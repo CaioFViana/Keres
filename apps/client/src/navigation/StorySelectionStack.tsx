@@ -1,10 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
+import {
+  DrawerActions,
+  getFocusedRouteNameFromRoute,
+  NavigatorScreenParams,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
@@ -180,40 +184,53 @@ const StorySelectionNavigator = () => {
           resizable={!isCompact}
         />
       )}
-      screenOptions={({ navigation, route }) => ({
-        headerShown: true,
-        headerStatusBarHeight: 0,
-        headerStyle: {
-          backgroundColor: colors.surface,
-        },
-        headerTintColor: colors.text,
-        headerLeft: isWide ? () => null : () => <DrawerToggleButton navigation={navigation} />,
-        headerRight: screenHelpPage[route.name]
-          ? () => (
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('HelpDrawer', {
-                    screen: 'HelpPage',
-                    params: { pageId: screenHelpPage[route.name] },
-                  })
-                }
-                style={{ marginRight: 15 }}
-                accessibilityLabel={t('help_title')}
-              >
-                <Ionicons name="help-circle-outline" size={26} color={colors.text} />
-              </TouchableOpacity>
-            )
-          : undefined,
-        drawerActiveTintColor: colors.primary,
-        drawerInactiveTintColor: colors.text,
-        drawerType: isWide ? 'permanent' : 'front',
-        swipeEnabled: !isWide,
-        drawerStyle: {
-          backgroundColor: colors.surface,
-          minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
-          width: isCompact ? compactDrawerWidth : drawerWidth,
-        },
-      })}
+      screenOptions={({ navigation, route }) => {
+        const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
+        const helpPageId = screenHelpPage[activeRouteName];
+
+        return {
+          headerShown: true,
+          headerStatusBarHeight: 0,
+          headerStyle: {
+            backgroundColor: colors.surface,
+          },
+          headerTintColor: colors.text,
+          // Subtelas podem ocupar headerRight com ações próprias; manter a ajuda à esquerda
+          // garante que o atalho contextual não desapareça em formulários e detalhes.
+          headerLeft:
+            !isWide || helpPageId
+              ? () => (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {!isWide ? <DrawerToggleButton navigation={navigation} /> : null}
+                    {helpPageId ? (
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate('HelpDrawer', {
+                            screen: 'HelpPage',
+                            params: { pageId: helpPageId },
+                          })
+                        }
+                        style={{ marginLeft: isWide ? 15 : 8 }}
+                        accessibilityLabel={t('help_title')}
+                      >
+                        <Ionicons name="help-circle-outline" size={26} color={colors.text} />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                )
+              : () => null,
+          headerRight: undefined,
+          drawerActiveTintColor: colors.primary,
+          drawerInactiveTintColor: colors.text,
+          drawerType: isWide ? 'permanent' : 'front',
+          swipeEnabled: !isWide,
+          drawerStyle: {
+            backgroundColor: colors.surface,
+            minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
+            width: isCompact ? compactDrawerWidth : drawerWidth,
+          },
+        };
+      }}
     >
       <Drawer.Screen
         name="StorySelectionMain"

@@ -1,7 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StorySchemaEntityType } from '@keres/shared';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { CommonActions, DrawerActions, NavigatorScreenParams } from '@react-navigation/native';
+import {
+  CommonActions,
+  DrawerActions,
+  getFocusedRouteNameFromRoute,
+  NavigatorScreenParams,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -470,44 +475,58 @@ const MainSystemNavigator = () => {
             resizable={!isCompact}
           />
         )}
-        screenOptions={({ navigation, route }) => ({
-          headerShown: true,
-          headerStatusBarHeight: 0,
-          headerStyle: {
-            backgroundColor: colors.surface,
-          },
-          headerTintColor: colors.text,
-          headerLeft: isWide
-            ? () => null
-            : () => (
-                <DrawerToggleButton navigation={navigation as MainDashboardScreenNavigationProp} />
-              ),
-          headerRight: screenHelpPage[route.name]
-            ? () => (
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate('HelpDrawer', {
-                      screen: 'HelpPage',
-                      params: { pageId: screenHelpPage[route.name] },
-                    })
-                  }
-                  style={{ marginRight: 15 }}
-                  accessibilityLabel={t('help_title')}
-                >
-                  <Ionicons name="help-circle-outline" size={26} color={colors.text} />
-                </TouchableOpacity>
-              )
-            : undefined,
-          drawerActiveTintColor: colors.primary,
-          drawerInactiveTintColor: colors.text,
-          drawerType: isWide ? 'permanent' : 'front',
-          swipeEnabled: !isWide,
-          drawerStyle: {
-            backgroundColor: colors.surface,
-            minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
-            width: isCompact ? compactDrawerWidth : drawerWidth,
-          },
-        })}
+        screenOptions={({ navigation, route }) => {
+          const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
+          const helpPageId = screenHelpPage[activeRouteName];
+
+          return {
+            headerShown: true,
+            headerStatusBarHeight: 0,
+            headerStyle: {
+              backgroundColor: colors.surface,
+            },
+            headerTintColor: colors.text,
+            // As telas aninhadas usam headerRight para ações como criar e editar. O atalho de
+            // ajuda fica no lado esquerdo para continuar visível quando essas ações substituem
+            // o lado direito do header do drawer.
+            headerLeft:
+              !isWide || helpPageId
+                ? () => (
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {!isWide ? (
+                        <DrawerToggleButton
+                          navigation={navigation as MainDashboardScreenNavigationProp}
+                        />
+                      ) : null}
+                      {helpPageId ? (
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate('HelpDrawer', {
+                              screen: 'HelpPage',
+                              params: { pageId: helpPageId },
+                            })
+                          }
+                          style={{ marginLeft: isWide ? 15 : 8 }}
+                          accessibilityLabel={t('help_title')}
+                        >
+                          <Ionicons name="help-circle-outline" size={26} color={colors.text} />
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                  )
+                : () => null,
+            headerRight: undefined,
+            drawerActiveTintColor: colors.primary,
+            drawerInactiveTintColor: colors.text,
+            drawerType: isWide ? 'permanent' : 'front',
+            swipeEnabled: !isWide,
+            drawerStyle: {
+              backgroundColor: colors.surface,
+              minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
+              width: isCompact ? compactDrawerWidth : drawerWidth,
+            },
+          };
+        }}
       >
         <Drawer.Screen
           name="MainDashboard"

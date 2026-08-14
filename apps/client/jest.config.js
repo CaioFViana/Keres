@@ -7,10 +7,7 @@ module.exports = {
   roots: ['<rootDir>/test', '<rootDir>/src'],
   // Ancorado em `test/` de propósito: `roots` agora inclui `src`, e um glob solto passaria a
   // procurar testes lá dentro também.
-  testMatch: [
-    '<rootDir>/test/**/*.test.ts',
-    '<rootDir>/test/**/*.test.tsx',
-  ],
+  testMatch: ['<rootDir>/test/**/*.test.ts', '<rootDir>/test/**/*.test.tsx'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',

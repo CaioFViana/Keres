@@ -1,19 +1,20 @@
 import { getHelpPages } from '../../src/help/repository';
-import { searchHelp } from '../../src/help/search';
+import { createHelpSearchIndex, searchHelp } from '../../src/help/search';
 import { HelpPage } from '../../src/help/types';
 
 describe('help search', () => {
   const pages = getHelpPages('pt');
+  const index = createHelpSearchIndex(pages);
   it('matches accents and case-insensitively', () =>
-    expect(searchHelp(pages, 'HISTORIA').some((result) => result.page.id === 'what-is-keres')).toBe(
+    expect(searchHelp(index, 'HISTORIA').some((result) => result.page.id === 'what-is-keres')).toBe(
       true,
     ));
   it('matches keywords', () =>
-    expect(searchHelp(pages, 'inventario').some((result) => result.page.id === 'story-state')).toBe(
+    expect(searchHelp(index, 'inventario').some((result) => result.page.id === 'story-state')).toBe(
       true,
     ));
   it('prioritizes titles', () =>
-    expect(searchHelp(pages, 'personagens')[0]?.page.id).toBe('characters'));
+    expect(searchHelp(index, 'personagens')[0]?.page.id).toBe('characters'));
   it('finds text in renderable blocks and keeps an accented excerpt', () => {
     const page: HelpPage = {
       id: 'what-is-keres',
@@ -23,7 +24,7 @@ describe('help search', () => {
       blocks: [{ type: 'paragraph', text: 'A história começa numa estação vazia.' }],
     };
 
-    const [result] = searchHelp([page], 'historia');
+    const [result] = searchHelp(createHelpSearchIndex([page]), 'historia');
     expect(result?.page.id).toBe('what-is-keres');
     expect(result?.excerpt).toContain('história');
   });
@@ -45,12 +46,11 @@ describe('help search', () => {
       },
     ];
 
-    expect(searchHelp(pagesWithTie, 'termo').map((result) => result.page.id)).toEqual([
-      'what-is-keres',
-      'first-story',
-    ]);
+    expect(
+      searchHelp(createHelpSearchIndex(pagesWithTie), 'termo').map((result) => result.page.id),
+    ).toEqual(['what-is-keres', 'first-story']);
   });
   it('returns no result when no searchable text matches', () => {
-    expect(searchHelp(pages, 'inexistente-keres-ajuda')).toEqual([]);
+    expect(searchHelp(index, 'inexistente-keres-ajuda')).toEqual([]);
   });
 });

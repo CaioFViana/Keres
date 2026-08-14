@@ -2,36 +2,46 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'glossary',
   title: 'Glossary',
-  summary: 'Look up terms that appear in the interface.',
-  keywords: ['glossary', 'help'],
+  summary: 'Look up the meaning of terms that appear in the interface.',
+  keywords: ['glossary', 'scene', 'chapter', 'marker', 'tag'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'The glossary summarizes words such as scene, chapter, choice, marker, tag, and collaborator.',
+      text: 'This glossary summarizes interface terms; each linked page explains the feature in more detail.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
       type: 'example',
       title: 'Example',
-      text: 'Consult glossary when this part of your work needs a decision or review.',
+      text: 'When you read “Marker” in a condition, use this summary and open Inventory and markers to configure the feature.',
+    },
+    { type: 'heading', level: 3, text: 'Main terms' },
+    {
+      type: 'table',
+      headers: ['Term', 'Meaning'],
+      rows: [
+        ['Scene', 'A story moment, linked to a location and optionally a chapter.'],
+        ['Choice', 'A decision leading from one scene to another in a branching story.'],
+        ['Marker', 'A name recording that something happened in reader state.'],
+        ['Tag', 'A short word that groups elements.'],
+        ['Collaborator', 'A person with owner, writer, or reader access to a synchronized story.'],
+      ],
     },
     { type: 'heading', level: 2, text: 'How to do it' },
     {
       type: 'steps',
       items: [
-        'Open the matching screen from the menu.',
-        'Read the information or choose the needed action.',
-        'Confirm the change when the screen asks.',
-        'Return to the story or list to check the result.',
+        'Search for the term in Help.',
+        'Open the page listed in See also to learn how to use the feature.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'The result can appear in collaboration, synchronization, lists, or related details according to the action taken.',
+      text: 'The glossary does not change your story; it only helps interpret names used on screens.',
     },
-    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['scenes', 'choices', 'tags', 'collaborators', 'story-state'] },
   ],
 };
 export default page;

@@ -355,7 +355,6 @@
   "eons": "Eons",
   "error": "Error",
   "error_fetching_summary": "Error fetching summary:",
-  "example_stories_already_installed": "This example story is already installed.",
   "example_stories_author": "By {{author}}",
   "example_stories_description": "Install a ready-made example story to explore the system's features. Once installed, it becomes a regular story - you can edit or delete it like any other.",
   "example_stories_empty": "No example stories are available in this version of the app.",

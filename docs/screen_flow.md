@@ -30,22 +30,25 @@ Drawer unificado dá acesso a todos os módulos do sistema, com uma tela por ent
 1. **Painel Principal** (`MainDashboard`) - o rótulo do drawer é substituído dinamicamente pelo título da própria história atual, em vez do texto fixo "Painel Principal".
 2. **Busca Global** (`GlobalSearch`) - campo de busca único que pesquisa por texto em **qualquer** tabela, em **qualquer** campo pesquisável (nativo ou atributo customizado), com resultados agrupados por tipo de entidade; tocar num resultado navega direto para o detalhe daquela entidade (`utils/entityNavigation.ts`).
 3. **Personagens** (`CharactersStack`)
-4. **Locais** (`LocationsStack`) - inclui uma visualização em grafo das relações entre locais (`LocationGraphScreen`).
-5. **Capítulos** (`ChaptersStack`)
-6. **Escolhas** (`ChoicesStack`) - **oculto no drawer se a história for `linear`** (só existem `Choice`s explícitas em histórias `branching`). Inclui um mapa/grafo da história (`ChoiceViewScreen`).
-7. **Itens** (`ItemsStack`)
-8. **Trajetórias de Item** (`ItemJourneysStack`) - histórico de mudanças de estado/posse de um item ao longo das cenas.
-9. **Cenas** (`ScenesStack`)
+4. **Capítulos** (`ChaptersStack`)
+5. **Cenas** (`ScenesStack`)
+6. **Escolhas** (`ChoicesStack`) - **oculto no drawer se a história for `linear`**. Inclui um mapa/grafo da história (`ChoiceViewScreen`).
+7. **Locais** (`LocationsStack`) - inclui uma visualização em grafo das relações entre locais (`LocationGraphScreen`).
+8. **Itens** (`ItemsStack`)
+9. **Trajetórias de Item** (`ItemJourneysStack`) - histórico de mudanças de estado/posse de um item ao longo das cenas.
 10. **Etiquetas** (`TagsStack`)
 11. **Regras do Mundo** (`WorldRulesStack`)
 12. **Notas** (`NotesStack`)
 13. **Galeria** (`GalleryStack`)
 14. **Relações de Personagens** (`CharacterRelationsStack`) - inclui um grafo de relações (`CharacterRelationGraphScreen`).
 15. **Atributos Customizados** (`StorySchemaStack`) - onde o usuário define campos customizados por tipo de entidade (ver `project_plan.md`, seção "Story Schema Fields").
-16. **Logs de Operação** (`OperationLogStack`) - histórico auditável de criações/edições/exclusões sincronizadas.
-17. **Configurações da História** (`StorySettings`)
-18. **Análise da História** (`StoryAnalysis`) - relatório de problemas estruturais que o autor dificilmente notaria sozinho (cenas órfãs, escolhas quebradas, etc.) - recarrega ao focar.
-19. **Seleção de Histórias** (`StorySelection`) - item "voltar": reseta a pilha raiz de volta à lista de histórias, sem ficar empilhado no histórico de navegação.
+16. **Sugestões** (`Suggestions`) - valores usados para sugerir preenchimento em campos do universo da história.
+17. **Comentários** (`CommentsStack`) - lista centralizada dos comentários feitos nos campos e elementos da história.
+18. **Logs de Operação** (`OperationLogStack`) - histórico auditável de criações/edições/exclusões sincronizadas.
+19. **Análise da História** (`StoryAnalysis`) - relatório de problemas estruturais que o autor dificilmente notaria sozinho (cenas órfãs, escolhas quebradas, etc.) - recarrega ao focar.
+20. **Configurações da História** (`StorySettings`)
+21. **Seleção de Histórias** (`StorySelection`) - item "voltar": reseta a pilha raiz de volta à lista de histórias, sem ficar empilhado no histórico de navegação.
+22. **Ajuda** (`HelpDrawer`) - abre o catálogo de ajuda sem sair da história.
 
 ### Padrão de telas por entidade (Personagens, Locais, Capítulos, Escolhas, Itens, Trajetórias de Item, Cenas, Etiquetas, Regras do Mundo, Notas)
 
@@ -62,6 +65,7 @@ Exceções ao padrão:
 - **Galeria** não segue Lista→Detalhe→Formulário: é uma grade de mídia importada (`GalleryListScreen`, cards visuais em vez de linhas de lista) com uma tela de Detalhe por item (`GalleryDetailScreen`); a "criação" é o fluxo de importação de arquivos, não um formulário de campos.
 - **Atributos Customizados** (Story Schema) tem Listagem e Formulário de campo, mas não "Detalhe" - o campo em si não tem uma visualização separada da edição.
 - **Log de Operações** é somente leitura: tem Listagem e Detalhe, sem Formulário.
+- **Comentários** são transversais: podem ser abertos junto de um campo no detalhe e também aparecem na lista centralizada; não possuem formulário de entidade próprio.
 
 ## Ajuda
 

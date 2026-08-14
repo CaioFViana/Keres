@@ -125,6 +125,14 @@ Para campos que requerem listas de valores pré-definidos (como gêneros literá
 
 O cliente inclui um catálogo de ajuda em português e inglês, com busca local, páginas por tarefa, tabelas de campos visíveis e acesso contextual pelos cabeçalhos das telas.
 
+## Recursos transversais da história
+
+- **Favoritos:** uma história ou elemento pode ser destacado para filtros e listas. Em histórias compartilhadas, o comportamento do favorito é definido nas configurações da história.
+- **Comentários:** colaboradores e leitores autorizados podem comentar um campo ou elemento; a lista de comentários reúne essas conversas em um só lugar.
+- **Veja também:** cria uma ligação livre e recíproca entre elementos relacionados, sem substituir etiquetas ou notas.
+- **Histórias ramificadas:** escolhas podem ter condições (visitas, itens ou marcadores) e efeitos (dar/tirar item ou ligar/desligar marcador). Esses recursos formam o estado do leitor e são analisados junto ao mapa da história.
+- **Colaboração:** uma história ligada a servidor pode ter colaboradores; permissões e comentários de leitores são configurados na própria história.
+
 **Nota sobre Suggestions:**
 > O código está implementado para que o sistema tenha uma lista padrão de sugestões, porém está inutilizado no momento visto que a forma atual permite uma completa customização desta lista ao usuário, sendo populada apenas pelo que o usuário insere. No entanto, pode-se ver como uma melhoria futura adicionar entradas nesta tabela para "persistir mesmo que todas as entidades com o valor X sejam excluidas." Talvez um novo futuro drawer.
 

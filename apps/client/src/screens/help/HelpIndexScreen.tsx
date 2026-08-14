@@ -1,18 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
 import { HighlightedText } from '../../components/features/help/HelpSearchBar/HighlightedText';
-import { HelpBlockRenderer as HelpBlockRendererComponent } from '../../components/features/help/HelpBlockRenderer/HelpBlockRenderer';
 import { helpSections } from '../../help/catalog';
-import { getHelpPage, getHelpPages, resolveHelpPage } from '../../help/repository';
-import { searchHelp } from '../../help/search';
+import { getHelpPage, getHelpPages } from '../../help/repository';
+import { createHelpSearchIndex, searchHelp } from '../../help/search';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { debounce } from '../../utils/debounce';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 type HelpNavigation = NativeStackNavigationProp<{
   HelpIndex: undefined;
@@ -27,33 +26,29 @@ export function HelpIndexScreen() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({ start: true });
   const pages = useMemo(() => getHelpPages(i18n.language), [i18n.language]);
-  const results = useMemo(() => searchHelp(pages, debouncedQuery), [pages, debouncedQuery]);
+  const searchIndex = useMemo(() => createHelpSearchIndex(pages), [pages]);
+  const results = useMemo(
+    () => searchHelp(searchIndex, debouncedQuery),
+    [searchIndex, debouncedQuery],
+  );
   const commitSearch = useMemo(
     () => debounce((value: string) => setDebouncedQuery(value), 400),
     [],
   );
+
   useEffect(() => {
     commitSearch(query);
     return () => commitSearch.cancel?.();
   }, [commitSearch, query]);
+
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(t('help_index_title'));
     }, [t]),
   );
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    searchRow: { flexDirection: 'row', alignItems: 'center', margin: 16, marginBottom: 4 },
-    search: {
-      flex: 1,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 8,
-      color: colors.text,
-      padding: 12,
-      backgroundColor: colors.surface,
-    },
-    clear: { marginLeft: 8, padding: 10 },
     section: {
       marginHorizontal: 16,
       marginTop: 12,
@@ -76,6 +71,7 @@ export function HelpIndexScreen() {
     empty: { padding: 24, color: colors.textSecondary, textAlign: 'center' },
   });
   const openPage = (id: string) => navigation.navigate('HelpPage', { pageId: id });
+
   return (
     <View style={styles.container}>
       <HelpSearchBar
@@ -170,47 +166,5 @@ export function HelpIndexScreen() {
         </ScrollView>
       )}
     </View>
-  );
-}
-
-export function HelpPageScreen() {
-  const { t, i18n } = useTranslation();
-  const navigation = useNavigation<HelpNavigation>();
-  const route = useRoute<{ key: string; name: 'HelpPage'; params: { pageId: string } }>();
-  const { colors } = useTheme();
-  const { page, usedFallback } = resolveHelpPage(route.params.pageId, i18n.language);
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(page?.title ?? t('help_page_not_found'));
-    }, [page?.title, t]),
-  );
-  return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
-    >
-      {page ? (
-        <>
-          <Text style={{ fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 16 }}>
-            {page.title}
-          </Text>
-          {usedFallback ? (
-            <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
-              {t('help_language_fallback_notice')}
-            </Text>
-          ) : null}
-          {page.blocks.map((block, index) => (
-            <HelpBlockRendererComponent
-              key={index}
-              block={block}
-              onOpenPage={(pageId) => navigation.push('HelpPage', { pageId })}
-              pageTitle={(pageId) => getHelpPage(pageId, i18n.language)?.title ?? pageId}
-            />
-          ))}
-        </>
-      ) : (
-        <Text style={{ color: colors.text, fontSize: 16 }}>{t('help_page_not_found')}</Text>
-      )}
-    </ScrollView>
   );
 }

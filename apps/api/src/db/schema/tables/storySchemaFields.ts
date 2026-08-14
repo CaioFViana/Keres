@@ -14,6 +14,7 @@ export const storySchemaFields = pgTable(
     key: text('key').notNull(),
     description: text('description'),
     type: text('type').notNull(),
+    targetEntityType: text('target_entity_type'),
     isRequired: boolean('is_required').notNull().default(false),
     defaultValue: text('default_value'),
     order: integer('order').notNull().default(0),

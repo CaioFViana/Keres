@@ -66,7 +66,14 @@ export const fieldSources: Record<string, string[]> = {
     'isFavorite',
   ],
   choices: ['text', 'sourceScene', 'destinationScene', 'notes'],
-  'custom-attributes': ['displayName', 'type', 'required', 'defaultValue', 'order'],
+  'custom-attributes': [
+    'displayName',
+    'type',
+    'targetEntityType',
+    'required',
+    'defaultValue',
+    'order',
+  ],
 };
 
 /** Página que explica os campos expostos pela metadata usada na busca avançada. */
@@ -367,6 +374,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'key',
       'description',
       'type',
+      'targetEntityType',
       'isRequired',
       'defaultValue',
       'order',

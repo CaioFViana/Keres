@@ -11,6 +11,7 @@ export const storySchemaFields = sqliteTable(
     key: text('key').notNull(),
     description: text('description'),
     type: text('type').notNull(),
+    targetEntityType: text('target_entity_type'),
     isRequired: integer('is_required', { mode: 'boolean' }).notNull().default(false),
     defaultValue: text('default_value'),
     order: integer('order').notNull().default(0),

@@ -1,4 +1,4 @@
-import { AttributeType } from '@keres/shared';
+import { AttributeType, StorySchemaEntityType } from '@keres/shared';
 import React from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
@@ -6,16 +6,19 @@ import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
 
 interface AttributeValueInputProps {
   type: AttributeType | string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string | null) => void;
   placeholder?: string;
   storyId?: string;
   /** Só usado quando `type === SUGGESTION`. Sem isto (campo recém-criado, ainda sem id salvo),
    *  cai pra texto simples em vez de tentar abrir sugestões de um campo que não existe. */
   suggestionFieldId?: string;
+  /** Declared target of an ENTITY field. */
+  targetEntityType?: StorySchemaEntityType | null;
   style?: any;
 }
 
@@ -32,6 +35,7 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
   placeholder,
   storyId,
   suggestionFieldId,
+  targetEntityType,
   style,
 }) => {
   const { colors } = useTheme();
@@ -100,6 +104,27 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
+          style={[commonInputStyles.input, style]}
+        />
+      );
+
+    case AttributeType.ENTITY:
+      if (storyId && targetEntityType) {
+        return (
+          <EntityPickerInput
+            storyId={storyId}
+            entityType={targetEntityType}
+            value={value || null}
+            onChange={onChange}
+            placeholder={placeholder}
+          />
+        );
+      }
+      return (
+        <TextInput
+          value={value}
+          placeholder={placeholder}
+          editable={false}
           style={[commonInputStyles.input, style]}
         />
       );

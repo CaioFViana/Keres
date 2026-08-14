@@ -1,4 +1,5 @@
 import {
+  AttributeType,
   CreateStorySchemaFieldDataSchema,
   CreateStorySchemaFieldDataType,
   CreateStoryUpdate,
@@ -51,6 +52,10 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
+    if (validatedData.type === AttributeType.ENTITY && !validatedData.targetEntityType) {
+      throw new Error('Entity attributes require a target entity type.');
+    }
+
     await db.insert(storySchemaFields).values({
       id: update.id!,
       storyId,
@@ -59,6 +64,7 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
       key: validatedData.key,
       description: validatedData.description,
       type: validatedData.type,
+      targetEntityType: validatedData.targetEntityType,
       isRequired: validatedData.isRequired,
       defaultValue: validatedData.defaultValue,
       order: validatedData.order,
@@ -84,6 +90,8 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     const changes = { ...update.changes };
     delete changes.entityType;
     delete changes.key;
+    delete changes.type;
+    delete changes.targetEntityType;
 
     await super.update(userId, storyId, { ...update, changes }, currentEntity);
   }

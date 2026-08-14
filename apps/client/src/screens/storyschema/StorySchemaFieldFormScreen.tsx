@@ -1,16 +1,22 @@
-import { AttributeKeyRegex, AttributeType, deriveAttributeKey } from '@keres/shared';
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import {
+  AttributeKeyRegex,
+  AttributeType,
+  deriveAttributeKey,
+  STORY_SCHEMA_ENTITY_TYPES,
+  StorySchemaEntityType,
+} from '@keres/shared';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import Select from '@/src/components/common/inputs/Select/Select';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -57,6 +63,7 @@ const StorySchemaFieldFormScreen = () => {
   const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
   const [description, setDescription] = useState<string | null>(null);
   const [type, setType] = useState<AttributeType>(AttributeType.TEXT);
+  const [targetEntityType, setTargetEntityType] = useState<StorySchemaEntityType | null>(null);
   const [isRequired, setIsRequired] = useState(false);
   const [defaultValue, setDefaultValue] = useState<string | null>(null);
   const [loading, setLoading] = useState(isEditing);
@@ -85,6 +92,7 @@ const StorySchemaFieldFormScreen = () => {
           setKeyManuallyEdited(true); // Chave já fixa em modo de edição, não precisa mais auto-derivar.
           setDescription(field.description);
           setType(field.type as AttributeType);
+          setTargetEntityType(field.targetEntityType as StorySchemaEntityType | null);
           setIsRequired(field.isRequired);
           setDefaultValue(field.defaultValue);
         } else {
@@ -121,6 +129,10 @@ const StorySchemaFieldFormScreen = () => {
       AppAlert.alert(t('error'), t('invalid_attribute_key'));
       return;
     }
+    if (type === AttributeType.ENTITY && !targetEntityType) {
+      AppAlert.alert(t('error'), t('attribute_target_entity_type_required'));
+      return;
+    }
     if (!userId) {
       AppAlert.alert(t('error'), t('user_not_identified'));
       return;
@@ -138,7 +150,7 @@ const StorySchemaFieldFormScreen = () => {
           name: name.trim(),
           description: description?.trim() || null,
           isRequired,
-          defaultValue: defaultValue?.trim() || null,
+          defaultValue: type === AttributeType.ENTITY ? null : defaultValue?.trim() || null,
         });
       } else {
         await service.createField(userId, {
@@ -148,8 +160,9 @@ const StorySchemaFieldFormScreen = () => {
           key,
           description: description?.trim() || null,
           type,
+          targetEntityType: type === AttributeType.ENTITY ? targetEntityType : null,
           isRequired,
-          defaultValue: defaultValue?.trim() || null,
+          defaultValue: type === AttributeType.ENTITY ? null : defaultValue?.trim() || null,
           order: existingFields.length,
         });
       }
@@ -164,6 +177,10 @@ const StorySchemaFieldFormScreen = () => {
 
   const typeOptions = ATTRIBUTE_TYPE_OPTIONS.map((value) => ({
     label: t(`attribute_type_${value}`),
+    value,
+  }));
+  const targetEntityTypeOptions = STORY_SCHEMA_ENTITY_TYPES.map((value) => ({
+    label: t(`${value.toLowerCase()}s`),
     value,
   }));
 
@@ -227,6 +244,20 @@ const StorySchemaFieldFormScreen = () => {
         disabled={isEditing}
       />
 
+      {type === AttributeType.ENTITY && (
+        <>
+          <Text style={styles.label}>{t('attribute_target_entity_type')}</Text>
+          <Text style={styles.hint}>{t('attribute_target_entity_type_hint')}</Text>
+          <Select
+            options={targetEntityTypeOptions}
+            value={targetEntityType}
+            onValueChange={(value) => setTargetEntityType((value as StorySchemaEntityType) || null)}
+            placeholder={t('attribute_target_entity_type')}
+            disabled={isEditing}
+          />
+        </>
+      )}
+
       <View style={styles.switchContainer}>
         <Text style={[styles.label, { marginTop: 0 }]}>{t('attribute_required')}</Text>
         <ThemedSwitch
@@ -236,15 +267,19 @@ const StorySchemaFieldFormScreen = () => {
         />
       </View>
 
-      <Text style={styles.label}>{t('attribute_default_value')}</Text>
-      <AttributeValueInput
-        type={type}
-        value={defaultValue || ''}
-        onChange={setDefaultValue}
-        placeholder={t('attribute_default_value')}
-        storyId={storyId}
-        suggestionFieldId={fieldId}
-      />
+      {type !== AttributeType.ENTITY && (
+        <>
+          <Text style={styles.label}>{t('attribute_default_value')}</Text>
+          <AttributeValueInput
+            type={type}
+            value={defaultValue || ''}
+            onChange={setDefaultValue}
+            placeholder={t('attribute_default_value')}
+            storyId={storyId}
+            suggestionFieldId={fieldId}
+          />
+        </>
+      )}
 
       <Button onPress={handleSave} style={styles.saveButton} disabled={saving}>
         {saving ? t('saving') : t('save')}

@@ -10,6 +10,7 @@ interface CommentableDetailFieldProps {
   storyId: string;
   label: string;
   value: string;
+  onPress?: () => void;
   comments: CommentSelect[];
   canComment: boolean;
   isStoryOwner: boolean;
@@ -36,6 +37,7 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   storyId,
   label,
   value,
+  onPress,
   comments,
   canComment,
   isStoryOwner,
@@ -49,7 +51,7 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   const hasComments = comments.length > 0;
 
   if (!hasComments && !canComment) {
-    return <DetailField label={label} value={value} />;
+    return <DetailField label={label} value={value} onPress={onPress} />;
   }
 
   const styles = StyleSheet.create({
@@ -69,7 +71,7 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   return (
     <View style={styles.row}>
       <View style={styles.field}>
-        <DetailField label={label} value={value} />
+        <DetailField label={label} value={value} onPress={onPress} />
       </View>
       <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
         <Ionicons

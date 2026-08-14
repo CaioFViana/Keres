@@ -8,7 +8,39 @@ export const AttributeKeyRegex = /^[a-z][a-z0-9_]*$/;
 export const StorySchemaEntityTypeSchema = z.enum(STORY_SCHEMA_ENTITY_TYPES);
 export const AttributeTypeSchema = z.nativeEnum(AttributeType);
 
-export const StorySchemaFieldSchema = z.object({
+function validateEntityAttribute(
+  data: {
+    type: AttributeType;
+    targetEntityType: string | null;
+    defaultValue: string | null;
+  },
+  ctx: z.RefinementCtx,
+) {
+  if (data.type === AttributeType.ENTITY) {
+    if (data.targetEntityType === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['targetEntityType'],
+        message: 'Entity attributes require a target entity type',
+      });
+    }
+    if (data.defaultValue !== null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['defaultValue'],
+        message: 'Entity attributes cannot have a default value',
+      });
+    }
+  } else if (data.targetEntityType !== null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['targetEntityType'],
+      message: 'Only entity attributes can have a target entity type',
+    });
+  }
+}
+
+const StorySchemaFieldBaseSchema = z.object({
   id: z.string(),
   storyId: z.string(),
   entityType: StorySchemaEntityTypeSchema,
@@ -18,6 +50,9 @@ export const StorySchemaFieldSchema = z.object({
     .regex(AttributeKeyRegex, 'Internal key must be lowercase snake_case starting with a letter'),
   description: z.string().nullable(),
   type: AttributeTypeSchema,
+  // Exports created before entity attributes did not persist this property. Keep
+  // parsing them compatible by materializing the historical null value.
+  targetEntityType: StorySchemaEntityTypeSchema.nullable().default(null),
   isRequired: z.boolean(),
   defaultValue: z.string().nullable(),
   order: z.number().int(),
@@ -28,7 +63,10 @@ export const StorySchemaFieldSchema = z.object({
   deletedAt: z.coerce.date().nullable(),
 });
 
-export const CreateStorySchemaFieldDataSchema = StorySchemaFieldSchema.omit({
+export const StorySchemaFieldSchema =
+  StorySchemaFieldBaseSchema.superRefine(validateEntityAttribute);
+
+export const CreateStorySchemaFieldDataSchema = StorySchemaFieldBaseSchema.omit({
   id: true,
   storyId: true,
   createdAt: true,
@@ -36,14 +74,21 @@ export const CreateStorySchemaFieldDataSchema = StorySchemaFieldSchema.omit({
   version: true,
   isDeleted: true,
   deletedAt: true,
-}).extend({
-  description: z.string().nullable().default(null),
-  isRequired: z.boolean().default(false),
-  defaultValue: z.string().nullable().default(null),
-  order: z.number().int().default(0),
-});
+})
+  .extend({
+    description: z.string().nullable().default(null),
+    targetEntityType: StorySchemaEntityTypeSchema.nullable().default(null),
+    isRequired: z.boolean().default(false),
+    defaultValue: z.string().nullable().default(null),
+    order: z.number().int().default(0),
+  })
+  .superRefine(validateEntityAttribute);
 
-export const PartialStorySchemaFieldSchema = StorySchemaFieldSchema.partial();
+// `partial()` keeps a nested Zod default active. Updates that do not mention
+// targetEntityType must preserve it instead of materializing the legacy null.
+export const PartialStorySchemaFieldSchema = StorySchemaFieldBaseSchema.partial().extend({
+  targetEntityType: StorySchemaEntityTypeSchema.nullable().optional(),
+});
 
 export type CreateStorySchemaFieldDataType = z.infer<typeof CreateStorySchemaFieldDataSchema>;
 export type StorySchemaFieldType = z.infer<typeof StorySchemaFieldSchema>;

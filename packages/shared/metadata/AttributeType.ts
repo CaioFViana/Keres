@@ -6,4 +6,5 @@ export enum AttributeType {
   BOOLEAN = 'boolean',
   DATE = 'date',
   SUGGESTION = 'suggestion',
+  ENTITY = 'entity',
 }

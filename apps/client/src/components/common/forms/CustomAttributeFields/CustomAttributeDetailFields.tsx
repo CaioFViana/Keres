@@ -4,11 +4,16 @@ import {
   decodeAttributeValue,
   StorySchemaEntityType,
 } from '@keres/shared';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
 import { createAttributeValueService } from '../../../../services/storymanagement/AttributeValueService';
+import { EntityService } from '../../../../services/EntityService';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
+import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
+import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import { useEntityComments } from '../../../../hooks/useEntityComments';
 import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
@@ -45,9 +50,11 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
   entityId,
 }) => {
   const { t } = useTranslation();
+  const navigation = useNavigation();
   const drizzleDb = useDrizzle();
   const fields = useStorySchemaFields(storyId, entityType);
   const [values, setValues] = useState<Record<string, string | null>>({});
+  const [resolvedEntityNames, setResolvedEntityNames] = useState<Record<string, string>>({});
   const {
     commentsByField,
     canComment,
@@ -62,12 +69,39 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
     try {
       const service = createAttributeValueService(drizzleDb);
       const rows = await service.getValuesForEntity(entityId);
-      setValues(Object.fromEntries(rows.map((row) => [row.fieldId, row.value])));
+      const loadedValues = Object.fromEntries(rows.map((row) => [row.fieldId, row.value]));
+      setValues(loadedValues);
+
+      const names = await Promise.all(
+        fields
+          .filter(
+            (field) =>
+              field.type === AttributeType.ENTITY &&
+              field.targetEntityType &&
+              loadedValues[field.id],
+          )
+          .map(async (field) => {
+            const name = await EntityService.getEntityIdentifier(
+              drizzleDb,
+              field.targetEntityType!,
+              loadedValues[field.id]!,
+              storyId,
+              t,
+            );
+            return [field.id, name] as const;
+          }),
+      );
+      setResolvedEntityNames(
+        Object.fromEntries(
+          names.filter((entry): entry is readonly [string, string] => entry[1] !== undefined),
+        ),
+      );
     } catch (error) {
       console.error('Failed to load attribute values:', error);
       setValues({});
+      setResolvedEntityNames({});
     }
-  }, [drizzleDb, entityId]);
+  }, [drizzleDb, entityId, fields, storyId, t]);
 
   useEffect(() => {
     fetchValues();
@@ -88,13 +122,33 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
         // defaultValue do campo (o mais honesto disponível) em vez de mostrar N/A à toa.
         const rawValue = values[field.id] ?? field.defaultValue ?? null;
         const decoded = decodeAttributeValue(field.type as AttributeType, rawValue);
-        const displayValue = formatValueForDisplay(field.type, decoded, t);
+        const isEntityReference = field.type === AttributeType.ENTITY;
+        const resolvedEntityName = resolvedEntityNames[field.id];
+        const displayValue =
+          isEntityReference && rawValue
+            ? resolvedEntityName || t('attribute_entity_deleted')
+            : formatValueForDisplay(field.type, decoded, t);
+        const onPress =
+          isEntityReference && resolvedEntityName && field.targetEntityType && rawValue
+            ? () => {
+                const drawerNavigation =
+                  navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
+                if (drawerNavigation) {
+                  navigateToEntityDetail(
+                    drawerNavigation,
+                    field.targetEntityType as StorySchemaEntityType,
+                    rawValue,
+                  );
+                }
+              }
+            : undefined;
         return (
           <CommentableDetailField
             key={field.id}
             storyId={storyId}
             label={field.name}
             value={displayValue}
+            onPress={onPress}
             comments={commentsByField[field.id] ?? []}
             canComment={canComment}
             isStoryOwner={isStoryOwner}

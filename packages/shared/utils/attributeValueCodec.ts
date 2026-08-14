@@ -1,5 +1,9 @@
 import { AttributeType } from '../metadata/AttributeType';
 
+export function isEntityAttributeType(type: AttributeType): boolean {
+  return type === AttributeType.ENTITY;
+}
+
 /**
  * `AttributeValue.value` (e `StorySchemaField.defaultValue`) são sempre uma única coluna de
  * texto, decodificada de acordo com `AttributeType` - não 4 colunas tipadas. Isso mantém a
@@ -22,6 +26,8 @@ export function encodeAttributeValue(
       const numeric = typeof raw === 'number' ? raw : Number(raw);
       return Number.isFinite(numeric) ? String(numeric) : null;
     }
+    case AttributeType.ENTITY:
+      return String(raw).trim() || null;
     default:
       return String(raw);
   }
@@ -41,6 +47,8 @@ export function decodeAttributeValue(
       const numeric = Number(stored);
       return Number.isFinite(numeric) ? numeric : null;
     }
+    case AttributeType.ENTITY:
+      return String(stored).trim() || null;
     default:
       return stored;
   }

@@ -1,4 +1,4 @@
-export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id' | 'color';
+export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'id' | 'color' | 'entity';
 
 export interface EntityFieldMetadata {
   name: string; // The field name in the entity
@@ -7,6 +7,8 @@ export interface EntityFieldMetadata {
   isSearchable: boolean; // Whether this field should appear in advanced search
   isSuggestion?: boolean; // Whether to use a suggestion component for this field
   suggestionsSource?: string; // Key to fetch suggestions (e.g., 'genderOptions', 'raceOptions')
+  /** Fixed target type when `type` is `entity`. */
+  entityTargetType?: string | null;
   /** Already-resolved display text, used as-is instead of `t(label)` - for synthetic metadata
    *  built from user-defined data (Story Schema custom attributes) that has no translation key,
    *  see `apps/client/src/utils/customAttributeFieldMetadata.ts`. */

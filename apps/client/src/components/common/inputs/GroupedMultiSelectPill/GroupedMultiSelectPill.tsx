@@ -36,6 +36,9 @@ interface GroupedMultiSelectPillProps {
   placeholder?: string;
   label?: string;
   noOptionsText?: string;
+  searchPlaceholder?: string;
+  /** Limits the selection to one value and closes after a choice. */
+  singleSelect?: boolean;
 }
 
 /**
@@ -54,6 +57,8 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
   placeholder,
   label,
   noOptionsText,
+  searchPlaceholder,
+  singleSelect = false,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -75,10 +80,10 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
 
   const selectedOptionDetails = useMemo(
     () =>
-      selectedValues
+      (singleSelect ? selectedValues.slice(0, 1) : selectedValues)
         .map((value) => optionsByValue.get(value))
         .filter(Boolean) as GroupedMultiSelectOption[],
-    [selectedValues, optionsByValue],
+    [selectedValues, optionsByValue, singleSelect],
   );
 
   const activeGroup = useMemo(
@@ -93,17 +98,9 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
     return activeGroup.options.filter((option) => option.label.toLowerCase().includes(query));
   }, [activeGroup, search]);
 
-  const toggleOption = useCallback(
-    (value: string) => {
-      const newSelection = selectedValues.includes(value)
-        ? selectedValues.filter((v) => v !== value)
-        : [...selectedValues, value];
-      onSelectionChange(newSelection);
-    },
-    [selectedValues, onSelectionChange],
-  );
-
   const openModal = useCallback(() => {
+    setSearch('');
+    setActiveGroupKey(groups.length === 1 ? (groups[0]?.key ?? null) : null);
     setModalVisible(true);
     Animated.timing(dropdownAnim, {
       toValue: 1,
@@ -111,7 +108,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
       easing: Easing.linear,
       useNativeDriver: true,
     }).start();
-  }, [dropdownAnim]);
+  }, [dropdownAnim, groups]);
 
   const closeModal = useCallback(() => {
     Animated.timing(dropdownAnim, {
@@ -127,6 +124,23 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
       setSearch('');
     });
   }, [dropdownAnim]);
+
+  const toggleOption = useCallback(
+    (value: string) => {
+      const newSelection = singleSelect
+        ? selectedValues.includes(value)
+          ? []
+          : [value]
+        : selectedValues.includes(value)
+          ? selectedValues.filter((v) => v !== value)
+          : [...selectedValues, value];
+      onSelectionChange(newSelection);
+      if (singleSelect) {
+        closeModal();
+      }
+    },
+    [selectedValues, onSelectionChange, singleSelect, closeModal],
+  );
 
   const openGroup = useCallback((groupKey: string) => {
     setSearch('');
@@ -279,7 +293,11 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <TouchableOpacity onPress={openModal} style={styles.pillContainer}>
+      <TouchableOpacity
+        testID="grouped-select-trigger"
+        onPress={openModal}
+        style={styles.pillContainer}
+      >
         {selectedOptionDetails.length > 0 ? (
           selectedOptionDetails.map((option) => (
             <View
@@ -297,7 +315,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
           <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
         )}
         <Ionicons
-          name="add-circle"
+          name={singleSelect ? 'chevron-down' : 'add-circle'}
           size={24}
           color={colors.primary}
           style={{ marginLeft: 'auto' }}
@@ -324,7 +342,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
             <>
               <View style={styles.modalHeader}>
                 <View style={styles.modalHeaderTitleRow}>
-                  {activeGroup && (
+                  {activeGroup && groups.length > 1 && (
                     <TouchableOpacity onPress={backToGroups} style={styles.backButton}>
                       <Ionicons name="chevron-back" size={22} color={colors.text} />
                     </TouchableOpacity>
@@ -343,7 +361,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                   style={styles.searchInput}
                   value={search}
                   onChangeText={setSearch}
-                  placeholder={t('search')}
+                  placeholder={searchPlaceholder || t('search')}
                   placeholderTextColor={colors.textSecondary}
                   autoFocus
                 />
@@ -396,6 +414,7 @@ const GroupedMultiSelectPill: React.FC<GroupedMultiSelectPillProps> = ({
                   visibleOptions.map((option) => (
                     <TouchableOpacity
                       key={option.value}
+                      testID={`grouped-select-option-${option.value}`}
                       style={styles.optionContainer}
                       onPress={() => toggleOption(option.value)}
                     >

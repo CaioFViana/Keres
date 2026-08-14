@@ -50,6 +50,13 @@
       "when": 1786641546265,
       "tag": "0006_new_rhino",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786725216624,
+      "tag": "0007_salty_caretaker",
+      "breakpoints": true
     }
   ]
 }

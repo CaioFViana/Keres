@@ -53,6 +53,9 @@ export function cloneExampleStoryForInstall(
     id: remapId(entity.id),
   });
   const storyId = remapId(example.story.id);
+  const entityFieldIds = new Set(
+    example.storySchemaFields?.filter((field) => field.type === 'entity').map((field) => field.id),
+  );
 
   const cloned: FullStoryExportType = {
     ...example,
@@ -156,6 +159,10 @@ export function cloneExampleStoryForInstall(
       storyId,
       entityId: remapId(value.entityId),
       fieldId: remapId(value.fieldId),
+      value:
+        entityFieldIds.has(value.fieldId) && value.value
+          ? (idMap.get(value.value) ?? null)
+          : value.value,
     })),
     favorites: example.favorites?.map((favorite) => ({
       ...cloneEntity(favorite),

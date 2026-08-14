@@ -39,8 +39,14 @@ const page: HelpPage = {
         {
           key: 'type',
           label: 'Tipo',
-          whatToWrite: 'Escolha Texto, Texto longo, Número, Sim/não, Data ou Sugestão.',
+          whatToWrite: 'Escolha Texto, Texto longo, Número, Sim/não, Data, Sugestão ou Entidade.',
           note: 'Define como o valor é preenchido.',
+        },
+        {
+          key: 'targetEntityType',
+          label: 'Tipo da entidade alvo',
+          whatToWrite: 'Para o tipo Entidade, escolha qual tipo de entidade ele pode referenciar.',
+          note: 'Fica fixo depois da criaÃ§Ã£o.',
         },
         {
           key: 'required',
@@ -61,6 +67,11 @@ const page: HelpPage = {
           note: 'Organiza formulários e detalhes.',
         },
       ],
+    },
+    {
+      type: 'callout',
+      tone: 'warning',
+      text: 'Um atributo de Entidade permite selecionar um Personagem, Local, Item, Cena, Capítulo, Nota ou Regra do Mundo. O tipo alvo fica fixo ao criar o atributo e ele não tem valor padrão. Se a entidade referenciada for excluída, o atributo permanece, mas aparece como indisponível.',
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {

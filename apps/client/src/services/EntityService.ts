@@ -452,7 +452,7 @@ export class EntityService {
         if (attributeValue) {
           const field = await db.query.storySchemaFields.findFirst({
             where: eq(storySchemaFields.id, attributeValue.fieldId),
-            columns: { name: true, type: true },
+            columns: { name: true, type: true, targetEntityType: true },
           });
           const owner = await EntityService._resolveRelationEntityName(
             db,
@@ -464,12 +464,24 @@ export class EntityService {
           const decodedValue = field
             ? decodeAttributeValue(field.type as AttributeType, attributeValue.value)
             : attributeValue.value;
+          const entityReferenceName =
+            field?.type === AttributeType.ENTITY &&
+            field.targetEntityType &&
+            typeof decodedValue === 'string'
+              ? await EntityService.getEntityIdentifier(
+                  db,
+                  field.targetEntityType,
+                  decodedValue,
+                  storyId,
+                  t,
+                )
+              : undefined;
           entitySpecificName = t('attribute_value_attributed_to_entity', {
             fieldname: field?.name || t('unknown_attribute'),
             value:
               decodedValue === null || decodedValue === undefined
                 ? t('common_na')
-                : String(decodedValue),
+                : entityReferenceName || String(decodedValue),
             entityname: owner.name || t('unknown_entity'),
             entitytype: owner.type || t('unknown_entity_type'),
           });

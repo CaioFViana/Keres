@@ -7,14 +7,17 @@ import migration_3 from './0002_purple_bloodscream';
 import migration_4 from './0003_military_rhino';
 import migration_5 from './0004_rapid_rage';
 import migration_6 from './0005_fat_ozymandias';
+import migration_7 from './0006_wonderful_goliath';
+
 
 const migrations = [
-  { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
+{ id: 1, name: '0000_curly_mockingbird', run: migration_1 },
   { id: 2, name: '0001_lethal_landau', run: migration_2 },
   { id: 3, name: '0002_purple_bloodscream', run: migration_3 },
   { id: 4, name: '0003_military_rhino', run: migration_4 },
   { id: 5, name: '0004_rapid_rage', run: migration_5 },
   { id: 6, name: '0005_fat_ozymandias', run: migration_6 },
+  { id: 7, name: '0006_wonderful_goliath', run: migration_7 },
 ];
 
 export default migrations;

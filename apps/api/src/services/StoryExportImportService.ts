@@ -1,4 +1,5 @@
 import {
+  AttributeType,
   CURRENT_STORY_FORMAT_VERSION,
   FullStoryExportSchema,
   FullStoryExportType,
@@ -915,6 +916,16 @@ export class StoryExportImportService {
         await tx.insert(dbSchema.storySchemaFields).values(newStorySchemaFieldsData);
       }
 
+      // Attribute values of entity fields store another entity's ID. Those IDs
+      // belong to the source export, so remap them just like other references.
+      // Missing targets are intentionally preserved as dangling references by
+      // clearing the value instead of aborting the whole import.
+      const entityFieldIds = new Set(
+        (validatedFullStory.storySchemaFields ?? [])
+          .filter((field) => field.type === AttributeType.ENTITY)
+          .map((field) => field.id),
+      );
+
       // --- AttributeValues (Optional) ---
       // Por último de propósito: entityId pode apontar pra qualquer um dos 7 tipos de
       // entidade suportados (Character/Location/Item/Scene/Chapter/Note/WorldRule), todos
@@ -935,12 +946,17 @@ export class StoryExportImportService {
               `Import Error: Entity ID ${original.entityId} (${original.entityType}) not found in ID map for attribute value ${original.id}.`,
             );
           }
+          const value =
+            entityFieldIds.has(original.fieldId) && original.value
+              ? (idMap.get(original.value) ?? null)
+              : original.value;
           return {
             ...original,
             id: newId,
             storyId: targetStoryId,
             fieldId: mappedFieldId,
             entityId: mappedEntityId,
+            value,
             version: 1,
             createdAt: now,
             updatedAt: now,

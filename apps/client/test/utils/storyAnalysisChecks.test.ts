@@ -27,6 +27,28 @@ const baseInput = (): StoryAnalysisInput => ({
 });
 
 describe('buildStoryAnalysisReport', () => {
+  it('warns when an entity attribute points to a deleted target', () => {
+    const input = baseInput();
+    input.storySchemaFields.push({
+      id: 'mentor',
+      entityType: 'Character',
+      name: 'Mentor',
+      type: 'entity',
+      targetEntityType: 'Character',
+      isRequired: false,
+    });
+    input.attributeValues.push({ fieldId: 'mentor', entityId: 'character', value: 'deleted' });
+
+    expect(buildStoryAnalysisReport(input)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          messageKey: 'analysis_attribute_entity_missing',
+          entityId: 'character',
+        }),
+      ]),
+    );
+  });
+
   it('finds unused entities and isolated scenes in a branching story', () => {
     const input = baseInput();
     input.scenes.push({

@@ -19,43 +19,43 @@ export const exampleStoryRegistry: ExampleStoryEntry[] = [
   {
     slug: 'alice-in-wonderland',
     languages: [
-      { language: 'en', story: aliceInWonderland_en },
-      { language: 'pt', story: aliceInWonderland_pt },
+        { language: 'en', story: aliceInWonderland_en },
+        { language: 'pt', story: aliceInWonderland_pt },
     ],
   },
   {
     slug: 'beauty-and-the-beast',
     languages: [
-      { language: 'en', story: beautyAndTheBeast_en },
-      { language: 'pt', story: beautyAndTheBeast_pt },
+        { language: 'en', story: beautyAndTheBeast_en },
+        { language: 'pt', story: beautyAndTheBeast_pt },
     ],
   },
   {
     slug: 'cinderella',
     languages: [
-      { language: 'en', story: cinderella_en },
-      { language: 'pt', story: cinderella_pt },
+        { language: 'en', story: cinderella_en },
+        { language: 'pt', story: cinderella_pt },
     ],
   },
   {
     slug: 'goldilocks',
     languages: [
-      { language: 'en', story: goldilocks_en },
-      { language: 'pt', story: goldilocks_pt },
+        { language: 'en', story: goldilocks_en },
+        { language: 'pt', story: goldilocks_pt },
     ],
   },
   {
     slug: 'little-mermaid',
     languages: [
-      { language: 'en', story: littleMermaid_en },
-      { language: 'pt', story: littleMermaid_pt },
+        { language: 'en', story: littleMermaid_en },
+        { language: 'pt', story: littleMermaid_pt },
     ],
   },
   {
     slug: 'princess-kaguya',
     languages: [
-      { language: 'en', story: princessKaguya_en },
-      { language: 'pt', story: princessKaguya_pt },
+        { language: 'en', story: princessKaguya_en },
+        { language: 'pt', story: princessKaguya_pt },
     ],
   },
 ];

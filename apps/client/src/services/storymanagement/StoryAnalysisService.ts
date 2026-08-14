@@ -159,6 +159,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
             entityType: schema.storySchemaFields.entityType,
             name: schema.storySchemaFields.name,
             type: schema.storySchemaFields.type,
+            targetEntityType: schema.storySchemaFields.targetEntityType,
             isRequired: schema.storySchemaFields.isRequired,
           })
           .from(schema.storySchemaFields)

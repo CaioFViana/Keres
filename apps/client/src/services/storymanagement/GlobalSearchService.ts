@@ -3,7 +3,7 @@ import {
   globalSearchFieldConfig,
   GlobalSearchEntityType,
 } from '@keres/shared/metadata/globalSearchFields';
-import { and, eq, inArray, or, sql, SQL } from 'drizzle-orm';
+import { and, eq, inArray, ne, or, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import { attributeValues, storySchemaFields } from '../../db/schema';
 import { getEntityTable } from '../entityTableRegistry';
@@ -126,6 +126,7 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
             and(
               eq(attributeValues.storyId, storyId),
               eq(attributeValues.isDeleted, false),
+              ne(storySchemaFields.type, 'entity'),
               sql`${attributeValues.value} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
             ),
           )
@@ -179,7 +180,121 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
         }
       })();
 
-      await Promise.all([...nativeQueries, attributeQuery]);
+      // Entity attributes are searched by their referenced entity's title, never by the raw
+      // ULID stored in AttributeValue.value. Skip all of this work for stories without one.
+      const entityAttributeQuery = (async () => {
+        const entityFields = await db
+          .select({
+            id: storySchemaFields.id,
+            name: storySchemaFields.name,
+            targetEntityType: storySchemaFields.targetEntityType,
+          })
+          .from(storySchemaFields)
+          .where(
+            and(
+              eq(storySchemaFields.storyId, storyId),
+              eq(storySchemaFields.type, 'entity'),
+              eq(storySchemaFields.isDeleted, false),
+            ),
+          )
+          .all();
+
+        const fieldsByTarget = new Map<GlobalSearchEntityType, typeof entityFields>();
+        for (const field of entityFields) {
+          const target = field.targetEntityType as GlobalSearchEntityType | null;
+          if (!target || !globalSearchFieldConfig[target]) continue;
+          const existing = fieldsByTarget.get(target) ?? [];
+          existing.push(field);
+          fieldsByTarget.set(target, existing);
+        }
+
+        await Promise.all(
+          Array.from(fieldsByTarget.entries()).map(async ([targetType, fields]) => {
+            const table = getEntityTable(targetType);
+            if (!table) return;
+            const { titleField } = globalSearchFieldConfig[targetType];
+            const rows = (await db
+              .select({
+                entityType: attributeValues.entityType,
+                entityId: attributeValues.entityId,
+                fieldName: storySchemaFields.name,
+                displayValue: (table as any)[titleField],
+              })
+              .from(attributeValues)
+              .innerJoin(storySchemaFields, eq(attributeValues.fieldId, storySchemaFields.id))
+              .innerJoin(table, eq(attributeValues.value, (table as any).id))
+              .where(
+                and(
+                  eq(attributeValues.storyId, storyId),
+                  eq(attributeValues.isDeleted, false),
+                  inArray(
+                    attributeValues.fieldId,
+                    fields.map((field) => field.id),
+                  ),
+                  eq((table as any).isDeleted, false),
+                  sql`${(table as any)[titleField]} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+                ),
+              )
+              .limit(ATTRIBUTE_RESULT_LIMIT)
+              .all()) as {
+              entityType: string;
+              entityId: string;
+              fieldName: string;
+              displayValue: unknown;
+            }[];
+
+            const ownerIdsByType = new Map<GlobalSearchEntityType, Set<string>>();
+            for (const row of rows) {
+              const ownerType = row.entityType as GlobalSearchEntityType;
+              if (!globalSearchFieldConfig[ownerType]) continue;
+              if (!ownerIdsByType.has(ownerType)) ownerIdsByType.set(ownerType, new Set());
+              ownerIdsByType.get(ownerType)!.add(row.entityId);
+            }
+            const ownerTitles = new Map<string, string>();
+            await Promise.all(
+              Array.from(ownerIdsByType.entries()).map(async ([ownerType, ids]) => {
+                const ownerTable = getEntityTable(ownerType);
+                if (!ownerTable) return;
+                const ownerTitleField = globalSearchFieldConfig[ownerType].titleField;
+                const ownerRows = (await db
+                  .select({
+                    id: (ownerTable as any).id,
+                    title: (ownerTable as any)[ownerTitleField],
+                  })
+                  .from(ownerTable)
+                  .where(
+                    and(
+                      inArray((ownerTable as any).id, Array.from(ids)),
+                      eq((ownerTable as any).isDeleted, false),
+                    ),
+                  )
+                  .all()) as { id: string; title: unknown }[];
+                for (const row of ownerRows) {
+                  ownerTitles.set(`${ownerType}:${row.id}`, String(row.title ?? ''));
+                }
+              }),
+            );
+
+            for (const row of rows) {
+              const ownerType = row.entityType as GlobalSearchEntityType;
+              if (!globalSearchFieldConfig[ownerType]) continue;
+              const key = `${ownerType}:${row.entityId}`;
+              if (results.has(key)) continue;
+              const title = ownerTitles.get(key);
+              if (title === undefined) continue;
+              results.set(key, {
+                entityType: ownerType,
+                id: row.entityId,
+                title,
+                snippet: buildSnippet(row.fieldName, row.displayValue),
+                isFavorite: null,
+              });
+            }
+          }),
+        );
+      })();
+
+      await Promise.all([...nativeQueries, attributeQuery, entityAttributeQuery]);
 
       const favoriteService = createFavoriteService(db);
       await Promise.all(

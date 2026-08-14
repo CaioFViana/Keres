@@ -14,6 +14,7 @@ import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/Co
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import TriStateToggleButton from '@/src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
+import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
 
 interface AdvancedSearchModalProps {
   entityName: string;
@@ -170,6 +171,19 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               <ColorPickerInput
                 currentColor={value || ''}
                 onSelectColor={(newColor: string) => handleInputChange(field.name, newColor)}
+                placeholder={fieldLabel}
+              />
+            </View>
+          );
+        case 'entity':
+          if (!field.entityTargetType) return null;
+          return (
+            <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
+              <EntityPickerInput
+                storyId={storyId}
+                entityType={field.entityTargetType as StorySchemaEntityType}
+                value={value ?? null}
+                onChange={(newValue) => handleInputChange(field.name, newValue)}
                 placeholder={fieldLabel}
               />
             </View>

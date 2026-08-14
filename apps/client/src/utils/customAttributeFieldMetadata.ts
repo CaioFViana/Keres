@@ -11,6 +11,8 @@ function mapAttributeTypeToFieldType(type: string): FieldType {
       return 'boolean';
     case AttributeType.DATE:
       return 'date';
+    case AttributeType.ENTITY:
+      return 'entity';
     default:
       // TEXT, LONG_TEXT, SUGGESTION - all rendered/matched as free text.
       return 'string';
@@ -35,6 +37,7 @@ export function buildCustomAttributeFieldMetadata(
     isSuggestion: field.type === AttributeType.SUGGESTION,
     suggestionsSource:
       field.type === AttributeType.SUGGESTION ? customAttributeSuggestionType(field.id) : undefined,
+    entityTargetType: field.targetEntityType,
   }));
 }
 

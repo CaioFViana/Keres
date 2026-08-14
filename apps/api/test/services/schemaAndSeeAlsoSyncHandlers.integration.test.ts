@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import {
+  AttributeType,
+  type CreateStoryUpdate,
+  type DeleteStoryUpdate,
+  type UpdateStoryUpdate,
+} from '@keres/shared';
 import { db } from '../../src/db';
 import { stories, users } from '../../src/db/schema';
 import { AttributeValueSyncHandler } from '../../src/services/entity-sync-handlers/AttributeValueSyncHandler';
@@ -130,6 +135,50 @@ describe('schema and see-also sync entity handlers', () => {
     expect(await fields.findById(fieldId)).toMatchObject({
       isDeleted: true,
       key: expect.stringContaining('__deleted_'),
+    });
+  });
+
+  it('stores an entity field target and keeps its type and target immutable', async () => {
+    const fields = new StorySchemaFieldSyncHandler();
+    const fieldId = newId();
+    await fields.create(
+      userId,
+      storyId,
+      create('StorySchemaField', fieldId, {
+        entityType: 'Character',
+        name: 'Lar',
+        key: 'lar',
+        description: null,
+        type: AttributeType.ENTITY,
+        targetEntityType: 'Location',
+        isRequired: false,
+        defaultValue: null,
+        order: 0,
+      }),
+    );
+
+    const field = await fields.findById(fieldId);
+    await fields.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'StorySchemaField',
+        id: fieldId,
+        changes: {
+          name: 'Lar atual',
+          type: AttributeType.TEXT,
+          targetEntityType: 'Character',
+          version: 1,
+        },
+      } as UpdateStoryUpdate,
+      field,
+    );
+
+    expect(await fields.findById(fieldId)).toMatchObject({
+      name: 'Lar atual',
+      type: AttributeType.ENTITY,
+      targetEntityType: 'Location',
     });
   });
 

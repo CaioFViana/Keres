@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { AttributeType } from '../../metadata/AttributeType';
 import { FullStoryExportSchema } from '../../schemas/FullStorySchemas';
 import { CURRENT_STORY_FORMAT_VERSION } from '../../schemas/StoryExportVersion';
 
@@ -119,6 +120,35 @@ describe('FullStoryExportSchema', () => {
 
     expect(parsed.chapters[0].createdAt).toBeInstanceOf(Date);
     expect(parsed.chapters[0].createdAt.toISOString()).toBe('2026-08-11T18:00:00.000Z');
+  });
+
+  it('round-trips an entity attribute field with its fixed target type', () => {
+    const parsed = FullStoryExportSchema.parse(
+      buildExport({
+        storySchemaFields: [
+          {
+            id: ulid('field1'),
+            storyId: STORY_ID,
+            entityType: 'Character',
+            name: 'Mentor',
+            key: 'mentor',
+            description: null,
+            type: AttributeType.ENTITY,
+            targetEntityType: 'Character',
+            isRequired: false,
+            defaultValue: null,
+            order: 0,
+            createdAt: '2026-08-11T18:00:00.000Z',
+            updatedAt: '2026-08-11T18:00:00.000Z',
+            version: 1,
+            isDeleted: false,
+            deletedAt: null,
+          },
+        ],
+      }),
+    );
+
+    expect(parsed.storySchemaFields?.[0]?.targetEntityType).toBe('Character');
   });
 
   it('rejects a story id that is not a ULID', () => {

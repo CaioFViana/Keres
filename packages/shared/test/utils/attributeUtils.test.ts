@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { AttributeType } from '../../metadata/AttributeType';
 import { deriveAttributeKey } from '../../utils/attributeKey';
-import { decodeAttributeValue, encodeAttributeValue } from '../../utils/attributeValueCodec';
+import {
+  decodeAttributeValue,
+  encodeAttributeValue,
+  isEntityAttributeType,
+} from '../../utils/attributeValueCodec';
 
 describe('deriveAttributeKey', () => {
   it('creates stable keys from human-readable labels', () => {
@@ -26,5 +30,13 @@ describe('attribute value codec', () => {
     expect(decodeAttributeValue(AttributeType.NUMBER, '42')).toBe(42);
     expect(decodeAttributeValue(AttributeType.NUMBER, 'invalid')).toBeNull();
     expect(decodeAttributeValue(AttributeType.TEXT, '')).toBeNull();
+  });
+
+  it('stores entity references as trimmed raw identifiers', () => {
+    expect(encodeAttributeValue(AttributeType.ENTITY, ' 01HXENTITY ')).toBe('01HXENTITY');
+    expect(decodeAttributeValue(AttributeType.ENTITY, ' 01HXENTITY ')).toBe('01HXENTITY');
+    expect(encodeAttributeValue(AttributeType.ENTITY, '   ')).toBeNull();
+    expect(isEntityAttributeType(AttributeType.ENTITY)).toBe(true);
+    expect(isEntityAttributeType(AttributeType.TEXT)).toBe(false);
   });
 });

@@ -19,6 +19,7 @@ interface SelectPropsSingle {
   multiple?: false; // Explicitly false for single select
   disabled?: boolean; // Added disabled prop
   allowDeselect?: boolean;
+  maxHeight?: number;
 }
 
 // Props for multi select
@@ -30,6 +31,7 @@ interface SelectPropsMulti {
   multiple: true; // Explicitly true for multi select
   disabled?: boolean; // Added disabled prop
   allowDeselect?: boolean;
+  maxHeight?: number;
 }
 
 type SelectProps = SelectPropsSingle | SelectPropsMulti;
@@ -42,6 +44,7 @@ const Select: React.FC<SelectProps> = ({
   multiple = false,
   disabled = false,
   allowDeselect = false,
+  maxHeight,
 }) => {
   const { colors } = useTheme();
 
@@ -181,6 +184,7 @@ const Select: React.FC<SelectProps> = ({
           zIndex={open ? 3000 : 1000} // Dynamic zIndex
           zIndexInverse={1000}
           multiple={true} // Explicitly true
+          maxHeight={maxHeight}
           mode="BADGE"
           renderBadgeItem={renderBadgeItem}
           disabled={disabled} // Pass disabled prop
@@ -235,6 +239,7 @@ const Select: React.FC<SelectProps> = ({
           zIndex={open ? 3000 : 1000} // Dynamic zIndex
           zIndexInverse={1000}
           multiple={false} // Explicitly false
+          maxHeight={maxHeight}
           disabled={disabled} // Pass disabled prop
           disabledStyle={dropdownStyles.disabledStyle} // Apply disabled style
         />

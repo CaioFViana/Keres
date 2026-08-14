@@ -53,6 +53,7 @@ describe('buildCustomAttributeFieldMetadata', () => {
     [AttributeType.TEXT, 'string'],
     [AttributeType.LONG_TEXT, 'string'],
     [AttributeType.SUGGESTION, 'string'],
+    [AttributeType.ENTITY, 'entity'],
   ])('renders %s as a %s input', (attributeType, expected) => {
     const [metadata] = buildCustomAttributeFieldMetadata([field({ type: attributeType })]);
 
@@ -66,6 +67,14 @@ describe('buildCustomAttributeFieldMetadata', () => {
 
     expect(metadata.isSuggestion).toBe(true);
     expect(metadata.suggestionsSource).toBe('custom:abc');
+  });
+
+  it('keeps an entity field target for the entity picker', () => {
+    const [metadata] = buildCustomAttributeFieldMetadata([
+      field({ type: AttributeType.ENTITY, targetEntityType: 'Character' }),
+    ]);
+
+    expect(metadata).toMatchObject({ type: 'entity', entityTargetType: 'Character' });
   });
 
   it('leaves a non-suggestion field without a suggestions source', () => {

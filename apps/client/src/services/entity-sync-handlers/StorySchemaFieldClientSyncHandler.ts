@@ -51,7 +51,13 @@ export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandle
       return;
     }
 
-    const fieldChanges = update.changes as Partial<StorySchemaField>;
+    const fieldChanges = { ...(update.changes as Partial<StorySchemaField>) };
+    // These values define how existing AttributeValues are interpreted. Match
+    // the API invariant even if an old or tampered operation reaches a client.
+    delete fieldChanges.entityType;
+    delete fieldChanges.key;
+    delete fieldChanges.type;
+    delete fieldChanges.targetEntityType;
 
     await this.db
       .update(schema.storySchemaFields)

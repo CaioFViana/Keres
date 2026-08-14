@@ -53,6 +53,9 @@ export async function buildCustomAttributeSearchCondition(
         rawValue === true || rawValue === 'true' ? 'true' : 'false',
       ) as SQL<boolean>;
       break;
+    case AttributeType.ENTITY:
+      valuePredicate = eq(attributeValues.value, String(rawValue)) as SQL<boolean>;
+      break;
     default:
       // text, long_text, date, suggestion - substring match, same treatment native string/date
       // fields already get.

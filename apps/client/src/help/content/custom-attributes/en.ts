@@ -39,8 +39,14 @@ const page: HelpPage = {
         {
           key: 'type',
           label: 'Type',
-          whatToWrite: 'Choose Text, Long text, Number, Yes/no, Date, or Suggestion.',
+          whatToWrite: 'Choose Text, Long text, Number, Yes/no, Date, Suggestion, or Entity.',
           note: 'It defines how the value is entered.',
+        },
+        {
+          key: 'targetEntityType',
+          label: 'Target entity type',
+          whatToWrite: 'For an Entity type, choose what kind of entity it can reference.',
+          note: 'It is fixed after creation.',
         },
         {
           key: 'required',
@@ -61,6 +67,11 @@ const page: HelpPage = {
           note: 'Organizes forms and details.',
         },
       ],
+    },
+    {
+      type: 'callout',
+      tone: 'warning',
+      text: 'An Entity attribute lets writers select a Character, Location, Item, Scene, Chapter, Note, or World Rule. Its target type is fixed when the attribute is created and it has no default value. If the referenced entity is deleted, the attribute remains but shows as unavailable.',
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {

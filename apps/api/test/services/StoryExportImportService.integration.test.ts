@@ -1,15 +1,18 @@
-import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
+import { AttributeType, CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
+  attributeValues,
   chapters,
+  characters,
   choiceCheckGroups,
   choiceChecks,
   choices,
   effects,
   locations,
   scenes,
+  storySchemaFields,
   stories,
   users,
 } from '../../src/db/schema';
@@ -28,6 +31,9 @@ const ORIGINAL_ITEM_ID = newId();
 const ORIGINAL_GROUP_ID = newId();
 const ORIGINAL_CHECK_ID = newId();
 const ORIGINAL_EFFECT_ID = newId();
+const ORIGINAL_CHARACTER_ID = newId();
+const ORIGINAL_FIELD_ID = newId();
+const ORIGINAL_ATTRIBUTE_VALUE_ID = newId();
 
 const OLD = new Date('2020-01-01T00:00:00.000Z');
 
@@ -80,6 +86,51 @@ const location = (id = ORIGINAL_LOCATION_ID) => ({
   createdAt: OLD,
   updatedAt: OLD,
   version: 3,
+  isDeleted: false,
+  deletedAt: null,
+});
+
+const character = (id = ORIGINAL_CHARACTER_ID) => ({
+  id,
+  storyId: ORIGINAL_STORY_ID,
+  name: 'Keres',
+  isFavorite: false,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
+});
+
+const entityField = () => ({
+  id: ORIGINAL_FIELD_ID,
+  storyId: ORIGINAL_STORY_ID,
+  entityType: 'Character',
+  name: 'Aliado',
+  key: 'aliado',
+  description: null,
+  type: AttributeType.ENTITY,
+  targetEntityType: 'Character',
+  isRequired: false,
+  defaultValue: null,
+  order: 0,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
+});
+
+const attributeValue = (value: string | null) => ({
+  id: ORIGINAL_ATTRIBUTE_VALUE_ID,
+  storyId: ORIGINAL_STORY_ID,
+  entityType: 'Character',
+  entityId: ORIGINAL_CHARACTER_ID,
+  fieldId: ORIGINAL_FIELD_ID,
+  value,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 1,
   isDeleted: false,
   deletedAt: null,
 });
@@ -486,5 +537,57 @@ describe('choice checks and effects', () => {
     });
 
     await expect(service.importStory(IMPORTER_ID, broken)).rejects.toThrow(/not found in ID map/);
+  });
+});
+
+describe('entity attribute references', () => {
+  it('remaps an entity attribute value to the imported target entity', async () => {
+    const storyId = await service.importStory(
+      IMPORTER_ID,
+      buildExport({
+        characters: [character()],
+        storySchemaFields: [entityField()],
+        attributeValues: [attributeValue(ORIGINAL_CHARACTER_ID)],
+      }),
+    );
+
+    const [importedCharacter] = await db
+      .select()
+      .from(characters)
+      .where(eq(characters.storyId, storyId));
+    const [importedField] = await db
+      .select()
+      .from(storySchemaFields)
+      .where(eq(storySchemaFields.storyId, storyId));
+    const [importedValue] = await db
+      .select()
+      .from(attributeValues)
+      .where(eq(attributeValues.storyId, storyId));
+
+    expect(importedField).toMatchObject({
+      type: AttributeType.ENTITY,
+      targetEntityType: 'Character',
+    });
+    expect(importedValue.fieldId).toBe(importedField.id);
+    expect(importedValue.value).toBe(importedCharacter.id);
+    expect(importedValue.value).not.toBe(ORIGINAL_CHARACTER_ID);
+  });
+
+  it('clears an entity attribute target absent from the imported package', async () => {
+    const storyId = await service.importStory(
+      IMPORTER_ID,
+      buildExport({
+        characters: [character()],
+        storySchemaFields: [entityField()],
+        attributeValues: [attributeValue(newId())],
+      }),
+    );
+
+    const [importedValue] = await db
+      .select()
+      .from(attributeValues)
+      .where(eq(attributeValues.storyId, storyId));
+
+    expect(importedValue.value).toBeNull();
   });
 });

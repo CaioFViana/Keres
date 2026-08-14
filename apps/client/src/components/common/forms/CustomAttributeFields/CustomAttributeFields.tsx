@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { StorySchemaEntityType } from '@keres/shared';
 import { StorySchemaFieldSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
@@ -89,6 +90,7 @@ const CustomAttributeFields: React.FC<CustomAttributeFieldsProps> = ({
             placeholder={field.name}
             storyId={storyId}
             suggestionFieldId={field.id}
+            targetEntityType={field.targetEntityType as StorySchemaEntityType | null}
           />
         </View>
       ))}

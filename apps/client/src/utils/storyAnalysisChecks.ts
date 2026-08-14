@@ -94,6 +94,7 @@ export interface AnalysisStorySchemaField {
   entityType: string;
   name: string;
   type: string;
+  targetEntityType?: string | null;
   isRequired: boolean;
 }
 
@@ -549,6 +550,25 @@ function checkStorySchema(input: StoryAnalysisInput): StoryAnalysisFinding[] {
             navigableType,
             entity,
             'analysis_attribute_required_missing',
+            { fieldName: field.name },
+          ),
+        );
+        continue;
+      }
+
+      if (
+        field.type === AttributeType.ENTITY &&
+        raw !== null &&
+        (!field.targetEntityType ||
+          !entitiesByType[field.targetEntityType]?.some((target) => target.id === raw))
+      ) {
+        findings.push(
+          buildFinding(
+            'storySchema',
+            'warning',
+            navigableType,
+            entity,
+            'analysis_attribute_entity_missing',
             { fieldName: field.name },
           ),
         );

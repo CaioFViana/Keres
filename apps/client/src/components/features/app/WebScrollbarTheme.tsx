@@ -18,10 +18,6 @@ const WebScrollbarTheme = () => {
     }
 
     styleElement.textContent = `
-      html {
-        scrollbar-gutter: stable;
-      }
-
       * {
         scrollbar-width: thin;
         scrollbar-color: ${colors.primaryContainer} transparent;

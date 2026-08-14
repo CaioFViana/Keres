@@ -9,7 +9,8 @@ import { StackActions, useNavigation } from '@react-navigation/native'; // Impor
 import { useSQLiteContext } from 'expo-sqlite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { APP_RELEASE } from '../../config/appRelease';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { servers } from '../../db/schema';
 import { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
@@ -35,6 +36,7 @@ const SettingsScreen = () => {
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const drizzleClient = useDrizzle(); // Initialize useDrizzle
   const db = useSQLiteContext();
   const navigation = useNavigation<SettingsScreenNavigationProp>();
@@ -110,13 +112,17 @@ const SettingsScreen = () => {
   };
 
   const languageOptions = getLanguageOptions(t);
+  const brandImageSize = Math.min(
+    Math.max(Math.min(screenWidth * 0.44, screenHeight * 0.28), 132),
+    256,
+  );
 
   return (
     <KeyboardAwareScreen
       style={commonContainerStyles.container}
-      contentContainerStyle={{ flexGrow: 1 }}
+      contentContainerStyle={styles.content}
     >
-      <View>
+      <View style={styles.settings}>
         <View style={styles.settingItem}>
           <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
           <View style={styles.inputWrapper}>
@@ -150,11 +156,29 @@ const SettingsScreen = () => {
           {t('reset_application')}
         </Button>
       </View>
+
+      <View style={styles.branding}>
+        <Image
+          source={require('../../../assets/images/desktop_icon.png')}
+          style={[styles.brandImage, { height: brandImageSize, width: brandImageSize }]}
+          resizeMode="contain"
+          accessibilityLabel="Keres"
+        />
+        <Text style={[styles.brandVersion, { color: colors.textSecondary }]}>
+          Keres {APP_RELEASE.version} {APP_RELEASE.name}
+        </Text>
+      </View>
     </KeyboardAwareScreen>
   );
 };
 
 const styles = StyleSheet.create({
+  content: {
+    flexGrow: 1,
+  },
+  settings: {
+    flexShrink: 0,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -185,6 +209,22 @@ const styles = StyleSheet.create({
     width: 150, // Fixed width for the select component
     marginLeft: 10, // Add margin to separate from label
     height: 50, // Explicitly set height to match TextInput
+  },
+  branding: {
+    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+    minHeight: 180,
+    paddingBottom: 16,
+    paddingTop: 36,
+  },
+  brandImage: {
+    opacity: 0.82,
+  },
+  brandVersion: {
+    fontSize: 14,
+    letterSpacing: 0.3,
+    marginTop: 12,
   },
 });
 

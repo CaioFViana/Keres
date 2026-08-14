@@ -39,6 +39,10 @@ flowchart LR
     A --> D
 ```
 
+## In-app help
+
+The **Help** drawer is available from both the main menu and a story menu. It contains Portuguese and English pages for Keres features, with local search, interface paths, and explanations of visible fields. The `?` icons in headers open the help page for the current screen.
+
 ## Quick start
 
 ### Requirements

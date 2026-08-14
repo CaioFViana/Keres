@@ -3,125 +3,21 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
+import { HighlightedText } from '../../components/features/help/HelpSearchBar/HighlightedText';
+import { HelpBlockRenderer as HelpBlockRendererComponent } from '../../components/features/help/HelpBlockRenderer/HelpBlockRenderer';
 import { helpSections } from '../../help/catalog';
-import { getHelpPage, getHelpPages } from '../../help/repository';
+import { getHelpPage, getHelpPages, resolveHelpPage } from '../../help/repository';
 import { searchHelp } from '../../help/search';
-import { HelpBlock } from '../../help/types';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { debounce } from '../../utils/debounce';
 
 type HelpNavigation = NativeStackNavigationProp<{
   HelpIndex: undefined;
   HelpPage: { pageId: string };
 }>;
-
-function HelpBlockRenderer({
-  block,
-  navigation,
-}: {
-  block: HelpBlock;
-  navigation: HelpNavigation;
-}) {
-  const { colors } = useTheme();
-  const { t, i18n } = useTranslation();
-  const styles = StyleSheet.create({
-    text: { color: colors.text, fontSize: 15, lineHeight: 22, marginBottom: 12 },
-    h2: { color: colors.text, fontSize: 20, fontWeight: '700', marginTop: 14, marginBottom: 8 },
-    box: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-    },
-    muted: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
-    row: {
-      flexDirection: 'row',
-      borderBottomColor: colors.border,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      paddingVertical: 8,
-    },
-    cell: { flex: 1, color: colors.text, fontSize: 13, paddingRight: 6 },
-  });
-  if (block.type === 'paragraph') return <Text style={styles.text}>{block.text}</Text>;
-  if (block.type === 'heading') return <Text style={styles.h2}>{block.text}</Text>;
-  if (block.type === 'steps' || block.type === 'list')
-    return (
-      <View>
-        {block.items.map((item, i) => (
-          <Text key={item} style={styles.text}>
-            {block.type === 'steps' || block.ordered ? `${i + 1}. ` : '• '}
-            {item}
-          </Text>
-        ))}
-      </View>
-    );
-  if (block.type === 'path') return <Text style={styles.muted}>{block.segments.join(' › ')}</Text>;
-  if (block.type === 'callout' || block.type === 'example')
-    return (
-      <View style={styles.box}>
-        {block.type === 'example' && block.title ? (
-          <Text style={[styles.text, { fontWeight: '700' }]}>{block.title}</Text>
-        ) : null}
-        <Text style={styles.muted}>{block.text}</Text>
-      </View>
-    );
-  if (block.type === 'fields')
-    return (
-      <View style={styles.box}>
-        <View style={styles.row}>
-          <Text style={styles.cell}>{t('help_field_column_name')}</Text>
-          <Text style={styles.cell}>{t('help_field_column_write')}</Text>
-          <Text style={styles.cell}>{t('help_field_column_note')}</Text>
-        </View>
-        {block.rows.map((row) => (
-          <View key={row.key} style={styles.row}>
-            <Text style={styles.cell}>{row.label}</Text>
-            <Text style={styles.cell}>{row.whatToWrite}</Text>
-            <Text style={styles.cell}>{row.note ?? ''}</Text>
-          </View>
-        ))}
-      </View>
-    );
-  if (block.type === 'table')
-    return (
-      <View style={styles.box}>
-        {block.rows.map((row, i) => (
-          <View key={i} style={styles.row}>
-            {row.map((cell, j) => (
-              <Text key={j} style={styles.cell}>
-                {cell}
-              </Text>
-            ))}
-          </View>
-        ))}
-      </View>
-    );
-  if (block.type === 'faq')
-    return (
-      <View>
-        {block.items.map((item) => (
-          <View key={item.question} style={styles.box}>
-            <Text style={[styles.text, { fontWeight: '700' }]}>{item.question}</Text>
-            <Text style={styles.muted}>{item.answer}</Text>
-          </View>
-        ))}
-      </View>
-    );
-  return (
-    <View>
-      {block.pages.map((id) => (
-        <TouchableOpacity key={id} onPress={() => navigation.push('HelpPage', { pageId: id })}>
-          <Text style={[styles.text, { color: colors.primary }]}>
-            → {getHelpPage(id, i18n.language)?.title ?? id}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-}
 
 export function HelpIndexScreen() {
   const { t, i18n } = useTranslation();
@@ -132,10 +28,14 @@ export function HelpIndexScreen() {
   const [open, setOpen] = useState<Record<string, boolean>>({ start: true });
   const pages = useMemo(() => getHelpPages(i18n.language), [i18n.language]);
   const results = useMemo(() => searchHelp(pages, debouncedQuery), [pages, debouncedQuery]);
+  const commitSearch = useMemo(
+    () => debounce((value: string) => setDebouncedQuery(value), 400),
+    [],
+  );
   useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedQuery(query), 250);
-    return () => clearTimeout(timeout);
-  }, [query]);
+    commitSearch(query);
+    return () => commitSearch.cancel?.();
+  }, [commitSearch, query]);
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(t('help_index_title'));
@@ -168,6 +68,7 @@ export function HelpIndexScreen() {
       justifyContent: 'space-between',
       backgroundColor: colors.surface,
     },
+    sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     title: { fontSize: 17, fontWeight: '700', color: colors.text },
     card: { padding: 14, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth },
     summary: { color: colors.textSecondary, marginTop: 4, lineHeight: 19 },
@@ -177,25 +78,15 @@ export function HelpIndexScreen() {
   const openPage = (id: string) => navigation.navigate('HelpPage', { pageId: id });
   return (
     <View style={styles.container}>
-      <View style={styles.searchRow}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={t('help_search_placeholder')}
-          placeholderTextColor={colors.textSecondary}
-          style={styles.search}
-          accessibilityLabel={t('help_search_placeholder')}
-        />
-        {!!query && (
-          <TouchableOpacity
-            style={styles.clear}
-            onPress={() => setQuery('')}
-            accessibilityLabel={t('help_search_clear')}
-          >
-            <Ionicons name="close-circle" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <HelpSearchBar
+        value={query}
+        onChangeText={setQuery}
+        onClear={() => setQuery('')}
+        placeholder={t('help_search_placeholder')}
+        clearAccessibilityLabel={t('help_search_clear')}
+        color={colors.textSecondary}
+        borderColor={colors.border}
+      />
       {debouncedQuery ? (
         <ScrollView>
           {results.length ? (
@@ -216,7 +107,12 @@ export function HelpIndexScreen() {
                     )}
                   </Text>
                   <Text style={styles.title}>{page.title}</Text>
-                  <Text style={styles.summary}>{excerpt}</Text>
+                  <HighlightedText
+                    text={excerpt}
+                    query={debouncedQuery}
+                    style={styles.summary}
+                    highlightColor={colors.primaryContainer}
+                  />
                 </TouchableOpacity>
               ))}
             </>
@@ -227,7 +123,7 @@ export function HelpIndexScreen() {
                 <Text style={styles.empty}>{t('help_no_results_hint')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => openPage('faq')}>
-                <Text style={styles.empty}>{t('faq')}</Text>
+                <Text style={styles.empty}>{t('help_no_results_faq_link')}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -242,7 +138,14 @@ export function HelpIndexScreen() {
                   style={styles.sectionHeader}
                   onPress={() => setOpen((old) => ({ ...old, [section.id]: !isOpen }))}
                 >
-                  <Text style={styles.title}>{t(section.titleKey)}</Text>
+                  <View style={styles.sectionTitle}>
+                    <Ionicons
+                      name={section.icon as keyof typeof Ionicons.glyphMap}
+                      size={20}
+                      color={colors.text}
+                    />
+                    <Text style={styles.title}>{t(section.titleKey)}</Text>
+                  </View>
                   <Ionicons
                     name={isOpen ? 'chevron-up' : 'chevron-down'}
                     size={20}
@@ -275,7 +178,7 @@ export function HelpPageScreen() {
   const navigation = useNavigation<HelpNavigation>();
   const route = useRoute<{ key: string; name: 'HelpPage'; params: { pageId: string } }>();
   const { colors } = useTheme();
-  const page = getHelpPage(route.params.pageId, i18n.language);
+  const { page, usedFallback } = resolveHelpPage(route.params.pageId, i18n.language);
   useFocusEffect(
     useCallback(() => {
       setDocumentTitle(page?.title ?? t('help_page_not_found'));
@@ -291,8 +194,18 @@ export function HelpPageScreen() {
           <Text style={{ fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 16 }}>
             {page.title}
           </Text>
+          {usedFallback ? (
+            <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
+              {t('help_language_fallback_notice')}
+            </Text>
+          ) : null}
           {page.blocks.map((block, index) => (
-            <HelpBlockRenderer key={index} block={block} navigation={navigation} />
+            <HelpBlockRendererComponent
+              key={index}
+              block={block}
+              onOpenPage={(pageId) => navigation.push('HelpPage', { pageId })}
+              pageTitle={(pageId) => getHelpPage(pageId, i18n.language)?.title ?? pageId}
+            />
           ))}
         </>
       ) : (

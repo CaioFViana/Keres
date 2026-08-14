@@ -56,6 +56,7 @@ const sharedSrcPath = path.join(__dirname, '..', '..', '..', 'packages', 'shared
 // Everywhere a translation key can plausibly originate: the app itself, and the shared
 // package whose `entityFields.ts` feeds form-field labels into `t()` indirectly.
 const SCAN_ROOTS = [clientSrcPath, sharedSrcPath];
+const HELP_CONTENT_PATH = path.join(clientSrcPath, 'help', 'content');
 
 // --- JSON helpers -----------------------------------------------------------------
 
@@ -133,8 +134,14 @@ function walkSourceFiles(rootDir: string): string[] {
   const walk = (dir: string) => {
     if (!fs.existsSync(dir)) return;
     for (const entry of fs.readdirSync(dir)) {
-      if (entry === 'node_modules' || entry === 'dist' || entry === '.expo') continue;
       const entryPath = path.join(dir, entry);
+      if (
+        entry === 'node_modules' ||
+        entry === 'dist' ||
+        entry === '.expo' ||
+        entryPath === HELP_CONTENT_PATH
+      )
+        continue;
       const stat = fs.statSync(entryPath);
       if (stat.isDirectory()) {
         walk(entryPath);

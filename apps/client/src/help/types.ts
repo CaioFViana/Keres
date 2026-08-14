@@ -31,5 +31,6 @@ export interface HelpPage {
 export interface HelpSection {
   id: string;
   titleKey: string;
+  icon: string;
   pageIds: HelpPageId[];
 }

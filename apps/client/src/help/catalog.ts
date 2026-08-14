@@ -4,6 +4,7 @@ export const helpSections: HelpSection[] = [
   {
     id: 'start',
     titleKey: 'help_section_start',
+    icon: 'compass-outline',
     pageIds: [
       'what-is-keres',
       'first-story',
@@ -16,6 +17,7 @@ export const helpSections: HelpSection[] = [
   {
     id: 'stories',
     titleKey: 'help_section_stories',
+    icon: 'book-outline',
     pageIds: [
       'story-list',
       'create-story',
@@ -30,6 +32,7 @@ export const helpSections: HelpSection[] = [
   {
     id: 'elements',
     titleKey: 'help_section_elements',
+    icon: 'people-outline',
     pageIds: [
       'characters',
       'character-relationships',
@@ -50,6 +53,7 @@ export const helpSections: HelpSection[] = [
   {
     id: 'branching',
     titleKey: 'help_section_branching',
+    icon: 'git-branch-outline',
     pageIds: [
       'branching-basics',
       'choices',
@@ -62,12 +66,19 @@ export const helpSections: HelpSection[] = [
   {
     id: 'annotate',
     titleKey: 'help_section_annotate',
+    icon: 'create-outline',
     pageIds: ['comments', 'see-also', 'custom-attributes', 'suggestions'],
   },
-  { id: 'preferences', titleKey: 'help_section_preferences', pageIds: ['app-settings'] },
+  {
+    id: 'preferences',
+    titleKey: 'help_section_preferences',
+    icon: 'settings-outline',
+    pageIds: ['app-settings'],
+  },
   {
     id: 'accounts',
     titleKey: 'help_section_accounts',
+    icon: 'people-circle-outline',
     pageIds: [
       'what-is-a-server',
       'add-server',
@@ -81,11 +92,13 @@ export const helpSections: HelpSection[] = [
   {
     id: 'sync',
     titleKey: 'help_section_sync',
+    icon: 'sync-outline',
     pageIds: ['sync-basics', 'sync-conflicts', 'activity-log'],
   },
   {
     id: 'support',
     titleKey: 'help_section_support',
+    icon: 'help-buoy-outline',
     pageIds: ['troubleshooting', 'data-and-backup', 'glossary', 'faq'],
   },
 ];

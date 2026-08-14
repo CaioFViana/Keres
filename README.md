@@ -39,6 +39,10 @@ flowchart LR
     A --> D
 ```
 
+## Ajuda no aplicativo
+
+O drawer **Ajuda** está disponível tanto no menu principal quanto no menu de uma história. Ele reúne páginas em português e inglês sobre cada recurso do Keres, com busca local, caminhos pela interface e explicações dos campos visíveis. Os ícones `?` nos cabeçalhos levam diretamente à página de ajuda da tela atual.
+
 ## Início rápido
 
 ### Requisitos

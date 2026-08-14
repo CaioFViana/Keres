@@ -12,4 +12,7 @@ describe('help catalog', () => {
     expect(new Set(helpPageIds).size).toBe(helpPageIds.length);
     expect(helpSections).toHaveLength(9);
   });
+  it('gives every section an icon for the help index', () => {
+    expect(helpSections.every((section) => section.icon.length > 0)).toBe(true);
+  });
 });

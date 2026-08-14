@@ -1,6 +1,37 @@
-import { getHelpPage } from '../../content';
 import { HelpPage } from '../../types';
-
-const page = getHelpPage('friends', 'en');
-if (!page) throw new Error('Missing help content for friends/en.');
-export default page as HelpPage;
+const page: HelpPage = {
+  id: 'friends',
+  title: 'Friends',
+  summary: 'Connect with people before collaborating.',
+  keywords: ['friends', 'help'],
+  blocks: [
+    { type: 'heading', level: 2, text: 'What it is' },
+    {
+      type: 'paragraph',
+      text: 'Friendship lets you send collaboration invitations. You can send, accept, decline, cancel, or remove a friendship.',
+    },
+    { type: 'heading', level: 2, text: 'What it is for' },
+    {
+      type: 'example',
+      title: 'Example',
+      text: 'Consult friends when this part of your work needs a decision or review.',
+    },
+    { type: 'heading', level: 2, text: 'How to do it' },
+    {
+      type: 'steps',
+      items: [
+        'Open the matching screen from the menu.',
+        'Read the information or choose the needed action.',
+        'Confirm the change when the screen asks.',
+        'Return to the story or list to check the result.',
+      ],
+    },
+    { type: 'heading', level: 2, text: 'What it affects elsewhere' },
+    {
+      type: 'paragraph',
+      text: 'The result can appear in collaboration, synchronization, lists, or related details according to the action taken.',
+    },
+    { type: 'seeAlso', pages: ['using-this-help', 'sync-basics', 'data-and-backup'] },
+  ],
+};
+export default page;

@@ -13,10 +13,12 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
+import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
 } from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
+import { screenHelpPage } from '../help/contextualHelp';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import ChapterDetailScreen, {
@@ -76,7 +78,6 @@ import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { useStoryStore } from '../state/storyStore';
 import { useTheme } from '../theme';
 import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
-import { screenHelpPage } from '../help/contextualHelp';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -478,6 +479,7 @@ const MainSystemNavigator = () => {
         screenOptions={({ navigation, route }) => {
           const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
           const helpPageId = screenHelpPage[activeRouteName];
+          const isHelpPage = activeRouteName === 'HelpPage';
 
           return {
             headerShown: true,
@@ -489,8 +491,13 @@ const MainSystemNavigator = () => {
             // As telas aninhadas usam headerRight para ações como criar e editar. O atalho de
             // ajuda fica no lado esquerdo para continuar visível quando essas ações substituem
             // o lado direito do header do drawer.
-            headerLeft:
-              !isWide || helpPageId
+            headerLeft: isHelpPage
+              ? () => (
+                  <NavigationBackButton
+                    onPress={() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' })}
+                  />
+                )
+              : !isWide || helpPageId
                 ? () => (
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       {!isWide ? (

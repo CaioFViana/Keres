@@ -9,13 +9,15 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
+import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
 } from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
+import { screenHelpPage } from '../help/contextualHelp';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
-import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
 import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
@@ -25,10 +27,9 @@ import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
-import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
-import { screenHelpPage } from '../help/contextualHelp';
+import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
 import { useTheme } from '../theme';
-import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -187,6 +188,7 @@ const StorySelectionNavigator = () => {
       screenOptions={({ navigation, route }) => {
         const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
         const helpPageId = screenHelpPage[activeRouteName];
+        const isHelpPage = activeRouteName === 'HelpPage';
 
         return {
           headerShown: true,
@@ -197,8 +199,13 @@ const StorySelectionNavigator = () => {
           headerTintColor: colors.text,
           // Subtelas podem ocupar headerRight com ações próprias; manter a ajuda à esquerda
           // garante que o atalho contextual não desapareça em formulários e detalhes.
-          headerLeft:
-            !isWide || helpPageId
+          headerLeft: isHelpPage
+            ? () => (
+                <NavigationBackButton
+                  onPress={() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' })}
+                />
+              )
+            : !isWide || helpPageId
               ? () => (
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     {!isWide ? <DrawerToggleButton navigation={navigation} /> : null}

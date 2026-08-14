@@ -51,8 +51,21 @@ const WebScrollbarTheme = () => {
       *::-webkit-scrollbar-corner {
         background: transparent;
       }
+
+      /* Chromium/Electron applies its own orange focus ring to keyboard-focused controls.
+         Keep that visible accessibility cue, but make it follow the active Keres theme. */
+      *:focus-visible {
+        outline: 2px solid ${colors.secondary} !important;
+        outline-offset: 2px;
+      }
     `;
-  }, [colors.primary, colors.primaryContainer, colors.primaryVariant, colors.surface]);
+  }, [
+    colors.primary,
+    colors.primaryContainer,
+    colors.primaryVariant,
+    colors.secondary,
+    colors.surface,
+  ]);
 
   return null;
 };

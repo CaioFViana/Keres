@@ -5,13 +5,13 @@ const lightColors: ThemeColors = {
   primaryVariant: '#3700B3',
   primaryContainer: '#EADDFF', // Added
   onPrimaryContainer: '#21005D', // Added
-  secondary: '#03DAC6',
-  secondaryVariant: '#018786',
+  secondary: '#7E57C2',
+  secondaryVariant: '#5E35B1',
   background: '#FFFFFF',
   surface: '#FFFFFF',
   error: '#B00020',
   onPrimary: '#FFFFFF',
-  onSecondary: '#000000',
+  onSecondary: '#FFFFFF',
   onBackground: '#000000',
   onSurface: '#000000',
   onError: '#FFFFFF',
@@ -30,13 +30,13 @@ const darkColors: ThemeColors = {
   primaryVariant: '#3700B3',
   primaryContainer: '#4F378B', // Added
   onPrimaryContainer: '#EADDFF', // Added
-  secondary: '#03DAC6',
-  secondaryVariant: '#03DAC6',
+  secondary: '#D0BCFF',
+  secondaryVariant: '#B69DF8',
   background: '#121212',
   surface: '#121212',
   error: '#CF6679',
   onPrimary: '#000000',
-  onSecondary: '#000000',
+  onSecondary: '#381E72',
   onBackground: '#FFFFFF',
   onSurface: '#FFFFFF',
   onError: '#000000',

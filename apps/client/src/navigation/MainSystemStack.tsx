@@ -805,6 +805,17 @@ const MainSystemNavigator = () => {
           options={{ title: t('story_settings_title') }}
         />
         <Drawer.Screen
+          name="HelpDrawer"
+          component={HelpStackNavigator}
+          options={{ title: t('help_title'), drawerLabel: t('help_title') }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
+            },
+          })}
+        />
+        <Drawer.Screen
           name="StorySelection"
           component={() => <View />} // A dummy component, as it won't be displayed
           options={{
@@ -832,17 +843,6 @@ const MainSystemNavigator = () => {
                   }),
                 );
               }
-            },
-          })}
-        />
-        <Drawer.Screen
-          name="HelpDrawer"
-          component={HelpStackNavigator}
-          options={{ title: t('help_title'), drawerLabel: t('help_title') }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
             },
           })}
         />

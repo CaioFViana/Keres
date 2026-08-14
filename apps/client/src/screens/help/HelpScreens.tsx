@@ -14,7 +14,7 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 type HelpNavigation = NativeStackNavigationProp<{ HelpIndex: undefined; HelpPage: { pageId: string } }>;
 
 function HelpBlockRenderer({ block, navigation }: { block: HelpBlock; navigation: HelpNavigation }) {
-  const { colors } = useTheme(); const { t } = useTranslation();
+  const { colors } = useTheme(); const { t, i18n } = useTranslation();
   const styles = StyleSheet.create({ text:{color:colors.text,fontSize:15,lineHeight:22,marginBottom:12}, h2:{color:colors.text,fontSize:20,fontWeight:'700',marginTop:14,marginBottom:8}, box:{backgroundColor:colors.surface,borderColor:colors.border,borderWidth:StyleSheet.hairlineWidth,borderRadius:8,padding:12,marginBottom:12}, muted:{color:colors.textSecondary,fontSize:14,lineHeight:20}, row:{flexDirection:'row',borderBottomColor:colors.border,borderBottomWidth:StyleSheet.hairlineWidth,paddingVertical:8}, cell:{flex:1,color:colors.text,fontSize:13,paddingRight:6} });
   if (block.type === 'paragraph') return <Text style={styles.text}>{block.text}</Text>;
   if (block.type === 'heading') return <Text style={styles.h2}>{block.text}</Text>;
@@ -24,7 +24,7 @@ function HelpBlockRenderer({ block, navigation }: { block: HelpBlock; navigation
   if (block.type === 'fields') return <View style={styles.box}><View style={styles.row}><Text style={styles.cell}>{t('help_field_column_name')}</Text><Text style={styles.cell}>{t('help_field_column_write')}</Text><Text style={styles.cell}>{t('help_field_column_note')}</Text></View>{block.rows.map(row => <View key={row.key} style={styles.row}><Text style={styles.cell}>{row.label}</Text><Text style={styles.cell}>{row.whatToWrite}</Text><Text style={styles.cell}>{row.note ?? ''}</Text></View>)}</View>;
   if (block.type === 'table') return <View style={styles.box}>{block.rows.map((row,i) => <View key={i} style={styles.row}>{row.map((cell,j) => <Text key={j} style={styles.cell}>{cell}</Text>)}</View>)}</View>;
   if (block.type === 'faq') return <View>{block.items.map(item => <View key={item.question} style={styles.box}><Text style={[styles.text,{fontWeight:'700'}]}>{item.question}</Text><Text style={styles.muted}>{item.answer}</Text></View>)}</View>;
-  return <View>{block.pages.map(id => <TouchableOpacity key={id} onPress={() => navigation.push('HelpPage', { pageId: id })}><Text style={[styles.text,{color:colors.primary}]}>→ {getHelpPage(id, 'pt')?.title ?? id}</Text></TouchableOpacity>)}</View>;
+  return <View>{block.pages.map(id => <TouchableOpacity key={id} onPress={() => navigation.push('HelpPage', { pageId: id })}><Text style={[styles.text,{color:colors.primary}]}>→ {getHelpPage(id, i18n.language)?.title ?? id}</Text></TouchableOpacity>)}</View>;
 }
 
 export function HelpIndexScreen() {

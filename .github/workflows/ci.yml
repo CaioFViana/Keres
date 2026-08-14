@@ -51,6 +51,21 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # O teste de S3 usa SeaweedFS real em localhost:8333. Sem este serviço o job
+      # iniciava somente o Postgres, apesar de docker-compose.test.yml definir ambos.
+      seaweedfs:
+        image: chrislusf/seaweedfs
+        env:
+          AWS_ACCESS_KEY_ID: admin
+          AWS_SECRET_ACCESS_KEY: secret
+          S3_BUCKET: my-bucket
+        ports:
+          - 8333:8333
+        options: >-
+          --health-cmd "wget -q -O /dev/null http://localhost:9333/cluster/status"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgres://keres_test:keres_test@localhost:55432/keres_test
       JWT_SECRET: ci-jwt-secret-that-is-at-least-thirty-two-characters

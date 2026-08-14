@@ -72,5 +72,6 @@ export * from './metadata/StorySchemaEntityType';
 export * from './metadata/LocationRelationType';
 export * from './metadata/SeeAlsoEntityType';
 export * from './metadata/CommentEntityType';
+export * from './metadata/entityFields';
 export * from './utils/attributeKey';
 export * from './utils/attributeValueCodec';

@@ -44,13 +44,13 @@ const page: HelpPage = {
           note: 'Helps review the sequence.',
         },
         {
-          key: 'chapter',
+          key: 'chapterId',
           label: 'Chapter',
           whatToWrite: 'The chapter where readers encounter the scene.',
           note: 'Defines grouping and reading order.',
         },
         {
-          key: 'location',
+          key: 'locationId',
           label: 'Location',
           whatToWrite: 'Where the scene happens. Choose an existing Location.',
           note: 'It is needed to save and connects the scene to the world.',
@@ -62,7 +62,7 @@ const page: HelpPage = {
           note: 'The map and analysis use this mark.',
         },
         {
-          key: 'isEnd',
+          key: 'isFinish',
           label: 'End scene',
           whatToWrite: 'Turn on when this ends a path.',
           note: 'Analysis warns if an end scene still has outgoing choices.',

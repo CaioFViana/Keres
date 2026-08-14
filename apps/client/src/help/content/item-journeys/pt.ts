@@ -33,20 +33,20 @@ const page: HelpPage = {
       type: 'fields',
       rows: [
         {
-          key: 'item',
+          key: 'itemId',
           label: 'Item',
           whatToWrite:
             'Escolha o objeto cuja trajetória está sendo registrada. É necessário para salvar.',
           note: 'A parada aparece na trajetória desse item.',
         },
         {
-          key: 'scene',
+          key: 'sceneId',
           label: 'Cena',
           whatToWrite: 'Escolha em qual Cena a mudança ocorre. É necessário para salvar.',
           note: 'Liga a mudança ao ponto da narrativa em que aconteceu.',
         },
         {
-          key: 'newCharacterOwner',
+          key: 'newCharacterOwnerId',
           label: 'Novo dono do personagem',
           whatToWrite: 'Escolha quem passa a possuir o item; deixe vazio se o dono não mudar.',
           note: 'É diferente do dono inicial informado na ficha do Item.',

@@ -26,6 +26,25 @@ const page: HelpPage = {
         'Save the profile and return to the map to check the link.',
       ],
     },
+    {
+      type: 'fields',
+      rows: [
+        {
+          key: 'relatedCharacter',
+          label: 'Related character',
+          whatToWrite:
+            'Choose the other character in the relationship. You cannot choose the same character.',
+          note: 'When editing, this character stays the same to preserve the existing relationship.',
+        },
+        {
+          key: 'relationType',
+          label: 'Relationship type',
+          whatToWrite:
+            'Write or choose the bond name, such as friendship, rivalry, family, or mentorship.',
+          note: 'The app can suggest a value already used in this story.',
+        },
+      ],
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

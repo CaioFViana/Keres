@@ -44,13 +44,13 @@ const page: HelpPage = {
           note: 'Ajuda a revisar a sequência.',
         },
         {
-          key: 'chapter',
+          key: 'chapterId',
           label: 'Capítulo',
           whatToWrite: 'O capítulo em que o leitor encontra a cena.',
           note: 'Define o agrupamento e a ordem de leitura.',
         },
         {
-          key: 'location',
+          key: 'locationId',
           label: 'Local',
           whatToWrite: 'Onde a cena acontece. Escolha um Local já cadastrado.',
           note: 'É necessário para salvar e liga a cena ao mundo.',
@@ -62,7 +62,7 @@ const page: HelpPage = {
           note: 'O mapa e a análise usam essa marca.',
         },
         {
-          key: 'isEnd',
+          key: 'isFinish',
           label: 'Cena final',
           whatToWrite: 'Ative quando esta encerrar um caminho.',
           note: 'A análise avisa se uma cena final ainda tiver escolhas de saída.',

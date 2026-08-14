@@ -26,6 +26,25 @@ const page: HelpPage = {
         'Salve a ficha e volte ao mapa para conferir a ligação.',
       ],
     },
+    {
+      type: 'fields',
+      rows: [
+        {
+          key: 'relatedCharacter',
+          label: 'Personagem relacionado',
+          whatToWrite:
+            'Escolha o outro personagem envolvido no vínculo. Não é possível escolher o próprio personagem.',
+          note: 'Ao editar, este personagem permanece o mesmo para preservar o vínculo já criado.',
+        },
+        {
+          key: 'relationType',
+          label: 'Tipo de relação',
+          whatToWrite:
+            'Escreva ou escolha o nome do vínculo, como amizade, rivalidade, parentesco ou mentoria.',
+          note: 'O valor pode ser sugerido quando já foi usado nesta história.',
+        },
+      ],
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

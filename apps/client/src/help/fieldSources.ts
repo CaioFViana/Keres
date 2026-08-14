@@ -31,10 +31,10 @@ export const fieldSources: Record<string, string[]> = {
   scenes: [
     'name',
     'summary',
-    'chapter',
-    'location',
+    'chapterId',
+    'locationId',
     'isStart',
-    'isEnd',
+    'isFinish',
     'gap',
     'duration',
     'isFavorite',
@@ -50,7 +50,8 @@ export const fieldSources: Record<string, string[]> = {
     'isFavorite',
     'extraNotes',
   ],
-  'item-journeys': ['item', 'scene', 'newCharacterOwner', 'newState', 'extraNotes'],
+  'item-journeys': ['itemId', 'sceneId', 'newCharacterOwnerId', 'newState', 'extraNotes'],
+  'character-relationships': ['relatedCharacter', 'relationType'],
   'world-rules': ['title', 'description', 'isFavorite', 'extraNotes'],
   notes: ['title', 'body', 'isFavorite', 'extraNotes'],
   tags: ['name', 'color', 'extraNotes', 'isFavorite'],
@@ -67,6 +68,21 @@ export const fieldSources: Record<string, string[]> = {
   choices: ['text', 'sourceScene', 'destinationScene', 'notes'],
   'custom-attributes': ['displayName', 'type', 'required', 'defaultValue', 'order'],
 };
+
+/** Página que explica os campos expostos pela metadata usada na busca avançada. */
+export const entityMetadataHelpPages = {
+  Character: 'characters',
+  Tag: 'tags',
+  Note: 'notes',
+  WorldRule: 'world-rules',
+  CharacterRelation: 'character-relationships',
+  Location: 'locations',
+  Item: 'items',
+  ItemJourney: 'item-journeys',
+  Chapter: 'chapters',
+  Scene: 'scenes',
+  Choice: 'choices',
+} as const;
 
 export const visibleEntityProperties = fieldSources;
 

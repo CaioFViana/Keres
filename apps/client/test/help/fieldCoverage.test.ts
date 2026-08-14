@@ -1,8 +1,13 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { entityFieldMetadata } from '@keres/shared';
 import ts from 'typescript';
 import { getHelpPage } from '../../src/help/repository';
-import { entityPropertyClassifications, fieldSources } from '../../src/help/fieldSources';
+import {
+  entityMetadataHelpPages,
+  entityPropertyClassifications,
+  fieldSources,
+} from '../../src/help/fieldSources';
 
 const entitiesDirectory = join(__dirname, '../../../../packages/shared/entities');
 
@@ -39,6 +44,19 @@ describe('help field coverage', () => {
           .filter((block) => block.type === 'fields')
           .flatMap((block) => block.rows.map((row) => row.key)) ?? [];
       expect(documented).toEqual(expect.arrayContaining(fields));
+    }
+  });
+
+  it('covers every field offered by advanced-search metadata', () => {
+    expect(Object.keys(entityMetadataHelpPages).sort()).toEqual(
+      Object.keys(entityFieldMetadata).sort(),
+    );
+
+    for (const [entityName, metadata] of Object.entries(entityFieldMetadata)) {
+      const pageId = entityMetadataHelpPages[entityName as keyof typeof entityMetadataHelpPages];
+      expect(fieldSources[pageId]).toEqual(
+        expect.arrayContaining(metadata.map((field) => field.name)),
+      );
     }
   });
 

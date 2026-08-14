@@ -33,19 +33,19 @@ const page: HelpPage = {
       type: 'fields',
       rows: [
         {
-          key: 'item',
+          key: 'itemId',
           label: 'Item',
           whatToWrite: 'Choose the object whose journey you are recording. It is needed to save.',
           note: 'The stop appears in that item’s journey.',
         },
         {
-          key: 'scene',
+          key: 'sceneId',
           label: 'Scene',
           whatToWrite: 'Choose the Scene where the change happens. It is needed to save.',
           note: 'It links the change to the narrative point where it happened.',
         },
         {
-          key: 'newCharacterOwner',
+          key: 'newCharacterOwnerId',
           label: 'New character owner',
           whatToWrite: 'Choose who receives the item; leave empty if ownership does not change.',
           note: 'It differs from the initial owner in the Item profile.',

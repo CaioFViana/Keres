@@ -1,37 +1,43 @@
 import { HelpPage } from '../../types';
+
 const page: HelpPage = {
   id: 'suggestions',
   title: 'Listas de sugestões',
-  summary: 'Reaproveite valores usados na história ao preencher campos.',
-  keywords: ['listas de sugestões', 'configurar'],
+  summary: 'Organize os valores sugeridos ao preencher campos repetidos da história.',
+  keywords: ['sugestão', 'gênero', 'raça', 'relação', 'valor', 'lista'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Sugestões oferecem valores já usados em campos como gênero, raça ou tipo de relação; você pode adicionar outros ao digitar.',
+      text: 'Listas de sugestões guardam valores que você pode reaproveitar em campos repetidos, como gênero e raça de personagens, tipo de relação, estado de item e atributos customizados do tipo Sugestão.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'Use listas de sugestões quando precisar adaptar o aplicativo ao seu modo de trabalhar.',
+      text: 'Em vez de digitar “Navegadora” com grafias diferentes em cada ficha, salve esse valor como sugestão de ocupação. Ao preencher outro personagem, basta selecioná-lo e a organização permanece consistente.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'steps',
       items: [
-        'Abra a tela correspondente pelo menu.',
-        'Preencha ou escolha as opções disponíveis.',
-        'Salve ou confirme a alteração quando a tela solicitar.',
-        'Volte ao menu para usar o recurso atualizado.',
+        'Abra Menu da história › Sugestões.',
+        'Escolha a lista desejada. O rótulo mostra o tipo de elemento e o campo que usarão aqueles valores.',
+        'Digite um novo valor e toque em Adicionar.',
+        'Use o lápis para corrigir um valor ou a lixeira para removê-lo. Apenas quem pode editar a história faz essas alterações.',
+        'Ao preencher uma ficha, abra o campo correspondente e escolha um dos valores sugeridos, ou escreva outro quando fizer sentido.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A alteração vale para o recurso escolhido e pode aparecer em formulários, buscas, colaboração ou sincronização relacionados.',
+      text: 'A lista escolhida aparece nos formulários que usam aquele campo. Alterar a lista não reescreve valores que já estão salvos nas fichas; ela apenas muda as opções oferecidas nas próximas edições.',
     },
-    { type: 'seeAlso', pages: ['story-settings', 'sync-basics', 'friends'] },
+    {
+      type: 'seeAlso',
+      pages: ['custom-attributes', 'characters', 'character-relationships', 'items'],
+    },
   ],
 };
+
 export default page;

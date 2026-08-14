@@ -2,28 +2,29 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'choices',
   title: 'Escolhas',
-  summary: 'Organize escolhas da sua história.',
-  keywords: ['escolhas'],
+  summary: 'Ligue uma cena a outra e escreva a decisão que abre cada caminho.',
+  keywords: ['escolha', 'cena de origem', 'cena de destino', 'caminho', 'ramificada'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Escolhas é um recurso para registrar e conectar informações da história.',
+      text: 'Uma escolha é a ligação entre duas cenas de uma história ramificada: ela nasce em uma Cena de origem, mostra um Texto e leva a uma Cena de destino.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'Use escolhas para tornar uma decisão de narrativa fácil de consultar durante a revisão.',
+      text: 'Na cena “A porta da estação abre”, o leitor vê “Seguir Mara para o trem”. Essa escolha leva à cena “Dentro do trem”. Outra escolha, “Investigar o corredor”, leva a uma cena diferente.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'steps',
       items: [
-        'Abra Escolhas no Menu da história.',
-        'Toque em + ou abra um registro existente.',
-        'Preencha os campos e salve.',
-        'Revise os vínculos nos detalhes.',
+        'Abra Menu da história › Escolhas. Esse menu só está disponível em histórias ramificadas.',
+        'Toque em + para criar uma escolha, ou abra uma existente para editar.',
+        'Escolha a Cena de origem e a Cena de destino, escreva o Texto e acrescente Anotações da escolha se precisar.',
+        'Salve. Depois de salvar uma nova escolha, você pode adicionar etiquetas, notas, Veja também, condições e efeitos.',
+        'Abra o Mapa da história ou a Análise da história para conferir se o novo caminho faz sentido.',
       ],
     },
     {
@@ -32,35 +33,40 @@ const page: HelpPage = {
         {
           key: 'text',
           label: 'Texto',
-          whatToWrite: 'Preencha a informação que descreve esta escolhas.',
-          note: 'Aparece nos detalhes e nas ferramentas relacionadas.',
+          whatToWrite:
+            'Escreva a opção que será apresentada ao leitor, como “Seguir Mara para o trem”. Este campo é obrigatório.',
+          note: 'É o nome da escolha nas listas, no detalhe e no mapa.',
         },
         {
           key: 'sourceScene',
           label: 'Cena de origem',
-          whatToWrite: 'Preencha a informação que descreve esta escolhas.',
-          note: 'Aparece nos detalhes e nas ferramentas relacionadas.',
+          whatToWrite: 'Selecione a cena em que esta decisão aparece. Este campo é obrigatório.',
+          note: 'O mapa desenha a saída a partir desta cena.',
         },
         {
           key: 'destinationScene',
           label: 'Cena de destino',
-          whatToWrite: 'Preencha a informação que descreve esta escolhas.',
-          note: 'Aparece nos detalhes e nas ferramentas relacionadas.',
+          whatToWrite: 'Selecione a cena para onde esta decisão leva. Este campo é obrigatório.',
+          note: 'O mapa desenha a chegada nessa cena.',
         },
         {
-          key: 'extraNotes',
-          label: 'Anotações extras',
-          whatToWrite: 'Preencha a informação que descreve esta escolhas.',
-          note: 'Aparece nos detalhes e nas ferramentas relacionadas.',
+          key: 'notes',
+          label: 'Anotações da escolha',
+          whatToWrite:
+            'Registre intenção, consequência ou uma pendência de revisão. Pode ficar em branco.',
+          note: 'Aparece no detalhe da escolha, separada de notas vinculadas.',
         },
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'As informações ficam disponíveis em listas, detalhes, buscas e vínculos relacionados.',
+      text: 'Cada escolha cria uma ligação no Mapa da história e é verificada pela Análise. Condições podem esconder, bloquear ou habilitar a escolha; efeitos podem alterar os itens e marcadores usados nas próximas decisões.',
     },
-    { type: 'seeAlso', pages: ['lists-and-search', 'see-also', 'comments'] },
+    {
+      type: 'seeAlso',
+      pages: ['branching-basics', 'story-map', 'choice-conditions', 'effects', 'story-state'],
+    },
   ],
 };
 export default page;

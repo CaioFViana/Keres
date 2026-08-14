@@ -16,12 +16,19 @@ export function HelpBlockRenderer({
   const { colors } = useTheme();
   const styles = StyleSheet.create({
     text: { color: colors.text, fontSize: 15, lineHeight: 22, marginBottom: 12 },
-    heading: {
+    heading2: {
       color: colors.text,
       fontSize: 20,
       fontWeight: '700',
       marginTop: 14,
       marginBottom: 8,
+    },
+    heading3: {
+      color: colors.text,
+      fontSize: 17,
+      fontWeight: '700',
+      marginTop: 12,
+      marginBottom: 6,
     },
     box: {
       backgroundColor: colors.surface,
@@ -32,9 +39,20 @@ export function HelpBlockRenderer({
       marginBottom: 12,
     },
     muted: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
+    infoCallout: { backgroundColor: colors.primaryContainer, borderColor: colors.primary },
+    warningCallout: { borderColor: colors.error, borderWidth: 1 },
+    tableRow: {
+      flexDirection: 'row',
+      borderBottomColor: colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      paddingVertical: 8,
+    },
+    tableCell: { color: colors.text, flex: 1, fontSize: 13, paddingRight: 8 },
+    tableHeader: { fontWeight: '700' },
   });
   if (block.type === 'paragraph') return <Text style={styles.text}>{block.text}</Text>;
-  if (block.type === 'heading') return <Text style={styles.heading}>{block.text}</Text>;
+  if (block.type === 'heading')
+    return <Text style={block.level === 2 ? styles.heading2 : styles.heading3}>{block.text}</Text>;
   if (block.type === 'fields') return <HelpFieldTable rows={block.rows} />;
   if (block.type === 'steps' || block.type === 'list')
     return (
@@ -50,7 +68,13 @@ export function HelpBlockRenderer({
   if (block.type === 'path') return <Text style={styles.muted}>{block.segments.join(' › ')}</Text>;
   if (block.type === 'callout' || block.type === 'example')
     return (
-      <View style={styles.box}>
+      <View
+        style={[
+          styles.box,
+          block.type === 'callout' &&
+            (block.tone === 'warning' ? styles.warningCallout : styles.infoCallout),
+        ]}
+      >
         {block.type === 'example' && block.title ? (
           <Text style={[styles.text, { fontWeight: '700' }]}>{block.title}</Text>
         ) : null}
@@ -71,10 +95,21 @@ export function HelpBlockRenderer({
   if (block.type === 'table')
     return (
       <View style={styles.box}>
+        <View style={styles.tableRow}>
+          {block.headers.map((header) => (
+            <Text key={header} style={[styles.tableCell, styles.tableHeader]}>
+              {header}
+            </Text>
+          ))}
+        </View>
         {block.rows.map((row, index) => (
-          <Text key={index} style={styles.text}>
-            {row.join(' · ')}
-          </Text>
+          <View key={index} style={styles.tableRow}>
+            {row.map((cell, cellIndex) => (
+              <Text key={cellIndex} style={styles.tableCell}>
+                {cell}
+              </Text>
+            ))}
+          </View>
         ))}
       </View>
     );

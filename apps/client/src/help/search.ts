@@ -4,6 +4,25 @@ const normalize = (value: string) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
+
+function findNormalizedMatch(value: string, needle: string): number {
+  let normalizedValue = '';
+  const originalIndexes: number[] = [];
+
+  for (let index = 0; index < value.length; ) {
+    const codePoint = value.codePointAt(index);
+    if (codePoint === undefined) break;
+    const character = String.fromCodePoint(codePoint);
+    const normalizedCharacter = normalize(character);
+    normalizedValue += normalizedCharacter;
+    originalIndexes.push(...Array.from(normalizedCharacter, () => index));
+    index += character.length;
+  }
+
+  const normalizedIndex = normalizedValue.indexOf(needle);
+  return normalizedIndex < 0 ? -1 : (originalIndexes[normalizedIndex] ?? -1);
+}
+
 export function flattenHelpPage(page: HelpPage): string {
   const blockText = page.blocks.flatMap((block) => {
     switch (block.type) {
@@ -48,15 +67,12 @@ export function searchHelp(pages: HelpPage[], query: string) {
             : body.includes(needle)
               ? 3
               : -1;
-      const bodyMatch = flattenHelpPage(page)
-        .toLocaleLowerCase()
-        .indexOf(query.trim().toLocaleLowerCase());
+      const flattenedPage = flattenHelpPage(page);
+      const bodyMatch = findNormalizedMatch(flattenedPage, needle);
       const excerptStart = bodyMatch > 56 ? bodyMatch - 56 : 0;
       const excerpt =
         bodyMatch >= 0
-          ? flattenHelpPage(page)
-              .slice(excerptStart, bodyMatch + query.trim().length + 96)
-              .trim()
+          ? flattenedPage.slice(excerptStart, bodyMatch + query.trim().length + 96).trim()
           : page.summary;
       return { page, order, rank, excerpt };
     })

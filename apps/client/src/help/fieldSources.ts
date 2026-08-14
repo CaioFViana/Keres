@@ -54,7 +54,17 @@ export const fieldSources: Record<string, string[]> = {
   'world-rules': ['title', 'description', 'isFavorite', 'extraNotes'],
   notes: ['title', 'body', 'isFavorite', 'extraNotes'],
   tags: ['name', 'color', 'extraNotes', 'isFavorite'],
-  choices: ['text', 'sourceScene', 'destinationScene', 'extraNotes'],
+  gallery: [
+    'fileName',
+    'mediaType',
+    'mimeType',
+    'sizeBytes',
+    'title',
+    'extraNotes',
+    'linkedEntities',
+    'isFavorite',
+  ],
+  choices: ['text', 'sourceScene', 'destinationScene', 'notes'],
   'custom-attributes': ['displayName', 'type', 'required', 'defaultValue', 'order'],
 };
 

@@ -1,6 +1,6 @@
 # Plano de implementação — Drawer "Ajuda" (Help)
 
-> Documento de planejamento. Nada aqui foi implementado ainda. Alvo: `apps/client`, drawer novo
+> Documento de planejamento. Tudo aqui foi implementado e adaptado. Alvo: `apps/client`, drawer novo
 > em `apps/client/src/navigation/StorySelectionStack.tsx`, mais um corpo de conteúdo de ajuda
 > versionado no repositório.
 >

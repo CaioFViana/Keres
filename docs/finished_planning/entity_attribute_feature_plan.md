@@ -1,6 +1,6 @@
 # Plano: atributo customizado do tipo Entidade (`AttributeType.ENTITY`)
 
-Status: planejamento. Nada implementado ainda.
+Status: Implementado.
 Branch base: `ouroboros`.
 
 ## 1. Objetivo

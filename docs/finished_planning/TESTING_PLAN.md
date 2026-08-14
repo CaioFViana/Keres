@@ -1,5 +1,7 @@
 # Plano de testes do Keres
 
+Plano usado para iniciar o planejamento de Ouroboros. Não atualizado no momento.
+
 ## Objetivo
 
 Cobrir lógica e integração de dados sem acoplar os ambientes que o monorepo já usa:

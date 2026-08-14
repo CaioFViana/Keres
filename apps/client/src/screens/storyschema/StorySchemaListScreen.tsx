@@ -8,8 +8,8 @@ import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import { useDrizzle } from '../../db';
 import { StorySchemaFieldSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { StorySchemaStackParamList } from '../../navigation/MainSystemStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '../../state/storyStore';
@@ -17,6 +17,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'characters_title',
@@ -36,6 +37,7 @@ type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<
 const StorySchemaListScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  useDocumentTitle(t('story_schema_management_title'));
   const { colors } = useTheme();
   const navigation = useNavigation<StorySchemaListScreenNavigationProp>();
   const { selectedStory } = useStoryStore();

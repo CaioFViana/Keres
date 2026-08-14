@@ -1,3 +1,8 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -5,11 +10,6 @@ import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-naviga
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, BackHandler, StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import Select from '@/src/components/common/inputs/Select/Select';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -17,8 +17,9 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { themeDisplayOptions } from '../../theme/palettes';
-import { getLanguageOptions } from '../../utils/i18n';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
+import { getLanguageOptions } from '../../utils/i18n';
 
 type RootStackParamList = {
   StoryForm: { storyId?: string };
@@ -35,6 +36,7 @@ const StoryFormScreen = () => {
   const navigation = useNavigation<StoryFormScreenNavigationProp>();
   const route = useRoute<StoryFormScreenRouteProp>();
   const { storyId } = route.params || {};
+  useDocumentTitle(storyId ? t('edit_story') : t('create_new_story_screen_title'));
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();

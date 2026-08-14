@@ -1,10 +1,10 @@
+import { Button, FormContainer, Select, TextInput } from '@/src/components/common';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, StyleSheet, Text, View } from 'react-native';
-import { Button, FormContainer, Select, TextInput } from '@/src/components/common';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { migrate } from '../../db/migrate'; // Import migrate
 import { setAuthDb } from '../../services/AuthTokenManager';
@@ -15,6 +15,7 @@ import { useThemeStore } from '../../state/themeStore'; // Import useThemeStore
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles'; // Import common styles
+import { useDocumentTitle } from '../../utils/documentTitle';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
 type RootStackParamList = {
@@ -30,6 +31,7 @@ const ColdInstallScreen = () => {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [languageError, setLanguageError] = useState<string | null>(null);
   const { t } = useTranslation();
+  useDocumentTitle(t('welcome'));
   const navigation = useNavigation<ColdInstallScreenNavigationProp>();
   const { colors } = useTheme();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);

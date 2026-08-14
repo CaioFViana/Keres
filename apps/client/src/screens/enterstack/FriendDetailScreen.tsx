@@ -1,20 +1,20 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import Button from '@/src/components/common/controls/Button/Button';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schemas/servers';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
@@ -22,6 +22,7 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 type FriendDetailScreenRouteProp = RouteProp<FriendshipStackParamList, 'FriendDetail'>;
 type FriendDetailScreenNavigationProp = NativeStackNavigationProp<
@@ -43,6 +44,7 @@ const statusLabelKey = (status: string) => {
 const FriendDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  useDocumentTitle(t('friend_detail_title'));
   const { colors } = useTheme();
   const navigation = useNavigation<FriendDetailScreenNavigationProp>();
   const route = useRoute<FriendDetailScreenRouteProp>();

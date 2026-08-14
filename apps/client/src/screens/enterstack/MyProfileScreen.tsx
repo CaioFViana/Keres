@@ -1,29 +1,30 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
+import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import Button from '@/src/components/common/controls/Button/Button';
-import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
-import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
-import { createServerService } from '../../services/ServerService';
 import { isOfflineError } from '../../services/apiClient';
+import { createServerService } from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 const BIO_MAX_LENGTH = 200;
 
@@ -36,6 +37,7 @@ type MyProfileScreenNavigationProp = NativeStackNavigationProp<
 const MyProfileScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  useDocumentTitle(t('my_profile_title'));
   const { colors } = useTheme();
   const navigation = useNavigation<MyProfileScreenNavigationProp>();
   const route = useRoute<MyProfileScreenRouteProp>();

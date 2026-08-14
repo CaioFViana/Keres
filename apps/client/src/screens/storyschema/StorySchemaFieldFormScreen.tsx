@@ -28,6 +28,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 type StorySchemaFieldFormScreenRouteProp = RouteProp<
   StorySchemaStackParamList,
@@ -56,6 +57,7 @@ const StorySchemaFieldFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
 
   const isEditing = !!fieldId;
+  useDocumentTitle(isEditing ? t('edit_attribute_title') : t('create_attribute_title'));
   const existingFields = useStorySchemaFields(storyId, entityType);
 
   const [name, setName] = useState('');

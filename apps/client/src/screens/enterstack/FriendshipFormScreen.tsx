@@ -1,15 +1,15 @@
+import Button from '@/src/components/common/controls/Button/Button'; // Custom Button
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Import ActivityIndicator
-import Button from '@/src/components/common/controls/Button/Button'; // Custom Button
-import Select from '@/src/components/common/inputs/Select/Select';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { ServerSelect } from '../../db/schemas/servers';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { friendshipApiService } from '../../services/FriendshipApiService'; // Import friendshipApiService
 import { createFriendshipService } from '../../services/FriendshipService';
@@ -19,6 +19,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -38,6 +39,7 @@ const FriendshipFormScreen = () => {
 
   const { colors } = useTheme();
   const { t } = useTranslation();
+  useDocumentTitle(t('add_new_friendship'));
   const drizzleClient = useDrizzle();
   // Stable references: recreating these every render would change their identity, which sits
   // in the effect/callback dependency arrays below and would otherwise re-trigger them forever.

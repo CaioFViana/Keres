@@ -1,23 +1,24 @@
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { createStoryService } from '../../services/storymanagement/StoryService';
 import { StorySelect } from '../../db/schema';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { mediaFileService } from '../../services/MediaFileService';
+import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { buildStoryZipBytes } from '../../utils/storyMediaBundle';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
+import { buildStoryZipBytes } from '../../utils/storyMediaBundle';
 import {
   buildExportFileName,
   buildExportZipFileName,
@@ -29,6 +30,7 @@ import {
 
 const ImportExportScreen = () => {
   const { t } = useTranslation();
+  useDocumentTitle(t('import_export_title'));
   const { colors } = useTheme();
   useBackButtonHandler();
   const drizzleDb = useDrizzle();

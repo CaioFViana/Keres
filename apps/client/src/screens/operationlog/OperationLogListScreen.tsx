@@ -1,3 +1,4 @@
+import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -5,7 +6,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // C
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import {
   MainSystemDrawerParamList,
   OperationLogStackParamList,
@@ -13,6 +13,7 @@ import {
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import entityEventEmitter
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 // Redefine OperationLogScreenNavigationProp as CompositeNavigationProp
 export type OperationLogScreenNavigationProp = CompositeNavigationProp<
@@ -24,6 +25,7 @@ const OperationLogScreen: React.FC = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const { t } = useTranslation();
+  useDocumentTitle(t('operation_logs_title'));
   const navigation = useNavigation<OperationLogScreenNavigationProp>();
   const { selectedStory } = useStoryStore();
 

@@ -1,3 +1,4 @@
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useNavigation } from '@react-navigation/native';
@@ -5,11 +6,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
-import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import { createFriendshipService, FriendshipWithServer } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
@@ -19,6 +19,7 @@ import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -35,6 +36,7 @@ const FriendshipListScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const { t } = useTranslation();
+  useDocumentTitle(t('manage_friendships'));
   const drizzleClient = useDrizzle();
   // Stable references: recreating these every render would change their identity, which sits
   // in fetchFriendshipsAndServers' dependency array and would re-subscribe/re-run on every render.

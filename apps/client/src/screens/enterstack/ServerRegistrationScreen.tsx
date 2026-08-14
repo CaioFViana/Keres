@@ -1,12 +1,12 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import apiClient from '../../services/apiClient';
@@ -16,6 +16,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type RootStackParamList = {
@@ -40,6 +41,7 @@ const ServerRegistrationScreen = () => {
   const route =
     useRoute<NativeStackScreenProps<RootStackParamList, 'ServerRegistration'>['route']>();
   const { serverId } = route.params || {};
+  useDocumentTitle(serverId ? t('edit_server') : t('register_new_server'));
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);

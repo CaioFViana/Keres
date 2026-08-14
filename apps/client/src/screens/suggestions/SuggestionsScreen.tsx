@@ -1,3 +1,5 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { Ionicons } from '@expo/vector-icons';
 import { AttributeType, STORY_SCHEMA_ENTITY_TYPES, StorySchemaEntityType } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
@@ -5,11 +7,11 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { SuggestionSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import {
   createSuggestionService,
@@ -17,11 +19,10 @@ import {
 } from '../../services/storymanagement/SuggestionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { useStoryRole } from '../../hooks/useStoryRole';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 type SuggestionGroup = { type: string; label: string; key: string };
 
@@ -44,6 +45,7 @@ const SCHEMA_ENTITY_LABELS: Record<StorySchemaEntityType, string> = {
 const SuggestionsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  useDocumentTitle(t('standard_suggestions_title'));
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
   const { isCompact } = useResponsiveLayout();

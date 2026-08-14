@@ -1,3 +1,4 @@
+import Select from '@/src/components/common/inputs/Select/Select';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -10,16 +11,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Select from '@/src/components/common/inputs/Select/Select';
 import { useDrizzle } from '../../db';
-import { createStoryService } from '../../services/storymanagement/StoryService';
 import { ExampleStoryEntry, ExampleStoryLanguage } from '../../exampleStories/types';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createExampleStoryService } from '../../services/storymanagement/ExampleStoryService';
+import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
+import { useDocumentTitle } from '../../utils/documentTitle';
 import { getLanguageOptions } from '../../utils/i18n';
 
 /**
@@ -80,6 +81,7 @@ function getStoryPreview(language: ExampleStoryLanguage, fallbackTitle: string):
 const ExampleStoriesScreen = () => {
   useBackButtonHandler();
   const { t, i18n } = useTranslation();
+  useDocumentTitle(t('examples_title'));
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();

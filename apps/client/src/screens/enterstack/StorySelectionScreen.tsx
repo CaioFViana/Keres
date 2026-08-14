@@ -1,3 +1,4 @@
+import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { Story } from '@keres/shared/entities/Story';
@@ -6,7 +7,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import { useDrizzle } from '../../db';
 import { createServerService } from '../../services/ServerService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -22,6 +22,7 @@ import {
   useThemeColors,
 } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -130,6 +131,7 @@ const StorySelectionScreen = () => {
   const { setSelectedStory } = useStoryStore();
   const { stories, fetchStories, updateStoryFavoriteStatus } = useStoryListStore();
   const { t } = useTranslation();
+  useDocumentTitle(t('story_selection_title'));
   const { showNotification } = useNotificationStore();
   const [serverNamesById, setServerNamesById] = useState<Record<string, string>>({});
 

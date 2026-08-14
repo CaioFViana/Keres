@@ -14,10 +14,11 @@ import { useUserDisplayName } from '../../hooks/useUserDisplayName';
 import { OperationLogStackParamList } from '../../navigation/MainSystemStack'; // Corrected import path
 import { EntityService } from '../../services/EntityService';
 import { createOperationLogService } from '../../services/OperationLogService';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useDocumentTitle } from '../../utils/documentTitle';
 import { ISO_DATE_PATTERN } from '../../utils/reviveDates';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
@@ -76,6 +77,7 @@ const OperationLogDetailScreen: React.FC = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const { t } = useTranslation();
+  useDocumentTitle(t('operation_log_detail_title'));
   const navigation = useNavigation<OperationLogDetailScreenNavigationProp>();
   const route = useRoute<OperationLogDetailScreenRouteProp>();
   const { logId } = route.params;

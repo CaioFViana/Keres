@@ -1,16 +1,16 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -21,6 +21,7 @@ import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 const MIN_NEW_PASSWORD_LENGTH = 8;
 
@@ -33,6 +34,7 @@ type ChangePasswordScreenNavigationProp = NativeStackNavigationProp<
 const ChangePasswordScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
+  useDocumentTitle(t('change_password_title'));
   const { colors } = useTheme();
   const navigation = useNavigation<ChangePasswordScreenNavigationProp>();
   const route = useRoute<ChangePasswordScreenRouteProp>();

@@ -1,3 +1,4 @@
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -12,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
@@ -26,6 +26,7 @@ import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { useDocumentTitle } from '../../utils/documentTitle';
 
 interface ServerWithStatus extends ServerSelect {
   pingStatus: 'idle' | 'pending' | 'online' | 'offline';
@@ -40,6 +41,7 @@ type ServerManagementScreenNavigationProp = NativeStackNavigationProp<
 const ServerManagementScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
+  useDocumentTitle(t('manage_servers'));
   const { colors } = useTheme();
   const navigation = useNavigation<ServerManagementScreenNavigationProp>();
   const commonContainerStyles = getCommonContainerStyles(colors);

@@ -25,11 +25,11 @@ const projects = [
 // isolation. The other values mirror their workspace coverage configs, so the report shows the
 // same thresholds that CI enforces.
 const ratchets = {
-  shared: { lines: 92, functions: 80, branches: 65 },
-  client: { lines: 13, functions: 13, branches: 9 },
-  api: { lines: 71, functions: 72, branches: 57 },
-  admin: { lines: 71, functions: 53, branches: 47 },
-  desktop: { lines: 94, functions: 92, branches: 80 },
+  shared: { lines: 93, functions: 81, branches: 67 },
+  client: { lines: 30, functions: 29, branches: 21 },
+  api: { lines: 72, functions: 72, branches: 58 },
+  admin: { lines: 70, functions: 53, branches: 47 },
+  desktop: { lines: 95, functions: 94, branches: 81 },
 };
 
 function run(command, args) {

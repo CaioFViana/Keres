@@ -36,6 +36,18 @@ jest.mock('../../src/utils/entityNavigation', () => ({
 
 const drawerNavigation = { navigate: jest.fn() };
 
+// CollapsibleCard mounts an invisible copy of its children to measure the animated height; the
+// last match is the copy inside the visible animated container.
+const getVisibleByTestId = (screen: Awaited<ReturnType<typeof render>>, testId: string) => {
+  const matches = screen.getAllByTestId(testId);
+  return matches[matches.length - 1]!;
+};
+
+const getVisibleByText = (screen: Awaited<ReturnType<typeof render>>, text: string) => {
+  const matches = screen.getAllByText(text);
+  return matches[matches.length - 1]!;
+};
+
 beforeEach(() => {
   mockNavigateToEntityDetail.mockClear();
   mockGetParent.mockReturnValue(drawerNavigation);
@@ -52,7 +64,7 @@ describe('RelatedEntitiesList', () => {
     );
 
     await fireEvent.press(screen.getByText('Tagged'));
-    await fireEvent.press(screen.getByTestId('related-entity-char-1'));
+    await fireEvent.press(getVisibleByTestId(screen, 'related-entity-char-1'));
 
     expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(drawerNavigation, 'Character', 'char-1');
   });
@@ -71,10 +83,10 @@ describe('RelatedEntitiesList', () => {
 
     await fireEvent.press(screen.getByText('Tagged'));
 
-    await fireEvent.press(screen.getByTestId('related-entity-rule-1'));
+    await fireEvent.press(getVisibleByTestId(screen, 'related-entity-rule-1'));
     expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(drawerNavigation, 'WorldRule', 'rule-1');
 
-    await fireEvent.press(screen.getByTestId('related-entity-journey-1'));
+    await fireEvent.press(getVisibleByTestId(screen, 'related-entity-journey-1'));
     expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(
       drawerNavigation,
       'ItemJourney',
@@ -97,7 +109,7 @@ describe('RelatedEntitiesList', () => {
 
     await fireEvent.press(screen.getByText('Tagged'));
 
-    expect(screen.getByText('Atena in scene 3')).toBeTruthy();
+    expect(getVisibleByText(screen, 'Atena in scene 3')).toBeTruthy();
     expect(screen.queryByTestId('related-entity-cs-1')).toBeNull();
     expect(screen.queryByTestId('related-entity-user-1')).toBeNull();
   });
@@ -112,6 +124,6 @@ describe('RelatedEntitiesList', () => {
     );
 
     await fireEvent.press(screen.getByText('Tagged'));
-    expect(screen.getByText('no_entities_tagged')).toBeTruthy();
+    expect(getVisibleByText(screen, 'no_entities_tagged')).toBeTruthy();
   });
 });

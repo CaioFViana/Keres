@@ -1,8 +1,14 @@
 /**
  * @jest-environment jsdom
  */
+jest.mock('@react-navigation/native', () => ({ useFocusEffect: jest.fn() }));
+
+import { useFocusEffect } from '@react-navigation/native';
+import { renderHook } from '@testing-library/react-native';
 import { Platform } from 'react-native';
-import { setDocumentTitle } from '../../src/utils/documentTitle';
+import { setDocumentTitle, useDocumentTitle } from '../../src/utils/documentTitle';
+
+const useFocusEffectMock = useFocusEffect as jest.Mock;
 
 /**
  * O título da aba é o que distingue várias janelas do Keres abertas ao mesmo tempo, e no
@@ -16,6 +22,7 @@ const originalOS = Platform.OS;
 
 afterEach(() => {
   setPlatform(originalOS);
+  jest.clearAllMocks();
 });
 
 describe('on web', () => {
@@ -49,5 +56,26 @@ describe.each(['ios', 'android'])('on %s', (os) => {
 
     expect(() => setDocumentTitle('Depois')).not.toThrow();
     expect(document.title).toBe('Keres: Antes');
+  });
+});
+
+describe('useDocumentTitle', () => {
+  beforeEach(() => setPlatform('web'));
+
+  it('updates the browser title only when the focused screen callback runs', async () => {
+    const focusCallbacks: (() => void)[] = [];
+    useFocusEffectMock.mockImplementation((callback) => focusCallbacks.push(callback));
+
+    const hook = await renderHook<void, { title: string }>(({ title }) => useDocumentTitle(title), {
+      initialProps: { title: 'Personagens' },
+    });
+    expect(document.title).not.toBe('Keres: Personagens');
+
+    focusCallbacks[0]();
+    expect(document.title).toBe('Keres: Personagens');
+
+    await hook.rerender({ title: 'Cenas' });
+    focusCallbacks[1]();
+    expect(document.title).toBe('Keres: Cenas');
   });
 });

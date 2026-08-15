@@ -4,8 +4,18 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
+import { AttributeValueClientSyncHandler } from '../../src/services/entity-sync-handlers/AttributeValueClientSyncHandler';
+import { ChapterClientSyncHandler } from '../../src/services/entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterClientSyncHandler';
+import { CharacterSceneClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSceneClientSyncHandler';
+import { ChoiceClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceClientSyncHandler';
+import { EffectClientSyncHandler } from '../../src/services/entity-sync-handlers/EffectClientSyncHandler';
+import { ItemClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemClientSyncHandler';
+import { LocationClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationClientSyncHandler';
 import { NoteClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteClientSyncHandler';
+import { NoteRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteRelationClientSyncHandler';
+import { SceneClientSyncHandler } from '../../src/services/entity-sync-handlers/SceneClientSyncHandler';
+import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
 import { TagClientSyncHandler } from '../../src/services/entity-sync-handlers/TagClientSyncHandler';
 import { WorldRuleClientSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleClientSyncHandler';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -21,6 +31,83 @@ let database: TestDatabase;
  * O contrato é o mesmo para os 20+ handlers; estes quatro cobrem as formas que existem.
  */
 const HANDLERS = [
+  {
+    name: 'AttributeValue',
+    build: () => new AttributeValueClientSyncHandler(),
+    table: schema.attributeValues,
+    labelColumn: 'value' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      entityType: 'Character',
+      entityId: `character-${id}`,
+      fieldId: `field-${id}`,
+      value: 'coragem',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { value: 'honra' },
+  },
+  {
+    name: 'Chapter',
+    build: () => new ChapterClientSyncHandler(),
+    table: schema.chapters,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Abertura',
+      index: 0,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Abertura revisada' },
+  },
+  {
+    name: 'Effect',
+    usesStoryContext: false,
+    build: () => new EffectClientSyncHandler(),
+    table: schema.effects,
+    labelColumn: 'triggerName' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      entityType: 'Choice',
+      entityId: 'choice-1',
+      effectType: 'triggerSet',
+      triggerName: 'ponte_aberta',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { triggerName: 'porta_aberta' },
+  },
+  {
+    name: 'Item',
+    usesStoryContext: false,
+    build: () => new ItemClientSyncHandler(),
+    table: schema.items,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Chave antiga',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Chave da torre' },
+  },
   {
     name: 'Character',
     build: () => new CharacterClientSyncHandler(),
@@ -39,6 +126,102 @@ const HANDLERS = [
     change: { name: 'Keres, a Deusa' },
   },
   {
+    name: 'NoteRelation',
+    build: () => new NoteRelationClientSyncHandler(),
+    table: schema.noteRelations,
+    labelColumn: 'relationId' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      noteId: 'note-1',
+      relationId: 'character-1',
+      relationType: 'Character',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { relationId: 'character-2' },
+  },
+  {
+    name: 'CharacterScene',
+    usesStoryContext: false,
+    build: () => new CharacterSceneClientSyncHandler(),
+    table: schema.characterScenes,
+    labelColumn: 'sceneId' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      characterId: 'character-1',
+      sceneId: 'scene-1',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { sceneId: 'scene-2' },
+  },
+  {
+    name: 'StorySchemaField',
+    build: () => new StorySchemaFieldClientSyncHandler(),
+    table: schema.storySchemaFields,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      entityType: 'Character',
+      name: 'Origem',
+      key: `origin-${id}`,
+      type: 'text',
+      order: 0,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Terra natal' },
+  },
+  {
+    name: 'Choice',
+    usesStoryContext: false,
+    build: () => new ChoiceClientSyncHandler(),
+    table: schema.choices,
+    labelColumn: 'text' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      sceneId: 'scene-1',
+      nextSceneId: 'scene-2',
+      text: 'Continuar',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { text: 'Seguir em frente' },
+  },
+  {
+    name: 'Location',
+    build: () => new LocationClientSyncHandler(),
+    table: schema.locations,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Torre',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Torre Antiga' },
+  },
+  {
     name: 'Tag',
     build: () => new TagClientSyncHandler(),
     table: schema.tags,
@@ -54,6 +237,27 @@ const HANDLERS = [
       deletedAt: null,
     }),
     change: { name: 'Antagonistas' },
+  },
+  {
+    name: 'Scene',
+    usesStoryContext: false,
+    build: () => new SceneClientSyncHandler(),
+    table: schema.scenes,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      chapterId: 'chapter-1',
+      locationId: 'location-1',
+      name: 'Chegada',
+      index: 0,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Chegada à torre' },
   },
   {
     name: 'Note',
@@ -115,7 +319,7 @@ afterEach(() => {
 
 describe.each(HANDLERS)(
   '$name client sync handler',
-  ({ name, build, table, labelColumn, data, change }) => {
+  ({ name, build, table, labelColumn, data, change, usesStoryContext = true }) => {
     const withDb = () => {
       const handler = build();
       handler.setDb(database.db);
@@ -162,7 +366,7 @@ describe.each(HANDLERS)(
 
       await handler.applyCreate('historia-certa', createUpdate(name, 'e-1', payload));
 
-      expect(rowsOf()[0].storyId).toBe('historia-certa');
+      expect(rowsOf()[0].storyId).toBe(usesStoryContext ? 'historia-certa' : 'historia-errada');
     });
 
     it('ignores an operation addressed to another entity type', async () => {

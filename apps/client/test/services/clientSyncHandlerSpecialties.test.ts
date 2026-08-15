@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { CharacterRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterRelationClientSyncHandler';
@@ -20,11 +20,14 @@ const createUpdate = (entity: string, id: string, data: unknown) =>
   ({ type: 'create', entity, id, data }) as CreateStoryUpdate;
 const updateUpdate = (entity: string, id: string, changes: unknown) =>
   ({ type: 'update', entity, id, changes }) as UpdateStoryUpdate;
+const deleteUpdate = (entity: string, id: string) =>
+  ({ type: 'delete', entity, id }) as DeleteStoryUpdate;
 
 beforeEach(async () => {
   database = await createTestDatabase();
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -81,6 +84,66 @@ describe('CharacterRelationClientSyncHandler', () => {
     const rows = await database.db.select().from(schema.characterRelations).all();
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ id: 'kept', isDeleted: false });
+  });
+
+  it('lets a newer update replace a duplicate pair and maps the server character ids', async () => {
+    const handler = new CharacterRelationClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(STORY_ID, createUpdate('CharacterRelation', 'old', relation('old')));
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('CharacterRelation', 'moving', {
+        ...relation('moving'),
+        character1Id: 'character-c',
+        character2Id: 'character-d',
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('CharacterRelation', 'moving', {
+        character1Id: 'character-a',
+        character2Id: 'character-b',
+        updatedAt: LATE,
+      }),
+    );
+
+    expect(await handler.getById('old')).toEqual(expect.objectContaining({ isDeleted: true }));
+    expect(await handler.getById('moving')).toEqual(
+      expect.objectContaining({ charId1: 'character-a', charId2: 'character-b', isDeleted: false }),
+    );
+  });
+
+  it('keeps the newer pair when an older update would collide and tombstones on delete', async () => {
+    const handler = new CharacterRelationClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('CharacterRelation', 'kept', relation('kept', LATE)),
+    );
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('CharacterRelation', 'moving', {
+        ...relation('moving'),
+        character1Id: 'character-c',
+        character2Id: 'character-d',
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('CharacterRelation', 'moving', {
+        character1Id: 'character-a',
+        character2Id: 'character-b',
+        updatedAt: EARLY,
+      }),
+    );
+    await handler.applyDelete(STORY_ID, deleteUpdate('CharacterRelation', 'moving'));
+
+    expect(await handler.getById('kept')).toEqual(expect.objectContaining({ isDeleted: false }));
+    expect(await handler.getById('moving')).toEqual(
+      expect.objectContaining({ charId1: 'character-c', charId2: 'character-d', isDeleted: true }),
+    );
   });
 });
 

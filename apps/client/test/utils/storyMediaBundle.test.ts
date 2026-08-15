@@ -1,6 +1,12 @@
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
+import { File } from 'expo-file-system';
 import JSZip from 'jszip';
-import { extractStoryZip, stripUtf8Bom } from '../../src/utils/storyMediaBundle';
+import { mediaFileService } from '../../src/services/MediaFileService';
+import {
+  buildStoryZipBytes,
+  extractStoryZip,
+  stripUtf8Bom,
+} from '../../src/utils/storyMediaBundle';
 import { StoryImportError } from '../../src/utils/StoryImportError';
 
 // `buildStoryZipBytes` lê arquivos do aparelho; só a leitura do pacote (`extractStoryZip`) é
@@ -8,6 +14,10 @@ import { StoryImportError } from '../../src/utils/StoryImportError';
 jest.mock('../../src/services/MediaFileService', () => ({
   mediaFileService: { localPathFor: jest.fn(), exists: jest.fn(() => false) },
 }));
+jest.mock('expo-file-system', () => ({ File: jest.fn() }));
+
+const fileMock = File as unknown as jest.Mock;
+const mediaServiceMock = mediaFileService as jest.Mocked<typeof mediaFileService>;
 
 const ulid = (suffix: string) => suffix.toUpperCase().padStart(26, '0');
 const STORY_ID = ulid('story1');
@@ -82,6 +92,50 @@ describe('stripUtf8Bom', () => {
 
   it('only removes the BOM at the very start', () => {
     expect(stripUtf8Bom('{"a":"﻿"}')).toBe('{"a":"﻿"}');
+  });
+});
+
+describe('buildStoryZipBytes', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('keeps the story JSON and includes only media available on this device', async () => {
+    const includedHash = HASH;
+    const absentHash = 'b'.repeat(32);
+    mediaServiceMock.localPathFor.mockImplementation((_storyId, hash) => `file://media/${hash}`);
+    mediaServiceMock.exists.mockImplementation((path) => (path ?? '').includes(includedHash));
+    fileMock.mockImplementation((path: string) => ({
+      bytes: jest
+        .fn()
+        .mockResolvedValue(new Uint8Array(path.includes(includedHash) ? [1, 2, 3] : [])),
+    }));
+
+    const result = await buildStoryZipBytes(
+      storyJson({
+        galleryItems: [galleryItem(includedHash), galleryItem(absentHash, 'image/jpeg')],
+      }) as never,
+      STORY_ID,
+    );
+    const zip = await JSZip.loadAsync(result.bytes);
+
+    expect(result).toMatchObject({ includedCount: 1, totalCount: 2 });
+    await expect(zip.file('story.json')!.async('string')).resolves.toContain('"A Queda"');
+    expect(Array.from(await zip.file(`media/${includedHash}.png`)!.async('uint8array'))).toEqual([
+      1, 2, 3,
+    ]);
+    expect(zip.file(`media/${absentHash}.jpg`)).toBeNull();
+    expect(mediaServiceMock.localPathFor).toHaveBeenCalledWith(STORY_ID, includedHash, 'image/png');
+  });
+
+  it('creates a valid data-only ZIP when the export has no gallery field', async () => {
+    const result = await buildStoryZipBytes(
+      storyJson({ galleryItems: undefined }) as never,
+      STORY_ID,
+    );
+    const zip = await JSZip.loadAsync(result.bytes);
+
+    expect(result).toMatchObject({ includedCount: 0, totalCount: 0 });
+    expect(zip.file('story.json')).not.toBeNull();
+    expect(zip.file(/^media\//)).toEqual([]);
   });
 });
 

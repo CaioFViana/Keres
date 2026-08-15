@@ -2,16 +2,16 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'chapters',
   title: 'Chapters',
-  summary: 'Group scenes by the order in which readers encounter them.',
+  summary: 'Group scenes by the order in which readers encounter them or in chronological order.',
   keywords: ['chapter', 'order', 'summary', 'scenes'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
-    { type: 'paragraph', text: 'Chapters organize scenes in the story’s reading order.' },
+    { type: 'paragraph', text: 'Chapters organize scenes in the story’s reading order or chronological. You are free to decide how to organize it.' },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
       type: 'example',
       title: 'Example',
-      text: 'A prologue can be the first chapter read even when it shows an event from twenty years earlier. Order records reading, not world chronology.',
+      text: 'A prologue can be the first chapter read or only for the author’s own organization, even when it shows an event from twenty years earlier. Order records reading or world chronology.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
     { type: 'path', segments: ['Story menu', 'Chapters', '+'] },

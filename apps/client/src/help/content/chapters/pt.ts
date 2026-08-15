@@ -2,16 +2,16 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'chapters',
   title: 'Capítulos',
-  summary: 'Agrupe cenas pela ordem em que o leitor as encontra.',
+  summary: 'Agrupe cenas pela ordem em que o leitor as encontra ou em ordem cronológica.',
   keywords: ['capítulo', 'ordem', 'resumo', 'cenas'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
-    { type: 'paragraph', text: 'Capítulos organizam cenas na ordem de leitura da história.' },
+    { type: 'paragraph', text: 'Capítulos organizam cenas na ordem de leitura da história ou cronológica. Você é livre para escolher como organizar.' },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'O prólogo pode ser o primeiro capítulo lido, mesmo que mostre um acontecimento de vinte anos antes. A Ordem registra leitura, não a cronologia do mundo.',
+      text: 'O prólogo pode ser o primeiro capítulo lido ou apenas para o autor se organizar, mesmo que mostre um acontecimento de vinte anos antes do começo da história. A Ordem registra leitura ou a cronologia do mundo.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     { type: 'path', segments: ['Menu da história', 'Capítulos', '+'] },

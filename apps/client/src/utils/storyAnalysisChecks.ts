@@ -1,4 +1,4 @@
-import { AttributeType, decodeAttributeValue } from '@keres/shared';
+import { AttributeType, decodeAttributeValue, isValidAttributeDate } from '@keres/shared';
 import { NavigableEntityType } from './entityNavigation';
 
 /**
@@ -581,7 +581,10 @@ function checkStorySchema(input: StoryAnalysisInput): StoryAnalysisFinding[] {
         field.type === AttributeType.NUMBER
           ? decoded === null
           : field.type === AttributeType.DATE
-            ? Number.isNaN(Date.parse(raw))
+            ? // `Date.parse` continua como segunda chance de propósito: só o formato canônico
+              // (`attributeDateValue.ts`) é aceito de primeira, mas valores de texto livre
+              // gravados antes do date picker existir não devem virar warning todos de uma vez.
+              !isValidAttributeDate(raw) && Number.isNaN(Date.parse(raw))
             : false;
 
       if (isInvalid) {

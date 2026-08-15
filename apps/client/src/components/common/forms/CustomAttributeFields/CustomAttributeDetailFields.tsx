@@ -2,6 +2,7 @@ import {
   AttributeType,
   CommentEntityType,
   decodeAttributeValue,
+  formatAttributeDateForDisplay,
   StorySchemaEntityType,
 } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -28,12 +29,19 @@ function formatValueForDisplay(
   type: AttributeType | string,
   decoded: string | number | boolean | null,
   t: (key: string) => string,
+  language: string,
 ): string {
   if (decoded === null) {
     return t('common_na');
   }
   if (typeof decoded === 'boolean') {
     return decoded ? t('common_yes') : t('common_no');
+  }
+  if (type === AttributeType.DATE) {
+    // Dia da semana + data por extenso no idioma do APP (nunca o do dispositivo), sempre igual
+    // em qualquer fuso - ver `attributeDateValue.ts`. Valores de texto livre gravados antes do
+    // date picker existir não são canônicos: aparecem crus em vez de sumir.
+    return formatAttributeDateForDisplay(String(decoded), language) ?? String(decoded);
   }
   return String(decoded);
 }
@@ -49,7 +57,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
   entityType,
   entityId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation();
   const drizzleDb = useDrizzle();
   const fields = useStorySchemaFields(storyId, entityType);
@@ -127,7 +135,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
         const displayValue =
           isEntityReference && rawValue
             ? resolvedEntityName || t('attribute_entity_deleted')
-            : formatValueForDisplay(field.type, decoded, t);
+            : formatValueForDisplay(field.type, decoded, t, i18n.language);
         const onPress =
           isEntityReference && resolvedEntityName && field.targetEntityType && rawValue
             ? () => {

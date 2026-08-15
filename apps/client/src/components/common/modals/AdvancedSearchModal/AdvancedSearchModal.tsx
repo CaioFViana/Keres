@@ -11,6 +11,7 @@ import { useTheme } from '../../../../theme';
 import { buildCustomAttributeFieldMetadata } from '../../../../utils/customAttributeFieldMetadata';
 import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import TriStateToggleButton from '@/src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
@@ -150,15 +151,18 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             </View>
           );
         case 'date':
-          // For dates, typically date pickers or range inputs. For simplicity, text input for now.
+          // Nenhum campo NATIVO é `type: 'date'` em `entityFields.ts` - este case só é alcançado
+          // por atributo customizado, então usa o mesmo picker do formulário. O filtro casa por
+          // substring (ver `attributeSearchPredicate`), então uma data completa acha o dia exato.
           return (
-            <View key={field.name} style={[styles.inputContainer, styleOverrides]}>
-              <TextInput // Custom TextInput
-                value={value ? String(value) : ''} // Needs date formatting
-                onChangeText={(text) => handleInputChange(field.name, text)} // Needs date parsing
+            <View
+              key={field.name}
+              style={[styles.inputContainer, styleOverrides, { marginBottom: 20 }]}
+            >
+              <DatePickerInput
+                value={value ? String(value) : null}
+                onChange={(newValue) => handleInputChange(field.name, newValue ?? undefined)}
                 placeholder={fieldLabel}
-                placeholderTextColor={colors.textSecondary}
-                style={{ width: '100%' }} // Explicitly override internal 80% width
               />
             </View>
           );

@@ -46,7 +46,13 @@ const page: HelpPage = {
           key: 'targetEntityType',
           label: 'Tipo da entidade alvo',
           whatToWrite: 'Para o tipo Entidade, escolha qual tipo de entidade ele pode referenciar.',
-          note: 'Fica fixo depois da criaÃ§Ã£o.',
+          note: 'Fica fixo depois da criação.',
+        },
+        {
+          key: 'dateValues',
+          label: 'Valores de data',
+          whatToWrite: 'O tipo Data abre um calendário, e cada data pode ter hora ou não.',
+          note: 'É uma data interna da história: nunca muda com o seu fuso horário.',
         },
         {
           key: 'required',

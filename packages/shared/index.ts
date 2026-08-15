@@ -75,3 +75,4 @@ export * from './metadata/CommentEntityType';
 export * from './metadata/entityFields';
 export * from './utils/attributeKey';
 export * from './utils/attributeValueCodec';
+export * from './utils/attributeDateValue';

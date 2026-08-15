@@ -7,6 +7,7 @@ import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 
 interface AttributeValueInputProps {
   type: AttributeType | string;
@@ -74,15 +75,12 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
       );
 
     case AttributeType.DATE:
-      // Nenhum date picker existe em nenhum lugar do app hoje (nem o próprio AdvancedSearchModal
-      // tem um pra seu filtro de data) - texto livre com um placeholder de formato é o único
-      // precedente existente, não uma escolha nova.
       return (
-        <TextInput
-          value={value}
-          onChangeText={onChange}
-          placeholder={placeholder || 'YYYY-MM-DD'}
-          style={[commonInputStyles.input, style]}
+        <DatePickerInput
+          value={value || null}
+          onChange={onChange}
+          placeholder={placeholder}
+          style={style}
         />
       );
 

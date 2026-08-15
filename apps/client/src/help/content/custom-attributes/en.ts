@@ -49,6 +49,12 @@ const page: HelpPage = {
           note: 'It is fixed after creation.',
         },
         {
+          key: 'dateValues',
+          label: 'Date values',
+          whatToWrite: 'A Date opens a calendar, and each date can carry a time or not.',
+          note: 'It is a date inside the story, so it never shifts with your time zone.',
+        },
+        {
           key: 'required',
           label: 'Required',
           whatToWrite: 'Turn on if every element of this type needs a value.',

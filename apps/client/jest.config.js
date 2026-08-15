@@ -20,6 +20,6 @@ module.exports = {
   // Piso, não meta: fixado um pouco abaixo do medido para absorver flutuação, e para subir
   // junto quando a cobertura subir. Ver a regra do ratchet em TESTING_PLAN.md.
   coverageThreshold: {
-    global: { lines: 28, functions: 26, branches: 19 },
+    global: { lines: 34, functions: 32, branches: 24 },
   },
 };

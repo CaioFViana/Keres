@@ -12,7 +12,7 @@ export default defineConfig({
       include: ['entities/**', 'metadata/**', 'schemas/**', 'utils/**', 'index.ts'],
       // Piso, não meta: fixado um pouco abaixo do medido para absorver flutuação, e para
       // subir junto quando a cobertura subir. Ver a regra do ratchet em TESTING_PLAN.md.
-      thresholds: { lines: 93, functions: 81, branches: 67 },
+      thresholds: { lines: 93, functions: 86, branches: 77 },
     },
   },
 });

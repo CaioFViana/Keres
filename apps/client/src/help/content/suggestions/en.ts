@@ -28,6 +28,7 @@ const page: HelpPage = {
         'When filling in a profile, open the matching field and choose a suggested value, or write another one when appropriate.',
       ],
     },
+    { type: 'callout', tone: 'info', text: 'Editing a new value on the field also works. The suggestion list utilizes not only the default values filled on the story, but also all the unique values utilized on that field. But watch out! If there is not any more entities with that new value, it disapears from future suggestions, needing to be added again.' },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

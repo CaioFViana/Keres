@@ -87,6 +87,7 @@ import { createServerService } from '../ServerService';
 import { createChoiceService } from './ChoiceService';
 import { createSceneService } from './SceneService';
 import { createFavoriteService } from './FavoriteService';
+import { cloneStoryForLocalImport } from './cloneStoryForLocalImport';
 import {
   checkLinearCompatibility as checkLinearCompatibilityGraph,
   classifyEdges,
@@ -216,6 +217,7 @@ export interface StoryService {
     queriedServerId: string | null,
     role?: EffectiveStoryRole | null,
     localMediaPaths?: Map<string, string>,
+    localImportStoryId?: string,
   ): Promise<string>;
   exportFullStory(storyId: string): Promise<FullStoryExportType>;
 }
@@ -1172,7 +1174,14 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       queriedServerId: string | null,
       role: EffectiveStoryRole | null = null,
       localMediaPaths?: Map<string, string>,
+      localImportStoryId?: string,
     ): Promise<string> {
+      // A file import is a new local copy. A server download keeps remote IDs because those
+      // IDs are the synchronization identity for that shared story.
+      const importedStoryData = queriedServerId
+        ? fullStoryData
+        : cloneStoryForLocalImport(fullStoryData, userId, localImportStoryId);
+      fullStoryData = importedStoryData;
       return db.transaction(async (tx) => {
         // Defensive: the caller already confirmed there's no `stories` row for this id (the
         // "already imported" check in ImportExportScreen/ExampleStoryService), but that alone
@@ -1180,10 +1189,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // a deletion made before deleteStoryChildRows covered every table would collide with
         // the fresh inserts below (e.g. a stale locationRelations row hitting its UNIQUE
         // constraint on id). Clearing first makes a retry self-healing either way.
-        await deleteStoryChildRows(tx, fullStoryData.story.id);
+        await deleteStoryChildRows(tx, importedStoryData.story.id);
 
         // 1. Process Story
-        const originalStory = fullStoryData.story;
+        const originalStory = importedStoryData.story;
         const storyToInsert: StoryInsert = {
           ...originalStory,
           userId: userId, // Assign to the current user
@@ -1601,8 +1610,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
         // 19. Process AttributeValues (Optional) - por último de propósito: entityId pode
         // apontar pra qualquer um dos 7 tipos de entidade suportados, todos já inseridos acima,
-        // e fieldId depende do bloco de StorySchemaFields logo acima. IDs preservados como
-        // vieram do arquivo (sem idMap, mesmo tratamento de todo bloco anterior neste método).
+        // e fieldId depende do bloco de StorySchemaFields logo acima. Em importações locais,
+        // os IDs já chegaram remapeados por cloneStoryForLocalImport.
         if (fullStoryData.attributeValues) {
           for (const attributeValue of fullStoryData.attributeValues) {
             const attributeValueToInsert: AttributeValueInsert = {
@@ -1621,7 +1630,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         }
 
         // Relações "Veja também" só entram depois das entidades às quais apontam. A relação
-        // já vem canonicalizada pelo serviço que a criou; manter os IDs preserva a simetria.
+        // já vem canonicalizada pelo serviço que a criou; a cópia local já remapeou ambos os lados.
         if (fullStoryData.seeAlsoRelations) {
           for (const relation of fullStoryData.seeAlsoRelations) {
             const relationToInsert: SeeAlsoRelationInsert = {
@@ -1672,7 +1681,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           }
         }
 
-        return originalStory.id; // Return the original story ID
+        return originalStory.id;
       });
     },
   };

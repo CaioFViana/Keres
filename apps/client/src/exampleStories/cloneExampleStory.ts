@@ -4,16 +4,16 @@ import { createULID } from '../utils/entityUtils';
 type EntityWithId = { id: string };
 
 /**
- * Cria uma cópia independente de uma história empacotada antes de instalá-la.
+ * Cria uma cópia independente de uma história local antes de instalá-la ou importá-la.
  *
- * Os arquivos de exemplo são conteúdo estático e, por isso, têm IDs fixos. Eles nunca
- * devem ser enviados diretamente ao banco: dois usuários que instalassem o mesmo exemplo
- * acabariam tentando sincronizar as mesmas entidades. Este remapeamento é propositalmente
- * restrito a esse catálogo; importação e exportação comuns preservam seus IDs normalmente.
+ * Arquivos empacotados e exports locais podem ter IDs que já existem no aparelho. Todos os
+ * IDs são substituídos antes da escrita, incluindo os vínculos internos, para que a origem
+ * permaneça intacta e a cópia possa ser importada mais de uma vez.
  */
 export function cloneExampleStoryForInstall(
   example: FullStoryExportType,
   userId: string,
+  targetStoryId?: string,
 ): FullStoryExportType {
   const idMap = new Map<string, string>();
   const register = (entity: EntityWithId) => idMap.set(entity.id, createULID());
@@ -21,6 +21,7 @@ export function cloneExampleStoryForInstall(
     entities?.forEach(register);
 
   register(example.story);
+  if (targetStoryId) idMap.set(example.story.id, targetStoryId);
   registerAll(example.chapters);
   registerAll(example.scenes);
   registerAll(example.choices);
@@ -43,6 +44,8 @@ export function cloneExampleStoryForInstall(
   registerAll(example.itemJourneys);
   registerAll(example.storySchemaFields);
   registerAll(example.attributeValues);
+  registerAll(example.comments);
+  registerAll(example.seeAlsoRelations);
   registerAll(example.favorites);
   registerAll(example.locationRelations);
 
@@ -163,6 +166,19 @@ export function cloneExampleStoryForInstall(
         entityFieldIds.has(value.fieldId) && value.value
           ? (idMap.get(value.value) ?? null)
           : value.value,
+    })),
+    comments: example.comments?.map((comment) => ({
+      ...cloneEntity(comment),
+      storyId,
+      entityId: remapId(comment.entityId),
+      fieldId: remapNullableId(comment.fieldId),
+      authorUserId: userId,
+    })),
+    seeAlsoRelations: example.seeAlsoRelations?.map((relation) => ({
+      ...cloneEntity(relation),
+      storyId,
+      entityAId: remapId(relation.entityAId),
+      entityBId: remapId(relation.entityBId),
     })),
     favorites: example.favorites?.map((favorite) => ({
       ...cloneEntity(favorite),

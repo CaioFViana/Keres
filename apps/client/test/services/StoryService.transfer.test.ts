@@ -126,33 +126,46 @@ it('round-trips portable story data after a permanent local purge and clears sta
     ...entityBase,
   });
 
-  await expect(
-    service.importFullStory(
-      LOCAL_USER_ID,
-      exported,
-      null,
-      null,
-      new Map([['0123456789abcdef0123456789abcdef', 'desktop-media:media/mapa.png']]),
-    ),
-  ).resolves.toBe(STORY_ID);
+  const importedStoryId = await service.importFullStory(
+    LOCAL_USER_ID,
+    exported,
+    null,
+    null,
+    new Map([['0123456789abcdef0123456789abcdef', 'desktop-media:media/mapa.png']]),
+  );
 
-  expect(await service.getStoryById(STORY_ID)).toEqual(
+  expect(importedStoryId).not.toBe(STORY_ID);
+  expect(await service.getStoryById(STORY_ID)).toBeUndefined();
+  expect(await service.getStoryById(importedStoryId)).toEqual(
     expect.objectContaining({ userId: LOCAL_USER_ID, serverId: null }),
   );
-  expect(await database.db.query.storySchemaFields.findFirst()).toEqual(
-    expect.objectContaining({ id: FIELD_ID, name: 'Poder' }),
+  const importedField = (await database.db.query.storySchemaFields.findMany()).find(
+    (field) => field.storyId === importedStoryId,
   );
-  expect(await database.db.query.attributeValues.findFirst()).toEqual(
-    expect.objectContaining({ id: VALUE_ID, value: 'Luz' }),
+  const importedValue = (await database.db.query.attributeValues.findMany()).find(
+    (value) => value.storyId === importedStoryId,
   );
+  const importedCharacter = (await database.db.query.characters.findMany()).find(
+    (character) => character.storyId === importedStoryId,
+  );
+  expect(importedField).toEqual(
+    expect.objectContaining({ storyId: importedStoryId, name: 'Poder' }),
+  );
+  expect(importedField?.id).not.toBe(FIELD_ID);
+  expect(importedValue).toEqual(
+    expect.objectContaining({ storyId: importedStoryId, fieldId: importedField?.id, value: 'Luz' }),
+  );
+  expect(importedValue?.id).not.toBe(VALUE_ID);
+  expect(importedCharacter?.id).not.toBe(CHARACTER_ID);
   expect(await database.db.query.galleries.findFirst()).toEqual(
     expect.objectContaining({
+      storyId: importedStoryId,
       localPath: 'desktop-media:media/mapa.png',
       uploadState: 'pending',
       downloadState: 'downloaded',
     }),
   );
   expect(await database.db.query.comments.findFirst()).toEqual(
-    expect.objectContaining({ authorUserId: LOCAL_USER_ID }),
+    expect.objectContaining({ storyId: importedStoryId, authorUserId: LOCAL_USER_ID }),
   );
 });

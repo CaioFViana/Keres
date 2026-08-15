@@ -762,6 +762,73 @@
       "relationType": "connected_to"
     }
   ],
+  "comments": [
+    {
+      "id": "01KZZ000000000000000000031",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "fieldId": null,
+      "fieldKey": "description",
+      "contentSnapshot": "Cachinhos Dourados entra na casa dos ursos sem permissão.",
+      "excerptText": "Cachinhos entra sem permissão.",
+      "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
+      "commentText": "Exemplo editorial: mantenha a consequência da invasão de Cachinhos no desfecho.",
+      "criticality": 2,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "seeAlsoRelations": [
+    {
+      "id": "01KZZ000000000000000000032",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityAType": "Character",
+      "entityAId": "01KYXBHD0KCR9PRYN7MHHCZF51",
+      "entityBType": "Location",
+      "entityBId": "01KYXBHD0KR4GHM0WGGT4A0DRQ",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "favorites": [
+    {
+      "id": "01KZZ000000000000000000034",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Story",
+      "userId": "EXAMPLEUSERPLACEHOLDER0000",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "choiceCheckGroups": [],
+  "choiceChecks": [],
+  "effects": [
+    {
+      "id": "01KZZ000000000000000000033",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0KQNJ4T7GWC4W6VD18",
+      "effectType": "triggerSet",
+      "itemId": null,
+      "triggerName": "cachinhos_entra_na_floresta",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 2
+  "formatVersion": 4
 }

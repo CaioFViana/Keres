@@ -1,6 +1,5 @@
 import { FullStoryExportSchema } from '@keres/shared';
 import { AppDrizzleClient } from '../../db';
-import { cloneExampleStoryForInstall } from '../../exampleStories/cloneExampleStory';
 import { exampleStoryRegistry } from '../../exampleStories/generated/registry';
 import { ExampleStoryEntry } from '../../exampleStories/types';
 import { reviveDates } from '../../utils/reviveDates';
@@ -62,10 +61,8 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
         return { status: 'invalid_content' };
       }
 
-      // Somente o catálogo de exemplos ganha novos IDs; importação e sincronização normais
-      // continuam preservando a identidade dos seus dados.
-      const clonedExample = cloneExampleStoryForInstall(parsed.data, userId);
-      const storyId = await storyService.importFullStory(userId, clonedExample, null);
+      // A importação local cria a cópia e remapeia seus IDs, inclusive para exemplos.
+      const storyId = await storyService.importFullStory(userId, parsed.data, null);
       return { status: 'installed', storyId };
     },
   };

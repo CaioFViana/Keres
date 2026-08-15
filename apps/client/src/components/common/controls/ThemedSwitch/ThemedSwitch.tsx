@@ -24,14 +24,25 @@ const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
 }) => {
   const { colors } = useTheme();
   const thumbPosition = useRef(new Animated.Value(value ? 1 : 0)).current;
+  const isInitialRender = useRef(true);
 
   useEffect(() => {
-    Animated.timing(thumbPosition, {
+    // The initial value is already represented by `thumbPosition`; animating it on mount only
+    // schedules needless frames (and causes React test updates outside the initiating act).
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    const animation = Animated.timing(thumbPosition, {
       toValue: value ? 1 : 0,
       duration: 180,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start();
+    });
+
+    animation.start();
+    return () => animation.stop();
   }, [thumbPosition, value]);
 
   const translateX = thumbPosition.interpolate({

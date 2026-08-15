@@ -947,6 +947,73 @@
       "relationType": "connected_to"
     }
   ],
+  "comments": [
+    {
+      "id": "01KZZ000000000000000000021",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "fieldId": null,
+      "fieldKey": "description",
+      "contentSnapshot": "A bondade de Cinderela resiste às dificuldades.",
+      "excerptText": "A bondade de Cinderela resiste.",
+      "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
+      "commentText": "Exemplo editorial: a transformação funciona melhor quando decorre da agência de Cinderela.",
+      "criticality": 2,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "seeAlsoRelations": [
+    {
+      "id": "01KZZ000000000000000000022",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityAType": "Character",
+      "entityAId": "01KYXBHD0JHTF79MKSRY0RB0N7",
+      "entityBType": "Location",
+      "entityBId": "01KYXBHD0JDW8Z6SWRWC3D7Y3C",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "favorites": [
+    {
+      "id": "01KZZ000000000000000000024",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Story",
+      "userId": "EXAMPLEUSERPLACEHOLDER0000",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "choiceCheckGroups": [],
+  "choiceChecks": [],
+  "effects": [
+    {
+      "id": "01KZZ000000000000000000023",
+      "storyId": "01KYXBHD0JW7A6HKZ9XA71RDWQ",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0JB67SHJWE64QS23PY",
+      "effectType": "triggerSet",
+      "itemId": null,
+      "triggerName": "historia_da_cinderela_comeca",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 2
+  "formatVersion": 4
 }

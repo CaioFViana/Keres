@@ -18,6 +18,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
+import { createULID } from '../../utils/entityUtils';
 import { buildStoryZipBytes } from '../../utils/storyMediaBundle';
 import {
   buildExportFileName,
@@ -166,13 +167,8 @@ const ImportExportScreen = () => {
 
       const storyService = createStoryService(drizzleDb);
 
-      // O importador insere com os ids originais, então uma história já presente colidiria na
-      // chave primária. Avisar antes é melhor do que deixar o insert falhar sem explicação.
-      const existing = await storyService.getStoryById(storyExport.story.id);
-      if (existing) {
-        showNotification(t('import_story_already_exists', { title: existing.title }), 'warning');
-        return;
-      }
+      // O importador insere com ids refeitos. Portanto pode ser usado para restaurar um backup paralelo.
+      const importedStoryId = createULID();
 
       // Grava os arquivos de mídia do .zip no armazenamento do aparelho antes de criar os
       // registros - a galeria já nasce com o arquivo local, sem depender de sincronizar com
@@ -180,7 +176,7 @@ const ImportExportScreen = () => {
       const localMediaPaths = new Map<string, string>();
       for (const item of media) {
         const localPath = await mediaFileService.writeDownloaded(
-          storyExport.story.id,
+          importedStoryId,
           item.hash,
           item.mimeType,
           item.bytes,
@@ -190,7 +186,14 @@ const ImportExportScreen = () => {
 
       // `serverId` nulo: o arquivo é uma cópia local. Vincular a um servidor é uma decisão
       // separada, feita na tela de seleção de histórias.
-      await storyService.importFullStory(userId, storyExport, null, null, localMediaPaths);
+      await storyService.importFullStory(
+        userId,
+        storyExport,
+        null,
+        null,
+        localMediaPaths,
+        importedStoryId,
+      );
 
       showNotification(t('import_story_success', { title: storyExport.story.title }), 'success');
       await loadStories();

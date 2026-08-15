@@ -909,6 +909,73 @@
       "relationType": "connected_to"
     }
   ],
+  "comments": [
+    {
+      "id": "01KZZ000000000000000000041",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Character",
+      "entityId": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "fieldId": null,
+      "fieldKey": "description",
+      "contentSnapshot": "A Pequena Sereia deseja compreender o mundo humano.",
+      "excerptText": "Ela deseja o mundo humano.",
+      "authorUserId": "EXAMPLEUSERPLACEHOLDER0000",
+      "commentText": "Exemplo editorial: deixe claro o preço do acordo da Sereia antes da transformação.",
+      "criticality": 3,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "seeAlsoRelations": [
+    {
+      "id": "01KZZ000000000000000000042",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityAType": "Character",
+      "entityAId": "01KYXBHD0MDSRT7CVV76CMDZC9",
+      "entityBType": "Location",
+      "entityBId": "01KYXBHD0MK3Q3KZ5X4XFDSBY8",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "favorites": [
+    {
+      "id": "01KZZ000000000000000000044",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Story",
+      "userId": "EXAMPLEUSERPLACEHOLDER0000",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "choiceCheckGroups": [],
+  "choiceChecks": [],
+  "effects": [
+    {
+      "id": "01KZZ000000000000000000043",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "entityType": "Scene",
+      "entityId": "01KYXBHD0M83N1C3AX7JH04JD2",
+      "effectType": "triggerSet",
+      "itemId": null,
+      "triggerName": "sereia_deixa_o_mar",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 2
+  "formatVersion": 4
 }

@@ -23,7 +23,7 @@ const page: HelpPage = {
         'Open the scene you want to adjust.',
         'Enter the Interval since the previous scene and select a unit.',
         'Enter the scene Duration and select a unit.',
-        'In Story settings, use normalize time when you want to recalculate the sequence from these values.',
+        'In Story settings, use normalize time when you want to recalculate the sequence from these values. The time can be shown as 26 hours or as 1 day and 2 hours.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

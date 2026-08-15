@@ -23,7 +23,7 @@ const page: HelpPage = {
         'Abra a cena que deseja ajustar.',
         'Informe o Intervalo desde a cena anterior e escolha a unidade.',
         'Informe a Duração da própria cena e escolha a unidade.',
-        'Em Configurações da história, use normalizar tempo quando quiser recalcular a sequência a partir desses valores.',
+        'Em Configurações da história, use normalizar tempo quando quiser recalcular a sequência a partir desses valores. O tempo poderá ser mostrado como 26 horas ou como 1 dia e 2 horas.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

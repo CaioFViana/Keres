@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
@@ -18,13 +18,20 @@ type HelpNavigation = NativeStackNavigationProp<{
   HelpPage: { pageId: string };
 }>;
 
-export function HelpIndexScreen() {
+type HelpIndexScreenProps = {
+  openSections?: Record<string, boolean>;
+  onOpenSectionsChange?: Dispatch<SetStateAction<Record<string, boolean>>>;
+};
+
+export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpIndexScreenProps) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<HelpNavigation>();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [open, setOpen] = useState<Record<string, boolean>>({ start: true });
+  const [defaultOpenSections, setDefaultOpenSections] = useState<Record<string, boolean>>({ start: true });
+  const open = openSections ?? defaultOpenSections;
+  const setOpen = onOpenSectionsChange ?? setDefaultOpenSections;
   const pages = useMemo(() => getHelpPages(i18n.language), [i18n.language]);
   const searchIndex = useMemo(() => createHelpSearchIndex(pages), [pages]);
   const results = useMemo(
@@ -132,7 +139,7 @@ export function HelpIndexScreen() {
               <View key={section.id} style={styles.section}>
                 <TouchableOpacity
                   style={styles.sectionHeader}
-                  onPress={() => setOpen((old) => ({ ...old, [section.id]: !isOpen }))}
+                  onPress={() => setOpen((old) => ({ ...old, [section.id]: !old[section.id] }))}
                 >
                   <View style={styles.sectionTitle}>
                     <Ionicons

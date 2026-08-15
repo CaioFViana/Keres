@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'activity-log',
   title: 'Histórico de atividade',
   summary: 'Veja mudanças sincronizadas de uma história e quem as realizou.',
-  keywords: ['histórico', 'atividade', 'criado em', 'atualizado em'],
+  keywords: ['histórico', 'atividade', 'logs', 'operação', 'criado em', 'atualizado em'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Menu da história › Histórico de atividade.',
+        'Abra Menu da história › Logs de operação.',
         'Use a lista para localizar uma criação, edição ou vínculo.',
         'Toque no registro para ver o detalhe e o elemento relacionado.',
       ],

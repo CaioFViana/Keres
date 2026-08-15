@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'activity-log',
   title: 'Activity history',
   summary: 'See synchronized story changes and who made them.',
-  keywords: ['activity', 'history', 'created at', 'updated at'],
+  keywords: ['activity', 'history', 'logs', 'operation', 'created at', 'updated at'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Story menu › Activity history.',
+        'Open Story menu › Operation Logs.',
         'Use the list to find a creation, edit, or link.',
         'Tap a record to see details and its related element.',
       ],

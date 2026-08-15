@@ -66,12 +66,6 @@ const page: HelpPage = {
           whatToWrite: 'An initial value for new profiles.',
           note: 'It can change in each profile.',
         },
-        {
-          key: 'order',
-          label: 'Order',
-          whatToWrite: 'The position where the field should appear.',
-          note: 'Organizes forms and details.',
-        },
       ],
     },
     {

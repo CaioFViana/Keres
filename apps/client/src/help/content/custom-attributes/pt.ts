@@ -66,12 +66,6 @@ const page: HelpPage = {
           whatToWrite: 'Um valor inicial para novas fichas.',
           note: 'Pode ser alterado em cada ficha.',
         },
-        {
-          key: 'order',
-          label: 'Ordem',
-          whatToWrite: 'A posição em que o campo deve aparecer.',
-          note: 'Organiza formulários e detalhes.',
-        },
       ],
     },
     {

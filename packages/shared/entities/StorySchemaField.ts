@@ -22,7 +22,7 @@ export interface StorySchemaField {
   isRequired: boolean;
   /** Sempre texto puro, igual a `AttributeValue.value` - ver `attributeValueCodec.ts`. */
   defaultValue: string | null;
-  /** Ordem de exibição em forms/details, crescente. */
+  /** Ordem de exibição em forms/details, crescente. Não é editável. Não é tão importante pra editar ordem! */
   order: number;
   createdAt: Date;
   updatedAt: Date;

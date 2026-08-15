@@ -71,8 +71,7 @@ export const fieldSources: Record<string, string[]> = {
     'type',
     'targetEntityType',
     'required',
-    'defaultValue',
-    'order',
+    'defaultValue'
   ],
 };
 

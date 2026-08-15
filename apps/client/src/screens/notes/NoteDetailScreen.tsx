@@ -5,7 +5,9 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
-import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import RelatedEntitiesList, {
+  RelatedEntityItem,
+} from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
@@ -90,7 +92,7 @@ const NoteDetailScreen = () => {
   } = useEntityComments(note?.storyId, 'Note', noteId);
   const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
   const [allNoteRelations, setAllNoteRelations] = useState<NoteRelation[]>([]);
-  const [groupedEntities, setGroupedEntities] = useState<Record<string, string[]>>({
+  const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
     character: [],
     worldrule: [],
     location: [],
@@ -186,7 +188,7 @@ const NoteDetailScreen = () => {
   const processNoteRelations = useCallback(async () => {
     if (!drizzleDb || !note?.storyId) return;
 
-    const newGroupedEntities: Record<string, string[]> = {
+    const newGroupedEntities: Record<string, RelatedEntityItem[]> = {
       chapter: [],
       character: [],
       choice: [],
@@ -216,7 +218,10 @@ const NoteDetailScreen = () => {
         t,
       );
       if (entityName) {
-        newGroupedEntities[relation.relationType.toLowerCase()].push(entityName);
+        newGroupedEntities[relation.relationType.toLowerCase()].push({
+          id: relation.relationId,
+          name: entityName,
+        });
       }
     }
     setGroupedEntities(newGroupedEntities);

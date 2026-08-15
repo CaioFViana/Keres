@@ -3,7 +3,9 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import RelatedEntitiesList, {
+  RelatedEntityItem,
+} from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import { Ionicons } from '@expo/vector-icons';
@@ -71,7 +73,7 @@ const TagDetailScreen = () => {
     updateComment,
   } = useEntityComments(selectedStory?.id, 'Tag', tagId);
   const [allTagRelations, setAllTagRelations] = useState<TagRelation[]>([]);
-  const [groupedEntities, setGroupedEntities] = useState<Record<string, string[]>>({
+  const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
     chapter: [],
     character: [],
     choice: [],
@@ -179,7 +181,7 @@ const TagDetailScreen = () => {
   const processTagRelations = useCallback(async () => {
     if (!drizzleDb || !selectedStory?.id) return;
 
-    const newGroupedEntities: Record<string, string[]> = {
+    const newGroupedEntities: Record<string, RelatedEntityItem[]> = {
       chapter: [],
       character: [],
       choice: [],
@@ -209,7 +211,10 @@ const TagDetailScreen = () => {
         t,
       );
       if (entityName) {
-        newGroupedEntities[relation.relationType.toLowerCase()].push(entityName);
+        newGroupedEntities[relation.relationType.toLowerCase()].push({
+          id: relation.relationId,
+          name: entityName,
+        });
       }
     }
     setGroupedEntities(newGroupedEntities);

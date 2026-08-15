@@ -41,6 +41,20 @@ const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
 };
 
 /**
+ * Resolves a loosely-cased entity type (the lowercase keys used by TagRelation/NoteRelation,
+ * or an already-correct `NavigableEntityType`) into one this module can navigate to, or `null`
+ * when it has no Detail screen - relation/junction rows (`characterscene`, `tagrelation`, ...),
+ * `story`, `user`, `suggestion` and `operationlog` all legitimately land here.
+ */
+export function toNavigableEntityType(value: string): NavigableEntityType | null {
+  const normalized = value.toLowerCase();
+  const match = (Object.keys(ENTITY_ROUTES) as NavigableEntityType[]).find(
+    (entityType) => entityType.toLowerCase() === normalized,
+  );
+  return match ?? null;
+}
+
+/**
  * Jumps from anywhere inside the main Drawer's nested stacks to another entity's Detail
  * screen, even across stacks (e.g. from a Location's screen to a Character's).
  *

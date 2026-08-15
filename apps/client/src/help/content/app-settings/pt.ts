@@ -25,6 +25,7 @@ const page: HelpPage = {
         'Em Usuário, escreva o nome que identifica você neste aparelho.',
         'Em Idioma, escolha o idioma da interface. A Ajuda acompanha essa escolha.',
         'Ative ou desative Modo escuro para mudar a aparência do aplicativo.',
+        'Ative ou desative Formato 24 horas para escolher como os atributos personalizados de Data mostram e editam a hora.',
         'Use Redefinir aplicativo somente quando quiser apagar os dados locais e voltar à instalação inicial. Leia a confirmação antes de aceitar.',
       ],
     },

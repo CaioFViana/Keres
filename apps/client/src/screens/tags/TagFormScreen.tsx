@@ -222,7 +222,6 @@ const TagFormScreen = () => {
         placeholder={t('select_tag_color')}
         currentColor={color}
         onSelectColor={setColor}
-        style={commonInputStyles.input}
       />
 
       <View style={styles.switchContainer}>

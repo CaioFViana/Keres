@@ -40,7 +40,15 @@ const SettingsScreen = () => {
   const drizzleClient = useDrizzle(); // Initialize useDrizzle
   const db = useSQLiteContext();
   const navigation = useNavigation<SettingsScreenNavigationProp>();
-  const { username, language, setUsername, setLanguage, resetSettings } = useUserSettingsStore();
+  const {
+    username,
+    language,
+    use24HourTime,
+    setUsername,
+    setLanguage,
+    setUse24HourTime,
+    resetSettings,
+  } = useUserSettingsStore();
   const { darkMode, setDarkMode, resetTheme } = useThemeStore();
 
   const handleUsernameChange = (newUsername: string) => {
@@ -56,6 +64,10 @@ const SettingsScreen = () => {
 
   const handleDarkModeToggle = (value: boolean) => {
     setDarkMode(drizzleClient, value);
+  };
+
+  const handleTimeFormatToggle = (value: boolean) => {
+    setUse24HourTime(drizzleClient, value);
   };
 
   const handleResetApplication = () => {
@@ -152,6 +164,18 @@ const SettingsScreen = () => {
           <ThemedSwitch value={darkMode} onValueChange={handleDarkModeToggle} />
         </View>
 
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {t('use_24_hour_time')}
+            </Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {use24HourTime ? t('use_24_hour_time_on') : t('use_24_hour_time_off')}
+            </Text>
+          </View>
+          <ThemedSwitch value={use24HourTime} onValueChange={handleTimeFormatToggle} />
+        </View>
+
         <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
           {t('reset_application')}
         </Button>
@@ -195,6 +219,14 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 18, // Increased font size
     fontWeight: 'bold', // Made font bold
+  },
+  settingTextWrap: {
+    flexShrink: 1,
+    paddingRight: 10,
+  },
+  settingHint: {
+    fontSize: 13,
+    marginTop: 2,
   },
   input: {
     marginBottom: 0,

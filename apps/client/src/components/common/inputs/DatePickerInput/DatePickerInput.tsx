@@ -5,14 +5,17 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import DatePickerModal from '@/src/components/common/inputs/DatePickerInput/DatePickerModal';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
 
 interface DatePickerInputProps {
   /** Canonical `YYYY-MM-DD` / `YYYY-MM-DDTHH:mm`, or `null`. */
   value: string | null;
   onChange: (value: string | null) => void;
   placeholder?: string;
+  /** Só posicionamento (margem, largura). NÃO passe `commonInputStyles.input` aqui: este
+   *  componente já desenha a moldura do campo, e uma segunda borda/altura por fora desalinha
+   *  o conteúdo interno. */
   style?: any;
 }
 
@@ -34,10 +37,12 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
-  const commonInputStyles = getCommonInputStyles(colors);
+  const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
 
   const resolvedPlaceholder = placeholder || t('attribute_date_select_placeholder');
-  const displayValue = value ? (formatAttributeDateForDisplay(value, i18n.language) ?? value) : '';
+  const displayValue = value
+    ? (formatAttributeDateForDisplay(value, i18n.language, use24HourTime) ?? value)
+    : '';
 
   const handleSelect = (nextValue: string | null) => {
     onChange(nextValue);
@@ -45,29 +50,37 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   };
 
   const styles = StyleSheet.create({
+    // Uma borda só, aqui. `commonInputStyles.input` NÃO é aplicado no contêiner nem no
+    // TextInput interno: ele já traz borda + altura, e somado à borda deste wrapper desenhava
+    // duas molduras encaixadas (e uma caixa alta demais, com `height: 50` sobre
+    // `customComponentInput`, que ainda soma `paddingBottom: 50`).
     container: {
       marginBottom: 10,
+      width: '100%',
     },
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.primary,
       borderRadius: 5,
       backgroundColor: colors.surface,
-      minHeight: 50,
+      height: 50,
+      overflow: 'hidden',
     },
     calendarButton: {
-      width: 50,
+      width: 46,
       height: '100%',
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: 5,
     },
     textInput: {
       flex: 1,
+      height: '100%',
       color: colors.text,
-      paddingHorizontal: 10,
+      fontSize: 16,
+      paddingHorizontal: 0,
+      paddingRight: 10,
       borderWidth: 0,
       backgroundColor: 'transparent',
       textTransform: 'capitalize',
@@ -80,20 +93,13 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   });
 
   return (
-    <View
-      style={[
-        styles.container,
-        style,
-        commonInputStyles.input,
-        commonInputStyles.customComponentInput,
-      ]}
-    >
+    <View style={[styles.container, style]}>
       <Pressable style={styles.inputWrapper} onPress={() => setModalVisible(true)}>
         <View style={styles.calendarButton}>
           <Ionicons name={value ? 'calendar' : 'calendar-outline'} size={20} color={colors.text} />
         </View>
         <TextInput
-          style={[commonInputStyles.input, styles.textInput]}
+          style={styles.textInput}
           value={displayValue}
           placeholder={resolvedPlaceholder}
           placeholderTextColor={colors.textSecondary}

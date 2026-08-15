@@ -17,6 +17,7 @@ import type { MainSystemDrawerParamList } from '../../../../navigation/MainSyste
 import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import { useEntityComments } from '../../../../hooks/useEntityComments';
 import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
+import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 
 interface CustomAttributeDetailFieldsProps {
@@ -30,6 +31,7 @@ function formatValueForDisplay(
   decoded: string | number | boolean | null,
   t: (key: string) => string,
   language: string,
+  use24HourTime: boolean,
 ): string {
   if (decoded === null) {
     return t('common_na');
@@ -39,9 +41,12 @@ function formatValueForDisplay(
   }
   if (type === AttributeType.DATE) {
     // Dia da semana + data por extenso no idioma do APP (nunca o do dispositivo), sempre igual
-    // em qualquer fuso - ver `attributeDateValue.ts`. Valores de texto livre gravados antes do
-    // date picker existir não são canônicos: aparecem crus em vez de sumir.
-    return formatAttributeDateForDisplay(String(decoded), language) ?? String(decoded);
+    // em qualquer fuso - ver `attributeDateValue.ts`. A hora segue o formato 24h/AM-PM escolhido
+    // em Configurações. Valores de texto livre gravados antes do date picker existir não são
+    // canônicos: aparecem crus em vez de sumir.
+    return (
+      formatAttributeDateForDisplay(String(decoded), language, use24HourTime) ?? String(decoded)
+    );
   }
   return String(decoded);
 }
@@ -58,6 +63,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
   entityId,
 }) => {
   const { t, i18n } = useTranslation();
+  const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
   const navigation = useNavigation();
   const drizzleDb = useDrizzle();
   const fields = useStorySchemaFields(storyId, entityType);
@@ -135,7 +141,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
         const displayValue =
           isEntityReference && rawValue
             ? resolvedEntityName || t('attribute_entity_deleted')
-            : formatValueForDisplay(field.type, decoded, t, i18n.language);
+            : formatValueForDisplay(field.type, decoded, t, i18n.language, use24HourTime);
         const onPress =
           isEntityReference && resolvedEntityName && field.targetEntityType && rawValue
             ? () => {

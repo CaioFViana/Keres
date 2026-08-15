@@ -1,0 +1,1 @@
+ALTER TABLE `client_settings` ADD `use_24_hour_time` integer DEFAULT true NOT NULL;

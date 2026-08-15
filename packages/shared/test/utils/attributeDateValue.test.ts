@@ -7,7 +7,9 @@ import {
   formatAttributeDateForDisplay,
   formatAttributeDateMonthLabel,
   isValidAttributeDate,
+  fromClockHour,
   parseAttributeDate,
+  toClockHour,
   toUtcDate,
 } from '../../utils/attributeDateValue';
 
@@ -128,6 +130,50 @@ describe('formatAttributeDateForDisplay', () => {
   it('returns null for values that are not canonical dates', () => {
     expect(formatAttributeDateForDisplay('sometime next spring', 'en-US')).toBeNull();
     expect(formatAttributeDateForDisplay(null, 'en-US')).toBeNull();
+  });
+});
+
+describe('12 vs 24 hour display', () => {
+  it('follows the preference instead of the locale convention', () => {
+    // en-US would default to AM/PM and pt-BR to 24h; the user's setting overrides both.
+    expect(formatAttributeDateForDisplay('2024-01-15T14:30', 'en-US', true)).toMatch(/14:30/);
+    expect(formatAttributeDateForDisplay('2024-01-15T14:30', 'pt-BR', false)).toMatch(/2:30/);
+    expect(
+      formatAttributeDateForDisplay('2024-01-15T14:30', 'pt-BR', false)?.toUpperCase(),
+    ).toMatch(/PM/);
+  });
+
+  it('leaves the locale in charge when no preference is given', () => {
+    expect(formatAttributeDateForDisplay('2024-01-15T14:30', 'pt-BR')).toMatch(/14:30/);
+  });
+
+  it('never changes the date-only output', () => {
+    const withPreference = formatAttributeDateForDisplay('2024-01-15', 'en-US', false);
+    expect(withPreference).toBe(formatAttributeDateForDisplay('2024-01-15', 'en-US', true));
+  });
+});
+
+describe('clock hour conversion', () => {
+  it('passes 24-hour values through untouched', () => {
+    expect(toClockHour(0, true)).toEqual({ hour: 0, isPm: false });
+    expect(toClockHour(23, true)).toEqual({ hour: 23, isPm: true });
+    expect(fromClockHour(23, true, true)).toBe(23);
+  });
+
+  it('maps midnight and noon to 12, not 0', () => {
+    expect(toClockHour(0, false)).toEqual({ hour: 12, isPm: false });
+    expect(toClockHour(12, false)).toEqual({ hour: 12, isPm: true });
+    expect(fromClockHour(12, false, false)).toBe(0);
+    expect(fromClockHour(12, true, false)).toBe(12);
+  });
+
+  it('round-trips every hour of the day through the 12-hour clock', () => {
+    for (let hour24 = 0; hour24 <= 23; hour24 += 1) {
+      const { hour, isPm } = toClockHour(hour24, false);
+      expect(hour).toBeGreaterThanOrEqual(1);
+      expect(hour).toBeLessThanOrEqual(12);
+      expect(fromClockHour(hour, isPm, false)).toBe(hour24);
+    }
   });
 });
 

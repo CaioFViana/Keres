@@ -8,10 +8,13 @@ interface UserSettingsState {
   userId: string | null; // Add userId to state
   username: string | null;
   language: string | null;
+  /** `true` = 24h, `false` = AM/PM. Vale para toda exibição/edição de hora das features de Data. */
+  use24HourTime: boolean;
   activeServer: ServerSelect | null;
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
   setLanguage: (db: AppDrizzleClient, language: string) => Promise<void>;
+  setUse24HourTime: (db: AppDrizzleClient, use24HourTime: boolean) => Promise<void>;
   setActiveServer: (server: ServerSelect | null) => void;
   clearActiveServer: () => void;
   resetSettings: () => void;
@@ -21,12 +24,18 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   userId: null, // Initialize userId
   username: null,
   language: null,
+  use24HourTime: true,
   activeServer: null,
 
   initializeSettings: async (db: AppDrizzleClient) => {
     const settings = await getClientSettings(db);
     if (settings) {
-      set({ userId: settings.id, username: settings.localUsername, language: settings.language }); // Set userId
+      set({
+        userId: settings.id,
+        username: settings.localUsername,
+        language: settings.language,
+        use24HourTime: settings.use24HourTime,
+      }); // Set userId
     }
     return settings; // Return the settings object
   },
@@ -41,6 +50,11 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
     set({ language });
   },
 
+  setUse24HourTime: async (db: AppDrizzleClient, use24HourTime: boolean) => {
+    await updateClientSettings(db, { use24HourTime });
+    set({ use24HourTime });
+  },
+
   setActiveServer: (server: ServerSelect | null) => {
     set({ activeServer: server });
   },
@@ -50,6 +64,12 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   },
 
   resetSettings: () => {
-    set({ userId: null, username: null, language: null, activeServer: null }); // Reset all settings including activeServer
+    set({
+      userId: null,
+      username: null,
+      language: null,
+      use24HourTime: true,
+      activeServer: null,
+    }); // Reset all settings including activeServer
   },
 }));

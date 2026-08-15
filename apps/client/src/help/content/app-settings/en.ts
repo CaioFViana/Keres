@@ -25,6 +25,7 @@ const page: HelpPage = {
         'Under User, enter the name that identifies you on this device.',
         'Under Language, choose the interface language. Help follows this choice.',
         'Turn Dark mode on or off to change the app appearance.',
+        'Turn 24-hour time on or off to choose how custom Date attributes show and edit their time.',
         'Use Reset application only when you want to erase local data and return to initial setup. Read the confirmation before accepting.',
       ],
     },

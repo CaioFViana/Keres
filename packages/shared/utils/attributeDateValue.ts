@@ -139,10 +139,14 @@ function safeFormat(
  * Data no idioma da APLICAÇÃO (não do dispositivo), sempre com o dia da semana, e com a hora
  * só quando o valor tem hora. `null` quando a string não é uma data canônica - o chamador
  * decide o que fazer (as telas mostram o valor cru, para não sumir com texto legado).
+ *
+ * `use24HourTime` vem da preferência do usuário (Configurações), não do idioma: `pt` e `en`
+ * têm convenções opostas, e a escolha é dele. `undefined` deixa o locale decidir.
  */
 export function formatAttributeDateForDisplay(
   raw: string | null | undefined,
   language: string,
+  use24HourTime?: boolean,
 ): string | null {
   const parts = parseAttributeDate(raw);
   if (!parts) {
@@ -160,11 +164,47 @@ export function formatAttributeDateForDisplay(
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-      ...(hasTime ? { hour: '2-digit', minute: '2-digit' } : {}),
+      ...(hasTime
+        ? {
+            hour: '2-digit',
+            minute: '2-digit',
+            ...(use24HourTime === undefined ? {} : { hour12: !use24HourTime }),
+          }
+        : {}),
     },
     utc,
     canonical,
   );
+}
+
+/**
+ * Hora do relógio de parede a partir da hora de 0 a 23: em 24h devolve ela mesma; em AM/PM
+ * devolve 1 a 12 mais o período. Existe para que o campo de hora do picker mostre o que a
+ * pessoa espera, sem que o valor canônico (sempre 0-23) mude de forma.
+ */
+export function toClockHour(
+  hour24: number,
+  use24HourTime: boolean,
+): { hour: number; isPm: boolean } {
+  if (use24HourTime) {
+    return { hour: hour24, isPm: hour24 >= 12 };
+  }
+  const isPm = hour24 >= 12;
+  const hour = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return { hour, isPm };
+}
+
+/** Inverso de `toClockHour`: hora do relógio (1-12 com período, ou 0-23) para 0-23. */
+export function fromClockHour(hour: number, isPm: boolean, use24HourTime: boolean): number {
+  if (use24HourTime) {
+    return clampHour(hour);
+  }
+  const base = hour % 12; // 12 AM -> 0, 12 PM -> 12
+  return clampHour(isPm ? base + 12 : base);
+}
+
+function clampHour(hour: number): number {
+  return Math.min(23, Math.max(0, hour));
 }
 
 /** Rótulo curto do mês + ano para o cabeçalho do calendário ("janeiro de 2024"). */

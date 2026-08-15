@@ -156,7 +156,6 @@ const MyProfileScreen = () => {
         currentColor={avatarColor || ''}
         onSelectColor={setAvatarColor}
         placeholder={t('select_avatar_color')}
-        style={commonInputStyles.input}
       />
 
       <Text style={styles.label}>{t('avatar_icon')}</Text>
@@ -164,7 +163,6 @@ const MyProfileScreen = () => {
         currentIcon={avatarIcon}
         onSelectIcon={setAvatarIcon}
         placeholder={t('select_avatar_icon')}
-        style={commonInputStyles.input}
       />
 
       <Text style={styles.label}>{t('bio')}</Text>

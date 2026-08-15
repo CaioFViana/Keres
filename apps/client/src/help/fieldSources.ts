@@ -193,7 +193,14 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
   ClientSettings: {
-    documented: ['localUsername', 'language', 'darkMode', 'createdAt', 'updatedAt'],
+    documented: [
+      'localUsername',
+      'language',
+      'darkMode',
+      'use24HourTime',
+      'createdAt',
+      'updatedAt',
+    ],
     invisible: ['id', 'version', 'isDeleted', 'deletedAt'],
   },
   Comment: {

@@ -6,9 +6,11 @@ import {
   formatAttributeDate,
   formatAttributeDateForDisplay,
   formatAttributeDateMonthLabel,
+  fromClockHour,
   MAX_ATTRIBUTE_DATE_YEAR,
   MIN_ATTRIBUTE_DATE_YEAR,
   parseAttributeDate,
+  toClockHour,
 } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
@@ -17,6 +19,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useTheme } from '../../../../theme';
 
 interface DatePickerModalProps {
@@ -33,6 +36,10 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+function pad2(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
 /**
  * Calendário de data (com hora opcional) para `AttributeType.DATE`. Espelha a estrutura de
  * `ColorPickerModal`: mantém a escolha em estado local e só a devolve no "Selecionar", para
@@ -45,6 +52,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
   const language = i18n.language;
+  const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
 
   const parsed = useMemo(() => parseAttributeDate(value), [value]);
   // Sem valor legível, abre no mês de hoje - e "hoje" é o do fuso de quem está escrevendo,
@@ -58,6 +66,14 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
   const [hour, setHour] = useState(parsed?.hour ?? 0);
   const [minute, setMinute] = useState(parsed?.minute ?? 0);
   const [yearText, setYearText] = useState(String(parsed?.year ?? today.getFullYear()));
+  // Hora e minuto guardam o TEXTO em edição, separado do número. Espelhar `String(hour)
+  // .padStart(2, '0')` de volta no campo fazia o primeiro dígito virar "01" na hora, e aí
+  // `maxLength={2}` recusava o segundo - digitar "10" era impossível.
+  const [hourText, setHourText] = useState(
+    pad2(toClockHour(parsed?.hour ?? 0, use24HourTime).hour),
+  );
+  const [minuteText, setMinuteText] = useState(pad2(parsed?.minute ?? 0));
+  const [isPm, setIsPm] = useState(toClockHour(parsed?.hour ?? 0, false).isPm);
 
   const monthLength = daysInMonth(year, month);
   const currentParts: AttributeDateParts | null =
@@ -72,7 +88,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
         };
 
   const previewText = currentParts
-    ? (formatAttributeDateForDisplay(formatAttributeDate(currentParts), language) ??
+    ? (formatAttributeDateForDisplay(formatAttributeDate(currentParts), language, use24HourTime) ??
       formatAttributeDate(currentParts))
     : t('attribute_date_no_date');
 
@@ -107,6 +123,37 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
     setSelectedDay((current) =>
       current === null ? null : Math.min(current, daysInMonth(nextYear, nextMonth)),
     );
+  };
+
+  // Em AM/PM o campo trabalha de 1 a 12 e o período fica no botão ao lado; a hora GUARDADA
+  // continua de 0 a 23 sempre - só a leitura/escrita do campo muda de forma.
+  const minHourInput = use24HourTime ? 0 : 1;
+  const maxHourInput = use24HourTime ? 23 : 12;
+
+  /** Deixa o texto ser digitado livre; só o número derivado é clampado. */
+  const handleTimeChange = (
+    text: string,
+    min: number,
+    max: number,
+    setText: (next: string) => void,
+    setNumber: (next: number) => void,
+  ) => {
+    const digits = text.replace(/[^0-9]/g, '').slice(0, 2);
+    const numeric = clamp(Number(digits) || min, min, max);
+    setText(Number(digits) > max ? pad2(numeric) : digits);
+    setNumber(numeric);
+  };
+
+  const handleHourChange = (text: string) => {
+    handleTimeChange(text, minHourInput, maxHourInput, setHourText, (clockHour) =>
+      setHour(fromClockHour(clockHour, isPm, use24HourTime)),
+    );
+  };
+
+  const togglePeriod = () => {
+    const nextIsPm = !isPm;
+    setIsPm(nextIsPm);
+    setHour(fromClockHour(Number(hourText) || 12, nextIsPm, false));
   };
 
   const goToToday = () => {
@@ -155,6 +202,17 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
     yearRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
     yearLabel: { color: colors.textSecondary, fontSize: 13, marginRight: 8 },
     yearInput: { width: 90, height: 40, marginBottom: 0 },
+    quickActions: { flexDirection: 'row', marginLeft: 'auto' },
+    iconButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: 8,
+    },
     weekRow: { flexDirection: 'row' },
     weekdayCell: {
       flex: 1,
@@ -183,10 +241,18 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
     timeInputs: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
     timeInput: { width: 64, height: 44, marginBottom: 0, textAlign: 'center' },
     timeSeparator: { fontSize: 20, color: colors.text, marginHorizontal: 8 },
-    secondaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
-    secondaryButton: { width: '47%', backgroundColor: colors.surface },
-    secondaryButtonText: { color: colors.text },
-    actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+    periodButton: {
+      marginLeft: 12,
+      paddingHorizontal: 14,
+      height: 44,
+      borderRadius: 22,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    periodText: { color: colors.primary, fontWeight: 'bold', fontSize: 15 },
+    actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
     actionButton: { width: '47%' },
   });
 
@@ -252,6 +318,25 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
           keyboardType="numeric"
           testID="date-picker-year"
         />
+
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={goToToday}
+            testID="date-picker-today"
+            accessibilityLabel={t('attribute_date_today')}
+          >
+            <Ionicons name="today-outline" size={18} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => onSelect(null)}
+            testID="date-picker-clear"
+            accessibilityLabel={t('attribute_date_clear')}
+          >
+            <Ionicons name="backspace-outline" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.weekRow}>
@@ -296,40 +381,41 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
         <View style={styles.timeInputs}>
           <TextInput
             style={styles.timeInput}
-            value={String(hour).padStart(2, '0')}
-            onChangeText={(text) => setHour(clamp(Number(text.replace(/[^0-9]/g, '')) || 0, 0, 23))}
+            value={hourText}
+            onChangeText={handleHourChange}
+            onBlur={() => setHourText(pad2(toClockHour(hour, use24HourTime).hour))}
             keyboardType="numeric"
             maxLength={2}
+            selectTextOnFocus
             accessibilityLabel={t('attribute_date_hour')}
             testID="date-picker-hour"
           />
           <Text style={styles.timeSeparator}>:</Text>
           <TextInput
             style={styles.timeInput}
-            value={String(minute).padStart(2, '0')}
-            onChangeText={(text) =>
-              setMinute(clamp(Number(text.replace(/[^0-9]/g, '')) || 0, 0, 59))
-            }
+            value={minuteText}
+            onChangeText={(text) => handleTimeChange(text, 0, 59, setMinuteText, setMinute)}
+            onBlur={() => setMinuteText(pad2(minute))}
             keyboardType="numeric"
             maxLength={2}
+            selectTextOnFocus
             accessibilityLabel={t('attribute_date_minute')}
             testID="date-picker-minute"
           />
+          {!use24HourTime && (
+            <TouchableOpacity
+              style={styles.periodButton}
+              onPress={togglePeriod}
+              testID="date-picker-period"
+              accessibilityLabel={t('attribute_date_period')}
+            >
+              <Text style={styles.periodText}>
+                {isPm ? t('attribute_date_pm') : t('attribute_date_am')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
-
-      <View style={styles.secondaryRow}>
-        <Button onPress={goToToday} style={styles.secondaryButton} testID="date-picker-today">
-          <Text style={styles.secondaryButtonText}>{t('attribute_date_today')}</Text>
-        </Button>
-        <Button
-          onPress={() => onSelect(null)}
-          style={styles.secondaryButton}
-          testID="date-picker-clear"
-        >
-          <Text style={styles.secondaryButtonText}>{t('attribute_date_clear')}</Text>
-        </Button>
-      </View>
 
       <View style={styles.actionRow}>
         <Button

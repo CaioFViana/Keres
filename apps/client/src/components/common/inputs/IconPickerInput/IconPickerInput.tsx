@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import IconPickerModal from '@/src/components/common/inputs/IconPickerInput/IconPickerModal';
 
@@ -10,6 +9,9 @@ interface IconPickerInputProps {
   onSelectIcon: (icon: string) => void;
   currentIcon: string | null;
   placeholder?: string;
+  /** Só posicionamento (margem, largura). NÃO passe `commonInputStyles.input` aqui: este
+   *  componente já desenha a moldura do campo, e uma segunda borda/altura por fora desalinha
+   *  o conteúdo interno. */
   style?: any;
 }
 
@@ -21,7 +23,6 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const { colors } = useTheme();
-  const commonInputStyles = getCommonInputStyles(colors);
 
   const handleSelectIcon = (icon: string) => {
     onSelectIcon(icon);
@@ -29,18 +30,25 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
   };
 
   const styles = StyleSheet.create({
+    // Uma borda só. `commonInputStyles.input` NÃO entra aqui: ele já traz borda + `height: 50`,
+    // e somado à borda deste wrapper desenhava duas molduras encaixadas - e mais alto do que
+    // deveria, porque `customComponentInput` ainda acrescenta `paddingBottom: 50`.
+    // `marginBottom: 0` como `commonInputStyles.input`: o ritmo vertical dos forms vem do
+    // `marginTop` do rótulo seguinte, não do campo.
     container: {
-      marginBottom: 10,
+      marginBottom: 0,
+      width: '100%',
     },
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.primary,
       borderRadius: 5,
       backgroundColor: colors.surface,
-      minHeight: 50,
+      height: 50,
       paddingHorizontal: 10,
+      overflow: 'hidden',
     },
     iconPreview: {
       width: 36,
@@ -64,14 +72,7 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
   });
 
   return (
-    <View
-      style={[
-        styles.container,
-        style,
-        commonInputStyles.input,
-        commonInputStyles.customComponentInput,
-      ]}
-    >
+    <View style={[styles.container, style]}>
       <Pressable style={styles.inputWrapper} onPress={() => setModalVisible(true)}>
         <View style={styles.iconPreview}>
           <Ionicons

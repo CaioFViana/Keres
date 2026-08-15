@@ -22,6 +22,17 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en-US' } }),
 }));
 
+let mockUse24HourTime = true;
+jest.mock('../../src/state/userSettingsStore', () => ({
+  __esModule: true,
+  useUserSettingsStore: (selector: (state: { use24HourTime: boolean }) => unknown) =>
+    selector({ use24HourTime: mockUse24HourTime }),
+}));
+
+beforeEach(() => {
+  mockUse24HourTime = true;
+});
+
 async function renderModal(value: string | null) {
   const onSelect = jest.fn();
   const onClose = jest.fn();
@@ -73,6 +84,31 @@ describe('DatePickerModal', () => {
     expect(onSelect).toHaveBeenCalledWith('2024-01-15T22:05');
   });
 
+  it('lets a two-digit hour be typed one digit at a time', async () => {
+    const { screen, onSelect } = await renderModal('2024-01-15T00:00');
+
+    // Regressão: o campo espelhava `String(hour).padStart(2, '0')`, então o primeiro dígito
+    // virava "01" na hora e `maxLength={2}` recusava o segundo - "19" era impossível de digitar.
+    await fireEvent.changeText(screen.getByTestId('date-picker-hour'), '1');
+    expect(screen.getByTestId('date-picker-hour').props.value).toBe('1');
+
+    await fireEvent.changeText(screen.getByTestId('date-picker-hour'), '19');
+    expect(screen.getByTestId('date-picker-hour').props.value).toBe('19');
+
+    await fireEvent.press(screen.getByTestId('date-picker-confirm'));
+    expect(onSelect).toHaveBeenCalledWith('2024-01-15T19:00');
+  });
+
+  it('pads the time back out when the field loses focus', async () => {
+    const { screen } = await renderModal('2024-01-15T00:00');
+
+    await fireEvent.changeText(screen.getByTestId('date-picker-hour'), '7');
+    expect(screen.getByTestId('date-picker-hour').props.value).toBe('7');
+
+    await fireEvent(screen.getByTestId('date-picker-hour'), 'blur');
+    expect(screen.getByTestId('date-picker-hour').props.value).toBe('07');
+  });
+
   it('clamps hours and minutes to a real clock', async () => {
     const { screen, onSelect } = await renderModal('2024-01-15T00:00');
 
@@ -100,6 +136,50 @@ describe('DatePickerModal', () => {
     await fireEvent.press(screen.getByTestId('date-picker-confirm'));
 
     expect(onSelect).toHaveBeenCalledWith('2025-01-10');
+  });
+
+  describe('with the AM/PM setting on', () => {
+    beforeEach(() => {
+      mockUse24HourTime = false;
+    });
+
+    it('shows an afternoon hour on a 12-hour clock but still stores 24-hour', async () => {
+      const { screen, onSelect } = await renderModal('2024-01-15T14:30');
+
+      expect(screen.getByTestId('date-picker-hour').props.value).toBe('02');
+      expect(screen.getByText('attribute_date_pm')).toBeTruthy();
+
+      await fireEvent.press(screen.getByTestId('date-picker-confirm'));
+      expect(onSelect).toHaveBeenCalledWith('2024-01-15T14:30');
+    });
+
+    it('converts to the afternoon when the period is switched to PM', async () => {
+      const { screen, onSelect } = await renderModal('2024-01-15T09:00');
+
+      await fireEvent.press(screen.getByTestId('date-picker-period'));
+      await fireEvent.press(screen.getByTestId('date-picker-confirm'));
+
+      expect(onSelect).toHaveBeenCalledWith('2024-01-15T21:00');
+    });
+
+    it('treats 12 AM as midnight and 12 PM as noon', async () => {
+      const { screen, onSelect } = await renderModal('2024-01-15T00:00');
+
+      // Midnight reads as 12 AM on a 12-hour clock.
+      expect(screen.getByTestId('date-picker-hour').props.value).toBe('12');
+
+      await fireEvent.press(screen.getByTestId('date-picker-period'));
+      await fireEvent.press(screen.getByTestId('date-picker-confirm'));
+      expect(onSelect).toHaveBeenCalledWith('2024-01-15T12:00');
+    });
+
+    it('does not show the period button in 24-hour mode', async () => {
+      mockUse24HourTime = true;
+      const { screen } = await renderModal('2024-01-15T14:30');
+
+      expect(screen.queryByTestId('date-picker-period')).toBeNull();
+      expect(screen.getByTestId('date-picker-hour').props.value).toBe('14');
+    });
   });
 
   it('emits null when cleared', async () => {

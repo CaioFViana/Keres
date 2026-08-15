@@ -15,7 +15,7 @@ const page: HelpPage = {
     {
       type: 'example',
       title: 'Exemplo',
-      text: 'A chave começa enferrujada com Lia. Na Cena “Mercado”, uma trajetória registra Novo dono do personagem: Omar e Novo estado: reparada.',
+      text: 'A chave começa enferrujada com Lia. Na Cena “Mercado”, uma trajetória registra Novo personagem dono: Omar e Novo estado: reparada.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
     { type: 'path', segments: ['Menu da história', 'Trajetória de itens', '+'] },
@@ -25,7 +25,7 @@ const page: HelpPage = {
         'Escolha o Item que mudou.',
         'Escolha a Cena em que a mudança acontece.',
         'Preencha Novo estado.',
-        'Escolha Novo dono do personagem somente se o item passar para alguém.',
+        'Escolha Novo personagem dono somente se o item passar para alguém.',
         'Salve e acrescente Etiquetas, Notas ou Veja também quando precisar de contexto.',
       ],
     },
@@ -47,7 +47,7 @@ const page: HelpPage = {
         },
         {
           key: 'newCharacterOwnerId',
-          label: 'Novo dono do personagem',
+          label: 'Novo personagem dono',
           whatToWrite: 'Escolha quem passa a possuir o item; deixe vazio se o dono não mudar.',
           note: 'É diferente do dono inicial informado na ficha do Item.',
         },

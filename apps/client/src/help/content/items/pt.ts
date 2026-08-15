@@ -24,7 +24,7 @@ const page: HelpPage = {
       items: [
         'Crie o item e preencha Nome.',
         'Use Categoria e Estado inicial quando ajudarem a organizar o acervo.',
-        'Escolha Dono do personagem se alguém já possuir o item no início.',
+        'Escolha Personagem dono se alguém já possuir o item no início.',
         'Salve para adicionar Etiquetas, Notas, mídia, atributos customizados e Veja também.',
         'Use Trajetória de um item para registrar mudanças que acontecem em cenas.',
       ],
@@ -58,7 +58,7 @@ const page: HelpPage = {
         },
         {
           key: 'characterOwnerId',
-          label: 'Dono do personagem',
+          label: 'Personagem dono',
           whatToWrite: 'Quem começa com o item, se houver.',
           note: 'O detalhe mostra o nome do personagem escolhido.',
         },

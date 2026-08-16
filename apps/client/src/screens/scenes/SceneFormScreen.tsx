@@ -1,10 +1,20 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import Select from '@/src/components/common/inputs/Select/Select'; // Import Select component
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import CharacterRelationManager from '@/src/components/features/characters/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
 import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
-import { Scene } from '@keres/shared/entities/Scene';
 import { Effect } from '@keres/shared/entities/Effect';
+import { Scene } from '@keres/shared/entities/Scene';
 import {
   RouteProp,
   StackActions,
@@ -16,16 +26,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'; // Added useMemo
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import CharacterRelationManager from '@/src/components/features/characters/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, {
-  CustomAttributeValues,
-  getDefaultCustomAttributeValues,
-  validateRequiredCustomAttributes,
-} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -38,9 +38,9 @@ import {
   CharacterSceneServiceInterface,
   createCharacterSceneService,
 } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import { createEffectService } from '../../services/storymanagement/EffectService';
 import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '../../services/storymanagement/SceneService';
-import { createEffectService } from '../../services/storymanagement/EffectService';
 import { useChapterStore } from '../../state/chapterStore'; // Import useChapterStore
 import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
 import { useItemStore } from '../../state/itemStore';
@@ -48,10 +48,10 @@ import { useLocationStore } from '../../state/locationStore'; // Import useLocat
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type SceneFormScreenRouteProp = RouteProp<SceneStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<SceneStackParamList, 'SceneForm'>;
@@ -678,7 +678,7 @@ const SceneFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 20,
+      marginTop: 10,
       marginBottom: 0,
     },
     deleteButton: {
@@ -692,17 +692,20 @@ const SceneFormScreen = () => {
     },
     noteSection: {
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: -10,
     },
     tagSection: {
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: 0,
     },
     sectionTitle: {
       fontSize: 18,
       fontWeight: 'bold',
       color: colors.text,
       marginBottom: 10,
+    },
+    effectsSection: {
+      marginBottom: 30,
     },
     numberWidthInput: {
       width: '30%',
@@ -875,23 +878,7 @@ const SceneFormScreen = () => {
       />
 
       {currentSceneId && selectedStory?.id && (
-        <View style={styles.noteSection}>
-          <Text style={styles.sectionTitle}>{t('characters_title')}</Text>
-          <CharacterRelationManager
-            characterRelations={characterSceneRelations}
-            availableCharacters={characters.filter((char) => !char.isDeleted)}
-            onSave={handleSaveCharacterSceneRelation}
-            onDelete={handleDeleteCharacterSceneRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentSceneId={currentSceneId}
-          />
-        </View>
-      )}
-
-      {currentSceneId && selectedStory?.id && (
         <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
           <MultiSelectPill
             options={availableTags.map((tag) => ({
               label: tag.name,
@@ -908,7 +895,20 @@ const SceneFormScreen = () => {
 
       {currentSceneId && selectedStory?.id && (
         <View style={styles.noteSection}>
-          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+          <CharacterRelationManager
+            characterRelations={characterSceneRelations}
+            availableCharacters={characters.filter((char) => !char.isDeleted)}
+            onSave={handleSaveCharacterSceneRelation}
+            onDelete={handleDeleteCharacterSceneRelation}
+            editable={true}
+            currentStoryId={selectedStory.id}
+            currentSceneId={currentSceneId}
+          />
+        </View>
+      )}
+
+      {currentSceneId && selectedStory?.id && (
+        <View style={styles.noteSection}>
           <NoteManager
             noteRelations={sceneNoteRelations}
             availableNotes={allNotes}
@@ -934,7 +934,7 @@ const SceneFormScreen = () => {
       )}
 
       {currentSceneId && selectedStory?.id && isBranching && (
-        <View style={styles.tagSection}>
+        <View style={[styles.tagSection, styles.effectsSection]}>
           <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
 
           {sceneEffects.map((effect) => (

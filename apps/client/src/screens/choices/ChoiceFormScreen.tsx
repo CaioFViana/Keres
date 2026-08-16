@@ -1,9 +1,13 @@
+import Button from '@/src/components/common/controls/Button/Button';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Choice } from '@keres/shared/entities/Choice';
-import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
+import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import { Effect } from '@keres/shared/entities/Effect';
 import {
   RouteProp,
@@ -16,29 +20,25 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { ChoiceStackParamList } from '../../navigation/MainSystemStack';
-import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createChoiceCheckGroupService } from '../../services/storymanagement/ChoiceCheckGroupService';
 import { createChoiceCheckService } from '../../services/storymanagement/ChoiceCheckService';
+import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createEffectService } from '../../services/storymanagement/EffectService';
 import { useItemStore } from '../../state/itemStore';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type ChoiceFormScreenRouteProp = RouteProp<ChoiceStackParamList, 'ChoiceForm'>;
 type ChoiceFormScreenNavigationProp = NativeStackNavigationProp<ChoiceStackParamList, 'ChoiceForm'>;
@@ -592,11 +592,11 @@ const ChoiceFormScreen = () => {
     scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
     title: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
     label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5 },
-    saveButton: { marginTop: 20, marginBottom: 0 },
+    saveButton: { marginTop: 10, marginBottom: 0 },
     deleteButton: { backgroundColor: 'red', marginBottom: 15 },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    noteSection: { marginTop: 20, marginBottom: 10 },
-    tagSection: { marginTop: 20, marginBottom: 10 },
+    noteSection: { marginTop: 20, marginBottom: -10 },
+    tagSection: { marginTop: 20, marginBottom: 0 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
     sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
     card: {
@@ -617,6 +617,10 @@ const ChoiceFormScreen = () => {
       padding: 10,
       marginTop: 8,
       backgroundColor: colors.background,
+    },
+    effectsSection: {
+      marginTop: 30,
+      marginBottom: 20,
     },
     removeLink: { color: colors.error, fontWeight: '600' },
     addLink: { color: colors.primary, fontWeight: '600', marginTop: 4 },
@@ -680,7 +684,6 @@ const ChoiceFormScreen = () => {
 
       {currentChoiceId && selectedStory?.id && (
         <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
           <MultiSelectPill
             options={availableTags.map((tag) => ({
               label: tag.name,
@@ -691,33 +694,6 @@ const ChoiceFormScreen = () => {
             onSelectionChange={setSelectedTagIds}
             placeholder={t('select_tags_for_choice')}
             label={t('choice_tags')}
-          />
-        </View>
-      )}
-
-      {currentChoiceId && selectedStory?.id && (
-        <View style={styles.noteSection}>
-          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
-          <NoteManager
-            noteRelations={choiceNoteRelations}
-            availableNotes={allNotes}
-            onSave={saveNoteRelation}
-            onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentChoiceId}
-            currentEntityType="Choice"
-          />
-        </View>
-      )}
-
-      {currentChoiceId && selectedStory?.id && (
-        <View style={styles.tagSection}>
-          <SeeAlsoManager
-            storyId={selectedStory.id}
-            entityType="Choice"
-            entityId={currentChoiceId}
-            editable={true}
           />
         </View>
       )}
@@ -900,7 +876,7 @@ const ChoiceFormScreen = () => {
       )}
 
       {currentChoiceId && selectedStory?.id && isBranching && (
-        <View style={styles.tagSection}>
+        <View style={[styles.tagSection, styles.effectsSection]}>
           <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
 
           {choiceEffects.map((effect) => (
@@ -964,6 +940,32 @@ const ChoiceFormScreen = () => {
           <TouchableOpacity onPress={handleAddEffect}>
             <Text style={styles.addLink}>{t('add_effect')}</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {currentChoiceId && selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <NoteManager
+            noteRelations={choiceNoteRelations}
+            availableNotes={allNotes}
+            onSave={saveNoteRelation}
+            onDelete={deleteNoteRelation}
+            editable={true}
+            currentStoryId={selectedStory.id}
+            currentEntityId={currentChoiceId}
+            currentEntityType="Choice"
+          />
+        </View>
+      )}
+
+      {currentChoiceId && selectedStory?.id && (
+        <View style={styles.tagSection}>
+          <SeeAlsoManager
+            storyId={selectedStory.id}
+            entityType="Choice"
+            entityId={currentChoiceId}
+            editable={true}
+          />
         </View>
       )}
 

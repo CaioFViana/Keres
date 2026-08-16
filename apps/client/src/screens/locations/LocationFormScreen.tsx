@@ -1,4 +1,15 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Location } from '@keres/shared/entities/Location';
 import {
   RouteProp,
@@ -11,17 +22,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, {
-  CustomAttributeValues,
-  getDefaultCustomAttributeValues,
-  validateRequiredCustomAttributes,
-} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -34,10 +34,10 @@ import { createLocationService } from '../../services/storymanagement/LocationSe
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type LocationFormScreenRouteProp = RouteProp<LocationStackParamList, 'LocationForm'>;
 type LocationFormScreenNavigationProp = NativeStackNavigationProp<
@@ -287,7 +287,7 @@ const LocationFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 20,
+      marginTop: 10,
       marginBottom: 0,
     },
     deleteButton: {
@@ -301,7 +301,12 @@ const LocationFormScreen = () => {
     },
     tagSection: {
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: 0,
+    },
+    noteSection: {
+      // Renamed from tagSection for clarity.
+      marginTop: 20,
+      marginBottom: -10,
     },
     sectionTitle: {
       fontSize: 18,
@@ -400,7 +405,6 @@ const LocationFormScreen = () => {
       />
 
       <View style={styles.tagSection}>
-        <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
         <MultiSelectPill
           options={availableTags.map((tag) => ({
             label: tag.name,
@@ -415,8 +419,7 @@ const LocationFormScreen = () => {
       </View>
 
       {currentLocationId && selectedStory?.id && (
-        <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+        <View style={styles.noteSection}>
           <NoteManager
             noteRelations={locationNoteRelations}
             availableNotes={allNotes}

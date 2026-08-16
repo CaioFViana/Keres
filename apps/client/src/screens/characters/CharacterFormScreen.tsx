@@ -1,4 +1,17 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
+import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Character } from '@keres/shared/entities/Character';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import {
@@ -12,19 +25,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import Button from '@/src/components/common/controls/Button/Button';
-import CustomAttributeFields, {
-  CustomAttributeValues,
-  getDefaultCustomAttributeValues,
-  validateRequiredCustomAttributes,
-} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
-import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect for character objects
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -42,10 +42,10 @@ import { createCharacterService } from '../../services/storymanagement/Character
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter'; // Import EventEmitter
 
 type CharacterFormScreenRouteProp = RouteProp<CharacterStackParamList, 'CharacterForm'>;
 type CharacterFormScreenNavigationProp = NativeStackNavigationProp<
@@ -432,7 +432,7 @@ const CharacterFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 20,
+      marginTop: 10,
       marginBottom: 0,
     },
     deleteButton: {
@@ -444,9 +444,14 @@ const CharacterFormScreen = () => {
       justifyContent: 'center',
       alignItems: 'center',
     },
+    noteSection: {
+      // Renamed from tagSection for clarity.
+      marginTop: 20,
+      marginBottom: -10,
+    },
     tagSection: {
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: 0,
     },
     sectionTitle: {
       fontSize: 18,
@@ -602,7 +607,6 @@ const CharacterFormScreen = () => {
       />
 
       <View style={styles.tagSection}>
-        <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
         <MultiSelectPill
           options={availableTags.map((tag) => ({
             label: tag.name,
@@ -617,8 +621,7 @@ const CharacterFormScreen = () => {
       </View>
 
       {currentCharacterId && selectedStory?.id && (
-        <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('character_relations_title')}</Text>
+        <View style={styles.noteSection}>
           <CharacterRelationManager
             characterRelations={characterRelations}
             characters={allCharacters}
@@ -632,8 +635,7 @@ const CharacterFormScreen = () => {
       )}
 
       {currentCharacterId && selectedStory?.id && (
-        <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
+        <View style={styles.noteSection}>
           <NoteManager
             noteRelations={characterNoteRelations}
             availableNotes={allNotes}

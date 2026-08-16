@@ -1,7 +1,17 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import Select from '@/src/components/common/inputs/Select/Select';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Item } from '@keres/shared/entities/Item'; // Import Item entity
 import {
   RouteProp,
@@ -14,16 +24,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, {
-  CustomAttributeValues,
-  getDefaultCustomAttributeValues,
-  validateRequiredCustomAttributes,
-} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -37,10 +37,10 @@ import { useCharacterStore } from '../../state/characterStore'; // Assuming Char
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type ItemFormScreenRouteProp = RouteProp<ItemStackParamList, 'ItemForm'>;
 type ItemFormScreenNavigationProp = NativeStackNavigationProp<ItemStackParamList, 'ItemForm'>;
@@ -288,11 +288,11 @@ const ItemFormScreen = () => {
       marginTop: 15,
       marginBottom: 5,
     },
-    saveButton: { marginTop: 20, marginBottom: 0 },
+    saveButton: { marginTop: 10, marginBottom: 0 },
     deleteButton: { backgroundColor: 'red', marginBottom: 15 },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    noteSection: { marginTop: 20, marginBottom: 10 },
-    tagSection: { marginTop: 20, marginBottom: 10 },
+    noteSection: { marginTop: 20, marginBottom: -10 },
+    tagSection: { marginTop: 20, marginBottom: 0 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
   });
 
@@ -389,7 +389,6 @@ const ItemFormScreen = () => {
 
       {currentItemId && selectedStory?.id && (
         <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
           <MultiSelectPill
             options={availableTags.map((tag) => ({
               label: tag.name,
@@ -406,7 +405,6 @@ const ItemFormScreen = () => {
 
       {currentItemId && selectedStory?.id && (
         <View style={styles.noteSection}>
-          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
           <NoteManager
             noteRelations={itemNoteRelations}
             availableNotes={allNotes}

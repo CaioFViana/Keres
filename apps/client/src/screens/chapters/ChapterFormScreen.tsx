@@ -1,5 +1,15 @@
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import CustomAttributeFields, {
+  CustomAttributeValues,
+  getDefaultCustomAttributeValues,
+  validateRequiredCustomAttributes,
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Chapter } from '@keres/shared/entities/Chapter';
 import {
   RouteProp,
@@ -12,16 +22,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import CustomAttributeFields, {
-  CustomAttributeValues,
-  getDefaultCustomAttributeValues,
-  validateRequiredCustomAttributes,
-} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { ChapterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -35,10 +35,10 @@ import { createChapterService } from '../../services/storymanagement/ChapterServ
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type ChapterFormScreenRouteProp = RouteProp<ChapterStackParamList, 'ChapterForm'>;
 type ChapterFormScreenNavigationProp = NativeStackNavigationProp<
@@ -291,7 +291,7 @@ const ChapterFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 20,
+      marginTop: 10,
       marginBottom: 0,
     },
     deleteButton: {
@@ -304,13 +304,13 @@ const ChapterFormScreen = () => {
       alignItems: 'center',
     },
     noteSection: {
-      // Renamed from tagSection for clarity, though it might contain tags in other forms
+      // Renamed from tagSection for clarity.
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: -10,
     },
     tagSection: {
       marginTop: 20,
-      marginBottom: 10,
+      marginBottom: 0,
     },
     sectionTitle: {
       fontSize: 18,
@@ -386,7 +386,6 @@ const ChapterFormScreen = () => {
 
       {currentChapterId && selectedStory?.id && (
         <View style={styles.tagSection}>
-          <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
           <MultiSelectPill
             options={availableTags.map((tag) => ({
               label: tag.name,
@@ -403,7 +402,6 @@ const ChapterFormScreen = () => {
 
       {currentChapterId && selectedStory?.id && (
         <View style={styles.noteSection}>
-          <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
           <NoteManager
             noteRelations={chapterNoteRelations}
             availableNotes={allNotes}

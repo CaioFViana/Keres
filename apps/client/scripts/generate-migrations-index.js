@@ -50,9 +50,8 @@ export default async function (db: SQLiteDatabase) {
 // Do not modify this file directly.
 
 ${imports}
-
 const migrations = [
-${migrationArray.trim()}
+  ${migrationArray.trim()}
 ];
 
 export default migrations;

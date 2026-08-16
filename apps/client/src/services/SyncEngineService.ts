@@ -716,6 +716,18 @@ export class SyncEngineService {
                         version: sql`${schema.scenes.version} + 1`,
                       })
                       .where(eq(schema.scenes.id, item.id));
+                  } else if (
+                    reorderUpdate.entity === 'Story' &&
+                    reorderUpdate.reorderTarget === 'StorySchemaField'
+                  ) {
+                    await tx
+                      .update(schema.storySchemaFields)
+                      .set({
+                        order: item.newIndex - 1,
+                        updatedAt: new Date(update.operationTime!),
+                        version: sql`${schema.storySchemaFields.version} + 1`,
+                      })
+                      .where(eq(schema.storySchemaFields.id, item.id));
                   } else if (reorderUpdate.entity === 'Story') {
                     // Reordering chapters within a story
                     await tx
@@ -960,6 +972,8 @@ export class SyncEngineService {
                       reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
                         ...item,
                       })),
+                      reorderTarget: filteredPayloadData.reorderTarget,
+                      schemaEntityType: filteredPayloadData.schemaEntityType,
                     } as StoryReorderingStoryUpdate;
                   }
                   console.warn(

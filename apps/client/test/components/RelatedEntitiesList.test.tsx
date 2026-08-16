@@ -66,7 +66,11 @@ describe('RelatedEntitiesList', () => {
     await fireEvent.press(screen.getByText('Tagged'));
     await fireEvent.press(getVisibleByTestId(screen, 'related-entity-char-1'));
 
-    expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(drawerNavigation, 'Character', 'char-1');
+    expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(
+      drawerNavigation,
+      'Character',
+      'char-1',
+    );
   });
 
   it('maps every lowercase relation key back to its navigable type', async () => {
@@ -84,7 +88,11 @@ describe('RelatedEntitiesList', () => {
     await fireEvent.press(screen.getByText('Tagged'));
 
     await fireEvent.press(getVisibleByTestId(screen, 'related-entity-rule-1'));
-    expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(drawerNavigation, 'WorldRule', 'rule-1');
+    expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(
+      drawerNavigation,
+      'WorldRule',
+      'rule-1',
+    );
 
     await fireEvent.press(getVisibleByTestId(screen, 'related-entity-journey-1'));
     expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(

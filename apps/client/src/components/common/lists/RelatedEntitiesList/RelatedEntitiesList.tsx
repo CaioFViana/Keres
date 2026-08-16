@@ -93,11 +93,7 @@ const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({
                       <View style={styles.relationRow}>
                         <Text style={[styles.relationText, styles.relationName]}>{item.name}</Text>
                         {isNavigable && (
-                          <Ionicons
-                            name="chevron-forward"
-                            size={18}
-                            color={colors.textSecondary}
-                          />
+                          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                         )}
                       </View>
                     );

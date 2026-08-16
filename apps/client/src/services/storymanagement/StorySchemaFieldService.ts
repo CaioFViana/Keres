@@ -33,6 +33,12 @@ export interface StorySchemaFieldService {
       Pick<StorySchemaFieldInsert, 'name' | 'description' | 'isRequired' | 'defaultValue' | 'order'>
     >,
   ): Promise<void>;
+  reorderFields(
+    currentUserId: string,
+    storyId: string,
+    entityType: StorySchemaEntityType,
+    newOrder: { id: string; order: number }[],
+  ): Promise<void>;
   deleteField(currentUserId: string, fieldId: string): Promise<void>;
 }
 
@@ -153,6 +159,57 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         },
       );
       entityEventEmitter.emit('story_schema_field_changed', updated.storyId, updated.entityType);
+    },
+
+    async reorderFields(currentUserId, storyId, entityType, newOrder): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
+
+      const fields = await db
+        .select({ id: storySchemaFields.id, order: storySchemaFields.order })
+        .from(storySchemaFields)
+        .where(
+          and(
+            eq(storySchemaFields.storyId, storyId),
+            eq(storySchemaFields.entityType, entityType),
+            eq(storySchemaFields.isDeleted, false),
+          ),
+        )
+        .all();
+      const fieldsById = new Map(fields.map((field) => [field.id, field]));
+
+      const orderValues = newOrder.map(({ order }) => order).sort((a, b) => a - b);
+      const hasSequentialOrder = orderValues.every((order, index) => order === index);
+      if (
+        newOrder.length !== fields.length ||
+        new Set(newOrder.map(({ id }) => id)).size !== fields.length ||
+        newOrder.some(({ id }) => !fieldsById.has(id)) ||
+        !hasSequentialOrder
+      ) {
+        throw new Error('Attribute reorder must contain every field of the selected entity type.');
+      }
+
+      const changedFields = newOrder.filter(({ id, order }) => fieldsById.get(id)?.order !== order);
+      if (changedFields.length === 0) return;
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      for (const field of changedFields) {
+        await db
+          .update(storySchemaFields)
+          .set({
+            order: field.order,
+            updatedAt: new Date(),
+            version: sql`${storySchemaFields.version} + 1`,
+          })
+          .where(eq(storySchemaFields.id, field.id))
+          .run();
+      }
+
+      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
+        reorderItems: newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 })),
+        reorderTarget: 'StorySchemaField',
+        schemaEntityType: entityType,
+      });
+      entityEventEmitter.emit('story_schema_field_changed', storyId, entityType);
     },
 
     async deleteField(currentUserId: string, fieldId: string): Promise<void> {

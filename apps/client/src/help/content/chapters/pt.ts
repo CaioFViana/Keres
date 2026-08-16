@@ -6,7 +6,10 @@ const page: HelpPage = {
   keywords: ['capítulo', 'ordem', 'resumo', 'cenas'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
-    { type: 'paragraph', text: 'Capítulos organizam cenas na ordem de leitura da história ou cronológica. Você é livre para escolher como organizar.' },
+    {
+      type: 'paragraph',
+      text: 'Capítulos organizam cenas na ordem de leitura da história ou cronológica. Você é livre para escolher como organizar.',
+    },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
       type: 'example',

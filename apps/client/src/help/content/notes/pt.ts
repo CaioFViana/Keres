@@ -50,7 +50,8 @@ const page: HelpPage = {
         {
           key: 'extraNotes',
           label: 'Anotações extras',
-          whatToWrite: 'Mais detalhes que não são relevantes o suficiente para adicionar no corpo da nota principal.',
+          whatToWrite:
+            'Mais detalhes que não são relevantes o suficiente para adicionar no corpo da nota principal.',
           note: 'Ficam nos detalhes da nota.',
         },
       ],

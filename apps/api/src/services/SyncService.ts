@@ -477,6 +477,8 @@ export class SyncService {
       payload = {
         reorderItems: (update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate)
           .reorderItems,
+        reorderTarget: (update as StoryReorderingStoryUpdate).reorderTarget,
+        schemaEntityType: (update as StoryReorderingStoryUpdate).schemaEntityType,
       };
     }
 
@@ -704,7 +706,11 @@ export class SyncService {
             operationId: op.id, // Permite ao cliente gravar a operação remota de forma idempotente
           } as DeleteStoryUpdate;
         } else if (op.operationType === 'reorder') {
-          const reorderPayload = op.payload as { reorderItems: { id: string; newIndex: number }[] };
+          const reorderPayload = op.payload as {
+            reorderItems: { id: string; newIndex: number }[];
+            reorderTarget?: 'StorySchemaField';
+            schemaEntityType?: string;
+          };
 
           if (op.entityType === 'Chapter') {
             // Reordering scenes within a chapter
@@ -726,6 +732,8 @@ export class SyncService {
               entity: 'Story',
               id: op.entityId, // The story ID whose chapters are reordered
               reorderItems: reorderPayload.reorderItems,
+              reorderTarget: reorderPayload.reorderTarget,
+              schemaEntityType: reorderPayload.schemaEntityType,
               version: resultingEntityVersion,
               operationVersion: op.operationVersion,
               operationTime: operationTime ? operationTime.toISOString() : undefined,

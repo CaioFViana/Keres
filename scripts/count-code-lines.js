@@ -75,13 +75,18 @@ function countLines(filePath) {
 function countApplication(rootPath, excludedPaths = []) {
   const code = { files: 0, lines: 0 };
   const tests = { files: 0, lines: 0 };
-  const excludedDirectories = new Set(excludedPaths.map((excludedPath) => path.resolve(excludedPath)));
+  const excludedDirectories = new Set(
+    excludedPaths.map((excludedPath) => path.resolve(excludedPath)),
+  );
 
   const visit = (directory, isTestDirectory = false) => {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       if (entry.isDirectory()) {
         const childDirectory = path.join(directory, entry.name);
-        if (!ignoredDirectories.has(entry.name) && !excludedDirectories.has(path.resolve(childDirectory)))
+        if (
+          !ignoredDirectories.has(entry.name) &&
+          !excludedDirectories.has(path.resolve(childDirectory))
+        )
           visit(childDirectory, isTestDirectory || entry.name === 'test');
         continue;
       }

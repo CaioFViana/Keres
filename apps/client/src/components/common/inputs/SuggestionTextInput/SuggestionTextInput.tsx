@@ -178,12 +178,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
   });
 
   return (
-    <View
-      style={[
-        styles.container,
-        style,
-      ]}
-    >
+    <View style={[styles.container, style]}>
       <View style={styles.inputWrapper}>
         <TextInput
           value={value}

@@ -10,7 +10,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../db';
-import { chapters, galleries, stories } from '../../db/schema';
+import { chapters, galleries, stories, storySchemaFields } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -77,6 +77,54 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
         currentEntity[this.versionColumnName],
         validatedReorderUpdate.id!,
       );
+
+      if (validatedReorderUpdate.reorderTarget === 'StorySchemaField') {
+        if (!validatedReorderUpdate.schemaEntityType) {
+          throw new Error('Validation Error: Attribute reorders require a schema entity type.');
+        }
+        const existingFields = await db.query.storySchemaFields.findMany({
+          where: and(
+            eq(storySchemaFields.storyId, validatedReorderUpdate.id!),
+            eq(storySchemaFields.entityType, validatedReorderUpdate.schemaEntityType),
+            eq(storySchemaFields.isDeleted, false),
+          ),
+          columns: { id: true, version: true },
+        });
+        const fieldIds = new Set(existingFields.map((field) => field.id));
+        const reorderIds = new Set(validatedReorderUpdate.reorderItems.map((item) => item.id));
+        const indices = validatedReorderUpdate.reorderItems.map((item) => item.newIndex);
+        if (
+          reorderIds.size !== fieldIds.size ||
+          ![...reorderIds].every((id) => fieldIds.has(id)) ||
+          Math.min(...indices) !== 1 ||
+          Math.max(...indices) !== indices.length
+        ) {
+          throw new Error(
+            'Validation Error: Attribute reorder items must match the selected type.',
+          );
+        }
+
+        await db.transaction(async (tx) => {
+          await Promise.all(
+            validatedReorderUpdate.reorderItems.map((item) => {
+              const field = existingFields.find((candidate) => candidate.id === item.id)!;
+              return tx
+                .update(storySchemaFields)
+                .set({
+                  order: item.newIndex - 1,
+                  updatedAt: new Date(),
+                  version: field.version + 1,
+                })
+                .where(eq(storySchemaFields.id, item.id));
+            }),
+          );
+          await tx
+            .update(stories)
+            .set({ updatedAt: new Date(), version: currentEntity.version + 1 })
+            .where(eq(stories.id, validatedReorderUpdate.id!));
+        });
+        return;
+      }
 
       await db.transaction(async (tx) => {
         // 1. Validate reorderItems against actual chapters in the story

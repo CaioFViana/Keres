@@ -66,13 +66,7 @@ export const fieldSources: Record<string, string[]> = {
     'isFavorite',
   ],
   choices: ['text', 'sourceScene', 'destinationScene', 'notes'],
-  'custom-attributes': [
-    'displayName',
-    'type',
-    'targetEntityType',
-    'required',
-    'defaultValue'
-  ],
+  'custom-attributes': ['displayName', 'type', 'targetEntityType', 'required', 'defaultValue'],
 };
 
 /** Página que explica os campos expostos pela metadata usada na busca avançada. */

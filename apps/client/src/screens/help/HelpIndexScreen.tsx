@@ -1,7 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
@@ -29,7 +36,9 @@ export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpInde
   const navigation = useNavigation<HelpNavigation>();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [defaultOpenSections, setDefaultOpenSections] = useState<Record<string, boolean>>({ start: true });
+  const [defaultOpenSections, setDefaultOpenSections] = useState<Record<string, boolean>>({
+    start: true,
+  });
   const open = openSections ?? defaultOpenSections;
   const setOpen = onOpenSectionsChange ?? setDefaultOpenSections;
   const pages = useMemo(() => getHelpPages(i18n.language), [i18n.language]);

@@ -102,6 +102,8 @@ export const StoryReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   entity: z.literal('Story'), // Entity to which reorderItems belong
   id: UlidSchema, // ID of the Story whose chapters are being reordered
   reorderItems: z.array(ReorderItemSchema), // Array of chapter IDs and their new indices
+  reorderTarget: z.literal('StorySchemaField').optional(),
+  schemaEntityType: z.string().min(1).optional(),
 });
 export type StoryReorderingStoryUpdate = z.infer<typeof StoryReorderingStoryUpdateSchema>;
 

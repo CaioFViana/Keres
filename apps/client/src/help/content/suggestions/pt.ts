@@ -28,7 +28,11 @@ const page: HelpPage = {
         'Ao preencher uma ficha, abra o campo correspondente e escolha um dos valores sugeridos, ou escreva outro quando fizer sentido.',
       ],
     },
-    { type: 'callout', tone: 'info', text: 'Editar um novo valor no campo também funciona. A lista que sugestões utiliza é baseada não só nos valores padrões cadastrados na história, mas como também todos os valores únicos utilizados neste campo. Mas cuidado! Se não houver mais entidades com este campo novo, ele desaparece de sugestões futuras, precisando ser adicionado novamente.' },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'Editar um novo valor no campo também funciona. A lista que sugestões utiliza é baseada não só nos valores padrões cadastrados na história, mas como também todos os valores únicos utilizados neste campo. Mas cuidado! Se não houver mais entidades com este campo novo, ele desaparece de sugestões futuras, precisando ser adicionado novamente.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

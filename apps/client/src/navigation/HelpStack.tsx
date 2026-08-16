@@ -12,10 +12,7 @@ export default function HelpStackNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HelpIndex">
         {() => (
-          <HelpIndexScreen
-            openSections={openSections}
-            onOpenSectionsChange={setOpenSections}
-          />
+          <HelpIndexScreen openSections={openSections} onOpenSectionsChange={setOpenSections} />
         )}
       </Stack.Screen>
       <Stack.Screen name="HelpPage" component={HelpPageScreen} />

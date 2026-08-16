@@ -18,6 +18,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
+import { StorySchemaFieldReorderModal } from '../../components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'characters_title',
@@ -46,6 +47,7 @@ const StorySchemaListScreen = () => {
   const { userId } = useUserSettingsStore();
 
   const [activeEntityType, setActiveEntityType] = useState<StorySchemaEntityType>('Character');
+  const [isReorderModalVisible, setIsReorderModalVisible] = useState(false);
   const fields = useStorySchemaFields(storyId, activeEntityType);
   const { canEdit } = useStoryRole(storyId);
 
@@ -161,6 +163,25 @@ const StorySchemaListScreen = () => {
     [drizzleDb, userId, t],
   );
 
+  const handleReorderConfirm = useCallback(
+    async (newOrder: { id: string; order: number }[]) => {
+      if (!userId || !storyId) return;
+      try {
+        await createStorySchemaFieldService(drizzleDb).reorderFields(
+          userId,
+          storyId,
+          activeEntityType,
+          newOrder,
+        );
+        setIsReorderModalVisible(false);
+      } catch (err) {
+        console.error('Failed to reorder attribute fields:', err);
+        AppAlert.alert(t('error'), t('failed_to_save_attribute'));
+      }
+    },
+    [activeEntityType, drizzleDb, storyId, t, userId],
+  );
+
   if (!storyId) {
     return (
       <View
@@ -176,7 +197,18 @@ const StorySchemaListScreen = () => {
 
   return (
     <View style={commonContainerStyles.container}>
-      <Text style={styles.title}>{t('story_schema_management_title')}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={styles.title}>{t('story_schema_management_title')}</Text>
+        {canEdit && fields.length > 1 && (
+          <TouchableOpacity
+            accessibilityLabel={t('reorder_attributes_title')}
+            style={styles.actionButton}
+            onPress={() => setIsReorderModalVisible(true)}
+          >
+            <Ionicons name="swap-vertical" size={24} color={colors.primary} />
+          </TouchableOpacity>
+        )}
+      </View>
       <Text style={styles.description}>{t('story_schema_management_description')}</Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsContainer}>
@@ -240,6 +272,12 @@ const StorySchemaListScreen = () => {
           <Ionicons name="add" size={30} color={colors.onPrimary} />
         </TouchableOpacity>
       )}
+      <StorySchemaFieldReorderModal
+        isVisible={isReorderModalVisible}
+        fields={fields}
+        onClose={() => setIsReorderModalVisible(false)}
+        onReorderConfirm={handleReorderConfirm}
+      />
     </View>
   );
 };

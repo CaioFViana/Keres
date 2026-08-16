@@ -201,6 +201,76 @@ describe('StorySchemaFieldService', () => {
       )?.isDeleted,
     ).toBe(true);
   });
+
+  it('reorders only fields of the selected entity type in one sync operation', async () => {
+    const service = createStorySchemaFieldService(database.db);
+    const first = await service.createField(USER_ID, {
+      storyId: STORY_ID,
+      entityType: 'Character',
+      name: 'First',
+      key: 'first',
+      description: null,
+      type: AttributeType.TEXT,
+      targetEntityType: null,
+      isRequired: false,
+      defaultValue: null,
+      order: 0,
+    });
+    const second = await service.createField(USER_ID, {
+      storyId: STORY_ID,
+      entityType: 'Character',
+      name: 'Second',
+      key: 'second',
+      description: null,
+      type: AttributeType.TEXT,
+      targetEntityType: null,
+      isRequired: false,
+      defaultValue: null,
+      order: 1,
+    });
+    const locationField = await service.createField(USER_ID, {
+      storyId: STORY_ID,
+      entityType: 'Location',
+      name: 'Region',
+      key: 'region',
+      description: null,
+      type: AttributeType.TEXT,
+      targetEntityType: null,
+      isRequired: false,
+      defaultValue: null,
+      order: 0,
+    });
+
+    await service.reorderFields(USER_ID, STORY_ID, 'Character', [
+      { id: second.id, order: 0 },
+      { id: first.id, order: 1 },
+    ]);
+
+    expect(
+      (await service.getFieldsByStoryAndEntityType(STORY_ID, 'Character')).map(({ id, order }) => ({
+        id,
+        order,
+      })),
+    ).toEqual([
+      { id: second.id, order: 0 },
+      { id: first.id, order: 1 },
+    ]);
+    expect((await service.getById(locationField.id))?.order).toBe(0);
+
+    const operations = await database.db.select().from(schema.operationLogs).all();
+    const reorders = operations.filter(
+      (operation) => operation.entityType === 'Story' && operation.operationType === 'reorder',
+    );
+    expect(reorders).toHaveLength(1);
+    expect(JSON.parse(reorders[0]!.payload)).toMatchObject({
+      reorderTarget: 'StorySchemaField',
+      schemaEntityType: 'Character',
+      reorderItems: [
+        { id: second.id, newIndex: 1 },
+        { id: first.id, newIndex: 2 },
+      ],
+    });
+  });
 });
 
 describe('SeeAlsoRelationService', () => {

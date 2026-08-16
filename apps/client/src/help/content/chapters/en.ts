@@ -6,7 +6,10 @@ const page: HelpPage = {
   keywords: ['chapter', 'order', 'summary', 'scenes'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
-    { type: 'paragraph', text: 'Chapters organize scenes in the story’s reading order or chronological. You are free to decide how to organize it.' },
+    {
+      type: 'paragraph',
+      text: 'Chapters organize scenes in the story’s reading order or chronological. You are free to decide how to organize it.',
+    },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
       type: 'example',

@@ -44,9 +44,11 @@ const SettingsScreen = () => {
     username,
     language,
     use24HourTime,
+    showContextualHelp,
     setUsername,
     setLanguage,
     setUse24HourTime,
+    setShowContextualHelp,
     resetSettings,
   } = useUserSettingsStore();
   const { darkMode, setDarkMode, resetTheme } = useThemeStore();
@@ -68,6 +70,10 @@ const SettingsScreen = () => {
 
   const handleTimeFormatToggle = (value: boolean) => {
     setUse24HourTime(drizzleClient, value);
+  };
+
+  const handleContextualHelpToggle = (value: boolean) => {
+    setShowContextualHelp(drizzleClient, value);
   };
 
   const handleResetApplication = () => {
@@ -176,6 +182,22 @@ const SettingsScreen = () => {
           <ThemedSwitch value={use24HourTime} onValueChange={handleTimeFormatToggle} />
         </View>
 
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {t('show_contextual_help')}
+            </Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {showContextualHelp ? t('show_contextual_help_on') : t('show_contextual_help_off')}
+            </Text>
+          </View>
+          <ThemedSwitch
+            value={showContextualHelp}
+            onValueChange={handleContextualHelpToggle}
+            style={styles.contextualHelpSwitch}
+          />
+        </View>
+
         <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
           {t('reset_application')}
         </Button>
@@ -227,6 +249,9 @@ const styles = StyleSheet.create({
   settingHint: {
     fontSize: 13,
     marginTop: 2,
+  },
+  contextualHelpSwitch: {
+    marginLeft: 10,
   },
   input: {
     marginBottom: 0,

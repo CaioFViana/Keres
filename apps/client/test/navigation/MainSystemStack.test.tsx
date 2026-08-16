@@ -45,6 +45,7 @@ jest.mock('@react-navigation/native', () => ({
   CommonActions: { reset: mockReset },
   DrawerActions: { toggleDrawer: jest.fn(() => ({ type: 'TOGGLE_DRAWER' })) },
   getFocusedRouteNameFromRoute: jest.fn(() => undefined),
+  StackActions: { pop: jest.fn(() => ({ type: 'POP' })) },
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
 jest.mock('react-i18next', () => {

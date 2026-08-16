@@ -27,7 +27,13 @@ it('creates settings once and increments their version when updating them', asyn
   const updated = await updateClientSettings(database.db, { darkMode: true, language: 'en-US' });
 
   expect(updated).toEqual(
-    expect.objectContaining({ id: created.id, darkMode: true, language: 'en-US', version: 2 }),
+    expect.objectContaining({
+      id: created.id,
+      darkMode: true,
+      language: 'en-US',
+      showContextualHelp: true,
+      version: 2,
+    }),
   );
   expect(await getClientSettings(database.db)).toEqual(expect.objectContaining({ id: created.id }));
 });

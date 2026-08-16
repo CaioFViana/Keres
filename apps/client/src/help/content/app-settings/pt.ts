@@ -34,6 +34,10 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Idioma e aparência se aplicam a todo o aplicativo neste aparelho. O nome local não é o mesmo que o nome, a @tag ou o perfil de uma conta em servidor. Redefinir remove histórias locais, mídias e conexões salvas deste aparelho.',
     },
+    {
+      type: 'paragraph',
+      text: 'Mostrar ajuda controla o atalho de ajuda contextual nos cabeçalhos das páginas compatíveis.',
+    },
     { type: 'seeAlso', pages: ['your-profile', 'data-and-backup', 'using-this-help'] },
   ],
 };

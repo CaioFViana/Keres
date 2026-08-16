@@ -1,30 +1,13 @@
-import { createElement, useCallback, useEffect } from 'react';
-import {
-  NavigationProp,
-  ParamListBase,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native';
-import { BackHandler, Platform } from 'react-native';
-import NavigationBackButton from '@/src/components/common/navigation/NavigationBackButton/NavigationBackButton';
-import NavigationDrawerButton from '@/src/components/common/navigation/NavigationDrawerButton/NavigationDrawerButton';
-import { useResponsiveLayout } from './useResponsiveLayout';
-
-const findDrawerNavigation = (navigation: NavigationProp<ParamListBase>) => {
-  let currentNavigation: NavigationProp<ParamListBase> | undefined = navigation;
-
-  for (let depth = 0; currentNavigation && depth < 5; depth += 1) {
-    if (currentNavigation.getState().type === 'drawer') {
-      return currentNavigation;
-    }
-    currentNavigation = currentNavigation.getParent();
-  }
-
-  return undefined;
-};
+import { useCallback, useEffect } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { BackHandler } from 'react-native';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 
 interface BackButtonHandlerOptions {
-  /** Show the web header button for this screen. Android uses its system button separately. */
+  /**
+   * Retained for existing callers. Drawer navigators own visible header navigation, so this
+   * option no longer changes the header from a nested screen.
+   */
   showWebBackButton?: boolean;
 }
 
@@ -38,29 +21,20 @@ export const useBackButtonHandler = ({
   showWebBackButton = false,
 }: BackButtonHandlerOptions = {}) => {
   const navigation = useNavigation();
-  const { isWide } = useResponsiveLayout();
+  const setBackAction = useHeaderBackActionStore((state) => state.setBackAction);
+  const clearBackAction = useHeaderBackActionStore((state) => state.clearBackAction);
 
   useFocusEffect(
     useCallback(() => {
-      if (Platform.OS !== 'web') {
+      if (!showWebBackButton) {
         return undefined;
       }
 
-      const typedNavigation = navigation as NavigationProp<ParamListBase>;
-      const drawerNavigation = findDrawerNavigation(typedNavigation);
+      const backAction = () => navigation.goBack();
+      setBackAction(backAction);
 
-      if (!drawerNavigation) {
-        return undefined;
-      }
-
-      drawerNavigation.setOptions({
-        headerLeft: showWebBackButton
-          ? () => createElement(NavigationBackButton, { onPress: () => typedNavigation.goBack() })
-          : isWide
-            ? () => null
-            : () => createElement(NavigationDrawerButton, { navigation: drawerNavigation }),
-      });
-    }, [isWide, navigation, showWebBackButton]),
+      return () => clearBackAction(backAction);
+    }, [clearBackAction, navigation, setBackAction, showWebBackButton]),
   );
 
   useEffect(() => {

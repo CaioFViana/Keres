@@ -5,7 +5,9 @@ import {
   CommonActions,
   DrawerActions,
   getFocusedRouteNameFromRoute,
+  NavigationState,
   NavigatorScreenParams,
+  StackActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -76,6 +78,8 @@ import WorldRuleDetailScreen, {
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { useStoryStore } from '../state/storyStore';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
 
@@ -110,6 +114,24 @@ export type MainSystemDrawerParamList = {
 };
 
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
+
+const mainSystemStackRootScreens = new Set([
+  'Characters',
+  'Chapters',
+  'Scenes',
+  'Choices',
+  'Items',
+  'ItemJourneys',
+  'Locations',
+  'CharacterRelations',
+  'GalleryList',
+  'Tags',
+  'Notes',
+  'WorldRules',
+  'OperationLog',
+  'CommentsList',
+  'StorySchemaList',
+]);
 
 //#region Character
 
@@ -458,6 +480,8 @@ const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
+  const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
+  const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
@@ -480,6 +504,29 @@ const MainSystemNavigator = () => {
           const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
           const helpPageId = screenHelpPage[activeRouteName];
           const isHelpPage = activeRouteName === 'HelpPage';
+          const nestedState = (route as typeof route & { state?: NavigationState }).state;
+          const nestedStackKey = nestedState?.key;
+          const isNestedDestination =
+            activeRouteName !== route.name && !mainSystemStackRootScreens.has(activeRouteName);
+          const showNestedBackButton =
+            isNestedDestination ||
+            (nestedState?.type === 'stack' && (nestedState.index ?? 0) > 0 && nestedStackKey);
+          const goBackInNestedStack = () => {
+            // Resolve the nested navigator lazily: the route object received while the header
+            // mounts can hold a partial state, while Drawer navigation always has the live one.
+            const liveDrawerRoute = navigation
+              .getState()
+              .routes.find((drawerRoute) => drawerRoute.key === route.key) as
+              | (typeof route & { state?: NavigationState })
+              | undefined;
+            const target = liveDrawerRoute?.state?.key ?? nestedStackKey;
+
+            if (target) {
+              navigation.dispatch({ ...StackActions.pop(), target });
+            } else {
+              navigation.dispatch(StackActions.pop());
+            }
+          };
 
           return {
             headerShown: true,
@@ -488,24 +535,33 @@ const MainSystemNavigator = () => {
               backgroundColor: colors.surface,
             },
             headerTintColor: colors.text,
+            headerTitleContainerStyle:
+              !isHelpPage && !showNestedBackButton && isWide && !showContextualHelp
+                ? { marginLeft: 15 }
+                : undefined,
             // As telas aninhadas usam headerRight para ações como criar e editar. O atalho de
             // ajuda fica no lado esquerdo para continuar visível quando essas ações substituem
             // o lado direito do header do drawer.
             headerLeft: isHelpPage
               ? () => (
                   <NavigationBackButton
-                    onPress={() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' })}
+                    onPress={
+                      nestedBackAction ??
+                      (() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' }))
+                    }
                   />
                 )
-              : !isWide || helpPageId
+              : showNestedBackButton || !isWide || (showContextualHelp && helpPageId)
                 ? () => (
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      {!isWide ? (
+                      {showNestedBackButton ? (
+                        <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
+                      ) : !isWide ? (
                         <DrawerToggleButton
                           navigation={navigation as MainDashboardScreenNavigationProp}
                         />
                       ) : null}
-                      {helpPageId ? (
+                      {showContextualHelp && helpPageId ? (
                         <TouchableOpacity
                           onPress={() =>
                             navigation.navigate('HelpDrawer', {
@@ -513,7 +569,7 @@ const MainSystemNavigator = () => {
                               params: { pageId: helpPageId },
                             })
                           }
-                          style={{ marginLeft: isWide ? 15 : 8 }}
+                          style={{ marginLeft: showNestedBackButton || !isWide ? 8 : 15 }}
                           accessibilityLabel={t('help_title')}
                         >
                           <Ionicons name="help-circle-outline" size={26} color={colors.text} />

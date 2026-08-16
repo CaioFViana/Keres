@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
 import { HelpBlockRenderer } from '../../components/features/help/HelpBlockRenderer/HelpBlockRenderer';
 import { getHelpPage, resolveHelpPage } from '../../help/repository';
+import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 
@@ -14,6 +15,7 @@ type HelpNavigation = NativeStackNavigationProp<{
 }>;
 
 export function HelpPageScreen() {
+  useBackButtonHandler({ showWebBackButton: true });
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HelpNavigation>();
   const route = useRoute<{ key: string; name: 'HelpPage'; params: { pageId: string } }>();

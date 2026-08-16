@@ -10,11 +10,13 @@ interface UserSettingsState {
   language: string | null;
   /** `true` = 24h, `false` = AM/PM. Vale para toda exibição/edição de hora das features de Data. */
   use24HourTime: boolean;
+  showContextualHelp: boolean;
   activeServer: ServerSelect | null;
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
   setLanguage: (db: AppDrizzleClient, language: string) => Promise<void>;
   setUse24HourTime: (db: AppDrizzleClient, use24HourTime: boolean) => Promise<void>;
+  setShowContextualHelp: (db: AppDrizzleClient, showContextualHelp: boolean) => Promise<void>;
   setActiveServer: (server: ServerSelect | null) => void;
   clearActiveServer: () => void;
   resetSettings: () => void;
@@ -25,6 +27,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   username: null,
   language: null,
   use24HourTime: true,
+  showContextualHelp: true,
   activeServer: null,
 
   initializeSettings: async (db: AppDrizzleClient) => {
@@ -35,6 +38,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
         username: settings.localUsername,
         language: settings.language,
         use24HourTime: settings.use24HourTime,
+        showContextualHelp: settings.showContextualHelp,
       }); // Set userId
     }
     return settings; // Return the settings object
@@ -55,6 +59,11 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
     set({ use24HourTime });
   },
 
+  setShowContextualHelp: async (db: AppDrizzleClient, showContextualHelp: boolean) => {
+    await updateClientSettings(db, { showContextualHelp });
+    set({ showContextualHelp });
+  },
+
   setActiveServer: (server: ServerSelect | null) => {
     set({ activeServer: server });
   },
@@ -69,6 +78,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
       username: null,
       language: null,
       use24HourTime: true,
+      showContextualHelp: true,
       activeServer: null,
     }); // Reset all settings including activeServer
   },

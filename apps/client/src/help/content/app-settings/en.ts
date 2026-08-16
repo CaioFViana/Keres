@@ -32,7 +32,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Language and appearance apply throughout this device. The local name is not the same as a server account name, @tag, or profile. Resetting removes local stories, media, and saved connections from this device.',
+      text: 'Language and appearance apply throughout this device. Show help controls the contextual help shortcut in supported page headers. The local name is not the same as a server account name, @tag, or profile. Resetting removes local stories, media, and saved connections from this device.',
     },
     { type: 'seeAlso', pages: ['your-profile', 'data-and-backup', 'using-this-help'] },
   ],

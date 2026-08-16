@@ -1,4 +1,7 @@
 {
+  "show_contextual_help": "Show help",
+  "show_contextual_help_on": "A help shortcut appears in supported page headers.",
+  "show_contextual_help_off": "Help shortcuts are hidden from page headers.",
   "accept_request_confirmation_message": "Are you sure you want to accept this friend request?",
   "accept_request_confirmation_title": "Accept Friend Request",
   "add": "Add",

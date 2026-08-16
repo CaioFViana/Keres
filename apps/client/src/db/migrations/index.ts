@@ -9,6 +9,7 @@ import migration_5 from './0004_rapid_rage';
 import migration_6 from './0005_fat_ozymandias';
 import migration_7 from './0006_wonderful_goliath';
 import migration_8 from './0007_fair_lenny_balinger';
+import migration_9 from './0008_boring_hannibal_king';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -19,6 +20,7 @@ const migrations = [
   { id: 6, name: '0005_fat_ozymandias', run: migration_6 },
   { id: 7, name: '0006_wonderful_goliath', run: migration_7 },
   { id: 8, name: '0007_fair_lenny_balinger', run: migration_8 },
+  { id: 9, name: '0008_boring_hannibal_king', run: migration_9 },
 ];
 
 export default migrations;

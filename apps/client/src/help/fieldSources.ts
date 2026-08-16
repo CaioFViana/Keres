@@ -191,6 +191,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'language',
       'darkMode',
       'use24HourTime',
+      'showContextualHelp',
       'createdAt',
       'updatedAt',
     ],

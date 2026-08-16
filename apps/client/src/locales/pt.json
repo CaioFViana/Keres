@@ -1,4 +1,7 @@
 {
+  "show_contextual_help": "Mostrar ajuda",
+  "show_contextual_help_on": "Um atalho de ajuda aparece nos cabeçalhos das páginas compatíveis.",
+  "show_contextual_help_off": "Os atalhos de ajuda ficam ocultos nos cabeçalhos das páginas.",
   "accept_request_confirmation_message": "Tem certeza de que deseja aceitar este pedido de amizade?",
   "accept_request_confirmation_title": "Aceitar Pedido de Amizade",
   "add": "Adicionar",

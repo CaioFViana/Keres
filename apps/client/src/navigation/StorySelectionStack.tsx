@@ -3,7 +3,9 @@ import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/d
 import {
   DrawerActions,
   getFocusedRouteNameFromRoute,
+  NavigationState,
   NavigatorScreenParams,
+  StackActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -29,6 +31,8 @@ import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
 import { useTheme } from '../theme';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import { useUserSettingsStore } from '../state/userSettingsStore';
 import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
 
 export type StorySelectionMainStackParamList = {
@@ -63,6 +67,12 @@ const Drawer = createDrawerNavigator<StorySelectionDrawerParamList>();
 const StorySelectionMainStack = createNativeStackNavigator<StorySelectionMainStackParamList>();
 const ServerManagementStack = createNativeStackNavigator<ServerManagementStackParamList>();
 const FriendshipStack = createNativeStackNavigator<FriendshipStackParamList>();
+
+const storySelectionStackRootScreens = new Set([
+  'StorySelectionScreen',
+  'ServerManagement',
+  'FriendshipList',
+]);
 
 type StorySelectionMainDrawerNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList>;
 
@@ -169,6 +179,8 @@ const FriendshipStackNavigator = () => {
 const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
+  const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
@@ -189,6 +201,27 @@ const StorySelectionNavigator = () => {
         const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
         const helpPageId = screenHelpPage[activeRouteName];
         const isHelpPage = activeRouteName === 'HelpPage';
+        const nestedState = (route as typeof route & { state?: NavigationState }).state;
+        const nestedStackKey = nestedState?.key;
+        const isNestedDestination =
+          activeRouteName !== route.name && !storySelectionStackRootScreens.has(activeRouteName);
+        const showNestedBackButton =
+          isNestedDestination ||
+          (nestedState?.type === 'stack' && (nestedState.index ?? 0) > 0 && nestedStackKey);
+        const goBackInNestedStack = () => {
+          const liveDrawerRoute = navigation
+            .getState()
+            .routes.find((drawerRoute) => drawerRoute.key === route.key) as
+            | (typeof route & { state?: NavigationState })
+            | undefined;
+          const target = liveDrawerRoute?.state?.key ?? nestedStackKey;
+
+          if (target) {
+            navigation.dispatch({ ...StackActions.pop(), target });
+          } else {
+            navigation.dispatch(StackActions.pop());
+          }
+        };
 
         return {
           headerShown: true,
@@ -197,19 +230,30 @@ const StorySelectionNavigator = () => {
             backgroundColor: colors.surface,
           },
           headerTintColor: colors.text,
+          headerTitleContainerStyle:
+            !isHelpPage && !showNestedBackButton && isWide && !showContextualHelp
+              ? { marginLeft: 15 }
+              : undefined,
           // Subtelas podem ocupar headerRight com ações próprias; manter a ajuda à esquerda
           // garante que o atalho contextual não desapareça em formulários e detalhes.
           headerLeft: isHelpPage
             ? () => (
                 <NavigationBackButton
-                  onPress={() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' })}
+                  onPress={
+                    nestedBackAction ??
+                    (() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' }))
+                  }
                 />
               )
-            : !isWide || helpPageId
+            : showNestedBackButton || !isWide || (showContextualHelp && helpPageId)
               ? () => (
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {!isWide ? <DrawerToggleButton navigation={navigation} /> : null}
-                    {helpPageId ? (
+                    {showNestedBackButton ? (
+                      <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
+                    ) : !isWide ? (
+                      <DrawerToggleButton navigation={navigation} />
+                    ) : null}
+                    {showContextualHelp && helpPageId ? (
                       <TouchableOpacity
                         onPress={() =>
                           navigation.navigate('HelpDrawer', {
@@ -217,7 +261,7 @@ const StorySelectionNavigator = () => {
                             params: { pageId: helpPageId },
                           })
                         }
-                        style={{ marginLeft: isWide ? 15 : 8 }}
+                        style={{ marginLeft: showNestedBackButton || !isWide ? 8 : 15 }}
                         accessibilityLabel={t('help_title')}
                       >
                         <Ionicons name="help-circle-outline" size={26} color={colors.text} />

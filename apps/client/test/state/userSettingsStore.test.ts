@@ -21,7 +21,13 @@ const store = () => useUserSettingsStore.getState();
 const db = {} as never;
 const server = { id: 'server-1', name: 'Casa', url: 'http://servidor' } as never;
 
-const SETTINGS = { id: 'local-user-1', localUsername: 'ana', language: 'pt-BR' };
+const SETTINGS = {
+  id: 'local-user-1',
+  localUsername: 'ana',
+  language: 'pt-BR',
+  use24HourTime: true,
+  showContextualHelp: false,
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -42,6 +48,7 @@ describe('initializeSettings', () => {
     const settings = await store().initializeSettings(db);
 
     expect(store()).toMatchObject({ userId: 'local-user-1', username: 'ana', language: 'pt-BR' });
+    expect(store().showContextualHelp).toBe(false);
     expect(settings).toEqual(SETTINGS);
   });
 
@@ -131,6 +138,24 @@ describe('active server', () => {
   });
 });
 
+describe('setShowContextualHelp', () => {
+  it('persists the header-help preference before updating the UI state', async () => {
+    await store().setShowContextualHelp(db, false);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      showContextualHelp: false,
+    });
+    expect(store().showContextualHelp).toBe(false);
+  });
+
+  it('keeps the current preference when persistence fails', async () => {
+    mockClientSettings.updateClientSettings.mockRejectedValueOnce(new Error('banco fora'));
+
+    await expect(store().setShowContextualHelp(db, false)).rejects.toThrow();
+    expect(store().showContextualHelp).toBe(true);
+  });
+});
+
 describe('resetSettings', () => {
   it('wipes everything, including the active server', async () => {
     mockClientSettings.getClientSettings.mockResolvedValue(SETTINGS);
@@ -143,6 +168,7 @@ describe('resetSettings', () => {
       userId: null,
       username: null,
       language: null,
+      showContextualHelp: true,
       activeServer: null,
     });
   });

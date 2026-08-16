@@ -1,11 +1,5 @@
-import { Note } from '@keres/shared/entities/Note';
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import Button from '@/src/components/common/controls/Button/Button';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import CustomAttributeFields, {
   CustomAttributeValues,
   getDefaultCustomAttributeValues,
@@ -13,6 +7,12 @@ import CustomAttributeFields, {
 } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import { Note } from '@keres/shared/entities/Note';
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -25,9 +25,9 @@ import { createNoteService } from '../../services/storymanagement/NoteService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { setDocumentTitle } from '../../utils/documentTitle';
 
 type NoteFormScreenRouteProp = RouteProp<NotesStackParamList, 'NoteForm'>;
 
@@ -233,7 +233,7 @@ const NoteFormScreen = () => {
       marginBottom: 5,
     },
     saveButton: {
-      marginTop: 20,
+      marginTop: 10,
       marginBottom: 0,
     },
     deleteButton: {
@@ -302,6 +302,7 @@ const NoteFormScreen = () => {
         value={body || ''}
         onChangeText={setBody}
         style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
       />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
@@ -310,6 +311,7 @@ const NoteFormScreen = () => {
         value={extraNotes || ''}
         onChangeText={setExtraNotes}
         style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
+        multiline
       />
 
       <CustomAttributeFields
@@ -320,7 +322,6 @@ const NoteFormScreen = () => {
       />
 
       <View style={styles.tagSection}>
-        <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
         <MultiSelectPill
           options={availableTags.map((tag) => ({
             label: tag.name,

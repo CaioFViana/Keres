@@ -1,16 +1,16 @@
-import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
-import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '@/src/db';
 import { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -387,12 +387,13 @@ const ChapterDetailScreen = () => {
         editable={false}
       />
 
+      <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />
+
       <EntityMetadata
         version={chapter.version}
         createdAt={chapter.createdAt}
         updatedAt={chapter.updatedAt}
       />
-      <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

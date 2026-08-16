@@ -699,12 +699,13 @@ const LocationDetailsScreen = () => {
         editable={false}
       />
 
+      <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />
+
       <EntityMetadata
         version={location.version}
         createdAt={location.createdAt}
         updatedAt={location.updatedAt}
       />
-      <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />
     </ScrollView>
   );
 };

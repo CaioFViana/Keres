@@ -1,43 +1,43 @@
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import NoteManager from '@/src/components/features/notes/NoteManager';
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
+import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
+import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
+import { Effect } from '@keres/shared/entities/Effect';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
-import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
-import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import { Effect } from '@keres/shared/entities/Effect';
 import { useDrizzle } from '../../db';
 import { ChoiceSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import { createChoiceService } from '../../services/storymanagement/ChoiceService';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createChoiceCheckGroupService } from '../../services/storymanagement/ChoiceCheckGroupService';
 import { createChoiceCheckService } from '../../services/storymanagement/ChoiceCheckService';
+import { createChoiceService } from '../../services/storymanagement/ChoiceService';
 import { createEffectService } from '../../services/storymanagement/EffectService';
-import { createSceneService } from '../../services/storymanagement/SceneService';
 import { createItemService } from '../../services/storymanagement/ItemService';
-import { describeChoiceCheck, describeEffect } from '../../utils/choiceCheckEffectDescriptions';
+import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { describeChoiceCheck, describeEffect } from '../../utils/choiceCheckEffectDescriptions';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
 export type ChoiceDetailScreenParamList = {
@@ -138,6 +138,7 @@ const ChoiceDetailScreen = () => {
       marginBottom: 12,
       backgroundColor: colors.surface,
     },
+    choiceEffectContainer: { marginBottom: 20 },
     checkRow: { color: colors.text, marginTop: 4 },
     groupLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
     sceneLink: { flexDirection: 'row', alignItems: 'center' },
@@ -362,26 +363,8 @@ const ChoiceDetailScreen = () => {
         onUpdateComment={updateComment}
       />
 
-      <NoteManager
-        noteRelations={choiceNoteRelations}
-        availableNotes={allNotes}
-        onSave={saveNoteRelation}
-        onDelete={deleteNoteRelation}
-        editable={false}
-        currentStoryId={selectedStory?.id || ''}
-        currentEntityId={choiceId}
-        currentEntityType="Choice"
-      />
-
-      <SeeAlsoManager
-        storyId={choice.storyId}
-        entityType="Choice"
-        entityId={choiceId}
-        editable={false}
-      />
-
       {isBranching && (
-        <>
+        <View style={styles.choiceEffectContainer}>
           <Text style={styles.sectionTitle}>{t('checks_title')}</Text>
           <Text style={styles.sectionDescription}>{t('checks_groups_and_note')}</Text>
           {checkGroups.length === 0 && (
@@ -423,8 +406,26 @@ const ChoiceDetailScreen = () => {
               ))}
             </View>
           )}
-        </>
+        </View>
       )}
+
+      <NoteManager
+        noteRelations={choiceNoteRelations}
+        availableNotes={allNotes}
+        onSave={saveNoteRelation}
+        onDelete={deleteNoteRelation}
+        editable={false}
+        currentStoryId={selectedStory?.id || ''}
+        currentEntityId={choiceId}
+        currentEntityType="Choice"
+      />
+
+      <SeeAlsoManager
+        storyId={choice.storyId}
+        entityType="Choice"
+        entityId={choiceId}
+        editable={false}
+      />
 
       <EntityMetadata
         version={choice.version}

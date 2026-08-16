@@ -1,3 +1,10 @@
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import Select from '@/src/components/common/inputs/Select/Select';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -5,13 +12,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
-import Select from '@/src/components/common/inputs/Select/Select';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDrizzle } from '../../db';
 import {
   ChapterSelect,
@@ -34,8 +34,8 @@ import { createSceneService } from '../../services/storymanagement/SceneService'
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
 
 export type ItemJourneysScreenNavigationProp = CompositeNavigationProp<
@@ -195,6 +195,7 @@ const ItemJourneyListScreen = () => {
       alignItems: 'flex-start',
     },
     searchInputWrapper: { flex: 1 },
+    searchInput: { width: '100%' },
     sortWrapper: { width: 170 },
     headerButton: { marginRight: 15 },
     itemHeaderLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
@@ -311,6 +312,7 @@ const ItemJourneyListScreen = () => {
             placeholder={t('search_items')}
             value={searchText}
             onChangeText={setSearchText}
+            style={styles.searchInput}
           />
         </View>
         <View style={styles.sortWrapper}>

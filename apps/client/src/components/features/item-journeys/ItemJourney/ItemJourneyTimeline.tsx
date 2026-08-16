@@ -193,7 +193,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
       ) : (
         <ScrollView
           horizontal
-          showsHorizontalScrollIndicator={false}
+          showsHorizontalScrollIndicator
           contentContainerStyle={styles.scrollContent}
         >
           <View style={[styles.card, styles.originCard]}>

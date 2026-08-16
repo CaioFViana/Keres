@@ -355,10 +355,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   saveButton: {
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: 35,
+    marginBottom: 0,
   },
   deleteButton: {
+    marginTop: 10,
+    marginBottom: 15,
     backgroundColor: 'red', // Destructive color
   },
   centered: {

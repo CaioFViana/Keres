@@ -1,3 +1,6 @@
+import { Button, Select, TextInput } from '@/src/components/common';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -5,9 +8,6 @@ import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Removed BackHandler
-import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import { Button, Select, TextInput } from '@/src/components/common';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '../../db';
 import { ServerSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler'; // Import useBackButtonHandler
@@ -25,9 +25,9 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { themeDisplayOptions } from '../../theme/palettes'; // Import themeDisplayOptions
+import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { getLanguageOptions } from '../../utils/i18n';
-import { AppAlert } from '../../utils/AppAlert';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,
@@ -727,7 +727,7 @@ const StorySettingsScreen = () => {
         placeholder={t('favorite_behavior')}
         disabled={!canEdit}
       />
-      <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
+      <Text style={{ color: colors.textSecondary, marginBottom: 0 }}>
         {t(`favorite_behavior_${favoriteBehavior}_description`)}
       </Text>
 
@@ -940,10 +940,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   saveButton: {
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: 35,
+    marginBottom: 0,
   },
   deleteButton: {
+    marginTop: 10,
+    marginBottom: 15,
     backgroundColor: 'red', // Destructive color
   },
   collaboratorsSection: {

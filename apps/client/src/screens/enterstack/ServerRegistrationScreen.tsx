@@ -513,10 +513,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
   },
-  registerButton: {
-    marginTop: 30,
-    marginBottom: 20,
-  },
   errorText: {
     marginTop: 10,
     textAlign: 'center',
@@ -526,8 +522,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  registerButton: {
+    marginTop: 35,
+    marginBottom: 0,
+  },
   deleteButton: {
-    backgroundColor: 'red',
+    marginTop: 10,
+    marginBottom: 15,
+    backgroundColor: 'red', // Destructive color
   },
 });
 

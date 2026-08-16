@@ -48,7 +48,7 @@ try {
         const language = path.basename(file, '.json');
         const importName = toImportName(slug, language);
         imports += `import ${importName} from '../content/${slug}/${file}';\n`;
-        return `        { language: '${language}', story: ${importName} },`;
+        return `      { language: '${language}', story: ${importName} },`;
       })
       .join('\n');
 

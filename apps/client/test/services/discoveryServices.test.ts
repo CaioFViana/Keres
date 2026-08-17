@@ -51,7 +51,7 @@ describe('discovery services', () => {
       ...entityBase,
     });
 
-    const report = await createStoryAnalysisService(database.db).analyzeStory(TEST_STORY_ID);
+    const report = await createStoryAnalysisService(database.db).analyzeStoryFull(TEST_STORY_ID);
     expect(report.generatedAt).toBeInstanceOf(Date);
     expect(report.findings).toEqual(
       expect.arrayContaining([

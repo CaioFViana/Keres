@@ -27,7 +27,7 @@ const baseInput = (): StoryAnalysisInput => ({
 });
 
 describe('buildStoryAnalysisReport', () => {
-  it('warns when an entity attribute points to a deleted target', () => {
+  it('warns when an entity attribute points to a deleted target', async () => {
     const input = baseInput();
     input.storySchemaFields.push({
       id: 'mentor',
@@ -39,7 +39,7 @@ describe('buildStoryAnalysisReport', () => {
     });
     input.attributeValues.push({ fieldId: 'mentor', entityId: 'character', value: 'deleted' });
 
-    expect(buildStoryAnalysisReport(input)).toEqual(
+    expect(await buildStoryAnalysisReport(input)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           messageKey: 'analysis_attribute_entity_missing',
@@ -49,7 +49,7 @@ describe('buildStoryAnalysisReport', () => {
     );
   });
 
-  it('finds unused entities and isolated scenes in a branching story', () => {
+  it('finds unused entities and isolated scenes in a branching story', async () => {
     const input = baseInput();
     input.scenes.push({
       id: 'isolated',
@@ -59,7 +59,7 @@ describe('buildStoryAnalysisReport', () => {
       isFinish: false,
     });
 
-    const keys = buildStoryAnalysisReport(input).map((finding) => finding.messageKey);
+    const keys = (await buildStoryAnalysisReport(input)).map((finding) => finding.messageKey);
 
     expect(keys).toEqual(
       expect.arrayContaining([
@@ -73,11 +73,11 @@ describe('buildStoryAnalysisReport', () => {
     );
   });
 
-  it('reports the single actionable error when a non-empty branching story has no start', () => {
+  it('reports the single actionable error when a non-empty branching story has no start', async () => {
     const input = baseInput();
     input.scenes[0].isStart = false;
 
-    const findings = buildStoryAnalysisReport(input);
+    const findings = await buildStoryAnalysisReport(input);
 
     expect(findings).toEqual(
       expect.arrayContaining([
@@ -96,7 +96,7 @@ describe('buildStoryAnalysisReport', () => {
   });
 
   describe('choice checks', () => {
-    it('flags a choice whose inventory check requires an item that is never granted anywhere', () => {
+    it('flags a choice whose inventory check requires an item that is never granted anywhere', async () => {
       const input = baseInput();
       input.scenes.push({
         id: 'end',
@@ -120,12 +120,12 @@ describe('buildStoryAnalysisReport', () => {
         triggerState: null,
       });
 
-      const keys = buildStoryAnalysisReport(input).map((f) => f.messageKey);
+      const keys = (await buildStoryAnalysisReport(input)).map((f) => f.messageKey);
 
       expect(keys).toContain('analysis_choice_never_satisfiable');
     });
 
-    it('flags a scene-count check requiring more than one visit when there is no cycle to revisit it', () => {
+    it('flags a scene-count check requiring more than one visit when there is no cycle to revisit it', async () => {
       const input = baseInput();
       input.scenes.push(
         { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false },
@@ -149,12 +149,12 @@ describe('buildStoryAnalysisReport', () => {
         triggerState: null,
       });
 
-      const keys = buildStoryAnalysisReport(input).map((f) => f.messageKey);
+      const keys = (await buildStoryAnalysisReport(input)).map((f) => f.messageKey);
 
       expect(keys).toContain('analysis_choice_never_satisfiable');
     });
 
-    it('does not flag a scene-count check requiring more than one visit when the scene is revisitable via a cycle', () => {
+    it('does not flag a scene-count check requiring more than one visit when the scene is revisitable via a cycle', async () => {
       const input = baseInput();
       input.scenes.push(
         { id: 'target', name: 'Target', locationId: 'location', isStart: false, isFinish: false },
@@ -179,12 +179,12 @@ describe('buildStoryAnalysisReport', () => {
         triggerState: null,
       });
 
-      const keys = buildStoryAnalysisReport(input).map((f) => f.messageKey);
+      const keys = (await buildStoryAnalysisReport(input)).map((f) => f.messageKey);
 
       expect(keys).not.toContain('analysis_choice_never_satisfiable');
     });
 
-    it('is satisfiable when an OR group has at least one check that can pass', () => {
+    it('is satisfiable when an OR group has at least one check that can pass', async () => {
       const input = baseInput();
       input.scenes.push({
         id: 'end',
@@ -222,12 +222,12 @@ describe('buildStoryAnalysisReport', () => {
         },
       );
 
-      const keys = buildStoryAnalysisReport(input).map((f) => f.messageKey);
+      const keys = (await buildStoryAnalysisReport(input)).map((f) => f.messageKey);
 
       expect(keys).not.toContain('analysis_choice_never_satisfiable');
     });
 
-    it('cascades to scene reachability: a scene only reachable via a never-satisfiable choice is reported unreachable', () => {
+    it('cascades to scene reachability: a scene only reachable via a never-satisfiable choice is reported unreachable', async () => {
       const input = baseInput();
       input.scenes.push({
         id: 'onlyVia',
@@ -251,7 +251,7 @@ describe('buildStoryAnalysisReport', () => {
         triggerState: null,
       });
 
-      const findings = buildStoryAnalysisReport(input);
+      const findings = await buildStoryAnalysisReport(input);
       const keys = findings.map((f) => f.messageKey);
 
       expect(keys).toContain('analysis_choice_never_satisfiable');
@@ -265,7 +265,7 @@ describe('buildStoryAnalysisReport', () => {
       );
     });
 
-    it('cascades through two levels: a choice gated on a scene that is itself only reachable via a never-satisfiable choice', () => {
+    it('cascades through two levels: a choice gated on a scene that is itself only reachable via a never-satisfiable choice', async () => {
       const input = baseInput();
       input.scenes.push(
         { id: 'sceneX', name: 'Scene X', locationId: 'location', isStart: false, isFinish: false },
@@ -314,7 +314,7 @@ describe('buildStoryAnalysisReport', () => {
         triggerState: null,
       });
 
-      const findings = buildStoryAnalysisReport(input);
+      const findings = await buildStoryAnalysisReport(input);
       const keys = findings.map((f) => f.messageKey);
       const neverSatisfiableChoiceIds = findings
         .filter((f) => f.messageKey === 'analysis_choice_never_satisfiable')

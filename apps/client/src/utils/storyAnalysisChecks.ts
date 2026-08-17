@@ -127,27 +127,76 @@ export interface StoryAnalysisInput {
   attributeValues: AnalysisAttributeValue[];
 }
 
-export function buildStoryAnalysisReport(input: StoryAnalysisInput): StoryAnalysisFinding[] {
-  const { findings: satisfiabilityFindings, unsatisfiableChoiceIds } =
-    input.storyType === 'branching'
-      ? checkChoiceSatisfiability(input)
-      : { findings: [], unsatisfiableChoiceIds: new Set<string>() };
+export interface StoryAnalysisProgress {
+  /** 0 a 1. */
+  fraction: number;
+}
 
+export interface RunStoryAnalysisOptions {
+  onProgress?: (progress: StoryAnalysisProgress) => void;
+  signal?: AbortSignal;
+}
+
+export class StoryAnalysisCancelledError extends Error {
+  constructor() {
+    super('Story analysis was cancelled.');
+    this.name = 'StoryAnalysisCancelledError';
+  }
+}
+
+/** Devolve o controle pro event loop entre pedaços de trabalho pesado, sem depender de Worker
+ *  (não dá pra ter um de verdade em RN mobile sem módulo nativo) nem de outra conexão de DB
+ *  (o driver do drizzle é preso à thread principal) - ver plano da feature. */
+const yieldToEventLoop = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw new StoryAnalysisCancelledError();
+}
+
+/**
+ * Checagens rápidas, O(entidades) - seguras de rodar toda vez que a story muda (ex.: badge do
+ * dashboard). Não inclui alcançabilidade nem satisfazibilidade de Choice: essas duas percorrem o
+ * grafo de Scenes/Choices em rodadas de ponto fixo e ficam caras em histórias ramificadas
+ * grandes, então só rodam sob demanda via `buildStoryAnalysisReport`.
+ */
+export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   return [
     ...checkCharacters(input),
     ...checkLocations(input),
     ...checkItems(input),
     ...checkTags(input),
-    // Alcançabilidade e integridade de Choice só fazem sentido pra histórias ramificadas -
-    // uma história linear não usa Choice, as Scenes são encadeadas por índice/capítulo.
-    ...(input.storyType === 'branching'
-      ? checkSceneReachability(input, unsatisfiableChoiceIds)
-      : []),
     ...checkSceneFinishWithChoices(input),
+    // Integridade de Choice é O(choices), cabe aqui mesmo sendo "só ramificada" - dangling
+    // references são baratas de achar, diferente de alcançabilidade/satisfazibilidade.
     ...(input.storyType === 'branching' ? checkChoices(input) : []),
-    ...satisfiabilityFindings,
     ...checkStorySchema(input),
   ];
+}
+
+/**
+ * Relatório completo: checagens rápidas + alcançabilidade/satisfazibilidade (que fazem sentido
+ * só pra histórias ramificadas). A parte pesada (`checkChoiceSatisfiability`) cede o controle ao
+ * event loop entre rodadas do ponto fixo e reporta progresso, então não trava a UI mesmo em
+ * histórias grandes - ver plano da feature em `StoryAnalysisScreen.tsx`.
+ */
+export async function buildStoryAnalysisReport(
+  input: StoryAnalysisInput,
+  options: RunStoryAnalysisOptions = {},
+): Promise<StoryAnalysisFinding[]> {
+  const cheapFindings = buildCheapStoryAnalysisFindings(input);
+
+  if (input.storyType !== 'branching') {
+    options.onProgress?.({ fraction: 1 });
+    return cheapFindings;
+  }
+
+  const { findings: satisfiabilityFindings, unsatisfiableChoiceIds } =
+    await checkChoiceSatisfiability(input, options);
+  throwIfAborted(options.signal);
+  const reachabilityFindings = checkSceneReachability(input, unsatisfiableChoiceIds);
+  options.onProgress?.({ fraction: 1 });
+
+  return [...cheapFindings, ...reachabilityFindings, ...satisfiabilityFindings];
 }
 
 function checkCharacters(input: StoryAnalysisInput): StoryAnalysisFinding[] {
@@ -327,10 +376,13 @@ function checkSceneFinishWithChoices(input: StoryAnalysisInput): StoryAnalysisFi
  * cresce (nunca remove uma Choice já reprovada), o que garante parada em no máximo
  * `choices.length` rodadas mesmo se um check em modo `block` "melhorasse" com menos alcance.
  */
-function checkChoiceSatisfiability(input: StoryAnalysisInput): {
+async function checkChoiceSatisfiability(
+  input: StoryAnalysisInput,
+  { onProgress, signal }: RunStoryAnalysisOptions,
+): Promise<{
   findings: StoryAnalysisFinding[];
   unsatisfiableChoiceIds: Set<string>;
-} {
+}> {
   const sceneIds = new Set(input.scenes.map((s) => s.id));
   const startIds = input.scenes.filter((s) => s.isStart).map((s) => s.id);
   const choiceById = new Map(input.choices.map((c) => [c.id, c]));
@@ -354,6 +406,7 @@ function checkChoiceSatisfiability(input: StoryAnalysisInput): {
   let iterations = 0;
 
   while (changed && iterations <= maxIterations) {
+    throwIfAborted(signal);
     changed = false;
     iterations++;
 
@@ -463,6 +516,11 @@ function checkChoiceSatisfiability(input: StoryAnalysisInput): {
         changed = true;
       }
     }
+
+    onProgress?.({ fraction: Math.min(iterations / maxIterations, 1) });
+    // Cede o controle ao event loop a cada rodada - cada rodada é O(scenes + choices), então uma
+    // história grande ainda faz vários yields por segundo, mantendo a UI responsiva.
+    await yieldToEventLoop();
   }
 
   const findings = [...unsatisfiableChoiceIds].map((id) =>

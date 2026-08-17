@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Button from '@/src/components/common/controls/Button/Button';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import {
   ScreenError,
@@ -21,12 +22,19 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
+import {
+  StoryAnalysisCancelledError,
+  StoryAnalysisCategory,
+  StoryAnalysisFinding,
+} from '../../utils/storyAnalysisChecks';
 
 /**
  * Relatório de análise estrutural: não é busca, é achar o que o escritor dificilmente notaria
- * sozinho (ver `storyAnalysisChecks.ts`). Recarrega ao focar - a pessoa normalmente chega aqui,
- * corrige um problema, volta e quer ver o relatório atualizado sem precisar recarregar à mão.
+ * sozinho (ver `storyAnalysisChecks.ts`). As checagens rápidas recarregam ao focar - a pessoa
+ * normalmente chega aqui, corrige um problema, volta e quer ver o relatório atualizado sem
+ * precisar recarregar à mão. Alcançabilidade/satisfazibilidade de Choice (as caras, que percorrem
+ * o grafo inteiro em rodadas de ponto fixo) só rodam sob demanda pelo botão: rodar isso a cada
+ * foco de tela travaria a UI em histórias ramificadas grandes.
  */
 
 type StoryAnalysisNavigationProp = DrawerNavigationProp<MainSystemDrawerParamList, 'StoryAnalysis'>;
@@ -67,26 +75,36 @@ const StoryAnalysisScreen = () => {
   const [report, setReport] = useState<StoryAnalysisReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [progressFraction, setProgressFraction] = useState(0);
+  // Alcançabilidade/satisfazibilidade só valem pra história ramificada - pra história linear, a
+  // checagem rápida já é o relatório completo, sem precisar do botão.
+  const [hasRunFull, setHasRunFull] = useState(selectedStory?.type !== 'branching');
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const loadReport = useCallback(async () => {
+  const loadCheapReport = useCallback(async () => {
     if (!storyId) return;
     try {
       setLoading(true);
       setError(null);
-      const result = await createStoryAnalysisService(drizzleDb).analyzeStory(storyId);
+      const result = await createStoryAnalysisService(drizzleDb).analyzeStoryCheap(storyId);
       setReport(result);
+      setHasRunFull(selectedStory?.type !== 'branching');
     } catch (loadError) {
       console.error('StoryAnalysisScreen: failed to analyze story.', loadError);
       setError(t('failed_to_load_analysis'));
     } finally {
       setLoading(false);
     }
-  }, [drizzleDb, storyId, t]);
+  }, [drizzleDb, storyId, selectedStory?.type, t]);
 
   useFocusEffect(
     useCallback(() => {
-      loadReport();
-    }, [loadReport]),
+      loadCheapReport();
+      // Cancela a análise pesada em andamento ao sair da tela - não faz sentido continuar
+      // rodando em background depois que ninguém mais está vendo o progresso.
+      return () => abortControllerRef.current?.abort();
+    }, [loadCheapReport]),
   );
 
   useFocusEffect(
@@ -95,6 +113,37 @@ const StoryAnalysisScreen = () => {
       setDocumentTitle(t('story_analysis_title'));
     }, [navigation, t]),
   );
+
+  const runFullAnalysis = useCallback(async () => {
+    if (!storyId || analyzing) return;
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    setAnalyzing(true);
+    setProgressFraction(0);
+    setError(null);
+    try {
+      const result = await createStoryAnalysisService(drizzleDb).analyzeStoryFull(storyId, {
+        signal: abortController.signal,
+        onProgress: ({ fraction }) => setProgressFraction(fraction),
+      });
+      setReport(result);
+      setHasRunFull(true);
+    } catch (runError) {
+      if (runError instanceof StoryAnalysisCancelledError) {
+        setError(t('story_analysis_cancelled'));
+      } else {
+        console.error('StoryAnalysisScreen: failed to run full analysis.', runError);
+        setError(t('failed_to_load_analysis'));
+      }
+    } finally {
+      abortControllerRef.current = null;
+      setAnalyzing(false);
+    }
+  }, [analyzing, drizzleDb, storyId, t]);
+
+  const cancelFullAnalysis = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
 
   const findingsByCategory = useMemo(() => {
     const grouped = new Map<StoryAnalysisCategory, StoryAnalysisFinding[]>();
@@ -120,6 +169,41 @@ const StoryAnalysisScreen = () => {
     subtitle: {
       color: colors.textSecondary,
       marginBottom: 16,
+    },
+    analysisCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: 16,
+      marginBottom: 20,
+    },
+    analysisHint: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      marginBottom: 12,
+      lineHeight: 18,
+    },
+    progressRow: {
+      marginBottom: 12,
+    },
+    progressLabel: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      marginBottom: 6,
+    },
+    progressTrack: {
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.border,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      borderRadius: 4,
+      backgroundColor: colors.primary,
+    },
+    cancelButton: {
+      backgroundColor: colors.error,
+      marginTop: 4,
     },
     findingRow: {
       flexDirection: 'row',
@@ -162,18 +246,52 @@ const StoryAnalysisScreen = () => {
     return <ScreenLoading padded message={t('loading_analysis')} />;
   }
 
-  if (error) {
+  if (error && !report) {
     return <ScreenError padded message={error} onGoBack={() => navigation.goBack()} />;
   }
 
-  if (!report || report.findings.length === 0) {
+  const progressPercent = Math.round(progressFraction * 100);
+
+  const analysisCard = (
+    <View style={styles.analysisCard}>
+      <Text style={styles.analysisHint}>{t('story_analysis_run_hint')}</Text>
+      {analyzing && (
+        <View style={styles.progressRow}>
+          <Text style={styles.progressLabel}>
+            {t('story_analysis_progress', { percent: progressPercent })}
+          </Text>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+          </View>
+        </View>
+      )}
+      {!!error && report && (
+        <Text style={[styles.analysisHint, { color: colors.error }]}>{error}</Text>
+      )}
+      {analyzing ? (
+        <Button onPress={cancelFullAnalysis} style={styles.cancelButton} testID="cancel-analysis">
+          {t('cancel')}
+        </Button>
+      ) : (
+        <Button onPress={runFullAnalysis} disabled={!storyId} testID="run-full-analysis">
+          {t('story_analysis_run_button')}
+        </Button>
+      )}
+    </View>
+  );
+
+  if (!report || (report.findings.length === 0 && hasRunFull)) {
     return (
-      <View style={commonContainerStyles.container}>
+      <ScrollView
+        style={commonContainerStyles.container}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {analysisCard}
         <View style={styles.emptyContainer}>
           <Ionicons name="checkmark-circle-outline" size={54} color={colors.primary} />
           <Text style={styles.emptyText}>{t('analysis_no_issues_found')}</Text>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 
@@ -182,9 +300,13 @@ const StoryAnalysisScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollContent}
     >
-      <Text style={styles.subtitle}>
-        {t('story_analysis_subtitle', { count: report.findings.length })}
-      </Text>
+      {analysisCard}
+
+      {(hasRunFull || report.findings.length > 0) && (
+        <Text style={styles.subtitle}>
+          {t('story_analysis_subtitle', { count: report.findings.length })}
+        </Text>
+      )}
 
       {CATEGORY_ORDER.map((category) => {
         const findings = findingsByCategory.get(category);

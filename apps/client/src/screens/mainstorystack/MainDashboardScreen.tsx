@@ -162,7 +162,7 @@ const MainDashboardScreen = () => {
       return;
     }
     try {
-      const report = await createStoryAnalysisService(db).analyzeStory(selectedStory.id);
+      const report = await createStoryAnalysisService(db).analyzeStoryCheap(selectedStory.id);
       setAnalysisIssueCount(report.findings.length);
     } catch (error) {
       console.error('Error running story analysis:', error);

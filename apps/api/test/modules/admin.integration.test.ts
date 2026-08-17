@@ -24,7 +24,7 @@ describe('requireAdmin gate', () => {
     ['PUT', '/admin/api/users/qualquer', { bio: 'x' }],
     ['DELETE', '/admin/api/users/qualquer'],
     ['POST', '/admin/api/users/qualquer/restore'],
-    ['POST', '/admin/api/users/qualquer/reset-password'],
+    ['POST', '/admin/api/users/qualquer/regenerate-recovery-codes'],
     ['GET', '/admin/api/tiers'],
     ['POST', '/admin/api/tiers', { name: 'Pro' }],
     ['GET', '/admin/api/registration-settings'],
@@ -161,18 +161,29 @@ describe('admin user lifecycle', () => {
     expect(restored.data.isDeleted).toBe(false);
   });
 
-  it('resets a password to a value the account can log in with', async () => {
+  it('regenerates recovery codes the account can use to reset its own password', async () => {
     const { status, data } = await request(
       'POST',
-      `/admin/api/users/${comum.userId}/reset-password`,
+      `/admin/api/users/${comum.userId}/regenerate-recovery-codes`,
       {
         token: admin.token,
       },
     );
 
     expect(status).toBe(200);
+    expect(data.recoveryCodes).toHaveLength(8);
+
+    const reset = await request('POST', '/auth/forgot-password', {
+      body: {
+        username: 'ana',
+        recoveryCode: data.recoveryCodes[0],
+        newPassword: 'a-brand-new-password',
+      },
+    });
+    expect(reset.status).toBe(200);
+
     const login = await request('POST', '/auth/login', {
-      body: { username: 'ana', password: data.newPassword },
+      body: { username: 'ana', password: 'a-brand-new-password' },
     });
     expect(login.status).toBe(200);
   });

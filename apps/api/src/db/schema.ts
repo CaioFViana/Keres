@@ -35,4 +35,5 @@ export * from './schema/tables/tagRelations';
 export * from './schema/tables/tags';
 export * from './schema/tables/tiers';
 export * from './schema/tables/users';
+export * from './schema/tables/userRecoveryCodes';
 export * from './schema/tables/worldRules';

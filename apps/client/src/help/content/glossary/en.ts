@@ -26,6 +26,10 @@ const page: HelpPage = {
         ['Marker', 'A name recording that something happened in reader state.'],
         ['Tag', 'A short word that groups elements.'],
         ['Collaborator', 'A person with owner, writer, or reader access to a synchronized story.'],
+        [
+          'Recovery code',
+          'A one-time code shown when you create an account on a server, used to set a new password if you forget it.',
+        ],
       ],
     },
     { type: 'heading', level: 2, text: 'How to do it' },

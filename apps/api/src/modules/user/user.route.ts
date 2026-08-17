@@ -1,4 +1,5 @@
 import {
+  RegenerateRecoveryCodesSchema,
   UpdateUserPasswordSchema,
   UpdateUserProfileSchema,
   UpdateUserTagSchema,
@@ -234,6 +235,52 @@ export const userRoutes = new Elysia()
         summary: 'Change your own password',
         description:
           "Requires the current password. Self-service - distinct from the admin panel's password reset, which does not require it.",
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .put(
+    '/recovery-codes',
+    async ({ body, set, user }) => {
+      if (!user) {
+        set.status = 401;
+        return { message: 'Unauthorized' };
+      }
+
+      const parsed = RegenerateRecoveryCodesSchema.safeParse(body);
+      if (!parsed.success) {
+        set.status = 400;
+        return { message: parsed.error.issues[0]?.message || 'Invalid request' };
+      }
+
+      try {
+        const recoveryCodes = await userService.regenerateRecoveryCodes(
+          user.userId,
+          parsed.data.currentPassword,
+        );
+        return { recoveryCodes };
+      } catch (error) {
+        if (error instanceof InvalidCurrentPasswordError) {
+          set.status = 401;
+          return { message: error.message };
+        }
+        throw error;
+      }
+    },
+    {
+      body: t.Object({
+        currentPassword: t.String(),
+      }),
+      response: {
+        200: t.Object({ recoveryCodes: t.Array(t.String()) }),
+        400: t.Object({ message: t.String() }),
+        401: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: 'Regenerate your recovery codes',
+        description:
+          'Requires the current password. Invalidates all previous recovery codes and returns a fresh batch - shown only in this response, store them.',
         tags: ['User'],
         security: [{ bearerAuth: [] }],
       },

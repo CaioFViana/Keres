@@ -29,6 +29,10 @@ const page: HelpPage = {
           'Colaborador',
           'Uma pessoa com acesso de dono, escritor ou leitor a uma história sincronizada.',
         ],
+        [
+          'Código de recuperação',
+          'Um código de uso único mostrado ao criar uma conta em um servidor, usado para definir uma nova senha caso você a esqueça.',
+        ],
       ],
     },
     { type: 'heading', level: 2, text: 'Como fazer' },

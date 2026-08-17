@@ -65,20 +65,22 @@ describe('AdminUserApiService', () => {
     expect(mocks.delete).toHaveBeenCalledWith('/admin/api/users/user-1');
   });
 
-  it('restores and resets password through their own sub-resources', async () => {
+  it('restores and regenerates recovery codes through their own sub-resources', async () => {
     await AdminUserApiService.restore('user-1');
-    await AdminUserApiService.resetPassword('user-1');
+    await AdminUserApiService.regenerateRecoveryCodes('user-1');
 
     expect(mocks.post).toHaveBeenNthCalledWith(1, '/admin/api/users/user-1/restore');
-    expect(mocks.post).toHaveBeenNthCalledWith(2, '/admin/api/users/user-1/reset-password');
+    expect(mocks.post).toHaveBeenNthCalledWith(
+      2,
+      '/admin/api/users/user-1/regenerate-recovery-codes',
+    );
   });
 
-  it('returns the generated password alongside the user after a reset', async () => {
-    mocks.post.mockResolvedValue({ data: { user: { id: 'user-1' }, newPassword: 'abc123' } });
+  it('returns the fresh recovery codes after regenerating', async () => {
+    mocks.post.mockResolvedValue({ data: { recoveryCodes: ['AAAAA-11111', 'BBBBB-22222'] } });
 
-    await expect(AdminUserApiService.resetPassword('user-1')).resolves.toEqual({
-      user: { id: 'user-1' },
-      newPassword: 'abc123',
+    await expect(AdminUserApiService.regenerateRecoveryCodes('user-1')).resolves.toEqual({
+      recoveryCodes: ['AAAAA-11111', 'BBBBB-22222'],
     });
   });
 

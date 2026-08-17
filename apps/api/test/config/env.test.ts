@@ -29,7 +29,6 @@ const BASE_ENV: Record<string, string> = {
   MEDIA_MAX_BYTES: '',
   ROOT_ADMIN_USERNAME: '',
   ROOT_ADMIN_PASSWORD: '',
-  DEFAULT_PASSWORD_RESET_VALUE: '',
 };
 
 /** Campos com `.default()` puro: string vazia é inválida, então precisam ser removidos. */
@@ -44,7 +43,6 @@ const DEFAULTED_KEYS = [
   'MEDIA_MAX_BYTES',
   'ROOT_ADMIN_USERNAME',
   'ROOT_ADMIN_PASSWORD',
-  'DEFAULT_PASSWORD_RESET_VALUE',
 ];
 
 async function loadEnv(overrides: Record<string, string | undefined> = {}) {
@@ -83,7 +81,6 @@ describe('env', () => {
       MEDIA_S3_PREFIX: 'keres',
       MEDIA_S3_FORCE_PATH_STYLE: false,
       MEDIA_MAX_BYTES: 50 * 1024 * 1024,
-      DEFAULT_PASSWORD_RESET_VALUE: 'abc123',
     });
   });
 

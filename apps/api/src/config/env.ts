@@ -64,12 +64,6 @@ const envSchema = z.object({
    */
   ROOT_ADMIN_USERNAME: z.string().min(1).optional(),
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),
-  /**
-   * Valor para o qual o painel admin reseta a senha de um usuário (botão "Reset password").
-   * Sem validação de tamanho mínimo de propósito: é uma escolha do operador via env, não uma
-   * senha que um usuário está cadastrando - o schema não deveria opinar sobre ela.
-   */
-  DEFAULT_PASSWORD_RESET_VALUE: z.string().min(1).optional().default('abc123'),
 });
 
 export const env = envSchema.parse(process.env);

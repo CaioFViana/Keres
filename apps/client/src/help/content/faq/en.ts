@@ -42,6 +42,11 @@ const page: HelpPage = {
           answer:
             'Compare Mine and Server, choose per field when possible, or postpone it to decide later.',
         },
+        {
+          question: 'What if I forget my password?',
+          answer:
+            'Use a recovery code you saved when you created the account: tap Forgot your password? when signing in on that server.',
+        },
       ],
     },
     { type: 'heading', level: 2, text: 'How to do it' },

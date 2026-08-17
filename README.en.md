@@ -68,7 +68,6 @@ bun install --frozen-lockfile
    JWT_SECRET_REFRESH=replace-with-another-secret-containing-at-least-32-characters
    ROOT_ADMIN_USERNAME=root
    ROOT_ADMIN_PASSWORD=replace-with-a-password-containing-8-or-more-characters
-   DEFAULT_PASSWORD_RESET_VALUE=replace-this-temporary-password
    ```
 
    `ROOT_ADMIN_*` is optional. When defined, the user is created or reconciled as an administrator on every startup; the configured password is also reapplied.
@@ -179,7 +178,6 @@ JWT_SECRET=generate-a-random-secret-containing-at-least-32-characters
 JWT_SECRET_REFRESH=generate-another-independent-secret-containing-at-least-32-characters
 ROOT_ADMIN_USERNAME=root
 ROOT_ADMIN_PASSWORD=generate-a-strong-administrator-password
-DEFAULT_PASSWORD_RESET_VALUE=generate-a-strong-temporary-password
 MEDIA_MAX_BYTES=52428800
 ```
 

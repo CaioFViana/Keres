@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(),
   softDelete: vi.fn(),
   restoreUser: vi.fn(),
-  resetPassword: vi.fn(),
+  regenerateRecoveryCodes: vi.fn(),
   listTiers: vi.fn(),
   createTier: vi.fn(),
   updateTier: vi.fn(),
@@ -34,7 +34,7 @@ vi.mock('../../src/api/AdminUserApiService', () => ({
     update: mocks.updateUser,
     softDelete: mocks.softDelete,
     restore: mocks.restoreUser,
-    resetPassword: mocks.resetPassword,
+    regenerateRecoveryCodes: mocks.regenerateRecoveryCodes,
   },
 }));
 vi.mock('../../src/api/TierApiService', () => ({

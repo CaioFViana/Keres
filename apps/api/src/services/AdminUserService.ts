@@ -6,6 +6,7 @@ import { env } from '../config/env';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { isUniqueViolation } from '../utils/errors';
+import { recoveryCodeService } from './RecoveryCodeService';
 
 export class UsernameAlreadyTakenError extends Error {
   constructor() {
@@ -152,7 +153,21 @@ export class AdminUserService {
         throw error;
       }
     }
-    return created!;
+
+    // O admin está criando a conta em nome de outra pessoa - mostrados aqui pra ele
+    // repassar, já que não há e-mail para enviá-los depois (ver auth.route.ts /register,
+    // mesma lógica do lado do autosserviço).
+    const recoveryCodes = await recoveryCodeService.generateCodes(created!.id);
+    return { ...created!, recoveryCodes };
+  }
+
+  /** Sem confirmação da senha atual - o admin age em nome de outra pessoa, não é autosserviço. */
+  async regenerateRecoveryCodes(id: string): Promise<string[]> {
+    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!existing) {
+      throw new AdminUserNotFoundError();
+    }
+    return recoveryCodeService.generateCodes(id);
   }
 
   async update(id: string, patch: AdminUpdateUser) {
@@ -198,29 +213,6 @@ export class AdminUserService {
     const [updated] = await db
       .update(users)
       .set({ isDeleted: false, deletedAt: null, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning(ADMIN_USER_RETURNING);
-    return updated;
-  }
-
-  /**
-   * Reseta a senha para o valor fixo configurado via `DEFAULT_PASSWORD_RESET_VALUE` - ao
-   * contrário de `UserService.changeOwnPassword`, não exige (nem tem como pedir) a senha
-   * atual, já que é o admin agindo em nome de outra pessoa, não o próprio usuário.
-   */
-  async resetPassword(id: string) {
-    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
-    if (!existing) {
-      throw new AdminUserNotFoundError();
-    }
-    if (this.isRootUsername(existing.username)) {
-      throw new RootAdminProtectedError();
-    }
-
-    const hashedPassword = await bcrypt.hash(env.DEFAULT_PASSWORD_RESET_VALUE, 10);
-    const [updated] = await db
-      .update(users)
-      .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
     return updated;

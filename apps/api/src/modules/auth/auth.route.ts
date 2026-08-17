@@ -1,5 +1,6 @@
 import { bearer } from '@elysiajs/bearer';
 import { jwt } from '@elysiajs/jwt';
+import { ForgotPasswordSchema } from '@keres/shared';
 import * as bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import { Elysia, t } from 'elysia';
@@ -8,6 +9,7 @@ import { env } from '../../config/env';
 import { jwtRefresh } from '../../config/jwt';
 import { db } from '../../db';
 import { users } from '../../db/schema';
+import { InvalidRecoveryCodeError, recoveryCodeService } from '../../services/RecoveryCodeService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { isUniqueViolation } from '../../utils/errors';
 import type { JWTPayload } from '../../index';
@@ -158,6 +160,10 @@ export const authRoutes = new Elysia()
         return { message: 'Failed to create user' };
       }
 
+      // Mostrados só agora, em texto puro - depois disto só o hash de cada um existe (ver
+      // RecoveryCodeService). É a única chance que este usuário tem de salvá-los.
+      const recoveryCodes = await recoveryCodeService.generateCodes(newUser.id);
+
       // Sign JWT with userId and username as per the schema defined in index.ts
       const accessToken = await jwt.sign({ userId: newUser.id, username: newUser.username });
       const refreshToken = await jwtRefresh.sign({
@@ -187,6 +193,7 @@ export const authRoutes = new Elysia()
         userId: newUser.id,
         username: newUser.username,
         tag: newUser.tag,
+        recoveryCodes,
       };
     },
     {
@@ -196,6 +203,65 @@ export const authRoutes = new Elysia()
       }),
       detail: {
         summary: 'User registration',
+        description:
+          'Also issues a batch of one-time recovery codes (`recoveryCodes`), returned only in this response - store them, they cannot be retrieved again later.',
+        tags: ['Auth'],
+      },
+    },
+  )
+  .post(
+    '/forgot-password',
+    async ({ jwt, jwtRefresh, body, set, cookie }) => {
+      const parsedBody = ForgotPasswordSchema.safeParse(body);
+      if (!parsedBody.success) {
+        set.status = 400;
+        return { message: parsedBody.error.issues[0]?.message || 'Invalid request' };
+      }
+      const { username, recoveryCode, newPassword } = parsedBody.data;
+
+      let user: { id: string; username: string; tag: string };
+      try {
+        user = await recoveryCodeService.redeemCode(username, recoveryCode, newPassword);
+      } catch (error) {
+        if (error instanceof InvalidRecoveryCodeError) {
+          set.status = 401;
+          return { message: error.message };
+        }
+        throw error;
+      }
+
+      // Mesma resposta de /login: a pessoa acabou de provar quem é tão bem quanto uma senha
+      // provaria, não faz sentido pedir pra ela logar de novo em seguida.
+      const accessToken = await jwt.sign({ userId: user.id, username: user.username });
+      const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username });
+
+      cookie['access_token'].set({
+        value: accessToken,
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 3600,
+      });
+      cookie['refresh_token'].set({
+        value: refreshToken,
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 7 * 24 * 3600,
+      });
+
+      return { accessToken, refreshToken, userId: user.id, username: user.username, tag: user.tag };
+    },
+    {
+      body: t.Object({
+        username: t.String(),
+        recoveryCode: t.String(),
+        newPassword: t.String(),
+      }),
+      detail: {
+        summary: 'Reset a forgotten password using a recovery code',
+        description:
+          'Consumes one unused recovery code (issued at registration or via regeneration) and sets a new password. Logs the user in on success, same response shape as /login.',
         tags: ['Auth'],
       },
     },

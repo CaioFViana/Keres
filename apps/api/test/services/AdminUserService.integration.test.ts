@@ -1,6 +1,4 @@
-import * as bcrypt from 'bcrypt';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
 import {
   AdminUserNotFoundError,
   AdminUserService,
@@ -49,7 +47,7 @@ describe('AdminUserService integration', () => {
     expect(await service.getById(member.id)).toMatchObject({ username: 'member', isAdmin: false });
   });
 
-  it('updates, soft-deletes, restores, and resets an existing account password', async () => {
+  it('updates, soft-deletes, restores an existing account, and regenerates its recovery codes', async () => {
     const service = new AdminUserService();
     const created = await service.create({
       username: 'member',
@@ -57,6 +55,7 @@ describe('AdminUserService integration', () => {
       isAdmin: false,
       tierId: null,
     });
+    expect(created.recoveryCodes).toHaveLength(8);
 
     expect(await service.update(created.id, { bio: 'Narradora', isAdmin: true })).toMatchObject({
       bio: 'Narradora',
@@ -64,11 +63,11 @@ describe('AdminUserService integration', () => {
     });
     expect(await service.softDelete(created.id)).toMatchObject({ isDeleted: true });
     expect(await service.restore(created.id)).toMatchObject({ isDeleted: false, deletedAt: null });
-    await service.resetPassword(created.id);
-    const stored = await db.query.users.findFirst({
-      where: (fields, { eq }) => eq(fields.id, created.id),
-    });
-    expect(await bcrypt.compare('abc123', stored!.password)).toBe(true);
+
+    const regenerated = await service.regenerateRecoveryCodes(created.id);
+    expect(regenerated).toHaveLength(8);
+    // Novo lote, sem sobreposição com o do create() - o anterior foi invalidado.
+    expect(regenerated.some((code) => created.recoveryCodes.includes(code))).toBe(false);
   });
 
   it('returns a domain error when an administrative operation targets no account', async () => {
@@ -79,6 +78,8 @@ describe('AdminUserService integration', () => {
     );
     await expect(service.softDelete(absentId)).rejects.toBeInstanceOf(AdminUserNotFoundError);
     await expect(service.restore(absentId)).rejects.toBeInstanceOf(AdminUserNotFoundError);
-    await expect(service.resetPassword(absentId)).rejects.toBeInstanceOf(AdminUserNotFoundError);
+    await expect(service.regenerateRecoveryCodes(absentId)).rejects.toBeInstanceOf(
+      AdminUserNotFoundError,
+    );
   });
 });

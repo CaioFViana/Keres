@@ -31,6 +31,7 @@ export * from './schemas/AttributeValueSchemas';
 export * from './schemas/SyncSchemas';
 export * from './schemas/AdminRecoverySchemas';
 export * from './schemas/AdminUserSchemas';
+export * from './schemas/AuthSchemas';
 export * from './schemas/RegistrationSettingsSchemas';
 export * from './schemas/TierSchemas';
 export * from './schemas/FullStorySchemas';

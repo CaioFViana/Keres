@@ -26,7 +26,7 @@ export const AdminUserApiService = {
     const { data } = await apiClient.get(`/admin/api/users/${id}`);
     return data;
   },
-  async create(input: AdminCreateUser): Promise<AdminUserInfo> {
+  async create(input: AdminCreateUser): Promise<AdminUserInfo & { recoveryCodes: string[] }> {
     const { data } = await apiClient.post('/admin/api/users', input);
     return data;
   },
@@ -42,8 +42,8 @@ export const AdminUserApiService = {
     const { data } = await apiClient.post(`/admin/api/users/${id}/restore`);
     return data;
   },
-  async resetPassword(id: string): Promise<{ user: AdminUserInfo; newPassword: string }> {
-    const { data } = await apiClient.post(`/admin/api/users/${id}/reset-password`);
+  async regenerateRecoveryCodes(id: string): Promise<{ recoveryCodes: string[] }> {
+    const { data } = await apiClient.post(`/admin/api/users/${id}/regenerate-recovery-codes`);
     return data;
   },
 };

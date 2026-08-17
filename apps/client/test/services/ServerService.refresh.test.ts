@@ -18,6 +18,7 @@ import type { ServerSelect } from '../../src/db/schema';
 import { authTokenManager } from '../../src/services/AuthTokenManager';
 import { createServerService } from '../../src/services/ServerService';
 import { isOfflineError } from '../../src/services/apiClient';
+import { useConnectivityStore } from '../../src/state/connectivityStore';
 import { useNotificationStore } from '../../src/state/notificationStore';
 import { isJwtExpired } from '../../src/utils/jwtUtils';
 
@@ -34,6 +35,7 @@ let service: ReturnType<typeof createServerService>;
 beforeEach(() => {
   jest.clearAllMocks();
   mockGetNotificationState.mockReturnValue({ showNotification: mockShowNotification });
+  useConnectivityStore.getState().reset();
   service = createServerService({} as never);
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
@@ -93,6 +95,23 @@ describe('ServerService.refreshServerToken', () => {
     mockIsJwtExpired.mockReturnValue(true);
     mockRefreshAccessToken.mockRejectedValue(offline);
     mockIsOfflineError.mockReturnValue(true);
+
+    await expect(service.refreshServerToken(server)).resolves.toBe(server);
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('does not report "refresh failed" when the server is already known unreachable', async () => {
+    // AuthTokenManager.refreshAccessToken swallows an offline failure into a plain `null`
+    // return (see its own isOfflineError branch) - the only way refreshServerToken can
+    // still tell "offline" from "credentials rejected" apart is by checking connectivityStore,
+    // which the request's own interceptor should already have updated before returning.
+    useConnectivityStore.getState().reportUnreachable(server.id, server.name);
+    mockShowNotification.mockClear(); // Clear the "server_unreachable" call from the line above.
+
+    mockGetTokens.mockResolvedValue({ accessToken: 'expired', refreshToken: 'refresh' });
+    mockIsJwtExpired.mockReturnValue(true);
+    mockRefreshAccessToken.mockResolvedValue(null);
 
     await expect(service.refreshServerToken(server)).resolves.toBe(server);
 

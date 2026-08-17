@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import { friendships, ServerInsert, ServerSelect, servers, stories } from '../db/schema';
+import { useConnectivityStore } from '../state/connectivityStore';
 import { useNotificationStore } from '../state/notificationStore';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -130,6 +131,14 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         );
 
         if (!refreshedTokens) {
+          // `refreshAccessToken` itself swallows an offline failure into this same `null`
+          // return (it can't tell "unreachable" from "credentials rejected" apart from in
+          // here) - the request's own interceptor already reported the server unreachable
+          // to `connectivityStore` before returning, so that's the signal to tell them apart.
+          if (useConnectivityStore.getState().isOffline(server.id)) {
+            console.log(`Server ${server.name} is unreachable; deferring token refresh.`);
+            return server;
+          }
           const message = `Token refresh failed for server ${server.name}. Please re-authenticate.`;
           console.log(message);
           showNotification(message, 'error');

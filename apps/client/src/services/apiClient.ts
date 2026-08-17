@@ -53,6 +53,10 @@ export interface KeresAxiosInstance extends AxiosInstance {
   setActiveServer(server: ServerSelect | null): void; // New method
 }
 
+/** Marca por requisição que impede o ciclo de renovação de token de reentrar para sempre - ver
+ *  uso no interceptor de resposta. */
+type RetriableRequestConfig = InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean };
+
 // There is only ever one token refresh strategy for the whole app, so this can
 // safely stay a single shared instance (it's stateless - it takes a serverId
 // per call rather than holding "current" state).
@@ -210,8 +214,18 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
       }
 
       if (error.response?.status === 401 && tokenProvider && originalRequest && currentServer) {
+        const retriableRequest = originalRequest as RetriableRequestConfig;
         // If it's a 401 and not a refresh token request itself
-        if (!originalRequest.url?.includes('/auth/refresh')) {
+        if (
+          !retriableRequest.url?.includes('/auth/refresh') &&
+          !retriableRequest._retriedAfterRefresh
+        ) {
+          // Um 401 depois de já termos renovado o token e reenviado esta mesma requisição não é
+          // token expirado - é o servidor recusando o próprio conteúdo da requisição (ex.: senha
+          // atual errada em PUT /user/password ou /user/recovery-codes). Sem esta marca, cada
+          // reenvio gera outro 401, que dispara outra renovação (o refresh token continua válido)
+          // e reenvia de novo - um loop infinito em vez de deixar o erro chegar até quem chamou.
+          retriableRequest._retriedAfterRefresh = true;
           const serverId = currentServer.id;
           const refreshState = getRefreshState(serverId);
 

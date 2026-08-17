@@ -19,8 +19,9 @@ export function UserFormPage() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [resetPasswordMessage, setResetPasswordMessage] = useState<string | null>(null);
+  const [regeneratingCodes, setRegeneratingCodes] = useState(false);
+  /** Mostrados só uma vez - depois disto só o hash de cada um existe no servidor. */
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 
   useEffect(() => {
     TierApiService.list()
@@ -48,13 +49,17 @@ export function UserFormPage() {
     setError(null);
     try {
       if (isNew) {
-        await AdminUserApiService.create({
+        const created = await AdminUserApiService.create({
           username,
           password,
           tag: tag || undefined,
           isAdmin,
           tierId: tierId || null,
         });
+        // Fica na tela mostrando os códigos em vez de navegar - é a única vez que eles
+        // aparecem em texto puro, e o admin precisa repassá-los pra pessoa (não há e-mail).
+        setRecoveryCodes(created.recoveryCodes);
+        return;
       } else if (id) {
         await AdminUserApiService.update(id, {
           isAdmin,
@@ -71,25 +76,52 @@ export function UserFormPage() {
     }
   };
 
-  const onResetPassword = async () => {
+  const onRegenerateRecoveryCodes = async () => {
     if (!id) return;
-    if (!confirm(`Reset ${username}'s password to the server's configured default value?`)) {
+    if (
+      !confirm(
+        `Regenerate ${username}'s recovery codes? All of their previous codes will stop working.`,
+      )
+    ) {
       return;
     }
-    setResettingPassword(true);
-    setResetPasswordMessage(null);
+    setRegeneratingCodes(true);
     setError(null);
     try {
-      const { newPassword } = await AdminUserApiService.resetPassword(id);
-      setResetPasswordMessage(`Password reset. The user can now log in with: ${newPassword}`);
+      const { recoveryCodes: codes } = await AdminUserApiService.regenerateRecoveryCodes(id);
+      setRecoveryCodes(codes);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Password reset failed.');
+      setError(err instanceof Error ? err.message : 'Failed to regenerate recovery codes.');
     } finally {
-      setResettingPassword(false);
+      setRegeneratingCodes(false);
     }
   };
 
   if (loading) return <p>Loading...</p>;
+
+  if (recoveryCodes) {
+    return (
+      <div>
+        <h1>Recovery codes for {username}</h1>
+        <div className="form-card">
+          <p className="hint">
+            Each code can be used once to reset the password without knowing the current one. Shown
+            only this once - hand them to the user now, they cannot be retrieved again later.
+          </p>
+          <ul>
+            {recoveryCodes.map((code) => (
+              <li key={code} style={{ fontFamily: 'monospace', fontSize: '1.1em' }}>
+                {code}
+              </li>
+            ))}
+          </ul>
+          <button type="button" onClick={() => navigate('/users')}>
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -155,15 +187,14 @@ export function UserFormPage() {
 
       {!isNew && (
         <div className="form-card">
-          <h3>Password</h3>
+          <h3>Locked out of their account?</h3>
           <p className="hint">
-            Resets the password to this server's configured default value. The user is not notified
-            - share the new password with them yourself.
+            Issues a fresh batch of recovery codes and invalidates any old ones. Hand a code to the
+            user - they use it to set their own new password, which you never see.
           </p>
-          <button type="button" onClick={onResetPassword} disabled={resettingPassword}>
-            {resettingPassword ? 'Resetting...' : 'Reset password'}
+          <button type="button" onClick={onRegenerateRecoveryCodes} disabled={regeneratingCodes}>
+            {regeneratingCodes ? 'Regenerating...' : 'Regenerate recovery codes'}
           </button>
-          {resetPasswordMessage && <p className="success-text">{resetPasswordMessage}</p>}
         </div>
       )}
     </div>

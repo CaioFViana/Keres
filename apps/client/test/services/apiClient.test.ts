@@ -377,6 +377,26 @@ describe('token refresh on 401', () => {
 
     await expect(instance.get('/stories')).rejects.toMatchObject({ code: 'SERVER_ERROR_401' });
   });
+
+  it('does not loop forever when the retried request 401s again for a reason unrelated to the token', async () => {
+    // Ex.: PUT /user/password ou /user/recovery-codes com a senha atual errada - o token é
+    // válido (a renovação sempre funciona), mas o servidor recusa o conteúdo da requisição.
+    // Sem a marca de "já reenviada uma vez", cada 401 dispara outra renovação, que teria vida
+    // infinita: refreshAccessToken nunca falha aqui de propósito.
+    updateServerTokenCache(SERVER.id, 'valido', 'refresh-1');
+    const { instance } = buildInstance([
+      { status: 401, data: { message: 'Current password is incorrect.' } },
+      { status: 401, data: { message: 'Current password is incorrect.' } },
+    ]);
+    const provider = tokenProvider();
+    instance.setTokenProvider(provider);
+
+    await expect(
+      instance.put('/user/recovery-codes', { currentPassword: 'wrong' }),
+    ).rejects.toMatchObject({ code: 'SERVER_ERROR_401' });
+
+    expect(provider.refreshAccessToken).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('clearAllServerAuthState', () => {

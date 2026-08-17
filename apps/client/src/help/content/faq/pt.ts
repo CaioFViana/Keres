@@ -42,6 +42,11 @@ const page: HelpPage = {
           answer:
             'Compare Minha e Servidor, escolha por campo quando possível ou adie para decidir depois.',
         },
+        {
+          question: 'E se eu esquecer minha senha?',
+          answer:
+            'Use um código de recuperação que você salvou ao criar a conta: toque em Esqueceu sua senha? ao entrar naquele servidor.',
+        },
       ],
     },
     { type: 'heading', level: 2, text: 'Como fazer' },

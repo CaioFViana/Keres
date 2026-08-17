@@ -72,4 +72,17 @@ describe('server-bound API services', () => {
     expect(mockClient.get).toHaveBeenNthCalledWith(1, '/user/by-tag/ada%2Flovelace');
     expect(mockClient.get).toHaveBeenNthCalledWith(2, '/user/details/me');
   });
+
+  it('regenerates recovery codes with the current password and returns the fresh batch', async () => {
+    mockClient.put.mockResolvedValue({ data: { recoveryCodes: ['AAAAA-11111', 'BBBBB-22222'] } });
+    const service = new UserApiService();
+
+    await expect(service.regenerateRecoveryCodes(server, 'hunter2')).resolves.toEqual([
+      'AAAAA-11111',
+      'BBBBB-22222',
+    ]);
+    expect(mockClient.put).toHaveBeenCalledWith('/user/recovery-codes', {
+      currentPassword: 'hunter2',
+    });
+  });
 });

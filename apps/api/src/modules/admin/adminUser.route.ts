@@ -11,7 +11,6 @@ import {
   RootAdminProtectedError,
   UsernameAlreadyTakenError,
 } from '../../services/AdminUserService';
-import { env } from '../../config/env';
 import { requireAdmin } from '../../utils/adminAuth';
 
 export const adminUserRoutes = new Elysia()
@@ -187,23 +186,16 @@ export const adminUserRoutes = new Elysia()
   )
 
   .post(
-    '/:id/reset-password',
+    '/:id/regenerate-recovery-codes',
     async ({ params, user, set }) => {
       await requireAdmin(user);
 
       try {
-        const updated = await adminUserService.resetPassword(params.id);
-        // Devolve o valor usado (não é segredo - só um admin já autenticado chega aqui, e
-        // quem configurou DEFAULT_PASSWORD_RESET_VALUE já o conhece) para a tela poder
-        // mostrar diretamente "senha resetada para X" em vez do admin ter que ir checar o .env.
-        return { user: updated, newPassword: env.DEFAULT_PASSWORD_RESET_VALUE };
+        const recoveryCodes = await adminUserService.regenerateRecoveryCodes(params.id);
+        return { recoveryCodes };
       } catch (error) {
         if (error instanceof AdminUserNotFoundError) {
           set.status = 404;
-          return { message: error.message };
-        }
-        if (error instanceof RootAdminProtectedError) {
-          set.status = 409;
           return { message: error.message };
         }
         throw error;
@@ -212,9 +204,9 @@ export const adminUserRoutes = new Elysia()
     {
       params: t.Object({ id: t.String() }),
       detail: {
-        summary: "Reset a user's password to the configured default value",
+        summary: "Regenerate a user's recovery codes",
         description:
-          'Sets the password to DEFAULT_PASSWORD_RESET_VALUE, no confirmation of the old password needed (admin action, not self-service).',
+          'Invalidates all previous recovery codes and issues a fresh batch, shown only in this response - no confirmation of the old password needed (admin action, not self-service).',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
       },

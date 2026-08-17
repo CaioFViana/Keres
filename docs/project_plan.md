@@ -259,7 +259,6 @@ JWT_SECRET=seu_segredo_jwt_forte_para_online
 JWT_SECRET_REFRESH="seu_segredo_jwt_forte_para_online_refresh"
 ROOT_ADMIN_USERNAME="root"
 ROOT_ADMIN_PASSWORD="password"
-DEFAULT_PASSWORD_RESET_VALUE="abc123"
 ```
 ---
 

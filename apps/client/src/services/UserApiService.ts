@@ -48,6 +48,13 @@ export class UserApiService {
     await this.clientFor(server).put('/user/password', { currentPassword, newPassword });
   }
 
+  /** Invalidates the current recovery codes on `server` and issues a fresh batch - requires
+   *  the current password, same reasoning as changeOwnPassword. */
+  async regenerateRecoveryCodes(server: ServerSelect, currentPassword: string): Promise<string[]> {
+    const response = await this.clientFor(server).put('/user/recovery-codes', { currentPassword });
+    return response.data.recoveryCodes;
+  }
+
   /** The current user's own profile on `server`, including avatar/bio - `server.idUser` is
    *  this account's own id on that server. */
   async getOwnProfile(server: ServerSelect): Promise<UserPublicInfo | undefined> {

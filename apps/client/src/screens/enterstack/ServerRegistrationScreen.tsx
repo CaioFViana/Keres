@@ -6,10 +6,18 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useDrizzle } from '../../db';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import apiClient from '../../services/apiClient';
+import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
 import { createServerService, ServerHasOwnedStoriesError } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -50,14 +58,18 @@ const ServerRegistrationScreen = () => {
   const serverService = useRef(createServerService(drizzleDb)).current;
   const { setActiveServer } = useUserSettingsStore();
 
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'recover'>('login');
   const [serverAddress, setServerAddress] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState(''); // Password will only be used for registration, not for editing
   const [confirmPassword, setConfirmPassword] = useState(''); // Only used when mode === 'register'
+  const [recoveryCode, setRecoveryCode] = useState(''); // Only used when mode === 'recover'
   const [serverName, setServerName] = useState('');
   const [loading, setLoading] = useState(true); // Changed to true to indicate loading initially
   const [error, setError] = useState<string | null>(null);
+  /** Códigos de recuperação recém-emitidos, mostrados uma única vez antes de sair da tela -
+   *  depois disto só o hash de cada um existe no servidor, não há como recuperá-los de novo. */
+  const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
 
   useEffect(() => {
     const loadServer = async () => {
@@ -136,6 +148,9 @@ const ServerRegistrationScreen = () => {
     let newAccessToken = existingTokens?.accessToken || '';
     let newRefreshToken = existingTokens?.refreshToken || '';
     let tokensChanged = false;
+    // Só existe na resposta de /auth/register - é a única vez que estes códigos aparecem
+    // em texto puro, então a tela precisa deles antes de sair (ver recoveryCodesToShow).
+    let issuedRecoveryCodes: string[] | null = null;
 
     try {
       // 1. Server Check (/kerescheck) - always check if server is reachable
@@ -211,6 +226,9 @@ const ServerRegistrationScreen = () => {
         tokensChanged = true;
         serverUserId = authResponse.data.userId; // Extract the server-provided userId
         serverUserTag = authResponse.data.tag ?? serverUserTag;
+        if (isRegistering && Array.isArray(authResponse.data.recoveryCodes)) {
+          issuedRecoveryCodes = authResponse.data.recoveryCodes;
+        }
       } else {
         // If not re-authenticating, use the existing server's idUser
         serverUserId = existingServer?.idUser || null;
@@ -248,7 +266,12 @@ const ServerRegistrationScreen = () => {
         setActiveServer(savedServer); // Set the active server in Zustand store
         entityEventEmitter.emit('server_connection_changed');
       }
-      navigation.goBack();
+      if (issuedRecoveryCodes) {
+        // Fica na tela mostrando os códigos - só sai quando a pessoa confirmar que salvou.
+        setRecoveryCodesToShow(issuedRecoveryCodes);
+      } else {
+        navigation.goBack();
+      }
     } catch (err) {
       let errorMessage = t('failed_to_save_server'); // New translation key
 
@@ -272,6 +295,75 @@ const ServerRegistrationScreen = () => {
     t,
     serverId,
     mode,
+    setActiveServer,
+  ]);
+
+  /** Restaura o acesso com um recovery code em vez da senha atual - ver plano da feature em
+   *  RecoveryCodeService (apps/api). Só existe pra conexão nova (`!serverId`): editar uma já
+   *  registrada usa o campo "Nova Senha" normal, que não precisa provar identidade de novo. */
+  const handleRecover = useCallback(async () => {
+    if (!serverAddress.trim() || !username.trim() || !recoveryCode.trim()) {
+      AppAlert.alert(t('error'), t('all_fields_required_except_password_for_edit'));
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      AppAlert.alert(t('error'), t('new_password_too_short'));
+      return;
+    }
+    if (password !== confirmPassword) {
+      AppAlert.alert(t('error'), t('passwords_do_not_match'));
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const outcome = await redeemRecoveryCode(serverAddress, username, recoveryCode, password);
+
+      if (!outcome.success) {
+        if (outcome.reason === 'invalid_code') {
+          AppAlert.alert(t('error'), t('recovery_code_invalid'));
+        } else {
+          AppAlert.alert(t('error'), `${t('server_error')}: ${outcome.status}`);
+        }
+        setLoading(false);
+        return;
+      }
+
+      const savedServer = await serverService.createServer({
+        idUser: outcome.result.userId,
+        userName: username,
+        tag: outcome.result.tag,
+        name: serverName || serverAddress,
+        url: serverAddress,
+        lastSyncDate: new Date(),
+      });
+      await authTokenManager.updateTokens(
+        savedServer.id,
+        outcome.result.accessToken,
+        outcome.result.refreshToken,
+      );
+      setActiveServer(savedServer);
+      entityEventEmitter.emit('server_connection_changed');
+      AppAlert.alert(t('success'), t('password_reset_successfully'));
+      navigation.goBack();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : t('failed_to_save_server');
+      setError(errorMessage);
+      AppAlert.alert(t('error'), errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    serverAddress,
+    username,
+    recoveryCode,
+    password,
+    confirmPassword,
+    serverName,
+    serverService,
+    navigation,
+    t,
     setActiveServer,
   ]);
 
@@ -336,6 +428,36 @@ const ServerRegistrationScreen = () => {
     );
   }
 
+  if (recoveryCodesToShow) {
+    return (
+      <KeyboardAwareScreen
+        style={commonContainerStyles.container}
+        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: scrollBottomPadding }]}
+      >
+        <Text style={[styles.title, { color: colors.text }]}>{t('recovery_codes_title')}</Text>
+        <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+          {t('recovery_codes_warning')}
+        </Text>
+        <View style={[styles.recoveryCodesBox, { borderColor: colors.border }]}>
+          {recoveryCodesToShow.map((code) => (
+            <Text key={code} selectable style={[styles.recoveryCode, { color: colors.text }]}>
+              {code}
+            </Text>
+          ))}
+        </View>
+        <Button
+          onPress={() => {
+            setRecoveryCodesToShow(null);
+            navigation.goBack();
+          }}
+          style={styles.registerButton}
+        >
+          {t('recovery_codes_continue_button')}
+        </Button>
+      </KeyboardAwareScreen>
+    );
+  }
+
   return (
     <KeyboardAwareScreen
       style={commonContainerStyles.container}
@@ -348,7 +470,7 @@ const ServerRegistrationScreen = () => {
         {serverId ? t('edit_server_description') : t('register_new_server_description')}
       </Text>
 
-      {!serverId && (
+      {!serverId && mode !== 'recover' && (
         <View style={[styles.modeToggleRow, { borderColor: colors.border }]}>
           <TouchableOpacity
             style={[
@@ -385,6 +507,12 @@ const ServerRegistrationScreen = () => {
         </View>
       )}
 
+      {!serverId && mode === 'recover' && (
+        <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+          {t('recover_account_description')}
+        </Text>
+      )}
+
       <Text style={[styles.label, { color: colors.text }]}>{t('server_address')}</Text>
       <TextInput
         placeholder={t('server_address_placeholder')}
@@ -412,7 +540,7 @@ const ServerRegistrationScreen = () => {
         autoCapitalize="none"
       />
 
-      {!serverId && ( // Only show password field for new registrations
+      {!serverId && (mode === 'login' || mode === 'register') && (
         <>
           <Text style={[styles.label, { color: colors.text }]}>{t('password')}</Text>
           <TextInput
@@ -425,6 +553,14 @@ const ServerRegistrationScreen = () => {
         </>
       )}
 
+      {!serverId && mode === 'login' && (
+        <TouchableOpacity onPress={() => setMode('recover')} style={styles.linkRow}>
+          <Text style={[styles.linkText, { color: colors.primary }]}>
+            {t('forgot_password_link')}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {!serverId && mode === 'register' && (
         <>
           <Text style={[styles.label, { color: colors.text }]}>{t('confirm_new_password')}</Text>
@@ -435,6 +571,41 @@ const ServerRegistrationScreen = () => {
             style={commonInputStyles.input}
             secureTextEntry
           />
+        </>
+      )}
+
+      {!serverId && mode === 'recover' && (
+        <>
+          <Text style={[styles.label, { color: colors.text }]}>{t('recovery_code_label')}</Text>
+          <TextInput
+            placeholder={t('recovery_code_placeholder')}
+            value={recoveryCode}
+            onChangeText={setRecoveryCode}
+            style={commonInputStyles.input}
+            autoCapitalize="characters"
+          />
+
+          <Text style={[styles.label, { color: colors.text }]}>{t('new_password')}</Text>
+          <TextInput
+            placeholder={t('new_password_placeholder')}
+            value={password}
+            onChangeText={setPassword}
+            style={commonInputStyles.input}
+            secureTextEntry
+          />
+
+          <Text style={[styles.label, { color: colors.text }]}>{t('confirm_new_password')}</Text>
+          <TextInput
+            placeholder={t('confirm_new_password_placeholder')}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            style={commonInputStyles.input}
+            secureTextEntry
+          />
+
+          <TouchableOpacity onPress={() => setMode('login')} style={styles.linkRow}>
+            <Text style={[styles.linkText, { color: colors.primary }]}>{t('back_to_login')}</Text>
+          </TouchableOpacity>
         </>
       )}
 
@@ -454,11 +625,17 @@ const ServerRegistrationScreen = () => {
         </>
       )}
 
-      <Button onPress={handleSave} style={styles.registerButton} disabled={loading}>
+      <Button
+        onPress={mode === 'recover' ? handleRecover : handleSave}
+        style={styles.registerButton}
+        disabled={loading}
+      >
         {loading ? (
           <ActivityIndicator color={colors.onPrimary} />
         ) : serverId ? (
           t('update_server')
+        ) : mode === 'recover' ? (
+          t('reset_password_button')
         ) : mode === 'register' ? (
           t('create_account')
         ) : (
@@ -508,6 +685,25 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
+  },
+  linkRow: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  linkText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  recoveryCodesBox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 20,
+  },
+  recoveryCode: {
+    fontSize: 16,
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+    marginBottom: 8,
   },
   modeToggleText: {
     fontSize: 15,

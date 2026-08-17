@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   restoreUser: vi.fn(),
   getUser: vi.fn(),
   updateUser: vi.fn(),
-  resetPassword: vi.fn(),
+  regenerateRecoveryCodes: vi.fn(),
   listTiers: vi.fn(),
   createTier: vi.fn(),
   updateTier: vi.fn(),
@@ -37,7 +37,7 @@ vi.mock('../../src/api/AdminUserApiService', () => ({
     restore: mocks.restoreUser,
     get: mocks.getUser,
     update: mocks.updateUser,
-    resetPassword: mocks.resetPassword,
+    regenerateRecoveryCodes: mocks.regenerateRecoveryCodes,
   },
 }));
 vi.mock('../../src/api/TierApiService', () => ({
@@ -66,6 +66,7 @@ const withRouter = (page: ReactElement, route = '/') =>
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.listUsers.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
+  mocks.createUser.mockResolvedValue({ id: 'user-1', recoveryCodes: ['AAAAA-11111'] });
   mocks.listTiers.mockResolvedValue([]);
   mocks.getSettings.mockResolvedValue({
     isRegistrationOpen: true,
@@ -116,7 +117,7 @@ describe('admin page actions', () => {
     await view.unmount();
   });
 
-  it('creates a user from the new-user form', async () => {
+  it('creates a user from the new-user form and shows the recovery codes once', async () => {
     const view = await withRouter(<UserFormPage />, '/users/new');
     await flush();
     const inputs = view.container.querySelectorAll('input');
@@ -129,6 +130,9 @@ describe('admin page actions', () => {
     expect(mocks.createUser).toHaveBeenCalledWith(
       expect.objectContaining({ username: 'ana', password: 'password123', isAdmin: false }),
     );
+    // The account has no e-mail, so this screen is the only chance the admin gets to see
+    // (and hand off) the codes - they're never retrievable again after this render.
+    expect(view.container.textContent).toContain('AAAAA-11111');
     await view.unmount();
   });
 

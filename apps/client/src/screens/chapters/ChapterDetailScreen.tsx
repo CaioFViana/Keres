@@ -1,6 +1,6 @@
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
+import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
   ScreenLoading,
@@ -287,7 +287,7 @@ const ChapterDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
-      <TagChipList tags={chapterTags} />
+      <TagList tags={chapterTags} variant="chip" emptyMessage={t('no_tags_found')} />
       <CommentableDetailField
         storyId={chapter.storyId}
         label={t('summary')}

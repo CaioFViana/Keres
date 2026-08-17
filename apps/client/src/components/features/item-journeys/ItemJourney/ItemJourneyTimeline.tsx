@@ -19,9 +19,9 @@ import { createChapterService } from '../../../../services/storymanagement/Chapt
 import { createChoiceService } from '../../../../services/storymanagement/ChoiceService';
 import { createItemJourneyService } from '../../../../services/storymanagement/ItemJourneyService';
 import { createSceneService } from '../../../../services/storymanagement/SceneService';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useTheme } from '../../../../theme';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
-import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
 import { buildChapterColors } from '../../../../utils/storyGraphLayout';
 
@@ -44,6 +44,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
   const drizzleDb = useDrizzle();
 
   const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
@@ -110,13 +111,9 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
 
   const handleOpenJourney = useCallback(
     (journeyId: string) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, 'ItemJourney', journeyId);
-      }
+      navigateToDetail('ItemJourney', journeyId);
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   const handleAddJourney = useCallback(() => {

@@ -1,12 +1,9 @@
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SceneSelect } from '../../../../db/schema';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { createULID } from '../../../../utils/entityUtils';
-import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager';
 
 interface CharacterSceneManagerProps {
@@ -29,17 +26,13 @@ const CharacterSceneManager: React.FC<CharacterSceneManagerProps> = ({
   currentCharacterId,
 }) => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
 
   const handleScenePress = useCallback(
     (scene: SceneSelect) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, 'Scene', scene.id);
-      }
+      navigateToDetail('Scene', scene.id);
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   const createCharacterSceneRelationObject = (

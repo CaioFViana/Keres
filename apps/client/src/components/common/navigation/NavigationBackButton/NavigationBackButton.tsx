@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 import { useTheme } from '../../../../theme';
+import { navigationButtonStyles } from '../navigationButtonStyles';
 
 interface NavigationBackButtonProps {
   onPress: () => void;
@@ -19,21 +20,11 @@ const NavigationBackButton: React.FC<NavigationBackButtonProps> = ({ onPress }) 
       accessibilityRole="button"
       hitSlop={8}
       onPress={onPress}
-      style={styles.button}
+      style={navigationButtonStyles.button}
     >
       <Ionicons name="arrow-back" size={24} color={colors.text} />
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
-    minWidth: 36,
-    minHeight: 36,
-  },
-});
 
 export default NavigationBackButton;

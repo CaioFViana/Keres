@@ -3,7 +3,7 @@ import { GALLERY_OWNER_ENTITIES, GalleryOwnerEntity } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GroupedMultiSelectGroup } from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
+import { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
 import * as schema from '../db/schema';
 
@@ -149,7 +149,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
    * primeiro o tipo de entidade, só depois a lista - que senão cresce junto com a história e vira
    * uma rolagem só, sem filtro, misturando os cinco tipos.
    */
-  const groupedOptions: GroupedMultiSelectGroup[] = useMemo(() => {
+  const groupedOptions: MultiSelectGroup[] = useMemo(() => {
     return GALLERY_OWNER_ENTITIES.map((ownerType) => ({
       key: ownerType,
       label: t(`${ownerType.toLowerCase()}s`),

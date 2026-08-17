@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import GroupedMultiSelectPill from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import {
   ScreenError,
   ScreenLoading,
@@ -476,7 +476,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
             />
 
             <Text style={styles.sectionTitle}>{t('media_linked_entities')}</Text>
-            <GroupedMultiSelectPill
+            <MultiSelectPill
               groups={ownerGroups}
               selectedValues={selectedOwners}
               onSelectionChange={canEdit ? setSelectedOwners : () => {}}

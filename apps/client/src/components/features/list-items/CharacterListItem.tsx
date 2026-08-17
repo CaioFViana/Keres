@@ -6,7 +6,8 @@ import { truncate } from '../../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '@/src/components/common/display/TagList/TagList';
-import { createCharacterStyles } from '@/src/components/features/list-items/styles/characterListItemStyles';
+import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
+import { createSimpleEntityListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
 
 interface CharacterListItemProps {
   character: CharacterWithTags;
@@ -23,14 +24,10 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
 
   const descriptionSummary = truncate(character.description, 150);
 
-  const styles = createCharacterStyles(colors); // Use externalized styles
+  const styles = createSimpleEntityListItemStyles(colors);
 
   const renderHeaderContent = (char: CharacterWithTags) => (
-    <View style={styles.headerLeft}>
-      <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {char.name}
-      </Text>
-    </View>
+    <ListItemTitle text={char.name} headerLeftStyle={styles.headerLeft} nameStyle={styles.name} />
   );
 
   const renderExpandedContent = (char: CharacterWithTags) => (

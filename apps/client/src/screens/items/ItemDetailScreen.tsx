@@ -1,6 +1,6 @@
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
   ScreenLoading,
@@ -218,7 +218,7 @@ const ItemDetailScreen = () => {
         };
         return (
           <>
-            <TagChipList tags={itemTags} />
+            <TagList tags={itemTags} variant="chip" emptyMessage={t('no_tags_found')} />
             <CommentableDetailField
               {...commentableFieldProps}
               label={t('description')}

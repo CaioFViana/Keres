@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 import { useTheme } from '../../../../theme';
+import { navigationButtonStyles } from '../navigationButtonStyles';
 
 interface NavigationDrawerButtonProps {
   navigation: {
@@ -20,21 +21,11 @@ const NavigationDrawerButton: React.FC<NavigationDrawerButtonProps> = ({ navigat
       accessibilityLabel="Menu"
       hitSlop={8}
       onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-      style={styles.button}
+      style={navigationButtonStyles.button}
     >
       <Ionicons name="menu" size={28} color={colors.text} />
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
-    minWidth: 36,
-    minHeight: 36,
-  },
-});
 
 export default NavigationDrawerButton;

@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,15 +12,15 @@ import {
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import { useDrizzle } from '../../db';
 import { ItemJourneySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useItemStore } from '../../state/itemStore';
@@ -31,7 +30,6 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { ItemJourneysScreenNavigationProp } from './ItemJourneyListScreen';
 
 export type ItemJourneyDetailScreenParamList = {
@@ -208,32 +206,22 @@ const ItemJourneyDetailScreen = () => {
   const relatedScene = scenes.find((scene) => scene.id === itemJourney?.sceneId);
   const newCharacterOwner = characters.find((char) => char.id === itemJourney?.newCharacterOwnerId);
 
+  const navigateToDetail = useNavigateToEntityDetail();
+
   const handleItemPress = useCallback(() => {
     if (!relatedItem) return;
-    const drawerNavigation =
-      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Item', relatedItem.id);
-    }
-  }, [navigation, relatedItem]);
+    navigateToDetail('Item', relatedItem.id);
+  }, [navigateToDetail, relatedItem]);
 
   const handleScenePress = useCallback(() => {
     if (!relatedScene) return;
-    const drawerNavigation =
-      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Scene', relatedScene.id);
-    }
-  }, [navigation, relatedScene]);
+    navigateToDetail('Scene', relatedScene.id);
+  }, [navigateToDetail, relatedScene]);
 
   const handleNewOwnerPress = useCallback(() => {
     if (!newCharacterOwner) return;
-    const drawerNavigation =
-      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Character', newCharacterOwner.id);
-    }
-  }, [navigation, newCharacterOwner]);
+    navigateToDetail('Character', newCharacterOwner.id);
+  }, [navigateToDetail, newCharacterOwner]);
 
   const renderHeaderRight = useCallback(
     () =>
@@ -276,7 +264,7 @@ const ItemJourneyDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
-      <TagChipList tags={itemJourneyTags} />
+      <TagList tags={itemJourneyTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {relatedItem && (
         <TouchableOpacity onPress={handleItemPress} style={styles.relationLink} activeOpacity={0.7}>

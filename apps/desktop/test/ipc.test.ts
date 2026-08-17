@@ -151,6 +151,16 @@ describe('auth channels', () => {
     expect(raw).not.toContain('refresh-1');
   });
 
+  it('creates the userData directory on first write instead of failing with ENOENT', async () => {
+    // beforeEach cria USER_DATA como efeito colateral do mkdir de MEDIA_ROOT (que é um
+    // subdiretório dele) - remove só o USER_DATA de novo pra reproduzir o cenário real de
+    // primeira execução, onde o Electron ainda não criou esse diretório.
+    await fs.rm(USER_DATA, { recursive: true, force: true });
+
+    await expect(invoke('auth:write', trustedEvent, 'server-1', TOKENS)).resolves.toBeUndefined();
+    await expect(invoke('auth:read', trustedEvent, 'server-1')).resolves.toEqual(TOKENS);
+  });
+
   it('keeps one entry per server', async () => {
     await invoke('auth:write', trustedEvent, 'server-1', TOKENS);
     await invoke('auth:write', trustedEvent, 'server-2', { accessToken: 'a2', refreshToken: 'r2' });

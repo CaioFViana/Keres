@@ -1,5 +1,5 @@
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
   ScreenLoading,
@@ -552,7 +552,7 @@ const LocationDetailsScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollViewContent}
     >
-      <TagChipList tags={locationTags} />
+      <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {(() => {
         const commentableFieldProps = {
@@ -652,7 +652,7 @@ const LocationDetailsScreen = () => {
         onAddChild={handleAddChild}
         onAddConnection={handleAddConnection}
         onRemoveRelation={handleRemoveLocationRelation}
-        editable={canEdit}
+        editable={false}
       />
 
       <ScenePresenceList

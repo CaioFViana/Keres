@@ -1,6 +1,7 @@
 import React, { forwardRef, useMemo } from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
 import { PanZoomCanvasHandle, usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
 import { useTheme } from '../../../../theme';
 import { LocationGraphLayout, LocationGraphNode } from '../../../../utils/locationGraphLayout';
@@ -26,25 +27,11 @@ interface LocationGraphCanvasProps {
 const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphCanvasProps>(
   ({ layout, selectedNodeId, onSelectNode }, ref) => {
     const { colors } = useTheme();
-    const { containerRef, handleLayout, panHandlers, animatedTransform } = usePanZoomCanvas(
-      ref,
-      layout,
-    );
+    const panZoom = usePanZoomCanvas(ref, layout);
 
     const styles = useMemo(
       () =>
         StyleSheet.create({
-          container: {
-            flex: 1,
-            overflow: 'hidden',
-            backgroundColor: colors.background,
-          },
-          content: {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            transformOrigin: 'top left',
-          },
           node: {
             position: 'absolute',
             borderRadius: 8,
@@ -75,67 +62,56 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
     );
 
     return (
-      <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              width: layout.width,
-              height: layout.height,
-              transform: animatedTransform,
-            },
-          ]}
-        >
-          <Svg width={layout.width} height={layout.height}>
-            {layout.edges.map((edge) => (
-              <Path
-                key={edge.id}
-                d={edge.path}
-                fill="none"
-                stroke={edge.relationType === 'contains' ? colors.primary : colors.textSecondary}
-                strokeWidth={edge.relationType === 'contains' ? 1.8 : 1.4}
-                strokeOpacity={edge.relationType === 'contains' ? 0.9 : 0.65}
-                strokeDasharray={edge.relationType === 'connected_to' ? '6,4' : undefined}
-              />
-            ))}
-          </Svg>
+      <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
+        <Svg width={layout.width} height={layout.height}>
+          {layout.edges.map((edge) => (
+            <Path
+              key={edge.id}
+              d={edge.path}
+              fill="none"
+              stroke={edge.relationType === 'contains' ? colors.primary : colors.textSecondary}
+              strokeWidth={edge.relationType === 'contains' ? 1.8 : 1.4}
+              strokeOpacity={edge.relationType === 'contains' ? 0.9 : 0.65}
+              strokeDasharray={edge.relationType === 'connected_to' ? '6,4' : undefined}
+            />
+          ))}
+        </Svg>
 
-          {layout.nodes.map((node) => {
-            const isSelected = node.id === selectedNodeId;
-            const borderColor = isSelected
-              ? colors.primary
-              : node.isIsolated
-                ? colors.textSecondary
-                : colors.border;
+        {layout.nodes.map((node) => {
+          const isSelected = node.id === selectedNodeId;
+          const borderColor = isSelected
+            ? colors.primary
+            : node.isIsolated
+              ? colors.textSecondary
+              : colors.border;
 
-            return (
-              <TouchableOpacity
-                key={node.id}
-                activeOpacity={0.75}
-                onPress={() => onSelectNode(node)}
+          return (
+            <TouchableOpacity
+              key={node.id}
+              activeOpacity={0.75}
+              onPress={() => onSelectNode(node)}
+              style={[
+                styles.node,
+                { left: node.x, top: node.y, width: node.width, height: node.height },
+              ]}
+            >
+              <View
                 style={[
-                  styles.node,
-                  { left: node.x, top: node.y, width: node.width, height: node.height },
+                  styles.nodeInner,
+                  node.isIsolated && styles.nodeInnerIsolated,
+                  { borderColor, borderWidth: isSelected ? 2.5 : 1.2 },
                 ]}
               >
-                <View
-                  style={[
-                    styles.nodeInner,
-                    node.isIsolated && styles.nodeInnerIsolated,
-                    { borderColor, borderWidth: isSelected ? 2.5 : 1.2 },
-                  ]}
-                >
-                  {node.labelLines.map((line, index) => (
-                    <Text key={index} style={styles.nodeLabel} numberOfLines={1}>
-                      {line}
-                    </Text>
-                  ))}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </Animated.View>
-      </View>
+                {node.labelLines.map((line, index) => (
+                  <Text key={index} style={styles.nodeLabel} numberOfLines={1}>
+                    {line}
+                  </Text>
+                ))}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </GraphCanvasFrame>
     );
   },
 );

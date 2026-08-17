@@ -5,17 +5,14 @@ import {
   formatAttributeDateForDisplay,
   StorySchemaEntityType,
 } from '@keres/shared';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../../db';
 import { createAttributeValueService } from '../../../../services/storymanagement/AttributeValueService';
 import { EntityService } from '../../../../services/EntityService';
 import { entityEventEmitter } from '../../../../utils/EventEmitter';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
-import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import { useEntityComments } from '../../../../hooks/useEntityComments';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
@@ -64,7 +61,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
 }) => {
   const { t, i18n } = useTranslation();
   const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
-  const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
   const drizzleDb = useDrizzle();
   const fields = useStorySchemaFields(storyId, entityType);
   const [values, setValues] = useState<Record<string, string | null>>({});
@@ -145,15 +142,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
         const onPress =
           isEntityReference && resolvedEntityName && field.targetEntityType && rawValue
             ? () => {
-                const drawerNavigation =
-                  navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-                if (drawerNavigation) {
-                  navigateToEntityDetail(
-                    drawerNavigation,
-                    field.targetEntityType as StorySchemaEntityType,
-                    rawValue,
-                  );
-                }
+                navigateToDetail(field.targetEntityType as StorySchemaEntityType, rawValue);
               }
             : undefined;
         return (

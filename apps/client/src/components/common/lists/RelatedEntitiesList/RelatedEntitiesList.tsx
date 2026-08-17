@@ -1,14 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useTheme } from '../../../../theme';
-import { navigateToEntityDetail, toNavigableEntityType } from '../../../../utils/entityNavigation';
+import { toNavigableEntityType } from '../../../../utils/entityNavigation';
 
 export interface RelatedEntityItem {
   id: string;
@@ -39,18 +37,16 @@ const RelatedEntitiesList: React.FC<RelatedEntitiesListProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
 
   const handlePress = useCallback(
     (entityType: string, entityId: string) => {
       const navigableType = toNavigableEntityType(entityType);
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (navigableType && drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, navigableType, entityId);
+      if (navigableType) {
+        navigateToDetail(navigableType, entityId);
       }
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   const styles = StyleSheet.create({

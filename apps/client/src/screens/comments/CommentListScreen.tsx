@@ -1,16 +1,15 @@
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import CommentList from '@/src/components/features/comments/CommentList/CommentList';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { CommentSelect } from '../../db/schema';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { navigateToEntityDetail, NavigableEntityType } from '../../utils/entityNavigation';
+import { NavigableEntityType } from '../../utils/entityNavigation';
 
 /**
  * Lista compreensiva de todos os comentários da história atual, cross-entidade - modelada em
@@ -22,6 +21,7 @@ const CommentListScreen: React.FC = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
   const { selectedStory } = useStoryStore();
 
   useFocusEffect(
@@ -33,17 +33,9 @@ const CommentListScreen: React.FC = () => {
 
   const handlePressComment = useCallback(
     (comment: CommentSelect) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(
-          drawerNavigation,
-          comment.entityType as NavigableEntityType,
-          comment.entityId,
-        );
-      }
+      navigateToDetail(comment.entityType as NavigableEntityType, comment.entityId);
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   const styles = StyleSheet.create({

@@ -1,11 +1,12 @@
 import { Character } from '@keres/shared/entities/Character';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { createULID } from '../../../../utils/entityUtils';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager'; // Removed BaseItem, BaseRelation
 
-interface CharacterRelationManagerProps {
+interface SceneCharacterManagerProps {
   characterRelations: CharacterScene[];
   availableCharacters: Character[];
   onSave: (relation: CharacterScene) => Promise<void>;
@@ -15,7 +16,9 @@ interface CharacterRelationManagerProps {
   currentSceneId: string; // The ID of the scene this character is related to
 }
 
-const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
+/** Personagens presentes nesta Cena, vista do lado da Cena - o irmão de `CharacterSceneManager`,
+ * que é a mesma relação (Character-Scene) vista do lado do Personagem. */
+const SceneCharacterManager: React.FC<SceneCharacterManagerProps> = ({
   characterRelations,
   availableCharacters,
   onSave,
@@ -25,6 +28,15 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
   currentSceneId,
 }) => {
   const { t } = useTranslation();
+  const navigateToDetail = useNavigateToEntityDetail();
+
+  const handleCharacterPress = useCallback(
+    (character: Character) => {
+      navigateToDetail('Character', character.id);
+    },
+    [navigateToDetail],
+  );
+
   const createCharacterSceneRelationObject = (
     selectedCharacterId: string,
     storyId: string,
@@ -80,8 +92,9 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
       deleteConfirmationTitle={t('delete_character_from_scene_title')}
       deleteConfirmationMessage={t('delete_character_from_scene_message')}
       title={t('characters_title')}
+      onItemPress={handleCharacterPress}
     />
   );
 };
 
-export default CharacterRelationManager;
+export default SceneCharacterManager;

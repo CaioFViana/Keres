@@ -1,5 +1,5 @@
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
   ScreenLoading,
@@ -339,7 +339,7 @@ const NoteDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
-      <TagChipList tags={noteTags} />
+      <TagList tags={noteTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
         storyId={note.storyId}

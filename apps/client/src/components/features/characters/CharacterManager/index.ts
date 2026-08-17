@@ -1,1 +1,1 @@
-export { default } from '@/src/components/features/characters/CharacterManager/CharacterRelationManager';
+export { default } from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';

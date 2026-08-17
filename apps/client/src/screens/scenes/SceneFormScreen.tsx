@@ -8,7 +8,7 @@ import CustomAttributeFields, {
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import Select from '@/src/components/common/inputs/Select/Select'; // Import Select component
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import CharacterRelationManager from '@/src/components/features/characters/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
+import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -895,7 +895,7 @@ const SceneFormScreen = () => {
 
       {currentSceneId && selectedStory?.id && (
         <View style={styles.noteSection}>
-          <CharacterRelationManager
+          <SceneCharacterManager
             characterRelations={characterSceneRelations}
             availableCharacters={characters.filter((char) => !char.isDeleted)}
             onSave={handleSaveCharacterSceneRelation}

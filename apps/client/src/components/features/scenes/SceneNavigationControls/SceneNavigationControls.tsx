@@ -1,15 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import { Choice } from '@keres/shared/entities/Choice';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SceneSelect } from '../../../../db/schema';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { ScenesScreenNavigationProp } from '../../../../screens/scenes/SceneListScreen';
 import { useTheme } from '../../../../theme';
-import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 
 interface SceneNavigationControlsProps {
   storyType: 'linear' | 'branching' | undefined;
@@ -34,6 +32,7 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ScenesScreenNavigationProp>();
+  const navigateToDetail = useNavigateToEntityDetail();
 
   const styles = StyleSheet.create({
     container: {
@@ -135,11 +134,7 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
   };
 
   const handleChoiceDetailNavigation = (choiceId: string) => {
-    const drawerNavigation =
-      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Choice', choiceId);
-    }
+    navigateToDetail('Choice', choiceId);
   };
 
   const renderChoiceCard = (choice: Choice, direction: 'outgoing' | 'incoming') => {

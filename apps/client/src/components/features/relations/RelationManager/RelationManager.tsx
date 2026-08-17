@@ -225,7 +225,9 @@ const RelationManager = <TItem extends BaseItem, TRelation extends BaseRelation>
 
     return (
       <View key={relation.id} style={styles.relationItem}>
-        {onItemPress ? (
+        {/* Só navega fora de um form: em `editable`, sair da tela perderia alterações não
+            salvas do formulário - mesma regra que já esconde o chevron abaixo. */}
+        {onItemPress && !editable ? (
           <TouchableOpacity
             style={styles.relationItemContent}
             onPress={() => onItemPress(relatedItem)}

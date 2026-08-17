@@ -5,7 +5,8 @@ import { useTheme } from '../../../theme';
 import { truncate } from '../../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
-import { createChoiceStyles } from '@/src/components/features/list-items/styles/choiceListItemStyles'; // Will create this
+import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
+import { createReferenceListItemStyles } from '@/src/components/features/list-items/styles/sharedListItemStyles';
 
 interface ChoiceListItemProps {
   choice: ChoiceSelect;
@@ -17,14 +18,10 @@ const ChoiceListItem: React.FC<ChoiceListItemProps> = ({ choice, onViewDetails }
 
   const choiceText = truncate(choice.text, 150); // Use choice.text
 
-  const styles = createChoiceStyles(colors); // Use externalized styles
+  const styles = createReferenceListItemStyles(colors);
 
   const renderHeaderContent = (cho: ChoiceSelect) => (
-    <View style={styles.headerLeft}>
-      <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-        {choiceText}
-      </Text>
-    </View>
+    <ListItemTitle text={choiceText} headerLeftStyle={styles.headerLeft} nameStyle={styles.name} />
   );
 
   const renderExpandedContent = (cho: ChoiceSelect) => (

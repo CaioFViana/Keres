@@ -8,6 +8,7 @@ import CustomAttributeFields, {
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
+import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Location } from '@keres/shared/entities/Location';
@@ -23,6 +24,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
+import { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
@@ -30,6 +32,10 @@ import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPaddi
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import {
+  createLocationRelationService,
+  LocationRelationService,
+} from '../../services/storymanagement/LocationRelationService';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -62,10 +68,14 @@ const LocationFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
+  const locationRelationServiceRef = useRef<LocationRelationService | null>(null);
 
   useEffect(() => {
     if (drizzleDb && !locationServiceRef.current) {
       locationServiceRef.current = createLocationService(drizzleDb);
+    }
+    if (drizzleDb && !locationRelationServiceRef.current) {
+      locationRelationServiceRef.current = createLocationRelationService(drizzleDb);
     }
   }, [drizzleDb]);
 
@@ -94,8 +104,140 @@ const LocationFormScreen = () => {
   const customDefaultsAppliedRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
+  const [allLocations, setAllLocations] = useState<LocationSelect[]>([]);
+  const [allLocationRelations, setAllLocationRelations] = useState<LocationRelationSelect[]>([]);
 
   const isEditing = !!currentLocationId;
+
+  const fetchAllLocationsInStory = useCallback(async () => {
+    if (!locationServiceRef.current || !selectedStory?.id) {
+      setAllLocations([]);
+      return;
+    }
+    try {
+      const fetchedLocations = await locationServiceRef.current.getAllByStoryId(selectedStory.id);
+      setAllLocations(fetchedLocations.filter((l) => !l.isDeleted));
+    } catch (err) {
+      console.error('Failed to fetch all locations:', err);
+    }
+  }, [selectedStory?.id]);
+
+  const fetchAllLocationRelationsInStory = useCallback(async () => {
+    if (!locationRelationServiceRef.current || !selectedStory?.id) {
+      setAllLocationRelations([]);
+      return;
+    }
+    try {
+      const fetchedRelations = await locationRelationServiceRef.current.getAllRelationsForStory(
+        selectedStory.id,
+      );
+      setAllLocationRelations(fetchedRelations);
+    } catch (err) {
+      console.error('Failed to fetch all location relations:', err);
+    }
+  }, [selectedStory?.id]);
+
+  useEffect(() => {
+    fetchAllLocationsInStory();
+    fetchAllLocationRelationsInStory();
+  }, [fetchAllLocationsInStory, fetchAllLocationRelationsInStory]);
+
+  const handleSetParent = useCallback(
+    async (newParentId: string | null) => {
+      if (
+        !locationRelationServiceRef.current ||
+        !selectedStory?.id ||
+        !userId ||
+        !currentLocationId
+      )
+        return;
+      try {
+        await locationRelationServiceRef.current.setParent(
+          userId,
+          selectedStory.id,
+          currentLocationId,
+          newParentId,
+        );
+        fetchAllLocationRelationsInStory();
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, currentLocationId, t, fetchAllLocationRelationsInStory],
+  );
+
+  const handleAddChild = useCallback(
+    async (childId: string) => {
+      if (
+        !locationRelationServiceRef.current ||
+        !selectedStory?.id ||
+        !userId ||
+        !currentLocationId
+      )
+        return;
+      try {
+        await locationRelationServiceRef.current.setParent(
+          userId,
+          selectedStory.id,
+          childId,
+          currentLocationId,
+        );
+        fetchAllLocationRelationsInStory();
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, currentLocationId, t, fetchAllLocationRelationsInStory],
+  );
+
+  const handleAddConnection = useCallback(
+    async (otherLocationId: string) => {
+      if (
+        !locationRelationServiceRef.current ||
+        !selectedStory?.id ||
+        !userId ||
+        !currentLocationId
+      )
+        return;
+      try {
+        await locationRelationServiceRef.current.addConnection(
+          userId,
+          selectedStory.id,
+          currentLocationId,
+          otherLocationId,
+        );
+        fetchAllLocationRelationsInStory();
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_save_relation'),
+        );
+      }
+    },
+    [selectedStory?.id, userId, currentLocationId, t, fetchAllLocationRelationsInStory],
+  );
+
+  const handleRemoveLocationRelation = useCallback(
+    async (relationId: string) => {
+      if (!locationRelationServiceRef.current || !userId) return;
+      try {
+        await locationRelationServiceRef.current.removeRelation(userId, relationId);
+        fetchAllLocationRelationsInStory();
+      } catch (err) {
+        AppAlert.alert(
+          t('error'),
+          err instanceof Error ? err.message : t('failed_to_remove_relation'),
+        );
+      }
+    },
+    [userId, t, fetchAllLocationRelationsInStory],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -429,6 +571,21 @@ const LocationFormScreen = () => {
             currentStoryId={selectedStory.id}
             currentEntityId={currentLocationId}
             currentEntityType="Location"
+          />
+        </View>
+      )}
+
+      {currentLocationId && selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <LocationRelationManager
+            currentLocationId={currentLocationId}
+            allLocations={allLocations}
+            allLocationRelations={allLocationRelations}
+            onSetParent={handleSetParent}
+            onAddChild={handleAddChild}
+            onAddConnection={handleAddConnection}
+            onRemoveRelation={handleRemoveLocationRelation}
+            editable={true}
           />
         </View>
       )}

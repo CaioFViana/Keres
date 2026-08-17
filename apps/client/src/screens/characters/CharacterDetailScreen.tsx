@@ -1,6 +1,6 @@
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
   ScreenLoading,
@@ -572,7 +572,7 @@ const CharacterDetailScreen = () => {
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
-      <TagChipList tags={characterTags} />
+      <TagList tags={characterTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {(() => {
         const commentableFieldProps = {

@@ -197,6 +197,7 @@ async function readAuthVault(): Promise<EncryptedTokenVault> {
 
 async function writeAuthVault(vault: EncryptedTokenVault): Promise<void> {
   const tempPath = `${AUTH_VAULT_FILE}.tmp`;
+  await fs.mkdir(path.dirname(AUTH_VAULT_FILE), { recursive: true });
   await fs.writeFile(tempPath, JSON.stringify(vault), { mode: 0o600 });
   await fs.rename(tempPath, AUTH_VAULT_FILE);
 }

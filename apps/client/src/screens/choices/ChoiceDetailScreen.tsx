@@ -1,6 +1,6 @@
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
   ScreenLoading,
@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import { Effect } from '@keres/shared/entities/Effect';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +23,7 @@ import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
+import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { createChoiceCheckGroupService } from '../../services/storymanagement/ChoiceCheckGroupService';
 import { createChoiceCheckService } from '../../services/storymanagement/ChoiceCheckService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
@@ -36,7 +35,6 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { describeChoiceCheck, describeEffect } from '../../utils/choiceCheckEffectDescriptions';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { ChoicesScreenNavigationProp } from './ChoiceListScreen';
 
@@ -249,15 +247,13 @@ const ChoiceDetailScreen = () => {
     }
   }, [choice, isBranching, fetchChecksAndEffects, fetchNameLookups]);
 
+  const navigateToDetail = useNavigateToEntityDetail();
+
   const handleScenePress = useCallback(
     (targetSceneId: string) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, 'Scene', targetSceneId);
-      }
+      navigateToDetail('Scene', targetSceneId);
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   const renderHeaderRight = useCallback(
@@ -297,7 +293,7 @@ const ChoiceDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
-      <TagChipList tags={choiceTags} />
+      <TagList tags={choiceTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <TouchableOpacity
         onPress={() => handleScenePress(choice.sceneId)}

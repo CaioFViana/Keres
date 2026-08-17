@@ -1,21 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import { SeeAlsoEntityType } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
-import GroupedMultiSelectPill from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import {
   decodeSeeAlsoValue,
   encodeSeeAlsoValue,
   useSeeAlsoEntityOptions,
 } from '../../../../hooks/useSeeAlsoEntityOptions';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useSeeAlsoRelations } from '../../../../hooks/useSeeAlsoRelations';
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
 import { useTheme } from '../../../../theme';
-import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import { ENTITY_TYPE_ICONS } from '../../../../utils/entityTypeIcons';
 
 interface SeeAlsoManagerProps {
@@ -28,7 +25,7 @@ interface SeeAlsoManagerProps {
 /**
  * Seção "Veja também" de uma tela de detalhe: lista, clicável, de outras entidades marcadas
  * como relacionadas a esta (vínculo mútuo - ver useSeeAlsoRelations), mais um picker
- * (`GroupedMultiSelectPill`, o mesmo usado na Galeria) para adicionar/remover vínculos.
+ * (`MultiSelectPill` em modo agrupado, o mesmo usado na Galeria) para adicionar/remover vínculos.
  *
  * Aplica a mudança imediatamente ao selecionar/desselecionar (sem botão "Salvar" separado) -
  * mesmo padrão de TagChipList/NoteManager/CharacterRelationManager nestas mesmas telas.
@@ -41,7 +38,7 @@ const SeeAlsoManager: React.FC<SeeAlsoManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
   const { relations, save } = useSeeAlsoRelations(storyId, entityType, entityId);
   const { groupedOptions, optionsByValue } = useSeeAlsoEntityOptions(storyId, entityType, entityId);
 
@@ -62,13 +59,9 @@ const SeeAlsoManager: React.FC<SeeAlsoManagerProps> = ({
 
   const handlePress = useCallback(
     (otherType: SeeAlsoEntityType, otherId: string) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, otherType, otherId);
-      }
+      navigateToDetail(otherType, otherId);
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   const styles = StyleSheet.create({
@@ -88,7 +81,7 @@ const SeeAlsoManager: React.FC<SeeAlsoManagerProps> = ({
   return (
     <CollapsibleCard title={`${t('see_also_title')} (${relations.length})`} initialExpanded={false}>
       {editable && (
-        <GroupedMultiSelectPill
+        <MultiSelectPill
           groups={groupedOptions}
           selectedValues={selectedValues}
           onSelectionChange={handleSelectionChange}

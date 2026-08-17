@@ -1,14 +1,11 @@
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { ItemJourney, Item } from '@keres/shared/entities/Item';
 import { SceneSelect } from '../../../../db/schema'; // SceneSelect type
 import { CharacterSelect } from '../../../../db/schemas/characters'; // CharacterSelect type
-import type { MainSystemDrawerParamList } from '../../../../navigation/MainSystemStack';
+import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useTheme } from '../../../../theme';
-import { navigateToEntityDetail } from '../../../../utils/entityNavigation';
 import GenericRelationDisplay, {
   BaseRelation,
 } from '@/src/components/features/relations/RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
@@ -37,17 +34,13 @@ const LocationItemManager: React.FC<LocationItemManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
 
   const handleItemPress = useCallback(
     (item: Item) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, 'Item', item.id);
-      }
+      navigateToDetail('Item', item.id);
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   const itemsAsRelations = useMemo(() => {

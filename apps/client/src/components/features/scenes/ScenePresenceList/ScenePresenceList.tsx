@@ -1,11 +1,9 @@
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
-import { navigateToEntityDetail, type NavigableEntityType } from '@/src/utils/entityNavigation';
+import type { NavigableEntityType } from '@/src/utils/entityNavigation';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 
@@ -54,7 +52,7 @@ const ScenePresenceList = <TItem extends RelatedEntity>({
   sceneLabel,
 }: ScenePresenceListProps<TItem>) => {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
 
   const relations = useMemo(
     () =>
@@ -68,13 +66,9 @@ const ScenePresenceList = <TItem extends RelatedEntity>({
 
   const handleItemPress = useCallback(
     (item: TItem) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, entityType, item.id);
-      }
+      navigateToDetail(entityType, item.id);
     },
-    [entityType, navigation],
+    [entityType, navigateToDetail],
   );
 
   return (

@@ -5,12 +5,11 @@ import { Choice } from '@keres/shared/entities/Choice'; // Import Choice
 import { Effect } from '@keres/shared/entities/Effect';
 import { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
 import { Location } from '@keres/shared/entities/Location'; // Import Location
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CharacterRelationManager from '@/src/components/features/characters/CharacterManager/CharacterRelationManager'; // Import CharacterRelationManager
+import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
@@ -19,7 +18,7 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList'; // Import TagChipList
+import TagList from '@/src/components/common/display/TagList/TagList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager'; // Import ItemSceneManager
 import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager'; // Import NoteRelationManager
@@ -32,9 +31,9 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityComments } from '../../hooks/useEntityComments';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
+import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import {
   ChapterService,
   createChapterService,
@@ -59,7 +58,6 @@ import { useCharacterStore } from '../../state/characterStore'; // Import useCha
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../utils/sceneTiming';
@@ -569,14 +567,12 @@ const SceneDetailScreen = () => {
     fetchSceneNames,
   ]);
 
+  const navigateToDetail = useNavigateToEntityDetail();
+
   const handleLocationPress = useCallback(() => {
     if (!location) return;
-    const drawerNavigation =
-      navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-    if (drawerNavigation) {
-      navigateToEntityDetail(drawerNavigation, 'Location', location.id);
-    }
-  }, [navigation, location]);
+    navigateToDetail('Location', location.id);
+  }, [navigateToDetail, location]);
 
   const renderHeaderRight = useCallback(
     () =>
@@ -647,7 +643,7 @@ const SceneDetailScreen = () => {
           {chapter.name}
         </Text>
       )}
-      <TagChipList tags={sceneTags} />
+      <TagList tags={sceneTags} variant="chip" emptyMessage={t('no_tags_found')} />
       <CommentableDetailField
         storyId={scene.storyId}
         label={t('summary')}
@@ -726,7 +722,7 @@ const SceneDetailScreen = () => {
         editable={canEdit}
       />
 
-      <CharacterRelationManager
+      <SceneCharacterManager
         characterRelations={characterSceneRelations}
         availableCharacters={characters.filter((char) => !char.isDeleted)}
         onSave={() => Promise.resolve()}

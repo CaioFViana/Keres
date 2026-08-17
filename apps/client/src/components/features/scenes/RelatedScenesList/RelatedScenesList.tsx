@@ -1,11 +1,8 @@
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
-import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 
@@ -33,7 +30,7 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
   sortScenes,
 }) => {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigateToDetail = useNavigateToEntityDetail();
 
   const relatedScenes = useMemo(
     () =>
@@ -45,13 +42,9 @@ const RelatedScenesList: React.FC<RelatedScenesListProps> = ({
 
   const handleScenePress = useCallback(
     (scene: SceneSelect) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, 'Scene', scene.id);
-      }
+      navigateToDetail('Scene', scene.id);
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   return (

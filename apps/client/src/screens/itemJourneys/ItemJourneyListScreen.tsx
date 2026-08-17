@@ -21,6 +21,7 @@ import {
   SceneSelect,
 } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type {
   ItemJourneyStackParamList,
@@ -34,7 +35,6 @@ import { createSceneService } from '../../services/storymanagement/SceneService'
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
 
@@ -158,15 +158,13 @@ const ItemJourneyListScreen = () => {
     return grouped;
   }, [items, journeys, scenes, choices, chapters, selectedStory?.type, searchText, sortMode]);
 
+  const navigateToDetail = useNavigateToEntityDetail();
+
   const handleOpenItem = useCallback(
     (itemId: string) => {
-      const drawerNavigation =
-        navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
-      if (drawerNavigation) {
-        navigateToEntityDetail(drawerNavigation, 'Item', itemId);
-      }
+      navigateToDetail('Item', itemId);
     },
-    [navigation],
+    [navigateToDetail],
   );
 
   const handleOpenJourney = useCallback(

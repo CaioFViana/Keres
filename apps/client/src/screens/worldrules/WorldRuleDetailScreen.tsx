@@ -1,5 +1,5 @@
 import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import TagChipList from '@/src/components/common/display/TagChipList/TagChipList';
+import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
   ScreenLoading,
@@ -213,7 +213,7 @@ const WorldRuleDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
-      <TagChipList tags={worldRule.tags} />
+      <TagList tags={worldRule.tags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
         storyId={worldRule.storyId}

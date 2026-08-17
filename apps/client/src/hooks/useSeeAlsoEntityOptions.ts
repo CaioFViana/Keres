@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SEE_ALSO_ENTITY_TYPES, SeeAlsoEntityType } from '@keres/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GroupedMultiSelectGroup } from '@/src/components/common/inputs/GroupedMultiSelectPill/GroupedMultiSelectPill';
+import { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '../db';
 import { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
 import { loadEntityOptions } from '../utils/entityOptions';
@@ -92,7 +92,7 @@ export function useSeeAlsoEntityOptions(
     [options],
   );
 
-  const groupedOptions: GroupedMultiSelectGroup[] = useMemo(() => {
+  const groupedOptions: MultiSelectGroup[] = useMemo(() => {
     return SEE_ALSO_ENTITY_TYPES.map((entityType) => ({
       key: entityType,
       label: t(`${entityType.toLowerCase()}s`),

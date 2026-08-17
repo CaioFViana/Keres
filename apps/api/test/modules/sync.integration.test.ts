@@ -192,6 +192,49 @@ describe('POST /sync/:storyId', () => {
   });
 });
 
+/**
+ * Antes desta correção, um handler de relação (CharacterRelation, ChoiceCheck, ItemJourney...)
+ * que referenciasse uma entidade excluída lançava um `Error` genérico, e o conflito chegava
+ * ao cliente com `reason: 'unknown'` - indistinguível de qualquer outra falha inesperada. Isso
+ * importa porque "manter a minha versão" nesse caso reenvia a mesma operação, que falha pelo
+ * mesmo motivo de novo, sem fim - a tela de conflito precisa do `reason` certo pra saber que
+ * essa opção não deveria nem ser oferecida (ver `SyncConflictModal.tsx`).
+ */
+describe('a sync operation referencing a deleted entity', () => {
+  it('reports referenced_entity_deleted instead of unknown', async () => {
+    const character1Id = newId();
+    const character2Id = newId();
+    await push(ana.token, storyId, [createCharacter(character1Id, 'Keres')]);
+    await push(ana.token, storyId, [createCharacter(character2Id, 'Nyx')]);
+    await push(ana.token, storyId, [{ type: 'delete', entity: 'Character', id: character1Id }]);
+
+    const relationId = newId();
+    const { data } = await push(ana.token, storyId, [
+      {
+        type: 'create',
+        entity: 'CharacterRelation',
+        id: relationId,
+        data: {
+          id: relationId,
+          storyId,
+          character1Id,
+          character2Id,
+          relationType: 'friend',
+        },
+        clientOperationId: 'local-relation',
+      },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toHaveLength(1);
+    expect(data.conflicts[0]).toMatchObject({
+      entity: 'CharacterRelation',
+      reason: 'referenced_entity_deleted',
+      clientOperationId: 'local-relation',
+    });
+  });
+});
+
 describe('GET /sync/:storyId/pull', () => {
   it('returns nothing new for a client that is already up to date', async () => {
     const { data: pushed } = await push(ana.token, storyId, [createCharacter(newId(), 'Keres')]);

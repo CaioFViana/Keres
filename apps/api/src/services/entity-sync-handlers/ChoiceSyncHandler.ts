@@ -9,7 +9,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { choices, scenes, stories } from '../../db/schema'; // Import stories
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChoiceSyncHandler extends BaseSyncEntityHandler<
   typeof CreateChoiceDataSchema,
@@ -42,7 +42,10 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (!sceneExists) {
-      throw new Error(`Scene with ID ${sceneId} not found or does not belong to story ${storyId}.`);
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `Scene with ID ${sceneId} not found or does not belong to story ${storyId}.`,
+      );
     }
 
     const nextSceneExists = await db.query.scenes.findFirst({
@@ -54,7 +57,8 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (!nextSceneExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Next Scene with ID ${nextSceneId} not found or does not belong to story ${storyId}.`,
       );
     }

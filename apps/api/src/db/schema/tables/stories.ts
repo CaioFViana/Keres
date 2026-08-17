@@ -49,6 +49,17 @@ export const stories = pgTable('stories', {
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),
+  /**
+   * Contador do próximo `operation_log.operation_version` a usar nesta história - não
+   * confundir com `version` acima, que é a concorrência otimista da própria Story.
+   *
+   * Incrementado por um único `UPDATE ... SET last_operation_version = last_operation_version
+   * + 1 RETURNING ...` (ver `SyncService.appendOperationLog`): o lock de linha do Postgres
+   * nessa instrução já serializa duas requisições concorrentes para a mesma história, sem
+   * precisar de lock explícito nem de recalcular via `max(operation_version)` (que corria
+   * risco de duas transações lerem o mesmo máximo antes de qualquer uma commitar).
+   */
+  lastOperationVersion: integer('last_operation_version').notNull().default(0),
 });
 
 export const storiesRelations = relations(stories, ({ one, many }) => ({

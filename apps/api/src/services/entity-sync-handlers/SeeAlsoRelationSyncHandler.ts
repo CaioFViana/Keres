@@ -20,7 +20,7 @@ import {
   seeAlsoRelations,
   worldRules,
 } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 type EntityRef = { type: SeeAlsoEntityType; id: string };
 
@@ -126,7 +126,8 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
         throw new Error(`Validation Error: Unsupported SeeAlsoEntityType: ${ref.type}.`);
     }
     if (!exists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: ${ref.type} with ID ${ref.id} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }

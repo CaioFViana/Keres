@@ -21,7 +21,11 @@ jest.mock('../../src/services/MediaSyncService', () => ({
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
-import { SyncEngineService } from '../../src/services/SyncEngineService';
+import {
+  OFFLINE_RETRY_MS,
+  SYNC_INTERVAL_MS,
+  SyncEngineService,
+} from '../../src/services/SyncEngineService';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -305,6 +309,143 @@ describe('pull', () => {
   });
 });
 
+/**
+ * Antes desta correção, um reorder remoto era sempre aplicado direto, mesmo com uma
+ * reordenação local ainda não enviada na mesma entidade - e o inverso também acontecia
+ * (o reorder local pendente sobrescrevia de volta depois). Nunca virava um `SyncConflict`,
+ * então a pessoa nunca ficava sabendo que perdeu a própria reordenação.
+ */
+describe('reconciling a remote reorder against pending local changes', () => {
+  it('records a conflict instead of silently overwriting a pending local reorder', async () => {
+    await seedStory();
+    await seedPendingOperation({
+      operationType: 'reorder',
+      entityType: 'Chapter',
+      entityId: 'chapter-1',
+      payload: JSON.stringify({
+        reorderItems: [
+          { id: 'scene-a', newIndex: 1 },
+          { id: 'scene-b', newIndex: 2 },
+        ],
+        version: 1,
+      }),
+    });
+    await database.db.insert(schema.scenes).values([
+      {
+        id: 'scene-a',
+        storyId: STORY_ID,
+        chapterId: 'chapter-1',
+        locationId: 'location-1',
+        name: 'A',
+        index: 2,
+        ...base,
+      },
+      {
+        id: 'scene-b',
+        storyId: STORY_ID,
+        chapterId: 'chapter-1',
+        locationId: 'location-1',
+        name: 'B',
+        index: 1,
+        ...base,
+      },
+    ]);
+    pullResponse = {
+      updates: [
+        {
+          type: 'reorder',
+          entity: 'Chapter',
+          id: 'chapter-1',
+          operationVersion: 9,
+          operationId: 'srv-9',
+          operationTime: NOW.toISOString(),
+          reorderItems: [
+            { id: 'scene-b', newIndex: 1 },
+            { id: 'scene-a', newIndex: 2 },
+          ],
+          version: 2,
+        },
+      ],
+      serverMaxOperationVersion: 9,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    const conflicts = await database.db.query.syncConflicts.findMany({
+      where: eq(schema.syncConflicts.storyId, STORY_ID),
+    });
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0]).toMatchObject({
+      entityType: 'Chapter',
+      entityId: 'chapter-1',
+      localOperationType: 'reorder',
+      reason: 'concurrent_edit',
+    });
+
+    // A ordem local não foi tocada - ela continua exatamente como o usuário deixou, esperando
+    // a decisão dele na tela de conflito.
+    const sceneA = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'scene-a'),
+    });
+    expect(sceneA!.index).toBe(2);
+  });
+
+  it('applies the remote reorder directly when nothing pending on that entity is a reorder', async () => {
+    await seedStory();
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-1',
+      storyId: STORY_ID,
+      name: 'Capítulo 1',
+      index: 1,
+      ...base,
+    });
+    await seedPendingOperation({
+      operationType: 'update',
+      entityType: 'Chapter',
+      entityId: 'chapter-1',
+      payload: JSON.stringify({ name: 'Novo nome', version: 1 }),
+    });
+    await database.db.insert(schema.scenes).values({
+      id: 'scene-a',
+      storyId: STORY_ID,
+      chapterId: 'chapter-1',
+      locationId: 'location-1',
+      name: 'A',
+      index: 1,
+      ...base,
+    });
+    pullResponse = {
+      updates: [
+        {
+          type: 'reorder',
+          entity: 'Chapter',
+          id: 'chapter-1',
+          operationVersion: 9,
+          operationId: 'srv-9',
+          operationTime: NOW.toISOString(),
+          reorderItems: [{ id: 'scene-a', newIndex: 5 }],
+          version: 2,
+        },
+      ],
+      serverMaxOperationVersion: 9,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    const conflicts = await database.db.query.syncConflicts.findMany({
+      where: eq(schema.syncConflicts.storyId, STORY_ID),
+    });
+    expect(conflicts).toEqual([]);
+
+    const sceneA = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'scene-a'),
+    });
+    expect(sceneA!.index).toBe(5);
+  });
+});
+
 describe('push', () => {
   it('sends the operations that were never synced', async () => {
     await seedStory({ lastOperationLog: 1 });
@@ -427,6 +568,86 @@ describe('guards before a cycle runs', () => {
   it('does nothing when the story is not in the local database', async () => {
     await expect(runOneCycle()).resolves.toBe(false);
     expect(seen.filter((request) => request.method === 'POST')).toEqual([]);
+  });
+});
+
+describe('startSync', () => {
+  // `performSync` já é coberto pelos outros describes deste arquivo; aqui interessa só o
+  // agendamento em si (roda na hora, reagenda com a cadência certa, não duplica o laço),
+  // então ele é mockado para isolar isso de toda a cadeia real de rede/DB.
+  let performSyncSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    performSyncSpy = jest.spyOn(engine as any, 'performSync').mockResolvedValue(false);
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('runs a cycle immediately, without waiting for the interval to elapse', async () => {
+    engine.startSync();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(performSyncSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not start a second cycle chain when already running', async () => {
+    engine.startSync();
+    engine.startSync();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(performSyncSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('reschedules at the normal interval after an online cycle', async () => {
+    engine.startSync();
+    await Promise.resolve();
+    await Promise.resolve();
+    performSyncSpy.mockClear();
+
+    jest.advanceTimersByTime(SYNC_INTERVAL_MS - 1);
+    await Promise.resolve();
+    expect(performSyncSpy).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(1);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(performSyncSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('reschedules sooner, at the offline retry interval, after an unreachable cycle', async () => {
+    performSyncSpy.mockResolvedValue(true); // true = server was unreachable this cycle
+    engine.startSync();
+    await Promise.resolve();
+    await Promise.resolve();
+    performSyncSpy.mockClear();
+
+    jest.advanceTimersByTime(OFFLINE_RETRY_MS - 1);
+    await Promise.resolve();
+    expect(performSyncSpy).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(1);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(performSyncSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops the chain for good once stopSync is called', async () => {
+    engine.startSync();
+    await Promise.resolve();
+    await Promise.resolve();
+    performSyncSpy.mockClear();
+
+    engine.stopSync();
+    jest.advanceTimersByTime(SYNC_INTERVAL_MS * 2);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(performSyncSpy).not.toHaveBeenCalled();
   });
 });
 

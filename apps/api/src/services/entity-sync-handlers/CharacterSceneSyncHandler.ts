@@ -9,7 +9,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, characterScenes, scenes } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
   typeof CreateCharacterSceneDataSchema,
@@ -46,7 +46,8 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (!characterExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Character with ID ${characterId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
@@ -56,7 +57,8 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (!sceneExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Scene with ID ${sceneId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }

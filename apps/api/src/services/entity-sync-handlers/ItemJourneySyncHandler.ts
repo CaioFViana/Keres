@@ -9,7 +9,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, itemJourneys, items, scenes } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
   typeof CreateItemJourneyDataSchema,
@@ -35,7 +35,8 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
       where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
     });
     if (!itemExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
@@ -44,7 +45,8 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
       where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
     });
     if (!sceneExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Scene with ID ${sceneId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
@@ -58,7 +60,8 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
         ),
       });
       if (!characterExists) {
-        throw new Error(
+        throw new SyncConflictError(
+          'referenced_entity_deleted',
           `Validation Error: Character with ID ${newCharacterOwnerId} not found, is deleted, or does not belong to story ${storyId}.`,
         );
       }

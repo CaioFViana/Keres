@@ -9,7 +9,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { choiceCheckGroups, choices } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
   typeof CreateChoiceCheckGroupDataSchema,
@@ -41,7 +41,8 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
       ),
     });
     if (!choiceExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Choice with ID ${choiceId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }

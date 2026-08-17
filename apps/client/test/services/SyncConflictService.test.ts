@@ -367,6 +367,144 @@ describe('resolveKeepServer', () => {
   });
 });
 
+/**
+ * Reorder não tem uma linha de entidade só pra "a ordem" - o valor em disputa é
+ * `reorderItems`, que mexe em N linhas de outra tabela (Scenes de um Chapter). Por isso as
+ * duas resoluções não passam pelo caminho genérico de `writeEntity`/`recordRebasedOperation`.
+ */
+describe('reorder conflicts', () => {
+  const CHAPTER_ID = 'chapter-1';
+
+  async function seedChapterWithScenes() {
+    await database.db.insert(schema.chapters).values({
+      id: CHAPTER_ID,
+      storyId: STORY_ID,
+      name: 'Capítulo 1',
+      index: 1,
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+    await database.db.insert(schema.scenes).values([
+      {
+        id: 'scene-a',
+        storyId: STORY_ID,
+        chapterId: CHAPTER_ID,
+        locationId: 'location-1',
+        name: 'A',
+        index: 2,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+      {
+        id: 'scene-b',
+        storyId: STORY_ID,
+        chapterId: CHAPTER_ID,
+        locationId: 'location-1',
+        name: 'B',
+        index: 1,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+    ]);
+  }
+
+  async function seedReorderConflict() {
+    const opId = await seedOperation('op-reorder', {
+      operationType: 'reorder',
+      entityType: 'Chapter',
+      entityId: CHAPTER_ID,
+      payload: JSON.stringify({
+        reorderItems: [
+          { id: 'scene-a', newIndex: 1 },
+          { id: 'scene-b', newIndex: 2 },
+        ],
+        version: 1,
+      }),
+    });
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Chapter',
+      entityId: CHAPTER_ID,
+      reason: 'concurrent_edit',
+      localOperationType: 'reorder',
+      localOperationIds: [opId],
+      localValues: {
+        reorderItems: [
+          { id: 'scene-a', newIndex: 1 },
+          { id: 'scene-b', newIndex: 2 },
+        ],
+      },
+      serverValues: {
+        reorderItems: [
+          { id: 'scene-b', newIndex: 1 },
+          { id: 'scene-a', newIndex: 2 },
+        ],
+      },
+      clientVersion: 1,
+      serverVersion: 2,
+    });
+    return opId;
+  }
+
+  it('keeps the same pending operation, just rebased, instead of abandoning and recreating it', async () => {
+    await seedChapterWithScenes();
+    const opId = await seedReorderConflict();
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepLocal(pending.id);
+
+    const op = await readOperation(opId);
+    expect(op).toBeDefined();
+    expect(op!.conflictState).toBeNull();
+    expect(op!.isSynced).toBe(false);
+    expect(JSON.parse(op!.payload).version).toBe(3); // serverVersion (2) + 1
+
+    // A ordem local não foi tocada - "manter a minha" para reorder não escreve nas Scenes,
+    // só libera a operação pendente pra ser reenviada.
+    const sceneA = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'scene-a'),
+    });
+    expect(sceneA!.index).toBe(2);
+  });
+
+  it('shows no field-by-field picker for a reorder conflict, since reorderItems is not a scalar field', async () => {
+    await seedChapterWithScenes();
+    await seedReorderConflict();
+
+    const [pending] = await service.getPendingConflicts();
+
+    expect(pending.contestedFields).toEqual([]);
+  });
+
+  it('applies the server order to the local Scenes and abandons the pending local reorder', async () => {
+    await seedChapterWithScenes();
+    const opId = await seedReorderConflict();
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepServer(pending.id);
+
+    const op = await readOperation(opId);
+    expect(op!.conflictState).toBe('abandoned');
+    expect(op!.isSynced).toBe(true);
+
+    const sceneA = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'scene-a'),
+    });
+    const sceneB = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'scene-b'),
+    });
+    expect(sceneA!.index).toBe(2);
+    expect(sceneB!.index).toBe(1);
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+});
+
 describe('dismissConflict', () => {
   it('takes the conflict off the pending list', async () => {
     await service.recordConflict(baseConflict());

@@ -282,6 +282,12 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
             );
             SyncEngineService.getInstance().configure(selectedStory.id, server);
             SyncEngineService.getInstance().requestSync('initial');
+            // Sem isto, o único jeito de sincronizar era um evento local ou uma mensagem de
+            // WebSocket - uma desconexão perdida ou um app em background por um tempo deixava
+            // o estado local parado, sem nenhum recurso de reconciliação periódica (ver
+            // plano de correção de sync/conflitos). `startSync` é um no-op se já estiver
+            // rodando, então é seguro chamar de novo a cada troca de história/servidor.
+            SyncEngineService.getInstance().startSync();
             realtimeByServerRef.current.get(server.id)?.subscribeToStory(selectedStory.id);
             useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store
           } else {

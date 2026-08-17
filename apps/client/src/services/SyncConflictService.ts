@@ -1,5 +1,9 @@
-import { SyncConflictReason } from '@keres/shared';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import {
+  ChapterReorderingStoryUpdate,
+  StoryReorderingStoryUpdate,
+  SyncConflictReason,
+} from '@keres/shared';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import { OperationLogSelect, SyncConflictSelect } from '../db/schema';
@@ -137,6 +141,59 @@ export function mergeLocalOperationPayloads(operations: OperationLogSelect[]): R
   return merged;
 }
 
+/**
+ * Aplica uma reordenação remota (ou a versão do servidor de uma que conflitou) ao banco
+ * local. Fica aqui, e não em `SyncEngineService`, porque `resolveKeepServer` também precisa
+ * dela para o caso de reorder - e este arquivo não pode depender de volta de
+ * `SyncEngineService`, que já depende deste (ver `conflictService` lá).
+ */
+export async function applyReorderToLocalDb(
+  db: AppDrizzleClient,
+  update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+  operationTime: Date,
+): Promise<void> {
+  const { reorderItems } = update;
+  if (!reorderItems || reorderItems.length === 0) return;
+
+  await db.transaction(async (tx) => {
+    for (const item of reorderItems) {
+      if (update.entity === 'Chapter') {
+        // Reordering scenes within a chapter
+        await tx
+          .update(schema.scenes)
+          .set({
+            index: item.newIndex,
+            updatedAt: operationTime,
+            version: sql`${schema.scenes.version} + 1`,
+          })
+          .where(eq(schema.scenes.id, item.id));
+      } else if (
+        update.entity === 'Story' &&
+        (update as StoryReorderingStoryUpdate).reorderTarget === 'StorySchemaField'
+      ) {
+        await tx
+          .update(schema.storySchemaFields)
+          .set({
+            order: item.newIndex - 1,
+            updatedAt: operationTime,
+            version: sql`${schema.storySchemaFields.version} + 1`,
+          })
+          .where(eq(schema.storySchemaFields.id, item.id));
+      } else if (update.entity === 'Story') {
+        // Reordering chapters within a story
+        await tx
+          .update(schema.chapters)
+          .set({
+            index: item.newIndex,
+            updatedAt: operationTime,
+            version: sql`${schema.chapters.version} + 1`,
+          })
+          .where(eq(schema.chapters.id, item.id));
+      }
+    }
+  });
+}
+
 export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictService => {
   const toPendingConflict = (row: SyncConflictSelect): PendingConflict => {
     const localValues = parseJson<Record<string, any>>(row.localValues, {});
@@ -156,7 +213,12 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       serverVersion: row.serverVersion,
       message: row.message,
       detectedAt: row.detectedAt,
-      contestedFields: findContestedFields(localValues, serverValues),
+      // Um reorder não tem "campos" no sentido em que o resto do conflito entende - o valor
+      // em disputa é a ordem inteira (`reorderItems`), não algo pra comparar item a item.
+      // Forçar vazio aqui faz a tela cair no fallback binário (manter a minha ordem / usar a
+      // do servidor) em vez de tentar montar um seletor de campo com JSON cru dentro.
+      contestedFields:
+        row.localOperationType === 'reorder' ? [] : findContestedFields(localValues, serverValues),
       isDeletedOnServer: row.reason === 'deleted_on_server' || !!serverValues?.isDeleted,
       isLocalDelete: row.localOperationType === 'delete',
     };
@@ -372,6 +434,31 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         return;
       }
 
+      if (conflict.localOperationType === 'reorder') {
+        // Diferente dos outros tipos, não há uma linha de entidade só pra "a ordem" - a
+        // operação de reorder pendente já tem os índices certos, só precisa ser reapoiada na
+        // versão atual do servidor e liberada pra ir no próximo push. Não passa por
+        // `abandonOperations`/`recordRebasedOperation` (que descartam e recriam a operação):
+        // aqui a mesma operação continua, só com a base atualizada.
+        const baseVersion = conflict.serverVersion ?? 0;
+        for (const opId of conflict.localOperationIds) {
+          const op = await db.query.operationLogs.findFirst({
+            where: eq(schema.operationLogs.id, opId),
+          });
+          if (!op) continue;
+          const payload = parseJson<Record<string, any>>(op.payload, {});
+          payload.version = baseVersion + 1;
+          await db
+            .update(schema.operationLogs)
+            .set({ payload: JSON.stringify(payload), conflictState: null })
+            .where(eq(schema.operationLogs.id, opId));
+        }
+        await closeConflict(conflictId, 'keep_local');
+        entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
+        entityEventEmitter.emit('operation_log_updated', conflict.storyId);
+        return;
+      }
+
       // Sem versão do servidor não há em que rebasear; 0 faz o servidor tratar como
       // last-write-wins, que é o resultado desejado quando ele não informou a versão.
       const baseVersion = conflict.serverVersion ?? 0;
@@ -453,7 +540,25 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
 
       await abandonOperations(conflict.localOperationIds);
 
-      if (!conflict.serverValues) {
+      if (conflict.localOperationType === 'reorder') {
+        // Idem: não é uma linha de entidade a escrever, é a ordem de N outras linhas -
+        // aplica a ordem que o servidor tem, com a mesma lógica usada ao aplicar um reorder
+        // remoto normal (ver `SyncEngineService`).
+        const reorderItems = conflict.serverValues?.reorderItems as
+          | { id: string; newIndex: number }[]
+          | undefined;
+        if (reorderItems && reorderItems.length > 0) {
+          await applyReorderToLocalDb(
+            db,
+            {
+              entity: conflict.entityType,
+              reorderItems,
+              reorderTarget: conflict.serverValues?.reorderTarget,
+            } as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+            new Date(),
+          );
+        }
+      } else if (!conflict.serverValues) {
         // O servidor não tem a entidade. Aceitar isso é removê-la aqui - e sem gravar
         // operação, porque não há nada a informar a quem já não a tem.
         await writeEntity(

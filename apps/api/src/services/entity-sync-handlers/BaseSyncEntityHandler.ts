@@ -9,6 +9,7 @@ import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { z } from 'zod'; // Import Zod
 import { db } from '../../db';
 import * as dbSchema from '../../db/schema'; // Import the entire schema
+import { logger } from '../../utils/logger';
 
 /**
  * Recusa de uma operação que o *usuário* pode resolver, em oposição a um erro de
@@ -343,6 +344,12 @@ export abstract class BaseSyncEntityHandler<
     // incrementada (base + 1) em vez da base. Eles continuam funcionando em last-write-wins;
     // apenas não ganham detecção de conflito.
     if (clientVersion === serverVersion + 1) {
+      logger.warn(`Client used legacy version-tolerance path for ${this.entityName} ${entityId}`, {
+        entityName: this.entityName,
+        entityId,
+        clientVersion,
+        serverVersion,
+      });
       return;
     }
 

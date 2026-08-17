@@ -76,7 +76,15 @@ export class ServerRealtimeService {
           return;
         }
         console.log(`Realtime connected: ${this.server.name}`);
-        if (this.storyId) socket.send(JSON.stringify({ type: 'subscribe', storyId: this.storyId }));
+        if (this.storyId) {
+          socket.send(JSON.stringify({ type: 'subscribe', storyId: this.storyId }));
+          // Mesmo motivo do refresh de friendships abaixo: eventos emitidos enquanto este
+          // cliente estava desconectado nunca são reentregues (o eventManager do servidor é
+          // em memória, não uma fila durável) - sem isto, uma história só voltava a
+          // sincronizar na próxima edição local, deixando o estado preso por tempo
+          // indefinido depois de uma queda de rede.
+          SyncEngineService.getInstance().requestSync('websocket');
+        }
         // WebSocket events are intentionally ephemeral. Refresh once on every connection so
         // profile/friendship changes made while this device was offline are not left stale
         // merely because their notification was missed.

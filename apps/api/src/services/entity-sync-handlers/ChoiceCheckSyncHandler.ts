@@ -8,7 +8,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { choiceCheckGroups, choiceChecks, items, scenes } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<
   typeof CreateChoiceCheckDataSchema,
@@ -38,7 +38,8 @@ export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<
       ),
     });
     if (!groupExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: ChoiceCheckGroup with ID ${groupId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
@@ -52,7 +53,8 @@ export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<
         ),
       });
       if (!sceneExists) {
-        throw new Error(
+        throw new SyncConflictError(
+          'referenced_entity_deleted',
           `Validation Error: Scene with ID ${sceneId} not found, is deleted, or does not belong to story ${storyId}.`,
         );
       }
@@ -63,7 +65,8 @@ export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<
         where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
       });
       if (!itemExists) {
-        throw new Error(
+        throw new SyncConflictError(
+          'referenced_entity_deleted',
           `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
         );
       }

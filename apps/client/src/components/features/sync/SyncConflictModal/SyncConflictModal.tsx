@@ -276,6 +276,18 @@ const SyncConflictModal: React.FC = () => {
   const isLimitExceeded = conflict.reason === 'limit_exceeded';
 
   /**
+   * A operação referencia outra entidade (personagem, cena, item...) que foi excluída no
+   * servidor. "Manter a minha versão" reenviaria a mesma operação, que falharia pelo mesmo
+   * motivo de novo - a referência continua apontando pra algo que não existe mais - então
+   * essa opção some daqui em vez de virar um botão que nunca funciona.
+   */
+  const isReferencedEntityDeleted = conflict.reason === 'referenced_entity_deleted';
+
+  /** A ordem inteira está em disputa, não campos de uma entidade - ver `contestedFields`
+   *  forçado vazio para este caso em `SyncConflictService.toPendingConflict`. */
+  const isReorderConflict = conflict.localOperationType === 'reorder';
+
+  /**
    * A escolha campo a campo só ajuda quando os dois lados têm valores concretos para
    * comparar. Numa exclusão (de qualquer um dos lados) ou quando o servidor não tem mais a
    * entidade, a decisão é binária, e oferecer rádios com "(vazio)" do outro lado só
@@ -289,11 +301,15 @@ const SyncConflictModal: React.FC = () => {
 
   const fieldPickerFallbackText = isLimitExceeded
     ? t('conflict_limit_exceeded_note')
-    : conflict.serverValues === null
-      ? t('conflict_server_has_no_copy')
-      : conflict.isDeletedOnServer || conflict.isLocalDelete
-        ? t('conflict_binary_choice_note')
-        : t('conflict_no_contested_fields');
+    : isReferencedEntityDeleted
+      ? t('conflict_referenced_entity_deleted_note')
+      : isReorderConflict
+        ? t('conflict_reorder_note')
+        : conflict.serverValues === null
+          ? t('conflict_server_has_no_copy')
+          : conflict.isDeletedOnServer || conflict.isLocalDelete
+            ? t('conflict_binary_choice_note')
+            : t('conflict_no_contested_fields');
 
   /** Rótulo do botão principal: no caso de exclusão remota, ele restaura a entidade. */
   const keepMineLabel = isLimitExceeded
@@ -304,11 +320,12 @@ const SyncConflictModal: React.FC = () => {
         ? t('conflict_apply_merge')
         : t('conflict_keep_mine');
 
-  const keepServerLabel = isLimitExceeded
-    ? t('conflict_discard_mine')
-    : conflict.isDeletedOnServer
-      ? t('conflict_accept_deletion')
-      : t('conflict_keep_server');
+  const keepServerLabel =
+    isLimitExceeded || isReferencedEntityDeleted
+      ? t('conflict_discard_mine')
+      : conflict.isDeletedOnServer
+        ? t('conflict_accept_deletion')
+        : t('conflict_keep_server');
 
   return (
     <Modal visible={isVisible} transparent animationType="fade" onRequestClose={close}>
@@ -387,7 +404,7 @@ const SyncConflictModal: React.FC = () => {
           </ScrollView>
 
           <View style={styles.footer}>
-            <Button onPress={handleKeepMine} disabled={isResolving}>
+            <Button onPress={handleKeepMine} disabled={isResolving || isReferencedEntityDeleted}>
               {keepMineLabel}
             </Button>
             <Button

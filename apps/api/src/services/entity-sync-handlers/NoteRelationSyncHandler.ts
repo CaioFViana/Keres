@@ -18,7 +18,7 @@ import {
   scenes,
   worldRules,
 } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateNoteRelationDataSchema,
@@ -52,7 +52,8 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
       where: and(eq(notes.id, noteId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)),
     });
     if (!noteExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Note with ID ${noteId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
@@ -68,7 +69,8 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
           ),
         });
         if (!charExists) {
-          throw new Error(
+          throw new SyncConflictError(
+            'referenced_entity_deleted',
             `Validation Error: Character with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`,
           );
         }
@@ -82,7 +84,8 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
           ),
         });
         if (!locationExists) {
-          throw new Error(
+          throw new SyncConflictError(
+            'referenced_entity_deleted',
             `Validation Error: Location with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`,
           );
         }
@@ -96,7 +99,8 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
           ),
         });
         if (!worldRuleExists) {
-          throw new Error(
+          throw new SyncConflictError(
+            'referenced_entity_deleted',
             `Validation Error: WorldRule with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`,
           );
         }
@@ -110,7 +114,8 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
           ),
         });
         if (!sceneExists) {
-          throw new Error(
+          throw new SyncConflictError(
+            'referenced_entity_deleted',
             `Validation Error: Scene with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`,
           );
         }
@@ -124,7 +129,8 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
           ),
         });
         if (!chapterExists) {
-          throw new Error(
+          throw new SyncConflictError(
+            'referenced_entity_deleted',
             `Validation Error: Chapter with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`,
           );
         }

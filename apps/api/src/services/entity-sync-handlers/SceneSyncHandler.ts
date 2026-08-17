@@ -9,7 +9,7 @@ import {
 import { and, eq, not, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { chapters, locations, scenes, stories } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class SceneSyncHandler extends BaseSyncEntityHandler<
   typeof CreateSceneDataSchema,
@@ -38,7 +38,8 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
       ),
     });
     if (!chapter) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Chapter with ID ${chapterId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
@@ -51,7 +52,8 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
       ),
     });
     if (!location) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Location with ID ${locationId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }

@@ -52,6 +52,7 @@ import { createStoryService } from './storymanagement/StoryService';
 import { createFavoriteService } from './storymanagement/FavoriteService';
 import { createCommentService } from './storymanagement/CommentService';
 import {
+  applyReorderToLocalDb,
   createSyncConflictService,
   findContestedFields,
   mergeLocalOperationPayloads,
@@ -673,7 +674,7 @@ export class SyncEngineService {
             pendingByEntity.get(this.entityKey(update.entity, update.id || '')) || [];
 
           try {
-            if (pendingLocalOps.length > 0 && update.type !== 'reorder') {
+            if (pendingLocalOps.length > 0) {
               const outcome = await this.reconcileRemoteUpdate(update, pendingLocalOps, handler);
               if (outcome.conflicted) {
                 conflictsDetected += 1;
@@ -694,53 +695,15 @@ export class SyncEngineService {
               const reorderUpdate = update as
                 | ChapterReorderingStoryUpdate
                 | StoryReorderingStoryUpdate;
-              const reorderItems = reorderUpdate.reorderItems;
 
-              if (!reorderItems || reorderItems.length === 0) {
+              if (!reorderUpdate.reorderItems || reorderUpdate.reorderItems.length === 0) {
                 console.warn(
                   `Reorder update for entity ${update.entity} ID ${update.id} has no reorderItems.`,
                 );
                 continue;
               }
 
-              // Apply reorder to local database within a transaction
-              await this._db.transaction(async (tx) => {
-                for (const item of reorderItems) {
-                  if (reorderUpdate.entity === 'Chapter') {
-                    // Reordering scenes within a chapter
-                    await tx
-                      .update(schema.scenes)
-                      .set({
-                        index: item.newIndex,
-                        updatedAt: new Date(update.operationTime!),
-                        version: sql`${schema.scenes.version} + 1`,
-                      })
-                      .where(eq(schema.scenes.id, item.id));
-                  } else if (
-                    reorderUpdate.entity === 'Story' &&
-                    reorderUpdate.reorderTarget === 'StorySchemaField'
-                  ) {
-                    await tx
-                      .update(schema.storySchemaFields)
-                      .set({
-                        order: item.newIndex - 1,
-                        updatedAt: new Date(update.operationTime!),
-                        version: sql`${schema.storySchemaFields.version} + 1`,
-                      })
-                      .where(eq(schema.storySchemaFields.id, item.id));
-                  } else if (reorderUpdate.entity === 'Story') {
-                    // Reordering chapters within a story
-                    await tx
-                      .update(schema.chapters)
-                      .set({
-                        index: item.newIndex,
-                        updatedAt: new Date(update.operationTime!),
-                        version: sql`${schema.chapters.version} + 1`,
-                      })
-                      .where(eq(schema.chapters.id, item.id));
-                  }
-                }
-              });
+              await applyReorderToLocalDb(this._db, reorderUpdate, new Date(update.operationTime!));
             }
             markEntityUpdated(update.entity, update.id);
 
@@ -1217,6 +1180,18 @@ export class SyncEngineService {
     handler: ClientSyncEntityHandler,
   ): Promise<{ conflicted: boolean }> {
     const entityId = update.id!;
+
+    // Reorder não cabe no resto desta função: o valor em disputa é a ordem inteira
+    // (`reorderItems`), não campos escalares de uma entidade - `mergeLocalOperationPayloads`/
+    // `findContestedFields` não fazem sentido pra ele.
+    if (update.type === 'reorder') {
+      return this.reconcileRemoteReorder(
+        update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+        entityId,
+        pendingLocalOps,
+      );
+    }
+
     const localWantsDelete = pendingLocalOps.some((op) => op.operationType === 'delete');
     const localValues = mergeLocalOperationPayloads(pendingLocalOps);
     const localOperationIds = pendingLocalOps.map((op) => op.id);
@@ -1293,6 +1268,45 @@ export class SyncEngineService {
     }
 
     await recordConflict('concurrent_edit', remoteValues);
+    return { conflicted: true };
+  }
+
+  /**
+   * Contraparte de `reconcileRemoteUpdate` só para reorder - extraída à parte porque o
+   * valor em disputa (`reorderItems`) não é um conjunto de campos de uma entidade, é a
+   * ordem inteira de N outras linhas (Scenes de um Chapter, ou Chapters de uma Story).
+   */
+  private async reconcileRemoteReorder(
+    update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+    entityId: string,
+    pendingLocalOps: OperationLogSelect[],
+  ): Promise<{ conflicted: boolean }> {
+    const localReorderOp = pendingLocalOps.find((op) => op.operationType === 'reorder');
+
+    if (!localReorderOp) {
+      // O que está pendente nesta entidade é de outro tipo (ex.: renomear um capítulo) - não
+      // conflita com a ordem vinda do servidor, que pode ser aplicada direto.
+      await applyReorderToLocalDb(this._db!, update, new Date(update.operationTime!));
+      return { conflicted: false };
+    }
+
+    const localPayload = JSON.parse(localReorderOp.payload);
+    await this.conflictService.recordConflict({
+      storyId: this.storyId!,
+      entityType: update.entity,
+      entityId,
+      reason: 'concurrent_edit',
+      localOperationType: 'reorder',
+      localOperationIds: [localReorderOp.id],
+      localValues: { reorderItems: localPayload.reorderItems ?? [] },
+      serverValues: {
+        reorderItems: update.reorderItems,
+        reorderTarget: (update as StoryReorderingStoryUpdate).reorderTarget,
+      },
+      clientVersion: this.deriveBaseVersion(localPayload) ?? null,
+      serverVersion: update.version ?? null,
+      message: `Server and local changes overlap on ordering ${update.entity} ${entityId}.`,
+    });
     return { conflicted: true };
   }
 

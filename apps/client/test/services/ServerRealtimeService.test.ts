@@ -69,10 +69,38 @@ it('subscribes after connecting and requests a sync for a changed story notifica
   expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', storyId: 'story' }));
   expect(mockFriendshipService.syncFriendshipsWithServer).toHaveBeenCalledWith('me', server);
 
+  mockSyncEngine.requestSync.mockClear(); // drop the connect-time catch-up call, tested on its own below
   socket.onmessage?.({ data: JSON.stringify({ type: 'story.changed', storyId: 'story' }) });
   await flush();
   expect(mockSyncEngine.requestSync).toHaveBeenCalledWith('websocket');
 
   await service.stop();
   expect(socket.close).toHaveBeenCalled();
+});
+
+it('requests a catch-up sync on every (re)connect, so events missed while offline are not lost', async () => {
+  // O eventManager do servidor é em memória, não uma fila durável - qualquer evento emitido
+  // enquanto este cliente estava desconectado nunca é reentregue. Sem isto, a história só
+  // sincronizava de novo na próxima edição local.
+  const service = new ServerRealtimeService({} as any, server, 'me');
+  service.start('story');
+  await flush();
+
+  const socket = MockWebSocket.instances[0];
+  socket.onopen?.();
+
+  expect(mockSyncEngine.requestSync).toHaveBeenCalledWith('websocket');
+  await service.stop();
+});
+
+it('does not request a sync on connect when not subscribed to any story yet', async () => {
+  const service = new ServerRealtimeService({} as any, server, 'me');
+  service.start(); // no storyId
+  await flush();
+
+  const socket = MockWebSocket.instances[0];
+  socket.onopen?.();
+
+  expect(mockSyncEngine.requestSync).not.toHaveBeenCalled();
+  await service.stop();
 });

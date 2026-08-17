@@ -8,7 +8,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { effects, items } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class EffectSyncHandler extends BaseSyncEntityHandler<
   typeof CreateEffectDataSchema,
@@ -32,7 +32,8 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
         where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
       });
       if (!itemExists) {
-        throw new Error(
+        throw new SyncConflictError(
+          'referenced_entity_deleted',
           `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
         );
       }

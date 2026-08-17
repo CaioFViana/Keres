@@ -12,7 +12,7 @@ import {
 import { and, eq, gt, max, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { z } from 'zod';
-import { db } from '../db';
+import { db, withTransaction } from '../db';
 import {
   favorites,
   operationLog,
@@ -237,57 +237,82 @@ export class SyncService {
 
       /** Já estava aplicada: nada a escrever, mas o cliente precisa saber que passou. */
       let alreadyApplied = false;
+      /** Preenchido dentro da transação quando a operação grava algo de novo. */
+      let writeResult: {
+        logged: { id: string; operationVersion: number };
+        entityAfter: any;
+      } | null = null;
 
       try {
-        if (update.type === 'create') {
-          if (currentEntity) {
-            // Reenvio idempotente: o push anterior chegou, só a resposta se perdeu.
-            // Recriar daria erro de chave duplicada e travaria o cliente para sempre.
-            alreadyApplied = true;
-          } else {
-            if (update.entity === 'Story') {
-              await tierEnforcementService.assertCanCreateStory(userId);
-            } else if (update.entity !== 'Favorite' && update.entity !== 'Comment') {
-              // Comments são anotações, não conteúdo da história - não devem consumir nem
-              // ser bloqueados pelo limite de entidades do tier, mesmo padrão de Favorite.
-              await tierEnforcementService.assertCanCreateEntity(userId, storyId);
+        // A escrita da entidade e o registro no log de operações rodam na mesma transação:
+        // sem isto, uma falha entre os dois passos (ex.: o processo cair) deixava a entidade
+        // mudada mas invisível para outros clientes, e um reenvio da mesma operação pelo
+        // próprio cliente que a originou batia um `version_conflict` falso contra o próprio
+        // trabalho dele. `db` resolve para esta transação em qualquer chamada feita durante
+        // `withTransaction`, incluindo dentro dos handlers de entidade - eles não precisam
+        // saber disso.
+        await withTransaction(async () => {
+          if (update.type === 'create') {
+            if (currentEntity) {
+              // Reenvio idempotente: o push anterior chegou, só a resposta se perdeu.
+              // Recriar daria erro de chave duplicada e travaria o cliente para sempre.
+              alreadyApplied = true;
+            } else {
+              if (update.entity === 'Story') {
+                await tierEnforcementService.assertCanCreateStory(userId);
+              } else if (update.entity !== 'Favorite' && update.entity !== 'Comment') {
+                // Comments são anotações, não conteúdo da história - não devem consumir nem
+                // ser bloqueados pelo limite de entidades do tier, mesmo padrão de Favorite.
+                await tierEnforcementService.assertCanCreateEntity(userId, storyId);
+              }
+              await handler.create(userId, storyId, update as CreateStoryUpdate);
             }
-            await handler.create(userId, storyId, update as CreateStoryUpdate);
-          }
-        } else if (update.type === 'update' || update.type === 'reorder') {
-          if (!currentEntity) {
-            recordConflict(
-              'not_found',
-              `${update.entity} with ID ${entityId} does not exist on the server.`,
-              conflictContext(),
-            );
-            continue;
-          }
-          await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
-        } else if (update.type === 'delete') {
-          if (!currentEntity) {
-            // Excluir algo que o servidor não tem é o resultado desejado, não um erro.
-            alreadyApplied = true;
-          } else {
-            // Comentário: o dono da história pode excluir qualquer comentário (moderação);
-            // escritor/leitor só o próprio - mesmo com acesso de leitura a comentários
-            // desligado depois, o autor original (se writer/reader) só perde a capacidade de
-            // excluir o próprio; o dono sempre pode. Verificado aqui, não em
-            // CommentSyncHandler, porque `role` só está disponível nesta função.
-            if (
-              update.entity === 'Comment' &&
-              role !== 'owner' &&
-              currentEntity.authorUserId !== userId
-            ) {
-              recordConflict(
-                'unauthorized',
-                'Only the comment author or the story owner can delete this comment.',
+          } else if (update.type === 'update' || update.type === 'reorder') {
+            if (!currentEntity) {
+              throw new SyncConflictError(
+                'not_found',
+                `${update.entity} with ID ${entityId} does not exist on the server.`,
               );
-              continue;
             }
-            await handler.delete(userId, storyId, update as DeleteStoryUpdate, currentEntity);
+            await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
+          } else if (update.type === 'delete') {
+            if (!currentEntity) {
+              // Excluir algo que o servidor não tem é o resultado desejado, não um erro.
+              alreadyApplied = true;
+            } else {
+              // Comentário: o dono da história pode excluir qualquer comentário (moderação);
+              // escritor/leitor só o próprio - mesmo com acesso de leitura a comentários
+              // desligado depois, o autor original (se writer/reader) só perde a capacidade de
+              // excluir o próprio; o dono sempre pode. Verificado aqui, não em
+              // CommentSyncHandler, porque `role` só está disponível nesta função.
+              if (
+                update.entity === 'Comment' &&
+                role !== 'owner' &&
+                currentEntity.authorUserId !== userId
+              ) {
+                throw new SyncConflictError(
+                  'unauthorized',
+                  'Only the comment author or the story owner can delete this comment.',
+                );
+              }
+              await handler.delete(userId, storyId, update as DeleteStoryUpdate, currentEntity);
+            }
           }
-        }
+
+          if (alreadyApplied) return;
+
+          // Versão da entidade *depois* da operação, lida de volta para que o cliente saiba
+          // sobre qual base as próximas edições dele se apoiam.
+          const entityAfter = await handler.findById(entityId).catch(() => undefined);
+          const logged = await this.appendOperationLog({
+            storyId,
+            userId,
+            update,
+            entityId,
+            entityVersion: entityAfter?.version,
+          });
+          writeResult = { logged, entityAfter };
+        });
       } catch (error) {
         if (error instanceof TierLimitExceededError) {
           recordConflict('limit_exceeded', error.message, conflictContext());
@@ -332,21 +357,7 @@ export class SyncService {
         continue;
       }
 
-      // Versão da entidade *depois* da operação, lida de volta para que o cliente saiba
-      // sobre qual base as próximas edições dele se apoiam.
-      const entityAfter = await handler.findById(entityId).catch(() => undefined);
-
-      // O log é gravado imediatamente após a escrita da entidade, e não em bloco no fim:
-      // se algo falhar mais adiante no lote, as operações já aplicadas continuam
-      // visíveis para os outros clientes.
-      const logged = await this.appendOperationLog({
-        storyId,
-        userId,
-        update,
-        entityId,
-        entityVersion: entityAfter?.version,
-      });
-
+      const { logged, entityAfter } = writeResult!;
       lastOperationVersion = logged.operationVersion;
       applied.push({
         clientOperationId: update.clientOperationId,
@@ -397,7 +408,7 @@ export class SyncService {
         sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`,
       );
 
-      const [favoriteRows, loggedFavoriteRows, maxVersionRows] = await Promise.all([
+      const [favoriteRows, loggedFavoriteRows, storyRow] = await Promise.all([
         tx
           .select()
           .from(favorites)
@@ -412,15 +423,18 @@ export class SyncService {
               eq(operationLog.operationType, 'create'),
             ),
           ),
+        // Mesmo contador que `appendOperationLog` usa - o `for update` acima garante que os
+        // dois não pisam um no outro: qualquer push concorrente que tente incrementar
+        // `lastOperationVersion` desta história espera esta transação terminar.
         tx
-          .select({ maxVersion: max(operationLog.operationVersion) })
-          .from(operationLog)
-          .where(eq(operationLog.storyId, storyId)),
+          .select({ lastOperationVersion: stories.lastOperationVersion })
+          .from(stories)
+          .where(eq(stories.id, storyId)),
       ]);
 
       const loggedIds = new Set(loggedFavoriteRows.map((row) => row.entityId));
       const missingFavorites = favoriteRows.filter((favorite) => !loggedIds.has(favorite.id));
-      let nextOperationVersion = maxVersionRows.at(0)?.maxVersion || 0;
+      let nextOperationVersion = storyRow.at(0)?.lastOperationVersion || 0;
 
       for (const favorite of missingFavorites) {
         nextOperationVersion += 1;
@@ -442,6 +456,13 @@ export class SyncService {
         });
       }
 
+      if (missingFavorites.length > 0) {
+        await tx
+          .update(stories)
+          .set({ lastOperationVersion: nextOperationVersion })
+          .where(eq(stories.id, storyId));
+      }
+
       return { count: missingFavorites.length, maxOperationVersion: nextOperationVersion };
     });
   }
@@ -449,9 +470,10 @@ export class SyncService {
   /**
    * Grava uma operação no log já com o próximo `operationVersion` da história.
    *
-   * A numeração é calculada dentro do próprio INSERT em vez de lida antes em JavaScript,
-   * para que dois pushes concorrentes na mesma história não recebam o mesmo número (o que
-   * faria um dos dois ficar invisível para os pulls dos outros clientes).
+   * A numeração vem de um `UPDATE` de uma linha só em `stories.lastOperationVersion` (ver
+   * comentário na própria coluna), não mais de `max(operation_log.operation_version)`: dois
+   * pushes concorrentes na mesma história agora nunca recebem o mesmo número, o que antes
+   * fazia um dos dois ficar invisível para sempre nos pulls incrementais de outros clientes.
    *
    * Pública para que AdminRecoveryService possa registrar uma restauração feita pelo
    * painel administrativo com a mesma lógica de numeração, em vez de duplicá-la.
@@ -482,26 +504,38 @@ export class SyncService {
       };
     }
 
-    const id = ulid();
-    const inserted = await db
-      .insert(operationLog)
-      .values({
-        id,
-        storyId,
-        userId,
-        operationVersion: sql<number>`coalesce((select max(existing.operation_version) from operation_log existing where existing.story_id = ${storyId}), 0) + 1`,
-        operationType: operationTypeEnum.enumValues.includes(update.type as any)
-          ? (update.type as any)
-          : 'update',
-        entityType: update.entity,
-        entityId: entityId || ulid(),
-        payload,
-        entityVersion: entityVersion ?? null,
-        createdAt: update.operationTime ? new Date(update.operationTime) : new Date(),
-      })
-      .returning({ operationVersion: operationLog.operationVersion });
+    // Contador atômico em vez de `coalesce(max(...), 0) + 1`: essa subquery deixava duas
+    // chamadas concorrentes para a mesma história calcularem o mesmo próximo número antes de
+    // qualquer uma commitar (nada as serializava). O `UPDATE` de uma linha só é, em si,
+    // serializado pelo lock de linha do Postgres - a segunda chamada concorrente espera a
+    // primeira committar e enxerga o valor já incrementado.
+    const [{ nextOperationVersion } = { nextOperationVersion: undefined }] = await db
+      .update(stories)
+      .set({ lastOperationVersion: sql`${stories.lastOperationVersion} + 1` })
+      .where(eq(stories.id, storyId))
+      .returning({ nextOperationVersion: stories.lastOperationVersion });
 
-    return { id, operationVersion: inserted.at(0)?.operationVersion ?? 0 };
+    if (nextOperationVersion === undefined) {
+      throw new Error(`SyncService: story ${storyId} not found while appending an operation log.`);
+    }
+
+    const id = ulid();
+    await db.insert(operationLog).values({
+      id,
+      storyId,
+      userId,
+      operationVersion: nextOperationVersion,
+      operationType: operationTypeEnum.enumValues.includes(update.type as any)
+        ? (update.type as any)
+        : 'update',
+      entityType: update.entity,
+      entityId: entityId || ulid(),
+      payload,
+      entityVersion: entityVersion ?? null,
+      createdAt: update.operationTime ? new Date(update.operationTime) : new Date(),
+    });
+
+    return { id, operationVersion: nextOperationVersion };
   }
 
   /** Converte Dates em ISO para que a entidade atravesse o JSON da resposta intacta. */

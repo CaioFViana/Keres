@@ -141,6 +141,13 @@ export const SyncConflictReasonSchema = z.enum([
   'edited_on_server',
   /** O cliente e o servidor mudaram os mesmos campos da mesma entidade. */
   'concurrent_edit',
+  /**
+   * A operação referencia outra entidade (personagem, cena, item...) que foi excluída no
+   * servidor. "Manter a minha versão" nunca vai passar sozinho aqui - a referência continua
+   * apontando para algo que não existe mais - então a tela de conflito trata este caso à
+   * parte, sem oferecer essa opção.
+   */
+  'referenced_entity_deleted',
   /** O payload não passou na validação do servidor. Não é resolvível pelo usuário. */
   'validation',
   /** O usuário não tem permissão para a operação. Não é resolvível pelo usuário. */

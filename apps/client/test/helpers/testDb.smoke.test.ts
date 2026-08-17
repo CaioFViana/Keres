@@ -54,3 +54,48 @@ describe('createTestDatabase', () => {
     expect(rows).toEqual([]);
   });
 });
+
+/**
+ * `db.transaction(async (tx) => {...})` roda em produção (expo-sqlite é async de verdade),
+ * mas o wrapper nativo do better-sqlite3 rejeita qualquer callback que devolva uma Promise -
+ * e chamar uma função `async` sempre devolve uma. Sem o patch em `createTestDatabase`, os dois
+ * testes abaixo lançariam `TypeError: Transaction function cannot return a promise`.
+ */
+describe('async transactions against the test driver', () => {
+  const row = (id: string) => ({
+    id,
+    userId: 'local-user',
+    title: id,
+    type: 'linear' as const,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    version: 1,
+    isDeleted: false,
+  });
+
+  it('commits every write made through the async callback', async () => {
+    const { db } = database;
+
+    await db.transaction(async (tx) => {
+      await tx.insert(stories).values(row('story-1'));
+      await tx.insert(stories).values(row('story-2'));
+    });
+
+    const rows = await db.query.stories.findMany();
+    expect(rows.map((r) => r.id).sort()).toEqual(['story-1', 'story-2']);
+  });
+
+  it('rolls back every write made through the async callback when it throws', async () => {
+    const { db } = database;
+
+    await expect(
+      db.transaction(async (tx) => {
+        await tx.insert(stories).values(row('story-1'));
+        throw new Error('boom');
+      }),
+    ).rejects.toThrow('boom');
+
+    const rows = await db.query.stories.findMany();
+    expect(rows).toEqual([]);
+  });
+});

@@ -21,7 +21,7 @@ import {
   tags,
   worldRules,
 } from '../../db/schema'; // Import all possible relation tables
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class TagRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateTagRelationDataSchema,
@@ -48,7 +48,8 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
       where: and(eq(tags.id, tagId), eq(tags.storyId, storyId), eq(tags.isDeleted, false)),
     });
     if (!tagExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Tag with ID ${tagId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
@@ -151,7 +152,8 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
     }
 
     if (!relationExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Entity with ID ${relationId} of type ${relationType} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }

@@ -9,7 +9,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { locationRelations, locations } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /** Limite defensivo contra loop infinito se os dados de alguma forma ficarem corrompidos -
  *  numa hierarquia válida (single-parent, sem ciclos) a cadeia de ancestrais nunca chega perto disso. */
@@ -57,7 +57,8 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
       ),
     });
     if (!locationAExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Location A with ID ${locationAId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
@@ -70,7 +71,8 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
       ),
     });
     if (!locationBExists) {
-      throw new Error(
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
         `Validation Error: Location B with ID ${locationBId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }

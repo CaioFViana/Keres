@@ -430,18 +430,26 @@ export class SyncService {
     entityType: string,
     entityId: string,
     sinceVersion: number,
-  ): Promise<string[]> {
+  ): Promise<string[] | undefined> {
+    // Sem filtro por `entityVersion` aqui de propósito: uma linha com `entity_version` nulo
+    // (gravada antes dessa coluna existir, ver seu comentário em `db/schema/tables/operationLog.ts`)
+    // não tem como ser comparada contra `sinceVersion` - `gt(entityVersion, sinceVersion)` no
+    // Postgres nunca é verdadeiro para NULL, então essa linha simplesmente desapareceria da
+    // união sem nenhum aviso, e o conjunto de campos mudados voltaria incompleto (podendo tanto
+    // esconder uma disputa real quanto, na direção oposta, mesclar por cima dela em silêncio).
+    // Buscar tudo e decidir em código deixa esse caso detectável.
     const rows = await db.query.operationLog.findMany({
-      where: and(
-        eq(operationLog.entityType, entityType),
-        eq(operationLog.entityId, entityId),
-        gt(operationLog.entityVersion, sinceVersion),
-      ),
-      columns: { payload: true },
+      where: and(eq(operationLog.entityType, entityType), eq(operationLog.entityId, entityId)),
+      columns: { payload: true, entityVersion: true },
     });
+
+    if (rows.some((row) => row.entityVersion === null)) {
+      return undefined;
+    }
 
     const fields = new Set<string>();
     for (const row of rows) {
+      if ((row.entityVersion as number) <= sinceVersion) continue;
       const payload = row.payload as Record<string, unknown> | null;
       for (const key of Object.keys(payload ?? {})) {
         // `version` é a base que cada operação declarou, não um campo de conteúdo - está

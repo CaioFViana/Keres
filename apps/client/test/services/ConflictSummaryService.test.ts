@@ -166,6 +166,134 @@ describe('buildConflictSummaries - relation conflicts', () => {
   });
 });
 
+describe('collectEntityRefs - content conflicts with id-type fields', () => {
+  it('collects a reference for an id-type field contested on a content (non-relation) entity', () => {
+    const refs = collectEntityRefs([
+      conflict({
+        entityType: 'Scene',
+        localValues: { chapterId: 'chapter-1' },
+        contestedFields: ['chapterId'],
+      }),
+    ]);
+
+    expect(refs).toEqual(
+      expect.arrayContaining([{ entityType: 'Chapter', entityId: 'chapter-1' }]),
+    );
+  });
+
+  it('ignores contested fields with no known entity target', () => {
+    const refs = collectEntityRefs([
+      conflict({
+        entityType: 'Character',
+        localValues: { motivation: 'Vingança' },
+        contestedFields: ['motivation'],
+      }),
+    ]);
+
+    expect(refs).toEqual([]);
+  });
+});
+
+describe('buildConflictSummaries - entity display name fallbacks', () => {
+  /**
+   * Regressão: `Choice` não tem `name` nem `title` - o campo que identifica é `text`. Sem um
+   * fallback pra ele, todo conflito de Choice mostrava o ULID cru como "nome" da entidade.
+   */
+  it('uses text as the display name for a Choice, which has neither name nor title', () => {
+    const [summary] = buildConflictSummaries(
+      [
+        conflict({
+          entityType: 'Choice',
+          entityId: 'choice-1',
+          localValues: { text: 'Seguir pela estrada' },
+          contestedFields: [],
+        }),
+      ],
+      new Map(),
+      t,
+    );
+
+    expect(summary.title).toBe('Seguir pela estrada');
+    expect(summary.title).not.toBe('choice-1');
+  });
+
+  /** Regressão: Gallery.title é opcional - cai pro nome do arquivo, nunca pro ID cru. */
+  it('falls back to the file name for a Gallery with no title', () => {
+    const [summary] = buildConflictSummaries(
+      [
+        conflict({
+          entityType: 'Gallery',
+          entityId: 'gallery-1',
+          localValues: { fileName: 'mapa.png' },
+          contestedFields: [],
+        }),
+      ],
+      new Map(),
+      t,
+    );
+
+    expect(summary.title).toBe('mapa.png');
+    expect(summary.title).not.toBe('gallery-1');
+  });
+
+  it('still falls back to the raw id when nothing identifying is available at all', () => {
+    const [summary] = buildConflictSummaries(
+      [conflict({ entityType: 'Chapter', entityId: 'chapter-1', contestedFields: [] })],
+      new Map(),
+      t,
+    );
+
+    expect(summary.title).toBe('chapter-1');
+  });
+});
+
+describe('buildConflictSummaries - diff field labels and id resolution', () => {
+  /**
+   * Regressão: `t(field, {defaultValue: field})` só funcionava por coincidência pros poucos
+   * campos que também têm uma chave de tradução solta sem o prefixo `field_` - `isFavorite` só
+   * tem `field_isFavorite`, então aparecia cru ("isFavorite") no comparativo.
+   */
+  it('resolves a field label through entityFieldMetadata instead of showing the raw key', () => {
+    const [summary] = buildConflictSummaries(
+      [
+        conflict({
+          entityType: 'Character',
+          localValues: { isFavorite: true },
+          serverValues: { isFavorite: false },
+          contestedFields: ['isFavorite'],
+        }),
+      ],
+      new Map(),
+      t,
+    );
+
+    expect(summary.diffFields[0].label).toBe('field_isFavorite');
+  });
+
+  /**
+   * Regressão: um campo de conteúdo que é ID de outra entidade (ex. `Scene.chapterId`) mostrava
+   * o ID cru no comparativo campo a campo - só as 8 relações tinham nomes resolvidos.
+   */
+  it('resolves an id-type content field to a name instead of showing the raw id', () => {
+    const names = new Map([['Chapter:chapter-a', 'Capítulo 1']]);
+    const [summary] = buildConflictSummaries(
+      [
+        conflict({
+          entityType: 'Scene',
+          localValues: { chapterId: 'chapter-a' },
+          serverValues: { chapterId: 'chapter-b' },
+          contestedFields: ['chapterId'],
+        }),
+      ],
+      names,
+      t,
+    );
+
+    expect(summary.diffFields[0].localDisplay).toBe('Capítulo 1');
+    expect(summary.diffFields[0].serverDisplay).toBe('chapter-b');
+  });
+});
+
 describe('buildConflictSummaries - content conflicts', () => {
   it('requires a diff drill-in when multiple real fields disagree', () => {
     const [summary] = buildConflictSummaries(
@@ -186,7 +314,7 @@ describe('buildConflictSummaries - content conflicts', () => {
     expect(summary.diffFields).toEqual([
       {
         field: 'motivation',
-        label: 'motivation',
+        label: 'field_motivation',
         localDisplay: 'Vingança',
         serverDisplay: 'Redenção',
       },

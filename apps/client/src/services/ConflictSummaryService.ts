@@ -1,6 +1,49 @@
+import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { TFunction } from 'i18next';
 import type { EntityRef } from './EntityNameBatchResolver';
 import type { PendingConflict } from './SyncConflictService';
+
+/** "extraNotes" -> "Extra Notes" - fallback for a field `entityFieldMetadata` doesn't cover.
+ *  Same helper as `OperationLogDetailScreen.tsx`'s, duplicated rather than imported since that
+ *  file is a screen, not a service this module should depend on. */
+function humanizeFieldName(key: string): string {
+  return key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+}
+
+/**
+ * Rótulo de um campo de conteúdo disputado. `t(field, {defaultValue: field})` (o que a modal
+ * antiga fazia) só funciona por coincidência para os poucos campos que também têm uma chave de
+ * tradução solta sem o prefixo `field_` (ex. `motivation`) - `isFavorite` não tem, e aparecia
+ * cru na tela. `entityFieldMetadata` é a fonte de verdade real do rótulo de cada campo.
+ */
+function fieldLabel(entityType: string, field: string, t: TFunction): string {
+  const meta = entityFieldMetadata[entityType]?.find((f) => f.name === field);
+  return meta ? t(meta.label) : humanizeFieldName(field);
+}
+
+/**
+ * Campos de conteúdo (não os das 8 relações acima) que são IDs de outra entidade - mesmo
+ * mapeamento que `OperationLogDetailScreen.tsx`'s `REFERENCE_FIELD_ENTITY_TYPES` usa pra
+ * resolver `EntityService.getEntityIdentifier`. Sem isto, um conflito genuíno em `Scene.chapterId`
+ * ou `Choice.nextSceneId` mostrava o ID cru no comparativo campo a campo em vez do nome.
+ */
+const CONTENT_REFERENCE_FIELDS: Record<string, string> = {
+  characterId: 'Character',
+  character1Id: 'Character',
+  character2Id: 'Character',
+  characterOwnerId: 'Character',
+  newCharacterOwnerId: 'Character',
+  sceneId: 'Scene',
+  nextSceneId: 'Scene',
+  itemId: 'Item',
+  locationId: 'Location',
+  chapterId: 'Chapter',
+  tagId: 'Tag',
+  noteId: 'Note',
+  worldRuleId: 'WorldRule',
+  galleryId: 'Gallery',
+  choiceId: 'Choice',
+};
 
 /**
  * Nome da entidade no protocolo de sincronização para a chave de tradução já existente.
@@ -129,31 +172,43 @@ function mergedValuesOf(conflict: PendingConflict): Record<string, any> {
   return { ...(conflict.serverValues ?? {}), ...conflict.localValues };
 }
 
-/** Todas as referências de entidade que os conflitos de relação de um lote vão precisar
- *  resolver - para passar de uma vez a `EntityNameBatchResolver.resolveMany`. */
+/** Todas as referências de entidade que os conflitos de relação, mais quaisquer campos de
+ *  conteúdo que sejam IDs de outra entidade, vão precisar resolver - para passar de uma vez a
+ *  `EntityNameBatchResolver.resolveMany`. */
 export function collectEntityRefs(conflicts: PendingConflict[]): EntityRef[] {
   const refs: EntityRef[] = [];
   for (const conflict of conflicts) {
     const targets = RELATION_FIELD_TARGETS[conflict.entityType];
-    if (!targets) continue;
-    const merged = mergedValuesOf(conflict);
-    for (const target of targets) {
-      if (target.kind === 'fixed') {
-        const entityId = merged[target.field];
-        if (typeof entityId === 'string' && entityId) {
-          refs.push({ entityType: target.entityType, entityId });
+    if (targets) {
+      const merged = mergedValuesOf(conflict);
+      for (const target of targets) {
+        if (target.kind === 'fixed') {
+          const entityId = merged[target.field];
+          if (typeof entityId === 'string' && entityId) {
+            refs.push({ entityType: target.entityType, entityId });
+          }
+        } else {
+          const entityId = merged[target.idField];
+          const entityType = merged[target.typeField];
+          if (
+            typeof entityId === 'string' &&
+            entityId &&
+            typeof entityType === 'string' &&
+            entityType
+          ) {
+            refs.push({ entityType, entityId });
+          }
         }
-      } else {
-        const entityId = merged[target.idField];
-        const entityType = merged[target.typeField];
-        if (
-          typeof entityId === 'string' &&
-          entityId &&
-          typeof entityType === 'string' &&
-          entityType
-        ) {
-          refs.push({ entityType, entityId });
-        }
+      }
+      continue;
+    }
+
+    for (const field of conflict.contestedFields) {
+      const entityType = CONTENT_REFERENCE_FIELDS[field];
+      if (!entityType) continue;
+      const entityId = conflict.localValues[field] ?? conflict.serverValues?.[field];
+      if (typeof entityId === 'string' && entityId) {
+        refs.push({ entityType, entityId });
       }
     }
   }
@@ -274,21 +329,37 @@ export function buildConflictSummaries(
 
     const canQuickResolve = isBinaryContentConflict(conflict);
     const emptyLabel = t('conflict_empty_value');
+    // `name`/`title` cobre a maioria das entidades, mas não todas: Choice não tem nenhum dos
+    // dois (o campo que identifica é `text`), e Gallery tem `title` opcional, caindo pro nome
+    // do arquivo (mesma regra que `EntityNameBatchResolver.ts` já usa) - sem isto, essas duas
+    // entidades sempre mostravam o ID cru como "nome".
     const entityName = formatValue(
       conflict.localValues.name ??
         conflict.localValues.title ??
+        conflict.localValues.text ??
+        conflict.localValues.fileName ??
         conflict.serverValues?.name ??
-        conflict.serverValues?.title,
+        conflict.serverValues?.title ??
+        conflict.serverValues?.text ??
+        conflict.serverValues?.fileName,
       conflict.entityId,
     );
+
+    const displayValue = (field: string, value: unknown): string => {
+      const targetType = CONTENT_REFERENCE_FIELDS[field];
+      if (targetType && typeof value === 'string' && value) {
+        return names.get(`${targetType}:${value}`) || formatValue(value, emptyLabel);
+      }
+      return formatValue(value, emptyLabel);
+    };
 
     const diffFields: ConflictDiffField[] = canQuickResolve
       ? []
       : conflict.contestedFields.map((field) => ({
           field,
-          label: t(field, { defaultValue: field }),
-          localDisplay: formatValue(conflict.localValues[field], emptyLabel),
-          serverDisplay: formatValue(conflict.serverValues?.[field], emptyLabel),
+          label: fieldLabel(conflict.entityType, field, t),
+          localDisplay: displayValue(field, conflict.localValues[field]),
+          serverDisplay: displayValue(field, conflict.serverValues?.[field]),
         }));
 
     // No caso binário (nada a comparar campo a campo) o motivo explica melhor a decisão do

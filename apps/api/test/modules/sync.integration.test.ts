@@ -1,4 +1,7 @@
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { db } from '../../src/db';
+import { operationLog } from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -176,6 +179,35 @@ describe('POST /sync/:storyId', () => {
     ]);
 
     expect(data.conflicts[0].changedFields).toContain('name');
+  });
+
+  /**
+   * `entity_version` é nulo em linhas gravadas antes dessa coluna existir (comentário na
+   * própria migração). Uma dessas linhas não pode ser comparada contra a base do cliente -
+   * `entityVersion > sinceVersion` no Postgres nunca é verdadeiro pra NULL, então ela some da
+   * união sem aviso, e o conjunto de campos "que mudaram" volta incompleto. `changedFields`
+   * precisa vir ausente (não uma lista incompleta) pra que o cliente saiba que não pode confiar
+   * nele e caia no caminho seguro de sempre perguntar, em vez de arriscar mesclar por cima de
+   * uma disputa real que a lacuna escondeu.
+   */
+  it('omits changedFields entirely when an intervening operation has no entityVersion recorded', async () => {
+    const characterId = newId();
+    const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const staleVersion = created.data.applied[0].entityVersion;
+    const intervening = await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Primeiro', staleVersion),
+    ]);
+    await db
+      .update(operationLog)
+      .set({ entityVersion: null })
+      .where(eq(operationLog.id, intervening.data.applied[0].operationId));
+
+    const { data } = await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Segundo', staleVersion, 'local-after-legacy-row'),
+    ]);
+
+    expect(data.conflicts).toHaveLength(1);
+    expect(data.conflicts[0].changedFields).toBeUndefined();
   });
 
   /**

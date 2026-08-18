@@ -20,6 +20,18 @@ import { createWebSocketTicket } from '../webSocket/webSocket.route';
  *  endpoint with no attempt limiting at all. */
 const loginAttemptLimiter = createAttemptLimiter({ maxAttempts: 5, windowMs: 15 * 60 * 1000 });
 
+/** Every rejection branch across this file returns exactly this shape. */
+const MessageResponseSchema = t.Object({ message: t.String() });
+
+/** Success shape shared by /login and /forgot-password - both log the user in the same way. */
+const AuthSessionResponseSchema = t.Object({
+  accessToken: t.String(),
+  refreshToken: t.String(),
+  userId: t.String(),
+  username: t.String(),
+  tag: t.String(),
+});
+
 export const authRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
   // Registering the `jwt` plugin here again (same name/secret/schema as index.ts's copy) looks
@@ -49,6 +61,10 @@ export const authRoutes = new Elysia()
       return { ticket: createWebSocketTicket(user), expiresInSeconds: 30 };
     },
     {
+      response: {
+        200: t.Object({ ticket: t.String(), expiresInSeconds: t.Number() }),
+        401: MessageResponseSchema,
+      },
       detail: {
         summary: 'Issue a short-lived WebSocket ticket',
         description:
@@ -119,6 +135,10 @@ export const authRoutes = new Elysia()
         username: t.String(),
         password: t.String(),
       }),
+      response: {
+        200: AuthSessionResponseSchema,
+        401: MessageResponseSchema,
+      },
       detail: {
         summary: 'User login',
         tags: ['Auth'],
@@ -242,6 +262,15 @@ export const authRoutes = new Elysia()
         username: t.String(),
         password: t.String(),
       }),
+      response: {
+        200: t.Composite([
+          AuthSessionResponseSchema,
+          t.Object({ recoveryCodes: t.Array(t.String()) }),
+        ]),
+        403: MessageResponseSchema,
+        409: MessageResponseSchema,
+        500: MessageResponseSchema,
+      },
       detail: {
         summary: 'User registration',
         description:
@@ -301,6 +330,11 @@ export const authRoutes = new Elysia()
         recoveryCode: t.String(),
         newPassword: t.String(),
       }),
+      response: {
+        200: AuthSessionResponseSchema,
+        400: MessageResponseSchema,
+        401: MessageResponseSchema,
+      },
       detail: {
         summary: 'Reset a forgotten password using a recovery code',
         description:
@@ -379,6 +413,14 @@ export const authRoutes = new Elysia()
       body: t.Object({
         refreshToken: t.Optional(t.String()),
       }),
+      response: {
+        200: t.Object({
+          accessToken: t.String(),
+          refreshToken: t.String(),
+          username: t.String(),
+        }),
+        401: MessageResponseSchema,
+      },
       detail: {
         summary: 'Refresh access token',
         tags: ['Auth'],

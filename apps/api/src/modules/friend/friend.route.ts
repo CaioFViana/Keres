@@ -1,7 +1,36 @@
 import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
-import { Elysia } from 'elysia';
+import { Elysia, t } from 'elysia';
 import { JWTPayload } from '../../index';
 import { friendshipService } from '../../services/FriendshipService';
+
+/** A `friendships` row exactly as `.returning()`/`db.query` sends it back - `createdAt`/
+ *  `updatedAt` are raw Date instances here (unlike EnrichedFriendshipResponseSchema below,
+ *  where FriendshipService.getFriendships explicitly calls `.toISOString()` on them). */
+const FriendshipResponseSchema = t.Object({
+  id: t.String(),
+  senderId: t.String(),
+  receiverId: t.String(),
+  status: t.String(),
+  blockedById: t.Nullable(t.String()),
+  createdAt: t.Date(),
+  updatedAt: t.Date(),
+});
+
+const EnrichedFriendshipResponseSchema = t.Object({
+  id: t.String(),
+  senderId: t.String(),
+  receiverId: t.String(),
+  status: t.String(),
+  blockedById: t.Nullable(t.String()),
+  createdAt: t.String(),
+  updatedAt: t.String(),
+  friendUsername: t.String(),
+  otherUserId: t.String(),
+  otherUserTag: t.String(),
+  otherUserAvatarColor: t.Nullable(t.String()),
+  otherUserAvatarIcon: t.Nullable(t.String()),
+  otherUserBio: t.Nullable(t.String()),
+});
 
 export const friendRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -21,6 +50,7 @@ export const friendRoutes = new Elysia()
     async ({ params, userId }) => friendshipService.sendFriendRequest(userId, params.targetUserId),
     {
       params: UserTargetIdParam,
+      response: FriendshipResponseSchema,
       detail: {
         summary: 'Send a friend request',
         description: 'Sends a friend request to another user.',
@@ -34,6 +64,7 @@ export const friendRoutes = new Elysia()
       friendshipService.acceptFriendRequest(userId, params.targetUserId),
     {
       params: UserTargetIdParam,
+      response: FriendshipResponseSchema,
       detail: {
         summary: 'Accept a friend request',
         description: 'Accepts a pending friend request from another user.',
@@ -47,6 +78,7 @@ export const friendRoutes = new Elysia()
       friendshipService.declineFriendRequest(userId, params.targetUserId),
     {
       params: UserTargetIdParam,
+      response: t.Void(),
       detail: {
         summary: 'Decline a friend request',
         description: 'Declines a pending friend request received from another user.',
@@ -60,6 +92,7 @@ export const friendRoutes = new Elysia()
       friendshipService.cancelSentFriendRequest(userId, params.targetUserId),
     {
       params: UserTargetIdParam,
+      response: t.Void(),
       detail: {
         summary: 'Cancel a sent friend request',
         description: 'Cancels a friend request previously sent to another user.',
@@ -72,6 +105,7 @@ export const friendRoutes = new Elysia()
     async ({ params, userId }) => friendshipService.blacklistUser(userId, params.targetUserId),
     {
       params: UserTargetIdParam,
+      response: FriendshipResponseSchema,
       detail: {
         summary: 'Blacklist a user',
         description:
@@ -85,6 +119,7 @@ export const friendRoutes = new Elysia()
     async ({ params, userId }) => friendshipService.unblacklistUser(userId, params.targetUserId),
     {
       params: UserTargetIdParam,
+      response: t.Void(),
       detail: {
         summary: 'Unblacklist a user',
         description:
@@ -98,6 +133,7 @@ export const friendRoutes = new Elysia()
     async ({ params, userId }) => friendshipService.unfriendUser(userId, params.targetUserId),
     {
       params: UserTargetIdParam,
+      response: t.Void(),
       detail: {
         summary: 'Unfriend a user',
         description: 'Removes a user from your friends list.',
@@ -106,6 +142,7 @@ export const friendRoutes = new Elysia()
     },
   )
   .get('/', async ({ userId }) => friendshipService.getFriendships(userId), {
+    response: t.Array(EnrichedFriendshipResponseSchema),
     detail: {
       summary: 'Get all friendships',
       description:

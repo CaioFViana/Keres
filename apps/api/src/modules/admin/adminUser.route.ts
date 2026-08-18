@@ -91,13 +91,37 @@ export const adminUserRoutes = new Elysia()
       }
     },
     {
+      // Mirrors AdminCreateUserSchema's length constraints (username/password), which the Zod
+      // parse above still re-enforces - kept in sync here so the two don't drift silently
+      // (this used to be looser than the real gate: no minLength anywhere, so swagger implied
+      // an empty password was fine). `tierId`'s ULID format isn't worth replicating in
+      // TypeBox; the Zod check still catches a malformed one.
       body: t.Object({
-        username: t.String(),
-        password: t.String(),
-        tag: t.Optional(t.String()),
+        username: t.String({ minLength: 1 }),
+        password: t.String({ minLength: 8 }),
+        tag: t.Optional(t.String({ minLength: 1 })),
         isAdmin: t.Optional(t.Boolean()),
         tierId: t.Optional(t.Nullable(t.String())),
       }),
+      response: {
+        201: t.Object({
+          id: t.String(),
+          username: t.String(),
+          tag: t.String(),
+          avatarColor: t.Nullable(t.String()),
+          avatarIcon: t.Nullable(t.String()),
+          bio: t.Nullable(t.String()),
+          isAdmin: t.Boolean(),
+          tierId: t.Nullable(t.String()),
+          createdAt: t.Date(),
+          updatedAt: t.Date(),
+          isDeleted: t.Boolean(),
+          deletedAt: t.Nullable(t.Date()),
+          recoveryCodes: t.Array(t.String()),
+        }),
+        400: t.Object({ message: t.String() }),
+        409: t.Object({ message: t.String() }),
+      },
       detail: { summary: 'Create a user', tags: ['Admin'], security: [{ bearerAuth: [] }] },
     },
   )
@@ -130,14 +154,35 @@ export const adminUserRoutes = new Elysia()
     },
     {
       params: t.Object({ id: t.String() }),
+      // Mirrors AdminUpdateUserSchema's constraints (tag/bio length), same reasoning as
+      // POST / above.
       body: t.Object({
         isAdmin: t.Optional(t.Boolean()),
         tierId: t.Optional(t.Nullable(t.String())),
-        tag: t.Optional(t.String()),
+        tag: t.Optional(t.String({ minLength: 1 })),
         avatarColor: t.Optional(t.Nullable(t.String())),
         avatarIcon: t.Optional(t.Nullable(t.String())),
-        bio: t.Optional(t.Nullable(t.String())),
+        bio: t.Optional(t.Nullable(t.String({ maxLength: 200 }))),
       }),
+      response: {
+        200: t.Object({
+          id: t.String(),
+          username: t.String(),
+          tag: t.String(),
+          avatarColor: t.Nullable(t.String()),
+          avatarIcon: t.Nullable(t.String()),
+          bio: t.Nullable(t.String()),
+          isAdmin: t.Boolean(),
+          tierId: t.Nullable(t.String()),
+          createdAt: t.Date(),
+          updatedAt: t.Date(),
+          isDeleted: t.Boolean(),
+          deletedAt: t.Nullable(t.Date()),
+        }),
+        400: t.Object({ message: t.String() }),
+        404: t.Object({ message: t.String() }),
+        409: t.Object({ message: t.String() }),
+      },
       detail: {
         summary: 'Update a user (profile, isAdmin, tierId)',
         tags: ['Admin'],

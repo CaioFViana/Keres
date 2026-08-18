@@ -23,6 +23,30 @@ const storyTypeEnumObject = storyTypeEnum.enumValues.reduce(
 
 const storyExportImportService = new StoryExportImportService();
 
+/** Every column of a `stories` row, as `.returning()` sends it back after POST /. */
+const StoryResponseSchema = t.Object({
+  id: t.String(),
+  userId: t.String(),
+  title: t.String(),
+  type: t.String(),
+  description: t.Nullable(t.String()),
+  genre: t.Nullable(t.String()),
+  language: t.Nullable(t.String()),
+  author: t.Nullable(t.String()),
+  isFavorite: t.Boolean(),
+  favoriteBehavior: t.String(),
+  extraNotes: t.Nullable(t.String()),
+  theme: t.Nullable(t.String()),
+  normalizeSceneTiming: t.Boolean(),
+  allowReaderComments: t.Boolean(),
+  createdAt: t.Date(),
+  updatedAt: t.Date(),
+  version: t.Number(),
+  isDeleted: t.Boolean(),
+  deletedAt: t.Nullable(t.Date()),
+  lastOperationVersion: t.Number(),
+});
+
 export const storyRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
   // Route to create a new story
@@ -66,6 +90,7 @@ export const storyRoutes = new Elysia()
         title: t.String(),
         type: t.Enum(storyTypeEnumObject), // Use the converted object here
       }),
+      response: StoryResponseSchema,
       detail: {
         summary: 'Create a new story',
         description: 'Creates a new story associated with the authenticated user.',
@@ -100,6 +125,12 @@ export const storyRoutes = new Elysia()
       params: t.Object({
         storyId: t.String(),
       }),
+      // Deliberately no `response` schema: Elysia's response schema strips any field it
+      // doesn't declare from the *actual* returned object (confirmed empirically), and a full
+      // story export is dozens of entity arrays deep (FullStoryExportSchema, imported above,
+      // is the Zod shape of it) - one missed or mistyped field here would silently truncate a
+      // real backup/export instead of just documenting it wrong. Not worth that risk for a
+      // swagger improvement.
       detail: {
         summary: 'Export a full story',
         description:
@@ -133,6 +164,7 @@ export const storyRoutes = new Elysia()
         // novo, usado ao baixar/duplicar uma história já existente em outro servidor.
         storyId: t.Optional(t.String()),
       }),
+      response: t.Object({ storyId: t.String() }),
       detail: {
         summary: 'Import a full story',
         description:

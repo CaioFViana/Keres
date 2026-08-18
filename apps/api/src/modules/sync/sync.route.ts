@@ -4,6 +4,32 @@ import { JWTPayload } from '../../index';
 import { syncService } from '../../services/SyncService';
 import { logger } from '../../utils/logger';
 
+/** Mirrors SyncConflictSchema (packages/shared) - not the Zod schema itself, same reasoning
+ *  as the body comment below: Elysia's OpenAPI output from a Zod schema isn't valid JSON
+ *  Schema, so this is hand-written to actually render in swagger. */
+const SyncConflictResponseSchema = t.Object({
+  clientOperationId: t.Optional(t.String()),
+  entity: t.String(),
+  entityId: t.String(),
+  type: t.String(),
+  reason: t.String(),
+  message: t.String(),
+  clientVersion: t.Optional(t.Number()),
+  serverVersion: t.Optional(t.Number()),
+  serverEntity: t.Optional(t.Nullable(t.Record(t.String(), t.Any()))),
+  attemptedChanges: t.Optional(t.Record(t.String(), t.Any())),
+});
+
+/** Mirrors SyncAppliedOperationSchema (packages/shared). */
+const SyncAppliedOperationResponseSchema = t.Object({
+  clientOperationId: t.Optional(t.String()),
+  operationId: t.Optional(t.String()),
+  operationVersion: t.Number(),
+  entityVersion: t.Optional(t.Number()),
+  entity: t.String(),
+  entityId: t.String(),
+});
+
 export const syncRoute = new Elysia()
   .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
   .post(
@@ -48,10 +74,37 @@ export const syncRoute = new Elysia()
       // `_def` AST, not valid JSON Schema, so it won't render meaningfully in Swagger UI or
       // work with any codegen tool that expects a real OpenAPI schema.
       body: StoryUpdatesArraySchema,
+      response: {
+        200: t.Object({
+          message: t.String(),
+          processedUpdates: t.Number(),
+          serverMaxOperationVersion: t.Number(),
+          applied: t.Array(SyncAppliedOperationResponseSchema),
+          conflicts: t.Array(SyncConflictResponseSchema),
+        }),
+        401: t.Object({ message: t.String() }),
+      },
       detail: {
         summary: 'Synchronize local story updates with the server',
         description:
-          'Receives an array of story updates (create, update, delete) from a client and applies them to the server database, handling conflict resolution.',
+          'Receives an array of story updates (create, update, delete, reorder) from a client ' +
+          'and applies them to the server database, handling conflict resolution. The request ' +
+          'body is a JSON array; every element shares this envelope: `type` ' +
+          '("create"|"update"|"delete"|"reorder"), `entity` (one of ~25 registered sync entity ' +
+          'names, e.g. "Character", "Scene", "TagRelation" - see SyncService.getEntityHandlers), ' +
+          '`id`, `operationVersion`, `operationTime` (ISO string), `originatingUser`, and an ' +
+          'optional `clientOperationId` used to correlate this operation with its result in the ' +
+          "response. On top of that envelope: a `create` carries `data` (the new entity's " +
+          'fields), an `update` carries `changes` (a partial patch) plus the base `version` it ' +
+          'was built on, a `delete` carries just that base `version`, and a `reorder` carries ' +
+          '`reorderItems` (id + newIndex pairs) instead of `data`/`changes`. The exact required ' +
+          'fields of `data`/`changes` differ per entity - this is a true union of ~25 shapes, ' +
+          'which is why the request body below is documented as an opaque schema rather than ' +
+          'a precise one: TypeBox (what would normally render a real shape in swagger for this ' +
+          "framework) can't express that union without becoming misleading busywork to keep in " +
+          'sync, and Zod (the schema actually enforcing it) produces its own internal ' +
+          'representation here instead of standard JSON Schema when Elysia serializes it for ' +
+          'this page. The response shape below is precise and can be trusted as-is.',
         tags: ['Sync'],
       },
     },

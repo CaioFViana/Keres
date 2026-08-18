@@ -132,6 +132,14 @@ export const mediaRoutes = new Elysia()
         mimeType: t.Optional(t.String()),
       }),
       type: 'multipart/form-data',
+      response: {
+        200: t.Object({ hash: t.String(), sizeBytes: t.Number(), mimeType: t.String() }),
+        400: t.Object({ message: t.String() }),
+        403: t.Object({ message: t.String() }),
+        404: t.Object({ message: t.String() }),
+        413: t.Object({ message: t.String() }),
+        415: t.Object({ message: t.String() }),
+      },
       detail: {
         summary: 'Upload a media blob',
         description:

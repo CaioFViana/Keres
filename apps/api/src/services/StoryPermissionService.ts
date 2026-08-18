@@ -137,6 +137,12 @@ export class StoryPermissionService {
         createdAt: new Date(),
         updatedAt: new Date(),
         version: 1,
+        // Matches every column the update branch's `.returning()` sends back above - without
+        // these, the two branches returned differently-shaped objects (this one missing
+        // isDeleted/deletedAt entirely), which a precise response schema would have to treat
+        // as optional just to accommodate.
+        isDeleted: false,
+        deletedAt: null,
       };
 
       await db.insert(storyPermissions).values(newPermission);

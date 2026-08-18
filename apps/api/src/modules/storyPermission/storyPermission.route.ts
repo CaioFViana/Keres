@@ -3,10 +3,25 @@ import {
   StoryAndTargetUserParams, // Import the new schema
   StoryIdParam,
 } from '@keres/shared';
-import { Elysia } from 'elysia';
+import { Elysia, t } from 'elysia';
 import { JWTPayload } from '../../index'; // Import JWTPayload
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { AppError } from '../../utils/errors';
+
+/** Shape of a `story_permissions` row as returned by upsertStoryPermission - both its
+ *  create and update branches now return every one of these fields (see the comment on
+ *  the create branch's object literal in StoryPermissionService.ts). */
+const StoryPermissionResponseSchema = t.Object({
+  id: t.String(),
+  storyId: t.String(),
+  userId: t.String(),
+  permissionType: t.String(),
+  version: t.Number(),
+  createdAt: t.Date(),
+  updatedAt: t.Date(),
+  isDeleted: t.Boolean(),
+  deletedAt: t.Nullable(t.Date()),
+});
 
 /**
  * `StoryPermissionService` throws plain `Error`s for its ownership checks (message starting
@@ -46,6 +61,7 @@ export const storyPermissionRoutes = new Elysia()
     },
     {
       body: CreateStoryPermissionSchema, // This schema now serves for upsert
+      response: StoryPermissionResponseSchema,
       detail: {
         summary: 'Create or update a story permission',
         description:
@@ -71,6 +87,7 @@ export const storyPermissionRoutes = new Elysia()
     },
     {
       params: StoryAndTargetUserParams, // Use the new params schema
+      response: t.Object({ message: t.String() }),
       detail: {
         summary: 'Delete a story permission',
         description:
@@ -92,6 +109,12 @@ export const storyPermissionRoutes = new Elysia()
     },
     {
       params: StoryIdParam,
+      response: t.Array(
+        t.Composite([
+          StoryPermissionResponseSchema,
+          t.Object({ user: t.Object({ id: t.String(), username: t.String() }) }),
+        ]),
+      ),
       detail: {
         summary: 'Get all story permissions for a specific story',
         description:

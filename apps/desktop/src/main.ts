@@ -196,10 +196,30 @@ async function readAuthVault(): Promise<EncryptedTokenVault> {
 }
 
 async function writeAuthVault(vault: EncryptedTokenVault): Promise<void> {
-  const tempPath = `${AUTH_VAULT_FILE}.tmp`;
+  // Nome único por escrita: duas chamadas concorrentes (ex.: `saveTokens` de um servidor e
+  // `auth:remove` de outro, disparadas perto o bastante uma da outra) que compartilhassem o
+  // mesmo `.tmp` faziam a segunda `rename` falhar com ENOENT - a primeira já tinha consumido
+  // (movido) o arquivo temporário antes da segunda tentar renomeá-lo.
+  const tempPath = `${AUTH_VAULT_FILE}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
   await fs.mkdir(path.dirname(AUTH_VAULT_FILE), { recursive: true });
   await fs.writeFile(tempPath, JSON.stringify(vault), { mode: 0o600 });
   await fs.rename(tempPath, AUTH_VAULT_FILE);
+}
+
+/**
+ * Serializa toda leitura-modificação-escrita do vault. Nomes de arquivo temporário únicos
+ * (acima) já evitam a colisão de `rename`, mas duas chamadas concorrentes ainda podiam se
+ * pisar de outro jeito: cada uma lê o vault inteiro, muda só a própria entrada, e escreve o
+ * vault inteiro de volta - sem isto, a segunda escrita a terminar sobrescrevia o arquivo
+ * inteiro com uma cópia que não tinha a mudança da primeira (um "lost update" silencioso,
+ * sem qualquer erro no log).
+ */
+let vaultQueue: Promise<unknown> = Promise.resolve();
+
+function withVaultLock<T>(task: () => Promise<T>): Promise<T> {
+  const result = vaultQueue.then(task, task);
+  vaultQueue = result.catch(() => undefined);
+  return result;
 }
 
 /** Exportado para o teste registrar os canais sem precisar que o app fique pronto. */
@@ -233,11 +253,13 @@ export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:remove', async (event, serverId: string) => {
     assertTrustedRenderer(event);
     assertValidServerId(serverId);
-    const vault = await readAuthVault();
-    if (serverId in vault) {
-      delete vault[serverId];
-      await writeAuthVault(vault);
-    }
+    await withVaultLock(async () => {
+      const vault = await readAuthVault();
+      if (serverId in vault) {
+        delete vault[serverId];
+        await writeAuthVault(vault);
+      }
+    });
   });
 }
 
@@ -245,11 +267,14 @@ async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
   if (!(await secureStorageAvailable())) {
     throw new Error('Secure credential storage is unavailable on this device.');
   }
-  const vault = await readAuthVault();
-  vault[serverId] = (await safeStorage.encryptStringAsync(JSON.stringify(tokens))).toString(
+  const encrypted = (await safeStorage.encryptStringAsync(JSON.stringify(tokens))).toString(
     'base64',
   );
-  await writeAuthVault(vault);
+  await withVaultLock(async () => {
+    const vault = await readAuthVault();
+    vault[serverId] = encrypted;
+    await writeAuthVault(vault);
+  });
 }
 
 Menu.setApplicationMenu(null);

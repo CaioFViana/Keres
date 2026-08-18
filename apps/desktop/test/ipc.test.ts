@@ -172,6 +172,42 @@ describe('auth channels', () => {
     });
   });
 
+  /**
+   * Regressão: duas escritas concorrentes usavam o mesmo nome de arquivo temporário
+   * (`auth-vault.json.tmp`), então a segunda `rename` a rodar encontrava ENOENT - a primeira
+   * já tinha movido (consumido) o arquivo. Isso derrubava a escrita inteira com um erro não
+   * tratado, e o token nunca chegava a ser salvo de verdade - exatamente o que fazia
+   * requisições autenticadas seguintes falharem com 401 mesmo depois do login "ter dado certo".
+   */
+  it('survives concurrent writes to different servers without losing either one', async () => {
+    await expect(
+      Promise.all([
+        invoke('auth:write', trustedEvent, 'server-1', TOKENS),
+        invoke('auth:write', trustedEvent, 'server-2', { accessToken: 'a2', refreshToken: 'r2' }),
+      ]),
+    ).resolves.toBeDefined();
+
+    await expect(invoke('auth:read', trustedEvent, 'server-1')).resolves.toEqual(TOKENS);
+    await expect(invoke('auth:read', trustedEvent, 'server-2')).resolves.toEqual({
+      accessToken: 'a2',
+      refreshToken: 'r2',
+    });
+  });
+
+  it('survives a write racing a remove for a different server', async () => {
+    await invoke('auth:write', trustedEvent, 'server-2', { accessToken: 'a2', refreshToken: 'r2' });
+
+    await expect(
+      Promise.all([
+        invoke('auth:write', trustedEvent, 'server-1', TOKENS),
+        invoke('auth:remove', trustedEvent, 'server-2'),
+      ]),
+    ).resolves.toBeDefined();
+
+    await expect(invoke('auth:read', trustedEvent, 'server-1')).resolves.toEqual(TOKENS);
+    await expect(invoke('auth:read', trustedEvent, 'server-2')).resolves.toBeNull();
+  });
+
   it('returns null for a server that was never stored', async () => {
     await expect(invoke('auth:read', trustedEvent, 'nunca-visto')).resolves.toBeNull();
   });

@@ -117,7 +117,7 @@ export class AdminUserService {
       throw new UsernameAlreadyTakenError();
     }
 
-    const hashedPassword = await bcrypt.hash(input.password, 10);
+    const hashedPassword = await bcrypt.hash(input.password, 12);
     const id = ulid();
     const desiredTag = input.tag ?? input.username;
 

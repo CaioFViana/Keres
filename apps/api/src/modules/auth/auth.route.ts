@@ -2,7 +2,7 @@ import { bearer } from '@elysiajs/bearer';
 import { jwt } from '@elysiajs/jwt';
 import { ForgotPasswordSchema } from '@keres/shared';
 import * as bcrypt from 'bcrypt';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { env } from '../../config/env';
@@ -12,8 +12,14 @@ import { users } from '../../db/schema';
 import { InvalidRecoveryCodeError, recoveryCodeService } from '../../services/RecoveryCodeService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { isUniqueViolation } from '../../utils/errors';
+import { createAttemptLimiter } from '../../utils/rateLimiter';
 import type { JWTPayload } from '../../index';
 import { createWebSocketTicket } from '../webSocket/webSocket.route';
+
+/** Same window as /forgot-password's limiter (RecoveryCodeService) - this one just never got
+ *  backported when that concept was introduced, leaving /login the only credential-checking
+ *  endpoint with no attempt limiting at all. */
+const loginAttemptLimiter = createAttemptLimiter({ maxAttempts: 5, windowMs: 15 * 60 * 1000 });
 
 export const authRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -44,8 +50,16 @@ export const authRoutes = new Elysia()
       // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
+      if (!loginAttemptLimiter.registerAttempt(username)) {
+        set.status = 401;
+        return { message: 'Invalid credentials' };
+      }
+
+      // isDeleted excluded here (not just checked after the fact) so a soft-deleted account
+      // fails exactly like a nonexistent one - both credentials-wise and message-wise -
+      // instead of successfully logging in and only getting blocked by admin-gated routes.
       const user = await db.query.users.findFirst({
-        where: eq(users.username, username),
+        where: and(eq(users.username, username), eq(users.isDeleted, false)),
       });
 
       if (!user) {
@@ -60,6 +74,8 @@ export const authRoutes = new Elysia()
         return { message: 'Invalid credentials' };
       }
 
+      loginAttemptLimiter.clearAttempts(username);
+
       // Sign JWT with userId and username as per the schema defined in index.ts
       const accessToken = await jwt.sign({ userId: user.id, username: user.username });
       const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username }); // Use jwtRefresh for refresh token
@@ -68,6 +84,7 @@ export const authRoutes = new Elysia()
         value: accessToken,
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
         maxAge: 3600, // 1 hour
       });
@@ -76,6 +93,7 @@ export const authRoutes = new Elysia()
         value: refreshToken,
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
         maxAge: 7 * 24 * 3600, // 7 days
       });
@@ -117,7 +135,7 @@ export const authRoutes = new Elysia()
         return { message: 'User already exists' };
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       const newUserId = ulid();
       const { defaultTierId } = await registrationSettingsService.getOrCreate();
 
@@ -175,6 +193,7 @@ export const authRoutes = new Elysia()
         value: accessToken,
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
         maxAge: 3600, // 1 hour
       });
@@ -183,6 +202,7 @@ export const authRoutes = new Elysia()
         value: refreshToken,
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
         maxAge: 7 * 24 * 3600, // 7 days
       });
@@ -239,6 +259,7 @@ export const authRoutes = new Elysia()
         value: accessToken,
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
         maxAge: 3600,
       });
@@ -246,6 +267,7 @@ export const authRoutes = new Elysia()
         value: refreshToken,
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
         maxAge: 7 * 24 * 3600,
       });
@@ -288,6 +310,19 @@ export const authRoutes = new Elysia()
         return { message: 'Invalid or expired refresh token' };
       }
 
+      // The refresh JWT alone only proves this token was validly issued at some point in the
+      // past - it says nothing about whether the account still exists or is still enabled.
+      // Without re-checking the DB here, a deleted/banned user keeps minting fresh access
+      // tokens off their still-valid refresh token indefinitely (there is no revocation list).
+      const dbUser = await db.query.users.findFirst({
+        where: and(eq(users.id, payload.userId), eq(users.isDeleted, false)),
+        columns: { id: true },
+      });
+      if (!dbUser) {
+        set.status = 401;
+        return { message: 'Invalid or expired refresh token' };
+      }
+
       // Sign a new access token with the payload from the refresh token
       const newAccessToken = await jwt.sign({ userId: payload.userId, username: payload.username });
       const newRefreshToken = await jwtRefresh.sign({
@@ -299,6 +334,7 @@ export const authRoutes = new Elysia()
         value: newAccessToken,
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
         maxAge: 3600, // 1 hour
       });
@@ -307,6 +343,7 @@ export const authRoutes = new Elysia()
         value: newRefreshToken,
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
         maxAge: 7 * 24 * 3600, // 7 days
       });

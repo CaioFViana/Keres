@@ -108,7 +108,7 @@ export class UserService {
       throw new InvalidCurrentPasswordError();
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
     await db
       .update(users)
       .set({ password: hashedPassword, updatedAt: new Date() })

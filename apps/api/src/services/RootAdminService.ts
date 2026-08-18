@@ -24,7 +24,7 @@ export async function reconcileRootAdmin(): Promise<void> {
     return;
   }
 
-  const hashedPassword = await bcrypt.hash(env.ROOT_ADMIN_PASSWORD, 10);
+  const hashedPassword = await bcrypt.hash(env.ROOT_ADMIN_PASSWORD, 12);
   const existing = await db.query.users.findFirst({
     where: eq(users.username, env.ROOT_ADMIN_USERNAME),
   });

@@ -810,7 +810,7 @@ export class SyncService {
       where: and(eq(stories.userId, userId), eq(stories.isDeleted, false)),
       columns: {
         id: true,
-        version: true,
+        lastOperationVersion: true,
       },
     });
 
@@ -827,7 +827,7 @@ export class SyncService {
         story: {
           columns: {
             id: true,
-            version: true,
+            lastOperationVersion: true,
             isDeleted: true,
           },
         },
@@ -843,13 +843,16 @@ export class SyncService {
     const storyMap = new Map<string, { lastOperationVersion: number; role: EffectiveStoryRole }>();
 
     ownedStories.forEach((story) => {
-      storyMap.set(story.id, { lastOperationVersion: story.version, role: 'owner' });
+      storyMap.set(story.id, {
+        lastOperationVersion: story.lastOperationVersion,
+        role: 'owner',
+      });
     });
 
     permittedStories.forEach((permission) => {
       if (permission.story && !permission.story.isDeleted) {
         storyMap.set(permission.story.id, {
-          lastOperationVersion: permission.story.version,
+          lastOperationVersion: permission.story.lastOperationVersion,
           role: permission.permissionType,
         });
       }

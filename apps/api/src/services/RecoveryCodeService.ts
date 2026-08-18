@@ -2,6 +2,7 @@ import * as bcrypt from 'bcrypt';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users, userRecoveryCodes } from '../db/schema';
+import { createAttemptLimiter } from '../utils/rateLimiter';
 
 export class InvalidRecoveryCodeError extends Error {
   constructor() {
@@ -14,31 +15,11 @@ export class InvalidRecoveryCodeError extends Error {
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODES_PER_USER = 8;
 
-const MAX_ATTEMPTS_PER_WINDOW = 5;
-const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
-
-/**
- * Contador de tentativas por usuário, em memória do processo - suficiente para uma API
- * self-hosted de instância única (não sobrevive a restart nem escala pra múltiplas
- * réplicas, mas nenhum outro rate-limit existe no projeto hoje). Sem isto, o endpoint
- * seria o único da API que aceita tentativas ilimitadas sem sessão prévia.
- */
-const attemptsByUsername = new Map<string, { count: number; windowStart: number }>();
-
-function registerAttempt(username: string): boolean {
-  const now = Date.now();
-  const entry = attemptsByUsername.get(username);
-  if (!entry || now - entry.windowStart > ATTEMPT_WINDOW_MS) {
-    attemptsByUsername.set(username, { count: 1, windowStart: now });
-    return true;
-  }
-  entry.count += 1;
-  return entry.count <= MAX_ATTEMPTS_PER_WINDOW;
-}
-
-function clearAttempts(username: string): void {
-  attemptsByUsername.delete(username);
-}
+/** Sem isto, o endpoint seria o único da API que aceita tentativas ilimitadas sem sessão prévia. */
+const recoveryAttemptLimiter = createAttemptLimiter({
+  maxAttempts: 5,
+  windowMs: 15 * 60 * 1000,
+});
 
 function generatePlainCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(10));
@@ -65,7 +46,7 @@ export class RecoveryCodeService {
     const rows = await Promise.all(
       plainCodes.map(async (code) => ({
         userId,
-        codeHash: await bcrypt.hash(code, 10),
+        codeHash: await bcrypt.hash(code, 12),
       })),
     );
 
@@ -95,11 +76,15 @@ export class RecoveryCodeService {
     plainCode: string,
     newPassword: string,
   ): Promise<{ id: string; username: string; tag: string }> {
-    if (!registerAttempt(username)) {
+    if (!recoveryAttemptLimiter.registerAttempt(username)) {
       throw new InvalidRecoveryCodeError();
     }
 
-    const user = await db.query.users.findFirst({ where: eq(users.username, username) });
+    // isDeleted excluded here too - otherwise a soft-deleted account could bypass the same
+    // restriction on /auth/login simply by resetting its password through this endpoint instead.
+    const user = await db.query.users.findFirst({
+      where: and(eq(users.username, username), eq(users.isDeleted, false)),
+    });
     if (!user) {
       throw new InvalidRecoveryCodeError();
     }
@@ -120,7 +105,7 @@ export class RecoveryCodeService {
       throw new InvalidRecoveryCodeError();
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
     await db.transaction(async (tx) => {
       await tx
         .update(userRecoveryCodes)
@@ -132,7 +117,7 @@ export class RecoveryCodeService {
         .where(eq(users.id, user.id));
     });
 
-    clearAttempts(username);
+    recoveryAttemptLimiter.clearAttempts(username);
     return { id: user.id, username: user.username, tag: user.tag };
   }
 }

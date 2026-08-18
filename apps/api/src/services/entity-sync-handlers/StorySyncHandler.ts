@@ -35,6 +35,18 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     );
   }
 
+  /**
+   * Story tem `storyIdColumnName` indefinido (é o próprio topo, não uma linha filha de uma
+   * história), então a base class assume "linha de topo, sem como checar, deixa passar" - o
+   * que na prática não checa nada. Sem este override, um usuário com acesso de escrita à sua
+   * própria história A podia empurrar `{entity:'Story', type:'update'|'delete', id:<história
+   * B de outro usuário>}` para `/sync/A` e alterar ou apagar a história B só por saber o ULID
+   * dela. "Pertencer à história" para a própria Story só pode significar "ser aquela história".
+   */
+  checkBelongsToStory(entity: any, storyId: string): boolean {
+    return entity[this.idColumnName] === storyId;
+  }
+
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: z.infer<typeof CreateStoryDataSchema> = this.createSchema.parse(

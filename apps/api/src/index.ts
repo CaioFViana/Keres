@@ -120,8 +120,21 @@ export async function createApp() {
         }),
       }),
     )
-    .use(cors())
-    .derive(async ({ jwt, headers, set, cookie }) => {
+    .use(
+      cors({
+        // No client (mobile, desktop, web export, admin panel) authenticates via cookies -
+        // every one of them attaches `Authorization: Bearer <token>` itself (see apiClient.ts
+        // on the client and admin sides), so nothing actually needs the browser to send
+        // cookies cross-origin. The default `credentials: true` combined with the default
+        // `origin: true` (reflects any request Origin back) let any third-party site make
+        // credentialed requests using this app's httpOnly auth cookies and read the response.
+        // Disabling credentials here closes that off while keeping `origin: true`, which this
+        // self-hosted, multi-deployment app still needs (there's no fixed set of client
+        // origins to allowlist - every self-hoster's install is its own origin).
+        credentials: false,
+      }),
+    )
+    .derive(async ({ jwt, headers, cookie }) => {
       let token: string | null | undefined = headers['authorization']?.startsWith('Bearer ')
         ? headers['authorization'].slice(7)
         : null;
@@ -137,18 +150,17 @@ export async function createApp() {
         return { user: null };
       }
 
+      // An invalid/expired token is treated exactly like no token at all - this `.derive()`
+      // runs on every request, including public ones (GET /kerescheck, GET /swagger, POST
+      // /auth/login...). Throwing 401 here used to reject those too, just because a client
+      // happened to carry a stale token; each route that actually requires auth already does
+      // its own `if (!user) { 401 }` check right after this runs, so nothing is lost by
+      // deferring the rejection to there instead.
       try {
         const payload = await jwt.verify(token);
-        if (!payload) {
-          set.status = 401;
-          throw new Error('Invalid token');
-        }
-        // In a real application, you would fetch user details from the database
-        // and return a more complete user object. For now, just return the payload.
-        return { user: payload as JWTPayload }; // Cast to our defined payload type
+        return { user: (payload || null) as JWTPayload | null };
       } catch {
-        set.status = 401;
-        throw new Error('Invalid token');
+        return { user: null };
       }
     })
     .onError(({ code, error, set, path, request, user, params }) => {

@@ -18,6 +18,7 @@ const SyncConflictResponseSchema = t.Object({
   serverVersion: t.Optional(t.Number()),
   serverEntity: t.Optional(t.Nullable(t.Record(t.String(), t.Any()))),
   attemptedChanges: t.Optional(t.Record(t.String(), t.Any())),
+  changedFields: t.Optional(t.Array(t.String())),
 });
 
 /** Mirrors SyncAppliedOperationSchema (packages/shared). */

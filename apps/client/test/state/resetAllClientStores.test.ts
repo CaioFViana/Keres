@@ -60,17 +60,17 @@ describe('resetAllClientStores', () => {
     expect(useConnectivityStore.getState().isOffline('server-1')).toBe(false);
   });
 
-  it('clears the pending conflicts and what had been postponed', () => {
+  it('clears the pending conflicts', () => {
     useSyncConflictStore.setState({
       conflicts: [{ id: 'c1' }],
-      postponedConflictIds: ['c1'],
+      selectedConflictId: 'c1',
     } as never);
 
     resetAllClientStores();
 
     expect(useSyncConflictStore.getState()).toMatchObject({
       conflicts: [],
-      postponedConflictIds: [],
+      selectedConflictId: null,
     });
   });
 

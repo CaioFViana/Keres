@@ -179,6 +179,17 @@ export const SyncConflictSchema = z.object({
   serverEntity: z.record(z.string(), z.any()).nullable().optional(),
   /** O que o cliente tentou gravar, para a tela poder mostrar o comparativo. */
   attemptedChanges: z.record(z.string(), z.any()).optional(),
+  /**
+   * Só presente para `reason: 'version_conflict'` num `update`: os campos que de fato mudaram
+   * na entidade desde a versão que o cliente leu como base (reconstruído do histórico de
+   * operações do servidor, não um diff contra `serverEntity`). Sem isto o cliente não consegue
+   * distinguir "a base ficou velha porque outro campo mudou" (mesclável em silêncio) de "o
+   * mesmo campo que eu editei também mudou lá" (uma decisão real) - comparar `serverEntity`
+   * direto contra o que o cliente quer escrever não serve, porque o valor atual de um campo que
+   * o cliente está editando sempre parece "diferente" do valor novo, tenha o servidor mexido
+   * nele ou não.
+   */
+  changedFields: z.array(z.string()).optional(),
 });
 export type SyncConflict = z.infer<typeof SyncConflictSchema>;
 

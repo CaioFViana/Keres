@@ -20,6 +20,7 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 import i18n from '../utils/i18n';
 import { createKeresAxiosInstance, isOfflineError, KeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
+import { getEntityTable, toEntityColumns } from './entityTableRegistry';
 import { AttributeValueClientSyncHandler } from './entity-sync-handlers/AttributeValueClientSyncHandler';
 import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
@@ -1386,6 +1387,7 @@ export class SyncEngineService {
       }
     }
 
+    let autoMergedCount = 0;
     for (const [key, group] of conflictsByEntity) {
       const first = group[0];
       // Todas as operações locais daquela entidade entram no conflito, e não só a que o
@@ -1398,6 +1400,62 @@ export class SyncEngineService {
         : relatedOps.some((op) => op.operationType === 'create')
           ? 'create'
           : 'update';
+      const localValues =
+        relatedOps.length > 0
+          ? mergeLocalOperationPayloads(relatedOps)
+          : first.attemptedChanges || {};
+
+      // `version_conflict` só diz que a base lida ficou velha, não que os dois lados
+      // mudaram os mesmos campos - `checkVersionConflict` no servidor compara só o número
+      // da versão (ver `BaseSyncEntityHandler.ts`). Se nenhum campo realmente disputa,
+      // mesclar em silêncio e reapoiar a operação pendente é o mesmo que `reconcileRemoteUpdate`
+      // já faz no caminho de pull; sem isto, editar campos diferentes do mesmo personagem em
+      // dois lugares sempre virava uma decisão do usuário, mesmo sem nada pra decidir. Restrito
+      // a `update` com a entidade ainda viva no servidor - uma entidade excluída chega com
+      // `reason: 'deleted_on_server'`, nunca `'version_conflict'` (checado antes, na própria
+      // `BaseSyncEntityHandler.update()`), então isto nunca mescla por cima de uma exclusão.
+      //
+      // Importante: `contestedFields` aqui NÃO pode vir de `findContestedFields(localValues,
+      // first.serverEntity)` como no caminho de pull. Lá `remoteValues` é só o delta de UMA
+      // operação remota específica, então comparar contra `localValues` responde "o servidor
+      // mudou este campo também?" corretamente. Aqui `first.serverEntity` é a linha inteira
+      // atual - o valor de um campo que o próprio cliente está editando sempre "parece"
+      // diferente do valor novo, tenha o servidor mexido nele ou não, o que faria todo campo
+      // editado parecer disputado. `first.changedFields` (populado pelo servidor a partir do
+      // seu próprio histórico de operações - ver `SyncService.getChangedFieldsSinceVersion`)
+      // é o delta de verdade: os campos que mudaram *desde a versão que o cliente leu*. Sem
+      // ele (servidor antigo, resposta sem esse campo), não há como provar que não há
+      // disputa real - o seguro é não mesclar, e deixar como conflito de sempre.
+      if (
+        first.reason === 'version_conflict' &&
+        localOperationType === 'update' &&
+        first.serverEntity &&
+        first.changedFields
+      ) {
+        const contestedFields = Object.keys(localValues).filter((field) =>
+          first.changedFields!.includes(field),
+        );
+        if (contestedFields.length === 0) {
+          const mergeableValues: Record<string, any> = {};
+          for (const [field, value] of Object.entries(first.serverEntity)) {
+            if (!contestedFields.includes(field)) {
+              mergeableValues[field] = value;
+            }
+          }
+          const table = getEntityTable(first.entity);
+          if (table) {
+            const columns = toEntityColumns(first.entity, mergeableValues);
+            if (Object.keys(columns).length > 0) {
+              await this._db!.update(table)
+                .set(columns)
+                .where(eq((table as any).id, first.entityId));
+            }
+          }
+          await this.rebasePendingOperations(relatedOps, first.serverVersion);
+          autoMergedCount++;
+          continue;
+        }
+      }
 
       await this.conflictService.recordConflict({
         storyId: this.storyId!,
@@ -1406,10 +1464,7 @@ export class SyncEngineService {
         reason: first.reason,
         localOperationType,
         localOperationIds: relatedOps.map((op) => op.id),
-        localValues:
-          relatedOps.length > 0
-            ? mergeLocalOperationPayloads(relatedOps)
-            : first.attemptedChanges || {},
+        localValues,
         serverValues: first.serverEntity ?? null,
         clientVersion: first.clientVersion ?? null,
         serverVersion: first.serverVersion ?? null,
@@ -1424,11 +1479,9 @@ export class SyncEngineService {
       console.log(`Successfully pushed ${appliedCount} operations for story ${this.storyId}.`);
       showNotification(i18n.t('sync_pushed_updates', { count: appliedCount }), 'success');
     }
-    if (conflictsByEntity.size > 0) {
-      showNotification(
-        i18n.t('sync_conflicts_detected', { count: conflictsByEntity.size }),
-        'warning',
-      );
+    const realConflictCount = conflictsByEntity.size - autoMergedCount;
+    if (realConflictCount > 0) {
+      showNotification(i18n.t('sync_conflicts_detected', { count: realConflictCount }), 'warning');
     }
   }
 }

@@ -8,6 +8,8 @@ import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity } from 'rea
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 //import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList'; // Import OperationLogList
+import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanner/SyncConflictBanner';
+import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { MainSystemDrawerParamList } from '../../navigation/MainSystemStack'; // Import MainSystemDrawerParamList
@@ -15,6 +17,7 @@ import { createStoryAnalysisService } from '../../services/storymanagement/Story
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
+import { useSyncConflictStore } from '../../state/syncConflictStore';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -28,6 +31,8 @@ const MainDashboardScreen = () => {
     useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
   const { showNotification } = useNotificationStore();
   const { t } = useTranslation();
+  const conflictCount = useSyncConflictStore((state) => state.conflicts.length);
+  const [conflictSheetOpen, setConflictSheetOpen] = useState(false);
 
   const [characterCount, setCharacterCount] = useState<number | undefined>(undefined);
   const [locationCount, setLocationCount] = useState<number | undefined>(undefined);
@@ -269,6 +274,10 @@ const MainDashboardScreen = () => {
         </Text>
       )}
 
+      {selectedStory?.id && (
+        <SyncConflictBanner count={conflictCount} onPress={() => setConflictSheetOpen(true)} />
+      )}
+
       <SummaryCard
         title={t('story_overview')}
         characterCount={characterCount}
@@ -300,6 +309,11 @@ const MainDashboardScreen = () => {
           <OperationLogList storyId={selectedStory.id} limit={20} />
         </>
       )}
+
+      <SyncConflictReviewSheet
+        visible={conflictSheetOpen}
+        onClose={() => setConflictSheetOpen(false)}
+      />
     </ScrollView>
   );
 };

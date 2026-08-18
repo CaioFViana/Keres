@@ -365,6 +365,77 @@ describe('resolveKeepServer', () => {
   it('does nothing for a conflict that is not there', async () => {
     await expect(service.resolveKeepServer('nao-existe')).resolves.toBeUndefined();
   });
+
+  /**
+   * Regressão: `CharacterRelation` é a única relação onde o payload de servidor
+   * (`character1Id`/`character2Id`) não bate com o nome de coluna da tabela local
+   * (`charId1`/`charId2`). Sem o alias em `toEntityColumns`, esta chamada não lançava erro,
+   * mas também não reescrevia quem estava relacionado - o bug era inteiramente silencioso.
+   */
+  it('rewrites which characters are related for a CharacterRelation conflict', async () => {
+    await database.db.insert(schema.characters).values([
+      {
+        id: 'char-a',
+        storyId: STORY_ID,
+        name: 'Ana',
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+      {
+        id: 'char-b',
+        storyId: STORY_ID,
+        name: 'Bia',
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+      {
+        id: 'char-c',
+        storyId: STORY_ID,
+        name: 'Carla',
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+    ]);
+    await database.db.insert(schema.characterRelations).values({
+      id: 'relation-1',
+      storyId: STORY_ID,
+      charId1: 'char-a',
+      charId2: 'char-b',
+      relationType: 'allies',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+
+    await service.recordConflict(
+      baseConflict({
+        entityType: 'CharacterRelation',
+        entityId: 'relation-1',
+        localValues: { character1Id: 'char-a', character2Id: 'char-b', relationType: 'allies' },
+        serverValues: { character1Id: 'char-a', character2Id: 'char-c', relationType: 'rivals' },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServer(pending.id);
+
+    const relation = await database.db.query.characterRelations.findFirst({
+      where: eq(schema.characterRelations.id, 'relation-1'),
+    });
+    expect(relation).toMatchObject({
+      charId1: 'char-a',
+      charId2: 'char-c',
+      relationType: 'rivals',
+    });
+  });
 });
 
 /**

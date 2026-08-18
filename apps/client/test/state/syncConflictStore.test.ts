@@ -30,71 +30,40 @@ afterEach(() => {
 });
 
 /**
- * A tela de conflito se abre sozinha porque um conflito trava a sincronização daquela
- * entidade - deixá-lo num canto esconderia trabalho parado. Mas reabrir a cada ciclo de 30s
- * algo que a pessoa acabou de fechar seria hostil, então cada conflito só se impõe uma vez.
+ * A tela de conflito não se abre mais sozinha - um conflito trava a sincronização daquela
+ * entidade, mas isso não justifica interromper o que o usuário está fazendo; o ponto de
+ * entrada (banner no Dashboard) é quem decide quando abrir a revisão. `refresh` só recarrega
+ * a lista.
  */
 describe('refresh', () => {
-  it('opens the screen by itself when a conflict shows up', async () => {
+  it('loads the pending conflicts without opening the screen', async () => {
     mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
 
     await store().refresh(db);
 
     expect(store().conflicts).toHaveLength(1);
-    expect(store().isVisible).toBe(true);
-  });
-
-  it('stays closed when there is nothing pending', async () => {
-    await store().refresh(db);
-
     expect(store().isVisible).toBe(false);
   });
 
-  it('does not reopen a conflict the user just closed', async () => {
+  it('never opens the screen on its own, even across repeated refreshes', async () => {
     mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
     await store().refresh(db);
-    store().close();
-
     await store().refresh(db);
-
-    expect(store().isVisible).toBe(false);
-  });
-
-  it('opens again when a new conflict arrives after a close', async () => {
-    mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
-    await store().refresh(db);
-    store().close();
 
     mockService.getPendingConflicts.mockResolvedValue([conflict('c1'), conflict('c2')]);
     await store().refresh(db);
 
-    expect(store().isVisible).toBe(true);
+    expect(store().isVisible).toBe(false);
   });
 
-  it('closes the screen once the last conflict is gone', async () => {
+  it('replaces the list wholesale, including clearing it out', async () => {
     mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
     await store().refresh(db);
 
     mockService.getPendingConflicts.mockResolvedValue([]);
     await store().refresh(db);
 
-    expect(store().isVisible).toBe(false);
     expect(store().conflicts).toEqual([]);
-  });
-
-  it('keeps the open index inside the list when conflicts disappear', async () => {
-    mockService.getPendingConflicts.mockResolvedValue([
-      conflict('c1'),
-      conflict('c2'),
-      conflict('c3'),
-    ]);
-    await store().refresh(db);
-    store().setActiveIndex(2);
-
-    mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
-    await store().refresh(db);
-
-    expect(store().activeIndex).toBe(0);
   });
 
   it('narrows to a single story when asked', async () => {
@@ -115,36 +84,29 @@ describe('refresh', () => {
 });
 
 describe('open and close', () => {
-  it('opens at the first conflict by default', () => {
+  it('opens and closes as a plain toggle', () => {
     store().open();
-
-    expect(store()).toMatchObject({ isVisible: true, activeIndex: 0 });
-  });
-
-  it('opens at the conflict the caller pointed at', () => {
-    store().open(2);
-
-    expect(store().activeIndex).toBe(2);
-  });
-
-  it('remembers every conflict that was on screen when it closed', async () => {
-    mockService.getPendingConflicts.mockResolvedValue([conflict('c1'), conflict('c2')]);
-    await store().refresh(db);
+    expect(store().isVisible).toBe(true);
 
     store().close();
-
-    expect(store().postponedConflictIds.sort()).toEqual(['c1', 'c2']);
+    expect(store().isVisible).toBe(false);
   });
 
-  it('does not duplicate ids across repeated closes', async () => {
-    mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
-    await store().refresh(db);
-
-    store().close();
-    store().open();
+  it('clears the selected conflict when closing', () => {
+    store().selectConflict('c1');
     store().close();
 
-    expect(store().postponedConflictIds).toEqual(['c1']);
+    expect(store().selectedConflictId).toBeNull();
+  });
+});
+
+describe('selecting a conflict for the field-diff drill-in', () => {
+  it('selects and clears', () => {
+    store().selectConflict('c1');
+    expect(store().selectedConflictId).toBe('c1');
+
+    store().clearSelection();
+    expect(store().selectedConflictId).toBeNull();
   });
 });
 
@@ -170,6 +132,22 @@ describe('resolving', () => {
     expect(mockService.getPendingConflicts).toHaveBeenCalled();
   });
 
+  it('clears the selection when the resolved conflict was the one open in the drill-in', async () => {
+    store().selectConflict('c1');
+
+    await store().keepLocal(db, 'c1');
+
+    expect(store().selectedConflictId).toBeNull();
+  });
+
+  it('leaves an unrelated selection untouched', async () => {
+    store().selectConflict('c2');
+
+    await store().keepLocal(db, 'c1');
+
+    expect(store().selectedConflictId).toBe('c2');
+  });
+
   it('lowers the resolving flag even when the write fails', async () => {
     mockService.resolveKeepLocal.mockRejectedValueOnce(new Error('sem permissão'));
 
@@ -188,19 +166,19 @@ describe('resolving', () => {
 });
 
 describe('reset', () => {
-  it('clears everything, including what was postponed', async () => {
+  it('clears everything', async () => {
     mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
     await store().refresh(db);
-    store().close();
+    store().selectConflict('c1');
+    store().open();
 
     store().reset();
 
     expect(store()).toMatchObject({
       conflicts: [],
-      activeIndex: 0,
+      selectedConflictId: null,
       isVisible: false,
       isResolving: false,
-      postponedConflictIds: [],
     });
   });
 });

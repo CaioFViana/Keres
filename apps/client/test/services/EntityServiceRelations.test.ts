@@ -293,3 +293,178 @@ describe('EntityService relationship labels', () => {
     );
   });
 });
+
+/**
+ * `getEntityIdentifier` (o resolvedor público usado por `OperationLogDetailScreen` e, depois
+ * desta mudança, pela camada de resumo de conflitos de sync) delega para
+ * `_resolveRelationEntityName` - um switch separado do que `getEntityName` usa, que até aqui
+ * só cobria uma parte das relações. Sem cobertura para os outros 6 tipos, ele voltava
+ * `undefined` mesmo com a linha existindo no banco.
+ */
+describe('EntityService.getEntityIdentifier', () => {
+  const identifierOf = (entityTypeString: string, entityId: string) =>
+    EntityService.getEntityIdentifier(database.db, entityTypeString, entityId, STORY_ID, t);
+
+  it('resolves a character relation by both participants', async () => {
+    await database.db.insert(schema.characters).values([
+      { id: 'mira', storyId: STORY_ID, name: 'Mira', ...base },
+      { id: 'oren', storyId: STORY_ID, name: 'Oren', ...base },
+    ]);
+    await database.db.insert(schema.characterRelations).values({
+      id: 'relation',
+      storyId: STORY_ID,
+      charId1: 'mira',
+      charId2: 'oren',
+      relationType: 'allies',
+      ...base,
+    });
+
+    await expect(identifierOf('characterrelation', 'relation')).resolves.toBe(
+      'Mira - Oren relation',
+    );
+  });
+
+  it('resolves a location relation', async () => {
+    await database.db.insert(schema.locations).values([
+      { id: 'city', storyId: STORY_ID, name: 'Cidade', ...base },
+      { id: 'harbor', storyId: STORY_ID, name: 'Porto', ...base },
+    ]);
+    await database.db.insert(schema.locationRelations).values({
+      id: 'contains',
+      storyId: STORY_ID,
+      locationAId: 'city',
+      locationBId: 'harbor',
+      relationType: 'contains',
+      ...base,
+    });
+
+    await expect(identifierOf('locationrelation', 'contains')).resolves.toBe(
+      'location_contains_location',
+    );
+  });
+
+  it('resolves a tag relation through the tag and its linked entity', async () => {
+    await database.db.insert(schema.tags).values({
+      id: 'mystery',
+      storyId: STORY_ID,
+      name: 'Mistério',
+      ...base,
+    });
+    await database.db.insert(schema.characters).values({
+      id: 'mira',
+      storyId: STORY_ID,
+      name: 'Mira',
+      ...base,
+    });
+    await database.db.insert(schema.tagRelations).values({
+      id: 'tag-link',
+      storyId: STORY_ID,
+      tagId: 'mystery',
+      relationId: 'mira',
+      relationType: 'Character',
+      ...base,
+    });
+
+    await expect(identifierOf('tagrelation', 'tag-link')).resolves.toBe('tag_attributed_to_entity');
+  });
+
+  it('resolves a character-to-scene relation', async () => {
+    await seedScene('tower', 'Torre');
+    await database.db.insert(schema.characters).values({
+      id: 'mira',
+      storyId: STORY_ID,
+      name: 'Mira',
+      ...base,
+    });
+    await database.db.insert(schema.characterScenes).values({
+      id: 'appearance',
+      storyId: STORY_ID,
+      characterId: 'mira',
+      sceneId: 'tower',
+      ...base,
+    });
+
+    await expect(identifierOf('characterscene', 'appearance')).resolves.toBe(
+      'character_attributed_to_scene',
+    );
+  });
+
+  it('resolves a gallery relation through both the media and its owner', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'mira',
+      storyId: STORY_ID,
+      name: 'Mira',
+      ...base,
+    });
+    await database.db.insert(schema.galleries).values({
+      id: 'portrait',
+      storyId: STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'portrait.png',
+      hash: 'hash-portrait',
+      sizeBytes: 42,
+      title: 'Retrato',
+      ...base,
+    });
+    await database.db.insert(schema.galleryRelations).values({
+      id: 'gallery-link',
+      storyId: STORY_ID,
+      galleryId: 'portrait',
+      ownerId: 'mira',
+      ownerType: 'Character',
+      ...base,
+    });
+
+    await expect(identifierOf('galleryrelation', 'gallery-link')).resolves.toBe(
+      'gallery_attributed_to_entity',
+    );
+  });
+
+  it('resolves a see-also relation through both sides', async () => {
+    await database.db
+      .insert(schema.characters)
+      .values({ id: 'mira', storyId: STORY_ID, name: 'Mira', ...base });
+    await database.db
+      .insert(schema.locations)
+      .values({ id: 'tower', storyId: STORY_ID, name: 'Torre', ...base });
+    await database.db.insert(schema.seeAlsoRelations).values({
+      id: 'see-also',
+      storyId: STORY_ID,
+      entityAType: 'Character',
+      entityAId: 'mira',
+      entityBType: 'Location',
+      entityBId: 'tower',
+      ...base,
+    });
+
+    await expect(identifierOf('seealsorelation', 'see-also')).resolves.toBe(
+      'Mira (character) - Torre (location)',
+    );
+  });
+
+  it('still resolves a note relation, which already worked before this fix', async () => {
+    await database.db
+      .insert(schema.notes)
+      .values({ id: 'clue', storyId: STORY_ID, title: 'Pista', ...base });
+    await database.db
+      .insert(schema.locations)
+      .values({ id: 'tower', storyId: STORY_ID, name: 'Torre', ...base });
+    await database.db.insert(schema.noteRelations).values({
+      id: 'note-link',
+      storyId: STORY_ID,
+      noteId: 'clue',
+      relationId: 'tower',
+      relationType: 'Location',
+      ...base,
+    });
+
+    await expect(identifierOf('noterelation', 'note-link')).resolves.toBe(
+      'note_attributed_to_entity_short',
+    );
+  });
+
+  it('throws for an unrecognized entity type string', async () => {
+    await expect(identifierOf('not-a-real-type', 'x')).rejects.toThrow('Invalid entityTypeString');
+  });
+});

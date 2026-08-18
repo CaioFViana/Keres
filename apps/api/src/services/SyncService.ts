@@ -54,6 +54,16 @@ import { SeeAlsoRelationSyncHandler } from './entity-sync-handlers/SeeAlsoRelati
 import { CommentSyncHandler } from './entity-sync-handlers/CommentSyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
 
+/** Campos de bookkeeping que nunca contam como "mudança de conteúdo" em `getChangedFieldsSinceVersion`. */
+const CHANGED_FIELDS_BOOKKEEPING = new Set([
+  'id',
+  'storyId',
+  'version',
+  'createdAt',
+  'updatedAt',
+  'deletedAt',
+]);
+
 export class SyncService {
   private entityHandlers: Map<string, SyncEntityHandler>;
 
@@ -319,10 +329,23 @@ export class SyncService {
           continue;
         }
         if (error instanceof SyncConflictError) {
+          const context = conflictContext();
+          const clientVersion = error.clientVersion ?? context.clientVersion;
+          // Só faz sentido pra `version_conflict` num `update` de uma entidade que ainda
+          // existe - as outras razões (exclusão, referência quebrada, validação...) não são
+          // "a base ficou velha", não têm um delta de campos pra calcular.
+          const changedFields =
+            error.reason === 'version_conflict' &&
+            update.type === 'update' &&
+            currentEntity &&
+            typeof clientVersion === 'number'
+              ? await this.getChangedFieldsSinceVersion(update.entity, entityId, clientVersion)
+              : undefined;
           recordConflict(error.reason, error.message, {
-            ...conflictContext(),
-            clientVersion: error.clientVersion ?? conflictContext().clientVersion,
-            serverVersion: error.serverVersion ?? conflictContext().serverVersion,
+            ...context,
+            clientVersion,
+            serverVersion: error.serverVersion ?? context.serverVersion,
+            changedFields,
           });
           continue;
         }
@@ -389,6 +412,46 @@ export class SyncService {
       .from(operationLog)
       .where(eq(operationLog.storyId, storyId));
     return result.at(0)?.maxVersion || 0;
+  }
+
+  /**
+   * Quais campos realmente mudaram nesta entidade desde a versão que o cliente leu como base -
+   * a diferença entre "a base do cliente ficou velha" (`version_conflict`, que só compara o
+   * número da versão) e "algo que o cliente também editou de fato mudou". Sem isto, o cliente
+   * não tem como saber se um `version_conflict` foi causado por uma edição num campo diferente
+   * do seu (perfeitamente mesclável) ou no mesmo campo (uma decisão real) - `serverEntity`
+   * sozinho não chega a essa resposta, porque o valor atual de um campo que o cliente está
+   * editando sempre "parece" diferente do valor que o cliente quer escrever, tenha o servidor
+   * mexido nele ou não. `entityVersion` (a versão da entidade *depois* de cada operação, ver
+   * `db/schema/tables/operationLog.ts`) é o que permite reconstruir exatamente as operações
+   * ocorridas entre a base do cliente e agora.
+   */
+  private async getChangedFieldsSinceVersion(
+    entityType: string,
+    entityId: string,
+    sinceVersion: number,
+  ): Promise<string[]> {
+    const rows = await db.query.operationLog.findMany({
+      where: and(
+        eq(operationLog.entityType, entityType),
+        eq(operationLog.entityId, entityId),
+        gt(operationLog.entityVersion, sinceVersion),
+      ),
+      columns: { payload: true },
+    });
+
+    const fields = new Set<string>();
+    for (const row of rows) {
+      const payload = row.payload as Record<string, unknown> | null;
+      for (const key of Object.keys(payload ?? {})) {
+        // `version` é a base que cada operação declarou, não um campo de conteúdo - está
+        // presente em todo payload de update por construção, então incluí-lo aqui faria
+        // parecer que "a versão" é sempre um campo em disputa.
+        if (CHANGED_FIELDS_BOOKKEEPING.has(key)) continue;
+        fields.add(key);
+      }
+    }
+    return Array.from(fields);
   }
 
   /**

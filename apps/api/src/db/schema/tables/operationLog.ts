@@ -50,6 +50,14 @@ export const operationLog = pgTable(
     index('operation_log_user_id_idx').on(table.userId),
     index('operation_log_entity_type_idx').on(table.entityType),
     index('operation_log_operation_type_idx').on(table.operationType),
+    // `SyncService.getChangedFieldsSinceVersion` filters by exactly these three columns to
+    // reconstruct which fields changed since a client's base version on a `version_conflict` -
+    // without this it's a full scan of every operation ever logged for the entity's type.
+    index('operation_log_entity_type_entity_id_entity_version_idx').on(
+      table.entityType,
+      table.entityId,
+      table.entityVersion,
+    ),
   ],
 );
 

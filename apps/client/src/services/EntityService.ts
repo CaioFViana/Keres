@@ -819,6 +819,183 @@ export class EntityService {
           type = t('note_relation');
         }
         break;
+      case OperationLogEntityType.CharacterRelation:
+        const characterRelation = await db.query.characterRelations.findFirst({
+          where: and(
+            eq(characterRelations.id, relationId),
+            eq(characterRelations.isDeleted, false),
+          ),
+          columns: { charId1: true, charId2: true },
+        });
+        if (characterRelation) {
+          const char1 = await db.query.characters.findFirst({
+            where: and(
+              eq(characters.id, characterRelation.charId1),
+              eq(characters.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const char2 = await db.query.characters.findFirst({
+            where: and(
+              eq(characters.id, characterRelation.charId2),
+              eq(characters.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          name = `${char1?.name || t('unknown_character')} - ${char2?.name || t('unknown_character')} ${t('relation')}`;
+        }
+        type = t('character_relation');
+        break;
+      case OperationLogEntityType.LocationRelation:
+        const locationRelation = await db.query.locationRelations.findFirst({
+          where: and(
+            eq(locationRelations.id, relationId),
+            eq(locationRelations.storyId, storyId),
+            eq(locationRelations.isDeleted, false),
+          ),
+          columns: { locationAId: true, locationBId: true, relationType: true },
+        });
+        if (locationRelation) {
+          const locationA = await db.query.locations.findFirst({
+            where: and(
+              eq(locations.id, locationRelation.locationAId),
+              eq(locations.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const locationB = await db.query.locations.findFirst({
+            where: and(
+              eq(locations.id, locationRelation.locationBId),
+              eq(locations.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const nameA = locationA?.name || t('unknown_location');
+          const nameB = locationB?.name || t('unknown_location');
+          name =
+            locationRelation.relationType === 'contains'
+              ? t('location_contains_location', { parentName: nameA, childName: nameB })
+              : t('location_connected_to_location', { locationAName: nameA, locationBName: nameB });
+        }
+        type = t('location_relation');
+        break;
+      case OperationLogEntityType.TagRelation:
+        const tagRelationForIdentifier = await db.query.tagRelations.findFirst({
+          where: and(
+            eq(tagRelations.id, relationId),
+            eq(tagRelations.storyId, storyId),
+            eq(tagRelations.isDeleted, false),
+          ),
+          columns: { tagId: true, relationId: true, relationType: true },
+        });
+        if (tagRelationForIdentifier) {
+          const relatedTagForIdentifier = await db.query.tags.findFirst({
+            where: and(
+              eq(tags.id, tagRelationForIdentifier.tagId),
+              eq(tags.storyId, storyId),
+              eq(tags.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const relatedForTag = await EntityService._resolveRelationEntityName(
+            db,
+            tagRelationForIdentifier.relationType as OperationLogEntityType,
+            tagRelationForIdentifier.relationId,
+            storyId,
+            t,
+          );
+          name = t('tag_attributed_to_entity', {
+            tagname: relatedTagForIdentifier?.name || t('unknown_tag'),
+            entityname: relatedForTag.name || t('unknown_entity'),
+            entitytype: relatedForTag.type || t('unknown_entity_type'),
+          });
+        }
+        type = t('tag_relation');
+        break;
+      case OperationLogEntityType.CharacterScene:
+        const characterScene = await db.query.characterScenes.findFirst({
+          where: and(eq(characterScenes.id, relationId), eq(characterScenes.isDeleted, false)),
+          columns: { characterId: true, sceneId: true },
+        });
+        if (characterScene) {
+          const relatedCharacter = await db.query.characters.findFirst({
+            where: and(
+              eq(characters.id, characterScene.characterId),
+              eq(characters.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const relatedScene = await db.query.scenes.findFirst({
+            where: and(eq(scenes.id, characterScene.sceneId), eq(scenes.isDeleted, false)),
+            columns: { name: true },
+          });
+          name = t('character_attributed_to_scene', {
+            characterName: relatedCharacter?.name || t('unknown_character'),
+            sceneName: relatedScene?.name || t('unknown_scene'),
+          });
+        }
+        type = t('character_scene_relation');
+        break;
+      case OperationLogEntityType.GalleryRelation:
+        const galleryRelation = await db.query.galleryRelations.findFirst({
+          where: and(
+            eq(galleryRelations.id, relationId),
+            eq(galleryRelations.storyId, storyId),
+            eq(galleryRelations.isDeleted, false),
+          ),
+          columns: { galleryId: true, ownerId: true, ownerType: true },
+        });
+        if (galleryRelation) {
+          const relatedGalleryForIdentifier = await db.query.galleries.findFirst({
+            where: and(eq(galleries.id, galleryRelation.galleryId), eq(galleries.isDeleted, false)),
+            columns: { title: true, fileName: true },
+          });
+          const relatedOwnerForGallery = await EntityService._resolveRelationEntityName(
+            db,
+            galleryRelation.ownerType as OperationLogEntityType,
+            galleryRelation.ownerId,
+            storyId,
+            t,
+          );
+          name = t('gallery_attributed_to_entity', {
+            medianame:
+              relatedGalleryForIdentifier?.title ||
+              relatedGalleryForIdentifier?.fileName ||
+              t('unknown_gallery'),
+            entityname: relatedOwnerForGallery.name || t('unknown_entity'),
+            entitytype: relatedOwnerForGallery.type || t('unknown_entity_type'),
+          });
+        }
+        type = t('gallery_relation');
+        break;
+      case OperationLogEntityType.SeeAlsoRelation:
+        const seeAlsoRelation = await db.query.seeAlsoRelations.findFirst({
+          where: and(
+            eq(seeAlsoRelations.id, relationId),
+            eq(seeAlsoRelations.storyId, storyId),
+            eq(seeAlsoRelations.isDeleted, false),
+          ),
+          columns: { entityAType: true, entityAId: true, entityBType: true, entityBId: true },
+        });
+        if (seeAlsoRelation) {
+          const sideA = await EntityService._resolveRelationEntityName(
+            db,
+            seeAlsoRelation.entityAType as OperationLogEntityType,
+            seeAlsoRelation.entityAId,
+            storyId,
+            t,
+          );
+          const sideB = await EntityService._resolveRelationEntityName(
+            db,
+            seeAlsoRelation.entityBType as OperationLogEntityType,
+            seeAlsoRelation.entityBId,
+            storyId,
+            t,
+          );
+          name = `${sideA.name || t('unknown_entity')} (${sideA.type || t('unknown_entity_type')}) - ${sideB.name || t('unknown_entity')} (${sideB.type || t('unknown_entity_type')})`;
+        }
+        type = t('see_also_relation');
+        break;
       default:
         name = undefined;
         type = t('unknown_entity_type');

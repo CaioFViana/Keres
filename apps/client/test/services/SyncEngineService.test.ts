@@ -537,6 +537,208 @@ describe('push', () => {
   });
 });
 
+/**
+ * `version_conflict` só diz que a base do cliente ficou velha, não que os dois lados
+ * mudaram os mesmos campos. `changedFields` (calculado pelo servidor a partir do próprio
+ * histórico de operações - ver `SyncService.getChangedFieldsSinceVersion` na API) é o que
+ * permite ao cliente mesclar em silêncio quando não há disputa real, em vez de sempre abrir
+ * uma decisão para o usuário.
+ */
+describe('push - auto-merging non-overlapping field conflicts', () => {
+  async function seedLocalCharacter(
+    overrides: Partial<typeof schema.characters.$inferInsert> = {},
+  ) {
+    await database.db.insert(schema.characters).values({
+      id: 'char-local',
+      storyId: STORY_ID,
+      name: 'Nyx',
+      title: 'Old Title',
+      motivation: 'Old Motivation',
+      ...base,
+      ...overrides,
+    });
+  }
+
+  const readCharacter = () =>
+    database.db.query.characters.findFirst({ where: eq(schema.characters.id, 'char-local') });
+
+  it('merges silently and rebases the pending operation when the server changed a different field', async () => {
+    await seedStory({ lastOperationLog: 1 });
+    await seedLocalCharacter();
+    const operation = await seedPendingOperation({
+      operationType: 'update',
+      payload: JSON.stringify({ id: 'char-local', motivation: 'Nova Motivação', version: 1 }),
+    });
+    pushResponse = {
+      message: 'ok',
+      processedUpdates: 1,
+      serverMaxOperationVersion: 5,
+      applied: [],
+      conflicts: [
+        {
+          entity: 'Character',
+          entityId: 'char-local',
+          type: 'update',
+          reason: 'version_conflict',
+          message: 'stale',
+          clientVersion: 1,
+          serverVersion: 2,
+          serverEntity: {
+            id: 'char-local',
+            storyId: STORY_ID,
+            name: 'Nyx',
+            title: 'Título Novo do Servidor',
+            motivation: 'Old Motivation',
+            createdAt: NOW.toISOString(),
+            updatedAt: NOW.toISOString(),
+            version: 2,
+            isDeleted: false,
+            deletedAt: null,
+          },
+          changedFields: ['title'],
+        },
+      ],
+    };
+
+    await runOneCycle();
+
+    expect(await database.db.query.syncConflicts.findMany()).toEqual([]);
+    expect(await readCharacter()).toMatchObject({
+      title: 'Título Novo do Servidor',
+      version: 2,
+    });
+
+    const log = await database.db.query.operationLogs.findFirst({
+      where: eq(schema.operationLogs.id, operation.id),
+    });
+    expect(log!.isSynced).toBe(false);
+    expect(log!.conflictState).toBeNull();
+    // Reapoiada na versão nova do servidor, pronta pra ir no próximo ciclo sem incomodar o usuário.
+    expect(JSON.parse(log!.payload).version).toBe(3);
+  });
+
+  it('still opens a conflict when the same field was edited on both sides', async () => {
+    await seedStory({ lastOperationLog: 1 });
+    await seedLocalCharacter();
+    await seedPendingOperation({
+      operationType: 'update',
+      payload: JSON.stringify({ id: 'char-local', motivation: 'Minha Motivação', version: 1 }),
+    });
+    pushResponse = {
+      message: 'ok',
+      processedUpdates: 1,
+      serverMaxOperationVersion: 5,
+      applied: [],
+      conflicts: [
+        {
+          entity: 'Character',
+          entityId: 'char-local',
+          type: 'update',
+          reason: 'version_conflict',
+          message: 'stale',
+          clientVersion: 1,
+          serverVersion: 2,
+          serverEntity: {
+            id: 'char-local',
+            storyId: STORY_ID,
+            name: 'Nyx',
+            title: 'Old Title',
+            motivation: 'Motivação do Servidor',
+            createdAt: NOW.toISOString(),
+            updatedAt: NOW.toISOString(),
+            version: 2,
+            isDeleted: false,
+            deletedAt: null,
+          },
+          changedFields: ['motivation'],
+        },
+      ],
+    };
+
+    await runOneCycle();
+
+    const conflicts = await database.db.query.syncConflicts.findMany();
+    expect(conflicts).toHaveLength(1);
+    expect((await readCharacter())!.motivation).toBe('Old Motivation');
+  });
+
+  it('does not auto-merge when the server response has no changedFields (older server)', async () => {
+    await seedStory({ lastOperationLog: 1 });
+    await seedLocalCharacter();
+    await seedPendingOperation({
+      operationType: 'update',
+      payload: JSON.stringify({ id: 'char-local', motivation: 'Nova Motivação', version: 1 }),
+    });
+    pushResponse = {
+      message: 'ok',
+      processedUpdates: 1,
+      serverMaxOperationVersion: 5,
+      applied: [],
+      conflicts: [
+        {
+          entity: 'Character',
+          entityId: 'char-local',
+          type: 'update',
+          reason: 'version_conflict',
+          message: 'stale',
+          clientVersion: 1,
+          serverVersion: 2,
+          serverEntity: {
+            id: 'char-local',
+            storyId: STORY_ID,
+            name: 'Nyx',
+            title: 'Título Novo do Servidor',
+            motivation: 'Old Motivation',
+            createdAt: NOW.toISOString(),
+            updatedAt: NOW.toISOString(),
+            version: 2,
+            isDeleted: false,
+            deletedAt: null,
+          },
+          // sem changedFields
+        },
+      ],
+    };
+
+    await runOneCycle();
+
+    expect(await database.db.query.syncConflicts.findMany()).toHaveLength(1);
+    expect((await readCharacter())!.title).toBe('Old Title');
+  });
+
+  it('always opens a conflict for a deletion on the server, never auto-merges', async () => {
+    await seedStory({ lastOperationLog: 1 });
+    await seedLocalCharacter();
+    await seedPendingOperation({
+      operationType: 'update',
+      payload: JSON.stringify({ id: 'char-local', title: 'Título Novo', version: 1 }),
+    });
+    pushResponse = {
+      message: 'ok',
+      processedUpdates: 1,
+      serverMaxOperationVersion: 5,
+      applied: [],
+      conflicts: [
+        {
+          entity: 'Character',
+          entityId: 'char-local',
+          type: 'update',
+          reason: 'deleted_on_server',
+          message: 'deleted',
+          clientVersion: 1,
+          serverVersion: 2,
+          serverEntity: { id: 'char-local', storyId: STORY_ID, isDeleted: true, version: 2 },
+          changedFields: ['isDeleted'],
+        },
+      ],
+    };
+
+    await runOneCycle();
+
+    expect(await database.db.query.syncConflicts.findMany()).toHaveLength(1);
+  });
+});
+
 describe('when the server cannot be reached', () => {
   it('does not move the cursor', async () => {
     await seedStory({ lastServerSyncedLog: 4 });

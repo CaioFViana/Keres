@@ -136,6 +136,49 @@ describe('POST /sync/:storyId', () => {
   });
 
   /**
+   * `changedFields` é o que permite ao cliente distinguir "a base ficou velha porque outro
+   * campo mudou" (mesclável sem perguntar nada) de "o mesmo campo que eu editei também mudou
+   * lá" (uma decisão real). Comparar `serverEntity` direto contra o que o cliente quer
+   * escrever não serviria: o valor atual de um campo que o cliente está editando sempre
+   * "parece" diferente do valor novo, tenha o servidor mexido nele ou não - só o histórico de
+   * operações (via `entityVersion`) diz o que realmente mudou.
+   */
+  it('reports only the fields that actually changed since the base version, not every field', async () => {
+    const characterId = newId();
+    const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const staleVersion = created.data.applied[0].entityVersion;
+    await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Character',
+        id: characterId,
+        version: staleVersion,
+        changes: { title: 'A Deusa Esquecida', version: staleVersion },
+      },
+    ]);
+
+    const { data } = await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Nyx', staleVersion, 'local-name-edit'),
+    ]);
+
+    expect(data.conflicts).toHaveLength(1);
+    expect(data.conflicts[0].changedFields).toEqual(['title']);
+  });
+
+  it('includes a field in changedFields when both sides genuinely edited it', async () => {
+    const characterId = newId();
+    const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const staleVersion = created.data.applied[0].entityVersion;
+    await push(ana.token, storyId, [updateCharacter(characterId, 'Primeiro', staleVersion)]);
+
+    const { data } = await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Segundo', staleVersion, 'local-name-clash'),
+    ]);
+
+    expect(data.conflicts[0].changedFields).toContain('name');
+  });
+
+  /**
    * Armadilha real do protocolo: sem `changes.version` o servidor não tem base para comparar e
    * aplica a escrita, virando último-a-escrever-vence. Um cliente que preencha só o `version`
    * do topo perde a detecção de conflito inteira sem nenhum sinal.

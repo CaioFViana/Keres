@@ -2,7 +2,6 @@ import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlert
 import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
 import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
 import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
-import SyncConflictModal from '@/src/components/features/sync/SyncConflictModal/SyncConflictModal';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
@@ -52,14 +51,8 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       {children}
       <DocumentTitleSync />
       <NotificationPopup />
-      {/*
-        Montado aqui, junto das notificações, para poder aparecer sobre qualquer tela: um
-        conflito trava a sincronização daquela entidade e precisa ser decidido onde o
-        usuário estiver, não numa aba que ele talvez nunca abra.
-      */}
-      <SyncConflictModal />
-      {/* Mesmo motivo do SyncConflictModal acima: AppAlert.alert() precisa poder ser chamado
-          de qualquer tela, então o Modal que o renderiza mora aqui, não em cada tela. */}
+      {/* AppAlert.alert() precisa poder ser chamado de qualquer tela, então o Modal que o
+          renderiza mora aqui, não em cada tela. */}
       <AppAlertHost />
     </View>
   );

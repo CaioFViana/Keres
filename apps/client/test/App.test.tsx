@@ -73,7 +73,6 @@ jest.mock('@/src/components/common/feedback/AppAlertHost/AppAlertHost', () => ()
 jest.mock('@/src/components/common/feedback/NotificationPopup/NotificationPopup', () => () => null);
 jest.mock('@/src/components/features/app/DocumentTitleSync', () => () => null);
 jest.mock('@/src/components/features/app/WebScrollbarTheme', () => () => null);
-jest.mock('@/src/components/features/sync/SyncConflictModal/SyncConflictModal', () => () => null);
 
 import { useSQLiteContext } from 'expo-sqlite';
 import { Platform } from 'react-native';

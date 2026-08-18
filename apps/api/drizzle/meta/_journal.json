@@ -78,6 +78,13 @@
       "when": 1787061259900,
       "tag": "0010_breezy_rachel_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787079832899,
+      "tag": "0011_big_wolf_cub",
+      "breakpoints": true
     }
   ]
 }

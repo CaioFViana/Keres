@@ -5,9 +5,9 @@ import { useTheme } from '../../../../theme';
 
 /**
  * Renderiza o que `AppAlert.alert()` pediu (ver utils/AppAlert.ts). Montado uma vez perto da
- * raiz do app (`App.tsx`), do mesmo jeito que `SyncConflictModal`/`NotificationPopup` - um
- * `Modal` só, isolado do resto da árvore de telas, para qualquer tela poder disparar um
- * alerta sem precisar montar nada localmente.
+ * raiz do app (`App.tsx`), do mesmo jeito que `NotificationPopup` - um `Modal` só, isolado do
+ * resto da árvore de telas, para qualquer tela poder disparar um alerta sem precisar montar
+ * nada localmente.
  */
 const AppAlertHost: React.FC = () => {
   const { colors } = useTheme();

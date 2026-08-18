@@ -22,7 +22,7 @@ What else got a cycle themed release? Story analysis followed the theme adding c
 
 Will say, favorite feature was the help pages.
 
-### 1.3.1: Hygieia
+### 1.4: Hygieia
 
 _"No matter how many cycles the serpent passes. No one should lose themselves to it. To heal is to care, and to care is to live."_
 

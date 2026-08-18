@@ -70,7 +70,20 @@ COPY --from=admin-build /app/apps/admin/dist ./apps/admin/dist
 
 WORKDIR /app/apps/api
 
+# Local media storage (the default driver) writes here at runtime - created ahead of time so
+# a fresh named volume mounted at this path (see docker-compose.deploy.yml) inherits
+# ownership matching the non-root user below, instead of being created root-owned by Docker
+# itself the moment the mount happens. Everything else under /app just needs to be readable
+# by that user, which chowning the whole tree covers in one pass.
+RUN mkdir -p media-storage && chown -R bun:bun /app
+
 EXPOSE 3000
+
+# oven/bun's base image already creates this user (uid/gid 1000) but never switches to it,
+# so the container ran as root by default. Nothing here needs root: migrations write to
+# Postgres, not the filesystem, and the local media driver only needs the directory chowned
+# above.
+USER bun
 
 # `server.ts` is the production entrypoint: it applies pending migrations, reconciles the
 # root admin and only then opens the HTTP port. `index.ts` deliberately only creates the app

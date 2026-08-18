@@ -83,6 +83,46 @@ export async function createApp() {
     .use(
       swagger({
         path: '/swagger',
+        // Default provider (Scalar's API Reference) kept explicit since scalarConfig below is
+        // specific to it - if this ever changes to 'swagger-ui', the theme needs redoing with
+        // that provider's own CSS classes instead.
+        provider: 'scalar',
+        scalarConfig: {
+          // 'none' instead of a built-in preset (e.g. 'purple'): a preset ships its own full
+          // stylesheet that the overrides below would otherwise be fighting piece by piece.
+          theme: 'none',
+          // Same palette as apps/client/src/theme/palettes/default.ts, mapped onto Scalar's
+          // own CSS custom properties (see https://github.com/scalar/scalar - documentation/
+          // themes.md) so /swagger doesn't look like a default Scalar install next to the rest
+          // of the app. `primaryContainer` (a primary-tinted surface in the client's Material-
+          // style palette) is a clean semantic match for Scalar's "accent background" slot;
+          // there's no third background/text tier in the client palette, so those reuse the
+          // second tier rather than inventing a color that doesn't exist anywhere else.
+          customCss: `
+            .light-mode {
+              --scalar-color-accent: #6200EE;
+              --scalar-background-1: #FFFFFF;
+              --scalar-background-2: #F5F5F5;
+              --scalar-background-3: #F5F5F5;
+              --scalar-background-accent: #EADDFF;
+              --scalar-color-1: #000000;
+              --scalar-color-2: #666666;
+              --scalar-color-3: #666666;
+              --scalar-border-color: #E0E0E0;
+            }
+            .dark-mode {
+              --scalar-color-accent: #BB86FC;
+              --scalar-background-1: #121212;
+              --scalar-background-2: #1E1E1E;
+              --scalar-background-3: #1E1E1E;
+              --scalar-background-accent: #4F378B;
+              --scalar-color-1: #FFFFFF;
+              --scalar-color-2: #AAAAAA;
+              --scalar-color-3: #AAAAAA;
+              --scalar-border-color: #333333;
+            }
+          `,
+        },
         documentation: {
           info: {
             title: 'Keres API Documentation',

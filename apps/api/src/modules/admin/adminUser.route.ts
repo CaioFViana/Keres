@@ -30,6 +30,17 @@ export const adminUserRoutes = new Elysia()
       return adminUserService.list(parsed.data);
     },
     {
+      // Loose on purpose - AdminUserListQuerySchema.safeParse above stays the real gate. Only
+      // exists so swagger shows the query shape; Elysia strips undeclared query keys before
+      // the handler runs, so this must include every field the Zod schema does.
+      query: t.Object({
+        search: t.Optional(t.String()),
+        isAdmin: t.Optional(t.String()),
+        isDeleted: t.Optional(t.String()),
+        tierId: t.Optional(t.String()),
+        page: t.Optional(t.Numeric()),
+        pageSize: t.Optional(t.Numeric()),
+      }),
       detail: {
         summary: 'List users (paginated, filterable)',
         tags: ['Admin'],

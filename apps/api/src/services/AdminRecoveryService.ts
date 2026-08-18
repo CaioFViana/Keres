@@ -1,7 +1,8 @@
 import { AdminOperationLogQuery, UpdateStoryUpdate } from '@keres/shared';
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
-import { db } from '../db';
+import { db, withTransaction } from '../db';
 import { operationLog } from '../db/schema';
+import type { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { syncService } from './SyncService';
 
 export class UnknownEntityTypeError extends Error {
@@ -39,23 +40,26 @@ export class AdminRecoveryService {
     const handlers = syncService.getEntityHandlers();
     const entityTypes = filters.entityType ? [filters.entityType] : [...handlers.keys()];
 
+    // 'Story' não tem `storyIdColumnName` (uma história não pertence a outra), então um
+    // filtro de storyId não a restringe - sem este pulo, "itens excluídos na história X"
+    // devolveria também histórias completamente alheias que por acaso estão excluídas.
+    const entries: Array<[string, SyncEntityHandler]> = entityTypes
+      .filter((entityType) => !(entityType === 'Story' && filters.storyId && !filters.entityType))
+      .map((entityType) => [entityType, handlers.get(entityType)] as const)
+      .filter((entry): entry is [string, SyncEntityHandler] => !!entry[1]);
+
+    // Consultas independentes por tipo de entidade, então rodam em paralelo em vez de
+    // serializadas uma atrás da outra - cada `findDeleted` já é seu próprio SELECT isolado.
+    const rowsByType = await Promise.all(
+      entries.map(([, handler]) => handler.findDeleted(filters.storyId)),
+    );
+
     const results: DeletedItem[] = [];
-    for (const entityType of entityTypes) {
-      // 'Story' não tem `storyIdColumnName` (uma história não pertence a outra), então um
-      // filtro de storyId não a restringe - sem este pulo, "itens excluídos na história X"
-      // devolveria também histórias completamente alheias que por acaso estão excluídas.
-      if (entityType === 'Story' && filters.storyId && !filters.entityType) {
-        continue;
-      }
-      const handler = handlers.get(entityType);
-      if (!handler) {
-        continue;
-      }
-      const rows = await handler.findDeleted(filters.storyId);
-      for (const row of rows) {
+    entries.forEach(([entityType], index) => {
+      for (const row of rowsByType[index]) {
         results.push({ entityType, ...row });
       }
-    }
+    });
 
     results.sort((a, b) => (b.deletedAt?.getTime() ?? 0) - (a.deletedAt?.getTime() ?? 0));
     return results;
@@ -90,18 +94,25 @@ export class AdminRecoveryService {
       operationTime: new Date().toISOString(),
     };
 
-    await handler.update(adminUserId, storyId, update, current);
-    const restored = await handler.findById(id);
+    // A escrita e o registro no log de operações rodam na mesma transação - sem isto, uma
+    // falha entre os dois passos (ex.: o processo cair logo após o `update`) deixava a
+    // entidade restaurada mas sem nenhuma entrada no log de operações, quebrando o rastro de
+    // auditoria que este método existe para manter (mesmo raciocínio do push em
+    // `SyncService.processAndRecordUpdates`).
+    return withTransaction(async () => {
+      await handler.update(adminUserId, storyId, update, current);
+      const restored = await handler.findById(id);
 
-    await syncService.appendOperationLog({
-      storyId,
-      userId: adminUserId,
-      update,
-      entityId: id,
-      entityVersion: restored?.version,
+      await syncService.appendOperationLog({
+        storyId,
+        userId: adminUserId,
+        update,
+        entityId: id,
+        entityVersion: restored?.version,
+      });
+
+      return restored;
     });
-
-    return restored;
   }
 
   async browseOperationLog(filters: AdminOperationLogQuery) {

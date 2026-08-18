@@ -249,10 +249,34 @@ export abstract class BaseSyncEntityHandler<
       changes[this.deletedAtColumnName] = null;
     }
 
-    await db
+    // The `checkVersionConflict` above only compares against the version this request read
+    // before its transaction started - it can't see a second transaction that reads the same
+    // base version and commits first. Guarding the write itself with `version = <base>` closes
+    // that gap: Postgres serializes the two UPDATEs via row lock, the loser's WHERE no longer
+    // matches once the winner has committed a new version, and `.returning()` coming back empty
+    // is how we tell "genuinely raced" apart from "row just doesn't exist" (already ruled out by
+    // `currentEntity` being loaded above).
+    const [updated] = await db
       .update(this.table)
       .set(changes)
-      .where(eq((this.table as any)[this.idColumnName], update.id!));
+      .where(
+        and(
+          eq((this.table as any)[this.idColumnName], update.id!),
+          eq((this.table as any)[this.versionColumnName], currentEntity[this.versionColumnName]),
+        ),
+      )
+      .returning({ id: (this.table as any)[this.idColumnName] });
+
+    if (!updated) {
+      throw new SyncConflictError(
+        'version_conflict',
+        `Conflict: ${this.entityName} ${update.id} was modified concurrently.`,
+        {
+          clientVersion: update.changes.version,
+          serverVersion: currentEntity[this.versionColumnName],
+        },
+      );
+    }
   }
 
   async delete(

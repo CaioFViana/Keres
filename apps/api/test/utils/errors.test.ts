@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { AppError, isUniqueViolation, postgresErrorCode } from '../../src/utils/errors';
+import {
+  AppError,
+  isUniqueViolation,
+  postgresErrorCode,
+  postgresErrorConstraint,
+} from '../../src/utils/errors';
 
 const withCode = (code: string) => Object.assign(new Error(code), { code });
+const withConstraint = (constraint: string) => Object.assign(new Error(constraint), { constraint });
 
 /** Como o drizzle entrega um erro do `pg`: embrulhado, com o original em `cause`. */
 const wrappedByDrizzle = (cause: unknown) =>
@@ -59,6 +65,25 @@ describe('postgresErrorCode', () => {
     }
 
     expect(postgresErrorCode(error)).toBeUndefined();
+  });
+});
+
+describe('postgresErrorConstraint', () => {
+  it('reads the constraint name straight off a pg error', () => {
+    expect(postgresErrorConstraint(withConstraint('users_username_unique'))).toBe(
+      'users_username_unique',
+    );
+  });
+
+  it('finds the constraint name the drizzle wrapper hid in cause', () => {
+    expect(postgresErrorConstraint(wrappedByDrizzle(withConstraint('users_tag_lower_idx')))).toBe(
+      'users_tag_lower_idx',
+    );
+  });
+
+  it('returns nothing when the error carries no constraint name', () => {
+    expect(postgresErrorConstraint(new Error('boom'))).toBeUndefined();
+    expect(postgresErrorConstraint(withCode('23505'))).toBeUndefined();
   });
 });
 

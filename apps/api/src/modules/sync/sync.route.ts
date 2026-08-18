@@ -42,7 +42,12 @@ export const syncRoute = new Elysia()
       params: t.Object({
         storyId: t.String(), // ULID for the story
       }),
-      body: StoryUpdatesArraySchema, // Elysia will use this for validation and OpenAPI spec
+      // Confirmed: Elysia does run this Zod schema at request time (a malformed body 422s
+      // before the handler runs, same as a TypeBox schema would). What it does NOT do well is
+      // feed swagger's OpenAPI output - the generated spec for this field is Zod's own internal
+      // `_def` AST, not valid JSON Schema, so it won't render meaningfully in Swagger UI or
+      // work with any codegen tool that expects a real OpenAPI schema.
+      body: StoryUpdatesArraySchema,
       detail: {
         summary: 'Synchronize local story updates with the server',
         description:

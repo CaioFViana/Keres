@@ -100,7 +100,11 @@ export class StoryPermissionService {
     });
 
     if (!targetUser) {
-      throw new Error('Target user not found.');
+      // `AppError`, not a plain `Error` routed through `withOwnershipCheck`'s "Unauthorized"
+      // prefix match (see that function's own comment) - this message doesn't start with
+      // "Unauthorized", so a plain `Error` here fell through to the generic 500 fallback
+      // instead of the 404 a "not found" case should be.
+      throw new AppError(404, 'Target user not found.');
     }
 
     // 3. Check if permission already exists
@@ -163,7 +167,10 @@ export class StoryPermissionService {
     });
 
     if (!permission) {
-      throw new Error('Story permission not found for this user on this story.');
+      // Same reasoning as the `targetUser` check in `upsertStoryPermission` above: `AppError`
+      // so this reaches the client as 404, not the generic 500 a plain `Error` would fall
+      // back to (its message doesn't start with "Unauthorized").
+      throw new AppError(404, 'Story permission not found for this user on this story.');
     }
 
     // 3. Mark permission as deleted (soft delete)

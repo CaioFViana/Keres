@@ -130,14 +130,12 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
 
     await this.validateRelatedEntities(storyId, newSceneId, newNextSceneId);
 
-    await db
-      .update(choices)
-      .set({
-        ...validatedChanges,
-        updatedAt: new Date(),
-        version: currentEntity.version + 1,
-      })
-      .where(and(eq(choices.id, update.id!), eq(choices.version, currentEntity.version)));
+    // Delegated to the base class instead of a raw version-matched UPDATE reimplemented here:
+    // that reimplementation had no `checkVersionConflict`, no `deleted_on_server` check, and
+    // used server time instead of the client's `operationTime` - a concurrent edit landed here
+    // with no error and no conflict reported, just silently dropped (same bug already found
+    // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
+    await super.update(userId, storyId, update, currentEntity);
   }
 
   async delete(

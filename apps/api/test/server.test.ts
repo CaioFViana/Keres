@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   setLogSink: vi.fn(),
 }));
 
-vi.mock('../src/config/env', () => ({ env: { PORT: '3000' } }));
+vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
 vi.mock('../src/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
 vi.mock('../src/index', () => ({ createApp: mocks.createApp }));
 vi.mock('../src/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
@@ -34,8 +34,10 @@ beforeAll(async () => {
   mocks.reconcile.mockResolvedValue(undefined);
   mocks.createApp.mockResolvedValue({
     listen: mocks.listen.mockImplementation(
-      (_port: string, callback: (address: { hostname: string; port: number }) => void) =>
-        callback({ hostname: '127.0.0.1', port: 3000 }),
+      (
+        _options: { port: string; maxRequestBodySize: number },
+        callback: (address: { hostname: string; port: number }) => void,
+      ) => callback({ hostname: '127.0.0.1', port: 3000 }),
     ),
   });
   await import('../src/server');
@@ -48,7 +50,10 @@ describe('production server bootstrap', () => {
     expect(mocks.assertStorage).toHaveBeenCalledOnce();
     expect(mocks.cleanup).toHaveBeenCalledOnce();
     expect(mocks.reconcile).toHaveBeenCalledOnce();
-    expect(mocks.listen).toHaveBeenCalledWith('3000', expect.any(Function));
+    expect(mocks.listen).toHaveBeenCalledWith(
+      { port: '3000', maxRequestBodySize: 50 * 1024 * 1024 + 8 * 1024 * 1024 },
+      expect.any(Function),
+    );
     expect(mocks.loggerInfo).toHaveBeenCalledWith('Removed 2 abandoned temporary media upload(s).');
     expect(mocks.loggerInfo).toHaveBeenCalledWith('Elysia is running at http://127.0.0.1:3000');
   });

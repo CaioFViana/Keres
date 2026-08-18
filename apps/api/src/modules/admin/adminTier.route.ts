@@ -65,6 +65,18 @@ export const adminTierRoutes = new Elysia()
       }
     },
     {
+      // Loose on purpose - TierCreateInputSchema.safeParse above stays the real gate. Only
+      // exists so swagger shows the body shape; Elysia strips undeclared body keys before the
+      // handler runs, so this must include every field the Zod schema does.
+      body: t.Object({
+        name: t.String(),
+        isDefault: t.Optional(t.Boolean()),
+        maxStories: t.Optional(t.Nullable(t.Number())),
+        maxEntitiesPerStory: t.Optional(t.Nullable(t.Number())),
+        maxEntitiesTotal: t.Optional(t.Nullable(t.Number())),
+        maxStorageBytesPerStory: t.Optional(t.Nullable(t.Number())),
+        maxStorageBytesTotal: t.Optional(t.Nullable(t.Number())),
+      }),
       detail: { summary: 'Create a tier', tags: ['Admin'], security: [{ bearerAuth: [] }] },
     },
   )
@@ -96,6 +108,17 @@ export const adminTierRoutes = new Elysia()
     },
     {
       params: t.Object({ id: t.String() }),
+      // Loose on purpose, same reasoning as POST / above - PartialTierSchema (every field of
+      // TierCreateInputSchema, but optional) stays the real gate.
+      body: t.Object({
+        name: t.Optional(t.String()),
+        isDefault: t.Optional(t.Boolean()),
+        maxStories: t.Optional(t.Nullable(t.Number())),
+        maxEntitiesPerStory: t.Optional(t.Nullable(t.Number())),
+        maxEntitiesTotal: t.Optional(t.Nullable(t.Number())),
+        maxStorageBytesPerStory: t.Optional(t.Nullable(t.Number())),
+        maxStorageBytesTotal: t.Optional(t.Nullable(t.Number())),
+      }),
       detail: { summary: 'Update a tier', tags: ['Admin'], security: [{ bearerAuth: [] }] },
     },
   )

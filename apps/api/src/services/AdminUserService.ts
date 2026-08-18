@@ -5,7 +5,7 @@ import { ulid } from 'ulid';
 import { env } from '../config/env';
 import { db } from '../db';
 import { users } from '../db/schema';
-import { isUniqueViolation } from '../utils/errors';
+import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { recoveryCodeService } from './RecoveryCodeService';
 
 export class UsernameAlreadyTakenError extends Error {
@@ -25,11 +25,15 @@ export class AdminUserNotFoundError extends Error {
 /**
  * Recusa demover/excluir a conta root reconciliada via env (ver RootAdminService) - ela só
  * pode ser removida mudando/removendo as env vars e reiniciando a API, nunca pela UI.
+ *
+ * Só essas duas ações são bloqueadas em `update`/`softDelete` abaixo - tag, avatar, bio e
+ * tierId da conta root passam por edição normal, então a mensagem não deve dizer "modificada"
+ * sem qualificar, isso sobra a impressão de que a conta é imutável por completo.
  */
 export class RootAdminProtectedError extends Error {
   constructor() {
     super(
-      'The root admin account cannot be modified or deleted through the admin panel. Change ROOT_ADMIN_USERNAME/ROOT_ADMIN_PASSWORD and restart the API instead.',
+      'The root admin account cannot be demoted or deleted through the admin panel. Change ROOT_ADMIN_USERNAME/ROOT_ADMIN_PASSWORD and restart the API instead.',
     );
     this.name = 'RootAdminProtectedError';
   }
@@ -137,7 +141,7 @@ export class AdminUserService {
         })
         .returning(ADMIN_USER_RETURNING);
     } catch (error) {
-      if (isUniqueViolation(error)) {
+      if (isUniqueViolation(error) && postgresErrorConstraint(error) === 'users_tag_lower_idx') {
         [created] = await db
           .insert(users)
           .values({
@@ -149,6 +153,11 @@ export class AdminUserService {
             tierId: input.tierId ?? null,
           })
           .returning(ADMIN_USER_RETURNING);
+      } else if (isUniqueViolation(error)) {
+        // Not the tag constraint - a concurrent request created this exact username between
+        // the pre-check above and this insert. Retrying with a suffixed tag (the tag-collision
+        // path) would just fail again on the *username* constraint, unhandled this time.
+        throw new UsernameAlreadyTakenError();
       } else {
         throw error;
       }

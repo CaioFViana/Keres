@@ -6,7 +6,7 @@ import {
   PartialTagSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { tags } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
@@ -73,7 +73,7 @@ export class TagSyncHandler extends BaseSyncEntityHandler<
           eq(tags.storyId, storyId),
           eq(tags.name, validatedChanges.name),
           eq(tags.isDeleted, false),
-          eq(tags.id, update.id!), // Exclude the current tag from the check
+          ne(tags.id, update.id!), // Exclude the current tag from the check
         ),
       });
 

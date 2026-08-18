@@ -54,67 +54,81 @@ export class FriendshipService {
     await this.checkUserExistence(senderId);
     await this.checkUserExistence(receiverId);
 
-    // Check for an existing direct pending request (sender -> receiver)
-    const existingDirectPending = await db.query.friendships.findFirst({
-      where: and(
-        eq(friendships.senderId, senderId),
-        eq(friendships.receiverId, receiverId),
-        eq(friendships.status, FriendStatus.PENDING),
-      ),
-    });
-    if (existingDirectPending) {
-      throw new AppError(
-        409,
-        'Friend request already pending from you to you. Please approve the pending request.',
+    const created = await db.transaction(async (tx) => {
+      // Serializes any concurrent sendFriendRequest between this exact pair of users, in
+      // either direction. Without this, two requests racing in opposite directions (A→B and
+      // B→A) can both read "no existing row" before either commits and create two independent
+      // rows - the unique constraint on (senderId, receiverId) only catches an exact duplicate
+      // (A→B twice), not the reverse direction. Sorting the pair before locking means A→B and
+      // B→A always contend for the same lock, regardless of who's sender vs receiver.
+      const [lockKeyA, lockKeyB] = [senderId, receiverId].sort();
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${lockKeyA}), hashtext(${lockKeyB}))`,
       );
-    }
 
-    // Check for an existing reverse pending request (receiver -> sender)
-    const existingReversePending = await db.query.friendships.findFirst({
-      where: and(
-        eq(friendships.senderId, receiverId),
-        eq(friendships.receiverId, senderId),
-        eq(friendships.status, FriendStatus.PENDING),
-      ),
-    });
-    if (existingReversePending) {
-      throw new AppError(409, 'There is a pending friend request from this user to you.');
-    }
-
-    // Check for any existing non-pending friendship (FRIEND, BLACKLISTED) in either direction
-    const existingEstablishedFriendship = await db.query.friendships.findFirst({
-      where: or(
-        and(eq(friendships.senderId, senderId), eq(friendships.receiverId, receiverId)),
-        and(eq(friendships.senderId, receiverId), eq(friendships.receiverId, senderId)),
-      ),
-    });
-
-    if (existingEstablishedFriendship) {
-      if (existingEstablishedFriendship.status === FriendStatus.FRIEND) {
-        throw new AppError(409, 'Already friends.');
-      } else if (existingEstablishedFriendship.status === FriendStatus.BLACKLISTED) {
+      // Check for an existing direct pending request (sender -> receiver)
+      const existingDirectPending = await tx.query.friendships.findFirst({
+        where: and(
+          eq(friendships.senderId, senderId),
+          eq(friendships.receiverId, receiverId),
+          eq(friendships.status, FriendStatus.PENDING),
+        ),
+      });
+      if (existingDirectPending) {
         throw new AppError(
-          403,
-          'A blacklisted relationship exists between these users, cannot send request.',
+          409,
+          'Friend request already pending from you to you. Please approve the pending request.',
         );
       }
-      // If it's another status (e.g., PENDING, but not covered by above checks, though it should be)
-      throw new AppError(409, 'An existing friendship relationship is preventing this request.');
-    }
 
-    const newFriendshipData = {
-      id: ulid(),
-      senderId: senderId,
-      receiverId: receiverId,
-      status: FriendStatus.PENDING,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+      // Check for an existing reverse pending request (receiver -> sender)
+      const existingReversePending = await tx.query.friendships.findFirst({
+        where: and(
+          eq(friendships.senderId, receiverId),
+          eq(friendships.receiverId, senderId),
+          eq(friendships.status, FriendStatus.PENDING),
+        ),
+      });
+      if (existingReversePending) {
+        throw new AppError(409, 'There is a pending friend request from this user to you.');
+      }
 
-    const newFriendship = await db.insert(friendships).values(newFriendshipData).returning();
+      // Check for any existing non-pending friendship (FRIEND, BLACKLISTED) in either direction
+      const existingEstablishedFriendship = await tx.query.friendships.findFirst({
+        where: or(
+          and(eq(friendships.senderId, senderId), eq(friendships.receiverId, receiverId)),
+          and(eq(friendships.senderId, receiverId), eq(friendships.receiverId, senderId)),
+        ),
+      });
+
+      if (existingEstablishedFriendship) {
+        if (existingEstablishedFriendship.status === FriendStatus.FRIEND) {
+          throw new AppError(409, 'Already friends.');
+        } else if (existingEstablishedFriendship.status === FriendStatus.BLACKLISTED) {
+          throw new AppError(
+            403,
+            'A blacklisted relationship exists between these users, cannot send request.',
+          );
+        }
+        // If it's another status (e.g., PENDING, but not covered by above checks, though it should be)
+        throw new AppError(409, 'An existing friendship relationship is preventing this request.');
+      }
+
+      const newFriendshipData = {
+        id: ulid(),
+        senderId: senderId,
+        receiverId: receiverId,
+        status: FriendStatus.PENDING,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const newFriendship = await tx.insert(friendships).values(newFriendshipData).returning();
+      return newFriendship[0];
+    });
 
     this.notifyChanged(senderId, receiverId);
-    return newFriendship[0];
+    return created;
   }
   async acceptFriendRequest(userId: string, targetUserId: string): Promise<Friendship> {
     await this.checkUserExistence(userId); // userId is the one trying to accept

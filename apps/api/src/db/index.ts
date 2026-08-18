@@ -9,6 +9,13 @@ dotenv.config({ path: '../.env' });
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  // Explicit instead of relying on `pg`'s defaults, since this pool is shared by the whole
+  // API process. `max` bounds how many connections one instance can hold open against
+  // Postgres at once; the two timeouts turn "Postgres is unreachable" into a clear error
+  // within seconds instead of a request hanging until the client itself times out.
+  max: 20,
+  connectionTimeoutMillis: 10_000,
+  idleTimeoutMillis: 30_000,
 });
 
 // node-postgres emits 'error' on the pool when an idle client's connection dies

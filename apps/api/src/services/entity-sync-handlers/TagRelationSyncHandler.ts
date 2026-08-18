@@ -6,7 +6,7 @@ import {
   PartialTagRelationSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   chapters,
@@ -228,11 +228,11 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
           eq(tagRelations.relationId, newRelationId),
           eq(tagRelations.relationType, newRelationType),
           eq(tagRelations.isDeleted, false),
-          eq(tagRelations.id, update.id!), // Exclude the current relation from the check
+          ne(tagRelations.id, update.id!), // Exclude the current relation from the check
         ),
       });
 
-      if (existingTagRelation && existingTagRelation.id !== update.id) {
+      if (existingTagRelation) {
         throw new Error(
           `Conflict: TagRelation for Tag ID ${newTagId}, Relation ID ${newRelationId} (Type: ${newRelationType}) already exists in story ${storyId}.`,
         );

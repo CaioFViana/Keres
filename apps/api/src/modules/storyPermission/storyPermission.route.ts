@@ -49,7 +49,7 @@ export const storyPermissionRoutes = new Elysia()
       detail: {
         summary: 'Create or update a story permission',
         description:
-          'Allows the story owner to grant or update read/write permissions for another user on a specific story. If a permission already exists for the user and story, it will be updated; otherwise, a new one will be created.',
+          'Allows the story owner to grant or update read/write permissions for another user on a specific story. If a permission already exists for the user and story, it will be updated; otherwise, a new one will be created. The target user must already be a friend of the owner (403 otherwise) - see StoryPermissionService.upsertStoryPermission.',
         tags: ['Story Permissions'],
       },
     },

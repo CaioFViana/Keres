@@ -1,4 +1,3 @@
-import { bearer } from '@elysiajs/bearer';
 import { cookie } from '@elysiajs/cookie';
 import { cors } from '@elysiajs/cors';
 import { jwt } from '@elysiajs/jwt';
@@ -107,7 +106,6 @@ export async function createApp() {
       }),
     )
     .use(cookie())
-    .use(bearer())
     .use(
       jwt({
         name: 'jwt',

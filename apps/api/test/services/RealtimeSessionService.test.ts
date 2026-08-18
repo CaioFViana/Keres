@@ -72,6 +72,34 @@ describe('RealtimeSessionService', () => {
     expect(listeners.get('storyUpdate:story-2')?.size).toBe(0);
   });
 
+  it('sweeps expired unconsumed tickets instead of leaking them forever', () => {
+    const createId = vi.fn().mockReturnValueOnce('t1').mockReturnValueOnce('t2');
+    service = new RealtimeSessionService({
+      eventBus: {
+        on: (key, callback) => {
+          const callbacks = listeners.get(key) ?? new Set();
+          callbacks.add(callback);
+          listeners.set(key, callbacks);
+        },
+        off: (key, callback) => listeners.get(key)?.delete(callback),
+        emit: (key, event) => listeners.get(key)?.forEach((callback) => callback(event)),
+      },
+      canReadStory,
+      getReadableStoryIds,
+      logInfo,
+      now: () => now,
+      createId,
+    });
+
+    service.createTicket({ userId: 'user-1', username: 'ana' }); // 't1' - never gets consumed
+    expect(service.pendingTicketCount).toBe(1);
+
+    now += 30_000; // 't1' is now expired
+    service.createTicket({ userId: 'user-2', username: 'bea' }); // 't2' - sweeps 't1' first
+
+    expect(service.pendingTicketCount).toBe(1);
+  });
+
   it('ignores malformed and unauthorized subscription requests', async () => {
     const socket = { send: vi.fn(), realtimeUserId: 'user-1' };
     canReadStory.mockResolvedValue(false);

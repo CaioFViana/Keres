@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { stories } from './stories';
 import { users } from './users';
 import { operationTypeEnum } from '../enums';
@@ -43,6 +43,13 @@ export const operationLog = pgTable(
       table.storyId,
       table.operationVersion,
     ),
+    // AdminRecoveryService.browseOperationLog filters/sorts by exactly these columns, in any
+    // combination - without these, every filter besides storyId (already covered by the
+    // unique index above as a prefix) falls back to a full table scan as the log grows.
+    index('operation_log_created_at_idx').on(table.createdAt),
+    index('operation_log_user_id_idx').on(table.userId),
+    index('operation_log_entity_type_idx').on(table.entityType),
+    index('operation_log_operation_type_idx').on(table.operationType),
   ],
 );
 

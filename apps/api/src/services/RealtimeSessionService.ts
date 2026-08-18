@@ -40,10 +40,33 @@ export class RealtimeSessionService {
     this.createId = dependencies.createId ?? ulid;
   }
 
+  /** Test-only visibility into how many tickets are held, to verify sweeping actually bounds
+   *  the Map's growth instead of just re-checking the same public expiry behavior. */
+  get pendingTicketCount(): number {
+    return this.tickets.size;
+  }
+
   createTicket(user: JWTPayload): string {
+    this.sweepExpiredTickets();
     const ticket = this.createId();
     this.tickets.set(ticket, { user, expiresAt: this.now() + 30_000 });
     return ticket;
+  }
+
+  /**
+   * A ticket that's created but never consumed (client aborts, the WebSocket connection
+   * never actually opens) would otherwise stay in `tickets` forever - `takeTicket` only ever
+   * removes an entry on a successful connect. Swept opportunistically here instead of on a
+   * timer, so the Map's steady-state size tracks recent ticket-creation volume instead of
+   * growing unboundedly over the process's uptime.
+   */
+  private sweepExpiredTickets(): void {
+    const now = this.now();
+    for (const [ticket, entry] of this.tickets) {
+      if (entry.expiresAt <= now) {
+        this.tickets.delete(ticket);
+      }
+    }
   }
 
   hasValidTicket(ticket: string | undefined): boolean {

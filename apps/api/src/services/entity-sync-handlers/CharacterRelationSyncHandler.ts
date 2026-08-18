@@ -6,7 +6,7 @@ import {
   PartialCharacterRelationSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { characterRelations, characters } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
@@ -144,11 +144,11 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
           eq(characterRelations.character2Id, newChar2Id),
           eq(characterRelations.isDeleted, false),
           // Ensure we are not conflicting with the entity being updated itself
-          eq(characterRelations.id, update.id!),
+          ne(characterRelations.id, update.id!),
         ),
       });
 
-      if (existingRelation && existingRelation.id !== update.id) {
+      if (existingRelation) {
         throw new Error(
           `Conflict: CharacterRelation between ${newChar1Id} and ${newChar2Id} already exists and is not deleted.`,
         );

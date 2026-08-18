@@ -125,11 +125,16 @@ export class TierEnforcementService {
     }
 
     if (tier.maxStorageBytesPerStory !== null) {
+      // `::int` here would raise "integer out of range" (Postgres doesn't silently wrap a
+      // CAST) the moment a story's total crosses ~2.1GB, breaking every upload to that story
+      // with an opaque 500 - not hypothetical, since a single tier's *limit* is capped there
+      // by the column type, but actual usage isn't (e.g. an unlimited tier, or a story that
+      // predates a tightened limit). Postgres returns bigint as a string, hence `Number(...)`.
       const [{ used }] = await db
-        .select({ used: sql<number>`coalesce(sum(${galleries.sizeBytes}), 0)::int` })
+        .select({ used: sql<string>`coalesce(sum(${galleries.sizeBytes}), 0)::bigint` })
         .from(galleries)
         .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)));
-      if (used + incomingBytes > tier.maxStorageBytesPerStory) {
+      if (Number(used) + incomingBytes > tier.maxStorageBytesPerStory) {
         throw new TierLimitExceededError(
           `Storage limit for this story reached for your plan (${tier.maxStorageBytesPerStory} bytes).`,
         );
@@ -138,11 +143,11 @@ export class TierEnforcementService {
 
     if (tier.maxStorageBytesTotal !== null) {
       const [{ used }] = await db
-        .select({ used: sql<number>`coalesce(sum(${galleries.sizeBytes}), 0)::int` })
+        .select({ used: sql<string>`coalesce(sum(${galleries.sizeBytes}), 0)::bigint` })
         .from(galleries)
         .innerJoin(stories, eq(galleries.storyId, stories.id))
         .where(and(eq(stories.userId, userId), eq(galleries.isDeleted, false)));
-      if (used + incomingBytes > tier.maxStorageBytesTotal) {
+      if (Number(used) + incomingBytes > tier.maxStorageBytesTotal) {
         throw new TierLimitExceededError(
           `Total storage limit reached for your plan (${tier.maxStorageBytesTotal} bytes).`,
         );

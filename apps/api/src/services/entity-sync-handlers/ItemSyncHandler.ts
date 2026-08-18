@@ -6,7 +6,7 @@ import {
   PartialItemSchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { characters, items } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
@@ -105,7 +105,7 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
           eq(items.storyId, storyId),
           eq(items.name, validatedChanges.name),
           eq(items.isDeleted, false),
-          eq(items.id, update.id!), // Exclude the current item from the check
+          ne(items.id, update.id!), // Exclude the current item from the check
         ),
       });
 

@@ -43,3 +43,23 @@ export function postgresErrorCode(error: unknown): string | undefined {
 export function isUniqueViolation(error: unknown): boolean {
   return postgresErrorCode(error) === UNIQUE_VIOLATION;
 }
+
+/**
+ * Nome da constraint/índice que causou a violação (ex.: `users_username_unique`), procurado
+ * em `.cause` pelo mesmo motivo de `postgresErrorCode`. Uma tabela pode ter mais de uma
+ * restrição de unicidade - `isUniqueViolation` sozinho não diz qual delas foi violada, e
+ * assumir que só pode ser uma específica (ex.: username vs tag em `users`) faz um retry
+ * pensado para uma colisão de verdade re-tentar a mesma operação, sem checar isto, contra
+ * uma restrição diferente que nunca vai passar.
+ */
+export function postgresErrorConstraint(error: unknown): string | undefined {
+  let current: unknown = error;
+  for (let depth = 0; current && depth < 5; depth++) {
+    const constraint = (current as { constraint?: unknown }).constraint;
+    if (typeof constraint === 'string') {
+      return constraint;
+    }
+    current = (current as { cause?: unknown }).cause;
+  }
+  return undefined;
+}

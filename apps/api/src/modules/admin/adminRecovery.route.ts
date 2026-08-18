@@ -25,6 +25,13 @@ export const adminRecoveryRoutes = new Elysia()
       return adminRecoveryService.listDeleted(parsed.data);
     },
     {
+      // Loose on purpose - AdminDeletedItemsQuerySchema.safeParse above stays the real gate.
+      // Only exists so swagger shows the query shape; Elysia strips undeclared query keys
+      // before the handler runs, so this must include every field the Zod schema does.
+      query: t.Object({
+        entityType: t.Optional(t.String()),
+        storyId: t.Optional(t.String()),
+      }),
       detail: {
         summary: 'Browse soft-deleted entities/Stories',
         description:
@@ -80,6 +87,18 @@ export const adminRecoveryRoutes = new Elysia()
       return adminRecoveryService.browseOperationLog(parsed.data);
     },
     {
+      // Loose on purpose, same reasoning as /deleted above - AdminOperationLogQuerySchema stays
+      // the real gate.
+      query: t.Object({
+        storyId: t.Optional(t.String()),
+        entityType: t.Optional(t.String()),
+        userId: t.Optional(t.String()),
+        operationType: t.Optional(t.String()),
+        from: t.Optional(t.String()),
+        to: t.Optional(t.String()),
+        page: t.Optional(t.Numeric()),
+        pageSize: t.Optional(t.Numeric()),
+      }),
       detail: {
         summary: 'Browse the operation log (paginated, filterable)',
         tags: ['Admin'],

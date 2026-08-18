@@ -156,14 +156,15 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await db
-      .update(scenes)
-      .set({
-        ...validatedChanges,
-        updatedAt: new Date(),
-        version: currentEntity.version + 1,
-      })
-      .where(and(eq(scenes.id, update.id!), eq(scenes.version, currentEntity.version)));
+    // Delegated to the base class instead of a raw version-matched UPDATE reimplemented here:
+    // that reimplementation had no `checkVersionConflict`, no `deleted_on_server` check, and
+    // used server time instead of the client's `operationTime` - a concurrent edit landed here
+    // with no error and no conflict reported, just silently dropped (same bug already found
+    // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
+    // As a bonus, throwing on conflict now also rolls back the isStart/isFinish flag-flip above
+    // via the same transaction, instead of leaving other scenes' flags cleared while this
+    // scene's own edit silently failed to apply.
+    await super.update(userId, storyId, update, currentEntity);
   }
 
   async delete(

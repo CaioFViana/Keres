@@ -1,4 +1,3 @@
-import { bearer } from '@elysiajs/bearer';
 import { jwt } from '@elysiajs/jwt';
 import { ForgotPasswordSchema } from '@keres/shared';
 import * as bcrypt from 'bcrypt';
@@ -11,7 +10,7 @@ import { db } from '../../db';
 import { users } from '../../db/schema';
 import { InvalidRecoveryCodeError, recoveryCodeService } from '../../services/RecoveryCodeService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
-import { isUniqueViolation } from '../../utils/errors';
+import { isUniqueViolation, postgresErrorConstraint } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
 import type { JWTPayload } from '../../index';
 import { createWebSocketTicket } from '../webSocket/webSocket.route';
@@ -23,27 +22,42 @@ const loginAttemptLimiter = createAttemptLimiter({ maxAttempts: 5, windowMs: 15 
 
 export const authRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
+  // Registering the `jwt` plugin here again (same name/secret/schema as index.ts's copy) looks
+  // redundant at first - Elysia dedupes same-named plugins at runtime, so only one decorator
+  // actually exists once this is mounted under the parent app. It's kept anyway: `authRoutes`
+  // is its own exported unit, and TypeScript only sees what THIS chain declares - the `jwt`
+  // context property these handlers destructure isn't visible without it, parent or not.
   .use(
     jwt({
       name: 'jwt',
       secret: env.JWT_SECRET,
       exp: '1h', // Access token expiration, consistent with index.ts
       schema: t.Object({
-        // Define schema for JWT payload, consistent with index.ts
         userId: t.String(),
         username: t.String(),
       }),
     }),
   )
-  .use(jwtRefresh) // Register jwtRefresh plugin
-  .use(bearer())
-  .post('/ws-ticket', ({ user, set }) => {
-    if (!user) {
-      set.status = 401;
-      return { message: 'Unauthorized' };
-    }
-    return { ticket: createWebSocketTicket(user), expiresInSeconds: 30 };
-  })
+  .use(jwtRefresh)
+  .post(
+    '/ws-ticket',
+    ({ user, set }) => {
+      if (!user) {
+        set.status = 401;
+        return { message: 'Unauthorized' };
+      }
+      return { ticket: createWebSocketTicket(user), expiresInSeconds: 30 };
+    },
+    {
+      detail: {
+        summary: 'Issue a short-lived WebSocket ticket',
+        description:
+          'Exchanges the current session for a single-use ticket (30s) that GET /ws/events accepts as its auth credential - WebSocket connections cannot carry an Authorization header.',
+        tags: ['Auth'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
   .post(
     '/login',
     async ({ jwt, jwtRefresh, body, set, cookie }) => {
@@ -157,7 +171,7 @@ export const authRoutes = new Elysia()
           })
           .returning({ id: users.id, username: users.username, tag: users.tag });
       } catch (error) {
-        if (isUniqueViolation(error)) {
+        if (isUniqueViolation(error) && postgresErrorConstraint(error) === 'users_tag_lower_idx') {
           [newUser] = await db
             .insert(users)
             .values({
@@ -168,6 +182,13 @@ export const authRoutes = new Elysia()
               tierId: defaultTierId,
             })
             .returning({ id: users.id, username: users.username, tag: users.tag });
+        } else if (isUniqueViolation(error)) {
+          // Not the tag constraint - a concurrent registration for this exact username
+          // landed between the pre-check above and this insert. Blindly retrying with a
+          // suffixed tag (the tag-collision path) would just fail again on the *username*
+          // constraint, this time as an unhandled error instead of a clean response.
+          set.status = 409;
+          return { message: 'User already exists' };
         } else {
           throw error;
         }

@@ -13,6 +13,7 @@ import { createTagRelationService } from '../services/storymanagement/TagRelatio
 import { createTagService } from '../services/storymanagement/TagService';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { AppAlert } from '../utils/AppAlert';
 
@@ -65,6 +66,9 @@ export function useEntityRelations({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [allNotes, setAllNotes] = useState<Note[]>([]);
   const [noteRelations, setNoteRelations] = useState<NoteRelation[]>([]);
+  // Enquanto `entityId` é undefined (criando), não há entidade real pra gravar a relação -
+  // guardado aqui até `persistNoteRelations` ser chamado com o id de verdade depois do save.
+  const [pendingNoteRelations, setPendingNoteRelations] = useState<NoteRelation[]>([]);
 
   const refreshAvailableTags = useCallback(async () => {
     if (!services || !storyId) {
@@ -204,6 +208,22 @@ export function useEntityRelations({
 
   const saveNoteRelation = useCallback(
     async (relation: SaveNoteRelation) => {
+      if (!entityId) {
+        // Ainda criando - guarda localmente com um id sintético só pra a UI (lista, key,
+        // remover) funcionar igual; `relationId` de verdade só existe no replay.
+        const draft: NoteRelation = {
+          ...relation,
+          id: `pending-${createULID()}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          version: 1,
+          isDeleted: false,
+          deletedAt: null,
+        };
+        setPendingNoteRelations((prev) => [...prev, draft]);
+        AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
+        return;
+      }
       if (!services || !storyId || !userId) {
         AppAlert.alert(t('error'), t('service_not_initialized'));
         return;
@@ -226,6 +246,11 @@ export function useEntityRelations({
 
   const deleteNoteRelation = useCallback(
     async (relationId: string) => {
+      if (!entityId) {
+        setPendingNoteRelations((prev) => prev.filter((r) => r.id !== relationId));
+        AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
+        return;
+      }
       if (!services || !storyId || !userId) {
         AppAlert.alert(t('error'), t('service_not_initialized'));
         return;
@@ -248,6 +273,30 @@ export function useEntityRelations({
   );
 
   /**
+   * Grava de verdade as relações de nota acumuladas enquanto a entidade ainda não existia.
+   * Mesmo padrão de `persistTagRelations`: chamado pelo form logo depois do save principal,
+   * com o id que só existe a partir dali.
+   */
+  const persistNoteRelations = useCallback(
+    async (targetEntityId: string) => {
+      if (!services || !storyId || !userId || pendingNoteRelations.length === 0) {
+        return;
+      }
+      for (const pending of pendingNoteRelations) {
+        await services.noteRelation.saveNoteRelation(userId, {
+          storyId,
+          noteId: pending.noteId,
+          relationId: targetEntityId,
+          relationType: pending.relationType,
+        });
+      }
+      setPendingNoteRelations([]);
+      entityEventEmitter.emit('note_relation_changed', storyId, targetEntityId);
+    },
+    [services, storyId, userId, pendingNoteRelations],
+  );
+
+  /**
    * The selected tags as full records. Detail screens render tag chips (name, colour)
    * rather than editing a selection, so ids alone aren't enough for them.
    */
@@ -262,10 +311,13 @@ export function useEntityRelations({
     setSelectedTagIds,
     selectedTags,
     allNotes,
-    noteRelations,
+    // Sem entidade ainda, `noteRelations` fetched fica sempre vazia - mostra o buffer local
+    // no lugar, transparente pra quem consome (NoteRelationManager não sabe a diferença).
+    noteRelations: entityId ? noteRelations : pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
     refresh,
     refreshNotes,
     refreshNoteRelations,

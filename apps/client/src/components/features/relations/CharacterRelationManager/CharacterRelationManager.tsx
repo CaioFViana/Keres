@@ -56,6 +56,12 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
     (rel) => rel.charId1 === currentCharacterId || rel.charId2 === currentCharacterId,
   );
 
+  // Characters already related to this one - excluded from the "add" picker so a second
+  // relation for the same pair can't be created (the modal only excludes self otherwise).
+  const relatedCharacterIds = filteredRelations.map((rel) =>
+    rel.charId1 === currentCharacterId ? rel.charId2 : rel.charId1,
+  );
+
   const handleAddRelation = () => {
     setEditingRelation(null);
     setIsModalVisible(true);
@@ -171,6 +177,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
         characters={characters}
         currentStoryId={currentStoryId}
         currentCharacterId={currentCharacterId}
+        relatedCharacterIds={relatedCharacterIds}
       />
     </View>
   );

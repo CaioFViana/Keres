@@ -10,7 +10,9 @@ import Select from '@/src/components/common/inputs/Select/Select';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Item } from '@keres/shared/entities/Item'; // Import Item entity
 import {
@@ -68,6 +70,7 @@ const ItemFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const itemServiceRef = useRef<ReturnType<typeof createItemService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
   useEffect(() => {
     if (drizzleDb && !itemServiceRef.current) {
@@ -107,6 +110,7 @@ const ItemFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'Item', entityId: currentItemId });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Item');
@@ -222,6 +226,8 @@ const ItemFormScreen = () => {
 
       if (savedItemId) {
         await persistTagRelations(savedItemId);
+        await persistNoteRelations(savedItemId);
+        await seeAlsoManagerRef.current?.persistPending(savedItemId);
         await createAttributeValueService(drizzleDb).saveValuesForEntity(
           userId,
           selectedStory.id,
@@ -387,7 +393,7 @@ const ItemFormScreen = () => {
         onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
       />
 
-      {currentItemId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <MultiSelectPill
             options={availableTags.map((tag) => ({
@@ -403,7 +409,7 @@ const ItemFormScreen = () => {
         </View>
       )}
 
-      {currentItemId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <NoteManager
             noteRelations={itemNoteRelations}
@@ -412,18 +418,19 @@ const ItemFormScreen = () => {
             onDelete={deleteNoteRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentEntityId={currentItemId}
+            currentEntityId={currentItemId ?? ''}
             currentEntityType="Item"
           />
         </View>
       )}
 
-      {currentItemId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <SeeAlsoManager
+            ref={seeAlsoManagerRef}
             storyId={selectedStory.id}
             entityType="Item"
-            entityId={currentItemId}
+            entityId={currentItemId ?? ''}
             editable={true}
           />
         </View>

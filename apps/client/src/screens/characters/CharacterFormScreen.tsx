@@ -10,7 +10,9 @@ import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextIn
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Character } from '@keres/shared/entities/Character';
 import { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
@@ -70,6 +72,7 @@ const CharacterFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const characterServiceRef = useRef<ReturnType<typeof createCharacterService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
   const characterRelationServiceRef = useRef<CharacterRelationServiceInterface | null>(null); // Ref for CharacterRelationService
 
   // Initialize services once when drizzleDb is available
@@ -104,6 +107,11 @@ const CharacterFormScreen = () => {
 
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // To pass to CharacterRelationManager
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
+  // Enquanto `currentCharacterId` é undefined (criando), guarda aqui - sem id real ainda pra
+  // gravar a relação. Replay em `persistPendingCharacterRelations` depois do save principal.
+  const [pendingCharacterRelations, setPendingCharacterRelations] = useState<CharacterRelation[]>(
+    [],
+  );
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Character');
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
@@ -118,6 +126,7 @@ const CharacterFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'Character', entityId: currentCharacterId });
 
   const [loading, setLoading] = useState(true);
@@ -287,6 +296,9 @@ const CharacterFormScreen = () => {
 
       if (savedCharacter.id) {
         await persistTagRelations(savedCharacter.id);
+        await persistNoteRelations(savedCharacter.id);
+        await seeAlsoManagerRef.current?.persistPending(savedCharacter.id);
+        await persistPendingCharacterRelations(savedCharacter.id);
         await createAttributeValueService(drizzleDb).saveValuesForEntity(
           userId,
           selectedStory.id,
@@ -349,12 +361,17 @@ const CharacterFormScreen = () => {
   );
 
   const handleSaveRelation = async (relation: CharacterRelation) => {
-    if (
-      !characterRelationServiceRef.current ||
-      !selectedStory?.id ||
-      !currentCharacterId ||
-      !userId
-    ) {
+    if (!currentCharacterId) {
+      setPendingCharacterRelations((prev) => {
+        const existingIndex = prev.findIndex((r) => r.id === relation.id);
+        return existingIndex > -1
+          ? prev.map((r, index) => (index === existingIndex ? relation : r))
+          : [...prev, relation];
+      });
+      AppAlert.alert(t('success'), t('relation_saved_successfully'));
+      return;
+    }
+    if (!characterRelationServiceRef.current || !selectedStory?.id || !userId) {
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
@@ -380,12 +397,12 @@ const CharacterFormScreen = () => {
   };
 
   const handleDeleteRelation = async (relationId: string) => {
-    if (
-      !characterRelationServiceRef.current ||
-      !selectedStory?.id ||
-      !currentCharacterId ||
-      !userId
-    ) {
+    if (!currentCharacterId) {
+      setPendingCharacterRelations((prev) => prev.filter((r) => r.id !== relationId));
+      AppAlert.alert(t('success'), t('relation_deleted_successfully'));
+      return;
+    }
+    if (!characterRelationServiceRef.current || !selectedStory?.id || !userId) {
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
@@ -404,6 +421,26 @@ const CharacterFormScreen = () => {
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_delete_relation'));
       console.error('Failed to delete character relation:', error);
+    }
+  };
+
+  /**
+   * Grava de verdade as relações acumuladas enquanto o personagem ainda não existia -
+   * `charId1`/`charId2` guardaram '' no lugar do id (placeholder do form, ver
+   * `CharacterRelationManager`); troca pelo id de verdade aqui.
+   */
+  const persistPendingCharacterRelations = async (targetCharacterId: string) => {
+    if (!characterRelationServiceRef.current || !selectedStory?.id || !userId) return;
+    for (const pending of pendingCharacterRelations) {
+      await characterRelationServiceRef.current.saveCharacterRelation(userId, {
+        ...pending,
+        charId1: pending.charId1 === '' ? targetCharacterId : pending.charId1,
+        charId2: pending.charId2 === '' ? targetCharacterId : pending.charId2,
+      });
+    }
+    setPendingCharacterRelations([]);
+    if (pendingCharacterRelations.length > 0) {
+      entityEventEmitter.emit('character_relation_changed', selectedStory.id, targetCharacterId);
     }
   };
 
@@ -486,6 +523,14 @@ const CharacterFormScreen = () => {
         placeholder={t('name_placeholder')}
         value={name}
         onChangeText={setName}
+        style={commonInputStyles.input}
+      />
+
+      <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
+      <TextInput
+        placeholder={t('character_title_placeholder')}
+        value={title || ''}
+        onChangeText={setTitle}
         style={commonInputStyles.input}
       />
 
@@ -620,21 +665,21 @@ const CharacterFormScreen = () => {
         />
       </View>
 
-      {currentCharacterId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <CharacterRelationManager
-            characterRelations={characterRelations}
+            characterRelations={currentCharacterId ? characterRelations : pendingCharacterRelations}
             characters={allCharacters}
             onSave={handleSaveRelation}
             onDelete={handleDeleteRelation}
             editable={true} // Editable in form screen
             currentStoryId={selectedStory.id}
-            currentCharacterId={currentCharacterId}
+            currentCharacterId={currentCharacterId ?? ''}
           />
         </View>
       )}
 
-      {currentCharacterId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <NoteManager
             noteRelations={characterNoteRelations}
@@ -643,18 +688,19 @@ const CharacterFormScreen = () => {
             onDelete={deleteNoteRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentEntityId={currentCharacterId}
+            currentEntityId={currentCharacterId ?? ''}
             currentEntityType="Character"
           />
         </View>
       )}
 
-      {currentCharacterId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <SeeAlsoManager
+            ref={seeAlsoManagerRef}
             storyId={selectedStory.id}
             entityType="Character"
-            entityId={currentCharacterId}
+            entityId={currentCharacterId ?? ''}
             editable={true}
           />
         </View>

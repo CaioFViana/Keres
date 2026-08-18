@@ -393,12 +393,13 @@ const NoteDetailScreen = () => {
         groupedEntities={groupedEntities}
       />
 
+      <FavoritedByList storyId={note.storyId} entityId={noteId} entityType="Note" />
+
       <EntityMetadata
         version={note.version}
         createdAt={note.createdAt}
         updatedAt={note.updatedAt}
       />
-      <FavoritedByList storyId={note.storyId} entityId={noteId} entityType="Note" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

@@ -313,6 +313,7 @@ const ItemDetailScreen = () => {
       <SeeAlsoManager storyId={item.storyId} entityType="Item" entityId={itemId} editable={false} />
 
       <FavoritedByList storyId={item.storyId} entityId={itemId} entityType="Item" />
+
       <EntityMetadata
         version={item.version}
         createdAt={item.createdAt}

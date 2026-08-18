@@ -8,7 +8,9 @@ import CustomAttributeFields, {
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Chapter } from '@keres/shared/entities/Chapter';
 import {
@@ -63,6 +65,7 @@ const ChapterFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
   useEffect(() => {
     if (drizzleDb && !chapterServiceRef.current) {
@@ -85,6 +88,7 @@ const ChapterFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'Chapter', entityId: currentChapterId });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Chapter');
@@ -211,6 +215,8 @@ const ChapterFormScreen = () => {
 
       if (savedChapter.id) {
         await persistTagRelations(savedChapter.id);
+        await persistNoteRelations(savedChapter.id);
+        await seeAlsoManagerRef.current?.persistPending(savedChapter.id);
         await createAttributeValueService(drizzleDb).saveValuesForEntity(
           userId,
           selectedStory.id,
@@ -384,7 +390,7 @@ const ChapterFormScreen = () => {
         onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
       />
 
-      {currentChapterId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <MultiSelectPill
             options={availableTags.map((tag) => ({
@@ -400,7 +406,7 @@ const ChapterFormScreen = () => {
         </View>
       )}
 
-      {currentChapterId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <NoteManager
             noteRelations={chapterNoteRelations}
@@ -409,18 +415,19 @@ const ChapterFormScreen = () => {
             onDelete={deleteNoteRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentEntityId={currentChapterId}
+            currentEntityId={currentChapterId ?? ''}
             currentEntityType="Chapter"
           />
         </View>
       )}
 
-      {currentChapterId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <SeeAlsoManager
+            ref={seeAlsoManagerRef}
             storyId={selectedStory.id}
             entityType="Chapter"
-            entityId={currentChapterId}
+            entityId={currentChapterId ?? ''}
             editable={true}
           />
         </View>

@@ -10,7 +10,9 @@ import Select from '@/src/components/common/inputs/Select/Select'; // Import Sel
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
 import { Effect } from '@keres/shared/entities/Effect';
@@ -97,6 +99,7 @@ const SceneFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null); // Ref for LocationService
   const characterSceneServiceRef = useRef<CharacterSceneServiceInterface | null>(null); // Ref for CharacterSceneService
   const effectServiceRef = useRef<ReturnType<typeof createEffectService> | null>(null);
@@ -189,6 +192,11 @@ const SceneFormScreen = () => {
 
   const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character-scene relations
   const [sceneEffects, setSceneEffects] = useState<Effect[]>([]);
+  // Enquanto a cena ainda não existe, personagens presentes ficam aqui em vez de gravar no banco -
+  // `sceneId: ''` até o replay em `persistPendingCharacterSceneRelations` depois do save principal.
+  const [pendingCharacterSceneRelations, setPendingCharacterSceneRelations] = useState<
+    CharacterScene[]
+  >([]);
 
   const {
     availableTags,
@@ -199,6 +207,7 @@ const SceneFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'Scene', entityId: currentSceneId });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Scene');
@@ -514,6 +523,9 @@ const SceneFormScreen = () => {
 
       if (savedSceneId) {
         await persistTagRelations(savedSceneId);
+        await persistNoteRelations(savedSceneId);
+        await seeAlsoManagerRef.current?.persistPending(savedSceneId);
+        await persistPendingCharacterSceneRelations(savedSceneId);
         await createAttributeValueService(drizzleDb).saveValuesForEntity(
           userId,
           selectedStory.id,
@@ -569,7 +581,17 @@ const SceneFormScreen = () => {
   );
 
   const handleSaveCharacterSceneRelation = async (relation: CharacterScene) => {
-    if (!characterSceneServiceRef.current || !selectedStory?.id || !currentSceneId || !userId) {
+    if (!currentSceneId) {
+      setPendingCharacterSceneRelations((prev) => {
+        const existingIndex = prev.findIndex((r) => r.id === relation.id);
+        return existingIndex > -1
+          ? prev.map((r, index) => (index === existingIndex ? relation : r))
+          : [...prev, relation];
+      });
+      AppAlert.alert(t('success'), t('character_scene_saved_successfully'));
+      return;
+    }
+    if (!characterSceneServiceRef.current || !selectedStory?.id || !userId) {
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
@@ -595,7 +617,12 @@ const SceneFormScreen = () => {
   };
 
   const handleDeleteCharacterSceneRelation = async (relationId: string) => {
-    if (!characterSceneServiceRef.current || !selectedStory?.id || !currentSceneId || !userId) {
+    if (!currentSceneId) {
+      setPendingCharacterSceneRelations((prev) => prev.filter((r) => r.id !== relationId));
+      AppAlert.alert(t('success'), t('character_scene_deleted_successfully'));
+      return;
+    }
+    if (!characterSceneServiceRef.current || !selectedStory?.id || !userId) {
       AppAlert.alert(t('error'), t('service_not_initialized'));
       return;
     }
@@ -614,6 +641,25 @@ const SceneFormScreen = () => {
     } catch (error) {
       AppAlert.alert(t('error'), t('failed_to_delete_character_scene'));
       console.error('Failed to delete character-scene relation:', error);
+    }
+  };
+
+  /**
+   * Grava de verdade as relações acumuladas enquanto a cena ainda não existia - `sceneId` guardou
+   * '' no lugar do id (placeholder do form, ver `SceneCharacterManager`); troca pelo id de verdade
+   * aqui.
+   */
+  const persistPendingCharacterSceneRelations = async (targetSceneId: string) => {
+    if (!characterSceneServiceRef.current || !selectedStory?.id || !userId) return;
+    for (const pending of pendingCharacterSceneRelations) {
+      await characterSceneServiceRef.current.saveCharacterScene(userId, {
+        ...pending,
+        sceneId: targetSceneId,
+      });
+    }
+    if (pendingCharacterSceneRelations.length > 0) {
+      setPendingCharacterSceneRelations([]);
+      entityEventEmitter.emit('character_scene_changed', selectedStory.id, targetSceneId);
     }
   };
 
@@ -877,7 +923,7 @@ const SceneFormScreen = () => {
         onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
       />
 
-      {currentSceneId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <MultiSelectPill
             options={availableTags.map((tag) => ({
@@ -893,21 +939,23 @@ const SceneFormScreen = () => {
         </View>
       )}
 
-      {currentSceneId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <SceneCharacterManager
-            characterRelations={characterSceneRelations}
+            characterRelations={
+              currentSceneId ? characterSceneRelations : pendingCharacterSceneRelations
+            }
             availableCharacters={characters.filter((char) => !char.isDeleted)}
             onSave={handleSaveCharacterSceneRelation}
             onDelete={handleDeleteCharacterSceneRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentSceneId={currentSceneId}
+            currentSceneId={currentSceneId ?? ''}
           />
         </View>
       )}
 
-      {currentSceneId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <NoteManager
             noteRelations={sceneNoteRelations}
@@ -916,18 +964,19 @@ const SceneFormScreen = () => {
             onDelete={deleteNoteRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentEntityId={currentSceneId}
+            currentEntityId={currentSceneId ?? ''}
             currentEntityType="Scene"
           />
         </View>
       )}
 
-      {currentSceneId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <SeeAlsoManager
+            ref={seeAlsoManagerRef}
             storyId={selectedStory.id}
             entityType="Scene"
-            entityId={currentSceneId}
+            entityId={currentSceneId ?? ''}
             editable={true}
           />
         </View>

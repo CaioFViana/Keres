@@ -571,8 +571,9 @@ const CharacterDetailScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
-      {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
       <TagList tags={characterTags} variant="chip" emptyMessage={t('no_tags_found')} />
+      
+      {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
 
       {(() => {
         const commentableFieldProps = {

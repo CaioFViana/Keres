@@ -17,7 +17,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -78,6 +80,7 @@ const ItemJourneyFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const itemJourneyServiceRef = useRef<ReturnType<typeof createItemJourneyService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
   useEffect(() => {
     if (drizzleDb && !itemJourneyServiceRef.current) {
@@ -133,6 +136,7 @@ const ItemJourneyFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'ItemJourney', entityId: currentItemJourneyId });
 
   const [loading, setLoading] = useState(true);
@@ -235,6 +239,8 @@ const ItemJourneyFormScreen = () => {
 
       if (savedItemJourneyId) {
         await persistTagRelations(savedItemJourneyId);
+        await persistNoteRelations(savedItemJourneyId);
+        await seeAlsoManagerRef.current?.persistPending(savedItemJourneyId);
       }
       entityEventEmitter.emit('item_journey_changed', selectedStory.id, savedItemJourneyId);
 
@@ -385,7 +391,7 @@ const ItemJourneyFormScreen = () => {
         multiline
       />
 
-      {currentItemJourneyId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <Text style={styles.sectionTitle}>{t('tags_title')}</Text>
           <MultiSelectPill
@@ -402,7 +408,7 @@ const ItemJourneyFormScreen = () => {
         </View>
       )}
 
-      {currentItemJourneyId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <Text style={styles.sectionTitle}>{t('notes_title')}</Text>
           <NoteManager
@@ -412,18 +418,19 @@ const ItemJourneyFormScreen = () => {
             onDelete={deleteNoteRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentEntityId={currentItemJourneyId}
+            currentEntityId={currentItemJourneyId ?? ''}
             currentEntityType="ItemJourney"
           />
         </View>
       )}
 
-      {currentItemJourneyId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <SeeAlsoManager
+            ref={seeAlsoManagerRef}
             storyId={selectedStory.id}
             entityType="ItemJourney"
-            entityId={currentItemJourneyId}
+            entityId={currentItemJourneyId ?? ''}
             editable={true}
           />
         </View>

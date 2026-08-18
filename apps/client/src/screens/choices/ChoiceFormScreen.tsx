@@ -3,7 +3,9 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import Select from '@/src/components/common/inputs/Select/Select';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Choice } from '@keres/shared/entities/Choice';
 import { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
@@ -72,6 +74,7 @@ const ChoiceFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
   const choiceCheckGroupServiceRef = useRef<ReturnType<
     typeof createChoiceCheckGroupService
   > | null>(null);
@@ -136,6 +139,7 @@ const ChoiceFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'Choice', entityId: currentChoiceId });
 
   const [loading, setLoading] = useState(true);
@@ -275,6 +279,8 @@ const ChoiceFormScreen = () => {
 
       if (savedChoiceId) {
         await persistTagRelations(savedChoiceId);
+        await persistNoteRelations(savedChoiceId);
+        await seeAlsoManagerRef.current?.persistPending(savedChoiceId);
       }
       entityEventEmitter.emit('choice_changed', selectedStory.id, savedChoiceId);
 
@@ -682,7 +688,7 @@ const ChoiceFormScreen = () => {
         multiline
       />
 
-      {currentChoiceId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <MultiSelectPill
             options={availableTags.map((tag) => ({
@@ -943,7 +949,7 @@ const ChoiceFormScreen = () => {
         </View>
       )}
 
-      {currentChoiceId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <NoteManager
             noteRelations={choiceNoteRelations}
@@ -952,18 +958,19 @@ const ChoiceFormScreen = () => {
             onDelete={deleteNoteRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentEntityId={currentChoiceId}
+            currentEntityId={currentChoiceId ?? ''}
             currentEntityType="Choice"
           />
         </View>
       )}
 
-      {currentChoiceId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <SeeAlsoManager
+            ref={seeAlsoManagerRef}
             storyId={selectedStory.id}
             entityType="Choice"
-            entityId={currentChoiceId}
+            entityId={currentChoiceId ?? ''}
             editable={true}
           />
         </View>

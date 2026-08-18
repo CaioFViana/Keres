@@ -17,6 +17,9 @@ interface CharacterRelationModalProps {
   characters: Character[];
   currentStoryId: string;
   currentCharacterId: string;
+  /** Characters that already have a relation with the current one - excluded from the
+   * picker so a second relation for the same pair can't be created. */
+  relatedCharacterIds: string[];
 }
 
 const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
@@ -27,6 +30,7 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   characters,
   currentStoryId,
   currentCharacterId,
+  relatedCharacterIds,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -73,8 +77,9 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
     return characters.find((char) => char.id === charId)?.name || t('select_character');
   };
 
+  const relatedCharacterIdSet = new Set(relatedCharacterIds);
   const selectableCharacters = characters
-    .filter((char) => char.id !== currentCharacterId)
+    .filter((char) => char.id !== currentCharacterId && !relatedCharacterIdSet.has(char.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleSelectCharacter = (charId: string) => {

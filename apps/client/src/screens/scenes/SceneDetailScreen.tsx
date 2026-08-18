@@ -1,3 +1,19 @@
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import TagList from '@/src/components/common/display/TagList/TagList';
+import {
+  ScreenError,
+  ScreenLoading,
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
+import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager'; // Import ItemSceneManager
+import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager'; // Import NoteRelationManager
+import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
+import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
 import { Chapter } from '@keres/shared/entities/Chapter';
 import { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
@@ -9,22 +25,6 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navig
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
-import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
-import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import {
-  ScreenError,
-  ScreenLoading,
-} from '@/src/components/common/feedback/ScreenState/ScreenState';
-import TagList from '@/src/components/common/display/TagList/TagList';
-import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager'; // Import ItemSceneManager
-import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager'; // Import NoteRelationManager
-import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls'; // Import SceneNavigationControls
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { useDrizzle } from '../../db';
 import { SceneSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -43,6 +43,7 @@ import {
   createCharacterSceneService,
 } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
 import { ChoiceService, createChoiceService } from '../../services/storymanagement/ChoiceService'; // Import ChoiceService
+import { createEffectService, EffectService } from '../../services/storymanagement/EffectService';
 import {
   createItemJourneyService,
   ItemJourneyService,
@@ -53,7 +54,6 @@ import {
   LocationService,
 } from '../../services/storymanagement/LocationService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
-import { createEffectService, EffectService } from '../../services/storymanagement/EffectService';
 import { useCharacterStore } from '../../state/characterStore'; // Import useCharacterStore
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -759,13 +759,6 @@ const SceneDetailScreen = () => {
         sceneNamesById={sceneNamesById}
       />
 
-      <SeeAlsoManager
-        storyId={scene.storyId}
-        entityType="Scene"
-        entityId={sceneId}
-        editable={false}
-      />
-
       {isBranching && (
         <>
           <Text style={styles.sectionTitle}>{t('effects_title')}</Text>
@@ -782,12 +775,20 @@ const SceneDetailScreen = () => {
         </>
       )}
 
+      <SeeAlsoManager
+        storyId={scene.storyId}
+        entityType="Scene"
+        entityId={sceneId}
+        editable={false}
+      />
+
+      <FavoritedByList storyId={scene.storyId} entityId={sceneId} entityType="Scene" />
+
       <EntityMetadata
         version={scene.version}
         createdAt={scene.createdAt}
         updatedAt={scene.updatedAt}
       />
-      <FavoritedByList storyId={scene.storyId} entityId={sceneId} entityType="Scene" />
 
       <View style={styles.buttonContainer}>
         <Button title={t('go_back')} onPress={() => navigation.goBack()} color={colors.primary} />

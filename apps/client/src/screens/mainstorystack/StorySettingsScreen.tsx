@@ -1,5 +1,6 @@
-import { Button, Select, TextInput } from '@/src/components/common';
+import { Button, Select } from '@/src/components/common';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
@@ -23,11 +24,9 @@ import { SyncEngineService } from '../../services/SyncEngineService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { themeDisplayOptions } from '../../theme/palettes'; // Import themeDisplayOptions
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
-import { getLanguageOptions } from '../../utils/i18n';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,
@@ -44,7 +43,6 @@ const StorySettingsScreen = () => {
   const storyId = selectedStory?.id;
   const { canEdit } = useStoryRole(storyId);
   const commonContainerStyles = getCommonContainerStyles(colors);
-  const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const storyService = useCallback(() => createStoryService(drizzleDb), [drizzleDb]);
@@ -578,24 +576,12 @@ const StorySettingsScreen = () => {
     );
   };
 
-  const storyTypeOptions = [
-    { label: t('linear'), value: 'linear' },
-    { label: t('branching'), value: 'branching' },
-  ];
-
   const permissionTypeOptions = [
     { label: t('permission_reader'), value: 'reader' },
     { label: t('permission_writer'), value: 'writer' },
   ];
 
   const addableFriendOptions = addableFriends.map((f) => ({ label: f.username, value: f.id }));
-
-  const languageOptions = getLanguageOptions(t);
-
-  const themeOptions = themeDisplayOptions.map((theme) => ({
-    label: t(theme.labelKey),
-    value: theme.value,
-  }));
 
   // Servidores disponíveis pra enviar uma história totalmente local pela primeira vez -
   // ver handleSendToServer. Diferente do antigo Select genérico, não tem opção "Nenhum
@@ -648,88 +634,30 @@ const StorySettingsScreen = () => {
         </Text>
       )}
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('title')}</Text>
-      <TextInput
-        placeholder={t('title_placeholder')}
-        value={title}
-        onChangeText={setTitle}
-        style={commonInputStyles.input}
+      <StoryFieldsForm
+        title={title}
+        onTitleChange={setTitle}
+        type={type}
+        onTypeChange={(value) => handleTypeChange(value)}
+        typeDisabled={!canEdit}
+        description={description}
+        onDescriptionChange={setDescription}
+        genre={genre}
+        onGenreChange={setGenre}
+        author={author}
+        onAuthorChange={setAuthor}
+        language={language}
+        onLanguageChange={setLanguage}
+        isFavorite={isFavorite}
+        onIsFavoriteChange={setIsFavorite}
+        favoriteBehavior={favoriteBehavior}
+        onFavoriteBehaviorChange={setFavoriteBehavior}
+        extraNotes={extraNotes}
+        onExtraNotesChange={setExtraNotes}
+        theme={theme}
+        onThemeChange={setTheme}
         editable={canEdit}
       />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('type')}</Text>
-      <Select
-        options={storyTypeOptions}
-        value={type}
-        onValueChange={(value) => handleTypeChange(value as 'linear' | 'branching')}
-        placeholder={t('select_story_type')}
-        disabled={!canEdit}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('description')}</Text>
-      <TextInput
-        placeholder={t('description_placeholder')}
-        value={description || ''}
-        onChangeText={setDescription}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-        multiline
-        editable={canEdit}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('genre')}</Text>
-      <TextInput
-        placeholder={t('genre_placeholder')}
-        value={genre || ''}
-        onChangeText={setGenre}
-        style={commonInputStyles.input}
-        editable={canEdit}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('author')}</Text>
-      <TextInput
-        placeholder={t('author_placeholder')}
-        value={author || ''}
-        onChangeText={setAuthor}
-        style={commonInputStyles.input}
-        editable={canEdit}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('language')}</Text>
-      <Select
-        options={languageOptions}
-        value={language}
-        onValueChange={setLanguage}
-        placeholder={t('select_language')}
-        disabled={!canEdit}
-      />
-
-      <View style={styles.switchContainer}>
-        <Text style={[styles.label, { color: colors.text, flex: 1, lineHeight: 30, marginTop: 5 }]}>
-          {t('is_favorite')}
-        </Text>
-        <ThemedSwitch
-          value={isFavorite}
-          onValueChange={setIsFavorite}
-          style={{ transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }] }}
-          disabled={!canEdit}
-        />
-      </View>
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('favorite_behavior')}</Text>
-      <Select
-        options={[
-          { label: t('favorite_behavior_global'), value: 'global' },
-          { label: t('favorite_behavior_individual'), value: 'individual' },
-          { label: t('favorite_behavior_individual_public'), value: 'individual_public' },
-        ]}
-        value={favoriteBehavior}
-        onValueChange={(value) => setFavoriteBehavior(value as FavoriteBehavior)}
-        placeholder={t('favorite_behavior')}
-        disabled={!canEdit}
-      />
-      <Text style={{ color: colors.textSecondary, marginBottom: 0 }}>
-        {t(`favorite_behavior_${favoriteBehavior}_description`)}
-      </Text>
 
       <View style={styles.switchContainer}>
         <View style={{ flex: 1, marginRight: 12 }}>
@@ -762,28 +690,6 @@ const StorySettingsScreen = () => {
           />
         </View>
       )}
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('extra_notes')}</Text>
-      <TextInput
-        placeholder={t('extra_notes_placeholder')}
-        value={extraNotes || ''}
-        onChangeText={setExtraNotes}
-        style={[commonInputStyles.input, { minHeight: 5 * 20, textAlignVertical: 'top' }]}
-        multiline
-        editable={canEdit}
-      />
-
-      <Text style={[styles.label, { color: colors.text }]}>{t('theme')}</Text>
-      <Select
-        options={themeOptions}
-        value={theme}
-        onValueChange={(value) => {
-          setTheme(value);
-          applyTheme(value || 'default');
-        }}
-        placeholder={t('select_theme')}
-        disabled={!canEdit}
-      />
 
       <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
       {serverId === null ? (

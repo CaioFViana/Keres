@@ -34,6 +34,10 @@ export function useSeeAlsoRelations(
 
   const [relations, setRelations] = useState<SeeAlsoLink[]>([]);
   const [loading, setLoading] = useState(true);
+  // Enquanto `entityId` é undefined (criando), não há entidade real pra gravar o vínculo -
+  // guarda o alvo escolhido aqui até `persistSeeAlsoRelations` ser chamado com o id de
+  // verdade depois do save. `null` = nunca mexeu (diferente de `[]`, que é "desmarcou tudo").
+  const [pendingTargets, setPendingTargets] = useState<SeeAlsoEntityRef[] | null>(null);
 
   const refresh = useCallback(async () => {
     if (!service || !storyId || !entityId) {
@@ -77,7 +81,11 @@ export function useSeeAlsoRelations(
 
   const save = useCallback(
     async (targets: SeeAlsoEntityRef[]) => {
-      if (!service || !storyId || !userId || !entityId) return;
+      if (!entityId) {
+        setPendingTargets(targets);
+        return;
+      }
+      if (!service || !storyId || !userId) return;
       await service.setSeeAlsoTargets(userId, storyId, entityType, entityId, targets);
     },
     [service, storyId, userId, entityType, entityId],
@@ -85,11 +93,49 @@ export function useSeeAlsoRelations(
 
   const remove = useCallback(
     async (relationId: string) => {
+      if (!entityId) {
+        setPendingTargets((prev) =>
+          (prev ?? []).filter(
+            (target) => `pending:${target.entityType}:${target.entityId}` !== relationId,
+          ),
+        );
+        return;
+      }
       if (!service || !userId) return;
       await service.removeSeeAlsoLink(userId, relationId);
     },
-    [service, userId],
+    [service, userId, entityId],
   );
 
-  return { relations, loading, save, remove, refresh };
+  /**
+   * Grava de verdade o conjunto de alvos escolhido enquanto a entidade ainda não existia.
+   * Mesmo padrão de `persistTagRelations`/`persistNoteRelations`: chamado pelo form logo
+   * depois do save principal, com o id que só existe a partir dali.
+   */
+  const persistSeeAlsoRelations = useCallback(
+    async (targetEntityId: string) => {
+      if (!service || !storyId || !userId || pendingTargets === null) return;
+      await service.setSeeAlsoTargets(userId, storyId, entityType, targetEntityId, pendingTargets);
+      setPendingTargets(null);
+    },
+    [service, storyId, userId, entityType, pendingTargets],
+  );
+
+  const displayedRelations = useMemo<SeeAlsoLink[]>(() => {
+    if (entityId || pendingTargets === null) return relations;
+    return pendingTargets.map((target) => ({
+      relationId: `pending:${target.entityType}:${target.entityId}`,
+      otherType: target.entityType,
+      otherId: target.entityId,
+    }));
+  }, [entityId, pendingTargets, relations]);
+
+  return {
+    relations: displayedRelations,
+    loading,
+    save,
+    remove,
+    refresh,
+    persistSeeAlsoRelations,
+  };
 }

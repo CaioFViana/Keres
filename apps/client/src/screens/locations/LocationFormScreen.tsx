@@ -9,7 +9,9 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Location } from '@keres/shared/entities/Location';
 import {
@@ -43,6 +45,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type LocationFormScreenRouteProp = RouteProp<LocationStackParamList, 'LocationForm'>;
@@ -50,6 +53,24 @@ type LocationFormScreenNavigationProp = NativeStackNavigationProp<
   LocationStackParamList,
   'LocationForm'
 >;
+
+const makePendingLocationRelation = (
+  storyId: string,
+  relationType: 'contains' | 'connected_to',
+  locationAId: string,
+  locationBId: string,
+): LocationRelationSelect => ({
+  id: `pending-${createULID()}`,
+  storyId,
+  locationAId,
+  locationBId,
+  relationType,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
+});
 
 const LocationFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -68,6 +89,7 @@ const LocationFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const locationServiceRef = useRef<ReturnType<typeof createLocationService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
   const locationRelationServiceRef = useRef<LocationRelationService | null>(null);
 
   useEffect(() => {
@@ -97,6 +119,7 @@ const LocationFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'Location', entityId: currentLocationId });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'Location');
@@ -106,6 +129,12 @@ const LocationFormScreen = () => {
   const [loading, setLoading] = useState(true);
   const [allLocations, setAllLocations] = useState<LocationSelect[]>([]);
   const [allLocationRelations, setAllLocationRelations] = useState<LocationRelationSelect[]>([]);
+  // Enquanto o location ainda não existe, cada operação vira uma relação sintética aqui em vez de
+  // gravar no banco - '' no lugar do lado ainda-não-criado. Replay em
+  // `persistPendingLocationRelations` depois do save principal.
+  const [pendingLocationRelations, setPendingLocationRelations] = useState<
+    LocationRelationSelect[]
+  >([]);
 
   const isEditing = !!currentLocationId;
 
@@ -144,13 +173,21 @@ const LocationFormScreen = () => {
 
   const handleSetParent = useCallback(
     async (newParentId: string | null) => {
-      if (
-        !locationRelationServiceRef.current ||
-        !selectedStory?.id ||
-        !userId ||
-        !currentLocationId
-      )
+      if (!currentLocationId) {
+        setPendingLocationRelations((prev) => {
+          const withoutParent = prev.filter(
+            (r) => !(r.relationType === 'contains' && r.locationBId === ''),
+          );
+          return newParentId === null
+            ? withoutParent
+            : [
+                ...withoutParent,
+                makePendingLocationRelation(selectedStory?.id ?? '', 'contains', newParentId, ''),
+              ];
+        });
         return;
+      }
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
       try {
         await locationRelationServiceRef.current.setParent(
           userId,
@@ -171,13 +208,14 @@ const LocationFormScreen = () => {
 
   const handleAddChild = useCallback(
     async (childId: string) => {
-      if (
-        !locationRelationServiceRef.current ||
-        !selectedStory?.id ||
-        !userId ||
-        !currentLocationId
-      )
+      if (!currentLocationId) {
+        setPendingLocationRelations((prev) => [
+          ...prev,
+          makePendingLocationRelation(selectedStory?.id ?? '', 'contains', '', childId),
+        ]);
         return;
+      }
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
       try {
         await locationRelationServiceRef.current.setParent(
           userId,
@@ -198,13 +236,14 @@ const LocationFormScreen = () => {
 
   const handleAddConnection = useCallback(
     async (otherLocationId: string) => {
-      if (
-        !locationRelationServiceRef.current ||
-        !selectedStory?.id ||
-        !userId ||
-        !currentLocationId
-      )
+      if (!currentLocationId) {
+        setPendingLocationRelations((prev) => [
+          ...prev,
+          makePendingLocationRelation(selectedStory?.id ?? '', 'connected_to', '', otherLocationId),
+        ]);
         return;
+      }
+      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
       try {
         await locationRelationServiceRef.current.addConnection(
           userId,
@@ -225,6 +264,10 @@ const LocationFormScreen = () => {
 
   const handleRemoveLocationRelation = useCallback(
     async (relationId: string) => {
+      if (!currentLocationId) {
+        setPendingLocationRelations((prev) => prev.filter((r) => r.id !== relationId));
+        return;
+      }
       if (!locationRelationServiceRef.current || !userId) return;
       try {
         await locationRelationServiceRef.current.removeRelation(userId, relationId);
@@ -236,7 +279,7 @@ const LocationFormScreen = () => {
         );
       }
     },
-    [userId, t, fetchAllLocationRelationsInStory],
+    [userId, t, fetchAllLocationRelationsInStory, currentLocationId],
   );
 
   useFocusEffect(
@@ -349,6 +392,9 @@ const LocationFormScreen = () => {
 
       if (savedLocation.id) {
         await persistTagRelations(savedLocation.id);
+        await persistNoteRelations(savedLocation.id);
+        await seeAlsoManagerRef.current?.persistPending(savedLocation.id);
+        await persistPendingLocationRelations(savedLocation.id);
         await createAttributeValueService(drizzleDb).saveValuesForEntity(
           userId,
           selectedStory.id,
@@ -395,6 +441,45 @@ const LocationFormScreen = () => {
         navigation.goBack();
       },
     });
+  };
+
+  /**
+   * Grava de verdade as relações acumuladas enquanto o location ainda não existia - '' no lugar do
+   * lado ainda-não-criado (ver `makePendingLocationRelation`); troca pelo id de verdade aqui.
+   */
+  const persistPendingLocationRelations = async (targetLocationId: string) => {
+    if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
+    for (const pending of pendingLocationRelations) {
+      if (pending.relationType === 'contains') {
+        if (pending.locationAId === '') {
+          await locationRelationServiceRef.current.setParent(
+            userId,
+            selectedStory.id,
+            pending.locationBId,
+            targetLocationId,
+          );
+        } else {
+          await locationRelationServiceRef.current.setParent(
+            userId,
+            selectedStory.id,
+            targetLocationId,
+            pending.locationAId,
+          );
+        }
+      } else {
+        const otherId = pending.locationAId === '' ? pending.locationBId : pending.locationAId;
+        await locationRelationServiceRef.current.addConnection(
+          userId,
+          selectedStory.id,
+          targetLocationId,
+          otherId,
+        );
+      }
+    }
+    if (pendingLocationRelations.length > 0) {
+      setPendingLocationRelations([]);
+      fetchAllLocationRelationsInStory();
+    }
   };
 
   const handleTagSelectionChange = useCallback(
@@ -560,7 +645,7 @@ const LocationFormScreen = () => {
         />
       </View>
 
-      {currentLocationId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <NoteManager
             noteRelations={locationNoteRelations}
@@ -569,18 +654,20 @@ const LocationFormScreen = () => {
             onDelete={deleteNoteRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentEntityId={currentLocationId}
+            currentEntityId={currentLocationId ?? ''}
             currentEntityType="Location"
           />
         </View>
       )}
 
-      {currentLocationId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <LocationRelationManager
-            currentLocationId={currentLocationId}
+            currentLocationId={currentLocationId ?? ''}
             allLocations={allLocations}
-            allLocationRelations={allLocationRelations}
+            allLocationRelations={
+              currentLocationId ? allLocationRelations : pendingLocationRelations
+            }
             onSetParent={handleSetParent}
             onAddChild={handleAddChild}
             onAddConnection={handleAddConnection}
@@ -590,12 +677,13 @@ const LocationFormScreen = () => {
         </View>
       )}
 
-      {currentLocationId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.tagSection}>
           <SeeAlsoManager
+            ref={seeAlsoManagerRef}
             storyId={selectedStory.id}
             entityType="Location"
-            entityId={currentLocationId}
+            entityId={currentLocationId ?? ''}
             editable={true}
           />
         </View>

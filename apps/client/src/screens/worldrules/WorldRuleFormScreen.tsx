@@ -8,7 +8,9 @@ import CustomAttributeFields, {
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager, {
+  SeeAlsoManagerHandle,
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { WorldRule } from '@keres/shared/entities/WorldRule';
 import {
@@ -56,6 +58,7 @@ const WorldRuleFormScreen = () => {
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
+  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
   useEffect(() => {
     if (drizzleDb && !worldRuleServiceRef.current) {
@@ -80,6 +83,7 @@ const WorldRuleFormScreen = () => {
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
+    persistNoteRelations,
   } = useEntityRelations({ entityType: 'WorldRule', entityId: currentWorldRuleId });
 
   const customFields = useStorySchemaFields(selectedStory?.id, 'WorldRule');
@@ -193,6 +197,8 @@ const WorldRuleFormScreen = () => {
 
       if (savedWorldRule.id) {
         await persistTagRelations(savedWorldRule.id);
+        await persistNoteRelations(savedWorldRule.id);
+        await seeAlsoManagerRef.current?.persistPending(savedWorldRule.id);
         await createAttributeValueService(drizzleDb).saveValuesForEntity(
           userId,
           selectedStory.id,
@@ -382,7 +388,7 @@ const WorldRuleFormScreen = () => {
         />
       </View>
 
-      {currentWorldRuleId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <NoteManager
             noteRelations={worldRuleNoteRelations}
@@ -391,18 +397,19 @@ const WorldRuleFormScreen = () => {
             onDelete={deleteNoteRelation}
             editable={true}
             currentStoryId={selectedStory.id}
-            currentEntityId={currentWorldRuleId}
+            currentEntityId={currentWorldRuleId ?? ''}
             currentEntityType="WorldRule"
           />
         </View>
       )}
 
-      {currentWorldRuleId && selectedStory?.id && (
+      {selectedStory?.id && (
         <View style={styles.noteSection}>
           <SeeAlsoManager
+            ref={seeAlsoManagerRef}
             storyId={selectedStory.id}
             entityType="WorldRule"
-            entityId={currentWorldRuleId}
+            entityId={currentWorldRuleId ?? ''}
             editable={true}
           />
         </View>

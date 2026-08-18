@@ -183,4 +183,87 @@ describe('relation sync entity handlers', () => {
       expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 2 });
     },
   );
+
+  /**
+   * Same dead-filter bug as the simple-entity rename check (see simpleSyncHandlers'
+   * "collides with a different existing row" test): the uniqueness re-check on a relation
+   * retarget filtered with `eq(id, update.id)` instead of `ne(id, update.id)`, so it could
+   * never find a genuinely different colliding row. These prove a retarget that would
+   * duplicate a different, already-existing relation is now rejected.
+   */
+  it('a CharacterRelation retarget that collides with a different existing relation is rejected', async () => {
+    const characters = new CharacterSyncHandler();
+    const characterC = newId();
+    await characters.create(userId, storyId, create('Character', characterC, { name: 'Hades' }));
+
+    const handler = new CharacterRelationSyncHandler();
+    const firstId = newId();
+    const secondId = newId();
+    await handler.create(
+      userId,
+      storyId,
+      create('CharacterRelation', firstId, {
+        character1Id: characterA,
+        character2Id: characterC,
+        relationType: 'siblings',
+      }),
+    );
+    await handler.create(
+      userId,
+      storyId,
+      create('CharacterRelation', secondId, {
+        character1Id: characterB,
+        character2Id: characterC,
+        relationType: 'rivals',
+      }),
+    );
+    const second = await handler.findById(secondId);
+
+    const retarget = handler.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'CharacterRelation',
+        id: secondId,
+        changes: { character1Id: characterA, character2Id: characterC, version: 1 },
+      } as UpdateStoryUpdate,
+      second,
+    );
+
+    await expect(retarget).rejects.toThrow(/already exists/i);
+    expect((await handler.findById(secondId)).relationType).toBe('rivals');
+  });
+
+  it('a TagRelation retarget that collides with a different existing relation is rejected', async () => {
+    const handler = new TagRelationSyncHandler();
+    const firstId = newId();
+    const secondId = newId();
+    await handler.create(
+      userId,
+      storyId,
+      create('TagRelation', firstId, { tagId, relationId: characterA, relationType: 'Character' }),
+    );
+    await handler.create(
+      userId,
+      storyId,
+      create('TagRelation', secondId, { tagId, relationId: characterB, relationType: 'Character' }),
+    );
+    const second = await handler.findById(secondId);
+
+    const retarget = handler.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'TagRelation',
+        id: secondId,
+        changes: { relationId: characterA, version: 1 },
+      } as UpdateStoryUpdate,
+      second,
+    );
+
+    await expect(retarget).rejects.toThrow(/already exists/i);
+    expect((await handler.findById(secondId)).relationId).toBe(characterB);
+  });
 });

@@ -224,4 +224,62 @@ describe('choice and inventory sync entity handlers', () => {
       expect(await handler.findById(id)).toMatchObject({ isDeleted: true });
     }
   });
+
+  /**
+   * Scene and Choice used to reimplement `update()` with a raw version-matched query that had
+   * no `checkVersionConflict`, no `deleted_on_server` check, and used server time instead of
+   * the client's `operationTime` - a concurrent edit landed with no error and no conflict
+   * reported, just silently dropped. Both now delegate to the base class; these guard against
+   * that regressing (same contract already covered for Note/WorldRule elsewhere).
+   */
+  it('a Scene reports a version conflict instead of silently dropping a concurrent edit', async () => {
+    const scenes = new SceneSyncHandler();
+    const current = await scenes.findById(firstSceneId);
+
+    const stale = scenes.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'Scene',
+        id: firstSceneId,
+        changes: { name: 'Nome que não deveria gravar', version: 99 },
+      } as UpdateStoryUpdate,
+      current,
+    );
+
+    await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
+    expect((await scenes.findById(firstSceneId)).name).toBe('Chegada');
+  });
+
+  it('a Choice reports a version conflict instead of silently dropping a concurrent edit', async () => {
+    const choice = new ChoiceSyncHandler();
+    const choiceId = newId();
+    await choice.create(
+      userId,
+      storyId,
+      create('Choice', choiceId, {
+        sceneId: firstSceneId,
+        nextSceneId: secondSceneId,
+        text: 'Abrir o portão',
+        notes: null,
+      }),
+    );
+    const current = await choice.findById(choiceId);
+
+    const stale = choice.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'Choice',
+        id: choiceId,
+        changes: { text: 'Texto que não deveria gravar', version: 99 },
+      } as UpdateStoryUpdate,
+      current,
+    );
+
+    await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
+    expect((await choice.findById(choiceId)).text).toBe('Abrir o portão');
+  });
 });

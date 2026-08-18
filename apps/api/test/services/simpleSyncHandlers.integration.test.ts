@@ -4,6 +4,7 @@ import { db } from '../../src/db';
 import { stories, users } from '../../src/db/schema';
 import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
+import { ItemSyncHandler } from '../../src/services/entity-sync-handlers/ItemSyncHandler';
 import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
 import { SuggestionSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionSyncHandler';
 import { TagSyncHandler } from '../../src/services/entity-sync-handlers/TagSyncHandler';
@@ -112,7 +113,84 @@ const cases: Array<
   ],
 ];
 
+/**
+ * The uniqueness re-check on rename used to filter with `eq(id, update.id)` instead of
+ * `ne(id, update.id)` - the query only ever matched the row being updated, so it could never
+ * find "another" row with the same name, and the duplicate-prevention check was dead code.
+ * These prove a rename that would collide with a *different*, already-existing row is
+ * actually rejected now (Tag and Item both key uniqueness on `name` within a story).
+ */
+const renameCollisionCases: Array<
+  [string, () => Handler, Record<string, unknown>, Record<string, unknown>]
+> = [
+  [
+    'Tag',
+    () => new TagSyncHandler(),
+    { name: 'Vilões', color: null, isFavorite: false, extraNotes: null },
+    { name: 'Heróis', color: null, isFavorite: false, extraNotes: null },
+  ],
+  [
+    'Item',
+    () => new ItemSyncHandler(),
+    {
+      characterOwnerId: null,
+      name: 'Espada',
+      category: null,
+      description: null,
+      initialState: null,
+      isFavorite: false,
+      extraNotes: null,
+    },
+    {
+      characterOwnerId: null,
+      name: 'Escudo',
+      category: null,
+      description: null,
+      initialState: null,
+      isFavorite: false,
+      extraNotes: null,
+    },
+  ],
+];
+
 describe('simple sync entity handlers', () => {
+  it.each(renameCollisionCases)(
+    'a %s rename that collides with a different existing row is rejected',
+    async (entity, build, firstData, secondData) => {
+      const handler = build();
+      const firstId = newId();
+      const secondId = newId();
+      await handler.create(userId, storyId, {
+        type: 'create',
+        entity,
+        id: firstId,
+        data: firstData,
+      } as CreateStoryUpdate);
+      await handler.create(userId, storyId, {
+        type: 'create',
+        entity,
+        id: secondId,
+        data: secondData,
+      } as CreateStoryUpdate);
+      const second = await handler.findById(secondId);
+
+      const rename = handler.update(
+        userId,
+        storyId,
+        {
+          type: 'update',
+          entity,
+          id: secondId,
+          changes: { name: firstData.name, version: 1 },
+        } as UpdateStoryUpdate,
+        second,
+      );
+
+      await expect(rename).rejects.toThrow(/already exists/i);
+      expect((await handler.findById(secondId)).name).toBe(secondData.name);
+    },
+  );
+
   it.each(cases)(
     '%s shares the create, update, and tombstone contract',
     async (entity, build, data, changes, changedField, expectedValue) => {

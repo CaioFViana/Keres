@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { truncateAll } from '../helpers/database';
-import { registerUser, request } from '../helpers/app';
+import { softDeleteUser, truncateAll } from '../helpers/database';
+import { newId, registerUser, request } from '../helpers/app';
 
 beforeEach(truncateAll);
 
@@ -58,6 +58,28 @@ describe('POST /auth/register', () => {
 
     expect(status).toBe(422);
   });
+
+  /**
+   * Two concurrent registrations for the same username can both pass the pre-check before
+   * either commits, so the real gate is what the *insert* does when the second one hits the
+   * database's unique constraint. That catch block used to assume any unique violation was a
+   * `tag` collision and blindly retried with a suffixed tag while reusing the same username -
+   * which would just fail again on the *username* constraint, this time unhandled (a raw 500),
+   * instead of the clean 409 a duplicate registration should get.
+   */
+  it('resolves a race between two registrations for the same username into one success and one clean 409', async () => {
+    const username = `race_${newId().toLowerCase()}`;
+
+    const [first, second] = await Promise.all([
+      request('POST', '/auth/register', { body: { username, password: 'senha-de-teste-123' } }),
+      request('POST', '/auth/register', { body: { username, password: 'outra-senha-456' } }),
+    ]);
+
+    const statuses = [first.status, second.status].sort();
+    expect(statuses).toEqual([200, 409]);
+    const rejected = first.status === 409 ? first : second;
+    expect(rejected.data.message).toBe('User already exists');
+  });
 });
 
 describe('POST /auth/login', () => {
@@ -102,6 +124,24 @@ describe('POST /auth/login', () => {
 
     expect(JSON.stringify(data)).not.toContain('$2b$');
     expect(data.password).toBeUndefined();
+  });
+
+  /**
+   * A soft-deleted account used to still authenticate normally (the lookup never filtered
+   * isDeleted) and only got blocked later by admin-gated routes - an admin "deleting" a user
+   * didn't actually cut off API access. Same message/status as a wrong password: a deleted
+   * account shouldn't be distinguishable from a nonexistent one.
+   */
+  it('rejects a soft-deleted account exactly like a nonexistent one', async () => {
+    const user = await registerUser('ana');
+    await softDeleteUser(user.userId);
+
+    const { status, data } = await request('POST', '/auth/login', {
+      body: { username: 'ana', password: user.password },
+    });
+
+    expect(status).toBe(401);
+    expect(data.message).toBe('Invalid credentials');
   });
 });
 
@@ -154,6 +194,96 @@ describe('POST /auth/refresh', () => {
     });
 
     expect(status).toBe(401);
+  });
+
+  /**
+   * The refresh token alone used to be enough - it only proves it was validly issued at some
+   * point in the past, not that the account is still enabled. Without a DB re-check here, a
+   * deleted/banned user kept minting fresh access tokens off a still-valid refresh token
+   * forever (there's no revocation list). The refresh token is minted *before* the delete, same
+   * as a real client that was logged in when an admin removed their account.
+   */
+  it('rejects a refresh token for an account that was soft-deleted after it was issued', async () => {
+    const user = await registerUser('ana');
+    await softDeleteUser(user.userId);
+
+    const { status, data } = await request('POST', '/auth/refresh', {
+      body: { refreshToken: user.refreshToken },
+    });
+
+    expect(status).toBe(401);
+    expect(data.message).toBe('Invalid or expired refresh token');
+  });
+});
+
+describe('POST /auth/login rate limiting', () => {
+  /**
+   * /login had no attempt limiting at all until this - the concept was introduced with
+   * /forgot-password and just never backported. Uses a unique auto-generated username (not
+   * 'ana', which other tests in this file also log into with a wrong password) so this test's
+   * count isn't polluted by - or doesn't pollute - anyone else's, since the limiter is a
+   * module-level singleton shared for the process's lifetime.
+   */
+  it('locks out further attempts after 5 failed logins, even with the correct password on the 6th', async () => {
+    const user = await registerUser();
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { status, data } = await request('POST', '/auth/login', {
+        body: { username: user.username, password: 'senha-errada' },
+      });
+      expect(status).toBe(401);
+      expect(data.message).toBe('Invalid credentials');
+    }
+
+    const { status, data } = await request('POST', '/auth/login', {
+      body: { username: user.username, password: user.password },
+    });
+
+    expect(status).toBe(401);
+    expect(data.message).toBe('Invalid credentials');
+  });
+
+  it('does not lock out a different username', async () => {
+    const lockedOut = await registerUser();
+    const unaffected = await registerUser();
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await request('POST', '/auth/login', {
+        body: { username: lockedOut.username, password: 'senha-errada' },
+      });
+    }
+
+    const { status, data } = await request('POST', '/auth/login', {
+      body: { username: unaffected.username, password: unaffected.password },
+    });
+
+    expect(status).toBe(200);
+    expect(data.userId).toBe(unaffected.userId);
+  });
+});
+
+describe('POST /auth/forgot-password', () => {
+  /**
+   * Same reasoning as login/refresh: without filtering isDeleted here too, a soft-deleted
+   * account could bypass the login block simply by resetting its password through recovery
+   * instead - which would completely defeat the point of blocking it at login.
+   */
+  it('rejects a soft-deleted account exactly like a nonexistent one', async () => {
+    const { data: registered } = await request('POST', '/auth/register', {
+      body: { username: 'ana', password: 'senha-de-teste-123' },
+    });
+    await softDeleteUser(registered.userId);
+
+    const { status, data } = await request('POST', '/auth/forgot-password', {
+      body: {
+        username: 'ana',
+        recoveryCode: registered.recoveryCodes[0],
+        newPassword: 'nova-senha-123',
+      },
+    });
+
+    expect(status).toBe(401);
+    expect(data.message).toBe('Invalid username or recovery code.');
   });
 });
 

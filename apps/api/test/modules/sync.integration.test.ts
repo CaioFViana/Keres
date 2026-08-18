@@ -190,6 +190,61 @@ describe('POST /sync/:storyId', () => {
 
     expect(status).toBe(401);
   });
+
+  /**
+   * Story has no `storyIdColumnName` (it's its own root, not a child row scoped by one), and
+   * `checkBelongsToStory`'s base implementation assumes that means "top-level entity, nothing
+   * to check" and allows it through. Without `StorySyncHandler`'s override, a user with write
+   * access to their own story could push a `Story`-type update/delete targeting any *other*
+   * story's id through their own story's `/sync/:storyId` endpoint and mutate or delete it,
+   * just by knowing its ULID.
+   */
+  it("rejects a Story update targeting a different story than the one in the URL, even one the pusher doesn't own", async () => {
+    const bia = await registerUser('bia');
+    const { data: biaStory } = await request('POST', '/stories/', {
+      token: bia.token,
+      body: { title: "Bia's story", type: 'linear' },
+    });
+
+    const { data } = await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Story',
+        id: biaStory.id,
+        changes: { title: 'Sequestrada', version: 1 },
+      },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toHaveLength(1);
+    expect(data.conflicts[0]).toMatchObject({ entity: 'Story', reason: 'unauthorized' });
+
+    const { data: reFetched } = await request('GET', `/stories/${biaStory.id}/export`, {
+      token: bia.token,
+    });
+    expect(reFetched.story.title).toBe("Bia's story");
+  });
+
+  it("rejects a Story delete targeting a different story than the one in the URL, even one the pusher doesn't own", async () => {
+    const bia = await registerUser('bia');
+    const { data: biaStory } = await request('POST', '/stories/', {
+      token: bia.token,
+      body: { title: "Bia's story", type: 'linear' },
+    });
+
+    const { data } = await push(ana.token, storyId, [
+      { type: 'delete', entity: 'Story', id: biaStory.id, version: 1 },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toHaveLength(1);
+    expect(data.conflicts[0]).toMatchObject({ entity: 'Story', reason: 'unauthorized' });
+
+    const { data: reFetched } = await request('GET', `/stories/${biaStory.id}/export`, {
+      token: bia.token,
+    });
+    expect(reFetched.story.isDeleted).toBe(false);
+  });
 });
 
 /**
@@ -296,6 +351,30 @@ describe('GET /sync/pullpreviews', () => {
     const { data } = await request('GET', '/sync/pullpreviews', { token: bia.token });
 
     expect(data.storyPreviews).toEqual([]);
+  });
+
+  /**
+   * `lastOperationVersion` used to come from `stories.version` (the Story row's own
+   * optimistic-concurrency counter, bumped only when the Story row itself changes) instead of
+   * `stories.lastOperationVersion` (a separate counter bumped by every operation in the story,
+   * including child-entity ones). Pushing a Character never touches the Story row, so the old
+   * code would report this preview's version as still 1 - stuck, even though real operations
+   * happened and a client relying on this number to decide "does this story need a pull" would
+   * never notice.
+   */
+  it("reports the story's actual lastOperationVersion, not the Story row's own version", async () => {
+    // Two pushes, not one: lastOperationVersion starts at 0 and the story's own creation (via
+    // POST /stories/, outside the operation log) never bumps it, so a single push landing on 1
+    // wouldn't distinguish "tracks real operations" from "coincidentally already 1". A second
+    // push moving it to 2 does.
+    await push(ana.token, storyId, [createCharacter(newId(), 'Keres')]);
+    const secondPush = await push(ana.token, storyId, [createCharacter(newId(), 'Nyx')]);
+
+    const { data } = await request('GET', '/sync/pullpreviews', { token: ana.token });
+
+    const preview = data.storyPreviews.find((p: { storyId: string }) => p.storyId === storyId);
+    expect(preview.lastOperationVersion).toBe(secondPush.data.serverMaxOperationVersion);
+    expect(preview.lastOperationVersion).toBeGreaterThan(1);
   });
 
   it('requires a session', async () => {

@@ -170,6 +170,19 @@ describe('DELETE /story-permissions/story/:storyId/user/:targetUserId', () => {
 
     expect(status).toBe(401);
   });
+
+  /**
+   * `StoryPermissionService` used to throw a plain `Error` here (message not prefixed with
+   * "Unauthorized", the only prefix the route's error-mapping translates to a status) - it
+   * fell through to Elysia's generic 500 fallback instead of the 404 a "not found" case should
+   * be. No prior grant exists for bia on this story, so the permission lookup finds nothing.
+   */
+  it('answers 404, not a generic 500, when revoking a permission that was never granted', async () => {
+    const { status, data } = await revoke(ana.token, bia.userId);
+
+    expect(status).toBe(404);
+    expect(data.message).toBe('Story permission not found for this user on this story.');
+  });
 });
 
 describe('GET /story-permissions/story/:storyId', () => {

@@ -161,4 +161,51 @@ describe('story and gallery sync entity handlers', () => {
       version: 2,
     });
   });
+
+  /**
+   * Same bug and same fix as Scene/Choice (see choiceInventorySyncHandlers.integration.test.ts):
+   * Gallery's `update()` used to be a raw version-matched query with no `checkVersionConflict`,
+   * so a concurrent edit vanished with no error instead of being reported as a conflict.
+   */
+  it('a Gallery reports a version conflict instead of silently dropping a concurrent edit', async () => {
+    const storyId = newId();
+    const stories = new StorySyncHandler();
+    const galleries = new GallerySyncHandler();
+    await stories.create(
+      userId,
+      storyId,
+      create('Story', storyId, { title: 'A Queda', type: 'linear' }, '2025-01-02T03:04:05.000Z'),
+    );
+    const id = newId();
+    await galleries.create(
+      userId,
+      storyId,
+      create('Gallery', id, {
+        mediaType: 'image',
+        mimeType: 'image/png',
+        fileName: 'nyx.png',
+        hash: 'c'.repeat(32),
+        sizeBytes: 1,
+        title: null,
+        isFavorite: false,
+        extraNotes: null,
+      }),
+    );
+    const current = await galleries.findById(id);
+
+    const stale = galleries.update(
+      userId,
+      storyId,
+      {
+        type: 'update',
+        entity: 'Gallery',
+        id,
+        changes: { fileName: 'nao-deveria-gravar.png', version: 99 },
+      } as UpdateStoryUpdate,
+      current,
+    );
+
+    await expect(stale).rejects.toMatchObject({ reason: 'version_conflict' });
+    expect((await galleries.findById(id)).fileName).toBe('nyx.png');
+  });
 });

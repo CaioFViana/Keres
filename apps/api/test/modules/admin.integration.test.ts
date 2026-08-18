@@ -115,6 +115,32 @@ describe('admin user lifecycle', () => {
   });
 
   /**
+   * Same fix as /auth/register's own race test: two concurrent creates for the same username
+   * can both pass the pre-check before either commits, so the real gate is the insert's catch
+   * block correctly telling a *username* collision apart from a *tag* one instead of blindly
+   * retrying with a suffixed tag and crashing on the username constraint a second time.
+   */
+  it('resolves a race between two creates for the same username into one success and one clean 409', async () => {
+    const username = `race_${newId().toLowerCase()}`;
+
+    const [first, second] = await Promise.all([
+      request('POST', '/admin/api/users', {
+        token: admin.token,
+        body: { username, password: 'senha-de-teste-123' },
+      }),
+      request('POST', '/admin/api/users', {
+        token: admin.token,
+        body: { username, password: 'outra-senha-456' },
+      }),
+    ]);
+
+    const statuses = [first.status, second.status].sort();
+    expect(statuses).toEqual([201, 409]);
+    const rejected = first.status === 409 ? first : second;
+    expect(rejected.data.message).toBe('Username is already taken.');
+  });
+
+  /**
    * Username e tag não compartilham unicidade: criar "bia" quando outra conta já usa "bia"
    * como tag precisa cair no sufixo, e não estourar. Este era o caminho que a violação de
    * unicidade embrulhada pelo drizzle deixava morto (ver `isUniqueViolation`).

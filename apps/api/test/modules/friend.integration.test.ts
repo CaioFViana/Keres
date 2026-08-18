@@ -70,6 +70,26 @@ describe('sending a friend request', () => {
     expect(data.message).toMatch(/pending friend request from this user/i);
   });
 
+  /**
+   * The sequential test above only proves the checks work when one request's write is already
+   * committed before the other's checks run. Two opposite-direction requests fired at the same
+   * time can both read "no existing row" before either commits - the unique constraint on
+   * (senderId, receiverId) doesn't help here since A→B and B→A are different rows. An advisory
+   * lock, keyed by the pair sorted so both directions contend for the same lock, serializes
+   * this; without it, both could succeed and leave two pending rows for the same pair instead
+   * of exactly one.
+   */
+  it('resolves a race between opposite-direction requests into exactly one pending relation', async () => {
+    const [anaToBia, biaToAna] = await Promise.all([sendRequest(ana, bia), sendRequest(bia, ana)]);
+
+    const statuses = [anaToBia.status, biaToAna.status].sort();
+    expect(statuses).toEqual([200, 409]);
+
+    const { data } = await listFriendships(ana);
+    expect(data).toHaveLength(1);
+    expect(data[0].status).toBe('pending');
+  });
+
   it('refuses a request to somebody who is already a friend', async () => {
     await sendRequest(ana, bia);
     await accept(bia, ana);

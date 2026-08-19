@@ -4,7 +4,14 @@ import type { JWTPayload } from '../index';
 export type RealtimeEvent =
   | { type: 'story.changed'; storyId: string; maxOperationVersion?: number }
   | { type: 'friendships.changed' }
-  | { type: 'stories.catalog-changed' };
+  | { type: 'stories.catalog-changed' }
+  /**
+   * Uma história ganhou (ou perdeu) uma versão pública. Vai para o dono e para todo mundo com
+   * permissão nela. Sem payload de conteúdo, como os demais: é só um empurrão para o cliente
+   * refazer o GET autoritativo - o barramento é em memória e não reenvia nada a quem estava
+   * offline, então o cliente também refaz esse GET a cada reconexão.
+   */
+  | { type: 'story.published'; storyId: string };
 
 type EventBus = {
   on: (key: string, callback: (event: any) => void) => void;

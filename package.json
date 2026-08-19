@@ -13,6 +13,8 @@
     "test:integration": "bun run --cwd apps/api test:integration",
     "test:all": "bun run test && bun run test:integration",
     "build:admin": "cd apps/admin && bun run build",
+    "build:showcase": "cd apps/admin && bun run build:showcase",
+    "build:web": "bun run build:admin && bun run build:showcase",
     "start:api": "cd apps/api && bun run src/server.ts",
     "docker:build": "docker compose -f apps/api/docker-compose.yml build",
     "docker:up": "docker compose -f apps/api/docker-compose.yml up -d",

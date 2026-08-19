@@ -67,6 +67,8 @@ import locations_en from '../content/locations/en';
 import locations_pt from '../content/locations/pt';
 import notes_en from '../content/notes/en';
 import notes_pt from '../content/notes/pt';
+import publishStory_en from '../content/publish-story/en';
+import publishStory_pt from '../content/publish-story/pt';
 import sceneTiming_en from '../content/scene-timing/en';
 import sceneTiming_pt from '../content/scene-timing/pt';
 import scenes_en from '../content/scenes/en';
@@ -142,6 +144,7 @@ export type GeneratedHelpPageId =
   | 'location-map'
   | 'locations'
   | 'notes'
+  | 'publish-story'
   | 'scene-timing'
   | 'scenes'
   | 'see-also'
@@ -295,6 +298,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   notes: {
     en: notes_en,
     pt: notes_pt,
+  },
+  'publish-story': {
+    en: publishStory_en,
+    pt: publishStory_pt,
   },
   'scene-timing': {
     en: sceneTiming_en,

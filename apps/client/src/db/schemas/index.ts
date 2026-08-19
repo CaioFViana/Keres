@@ -25,6 +25,7 @@ export * from './seeAlsoRelations';
 export * from './servers';
 export * from './stories';
 export * from './storyPermissions';
+export * from './storyPublications';
 export * from './storySchemaFields';
 export * from './suggestions';
 export * from './syncConflicts';

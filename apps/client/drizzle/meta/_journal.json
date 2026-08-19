@@ -71,6 +71,13 @@
       "when": 1787200000000,
       "tag": "0009_rename_char_id_to_character_id",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1787177033280,
+      "tag": "0010_orange_blazing_skull",
+      "breakpoints": true
     }
   ]
 }

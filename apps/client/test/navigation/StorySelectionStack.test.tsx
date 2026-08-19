@@ -4,6 +4,9 @@ import React from 'react';
 const mockDrawerScreens: Array<Record<string, any>> = [];
 const mockDrawerNavigatorProps: Array<Record<string, any>> = [];
 const mockResponsiveLayout = { isCompact: false, isWide: true, width: 1200 };
+// Objeto, e não booleano solto: `jest.mock` é içado para antes das atribuições, então a
+// factory precisa ler o valor na hora da chamada, não capturá-lo na definição.
+const mockHasRegisteredServer = { value: true };
 
 function mockDrawerNavigator({
   children,
@@ -56,6 +59,10 @@ jest.mock('../../src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => mockResponsiveLayout,
 }));
+jest.mock('../../src/hooks/useHasRegisteredServer', () => ({
+  __esModule: true,
+  useHasRegisteredServer: () => mockHasRegisteredServer.value,
+}));
 jest.mock(
   '../../src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent',
   () => ({
@@ -100,6 +107,10 @@ jest.mock('../../src/screens/enterstack/ImportExportScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/enterstack/PublishStoryScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/enterstack/MyProfileScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -140,7 +151,7 @@ beforeEach(() => {
 
 async function renderDrawer() {
   await render(<StorySelectionStack />);
-  expect(mockDrawerScreens).toHaveLength(7);
+  expect(mockDrawerScreens).toHaveLength(8);
 }
 
 it('keeps the wide story-selection menu permanently open with its main routes', async () => {
@@ -155,6 +166,7 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
     'ServerManagementDrawer',
     'FriendshipDrawer',
     'ImportExport',
+    'PublishStory',
     'ExampleStories',
     'Settings',
     'HelpDrawer',
@@ -189,4 +201,27 @@ it('uses the compact front drawer dimensions on small screens', async () => {
   expect(navigator).toMatchObject({ defaultStatus: 'closed' });
   expect(options).toMatchObject({ drawerType: 'front', swipeEnabled: true });
   expect(options.drawerStyle).toMatchObject({ minWidth: 300, width: 300 });
+});
+
+describe('the publish entry', () => {
+  it('is offered when a server is registered', async () => {
+    mockHasRegisteredServer.value = true;
+    await renderDrawer();
+
+    expect(drawerScreen('PublishStory')?.options.drawerItemStyle).toMatchObject({
+      height: undefined,
+    });
+  });
+
+  // A tela continua registrada - só o item do menu some, para uma navegação direta (ou o
+  // link da ajuda) não quebrar quando o último servidor é removido.
+  it('is hidden when no server is registered', async () => {
+    mockHasRegisteredServer.value = false;
+    await renderDrawer();
+
+    expect(drawerScreen('PublishStory')?.options.drawerItemStyle).toMatchObject({
+      height: 0,
+      overflow: 'hidden',
+    });
+  });
 });

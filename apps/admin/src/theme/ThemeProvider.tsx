@@ -8,12 +8,15 @@ import {
   useState,
 } from 'react';
 import {
+  applyPalette,
   applyResolvedTheme,
   cycleThemePreference,
+  readPaletteName,
   readThemePreference,
   resolveTheme,
   ThemePreference,
   themePreferenceLabel,
+  writePaletteName,
   writeThemePreference,
   type ResolvedTheme,
 } from './theme';
@@ -23,6 +26,9 @@ interface ThemeState {
   resolved: ResolvedTheme;
   cyclePreference: () => void;
   preferenceLabel: string;
+  /** Nome da paleta de `@keres/shared`; `default` reproduz o visual original do painel. */
+  palette: string;
+  setPalette: (name: string) => void;
 }
 
 const ThemeContext = createContext<ThemeState | null>(null);
@@ -32,6 +38,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [resolved, setResolved] = useState<ResolvedTheme>(() =>
     resolveTheme(readThemePreference()),
   );
+  const [palette, setPaletteState] = useState<string>(() => readPaletteName());
 
   useEffect(() => {
     const next = resolveTheme(preference);
@@ -52,9 +59,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => media.removeEventListener('change', onChange);
   }, [preference]);
 
+  // Claro e escuro têm cores diferentes na mesma paleta, então reaplicar depende dos dois.
+  useEffect(() => {
+    applyPalette(palette, resolved);
+    writePaletteName(palette);
+  }, [palette, resolved]);
+
   const cyclePreference = useCallback(() => {
     setPreference((current) => cycleThemePreference(current));
   }, []);
+
+  const setPalette = useCallback((name: string) => setPaletteState(name), []);
 
   const value = useMemo(
     () => ({
@@ -62,8 +77,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       resolved,
       cyclePreference,
       preferenceLabel: themePreferenceLabel(preference),
+      palette,
+      setPalette,
     }),
-    [preference, resolved, cyclePreference],
+    [preference, resolved, cyclePreference, palette, setPalette],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

@@ -8,4 +8,10 @@ export const operationTypeEnum = pgEnum('operation_type', [
   'reorder',
 ]);
 export const storyPermissionTypeEnum = pgEnum('story_permission_type', ['reader', 'writer']);
+export const showcaseVisibilityEnum = pgEnum('showcase_visibility', ['public', 'password']);
+export const publicationLabelModeEnum = pgEnum('publication_label_mode', [
+  'version',
+  'date',
+  'both',
+]);
 export const apiLogLevelEnum = pgEnum('api_log_level', ['info', 'warn', 'error']);

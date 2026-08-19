@@ -110,7 +110,7 @@ describe('admin routes', () => {
     ['/recovery', 'Recovery'],
     ['/logs', 'Logs'],
     ['/tiers', 'Tiers'],
-    ['/settings', 'Registration Settings'],
+    ['/settings', 'Settings'],
   ])('renders the protected %s route', async (route, heading) => {
     setToken('admin-token');
     const view = await renderRoute(route);

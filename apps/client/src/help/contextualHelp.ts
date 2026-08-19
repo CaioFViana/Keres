@@ -11,6 +11,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   StoryForm: 'create-story',
   ExampleStories: 'example-stories',
   ImportExport: 'import-export',
+  PublishStory: 'publish-story',
   Settings: 'app-settings',
   ServerManagementDrawer: 'what-is-a-server',
   ServerManagement: 'what-is-a-server',

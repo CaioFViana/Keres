@@ -17,6 +17,7 @@ import ResizableDrawerContent, {
   useResizableDrawerWidth,
 } from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import { screenHelpPage } from '../help/contextualHelp';
+import { useHasRegisteredServer } from '../hooks/useHasRegisteredServer';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
@@ -24,6 +25,7 @@ import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
 import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
+import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
 import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
@@ -58,6 +60,7 @@ export type StorySelectionDrawerParamList = {
   ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
   FriendshipDrawer: NavigatorScreenParams<FriendshipStackParamList>;
   ImportExport: undefined;
+  PublishStory: undefined;
   ExampleStories: undefined;
   Settings: undefined;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
@@ -179,6 +182,7 @@ const FriendshipStackNavigator = () => {
 const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const hasServers = useHasRegisteredServer();
   const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
@@ -336,6 +340,24 @@ const StorySelectionNavigator = () => {
         options={{
           title: t('import_export_title'),
           drawerLabel: t('import_export_title'),
+        }}
+      />
+      {/*
+        Publicar só existe com servidor: uma história que nunca saiu deste aparelho não tem
+        onde ser publicada. O item é escondido pela altura, como o de Escolhas em
+        MainSystemStack faz com histórias lineares - a tela continua registrada, então uma
+        navegação direta (ou o link da ajuda) não quebra quando o servidor é removido.
+      */}
+      <Drawer.Screen
+        name="PublishStory"
+        component={PublishStoryScreen}
+        options={{
+          title: t('publish_story_title'),
+          drawerLabel: t('publish_story_title'),
+          drawerItemStyle: {
+            height: hasServers ? undefined : 0,
+            overflow: 'hidden',
+          },
         }}
       />
       {/*

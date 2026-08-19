@@ -5,6 +5,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '../../config/env';
 import type { BlobStorage } from './BlobStorage';
 
@@ -77,6 +78,14 @@ export class S3BlobStorage implements BlobStorage {
       }
       throw error;
     }
+  }
+
+  async presignGet(key: string, ttlSeconds: number): Promise<string> {
+    return getSignedUrl(
+      this.client,
+      new GetObjectCommand({ Bucket: env.MEDIA_S3_BUCKET!, Key: this.objectKey(key) }),
+      { expiresIn: ttlSeconds },
+    );
   }
 
   async delete(key: string): Promise<void> {

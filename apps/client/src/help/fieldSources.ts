@@ -336,6 +336,51 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     documented: ['entityAType', 'entityAId', 'entityBType', 'entityBId', 'createdAt', 'updatedAt'],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
+  /*
+   * As formas do Showcase (site público) descrevem o que o *servidor* devolve para uma página
+   * web anônima, não uma tela do app. Nada aqui é editável por quem escreve - o autor escolhe
+   * publicar e com que nome, e o resto é montado a partir da própria história. Por isso são
+   * integralmente internas para efeito de ajuda.
+   */
+  ShowcaseOwner: {
+    documented: [],
+    invisible: ['username', 'tag', 'avatarColor', 'avatarIcon'],
+  },
+  ShowcaseProtectedStub: {
+    documented: [],
+    invisible: ['storyId', 'protected'],
+  },
+  ShowcaseStoryCard: {
+    documented: [],
+    invisible: ['storyId', 'snapshot', 'owner', 'versionCount', 'latestVersion', 'updatedAt'],
+  },
+  ShowcaseStoryDetail: {
+    documented: [],
+    invisible: ['storyId', 'snapshot', 'owner', 'versions', 'updatedAt'],
+  },
+  ShowcaseVersion: {
+    documented: [],
+    invisible: ['id', 'label', 'byteSize', 'mediaIncluded', 'mediaTotal', 'createdAt'],
+  },
+  StoryPublication: {
+    documented: [],
+    invisible: [
+      'id',
+      'storyId',
+      'ownerUserId',
+      'label',
+      'operationVersion',
+      'formatVersion',
+      'byteSize',
+      'mediaIncluded',
+      'mediaTotal',
+      'createdAt',
+    ],
+  },
+  StoryPublicationSnapshot: {
+    documented: [],
+    invisible: ['title', 'description', 'genre', 'language', 'author', 'type', 'theme'],
+  },
   Story: {
     documented: [
       'title',

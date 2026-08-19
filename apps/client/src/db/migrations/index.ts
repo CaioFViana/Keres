@@ -11,6 +11,7 @@ import migration_7 from './0006_wonderful_goliath';
 import migration_8 from './0007_fair_lenny_balinger';
 import migration_9 from './0008_boring_hannibal_king';
 import migration_10 from './0009_rename_char_id_to_character_id';
+import migration_11 from './0010_orange_blazing_skull';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -23,6 +24,7 @@ const migrations = [
   { id: 8, name: '0007_fair_lenny_balinger', run: migration_8 },
   { id: 9, name: '0008_boring_hannibal_king', run: migration_9 },
   { id: 10, name: '0009_rename_char_id_to_character_id', run: migration_10 },
+  { id: 11, name: '0010_orange_blazing_skull', run: migration_11 },
 ];
 
 export default migrations;

@@ -4,6 +4,7 @@ import { useStoryListStore } from '../state/storyListStore';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
+import { createPublicationService } from './PublicationService';
 import { SyncEngineService } from './SyncEngineService';
 import { createStoryService } from './storymanagement/StoryService';
 
@@ -13,6 +14,7 @@ type ServerEvent =
   | { type: 'story.changed'; storyId: string }
   | { type: 'friendships.changed' }
   | { type: 'stories.catalog-changed' }
+  | { type: 'story.published'; storyId: string }
   | { type: 'server.heartbeat' };
 
 /** One server connection. WebSocket only signals work; HTTP remains authoritative. */
@@ -100,6 +102,19 @@ export class ServerRealtimeService {
               ),
             ),
         );
+        // Mesma razão, para publicações: quem esteve offline enquanto uma história que ele lê
+        // ganhou versão pública só descobre isso aqui - o aviso nasce da diferença com o
+        // espelho local, não do evento em si.
+        this.track(
+          createPublicationService(this.db)
+            .syncPublicationsWithServer(this.server)
+            .catch((error) =>
+              console.log(
+                'Realtime publication refresh failed:',
+                (error as Error)?.message || error,
+              ),
+            ),
+        );
       };
       socket.onmessage = (event) => {
         if (!this.stopped) {
@@ -133,6 +148,8 @@ export class ServerRealtimeService {
       SyncEngineService.getInstance().requestSync('websocket');
     } else if (event.type === 'friendships.changed') {
       await createFriendshipService(this.db).syncFriendshipsWithServer(this.userId, this.server);
+    } else if (event.type === 'story.published') {
+      await createPublicationService(this.db).syncPublicationsWithServer(this.server);
     } else if (event.type === 'stories.catalog-changed') {
       const engine = SyncEngineService.getInstance();
       const previews = await engine.fetchServerStoryPreviews(this.server);

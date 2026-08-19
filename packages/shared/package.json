@@ -17,5 +17,8 @@
     "eslint": "^9.25.0",
     "vitest": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1"
   }
 }

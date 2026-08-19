@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { LogsPage } from '../../src/pages/logs/LogsPage';
 import { RecoveryPage } from '../../src/pages/recovery/RecoveryPage';
 import { RegistrationSettingsPage } from '../../src/pages/settings/RegistrationSettingsPage';
+import { ThemeProvider } from '../../src/theme/ThemeProvider';
 import { TiersPage } from '../../src/pages/tiers/TiersPage';
 import { UserFormPage } from '../../src/pages/users/UserFormPage';
 import { UsersListPage } from '../../src/pages/users/UsersListPage';
@@ -60,8 +61,14 @@ vi.mock('../../src/api/RecoveryApiService', () => ({
 }));
 vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
 
+// `ThemeProvider` porque a página de settings passou a incluir o cartão de aparência, que lê
+// a paleta escolhida do contexto de tema.
 const withRouter = (page: ReactElement, route = '/') =>
-  render(<MemoryRouter initialEntries={[route]}>{page}</MemoryRouter>);
+  render(
+    <MemoryRouter initialEntries={[route]}>
+      <ThemeProvider>{page}</ThemeProvider>
+    </MemoryRouter>,
+  );
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -157,6 +164,7 @@ describe('admin page actions', () => {
   it('saves registration settings after loading them', async () => {
     const view = await withRouter(<RegistrationSettingsPage />);
     await flush();
+    // O primeiro form da página é o de cadastro; aparência e showcase não são formulários.
     await submit(view.container.querySelector('form')!);
     await flush();
 

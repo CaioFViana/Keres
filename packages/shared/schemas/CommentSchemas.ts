@@ -36,7 +36,21 @@ export const CreateCommentDataSchema = CommentSchema.omit({
   path: ['fieldKey'],
 });
 
-export const PartialCommentSchema = CommentSchema.partial();
+export const PartialCommentSchema = CommentSchema.omit({
+  id: true,
+  storyId: true,
+  authorUserId: true,
+  entityType: true,
+  entityId: true,
+  fieldId: true,
+  fieldKey: true,
+  contentSnapshot: true,
+  createdAt: true,
+  updatedAt: true,
+  version: true,
+  isDeleted: true,
+  deletedAt: true,
+}).partial();
 
 export type CreateCommentDataType = z.infer<typeof CreateCommentDataSchema>;
 export type CommentSchemaType = z.infer<typeof CommentSchema>;

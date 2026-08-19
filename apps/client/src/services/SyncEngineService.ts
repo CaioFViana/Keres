@@ -4,6 +4,7 @@ import {
   DeleteStoryUpdate,
   EffectiveStoryRole,
   Favorite,
+  MAX_SYNC_PULL_BATCH,
   StoryReorderingStoryUpdate,
   StoryUpdate,
   SyncConflict as SharedSyncConflict,
@@ -20,7 +21,7 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 import i18n from '../utils/i18n';
 import { createKeresAxiosInstance, isOfflineError, KeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
-import { getEntityTable, toEntityColumns } from './entityTableRegistry';
+import { getEntityTable, omitClientProtectedFields, toEntityColumns } from './entityTableRegistry';
 import { AttributeValueClientSyncHandler } from './entity-sync-handlers/AttributeValueClientSyncHandler';
 import { ChapterClientSyncHandler } from './entity-sync-handlers/ChapterClientSyncHandler';
 import { CharacterClientSyncHandler } from './entity-sync-handlers/CharacterClientSyncHandler';
@@ -47,6 +48,7 @@ import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClie
 import { FavoriteClientSyncHandler } from './entity-sync-handlers/FavoriteClientSyncHandler';
 import { SeeAlsoRelationClientSyncHandler } from './entity-sync-handlers/SeeAlsoRelationClientSyncHandler';
 import { CommentClientSyncHandler } from './entity-sync-handlers/CommentClientSyncHandler';
+import { SuggestionClientSyncHandler } from './entity-sync-handlers/SuggestionClientSyncHandler';
 import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
 import { createServerService } from './ServerService';
 import { createStoryService } from './storymanagement/StoryService';
@@ -99,6 +101,7 @@ const SYNC_ENTITY_EVENTS: Record<string, string> = {
   Favorite: 'favorite_changed',
   SeeAlsoRelation: 'see_also_relation_changed',
   Comment: 'comment_changed',
+  Suggestion: 'suggestion_changed',
 };
 
 const FAVORITE_TARGET_EVENTS: Record<string, string> = {
@@ -179,7 +182,7 @@ export class SyncEngineService {
     this.registerEntityHandler(new FavoriteClientSyncHandler());
     this.registerEntityHandler(new SeeAlsoRelationClientSyncHandler());
     this.registerEntityHandler(new CommentClientSyncHandler());
-    // TODO: Register other entity handlers here
+    this.registerEntityHandler(new SuggestionClientSyncHandler());
   }
 
   public static getInstance(): SyncEngineService {
@@ -260,7 +263,7 @@ export class SyncEngineService {
     const runCycle = async () => {
       let wasOffline = false;
       try {
-        wasOffline = await this.performTrackedSync();
+        wasOffline = await this.runExclusiveSync();
       } catch (error) {
         if (isOfflineError(error)) {
           console.log('SyncEngineService: sync cycle skipped, server unreachable.');
@@ -285,22 +288,32 @@ export class SyncEngineService {
   /** Coalesced on-demand sync used by realtime notifications and local writes. */
   public requestSync(_reason: 'websocket' | 'initial' | 'local-change' = 'websocket'): void {
     if (!this.storyId || !this._db || !this.client.defaults.baseURL) return;
-    if (this.syncInFlight) {
-      this.syncQueued = true;
-      return;
-    }
-    this.syncInFlight = true;
-    const run = async () => {
-      do {
-        this.syncQueued = false;
-        await this.performTrackedSync();
-      } while (this.syncQueued);
-      this.syncInFlight = false;
-    };
-    run().catch((error) => {
-      this.syncInFlight = false;
+    void this.runExclusiveSync().catch((error) => {
       console.log('SyncEngineService: on-demand sync failed.', error);
     });
+  }
+
+  /**
+   * Um único executante por vez para o ciclo de pull/push. O timer e o `requestSync`
+   * (websocket / escrita local) compartilham este cadeado - sem ele os dois corriam
+   * `performSync` em paralelo e podiam empurrar o mesmo lote duas vezes.
+   */
+  private async runExclusiveSync(): Promise<boolean> {
+    if (this.syncInFlight) {
+      this.syncQueued = true;
+      return false;
+    }
+    this.syncInFlight = true;
+    try {
+      let wasOffline = false;
+      do {
+        this.syncQueued = false;
+        wasOffline = await this.performTrackedSync();
+      } while (this.syncQueued);
+      return wasOffline;
+    } finally {
+      this.syncInFlight = false;
+    }
   }
 
   public stopSync() {
@@ -557,6 +570,23 @@ export class SyncEngineService {
     return `${entityType}:${entityId}`;
   }
 
+  /** Remove colunas de bookkeeping local de um update remoto antes de aplicar. */
+  private protectRemoteUpdate(update: StoryUpdate): StoryUpdate {
+    if (update.type === 'create') {
+      return {
+        ...update,
+        data: omitClientProtectedFields(update.entity, update.data),
+      } as CreateStoryUpdate;
+    }
+    if (update.type === 'update') {
+      return {
+        ...update,
+        changes: omitClientProtectedFields(update.entity, update.changes),
+      } as UpdateStoryUpdate;
+    }
+    return update;
+  }
+
   /** Runs one full pull/push cycle. Resolves to true when the server was unreachable. */
   private async performSync(): Promise<boolean> {
     const { showNotification } = useNotificationStore.getState();
@@ -599,19 +629,36 @@ export class SyncEngineService {
       const lastSyncedLog = localStory.lastServerSyncedLog || 0;
       const lastPublicFavoriteLog = localStory.lastPublicFavoriteLog || 0;
 
-      // 2. Pull remote updates first (since the latest known server version)
+      // 2. Pull remote updates first (since the latest known server version).
+      // O servidor devolve no máximo MAX_SYNC_PULL_BATCH ops; repetimos até a página
+      // vir incompleta para não deixar um backlog grande para o ciclo seguinte.
       console.log(
         `Pulling remote updates for story ${this.storyId} since version ${lastSyncedLog}...`,
       );
-      const pullResponse = await this.client.get<{
-        updates: StoryUpdate[];
-        publicFavorites?: Favorite[];
-        serverMaxOperationVersion: number;
-        role: 'owner' | 'writer' | 'reader';
-      }>(
-        `/sync/${this.storyId}/pull?lastOperationVersion=${lastSyncedLog}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}`,
-      );
-      const { updates: remoteUpdates, publicFavorites = [], role: myRole } = pullResponse.data;
+      const remoteUpdates: StoryUpdate[] = [];
+      let publicFavorites: Favorite[] = [];
+      let myRole: 'owner' | 'writer' | 'reader' = localStory.myRole || 'reader';
+      let pullCursor = lastSyncedLog;
+      for (let page = 0; page < 20; page += 1) {
+        const pullResponse = await this.client.get<{
+          updates: StoryUpdate[];
+          publicFavorites?: Favorite[];
+          serverMaxOperationVersion: number;
+          role: 'owner' | 'writer' | 'reader';
+        }>(
+          `/sync/${this.storyId}/pull?lastOperationVersion=${pullCursor}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}`,
+        );
+        const pageUpdates = pullResponse.data.updates ?? [];
+        publicFavorites = pullResponse.data.publicFavorites ?? publicFavorites;
+        if (pullResponse.data.role) myRole = pullResponse.data.role;
+        remoteUpdates.push(...pageUpdates);
+        if (pageUpdates.length === 0) break;
+        pullCursor = Math.max(
+          pullCursor,
+          ...pageUpdates.map((update) => update.operationVersion || 0),
+        );
+        if (pageUpdates.length < MAX_SYNC_PULL_BATCH) break;
+      }
 
       /**
        * Avançamos o marcador apenas até a operação mais alta que realmente chegou, e não
@@ -659,18 +706,36 @@ export class SyncEngineService {
         // apagaria em silêncio o que o usuário escreveu offline.
         const pendingByEntity = await this.getPendingOperationsByEntity();
         let conflictsDetected = 0;
+        let pullBlocked = false;
 
-        for (const update of remoteUpdates) {
+        for (const rawUpdate of remoteUpdates) {
+          if (pullBlocked) break;
+
+          const update = this.protectRemoteUpdate(rawUpdate);
           const handler = this.entityHandlers.get(update.entity);
           if (!handler) {
             console.log(`No client sync handler registered for entity type: ${update.entity}`);
+            pullBlocked = true;
+            break;
+          }
+
+          if (
+            update.entity === 'Story' &&
+            update.type === 'create' &&
+            update.id !== this.storyId
+          ) {
+            console.warn(
+              `Ignoring Story create for ${update.id} while syncing ${this.storyId}.`,
+            );
+            await this.recordRemoteOperationLocally(rawUpdate);
+            markRemoteOperationApplied(rawUpdate);
             continue;
           }
 
           // Operação que este próprio cliente enviou e o servidor está devolvendo. Já está
           // aplicada aqui; reaplicá-la só duplicaria a linha no log local.
-          if (await this.isOwnEchoedOperation(update)) {
-            markRemoteOperationApplied(update);
+          if (await this.isOwnEchoedOperation(rawUpdate)) {
+            markRemoteOperationApplied(rawUpdate);
             continue;
           }
 
@@ -684,8 +749,8 @@ export class SyncEngineService {
                 conflictsDetected += 1;
               }
               markEntityUpdated(update.entity, update.id);
-              await this.recordRemoteOperationLocally(update);
-              markRemoteOperationApplied(update);
+              await this.recordRemoteOperationLocally(rawUpdate);
+              markRemoteOperationApplied(rawUpdate);
               continue;
             }
 
@@ -704,16 +769,18 @@ export class SyncEngineService {
                 console.warn(
                   `Reorder update for entity ${update.entity} ID ${update.id} has no reorderItems.`,
                 );
-                continue;
+                pullBlocked = true;
+                break;
               }
 
               await applyReorderToLocalDb(this._db, reorderUpdate, new Date(update.operationTime!));
             }
             markEntityUpdated(update.entity, update.id);
 
-            await this.recordRemoteOperationLocally(update);
-            markRemoteOperationApplied(update);
+            await this.recordRemoteOperationLocally(rawUpdate);
+            markRemoteOperationApplied(rawUpdate);
           } catch (handlerError) {
+            pullBlocked = true;
             if (
               update.entity === 'Favorite' &&
               (update.operationVersion || 0) > lastPublicFavoriteLog
@@ -827,13 +894,13 @@ export class SyncEngineService {
           if (!changed) continue;
 
           await this.applyRemoteCreate(
-            {
+            this.protectRemoteUpdate({
               type: 'create',
               entity: 'Favorite',
               id: favorite.id,
               data: favorite,
               version: favorite.version,
-            } as CreateStoryUpdate,
+            } as CreateStoryUpdate) as CreateStoryUpdate,
             favoriteHandler,
           );
 
@@ -1120,7 +1187,13 @@ export class SyncEngineService {
       ...createUpdate,
       type: 'update',
       id: update.id!,
-      changes: createUpdate.data,
+      changes: {
+        ...createUpdate.data,
+        version:
+          typeof createUpdate.data?.version === 'number'
+            ? createUpdate.data.version
+            : (createUpdate.version ?? 0),
+      },
     } as UpdateStoryUpdate);
   }
 

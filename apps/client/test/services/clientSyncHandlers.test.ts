@@ -384,7 +384,7 @@ describe.each(HANDLERS)(
         type: 'create',
         entity: name,
         data: data('e-1'),
-      } as CreateStoryUpdate);
+      } as unknown as CreateStoryUpdate);
 
       expect(rowsOf()).toEqual([]);
       expect(console.error).toHaveBeenCalled();

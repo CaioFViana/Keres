@@ -31,7 +31,7 @@ export const CreateNoteRelationDataSchema = NoteRelationSchema.omit({
   deletedAt: true,
 });
 
-export const PartialNoteRelationSchema = NoteRelationSchema.partial();
+export const PartialNoteRelationSchema = CreateNoteRelationDataSchema.partial();
 
 export type NoteRelationType = z.infer<typeof NoteRelationSchema>;
 export type CreateNoteRelationDataType = z.infer<typeof CreateNoteRelationDataSchema>;

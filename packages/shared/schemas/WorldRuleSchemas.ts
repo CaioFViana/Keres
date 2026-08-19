@@ -27,7 +27,7 @@ export const CreateWorldRuleDataSchema = WorldRuleSchema.omit({
   isFavorite: z.boolean().default(false),
 });
 
-export const PartialWorldRuleSchema = WorldRuleSchema.partial();
+export const PartialWorldRuleSchema = CreateWorldRuleDataSchema.partial();
 
 export type CreateWorldRuleDataType = z.infer<typeof CreateWorldRuleDataSchema>;
 export type WorldRuleType = z.infer<typeof WorldRuleSchema>;

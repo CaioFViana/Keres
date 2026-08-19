@@ -29,7 +29,7 @@ export const CreateChapterDataSchema = ChapterSchema.omit({
   isFavorite: z.boolean().default(false),
 });
 
-export const PartialChapterSchema = ChapterSchema.partial();
+export const PartialChapterSchema = CreateChapterDataSchema.partial();
 
 export type CreateChapterDataType = z.infer<typeof CreateChapterDataSchema>;
 export type ChapterType = z.infer<typeof ChapterSchema>;

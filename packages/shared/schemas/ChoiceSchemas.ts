@@ -29,7 +29,7 @@ export const CreateChoiceDataSchema = ChoiceSchema.omit({
   notes: z.string().nullable().default(null),
 });
 
-export const PartialChoiceSchema = ChoiceSchema.partial();
+export const PartialChoiceSchema = CreateChoiceDataSchema.partial();
 
 export type CreateChoiceDataType = z.infer<typeof CreateChoiceDataSchema>;
 export type ChoiceType = z.infer<typeof ChoiceSchema>;

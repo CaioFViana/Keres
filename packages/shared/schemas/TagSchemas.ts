@@ -29,7 +29,7 @@ export const CreateTagDataSchema = TagSchema.omit({
   extraNotes: z.string().nullable().default(null),
 });
 
-export const PartialTagSchema = TagSchema.partial();
+export const PartialTagSchema = CreateTagDataSchema.partial();
 
 export type CreateTagDataType = z.infer<typeof CreateTagDataSchema>;
 export type TagType = z.infer<typeof TagSchema>;

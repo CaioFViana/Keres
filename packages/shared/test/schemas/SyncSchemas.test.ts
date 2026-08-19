@@ -55,9 +55,17 @@ describe('StoryUpdateSchema', () => {
     );
   });
 
-  it('allows a create operation without an id, since the entity does not exist yet', () => {
+  it('requires an id on create operations, since the client always generates the ULID', () => {
     expect(
       CreateStoryUpdateSchema.safeParse({ type: 'create', entity: 'Character', data: {} }).success,
+    ).toBe(false);
+    expect(
+      CreateStoryUpdateSchema.safeParse({
+        type: 'create',
+        entity: 'Character',
+        id: STORY_ID,
+        data: {},
+      }).success,
     ).toBe(true);
   });
 
@@ -67,12 +75,23 @@ describe('StoryUpdateSchema', () => {
     ).toBe(false);
   });
 
+  it('requires the OCC base version inside changes, not only on the envelope', () => {
+    expect(
+      UpdateStoryUpdateSchema.safeParse({
+        type: 'update',
+        entity: 'Chapter',
+        id: CHAPTER_ID,
+        changes: { name: 'Novo nome' },
+      }).success,
+    ).toBe(false);
+  });
+
   it('keeps entity version and operation version as independent counters', () => {
     const parsed = UpdateStoryUpdateSchema.parse({
       type: 'update',
       entity: 'Chapter',
       id: CHAPTER_ID,
-      changes: { name: 'Novo nome' },
+      changes: { name: 'Novo nome', version: 3 },
       version: 3,
       operationVersion: 87,
     });
@@ -82,7 +101,12 @@ describe('StoryUpdateSchema', () => {
   });
 
   it('rejects negative versions', () => {
-    const base = { type: 'update' as const, entity: 'Chapter', id: CHAPTER_ID, changes: {} };
+    const base = {
+      type: 'update' as const,
+      entity: 'Chapter',
+      id: CHAPTER_ID,
+      changes: { version: 1 },
+    };
     expect(UpdateStoryUpdateSchema.safeParse({ ...base, version: -1 }).success).toBe(false);
     expect(UpdateStoryUpdateSchema.safeParse({ ...base, operationVersion: -1 }).success).toBe(
       false,
@@ -118,14 +142,14 @@ describe('StoryUpdateSchema', () => {
   it('validates every element of a push batch', () => {
     const batch = [
       { type: 'create', entity: 'Character', data: {} },
-      { type: 'delete', entity: 'Character' },
+      { type: 'delete', entity: 'Character', id: STORY_ID },
     ];
 
     expect(StoryUpdatesArraySchema.safeParse(batch).success).toBe(false);
   });
 
   it('requires operationTime to be an ISO datetime string', () => {
-    const base = { type: 'create' as const, entity: 'Character', data: {} };
+    const base = { type: 'create' as const, entity: 'Character', id: STORY_ID, data: {} };
     expect(
       CreateStoryUpdateSchema.safeParse({ ...base, operationTime: '2026-08-11T18:00:00.000Z' })
         .success,

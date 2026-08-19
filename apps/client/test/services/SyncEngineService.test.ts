@@ -837,6 +837,12 @@ describe('startSync', () => {
   // então ele é mockado para isolar isso de toda a cadeia real de rede/DB.
   let performSyncSpy: jest.SpyInstance;
 
+  const flush = async () => {
+    for (let i = 0; i < 8; i += 1) {
+      await Promise.resolve();
+    }
+  };
+
   beforeEach(() => {
     performSyncSpy = jest.spyOn(engine as any, 'performSync').mockResolvedValue(false);
     jest.useFakeTimers();
@@ -848,8 +854,7 @@ describe('startSync', () => {
 
   it('runs a cycle immediately, without waiting for the interval to elapse', async () => {
     engine.startSync();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
 
     expect(performSyncSpy).toHaveBeenCalledTimes(1);
   });
@@ -857,55 +862,48 @@ describe('startSync', () => {
   it('does not start a second cycle chain when already running', async () => {
     engine.startSync();
     engine.startSync();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
 
     expect(performSyncSpy).toHaveBeenCalledTimes(1);
   });
 
   it('reschedules at the normal interval after an online cycle', async () => {
     engine.startSync();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
     performSyncSpy.mockClear();
 
     jest.advanceTimersByTime(SYNC_INTERVAL_MS - 1);
-    await Promise.resolve();
+    await flush();
     expect(performSyncSpy).not.toHaveBeenCalled();
 
     jest.advanceTimersByTime(1);
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
     expect(performSyncSpy).toHaveBeenCalledTimes(1);
   });
 
   it('reschedules sooner, at the offline retry interval, after an unreachable cycle', async () => {
     performSyncSpy.mockResolvedValue(true); // true = server was unreachable this cycle
     engine.startSync();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
     performSyncSpy.mockClear();
 
     jest.advanceTimersByTime(OFFLINE_RETRY_MS - 1);
-    await Promise.resolve();
+    await flush();
     expect(performSyncSpy).not.toHaveBeenCalled();
 
     jest.advanceTimersByTime(1);
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
     expect(performSyncSpy).toHaveBeenCalledTimes(1);
   });
 
   it('stops the chain for good once stopSync is called', async () => {
     engine.startSync();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
     performSyncSpy.mockClear();
 
     engine.stopSync();
     jest.advanceTimersByTime(SYNC_INTERVAL_MS * 2);
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
 
     expect(performSyncSpy).not.toHaveBeenCalled();
   });

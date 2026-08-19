@@ -139,7 +139,7 @@ export class AdminRecoveryService {
       type: 'update',
       entity: entityType,
       id,
-      changes: { isDeleted: false },
+      changes: { isDeleted: false, version: current.version },
       operationTime: new Date().toISOString(),
     };
 

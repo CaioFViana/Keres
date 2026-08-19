@@ -27,7 +27,7 @@ export const CreateChoiceCheckGroupDataSchema = ChoiceCheckGroupSchema.omit({
   order: z.number().default(0),
 });
 
-export const PartialChoiceCheckGroupSchema = ChoiceCheckGroupSchema.partial();
+export const PartialChoiceCheckGroupSchema = CreateChoiceCheckGroupDataSchema.partial();
 
 export type CreateChoiceCheckGroupDataType = z.infer<typeof CreateChoiceCheckGroupDataSchema>;
 export type ChoiceCheckGroupType = z.infer<typeof ChoiceCheckGroupSchema>;

@@ -4,6 +4,45 @@ import { z } from 'zod';
 // Define a Zod schema for ULID strings
 export const UlidSchema = z.string().regex(/^[0-9A-Z]{26}$/, 'Invalid ULID format');
 
+/**
+ * Campos que o cliente nunca pode escrever via sync. Schemas de update omitem estes
+ * campos; o handler-base e o log de operações também os descartam. `version` no
+ * envelope/`changes` é só a base do OCC - não é escrita na coluna.
+ */
+export const SYNC_CLIENT_IMMUTABLE_FIELDS = [
+  'id',
+  'storyId',
+  'userId',
+  'authorUserId',
+  'version',
+  'createdAt',
+  'updatedAt',
+  'deletedAt',
+  'isDeleted',
+  'lastOperationVersion',
+] as const;
+
+export const SYNC_CLIENT_IMMUTABLE_FIELD_SET: ReadonlySet<string> = new Set(
+  SYNC_CLIENT_IMMUTABLE_FIELDS,
+);
+
+/** Teto do lote de push. O cap HTTP ainda vale; isto evita um lote de dezenas de milhares de ops. */
+export const MAX_SYNC_BATCH_SIZE = 200;
+
+/** Teto de operações devolvidas num único pull. O cliente puxa de novo a partir do cursor. */
+export const MAX_SYNC_PULL_BATCH = 500;
+
+export function omitSyncImmutableFields<T extends Record<string, unknown>>(
+  value: T,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, fieldValue] of Object.entries(value)) {
+    if (SYNC_CLIENT_IMMUTABLE_FIELD_SET.has(key)) continue;
+    out[key] = fieldValue;
+  }
+  return out;
+}
+
 // 1. Define o tipo de operação de sincronização
 export const StoryUpdateTypeSchema = z.enum(['create', 'update', 'delete', 'reorder']); // Added 'reorder'
 export type StoryUpdateType = z.infer<typeof StoryUpdateTypeSchema>;
@@ -13,7 +52,8 @@ export type StoryUpdateType = z.infer<typeof StoryUpdateTypeSchema>;
 export const BaseStoryUpdateSchema = z
   .object({
     entity: z.string().min(1, 'Entity name cannot be empty'), // Nome da entidade (ex: 'Story', 'Character')
-    // O ID é opcional aqui porque 'create' não terá um ID ainda
+    // Create, update, delete e reorder exigem o ULID; o envelope deixa opcional e cada
+    // variante concreta re-declara quando é obrigatório.
     id: UlidSchema.optional(),
     /**
      * A versão da *entidade*, base do controle de concorrência otimista.
@@ -60,6 +100,8 @@ export const BaseStoryUpdateSchema = z
 // 3. Schema para operações de criação
 export const CreateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('create'),
+  // O cliente gera o ULID antes de enviar - sem id o servidor não tem o que gravar.
+  id: UlidSchema,
   // 'data' contém o objeto completo da nova entidade
   data: z.record(z.string(), z.any()), // Placeholder, pode ser mais específico depois
 });
@@ -69,8 +111,11 @@ export type CreateStoryUpdate = z.infer<typeof CreateStoryUpdateSchema>;
 export const UpdateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('update'),
   id: UlidSchema, // ID é obrigatório para atualizações
-  // 'changes' contém apenas os campos que foram alterados
-  changes: z.record(z.string(), z.any()), // Placeholder, pode ser mais específico depois
+  // Sem `version` a detecção de conflito desliga (last-write-wins). O motor do cliente
+  // sempre envia a base aqui; recusar o omitido fecha a porta para um cliente adulterado.
+  changes: z
+    .object({ version: z.number().int().min(0) })
+    .passthrough(),
 });
 export type UpdateStoryUpdate = z.infer<typeof UpdateStoryUpdateSchema>;
 
@@ -78,6 +123,7 @@ export type UpdateStoryUpdate = z.infer<typeof UpdateStoryUpdateSchema>;
 export const DeleteStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('delete'),
   id: UlidSchema, // ID é obrigatório para exclusões
+  version: z.number().int().min(0),
 });
 export type DeleteStoryUpdate = z.infer<typeof DeleteStoryUpdateSchema>;
 
@@ -118,7 +164,7 @@ export const StoryUpdateSchema = z.union([
 export type StoryUpdate = z.infer<typeof StoryUpdateSchema>;
 
 // 9. Schema para um array de StoryUpdates (o que o servidor receberá)
-export const StoryUpdatesArraySchema = z.array(StoryUpdateSchema);
+export const StoryUpdatesArraySchema = z.array(StoryUpdateSchema).max(MAX_SYNC_BATCH_SIZE);
 export type StoryUpdatesArray = z.infer<typeof StoryUpdatesArraySchema>;
 
 // 10. Resultado por operação de um push

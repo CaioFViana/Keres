@@ -254,7 +254,12 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
         newRelationType as CreateLocationRelationDataType['relationType'];
     }
 
-    await super.update(userId, storyId, { ...update, changes: validatedChanges }, currentEntity);
+    await super.update(
+      userId,
+      storyId,
+      { ...update, changes: { ...validatedChanges, version: update.changes.version } },
+      currentEntity,
+    );
   }
 
   async delete(

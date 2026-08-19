@@ -86,9 +86,19 @@ export const CreateStorySchemaFieldDataSchema = StorySchemaFieldBaseSchema.omit(
 
 // `partial()` keeps a nested Zod default active. Updates that do not mention
 // targetEntityType must preserve it instead of materializing the legacy null.
-export const PartialStorySchemaFieldSchema = StorySchemaFieldBaseSchema.partial().extend({
-  targetEntityType: StorySchemaEntityTypeSchema.nullable().optional(),
-});
+export const PartialStorySchemaFieldSchema = StorySchemaFieldBaseSchema.omit({
+  id: true,
+  storyId: true,
+  createdAt: true,
+  updatedAt: true,
+  version: true,
+  isDeleted: true,
+  deletedAt: true,
+})
+  .partial()
+  .extend({
+    targetEntityType: StorySchemaEntityTypeSchema.nullable().optional(),
+  });
 
 export type CreateStorySchemaFieldDataType = z.infer<typeof CreateStorySchemaFieldDataSchema>;
 export type StorySchemaFieldType = z.infer<typeof StorySchemaFieldSchema>;

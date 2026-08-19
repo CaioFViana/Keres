@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { db } from '../../db';
 import { chapters, galleries, stories, storySchemaFields } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class StorySyncHandler extends BaseSyncEntityHandler<
   typeof CreateStoryDataSchema,
@@ -92,7 +92,10 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
 
       if (validatedReorderUpdate.reorderTarget === 'StorySchemaField') {
         if (!validatedReorderUpdate.schemaEntityType) {
-          throw new Error('Validation Error: Attribute reorders require a schema entity type.');
+          throw new SyncConflictError(
+            'validation',
+            'Validation Error: Attribute reorders require a schema entity type.',
+          );
         }
         const existingFields = await db.query.storySchemaFields.findMany({
           where: and(
@@ -111,7 +114,8 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           Math.min(...indices) !== 1 ||
           Math.max(...indices) !== indices.length
         ) {
-          throw new Error(
+          throw new SyncConflictError(
+            'validation',
             'Validation Error: Attribute reorder items must match the selected type.',
           );
         }
@@ -162,7 +166,8 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           reorderChapterIds.size !== existingChapterIds.size ||
           ![...reorderChapterIds].every((id) => existingChapterIds.has(id))
         ) {
-          throw new Error(
+          throw new SyncConflictError(
+            'validation',
             'Validation Error: Reorder items do not match current chapters in story or contain invalid chapter IDs.',
           );
         }
@@ -170,11 +175,15 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
         // Ensure new indices are unique and sequential (optional, but good for data integrity)
         const newIndices = validatedReorderUpdate.reorderItems.map((item) => item.newIndex);
         if (new Set(newIndices).size !== newIndices.length) {
-          throw new Error('Validation Error: Duplicate newIndex values found in reorder items.');
+          throw new SyncConflictError(
+            'validation',
+            'Validation Error: Duplicate newIndex values found in reorder items.',
+          );
         }
         // Assuming indices start from 1 and are sequential without gaps.
         if (Math.min(...newIndices) !== 1 || Math.max(...newIndices) !== newIndices.length) {
-          throw new Error(
+          throw new SyncConflictError(
+            'validation',
             'Validation Error: New indices must be sequential starting from 1 without gaps.',
           );
         }

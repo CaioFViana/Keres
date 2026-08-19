@@ -31,7 +31,7 @@ export const CreateEffectDataSchema = EffectSchema.omit({
   triggerName: z.string().nullable().default(null),
 });
 
-export const PartialEffectSchema = EffectSchema.partial();
+export const PartialEffectSchema = CreateEffectDataSchema.partial();
 
 export type CreateEffectDataType = z.infer<typeof CreateEffectDataSchema>;
 export type EffectType = z.infer<typeof EffectSchema>;

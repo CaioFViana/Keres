@@ -41,7 +41,7 @@ export const CreateChoiceCheckDataSchema = ChoiceCheckSchema.omit({
   triggerState: z.enum(['set', 'unset']).nullable().default(null),
 });
 
-export const PartialChoiceCheckSchema = ChoiceCheckSchema.partial();
+export const PartialChoiceCheckSchema = CreateChoiceCheckDataSchema.partial();
 
 export type CreateChoiceCheckDataType = z.infer<typeof CreateChoiceCheckDataSchema>;
 export type ChoiceCheckType = z.infer<typeof ChoiceCheckSchema>;

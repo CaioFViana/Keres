@@ -47,4 +47,4 @@ export const StorySchema = StoryCreateInputSchema.extend({
   deletedAt: z.coerce.date().nullable().optional(),
 });
 
-export const PartialStorySchema = StorySchema.partial();
+export const PartialStorySchema = CreateStoryDataSchema.partial();

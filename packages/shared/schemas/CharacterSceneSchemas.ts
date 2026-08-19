@@ -25,7 +25,7 @@ export const CreateCharacterSceneDataSchema = CharacterSceneSchema.omit({
   sceneId: z.string().min(1, 'Scene ID cannot be empty'),
 });
 
-export const PartialCharacterSceneSchema = CharacterSceneSchema.partial();
+export const PartialCharacterSceneSchema = CreateCharacterSceneDataSchema.partial();
 
 export type CreateCharacterSceneDataType = z.infer<typeof CreateCharacterSceneDataSchema>;
 export type CharacterSceneType = z.infer<typeof CharacterSceneSchema>;

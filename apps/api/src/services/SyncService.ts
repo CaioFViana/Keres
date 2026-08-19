@@ -3,6 +3,7 @@ import {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   EffectiveStoryRole,
+  MAX_SYNC_PULL_BATCH,
   StoryReorderingStoryUpdate,
   StoryUpdate,
   SyncAppliedOperation,
@@ -207,6 +208,33 @@ export class SyncService {
         continue;
       }
 
+      if (update.entity === 'Story' && update.type === 'create' && update.id !== storyId) {
+        recordConflict(
+          'unauthorized',
+          'Cannot create a different story through this sync endpoint.',
+        );
+        continue;
+      }
+
+      if (update.entity === 'Story' && update.type === 'delete' && role !== 'owner') {
+        recordConflict('unauthorized', 'Only the story owner can delete the story.');
+        continue;
+      }
+
+      if (update.entity === 'Story' && update.type === 'update' && role !== 'owner') {
+        const ownerOnlyFields = ['allowReaderComments', 'favoriteBehavior', 'type', 'userId', 'id'];
+        const attempted = ownerOnlyFields.filter(
+          (field) => (update as UpdateStoryUpdate).changes?.[field] !== undefined,
+        );
+        if (attempted.length > 0 || (update as UpdateStoryUpdate).changes?.isDeleted === false) {
+          recordConflict(
+            'unauthorized',
+            'Only the story owner can change story identity or policy.',
+          );
+          continue;
+        }
+      }
+
       if (blockedEntities.has(entityKey)) {
         recordConflict(
           'version_conflict',
@@ -216,18 +244,6 @@ export class SyncService {
       }
 
       let currentEntity: any;
-      try {
-        currentEntity = await handler.findById(entityId);
-      } catch (error) {
-        recordConflict('unknown', `Failed to load ${entityKey}: ${(error as Error)?.message}`);
-        continue;
-      }
-
-      // Check if the entity belongs to the story (if applicable)
-      if (currentEntity && !handler.checkBelongsToStory(currentEntity, storyId)) {
-        recordConflict('unauthorized', `Entity ${entityId} does not belong to story ${storyId}.`);
-        continue;
-      }
 
       /** Contexto que a tela de conflito usa para montar o comparativo lado a lado. */
       const conflictContext = (): Partial<SyncConflict> => ({
@@ -262,10 +278,32 @@ export class SyncService {
         // `withTransaction`, incluindo dentro dos handlers de entidade - eles não precisam
         // saber disso.
         await withTransaction(async () => {
+          // Leitura dentro da transação: a decisão create-vs-alreadyApplied / not_found
+          // tem que ver a mesma linha que o write vai tocar.
+          currentEntity = await handler.findById(entityId);
+
+          if (currentEntity && !handler.checkBelongsToStory(currentEntity, storyId)) {
+            throw new SyncConflictError(
+              'unauthorized',
+              `Entity ${entityId} does not belong to story ${storyId}.`,
+            );
+          }
+
           if (update.type === 'create') {
             if (currentEntity) {
-              // Reenvio idempotente: o push anterior chegou, só a resposta se perdeu.
-              // Recriar daria erro de chave duplicada e travaria o cliente para sempre.
+              // Reenvio idempotente só se o payload descreve a mesma linha. Um create
+              // com o mesmo id e dados diferentes não é retry, é colisão.
+              if (
+                !handler.createPayloadMatches(
+                  currentEntity,
+                  (update as CreateStoryUpdate).data,
+                )
+              ) {
+                throw new SyncConflictError(
+                  'validation',
+                  `An entity with ID ${entityId} already exists with different data.`,
+                );
+              }
               alreadyApplied = true;
             } else {
               if (update.entity === 'Story') {
@@ -339,7 +377,12 @@ export class SyncService {
             update.type === 'update' &&
             currentEntity &&
             typeof clientVersion === 'number'
-              ? await this.getChangedFieldsSinceVersion(update.entity, entityId, clientVersion)
+              ? await this.getChangedFieldsSinceVersion(
+                  storyId,
+                  update.entity,
+                  entityId,
+                  clientVersion,
+                )
               : undefined;
           recordConflict(error.reason, error.message, {
             ...context,
@@ -427,6 +470,7 @@ export class SyncService {
    * ocorridas entre a base do cliente e agora.
    */
   private async getChangedFieldsSinceVersion(
+    storyId: string,
     entityType: string,
     entityId: string,
     sinceVersion: number,
@@ -439,7 +483,11 @@ export class SyncService {
     // esconder uma disputa real quanto, na direção oposta, mesclar por cima dela em silêncio).
     // Buscar tudo e decidir em código deixa esse caso detectável.
     const rows = await db.query.operationLog.findMany({
-      where: and(eq(operationLog.entityType, entityType), eq(operationLog.entityId, entityId)),
+      where: and(
+        eq(operationLog.storyId, storyId),
+        eq(operationLog.entityType, entityType),
+        eq(operationLog.entityId, entityId),
+      ),
       columns: { payload: true, entityVersion: true },
     });
 
@@ -558,15 +606,13 @@ export class SyncService {
   }): Promise<{ id: string; operationVersion: number }> {
     const { storyId, userId, update, entityId, entityVersion } = args;
 
+    const handler = this.entityHandlers.get(update.entity);
     let payload: Record<string, any> = {};
-    if (update.type === 'create') {
-      payload = (update as CreateStoryUpdate).data;
-    } else if (update.type === 'update') {
-      payload = (update as UpdateStoryUpdate).changes;
+    if (handler) {
+      payload = handler.sanitizePayloadForLog(update, userId);
     } else if (update.type === 'delete') {
-      payload = { id: entityId }; // For delete, store the ID of the deleted entity
+      payload = { id: entityId };
     } else if (update.type === 'reorder') {
-      // Sem isto o pull devolve um reorder sem `reorderItems` e o cliente não tem o que aplicar.
       payload = {
         reorderItems: (update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate)
           .reorderItems,
@@ -677,6 +723,7 @@ export class SyncService {
         gt(operationLog.operationVersion, lastOperationVersion),
       ),
       orderBy: [operationLog.operationVersion],
+      limit: MAX_SYNC_PULL_BATCH,
     });
 
     const visibleOperations = operationsAfterMainCursor.filter(

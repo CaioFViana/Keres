@@ -35,18 +35,28 @@ export const CreateSeeAlsoRelationDataSchema = SeeAlsoRelationSchema.omit({
     path: ['entityBId'],
   });
 
-export const PartialSeeAlsoRelationSchema = SeeAlsoRelationSchema.partial().refine(
-  (data) => {
-    if (data.entityAType && data.entityAId && data.entityBType && data.entityBId) {
-      return !(data.entityAType === data.entityBType && data.entityAId === data.entityBId);
-    }
-    return true;
-  },
-  {
-    message: 'An entity cannot be See-Also-linked to itself.',
-    path: ['entityBId'],
-  },
-);
+export const PartialSeeAlsoRelationSchema = SeeAlsoRelationSchema.omit({
+  id: true,
+  storyId: true,
+  createdAt: true,
+  updatedAt: true,
+  version: true,
+  isDeleted: true,
+  deletedAt: true,
+})
+  .partial()
+  .refine(
+    (data) => {
+      if (data.entityAType && data.entityAId && data.entityBType && data.entityBId) {
+        return !(data.entityAType === data.entityBType && data.entityAId === data.entityBId);
+      }
+      return true;
+    },
+    {
+      message: 'An entity cannot be See-Also-linked to itself.',
+      path: ['entityBId'],
+    },
+  );
 
 export type CreateSeeAlsoRelationDataType = z.infer<typeof CreateSeeAlsoRelationDataSchema>;
 export type SeeAlsoRelationSchemaType = z.infer<typeof SeeAlsoRelationSchema>;

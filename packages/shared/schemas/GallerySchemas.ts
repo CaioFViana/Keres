@@ -151,7 +151,7 @@ export const CreateGalleryDataSchema = GallerySchema.omit({
   extraNotes: z.string().nullable().default(null),
 });
 
-export const PartialGallerySchema = GallerySchema.partial();
+export const PartialGallerySchema = CreateGalleryDataSchema.partial();
 
 export type CreateGalleryDataType = z.infer<typeof CreateGalleryDataSchema>;
 export type GalleryType = z.infer<typeof GallerySchema>;
@@ -186,7 +186,7 @@ export const CreateGalleryRelationDataSchema = GalleryRelationSchema.omit({
   deletedAt: true,
 });
 
-export const PartialGalleryRelationSchema = GalleryRelationSchema.partial();
+export const PartialGalleryRelationSchema = CreateGalleryRelationDataSchema.partial();
 
 export type CreateGalleryRelationDataType = z.infer<typeof CreateGalleryRelationDataSchema>;
 export type GalleryRelationType = z.infer<typeof GalleryRelationSchema>;

@@ -3,6 +3,9 @@ import { Elysia, t } from 'elysia';
 import { JWTPayload } from '../../index';
 import { syncService } from '../../services/SyncService';
 import { logger } from '../../utils/logger';
+import { createAttemptLimiter } from '../../utils/rateLimiter';
+
+const syncAttemptLimiter = createAttemptLimiter({ maxAttempts: 120, windowMs: 60 * 1000 });
 
 /** Mirrors SyncConflictSchema (packages/shared) - not the Zod schema itself, same reasoning
  *  as the body comment below: Elysia's OpenAPI output from a Zod schema isn't valid JSON
@@ -40,6 +43,11 @@ export const syncRoute = new Elysia()
       if (!user || !user.userId) {
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
+      }
+
+      if (!syncAttemptLimiter.registerAttempt(user.userId)) {
+        set.status = 429;
+        throw new Error('Too many sync requests. Try again shortly.');
       }
 
       const { storyId } = params;
@@ -117,6 +125,11 @@ export const syncRoute = new Elysia()
       if (!user || !user.userId) {
         set.status = 401;
         throw new Error('Unauthorized: User not authenticated.');
+      }
+
+      if (!syncAttemptLimiter.registerAttempt(user.userId)) {
+        set.status = 429;
+        throw new Error('Too many sync requests. Try again shortly.');
       }
 
       const { storyId } = params;

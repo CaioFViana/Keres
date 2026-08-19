@@ -12,7 +12,7 @@ import {
 import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
 import { db } from '../../db';
 import { chapters, scenes } from '../../db/schema'; // Import scenes table
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChapterSyncHandler extends BaseSyncEntityHandler<
   typeof CreateChapterDataSchema,
@@ -98,7 +98,8 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
           reorderSceneIds.size !== existingSceneIds.size ||
           ![...reorderSceneIds].every((id) => existingSceneIds.has(id))
         ) {
-          throw new Error(
+          throw new SyncConflictError(
+            'validation',
             'Validation Error: Reorder items do not match current scenes in chapter or contain invalid scene IDs.',
           );
         }
@@ -106,12 +107,16 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
         // Ensure new indices are unique and sequential (optional, but good for data integrity)
         const newIndices = validatedReorderUpdate.reorderItems.map((item) => item.newIndex);
         if (new Set(newIndices).size !== newIndices.length) {
-          throw new Error('Validation Error: Duplicate newIndex values found in reorder items.');
+          throw new SyncConflictError(
+            'validation',
+            'Validation Error: Duplicate newIndex values found in reorder items.',
+          );
         }
         // Assuming indices start from 1 and are sequential without gaps. Adjust if model allows gaps or 0-indexing.
         // The client should provide 1-based sequential indices for the new order.
         if (Math.min(...newIndices) !== 1 || Math.max(...newIndices) !== newIndices.length) {
-          throw new Error(
+          throw new SyncConflictError(
+            'validation',
             'Validation Error: New indices must be sequential starting from 1 without gaps.',
           );
         }

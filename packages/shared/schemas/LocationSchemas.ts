@@ -30,7 +30,7 @@ export const CreateLocationDataSchema = LocationSchema.omit({
   isFavorite: z.boolean().default(false),
 });
 
-export const PartialLocationSchema = LocationSchema.partial();
+export const PartialLocationSchema = CreateLocationDataSchema.partial();
 
 export type CreateLocationDataType = z.infer<typeof CreateLocationDataSchema>;
 export type LocationType = z.infer<typeof LocationSchema>;

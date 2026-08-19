@@ -25,7 +25,7 @@ export const CreateSuggestionDataSchema = SuggestionSchema.omit({
   value: z.string().min(1, 'Suggestion value cannot be empty'),
 });
 
-export const PartialSuggestionSchema = SuggestionSchema.partial();
+export const PartialSuggestionSchema = CreateSuggestionDataSchema.partial();
 
 export type CreateSuggestionDataType = z.infer<typeof CreateSuggestionDataSchema>;
 export type SuggestionType = z.infer<typeof SuggestionSchema>;

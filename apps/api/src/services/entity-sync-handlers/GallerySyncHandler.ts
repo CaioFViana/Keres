@@ -8,10 +8,11 @@ import {
   PartialGallerySchema,
   UpdateStoryUpdate,
 } from '@keres/shared';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { galleries } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /**
  * Sincroniza os *metadados* de uma mídia. Os bytes não passam por aqui: eles sobem e
@@ -57,6 +58,28 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     }
   }
 
+  /**
+   * Hash conhecido no storage global só pode ser ligado a esta história se ela já o
+   * referencia (inclusive via tombstone). Um hash ainda inexistente é mídia nova cujo
+   * upload virá depois. Sem isto, quem conhece o MD5 de um blob alheio cria uma Gallery
+   * aqui e baixa o arquivo pela rota de mídia.
+   */
+  private async assertHashBindableToStory(storyId: string, hash: string): Promise<void> {
+    const blobExists = await mediaStorageService.has(hash);
+    if (!blobExists) return;
+
+    const referencedHere = await db.query.galleries.findFirst({
+      where: and(eq(galleries.storyId, storyId), eq(galleries.hash, hash)),
+      columns: { id: true },
+    });
+    if (!referencedHere) {
+      throw new SyncConflictError(
+        'unauthorized',
+        'Cannot bind a media hash that is not already part of this story.',
+      );
+    }
+  }
+
   async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateGalleryDataType = this.createSchema.parse(update.data);
@@ -67,6 +90,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     }
 
     this.assertSupportedMedia(validatedData.mimeType, validatedData.mediaType);
+    await this.assertHashBindableToStory(storyId, validatedData.hash);
 
     await db.insert(galleries).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
@@ -93,6 +117,10 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
         validatedChanges.mimeType ?? currentEntity.mimeType,
         validatedChanges.mediaType ?? currentEntity.mediaType,
       );
+    }
+
+    if (validatedChanges.hash && validatedChanges.hash !== currentEntity.hash) {
+      await this.assertHashBindableToStory(storyId, validatedChanges.hash);
     }
 
     // Delegated to the base class instead of a raw version-matched UPDATE reimplemented here:

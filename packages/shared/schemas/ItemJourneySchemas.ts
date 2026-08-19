@@ -31,7 +31,7 @@ export const CreateItemJourneyDataSchema = ItemJourneySchema.omit({
   extraNotes: z.string().nullable().default(null),
 });
 
-export const PartialItemJourneySchema = ItemJourneySchema.partial();
+export const PartialItemJourneySchema = CreateItemJourneyDataSchema.partial();
 
 export type CreateItemJourneyDataType = z.infer<typeof CreateItemJourneyDataSchema>;
 export type ItemJourneyType = z.infer<typeof ItemJourneySchema>;

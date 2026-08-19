@@ -22,6 +22,15 @@ describe('entity table registry', () => {
       name: 'Ada',
       updatedAt: new Date('2026-08-14T12:00:00.000Z'),
     });
+    expect(
+      toEntityColumns('Story', {
+        title: 'A Queda',
+        userId: 'attacker',
+        serverId: 'server-1',
+        lastOperationLog: 99,
+        myRole: 'reader',
+      }),
+    ).toEqual({ title: 'A Queda' });
     expect(toEntityColumns('Unknown', { name: 'Ada' })).toEqual({});
   });
 });

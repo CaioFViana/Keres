@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { CreateChapterDataSchema } from '../../schemas/ChapterSchemas';
-import { CreateCharacterDataSchema } from '../../schemas/CharacterSchemas';
+import { CreateCharacterDataSchema, PartialCharacterSchema } from '../../schemas/CharacterSchemas';
 import { CreateNoteDataSchema } from '../../schemas/NoteSchemas';
 import { CreateSceneDataSchema } from '../../schemas/SceneSchemas';
-import { CreateStoryDataSchema, StoryCreateInputSchema } from '../../schemas/StorySchemas';
+import {
+  CreateStoryDataSchema,
+  PartialStorySchema,
+  StoryCreateInputSchema,
+} from '../../schemas/StorySchemas';
 import { CreateTagDataSchema } from '../../schemas/TagSchemas';
 import { CreateWorldRuleDataSchema } from '../../schemas/WorldRuleSchemas';
 
@@ -113,5 +117,27 @@ describe('StoryCreateInputSchema', () => {
   ])('rejects an unknown %s', (_label, override) => {
     const payload = { id: ulid('story1'), title: 'A Queda', type: 'linear', ...override };
     expect(StoryCreateInputSchema.safeParse(payload).success).toBe(false);
+  });
+});
+
+describe('partial update schemas strip identity fields', () => {
+  it('does not keep storyId or id on a character patch', () => {
+    const parsed = PartialCharacterSchema.parse({
+      name: 'Nyx',
+      storyId: ulid('otherstory'),
+      id: ulid('character1'),
+    });
+    expect(parsed.name).toBe('Nyx');
+    expect('storyId' in parsed).toBe(false);
+    expect('id' in parsed).toBe(false);
+  });
+
+  it('does not keep userId on a story patch', () => {
+    const parsed = PartialStorySchema.parse({
+      title: 'A Queda',
+      userId: ulid('user1'),
+    });
+    expect(parsed.title).toBe('A Queda');
+    expect('userId' in parsed).toBe(false);
   });
 });

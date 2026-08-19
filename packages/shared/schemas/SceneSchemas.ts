@@ -40,7 +40,7 @@ export const CreateSceneDataSchema = SceneSchema.omit({
   isFinish: z.boolean().default(false),
 });
 
-export const PartialSceneSchema = SceneSchema.partial();
+export const PartialSceneSchema = CreateSceneDataSchema.partial();
 
 export type CreateSceneDataType = z.infer<typeof CreateSceneDataSchema>;
 export type SceneType = z.infer<typeof SceneSchema>;

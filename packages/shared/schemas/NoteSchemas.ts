@@ -27,7 +27,7 @@ export const CreateNoteDataSchema = NoteSchema.omit({
   isFavorite: z.boolean().default(false),
 });
 
-export const PartialNoteSchema = NoteSchema.partial();
+export const PartialNoteSchema = CreateNoteDataSchema.partial();
 
 export type CreateNoteDataType = z.infer<typeof CreateNoteDataSchema>;
 export type NoteType = z.infer<typeof NoteSchema>;

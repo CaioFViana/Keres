@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { operationLog } from '../../src/db/schema';
+import { characters, operationLog, stories } from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -215,13 +215,13 @@ describe('POST /sync/:storyId', () => {
    * aplica a escrita, virando último-a-escrever-vence. Um cliente que preencha só o `version`
    * do topo perde a detecção de conflito inteira sem nenhum sinal.
    */
-  it('skips the conflict check entirely when changes carries no version', async () => {
+  it('rejects an update that omits changes.version instead of last-write-wins', async () => {
     const characterId = newId();
     const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
     const staleVersion = created.data.applied[0].entityVersion;
     await push(ana.token, storyId, [updateCharacter(characterId, 'Primeiro', staleVersion)]);
 
-    const { data } = await push(ana.token, storyId, [
+    const { status } = await push(ana.token, storyId, [
       {
         type: 'update',
         entity: 'Character',
@@ -231,8 +231,7 @@ describe('POST /sync/:storyId', () => {
       },
     ]);
 
-    expect(data.conflicts).toEqual([]);
-    expect(data.applied).toHaveLength(1);
+    expect(status).toBe(422);
   });
 
   it('applies the good operations of a batch even when one conflicts', async () => {
@@ -245,7 +244,7 @@ describe('POST /sync/:storyId', () => {
         entity: 'Character',
         id: newId(),
         version: 5,
-        changes: { name: 'Fantasma' },
+        changes: { name: 'Fantasma', version: 5 },
       },
     ]);
 
@@ -336,7 +335,9 @@ describe('a sync operation referencing a deleted entity', () => {
     const character2Id = newId();
     await push(ana.token, storyId, [createCharacter(character1Id, 'Keres')]);
     await push(ana.token, storyId, [createCharacter(character2Id, 'Nyx')]);
-    await push(ana.token, storyId, [{ type: 'delete', entity: 'Character', id: character1Id }]);
+    await push(ana.token, storyId, [
+      { type: 'delete', entity: 'Character', id: character1Id, version: 1 },
+    ]);
 
     const relationId = newId();
     const { data } = await push(ana.token, storyId, [
@@ -456,5 +457,128 @@ describe('GET /sync/pullpreviews', () => {
     const { status } = await request('GET', '/sync/pullpreviews');
 
     expect(status).toBe(401);
+  });
+});
+
+const grantWriter = async (owner: TestUser, collaborator: TestUser, story: string) => {
+  const requested = await request('POST', `/friend/request/${collaborator.userId}`, {
+    token: owner.token,
+  });
+  expect(requested.status).toBeLessThan(400);
+  const accepted = await request('PUT', `/friend/accept/${owner.userId}`, {
+    token: collaborator.token,
+  });
+  expect(accepted.status).toBeLessThan(400);
+  const granted = await request('POST', '/story-permissions/', {
+    token: owner.token,
+    body: { storyId: story, targetUserId: collaborator.userId, permissionType: 'writer' },
+  });
+  expect(granted.status).toBeLessThan(400);
+};
+
+describe('sync authorization hardening', () => {
+  it('does not let a writer steal story ownership via userId in an update', async () => {
+    const bia = await registerUser('bia');
+    await grantWriter(ana, bia, storyId);
+
+    const { data } = await push(bia.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Story',
+        id: storyId,
+        changes: { userId: bia.userId, version: 1 },
+      },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts[0]).toMatchObject({ entity: 'Story', reason: 'unauthorized' });
+
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+    expect(story?.userId).toBe(ana.userId);
+  });
+
+  it('does not let a writer delete the story', async () => {
+    const bia = await registerUser('bia');
+    await grantWriter(ana, bia, storyId);
+
+    const { data } = await push(bia.token, storyId, [
+      { type: 'delete', entity: 'Story', id: storyId, version: 1 },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts[0]).toMatchObject({ entity: 'Story', reason: 'unauthorized' });
+
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+    expect(story?.isDeleted).toBe(false);
+  });
+
+  it('does not let a writer move a character into another story', async () => {
+    const bia = await registerUser('bia');
+    const { data: biaStory } = await request('POST', '/stories/', {
+      token: bia.token,
+      body: { title: 'Outra', type: 'linear' },
+    });
+    await grantWriter(ana, bia, storyId);
+    const characterId = newId();
+    await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+
+    const { data } = await push(bia.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Character',
+        id: characterId,
+        changes: { storyId: biaStory.id, version: 1 },
+      },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts[0]).toMatchObject({ reason: 'unauthorized' });
+
+    const character = await db.query.characters.findFirst({
+      where: eq(characters.id, characterId),
+    });
+    expect(character?.storyId).toBe(storyId);
+  });
+
+  it('does not let a writer create a second story through this story sync endpoint', async () => {
+    const bia = await registerUser('bia');
+    await grantWriter(ana, bia, storyId);
+    const ghostId = newId();
+
+    const { data } = await push(bia.token, storyId, [
+      {
+        type: 'create',
+        entity: 'Story',
+        id: ghostId,
+        data: { title: 'Fantasma', type: 'linear' },
+      },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts[0]).toMatchObject({ entity: 'Story', reason: 'unauthorized' });
+
+    const ghost = await db.query.stories.findFirst({ where: eq(stories.id, ghostId) });
+    expect(ghost).toBeUndefined();
+  });
+
+  it('does not retransmit extra client fields through the operation log', async () => {
+    const characterId = newId();
+    await push(ana.token, storyId, [
+      {
+        type: 'create',
+        entity: 'Character',
+        id: characterId,
+        data: { name: 'Keres', isDeleted: true, extraField: 'poison', storyId },
+        clientOperationId: `local-${characterId}`,
+      },
+    ]);
+
+    const { data } = await pull(ana.token, storyId, 0);
+    const created = data.updates.find((update: { id: string }) => update.id === characterId);
+
+    expect(created.data.extraField).toBeUndefined();
+    expect(created.data.isDeleted).toBe(false);
+    expect(created.data.storyId).toBeUndefined();
+    expect(created.data.name).toBe('Keres');
   });
 });

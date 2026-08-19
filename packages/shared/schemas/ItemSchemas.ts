@@ -35,7 +35,7 @@ export const CreateItemDataSchema = ItemSchema.omit({
   extraNotes: z.string().nullable().default(null),
 });
 
-export const PartialItemSchema = ItemSchema.partial();
+export const PartialItemSchema = CreateItemDataSchema.partial();
 
 export type CreateItemDataType = z.infer<typeof CreateItemDataSchema>;
 export type ItemType = z.infer<typeof ItemSchema>;

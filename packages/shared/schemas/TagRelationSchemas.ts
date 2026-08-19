@@ -27,7 +27,7 @@ export const CreateTagRelationDataSchema = TagRelationSchema.omit({
   relationType: z.string().min(1, 'Relation type cannot be empty'),
 });
 
-export const PartialTagRelationSchema = TagRelationSchema.partial();
+export const PartialTagRelationSchema = CreateTagRelationDataSchema.partial();
 
 export type CreateTagRelationDataType = z.infer<typeof CreateTagRelationDataSchema>;
 export type TagRelationType = z.infer<typeof TagRelationSchema>;

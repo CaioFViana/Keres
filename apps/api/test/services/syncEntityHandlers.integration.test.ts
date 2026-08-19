@@ -178,7 +178,7 @@ describe('update', () => {
     expect((await handler.findById(entity.id)).name).toBe('Primeiro');
   });
 
-  it('accepts an edit with no base version at all, falling back to last-write-wins', async () => {
+  it('refuses an edit with no base version instead of last-write-wins', async () => {
     const entity = await createCharacter();
     await handler.update(
       USER_ID,
@@ -188,23 +188,24 @@ describe('update', () => {
     );
     const current = await handler.findById(entity.id);
 
-    await handler.update(USER_ID, STORY_ID, updateUpdate(entity.id, { name: 'Sem base' }), current);
-
-    expect((await handler.findById(entity.id)).name).toBe('Sem base');
+    await expect(
+      handler.update(USER_ID, STORY_ID, updateUpdate(entity.id, { name: 'Sem base' }), current),
+    ).rejects.toBeInstanceOf(SyncConflictError);
+    expect((await handler.findById(entity.id)).name).toBe('Primeiro');
   });
 
-  /** Tolerância para clientes antigos, que enviavam a versão já incrementada em vez da base. */
-  it('tolerates a client that sends the already-incremented version', async () => {
+  it('refuses a client that sends the already-incremented version instead of the base', async () => {
     const entity = await createCharacter();
 
-    await handler.update(
-      USER_ID,
-      STORY_ID,
-      updateUpdate(entity.id, { name: 'Nyx', version: 2 }),
-      entity,
-    );
-
-    expect((await handler.findById(entity.id)).name).toBe('Nyx');
+    await expect(
+      handler.update(
+        USER_ID,
+        STORY_ID,
+        updateUpdate(entity.id, { name: 'Nyx', version: 2 }),
+        entity,
+      ),
+    ).rejects.toBeInstanceOf(SyncConflictError);
+    expect((await handler.findById(entity.id)).name).toBe('Keres');
   });
 
   it('refuses to edit an entity that was deleted on the server', async () => {

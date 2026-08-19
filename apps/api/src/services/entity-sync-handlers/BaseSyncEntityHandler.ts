@@ -2,6 +2,9 @@ import {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   getSimpleDisplayName,
+  omitSyncImmutableFields,
+  StoryUpdate,
+  SYNC_CLIENT_IMMUTABLE_FIELD_SET,
   SyncConflictReason,
   UpdateStoryUpdate,
 } from '@keres/shared';
@@ -10,7 +13,6 @@ import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { z } from 'zod'; // Import Zod
 import { db } from '../../db';
 import * as dbSchema from '../../db/schema'; // Import the entire schema
-import { logger } from '../../utils/logger';
 
 /**
  * Recusa de uma operação que o *usuário* pode resolver, em oposição a um erro de
@@ -56,6 +58,10 @@ export interface SyncEntityHandler {
   ): Promise<void>;
   checkOwnership(entity: any, userId: string): boolean;
   checkBelongsToStory(entity: any, storyId: string): boolean;
+  /** Payload que o log deve retransmitir: o que foi gravado, não o JSON cru do cliente. */
+  sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): Record<string, any>;
+  /** Create reenviado: o payload sanitizado descreve a mesma linha que já existe? */
+  createPayloadMatches(existing: any, incomingData: Record<string, any>): boolean;
   /** Conta linhas não excluídas desta entidade nas histórias dadas. Usado por TierEnforcementService. */
   countForStoryIds(storyIds: string[]): Promise<number>;
   /** Linhas excluídas (tombstones), opcionalmente restritas a uma história. Usado por AdminRecoveryService. */
@@ -195,6 +201,8 @@ export abstract class BaseSyncEntityHandler<
     delete incomingChanges.isDeleted;
     delete incomingChanges.deletedAt;
 
+    this.assertNoImmutableFieldWrites(incomingChanges);
+
     const isDeletedOnServer = !!(
       this.isDeletedColumnName && currentEntity[this.isDeletedColumnName]
     );
@@ -220,6 +228,8 @@ export abstract class BaseSyncEntityHandler<
 
     // Validate incoming changes against the update schema.
     const validatedChanges: z.infer<UpdateType> = this.updateSchema.parse(incomingChanges);
+    this.stripImmutableFields(validatedChanges as Record<string, any>);
+    this.keepOnlyProvidedKeys(validatedChanges as Record<string, any>, incomingChanges);
 
     // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
@@ -289,7 +299,7 @@ export abstract class BaseSyncEntityHandler<
     // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
 
-    await db
+    const [deleted] = await db
       .update(this.table)
       .set({
         [this.isDeletedColumnName]: true,
@@ -298,7 +308,24 @@ export abstract class BaseSyncEntityHandler<
           sql`${(this.table as any)[this.versionColumnName]} + 1` as SQL<number>,
         updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
       })
-      .where(eq((this.table as any)[this.idColumnName], update.id!));
+      .where(
+        and(
+          eq((this.table as any)[this.idColumnName], update.id!),
+          eq((this.table as any)[this.versionColumnName], currentEntity[this.versionColumnName]),
+        ),
+      )
+      .returning({ id: (this.table as any)[this.idColumnName] });
+
+    if (!deleted) {
+      throw new SyncConflictError(
+        'version_conflict',
+        `Conflict: ${this.entityName} ${update.id} was modified concurrently.`,
+        {
+          clientVersion: update.version,
+          serverVersion: currentEntity[this.versionColumnName],
+        },
+      );
+    }
   }
 
   /** Rejeita horários no futuro (fora de 1s de folga para diferença de relógio). */
@@ -333,9 +360,8 @@ export abstract class BaseSyncEntityHandler<
    * Controle de concorrência otimista: a operação só é aceita se o cliente a construiu
    * sobre a versão que o servidor tem agora.
    *
-   * A comparação é de igualdade, não `<`. Com `<` uma edição feita sobre uma base
-   * *mais nova* que a do servidor passava sem checagem, o que na prática deixava
-   * qualquer conflito escapar.
+   * A comparação é de igualdade, não `<`. Sem versão o servidor recusa: last-write-wins
+   * deixava um cliente adulterado sobrescrever qualquer edição concorrente.
    */
   protected checkVersionConflict(
     clientVersion: number | undefined,
@@ -343,24 +369,13 @@ export abstract class BaseSyncEntityHandler<
     entityId: string,
   ): void {
     if (clientVersion === undefined || clientVersion === null) {
-      // Cliente que não informa a base abre mão do controle de concorrência: last-write-wins.
-      return;
+      throw new SyncConflictError(
+        'validation',
+        `Conflict: ${this.entityName} ${entityId} is missing a base version.`,
+      );
     }
 
     if (clientVersion === serverVersion) {
-      return;
-    }
-
-    // Tolerância para clientes anteriores a esta mudança, que enviavam a versão já
-    // incrementada (base + 1) em vez da base. Eles continuam funcionando em last-write-wins;
-    // apenas não ganham detecção de conflito.
-    if (clientVersion === serverVersion + 1) {
-      logger.warn(`Client used legacy version-tolerance path for ${this.entityName} ${entityId}`, {
-        entityName: this.entityName,
-        entityId,
-        clientVersion,
-        serverVersion,
-      });
       return;
     }
 
@@ -369,5 +384,109 @@ export abstract class BaseSyncEntityHandler<
       `Conflict: ${this.entityName} ${entityId} is outdated. Client base version ${clientVersion} != server version ${serverVersion}.`,
       { clientVersion, serverVersion },
     );
+  }
+
+  sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): Record<string, any> {
+    if (update.type === 'create') {
+      const parsed = this.createSchema.parse(update.data) as Record<string, any>;
+      return this.payloadForLog(parsed, actingUserId);
+    }
+    if (update.type === 'update') {
+      const incoming: Record<string, any> = { ...(update as UpdateStoryUpdate).changes };
+      const restoreRequested = incoming.isDeleted === false;
+      delete incoming.isDeleted;
+      delete incoming.deletedAt;
+      const parsed = this.updateSchema.parse(incoming) as Record<string, any>;
+      this.keepOnlyProvidedKeys(parsed, incoming);
+      const payload = this.payloadForLog(parsed, actingUserId);
+      if (restoreRequested) {
+        payload.isDeleted = false;
+        payload.deletedAt = null;
+      }
+      return payload;
+    }
+    if (update.type === 'delete') {
+      return { id: update.id };
+    }
+    if (update.type === 'reorder') {
+      return {
+        reorderItems: (update as { reorderItems?: unknown }).reorderItems,
+        reorderTarget: (update as { reorderTarget?: unknown }).reorderTarget,
+        schemaEntityType: (update as { schemaEntityType?: unknown }).schemaEntityType,
+      };
+    }
+    return {};
+  }
+
+  createPayloadMatches(existing: any, incomingData: Record<string, any>): boolean {
+    let parsed: Record<string, any>;
+    try {
+      parsed = this.createSchema.parse(incomingData) as Record<string, any>;
+    } catch {
+      return false;
+    }
+    for (const [key, value] of Object.entries(parsed)) {
+      if (SYNC_CLIENT_IMMUTABLE_FIELD_SET.has(key)) continue;
+      if (key === 'userId' || key === 'authorUserId') continue;
+      if (value === undefined) continue;
+      const current = existing?.[key];
+      if (current instanceof Date) {
+        const incomingTime = value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
+        if (current.getTime() !== incomingTime) return false;
+        continue;
+      }
+      if (JSON.stringify(current ?? null) !== JSON.stringify(value ?? null)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * `storyId`/`userId`/`id` no body de um update são transplante ou roubo de identidade.
+   * `version` é a base do OCC e fica de fora desta checagem.
+   */
+  protected assertNoImmutableFieldWrites(changes: Record<string, any>): void {
+    const attempted = ['id', 'storyId', 'userId', 'authorUserId', 'lastOperationVersion'].filter(
+      (field) => changes[field] !== undefined,
+    );
+    if (attempted.length === 0) return;
+    throw new SyncConflictError(
+      'unauthorized',
+      `Cannot write server-managed field(s) ${attempted.join(', ')} on ${this.entityName}.`,
+    );
+  }
+
+  /** Zod `.partial()` keeps `.default()` active; without this, a name-only patch would reset isFavorite. */
+  protected keepOnlyProvidedKeys(
+    parsed: Record<string, any>,
+    provided: Record<string, any>,
+  ): void {
+    for (const key of Object.keys(parsed)) {
+      if (!(key in provided)) delete parsed[key];
+    }
+  }
+
+  protected stripImmutableFields(changes: Record<string, any>): void {
+    for (const field of SYNC_CLIENT_IMMUTABLE_FIELD_SET) {
+      delete changes[field];
+    }
+  }
+
+  private payloadForLog(
+    parsed: Record<string, any>,
+    actingUserId: string,
+  ): Record<string, any> {
+    const sanitized = omitSyncImmutableFields(parsed);
+    if (this.entityName === 'Favorite') {
+      sanitized.userId = actingUserId;
+    }
+    if (this.entityName === 'Comment') {
+      sanitized.authorUserId = actingUserId;
+    }
+    if (this.entityName === 'Story') {
+      delete sanitized.userId;
+    }
+    return sanitized;
   }
 }

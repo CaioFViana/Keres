@@ -55,8 +55,37 @@ describe('StoryClientSyncHandler', () => {
         id: STORY_ID,
         title: 'A Queda',
         createdAt: new Date(CREATED_AT),
-        lastOperationLog: 18,
+        lastOperationLog: 0,
         lastServerSyncedLog: 0,
+      }),
+    );
+  });
+
+  it('does not apply serverId, myRole, lastOperationLog or userId from a remote update', async () => {
+    const handler = new StoryClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(STORY_ID, createUpdate('Story', STORY_ID, remoteStory()));
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Story', STORY_ID, {
+        title: 'A Queda Final',
+        serverId: 'attacker-server',
+        myRole: 'reader',
+        lastOperationLog: 999,
+        lastServerSyncedLog: 999,
+        userId: '01ARZ3NDEKTSV4RRFFQ69G5FAZ',
+      }),
+    );
+
+    expect(await handler.getById(STORY_ID)).toEqual(
+      expect.objectContaining({
+        title: 'A Queda Final',
+        serverId: null,
+        myRole: null,
+        lastOperationLog: 0,
+        lastServerSyncedLog: 0,
+        userId: '01ARZ3NDEKTSV4RRFFQ69G5FAX',
       }),
     );
   });
@@ -94,7 +123,7 @@ describe('StoryClientSyncHandler', () => {
       type: 'create',
       entity: 'Story',
       data: remoteStory(),
-    } as CreateStoryUpdate);
+    } as unknown as CreateStoryUpdate);
     await handler.applyUpdate(STORY_ID, {
       type: 'update',
       entity: 'Story',

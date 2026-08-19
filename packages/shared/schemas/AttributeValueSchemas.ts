@@ -27,7 +27,7 @@ export const CreateAttributeValueDataSchema = AttributeValueSchema.omit({
   value: z.string().nullable().default(null),
 });
 
-export const PartialAttributeValueSchema = AttributeValueSchema.partial();
+export const PartialAttributeValueSchema = CreateAttributeValueDataSchema.partial();
 
 export type CreateAttributeValueDataType = z.infer<typeof CreateAttributeValueDataSchema>;
 export type AttributeValueType = z.infer<typeof AttributeValueSchema>;

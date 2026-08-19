@@ -561,6 +561,17 @@ describe('sync authorization hardening', () => {
     expect(ghost).toBeUndefined();
   });
 
+  it('lets the owner delete the story without sending a base version', async () => {
+    const { data } = await push(ana.token, storyId, [
+      { type: 'delete', entity: 'Story', id: storyId },
+    ]);
+
+    expect(data.conflicts).toEqual([]);
+    expect(data.applied).toHaveLength(1);
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+    expect(story?.isDeleted).toBe(true);
+  });
+
   it('does not retransmit extra client fields through the operation log', async () => {
     const characterId = newId();
     await push(ana.token, storyId, [

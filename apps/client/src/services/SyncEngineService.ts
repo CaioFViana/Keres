@@ -4,6 +4,7 @@ import {
   DeleteStoryUpdate,
   EffectiveStoryRole,
   Favorite,
+  MAX_SYNC_BATCH_SIZE,
   MAX_SYNC_PULL_BATCH,
   StoryReorderingStoryUpdate,
   StoryUpdate,
@@ -916,118 +917,22 @@ export class SyncEngineService {
         }
       }
 
-      // 3. Fetch pending local operations (after applying remote updates to bring local DB up to date)
-      const pendingLocalOperations = await this.getPushableOperations();
-
-      // 4. Push local updates to server
-      if (pendingLocalOperations.length > 0) {
-        console.log(
-          `Pushing ${pendingLocalOperations.length} local operations for story ${this.storyId} to server...`,
-        );
-        try {
-          const updatesToPush: StoryUpdate[] = pendingLocalOperations
-            .map((op) => {
-              const payloadData = JSON.parse(op.payload);
-
-              const baseUpdate: Omit<StoryUpdate, 'type'> = {
-                entity: op.entityType,
-                id: op.entityId,
-                // Base sobre a qual o usuário editou. O servidor compara com a versão que ele
-                // tem para decidir se aceita ou se devolve conflito.
-                version: this.deriveBaseVersion(payloadData),
-                operationTime: op.createdAt.toISOString(),
-                // Devolvido intacto na resposta, para sabermos exatamente quais operações
-                // passaram e quais foram recusadas.
-                clientOperationId: op.id,
-              };
-
-              // Remove client-generated timestamp fields that should be server-managed
-              const filteredPayloadData: Record<string, any> = { ...payloadData };
-              delete filteredPayloadData.createdAt;
-              delete filteredPayloadData.updatedAt;
-              delete filteredPayloadData.deletedAt;
-              delete filteredPayloadData.storyId; // Remove storyId if it somehow got into payloadData
-
-              switch (op.operationType) {
-                case 'create':
-                  return {
-                    ...baseUpdate,
-                    type: 'create',
-                    data: filteredPayloadData,
-                  } as CreateStoryUpdate;
-                case 'update':
-                  return {
-                    ...baseUpdate,
-                    type: 'update',
-                    changes: {
-                      ...filteredPayloadData,
-                      // O servidor lê a base de `changes.version` para operações de update.
-                      version: baseUpdate.version,
-                    },
-                  } as UpdateStoryUpdate;
-                case 'delete':
-                  return {
-                    ...baseUpdate,
-                    type: 'delete',
-                  } as DeleteStoryUpdate;
-                case 'reorder':
-                  if (
-                    op.entityType === 'Chapter' &&
-                    Array.isArray(filteredPayloadData.reorderItems)
-                  ) {
-                    return {
-                      ...baseUpdate,
-                      type: 'reorder',
-                      entity: 'Chapter',
-                      reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
-                        ...item,
-                      })),
-                    } as ChapterReorderingStoryUpdate;
-                  } else if (
-                    op.entityType === 'Story' &&
-                    Array.isArray(filteredPayloadData.reorderItems)
-                  ) {
-                    return {
-                      ...baseUpdate,
-                      type: 'reorder',
-                      entity: 'Story',
-                      reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
-                        ...item,
-                      })),
-                      reorderTarget: filteredPayloadData.reorderTarget,
-                      schemaEntityType: filteredPayloadData.schemaEntityType,
-                    } as StoryReorderingStoryUpdate;
-                  }
-                  console.warn(
-                    `Unhandled reorder operation type or entity: ${op.entityType}, ${op.operationType}`,
-                  );
-                  return null;
-
-                default:
-                  console.warn(`Unhandled operation type: ${op.operationType}`);
-                  return null;
-              }
-            })
-            .filter(Boolean) as StoryUpdate[];
-
-          const pushResponse = await this.client.post<SyncPushResult>(
-            `/sync/${this.storyId}`,
-            updatesToPush,
-          );
-          await this.applyPushResult(pushResponse.data, pendingLocalOperations);
-        } catch (pushError: any) {
-          if (isOfflineError(pushError)) {
-            // Server unreachable: the operations stay unsynced and will be retried
-            // on the next cycle. Nothing for the user to act on.
-            console.log(`Push skipped for story ${this.storyId}: server unreachable.`);
-            return true;
-          }
-          console.log(
-            `Error pushing local operations for story ${this.storyId}:`,
-            pushError?.message || pushError,
-          );
-          showNotification(i18n.t('sync_push_failed'), 'error');
+      // 3-4. Push pending local operations in batches the server will accept.
+      try {
+        const pushed = await this.pushPendingOperations();
+        if (pushed.offline) {
+          return true;
         }
+      } catch (pushError: any) {
+        if (isOfflineError(pushError)) {
+          console.log(`Push skipped for story ${this.storyId}: server unreachable.`);
+          return true;
+        }
+        console.log(
+          `Error pushing local operations for story ${this.storyId}:`,
+          pushError?.message || pushError,
+        );
+        showNotification(i18n.t('sync_push_failed'), 'error');
       }
 
       // 5. Update local story's lastServerSyncedLog and cached role
@@ -1102,6 +1007,141 @@ export class SyncEngineService {
     } catch (error) {
       console.log(`Media sync skipped for story ${this.storyId}.`, error);
       return false;
+    }
+  }
+
+  /**
+   * Empurra a fila local em fatias de `MAX_SYNC_BATCH_SIZE`. Sem isto um backlog de 201+
+   * ops (edição longa offline) toma 422 no schema do servidor e nunca sincroniza.
+   */
+  private async pushPendingOperations(): Promise<{ offline: boolean }> {
+    const { showNotification } = useNotificationStore.getState();
+    let totalApplied = 0;
+    let totalConflicts = 0;
+
+    for (let chunk = 0; chunk < 50; chunk += 1) {
+      const pending = await this.getPushableOperations();
+      const mapped: { op: OperationLogSelect; update: StoryUpdate }[] = [];
+      for (const op of pending) {
+        const update = this.buildStoryUpdateFromLocalOp(op);
+        if (update) mapped.push({ op, update });
+      }
+      const prepared = mapped.slice(0, MAX_SYNC_BATCH_SIZE);
+      if (prepared.length === 0) break;
+
+      if (chunk === 0) {
+        console.log(
+          `Pushing local operations for story ${this.storyId} to server...`,
+        );
+      }
+
+      const pushResponse = await this.client.post<SyncPushResult>(
+        `/sync/${this.storyId}`,
+        prepared.map((entry) => entry.update),
+      );
+      const summary = await this.applyPushResult(
+        pushResponse.data,
+        prepared.map((entry) => entry.op),
+        { silent: true },
+      );
+      totalApplied += summary.applied;
+      totalConflicts += summary.conflicts;
+
+      const remaining = await this.getPushableOperations();
+      if (remaining.length >= pending.length) {
+        break;
+      }
+    }
+
+    if (totalApplied > 0) {
+      showNotification(i18n.t('sync_pushed_updates', { count: totalApplied }), 'success');
+    }
+    if (totalConflicts > 0) {
+      showNotification(i18n.t('sync_conflicts_detected', { count: totalConflicts }), 'warning');
+    }
+    return { offline: false };
+  }
+
+  private buildStoryUpdateFromLocalOp(op: OperationLogSelect): StoryUpdate | null {
+    const payloadData = JSON.parse(op.payload);
+    const baseVersion = this.deriveBaseVersion(payloadData);
+
+    if (op.operationType === 'update' && typeof baseVersion !== 'number') {
+      console.warn(
+        `Skipping update ${op.entityType} ${op.entityId}: payload has no version, server would 422 the whole batch.`,
+      );
+      return null;
+    }
+    if (op.operationType === 'create' && !op.entityId) {
+      console.warn(`Skipping create of ${op.entityType}: missing entity id.`);
+      return null;
+    }
+
+    const baseUpdate: Omit<StoryUpdate, 'type'> = {
+      entity: op.entityType,
+      id: op.entityId,
+      version: baseVersion,
+      operationTime: op.createdAt.toISOString(),
+      clientOperationId: op.id,
+    };
+
+    const filteredPayloadData: Record<string, any> = { ...payloadData };
+    delete filteredPayloadData.createdAt;
+    delete filteredPayloadData.updatedAt;
+    delete filteredPayloadData.deletedAt;
+    delete filteredPayloadData.storyId;
+
+    switch (op.operationType) {
+      case 'create':
+        return {
+          ...baseUpdate,
+          type: 'create',
+          data: filteredPayloadData,
+        } as CreateStoryUpdate;
+      case 'update':
+        return {
+          ...baseUpdate,
+          type: 'update',
+          changes: {
+            ...filteredPayloadData,
+            version: baseVersion,
+          },
+        } as UpdateStoryUpdate;
+      case 'delete':
+        return {
+          ...baseUpdate,
+          type: 'delete',
+        } as DeleteStoryUpdate;
+      case 'reorder':
+        if (op.entityType === 'Chapter' && Array.isArray(filteredPayloadData.reorderItems)) {
+          return {
+            ...baseUpdate,
+            type: 'reorder',
+            entity: 'Chapter',
+            reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
+              ...item,
+            })),
+          } as ChapterReorderingStoryUpdate;
+        }
+        if (op.entityType === 'Story' && Array.isArray(filteredPayloadData.reorderItems)) {
+          return {
+            ...baseUpdate,
+            type: 'reorder',
+            entity: 'Story',
+            reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
+              ...item,
+            })),
+            reorderTarget: filteredPayloadData.reorderTarget,
+            schemaEntityType: filteredPayloadData.schemaEntityType,
+          } as StoryReorderingStoryUpdate;
+        }
+        console.warn(
+          `Unhandled reorder operation type or entity: ${op.entityType}, ${op.operationType}`,
+        );
+        return null;
+      default:
+        console.warn(`Unhandled operation type: ${op.operationType}`);
+        return null;
     }
   }
 
@@ -1411,7 +1451,8 @@ export class SyncEngineService {
   private async applyPushResult(
     result: SyncPushResult,
     pushedOperations: OperationLogSelect[],
-  ): Promise<void> {
+    options: { silent?: boolean } = {},
+  ): Promise<{ applied: number; conflicts: number }> {
     const { showNotification } = useNotificationStore.getState();
 
     if (!Array.isArray(result?.applied) && !Array.isArray(result?.conflicts)) {
@@ -1426,7 +1467,7 @@ export class SyncEngineService {
           .where(eq(schema.operationLogs.id, op.id));
       }
       entityEventEmitter.emit('operation_log_updated', this.storyId);
-      return;
+      return { applied: pushedOperations.length, conflicts: 0 };
     }
 
     for (const entry of result.applied || []) {
@@ -1545,13 +1586,16 @@ export class SyncEngineService {
     entityEventEmitter.emit('operation_log_updated', this.storyId);
 
     const appliedCount = (result.applied || []).length;
+    const realConflictCount = conflictsByEntity.size - autoMergedCount;
     if (appliedCount > 0) {
       console.log(`Successfully pushed ${appliedCount} operations for story ${this.storyId}.`);
-      showNotification(i18n.t('sync_pushed_updates', { count: appliedCount }), 'success');
+      if (!options.silent) {
+        showNotification(i18n.t('sync_pushed_updates', { count: appliedCount }), 'success');
+      }
     }
-    const realConflictCount = conflictsByEntity.size - autoMergedCount;
-    if (realConflictCount > 0) {
+    if (realConflictCount > 0 && !options.silent) {
       showNotification(i18n.t('sync_conflicts_detected', { count: realConflictCount }), 'warning');
     }
+    return { applied: appliedCount, conflicts: realConflictCount };
   }
 }

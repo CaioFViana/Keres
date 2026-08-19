@@ -2,7 +2,7 @@ import { Scene } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { and, asc, desc, eq, sql, SQL } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
-import { SceneInsert, scenes, SceneSelect } from '../../db/schema';
+import { chapters, SceneInsert, scenes, SceneSelect } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
@@ -347,7 +347,6 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     ): Promise<void> {
       await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      const reorderPayload = { reorderItems: newOrder.map((item) => ({ ...item })) };
 
       await db.transaction(async (tx) => {
         for (const scene of newOrder) {
@@ -374,16 +373,16 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         }
       });
 
-      // Record a single 'reorder' operation for the entire list of scenes within a chapter
-      await recordLocalOperation(
-        db,
-        storyId,
-        userIdToLog,
-        'reorder',
-        'Chapter',
-        chapterId,
-        reorderPayload,
-      );
+      const [chapter] = await db
+        .update(chapters)
+        .set({ version: sql`${chapters.version} + 1`, updatedAt: new Date() })
+        .where(eq(chapters.id, chapterId))
+        .returning({ version: chapters.version });
+
+      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Chapter', chapterId, {
+        reorderItems: newOrder.map((item) => ({ ...item })),
+        version: chapter?.version,
+      });
       entityEventEmitter.emit('scene_changed', storyId, 'reorder');
     },
 

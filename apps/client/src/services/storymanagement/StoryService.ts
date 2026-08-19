@@ -343,7 +343,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // input directly would record every field the form sends (title, description, genre...)
       // as "changed" even when only one of them actually was.
       const changes = getChangedFields(originalStory, updatedStory);
-      delete changes.version;
       delete changes.updatedAt;
       await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, changes);
       entityEventEmitter.emit('story_changed', storyId, storyId);
@@ -903,11 +902,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             const client = createKeresAxiosInstance({ baseURL: server.url });
             client.setTokenProvider(authTokenManager);
             client.setActiveServer(server);
-            // Sem `version`: o objetivo aqui é apagar independente do que o servidor ache que
-            // é a versão atual (o local já decidiu apagar, incondicionalmente) - mandar a
-            // versão local faria o servidor tratar quase toda chamada como conflito de
-            // concorrência (`checkVersionConflict`) e devolver 200 sem aplicar nada, porque o
-            // contador local de versão nunca ficou de fato em lockstep com o do servidor.
+            // Sem `version`: o `stories.version` local nunca ficou em lockstep com o do
+            // servidor, então mandar o número daqui faria o OCC recusar o delete. O servidor
+            // preenche a versão atual quando o dono omite a base (só para delete de Story).
             // Sem `operationTime` também: o servidor recusa qualquer horário mais de 1s à
             // frente do próprio relógio dele (`parseOperationTime`), e o relógio do
             // aparelho/emulador não tem garantia nenhuma de estar sincronizado com o do
@@ -989,14 +986,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // before offering this action at all.
       //
       // No `version` in the payload, same reasoning as deleteStory: local `stories.version`
-      // was never kept in lockstep with the server's copy (nothing pushes plain Story-field
-      // edits through a version-checked path today), so sending it would make the server
-      // reject this as a concurrency conflict almost every time - a 200 response whose
-      // `conflicts` array says the delete never actually applied, silently defeating the
-      // whole point of this action. Omitting it opts into last-write-wins on the server
-      // (`checkVersionConflict` short-circuits when the client doesn't state a base version),
-      // which is exactly the semantics wanted here: this action means "delete it, whatever
-      // state it's in."
+      // was never kept in lockstep with the server's copy, so sending it would make OCC
+      // reject this almost every time. The server fills in the live version when the owner
+      // omits the base on a Story delete.
       //
       // No `operationTime` either: the server rejects any timestamp more than 1s ahead of
       // its own clock (`parseOperationTime`), and a device/emulator's clock has no guarantee

@@ -343,7 +343,18 @@ export class SyncService {
                   'Only the comment author or the story owner can delete this comment.',
                 );
               }
-              await handler.delete(userId, storyId, update as DeleteStoryUpdate, currentEntity);
+              let deleteUpdate = update as DeleteStoryUpdate;
+              if (
+                update.entity === 'Story' &&
+                role === 'owner' &&
+                (update.version === undefined || update.version === null)
+              ) {
+                // deleteStory/unlinkFromServer omit the base on purpose (local Story.version
+                // is not kept in lockstep). Fill in the live server version so OCC still
+                // guards concurrent writers, without making the owner send a stale number.
+                deleteUpdate = { ...deleteUpdate, version: currentEntity.version };
+              }
+              await handler.delete(userId, storyId, deleteUpdate, currentEntity);
             }
           }
 

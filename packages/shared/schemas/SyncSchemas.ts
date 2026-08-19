@@ -123,7 +123,11 @@ export type UpdateStoryUpdate = z.infer<typeof UpdateStoryUpdateSchema>;
 export const DeleteStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('delete'),
   id: UlidSchema, // ID é obrigatório para exclusões
-  version: z.number().int().min(0),
+  // Opcional de propósito: `StoryService.deleteStory`/`unlinkFromServer` omitem a versão
+  // porque o `stories.version` local nunca ficou em lockstep com o servidor. Sem versão o
+  // servidor só aceita o delete da própria Story quando o caller é o dono (força o
+  // tombstone na versão atual). Demais entidades continuam exigindo a base no handler.
+  version: z.number().int().min(0).optional(),
 });
 export type DeleteStoryUpdate = z.infer<typeof DeleteStoryUpdateSchema>;
 

@@ -53,6 +53,13 @@ describe('StoryUpdateSchema', () => {
     expect(DeleteStoryUpdateSchema.safeParse({ type: 'delete', entity: 'Character' }).success).toBe(
       false,
     );
+    expect(
+      DeleteStoryUpdateSchema.safeParse({
+        type: 'delete',
+        entity: 'Story',
+        id: STORY_ID,
+      }).success,
+    ).toBe(true);
   });
 
   it('requires an id on create operations, since the client always generates the ULID', () => {

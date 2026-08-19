@@ -6,6 +6,7 @@ import {
   StorySchemaFieldInsert,
   storySchemaFields,
   StorySchemaFieldSelect,
+  stories,
 } from '../../db/schema';
 import { Create, createULID, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -204,10 +205,17 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
           .run();
       }
 
+      const [story] = await db
+        .update(stories)
+        .set({ version: sql`${stories.version} + 1`, updatedAt: new Date() })
+        .where(eq(stories.id, storyId))
+        .returning({ version: stories.version });
+
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
         reorderItems: newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 })),
         reorderTarget: 'StorySchemaField',
         schemaEntityType: entityType,
+        version: story?.version,
       });
       entityEventEmitter.emit('story_schema_field_changed', storyId, entityType);
     },

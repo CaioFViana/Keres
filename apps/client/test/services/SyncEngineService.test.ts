@@ -21,6 +21,7 @@ jest.mock('../../src/services/MediaSyncService', () => ({
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
+import { MAX_SYNC_BATCH_SIZE } from '@keres/shared';
 import {
   OFFLINE_RETRY_MS,
   SYNC_INTERVAL_MS,
@@ -56,6 +57,8 @@ let pullResponse: {
 let pushResponse: any;
 /** Quando definido, o adapter falha como se o servidor estivesse fora do ar. */
 let offlineOn: 'pull' | 'push' | null;
+/** When true, a push is acknowledged for every operation in the request body. */
+let echoPushApplied: boolean;
 
 /**
  * O Axios resolve o adapter na hora da requisição e cai em `axios.defaults.adapter` quando a
@@ -68,7 +71,8 @@ function installAdapter() {
   (axios.defaults as any).adapter = async (config: any) => {
     const url = `${config.url}`;
     const method = (config.method || 'get').toUpperCase();
-    seen.push({ method, url, body: config.data ? JSON.parse(config.data) : undefined });
+    const body = config.data ? JSON.parse(config.data) : undefined;
+    seen.push({ method, url, body });
 
     const isPull = url.includes('/pull');
     if (
@@ -82,7 +86,25 @@ function installAdapter() {
       throw error;
     }
 
-    const data = isPull ? pullResponse : method === 'POST' ? pushResponse : {};
+    let data = isPull ? pullResponse : method === 'POST' ? pushResponse : {};
+    if (
+      !isPull &&
+      method === 'POST' &&
+      echoPushApplied &&
+      Array.isArray(body)
+    ) {
+      data = {
+        ...pushResponse,
+        processedUpdates: body.length,
+        applied: body.map((update: { clientOperationId?: string; entity: string; id: string }) => ({
+          clientOperationId: update.clientOperationId,
+          operationVersion: 1,
+          entity: update.entity,
+          entityId: update.id,
+        })),
+        conflicts: [],
+      };
+    }
     return { data, status: 200, statusText: 'OK', headers: {}, config };
   };
 }
@@ -173,6 +195,7 @@ beforeEach(async () => {
     conflicts: [],
   };
   offlineOn = null;
+  echoPushApplied = false;
   installAdapter();
 
   jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -457,6 +480,30 @@ describe('push', () => {
     expect(push).toBeDefined();
     expect(push!.body).toHaveLength(1);
     expect(push!.body[0]).toMatchObject({ type: 'create', entity: 'Character', id: 'char-local' });
+  });
+
+  it('splits a backlog larger than the server batch cap into multiple posts', async () => {
+    await seedStory({ lastOperationLog: 250 });
+    for (let index = 0; index < MAX_SYNC_BATCH_SIZE + 1; index += 1) {
+      await seedPendingOperation({
+        id: `op-batch-${index}`,
+        operationVersion: index + 1,
+        entityId: `char-${index}`,
+        payload: JSON.stringify({
+          id: `char-${index}`,
+          storyId: STORY_ID,
+          name: 'Nyx',
+          version: 1,
+        }),
+      });
+    }
+
+    echoPushApplied = true;
+
+    await runOneCycle();
+
+    const posts = seen.filter((request) => request.method === 'POST');
+    expect(posts.map((post) => post.body.length)).toEqual([MAX_SYNC_BATCH_SIZE, 1]);
   });
 
   it('does not push when there is nothing pending', async () => {

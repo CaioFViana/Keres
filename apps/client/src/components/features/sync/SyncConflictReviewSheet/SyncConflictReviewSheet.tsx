@@ -5,9 +5,13 @@ import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-nat
 import { useDrizzle } from '../../../../db';
 import {
   buildConflictSummaries,
+  collectConflictEntityRefs,
   collectEntityRefs,
 } from '../../../../services/ConflictSummaryService';
-import { createEntityNameBatchResolver } from '../../../../services/EntityNameBatchResolver';
+import {
+  createEntityNameBatchResolver,
+  createEntitySnapshotResolver,
+} from '../../../../services/EntityNameBatchResolver';
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useTheme } from '../../../../theme';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -39,31 +43,44 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
   const selectConflict = useSyncConflictStore((state) => state.selectConflict);
   const clearSelection = useSyncConflictStore((state) => state.clearSelection);
 
+  const [snapshots, setSnapshots] = useState<Map<string, Record<string, any>>>(new Map());
   const [names, setNames] = useState<Map<string, string>>(new Map());
 
+  // Duas fases: primeiro a linha local de cada conflito em si (preenche o que
+  // `deleted_on_server` deixa faltando em `localValues`/`serverValues` - nome de uma entidade
+  // de conteúdo, ou os IDs de uma relação), só então dá pra saber quais outras entidades
+  // (personagens de uma `CharacterRelation`, por exemplo) precisam ter o nome resolvido.
   useEffect(() => {
     let cancelled = false;
-    const refs = collectEntityRefs(conflicts);
-    if (refs.length === 0) {
+    const snapshotRefs = collectConflictEntityRefs(conflicts);
+    if (snapshotRefs.length === 0) {
+      setSnapshots(new Map());
       setNames(new Map());
       return;
     }
-    createEntityNameBatchResolver(db)
-      .resolveMany(refs)
-      .then((resolved) => {
-        if (!cancelled) setNames(resolved);
-      })
-      .catch((error) => {
-        console.log('SyncConflictReviewSheet: failed to resolve entity names.', error);
-      });
+    (async () => {
+      const resolvedSnapshots = await createEntitySnapshotResolver(db).resolveMany(snapshotRefs);
+      if (cancelled) return;
+      setSnapshots(resolvedSnapshots);
+
+      const nameRefs = collectEntityRefs(conflicts, resolvedSnapshots);
+      if (nameRefs.length === 0) {
+        setNames(new Map());
+        return;
+      }
+      const resolvedNames = await createEntityNameBatchResolver(db).resolveMany(nameRefs);
+      if (!cancelled) setNames(resolvedNames);
+    })().catch((error) => {
+      console.log('SyncConflictReviewSheet: failed to resolve entity names.', error);
+    });
     return () => {
       cancelled = true;
     };
   }, [db, conflicts]);
 
   const summaries = useMemo(
-    () => buildConflictSummaries(conflicts, names, t),
-    [conflicts, names, t],
+    () => buildConflictSummaries(conflicts, snapshots, names, t),
+    [conflicts, snapshots, names, t],
   );
 
   const sections = useMemo(() => {

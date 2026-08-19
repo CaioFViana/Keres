@@ -2,7 +2,10 @@
  * @jest-environment node
  */
 import * as schema from '../../src/db/schema';
-import { createEntityNameBatchResolver } from '../../src/services/EntityNameBatchResolver';
+import {
+  createEntityNameBatchResolver,
+  createEntitySnapshotResolver,
+} from '../../src/services/EntityNameBatchResolver';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
@@ -114,5 +117,91 @@ describe('EntityNameBatchResolver', () => {
     const names = await resolver.resolveMany([{ entityType: 'Character', entityId: 'ghost' }]);
 
     expect(names.has('Character:ghost')).toBe(false);
+  });
+});
+
+/**
+ * Diferente de `createEntityNameBatchResolver` (só uma coluna de nome), este resolve a linha
+ * local inteira - usado para preencher o que `localValues`/`serverValues` de um conflito
+ * `deleted_on_server` deixam faltando (ver `ConflictSummaryService.ts`'s `mergedValuesOf`).
+ */
+describe('createEntitySnapshotResolver', () => {
+  it('resolves the full local row of an entity, not just its name column', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'mira',
+      storyId: STORY_ID,
+      name: 'Mira',
+      motivation: 'Proteger a irmã',
+      ...base,
+    });
+
+    const resolver = createEntitySnapshotResolver(database.db);
+    const snapshots = await resolver.resolveMany([{ entityType: 'Character', entityId: 'mira' }]);
+
+    expect(snapshots.get('Character:mira')).toMatchObject({
+      name: 'Mira',
+      motivation: 'Proteger a irmã',
+    });
+  });
+
+  /**
+   * `CharacterRelation` é a única relação onde o nome de coluna local (`charId1`/`charId2`)
+   * difere do que o resto de `ConflictSummaryService.ts` espera (`character1Id`/
+   * `character2Id`) - sem a tradução, o snapshot preenchia campos que o switch de relações
+   * nunca ia reconhecer.
+   */
+  it('translates CharacterRelation column names to the server-shaped field names', async () => {
+    await database.db.insert(schema.characters).values([
+      { id: 'mira', storyId: STORY_ID, name: 'Mira', ...base },
+      { id: 'oren', storyId: STORY_ID, name: 'Oren', ...base },
+    ]);
+    await database.db.insert(schema.characterRelations).values({
+      id: 'relation-1',
+      storyId: STORY_ID,
+      charId1: 'mira',
+      charId2: 'oren',
+      relationType: 'allies',
+      ...base,
+    });
+
+    const resolver = createEntitySnapshotResolver(database.db);
+    const snapshots = await resolver.resolveMany([
+      { entityType: 'CharacterRelation', entityId: 'relation-1' },
+    ]);
+
+    expect(snapshots.get('CharacterRelation:relation-1')).toMatchObject({
+      character1Id: 'mira',
+      character2Id: 'oren',
+      relationType: 'allies',
+    });
+    expect(snapshots.get('CharacterRelation:relation-1')).not.toHaveProperty('charId1');
+  });
+
+  /**
+   * O ponto inteiro do snapshot: uma entidade excluída no servidor mas não localmente (a
+   * exclusão remota não é aplicada de propósito, ver `reconcileRemoteUpdate`) continua com
+   * `isDeleted: false` na tabela local - o resolvedor não filtra por isso, então ainda acha a
+   * linha com o nome real.
+   */
+  it('finds an entity regardless of its isDeleted flag', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'mira',
+      storyId: STORY_ID,
+      name: 'Mira',
+      ...base,
+      isDeleted: true,
+    });
+
+    const resolver = createEntitySnapshotResolver(database.db);
+    const snapshots = await resolver.resolveMany([{ entityType: 'Character', entityId: 'mira' }]);
+
+    expect(snapshots.get('Character:mira')).toMatchObject({ name: 'Mira', isDeleted: true });
+  });
+
+  it('leaves a missing entity out of the result instead of throwing', async () => {
+    const resolver = createEntitySnapshotResolver(database.db);
+    const snapshots = await resolver.resolveMany([{ entityType: 'Character', entityId: 'ghost' }]);
+
+    expect(snapshots.has('Character:ghost')).toBe(false);
   });
 });

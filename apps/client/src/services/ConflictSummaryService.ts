@@ -163,24 +163,54 @@ function formatValue(value: unknown, emptyLabel: string): string {
   return String(value);
 }
 
+/** Chave de um snapshot no mapa devolvido por `EntitySnapshotResolver.resolveMany`. */
+const snapshotKey = (entityType: string, entityId: string) => `${entityType}:${entityId}`;
+
 /**
- * Junta os dois lados de um conflito de relação num único objeto para montar a frase: prefere
- * o valor local (o que o usuário fez), cai para o do servidor só nos campos que a operação
- * local não tocou (ex: uma exclusão pura não carrega `relationType`, mas o servidor sabe qual era).
+ * Uma referência por conflito - a própria entidade dele - para pedir de uma vez a
+ * `EntitySnapshotResolver.resolveMany` antes de montar os resumos. Precisa rodar primeiro e
+ * separado de `collectEntityRefs`: só depois de ter o snapshot é que dá pra saber, por
+ * exemplo, quem são os dois personagens de uma `CharacterRelation` cujo conflito não carrega
+ * `character1Id`/`character2Id` em nenhum dos lados (caso `deleted_on_server`).
  */
-function mergedValuesOf(conflict: PendingConflict): Record<string, any> {
-  return { ...(conflict.serverValues ?? {}), ...conflict.localValues };
+export function collectConflictEntityRefs(conflicts: PendingConflict[]): EntityRef[] {
+  return conflicts.map((conflict) => ({
+    entityType: conflict.entityType,
+    entityId: conflict.entityId,
+  }));
+}
+
+/**
+ * Junta os três níveis de um conflito num único objeto para montar a frase: prefere o valor
+ * local (o que o usuário fez), cai para o do servidor nos campos que a operação local não
+ * tocou, e só por último cai pro snapshot da linha local atual - necessário porque um
+ * conflito `deleted_on_server` carrega só `{isDeleted, version}` do lado do servidor, de
+ * propósito (ver `reconcileRemoteUpdate`), então nem o nome de uma entidade de conteúdo nem
+ * os IDs de uma relação estão em `localValues`/`serverValues` quando o campo em questão não é
+ * o que o usuário editou offline - só o snapshot da linha local (que a exclusão remota nunca
+ * chegou a apagar) ainda tem essa informação.
+ */
+function mergedValuesOf(
+  conflict: PendingConflict,
+  snapshots: Map<string, Record<string, any>>,
+): Record<string, any> {
+  const snapshot = snapshots.get(snapshotKey(conflict.entityType, conflict.entityId)) ?? {};
+  return { ...snapshot, ...(conflict.serverValues ?? {}), ...conflict.localValues };
 }
 
 /** Todas as referências de entidade que os conflitos de relação, mais quaisquer campos de
  *  conteúdo que sejam IDs de outra entidade, vão precisar resolver - para passar de uma vez a
- *  `EntityNameBatchResolver.resolveMany`. */
-export function collectEntityRefs(conflicts: PendingConflict[]): EntityRef[] {
+ *  `EntityNameBatchResolver.resolveMany`. Precisa dos snapshots já resolvidos (ver
+ *  `collectConflictEntityRefs`) para enxergar campos de relação que só existem lá. */
+export function collectEntityRefs(
+  conflicts: PendingConflict[],
+  snapshots: Map<string, Record<string, any>>,
+): EntityRef[] {
   const refs: EntityRef[] = [];
   for (const conflict of conflicts) {
     const targets = RELATION_FIELD_TARGETS[conflict.entityType];
     if (targets) {
-      const merged = mergedValuesOf(conflict);
+      const merged = mergedValuesOf(conflict, snapshots);
       for (const target of targets) {
         if (target.kind === 'fixed') {
           const entityId = merged[target.field];
@@ -227,10 +257,11 @@ function nameOf(
 
 function buildRelationSummary(
   conflict: PendingConflict,
+  snapshots: Map<string, Record<string, any>>,
   names: Map<string, string>,
   t: TFunction,
 ): { title: string; detail: string } {
-  const merged = mergedValuesOf(conflict);
+  const merged = mergedValuesOf(conflict, snapshots);
   const unknown = t('unknown_entity');
 
   switch (conflict.entityType) {
@@ -304,6 +335,7 @@ function isBinaryContentConflict(conflict: PendingConflict): boolean {
 
 export function buildConflictSummaries(
   conflicts: PendingConflict[],
+  snapshots: Map<string, Record<string, any>>,
   names: Map<string, string>,
   t: TFunction,
 ): ConflictSummary[] {
@@ -313,7 +345,7 @@ export function buildConflictSummaries(
     });
 
     if (RELATION_ENTITY_TYPES.has(conflict.entityType)) {
-      const { title, detail } = buildRelationSummary(conflict, names, t);
+      const { title, detail } = buildRelationSummary(conflict, snapshots, names, t);
       return {
         id: conflict.id,
         entityType: conflict.entityType,
@@ -331,17 +363,13 @@ export function buildConflictSummaries(
     const emptyLabel = t('conflict_empty_value');
     // `name`/`title` cobre a maioria das entidades, mas não todas: Choice não tem nenhum dos
     // dois (o campo que identifica é `text`), e Gallery tem `title` opcional, caindo pro nome
-    // do arquivo (mesma regra que `EntityNameBatchResolver.ts` já usa) - sem isto, essas duas
-    // entidades sempre mostravam o ID cru como "nome".
+    // do arquivo (mesma regra que `EntityNameBatchResolver.ts` já usa). E nenhum dos dois pode
+    // vir só de `localValues`/`serverValues`: um conflito `deleted_on_server` não carrega o
+    // nome em nenhum dos dois lados (ver `mergedValuesOf`) - por isso o snapshot da linha
+    // local entra como terceiro nível, antes de cair pro ID cru.
+    const mergedContent = mergedValuesOf(conflict, snapshots);
     const entityName = formatValue(
-      conflict.localValues.name ??
-        conflict.localValues.title ??
-        conflict.localValues.text ??
-        conflict.localValues.fileName ??
-        conflict.serverValues?.name ??
-        conflict.serverValues?.title ??
-        conflict.serverValues?.text ??
-        conflict.serverValues?.fileName,
+      mergedContent.name ?? mergedContent.title ?? mergedContent.text ?? mergedContent.fileName,
       conflict.entityId,
     );
 

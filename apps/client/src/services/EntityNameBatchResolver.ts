@@ -88,3 +88,64 @@ export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameB
     },
   };
 }
+
+export interface EntitySnapshotResolver {
+  /**
+   * Resolve a linha local inteira de cada referência, não só um nome - usado para preencher
+   * campos que faltam tanto em `localValues` quanto em `serverValues` de um `PendingConflict`
+   * (ex.: um conflito `deleted_on_server` carrega só `{isDeleted, version}` do lado do
+   * servidor, de propósito - a linha local em si não foi apagada, e ainda tem o `name`/os IDs
+   * de relação originais). Mesmo agrupamento por tipo e uma query `inArray` por tabela que
+   * `resolveMany` já usa.
+   */
+  resolveMany(refs: EntityRef[]): Promise<Map<string, Record<string, any>>>;
+}
+
+/**
+ * `CharacterRelation` é a única relação onde o nome de coluna local (`charId1`/`charId2`)
+ * difere do nome usado no payload de sincronização (`character1Id`/`character2Id`) - mesmo
+ * motivo do alias em `entityTableRegistry.ts`, na direção oposta: aqui é preciso traduzir de
+ * volta pra nomenclatura de servidor depois de ler a linha local, porque o resto de
+ * `ConflictSummaryService.ts` (switch de relações, `RELATION_FIELD_TARGETS`) só entende esse
+ * nome.
+ */
+const LOCAL_TO_SERVER_FIELD_ALIASES: Partial<Record<string, Record<string, string>>> = {
+  CharacterRelation: { charId1: 'character1Id', charId2: 'character2Id' },
+};
+
+export function createEntitySnapshotResolver(db: AppDrizzleClient): EntitySnapshotResolver {
+  return {
+    async resolveMany(refs: EntityRef[]): Promise<Map<string, Record<string, any>>> {
+      const idsByType = new Map<string, Set<string>>();
+      for (const ref of refs) {
+        if (!ref.entityType || !ref.entityId) continue;
+        const set = idsByType.get(ref.entityType) ?? new Set<string>();
+        set.add(ref.entityId);
+        idsByType.set(ref.entityType, set);
+      }
+
+      const result = new Map<string, Record<string, any>>();
+
+      for (const [entityType, ids] of idsByType) {
+        const table = getEntityTable(entityType);
+        if (!table) continue;
+        const idList = Array.from(ids);
+        const aliasMap = LOCAL_TO_SERVER_FIELD_ALIASES[entityType];
+
+        const rows = (await db
+          .select()
+          .from(table)
+          .where(inArray((table as any).id, idList))) as Record<string, any>[];
+        for (const row of rows) {
+          const translated: Record<string, any> = {};
+          for (const [key, value] of Object.entries(row)) {
+            translated[aliasMap?.[key] ?? key] = value;
+          }
+          result.set(nameKey(entityType, row.id), translated);
+        }
+      }
+
+      return result;
+    },
+  };
+}

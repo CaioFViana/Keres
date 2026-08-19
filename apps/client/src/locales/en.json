@@ -112,7 +112,7 @@
   "category_placeholder": "Enter category",
   "change_parent": "Change Parent",
   "change_password_title": "Change Password",
-  "change_password_warning": "Leaving the password field empty will keep the current password. Enter a new password to change it.",
+  "change_password_warning": "If you are renewing your login access, you might need to type your password again.",
   "chapter": "Chapter",
   "chapter_created_successfully": "Chapter created successfully!",
   "chapter_data_missing": "Chapter data is missing.",

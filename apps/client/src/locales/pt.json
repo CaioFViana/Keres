@@ -112,7 +112,7 @@
   "category_placeholder": "Inserir categoria",
   "change_parent": "Trocar Pai",
   "change_password_title": "Alterar Senha",
-  "change_password_warning": "Deixar o campo de senha vazio manterá a senha atual. Digite uma nova senha para alterá-la.",
+  "change_password_warning": "Se estiver renovando seu acesso de login, você talvez tenha de digitar sua senha novamente.",
   "chapter": "Capítulo",
   "chapter_created_successfully": "Capítulo criado com sucesso!",
   "chapter_data_missing": "Dados do capítulo ausentes.",

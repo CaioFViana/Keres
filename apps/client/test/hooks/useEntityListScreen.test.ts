@@ -93,6 +93,16 @@ describe('bootstrapping', () => {
 
     await waitFor(() => expect(store.fetchTags).toHaveBeenCalled());
   });
+
+  it('refetches when the open story changes', async () => {
+    const { rerender } = await render();
+    store.fetchTags.mockClear();
+    (useStoryStore as unknown as jest.Mock).mockReturnValue({ selectedStory: { id: 'story-2' } });
+
+    await rerender(undefined as never);
+
+    await waitFor(() => expect(store.fetchTags).toHaveBeenCalled());
+  });
 });
 
 /**

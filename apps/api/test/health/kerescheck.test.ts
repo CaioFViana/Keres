@@ -21,7 +21,9 @@ describe('GET /kerescheck', () => {
     const isIco = bytes[0] === 0x00 && bytes[1] === 0x00 && bytes[2] === 0x01 && bytes[3] === 0x00;
     const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
     expect(isIco || isPng).toBe(true);
-    expect(response.headers.get('content-type')).toMatch(isIco ? /image\/(x-icon|vnd\.microsoft\.icon)/ : /image\/png/);
+    expect(response.headers.get('content-type')).toMatch(
+      isIco ? /image\/(x-icon|vnd\.microsoft\.icon)/ : /image\/png/,
+    );
   });
 
   it('returns a controlled response before accessing the database for protected routes', async () => {

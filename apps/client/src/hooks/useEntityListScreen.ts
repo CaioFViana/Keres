@@ -102,10 +102,13 @@ export function useEntityListScreen<
     }
   }, [drizzleDb, storyId, setDbAndStoryId, initializeService]);
 
-  // Refetch whenever the committed filter state changes.
+  // Refetch whenever the committed filter state or the open story changes. `fetchItems`
+  // is a stable store method, so without `storyId` here a story switch would keep the
+  // previous story's rows on screen until the user touched a filter.
   useEffect(() => {
     fetchItems();
   }, [
+    storyId,
     storeSearchTerm,
     activeFilterTags,
     activeSort,

@@ -431,7 +431,8 @@ export abstract class BaseSyncEntityHandler<
       if (value === undefined) continue;
       const current = existing?.[key];
       if (current instanceof Date) {
-        const incomingTime = value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
+        const incomingTime =
+          value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
         if (current.getTime() !== incomingTime) return false;
         continue;
       }
@@ -458,10 +459,7 @@ export abstract class BaseSyncEntityHandler<
   }
 
   /** Zod `.partial()` keeps `.default()` active; without this, a name-only patch would reset isFavorite. */
-  protected keepOnlyProvidedKeys(
-    parsed: Record<string, any>,
-    provided: Record<string, any>,
-  ): void {
+  protected keepOnlyProvidedKeys(parsed: Record<string, any>, provided: Record<string, any>): void {
     for (const key of Object.keys(parsed)) {
       if (!(key in provided)) delete parsed[key];
     }
@@ -473,10 +471,7 @@ export abstract class BaseSyncEntityHandler<
     }
   }
 
-  private payloadForLog(
-    parsed: Record<string, any>,
-    actingUserId: string,
-  ): Record<string, any> {
+  private payloadForLog(parsed: Record<string, any>, actingUserId: string): Record<string, any> {
     const sanitized = omitSyncImmutableFields(parsed);
     if (this.entityName === 'Favorite') {
       sanitized.userId = actingUserId;

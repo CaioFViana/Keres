@@ -294,10 +294,7 @@ export class SyncService {
               // Reenvio idempotente só se o payload descreve a mesma linha. Um create
               // com o mesmo id e dados diferentes não é retry, é colisão.
               if (
-                !handler.createPayloadMatches(
-                  currentEntity,
-                  (update as CreateStoryUpdate).data,
-                )
+                !handler.createPayloadMatches(currentEntity, (update as CreateStoryUpdate).data)
               ) {
                 throw new SyncConflictError(
                   'validation',

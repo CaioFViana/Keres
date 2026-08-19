@@ -40,12 +40,17 @@ export class AdminApiLogService {
       db.select({ total: count() }).from(apiLogs).where(where),
     ]);
 
-    const storyIds = [...new Set(items.map((row) => row.storyId).filter((id): id is string => !!id))];
+    const storyIds = [
+      ...new Set(items.map((row) => row.storyId).filter((id): id is string => !!id)),
+    ];
     const userIds = [...new Set(items.map((row) => row.userId).filter((id): id is string => !!id))];
 
     const [storyRows, userRows] = await Promise.all([
       storyIds.length > 0
-        ? db.select({ id: stories.id, title: stories.title }).from(stories).where(inArray(stories.id, storyIds))
+        ? db
+            .select({ id: stories.id, title: stories.title })
+            .from(stories)
+            .where(inArray(stories.id, storyIds))
         : Promise.resolve([] as Array<{ id: string; title: string }>),
       userIds.length > 0
         ? db

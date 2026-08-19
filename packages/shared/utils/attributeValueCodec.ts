@@ -42,9 +42,7 @@ export function explodeAttributeUsageValue(
   return stored ? [stored] : [];
 }
 
-export function joinSuggestionListForDisplay(
-  items: string[] | null | undefined,
-): string | null {
+export function joinSuggestionListForDisplay(items: string[] | null | undefined): string | null {
   if (!items?.length) return null;
   return items.join(', ');
 }

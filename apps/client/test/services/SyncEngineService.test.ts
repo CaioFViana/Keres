@@ -87,12 +87,7 @@ function installAdapter() {
     }
 
     let data = isPull ? pullResponse : method === 'POST' ? pushResponse : {};
-    if (
-      !isPull &&
-      method === 'POST' &&
-      echoPushApplied &&
-      Array.isArray(body)
-    ) {
+    if (!isPull && method === 'POST' && echoPushApplied && Array.isArray(body)) {
       data = {
         ...pushResponse,
         processedUpdates: body.length,

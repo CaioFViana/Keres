@@ -74,14 +74,6 @@ export interface EntityStoreConfig<TKey extends string, TEntity, TService> {
   changeEvent?: string;
   defaultSort?: string | null;
   defaultSortDirection?: SortDirection;
-  /**
-   * Whether `setSearchTerm` refetches immediately.
-   *
-   * List screens debounce typing locally and drive the fetch from an effect watching
-   * the store's term, so refetching here too fires the query twice per keystroke-burst.
-   * Defaults to false; the stores that currently do it opt in explicitly.
-   */
-  fetchOnSearchTermChange?: boolean;
   errorMessages?: { fetch?: string; toggleFavorite?: string };
   /** Persists the filter/sort selection under this key, via AsyncStorage. */
   persistKey?: string;
@@ -139,6 +131,12 @@ export function createEntityStore<
 
   const creator: StateCreator<Store> = (set, get) => {
     const setPartial = (partial: Record<string, unknown>) => set(partial as Partial<Store>);
+    // Bumped on every fetch (and on reset) so a slower request cannot overwrite a newer
+    // one, or land rows after the user has already left the story.
+    let fetchGeneration = 0;
+
+    const isCurrentFetch = (generation: number, requestedStoryId: string) =>
+      generation === fetchGeneration && get().storyId === requestedStoryId;
 
     const runFetch = async (): Promise<void> => {
       const state = get() as Store;
@@ -149,6 +147,8 @@ export function createEntityStore<
         return;
       }
 
+      const generation = ++fetchGeneration;
+      const requestedStoryId = storyId;
       setPartial({ loading: true, error: null });
       try {
         const localUserId = useUserSettingsStore.getState().userId;
@@ -157,10 +157,10 @@ export function createEntityStore<
           config.favoriteEntityType &&
           localUserId &&
           favoriteService &&
-          (await favoriteService.getBehavior(storyId)) !== 'global'
+          (await favoriteService.getBehavior(requestedStoryId)) !== 'global'
         );
         let entities = await config.fetchEntities(service, {
-          storyId,
+          storyId: requestedStoryId,
           searchTerm: state.searchTerm,
           activeFilterTags: state.activeFilterTags,
           favoriteFilterState: individualFavorites ? 'all' : state.favoriteFilterState,
@@ -168,9 +168,12 @@ export function createEntityStore<
           sortDirection: state.sortDirection,
           advancedSearchCriteria: state.advancedSearchCriteria,
         });
+        if (!isCurrentFetch(generation, requestedStoryId)) {
+          return;
+        }
         if (individualFavorites && favoriteService && localUserId && config.favoriteEntityType) {
           entities = (await favoriteService.decorateEntities(
-            storyId,
+            requestedStoryId,
             config.favoriteEntityType,
             localUserId,
             entities as (TEntity & { isFavorite: boolean })[],
@@ -182,8 +185,14 @@ export function createEntityStore<
             );
           }
         }
+        if (!isCurrentFetch(generation, requestedStoryId)) {
+          return;
+        }
         setPartial({ [collectionKey]: entities, loading: false });
       } catch (err) {
+        if (!isCurrentFetch(generation, requestedStoryId)) {
+          return;
+        }
         console.error(`Failed to fetch ${label}:`, err);
         setPartial({
           error: config.errorMessages?.fetch ?? `Failed to load ${label}.`,
@@ -263,11 +272,7 @@ export function createEntityStore<
       },
 
       setSearchTerm: (term: string) => {
-        if (config.fetchOnSearchTermChange) {
-          setAndRefetch({ searchTerm: term });
-        } else {
-          setPartial({ searchTerm: term });
-        }
+        setPartial({ searchTerm: term });
       },
 
       setFilterTags: (tagIds: string[]) => setAndRefetch({ activeFilterTags: tagIds }),
@@ -280,7 +285,10 @@ export function createEntityStore<
 
       toggleFavorite,
 
-      resetStore: () => setPartial(defaultState),
+      resetStore: () => {
+        fetchGeneration += 1;
+        setPartial(defaultState);
+      },
 
       ...config.extraActions?.({
         get: () => get() as EntityStore<TKey, TEntity, TService>,

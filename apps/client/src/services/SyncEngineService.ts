@@ -720,14 +720,8 @@ export class SyncEngineService {
             break;
           }
 
-          if (
-            update.entity === 'Story' &&
-            update.type === 'create' &&
-            update.id !== this.storyId
-          ) {
-            console.warn(
-              `Ignoring Story create for ${update.id} while syncing ${this.storyId}.`,
-            );
+          if (update.entity === 'Story' && update.type === 'create' && update.id !== this.storyId) {
+            console.warn(`Ignoring Story create for ${update.id} while syncing ${this.storyId}.`);
             await this.recordRemoteOperationLocally(rawUpdate);
             markRemoteOperationApplied(rawUpdate);
             continue;
@@ -1030,9 +1024,7 @@ export class SyncEngineService {
       if (prepared.length === 0) break;
 
       if (chunk === 0) {
-        console.log(
-          `Pushing local operations for story ${this.storyId} to server...`,
-        );
+        console.log(`Pushing local operations for story ${this.storyId} to server...`);
       }
 
       const pushResponse = await this.client.post<SyncPushResult>(

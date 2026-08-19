@@ -177,7 +177,11 @@ export function TiersPage() {
                         <button type="button" onClick={() => startEdit(t)}>
                           Edit
                         </button>
-                        <button type="button" className="button-danger" onClick={() => void remove(t)}>
+                        <button
+                          type="button"
+                          className="button-danger"
+                          onClick={() => void remove(t)}
+                        >
                           Delete
                         </button>
                       </div>

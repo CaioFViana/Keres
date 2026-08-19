@@ -1,9 +1,4 @@
-import {
-  apiClient,
-  clearLocalSession,
-  setStoredUsername,
-  setToken,
-} from './apiClient';
+import { apiClient, clearLocalSession, setStoredUsername, setToken } from './apiClient';
 
 export interface LoginResult {
   userId: string;

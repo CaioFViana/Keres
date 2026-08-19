@@ -262,7 +262,7 @@ describe('filter and sort setters', () => {
     expect(fetchEntities).toHaveBeenCalledTimes(1);
   });
 
-  it('does not refetch on every keystroke by default, since the screen debounces', async () => {
+  it('does not refetch on every keystroke, since the screen debounces', async () => {
     const { store, fetchEntities } = readyStore();
 
     store.getState().setSearchTerm('an');
@@ -270,15 +270,6 @@ describe('filter and sort setters', () => {
 
     expect(store.getState().searchTerm).toBe('an');
     expect(fetchEntities).not.toHaveBeenCalled();
-  });
-
-  it('refetches on search when the store opts in', async () => {
-    const { store, fetchEntities } = readyStore({ fetchOnSearchTermChange: true } as any);
-
-    store.getState().setSearchTerm('an');
-    await flush();
-
-    expect(fetchEntities).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -382,6 +373,62 @@ describe('toggleFavorite', () => {
     await store.getState().toggleFavorite('a', true);
 
     expect(mockFavoriteService.setFavorite).not.toHaveBeenCalled();
+  });
+});
+
+describe('overlapping fetches', () => {
+  it('keeps only the latest result when two fetches overlap on the same story', async () => {
+    let resolveFirst!: (value: Tag[]) => void;
+    const first = new Promise<Tag[]>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const { store, fetchEntities } = readyStore();
+    fetchEntities.mockReturnValueOnce(first);
+    fetchEntities.mockResolvedValueOnce([tag('second')]);
+
+    const pendingFirst = (store.getState() as any).fetchTags();
+    const pendingSecond = (store.getState() as any).fetchTags();
+    resolveFirst([tag('first')]);
+    await pendingFirst;
+    await pendingSecond;
+
+    expect((store.getState() as any).tags).toEqual([tag('second')]);
+  });
+
+  it('discards a fetch that finishes after the story has changed', async () => {
+    let resolveFirst!: (value: Tag[]) => void;
+    const first = new Promise<Tag[]>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const { store, fetchEntities } = readyStore();
+    fetchEntities.mockReturnValueOnce(first);
+    fetchEntities.mockResolvedValueOnce([tag('new')]);
+
+    const pendingFirst = (store.getState() as any).fetchTags();
+    store.getState().setDbAndStoryId(fakeDb, 'story-2');
+    const pendingSecond = (store.getState() as any).fetchTags();
+    resolveFirst([tag('old')]);
+    await pendingFirst;
+    await pendingSecond;
+
+    expect((store.getState() as any).tags).toEqual([tag('new')]);
+  });
+
+  it('does not apply rows or an error after the store is reset', async () => {
+    let rejectFetch!: (error: Error) => void;
+    const delayed = new Promise<Tag[]>((_, reject) => {
+      rejectFetch = reject;
+    });
+    const { store, fetchEntities } = readyStore();
+    fetchEntities.mockReturnValueOnce(delayed);
+
+    const pending = (store.getState() as any).fetchTags();
+    store.getState().resetStore();
+    rejectFetch(new Error('stale'));
+    await pending;
+
+    expect((store.getState() as any).tags).toEqual([]);
+    expect(store.getState()).toMatchObject({ loading: false, error: null, storyId: null });
   });
 });
 

@@ -78,7 +78,11 @@ export function toEntityColumns(
   const normalized: Record<string, any> = {};
 
   for (const [key, value] of Object.entries(values)) {
-    if (PROTECTED_FIELDS.has(key) || PROTECTED_BY_ENTITY[entityType]?.has(key) || !columns.has(key)) {
+    if (
+      PROTECTED_FIELDS.has(key) ||
+      PROTECTED_BY_ENTITY[entityType]?.has(key) ||
+      !columns.has(key)
+    ) {
       continue;
     }
     if (DATE_FIELDS.has(key)) {

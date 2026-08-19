@@ -11,6 +11,7 @@ import { useConnectivityStore } from '../../src/state/connectivityStore';
 import { useNotificationStore } from '../../src/state/notificationStore';
 import { useSyncConflictStore } from '../../src/state/syncConflictStore';
 import { useTagStore } from '../../src/state/tagStore';
+import { useWorldRuleStore } from '../../src/state/worldRuleStore';
 import { resetAllClientStores } from '../../src/state/resetAllClientStores';
 
 /**
@@ -36,6 +37,7 @@ describe('resetAllClientStores', () => {
   it.each([
     ['chapters', useChapterStore],
     ['tags', useTagStore],
+    ['worldRules', useWorldRuleStore],
   ])('resets the %s store too', (_label, store) => {
     store.getState().setDbAndStoryId({} as never, 'story-1');
 

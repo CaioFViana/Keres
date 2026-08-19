@@ -75,16 +75,13 @@ describe('useStoryRole', () => {
     ['owner', true, true],
     ['writer', true, false],
     ['reader', false, false],
-  ] as const)(
-    'reports %s on a linked story',
-    async (myRole, canEdit, canManageStoryPolicy) => {
-      await seedStory({ serverId: 'server-1', myRole });
+  ] as const)('reports %s on a linked story', async (myRole, canEdit, canManageStoryPolicy) => {
+    await seedStory({ serverId: 'server-1', myRole });
 
-      const { result } = await renderStoryRole();
+    const { result } = await renderStoryRole();
 
-      expect(result.current).toMatchObject({ role: myRole, canEdit, canManageStoryPolicy });
-    },
-  );
+    expect(result.current).toMatchObject({ role: myRole, canEdit, canManageStoryPolicy });
+  });
 
   it('fails closed while the role of a linked story has not resolved', async () => {
     await seedStory({ serverId: 'server-1', myRole: null });

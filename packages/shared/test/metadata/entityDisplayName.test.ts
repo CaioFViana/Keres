@@ -3,9 +3,7 @@ import { getSimpleDisplayName } from '../../metadata/entityDisplayName';
 
 describe('getSimpleDisplayName', () => {
   it('uses Character.name even when title is also set', () => {
-    expect(
-      getSimpleDisplayName('Character', { name: 'Keres', title: 'Lady' }),
-    ).toBe('Keres');
+    expect(getSimpleDisplayName('Character', { name: 'Keres', title: 'Lady' })).toBe('Keres');
   });
 
   it('falls back Gallery title to fileName', () => {
@@ -20,9 +18,9 @@ describe('getSimpleDisplayName', () => {
 
   it('snippets Comment text and uses Effect trigger/type', () => {
     expect(getSimpleDisplayName('Comment', { commentText: 'Hello world' })).toBe('Hello world');
-    expect(getSimpleDisplayName('Effect', { triggerName: 'door_open', effectType: 'triggerSet' })).toBe(
-      'door_open',
-    );
+    expect(
+      getSimpleDisplayName('Effect', { triggerName: 'door_open', effectType: 'triggerSet' }),
+    ).toBe('door_open');
     expect(getSimpleDisplayName('Effect', { effectType: 'itemGrant' })).toBe('itemGrant');
   });
 

@@ -52,9 +52,7 @@ function labelOrId(map: NameMap, entityType: string, id: string | null): string 
 }
 
 /** Tables that expose a single primary display column (Gallery handled separately). */
-const SIMPLE_TABLES: Partial<
-  Record<string, { table: any; column: string }>
-> = {
+const SIMPLE_TABLES: Partial<Record<string, { table: any; column: string }>> = {
   Character: { table: characters, column: 'name' },
   Location: { table: locations, column: 'name' },
   Item: { table: items, column: 'name' },
@@ -68,7 +66,9 @@ const SIMPLE_TABLES: Partial<
   StorySchemaField: { table: storySchemaFields, column: 'name' },
 };
 
-async function resolveSimpleNames(refs: Array<{ entityType: string; id: string }>): Promise<NameMap> {
+async function resolveSimpleNames(
+  refs: Array<{ entityType: string; id: string }>,
+): Promise<NameMap> {
   const idsByType = new Map<string, Set<string>>();
   for (const ref of refs) {
     if (!ref.entityType || !ref.id) continue;
@@ -148,7 +148,8 @@ export async function enrichDeletedDisplayNames(
         }
         break;
       case 'CharacterScene':
-        if (asId(r.characterId)) refs.push({ entityType: 'Character', id: r.characterId as string });
+        if (asId(r.characterId))
+          refs.push({ entityType: 'Character', id: r.characterId as string });
         if (asId(r.sceneId)) refs.push({ entityType: 'Scene', id: r.sceneId as string });
         break;
       case 'ItemJourney':
@@ -405,7 +406,10 @@ async function loadEntityRows(
     [...idsByType.entries()].map(async ([entityType, ids]) => {
       const table = ENTITY_TABLES[entityType];
       if (!table) return;
-      const rows = await db.select().from(table).where(inArray(table.id, [...ids]));
+      const rows = await db
+        .select()
+        .from(table)
+        .where(inArray(table.id, [...ids]));
       for (const row of rows as Array<{ id: string }>) {
         result.set(nameKey(entityType, row.id), row as unknown as Record<string, unknown>);
       }

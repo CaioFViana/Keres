@@ -4,7 +4,7 @@
  */
 
 :root,
-[data-theme='light'] {
+[data-theme="light"] {
   --color-primary: #6200ee;
   --color-primary-variant: #3700b3;
   --color-primary-hover: #4b00c4;
@@ -35,7 +35,7 @@
   --shadow-login: 0 2px 12px var(--color-shadow);
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   --color-primary: #bb86fc;
   --color-primary-variant: #3700b3;
   --color-primary-hover: #d0bcff;
@@ -67,7 +67,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
 }

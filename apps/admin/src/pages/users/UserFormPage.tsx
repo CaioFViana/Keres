@@ -215,11 +215,7 @@ export function UserFormPage() {
         </label>
         {tierError && <p className="error-text">{tierError}</p>}
         <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={isAdmin}
-            onChange={(e) => setIsAdmin(e.target.checked)}
-          />
+          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
           Admin access
         </label>
         {error && <p className="error-text">{error}</p>}

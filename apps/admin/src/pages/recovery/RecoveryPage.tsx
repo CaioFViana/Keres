@@ -67,11 +67,7 @@ export function RecoveryPage() {
 
   const storyCell = (item: DeletedItem) => {
     if (item.storyTitle) {
-      return (
-        <span title={item.storyId ?? undefined}>
-          {item.storyTitle}
-        </span>
-      );
+      return <span title={item.storyId ?? undefined}>{item.storyTitle}</span>;
     }
     return item.storyId ?? '-';
   };

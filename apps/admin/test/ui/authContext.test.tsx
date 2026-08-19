@@ -15,9 +15,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../src/api/apiClient', async () => {
-  const actual = await vi.importActual<typeof import('../../src/api/apiClient')>(
-    '../../src/api/apiClient',
-  );
+  const actual =
+    await vi.importActual<typeof import('../../src/api/apiClient')>('../../src/api/apiClient');
   return {
     ...actual,
     getToken: mocks.getToken,

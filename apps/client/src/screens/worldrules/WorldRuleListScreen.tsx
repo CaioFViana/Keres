@@ -1,4 +1,4 @@
-import { worldRuleStore } from '@/src/state/worldRuleStore';
+import { useWorldRuleStore } from '@/src/state/worldRuleStore';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CompositeNavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -62,7 +62,7 @@ const WorldRulesScreen = () => {
     setAdvancedSearchCriteria,
     toggleFavorite,
   } = useEntityListScreen({
-    useStore: worldRuleStore,
+    useStore: useWorldRuleStore,
     collectionKey: 'worldRules',
     changeEvent: 'worldrule_changed',
   });

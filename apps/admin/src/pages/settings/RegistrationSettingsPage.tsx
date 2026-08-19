@@ -21,7 +21,11 @@ export function RegistrationSettingsPage() {
   }, []);
 
   if (!settings) {
-    return <p className="loading-text">{error ? <span className="error-text">{error}</span> : 'Loading...'}</p>;
+    return (
+      <p className="loading-text">
+        {error ? <span className="error-text">{error}</span> : 'Loading...'}
+      </p>
+    );
   }
 
   const save = async (e: React.FormEvent) => {

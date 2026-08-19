@@ -7,11 +7,19 @@ jest.mock('../../src/services/FriendshipService', () => ({ createFriendshipServi
 jest.mock('../../src/services/SyncEngineService', () => ({
   SyncEngineService: { getInstance: jest.fn() },
 }));
+jest.mock('../../src/services/storymanagement/StoryService', () => ({
+  createStoryService: jest.fn(),
+}));
+jest.mock('../../src/state/storyListStore', () => ({
+  useStoryListStore: { getState: jest.fn() },
+}));
 
 import { createKeresAxiosInstance } from '../../src/services/apiClient';
 import { createFriendshipService } from '../../src/services/FriendshipService';
 import { ServerRealtimeService } from '../../src/services/ServerRealtimeService';
 import { SyncEngineService } from '../../src/services/SyncEngineService';
+import { createStoryService } from '../../src/services/storymanagement/StoryService';
+import { useStoryListStore } from '../../src/state/storyListStore';
 
 const mockClient = {
   post: jest.fn(),
@@ -19,7 +27,13 @@ const mockClient = {
   setTokenProvider: jest.fn(),
 };
 const mockFriendshipService = { syncFriendshipsWithServer: jest.fn() };
-const mockSyncEngine = { requestSync: jest.fn() };
+const mockSyncEngine = {
+  requestSync: jest.fn(),
+  fetchServerStoryPreviews: jest.fn(),
+  downloadAndImportStory: jest.fn(),
+};
+const mockStoryService = {};
+const mockFetchStories = jest.fn();
 
 class MockWebSocket {
   static OPEN = 1;
@@ -51,6 +65,11 @@ beforeEach(() => {
   mockFriendshipService.syncFriendshipsWithServer.mockResolvedValue(undefined);
   (createFriendshipService as jest.Mock).mockReturnValue(mockFriendshipService);
   (SyncEngineService.getInstance as jest.Mock).mockReturnValue(mockSyncEngine);
+  mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([]);
+  mockSyncEngine.downloadAndImportStory.mockResolvedValue(undefined);
+  (createStoryService as jest.Mock).mockReturnValue(mockStoryService);
+  mockFetchStories.mockResolvedValue(undefined);
+  (useStoryListStore.getState as jest.Mock).mockReturnValue({ fetchStories: mockFetchStories });
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -103,4 +122,70 @@ it('does not request a sync on connect when not subscribed to any story yet', as
 
   expect(mockSyncEngine.requestSync).not.toHaveBeenCalled();
   await service.stop();
+});
+
+/**
+ * Regressão: uma história nova (ex.: alguém te adicionou como colaborador) chegava por este
+ * evento, era baixada e salva no banco local, mas `StorySelectionScreen` continuava mostrando a
+ * lista antiga - nada avisava `useStoryListStore` que havia algo novo pra buscar.
+ */
+describe('stories.catalog-changed', () => {
+  it('downloads only the stories missing locally, then refreshes the story list store', async () => {
+    const mockDb = {
+      query: {
+        stories: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'existing' }]),
+        },
+      },
+    };
+    mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([
+      { storyId: 'existing', role: 'owner' },
+      { storyId: 'new-story', role: 'reader' },
+    ]);
+
+    const service = new ServerRealtimeService(mockDb as any, server, 'me');
+    service.start('existing');
+    await flush();
+
+    const socket = MockWebSocket.instances[0];
+    socket.onmessage?.({ data: JSON.stringify({ type: 'stories.catalog-changed' }) });
+    await flush();
+
+    expect(mockSyncEngine.downloadAndImportStory).toHaveBeenCalledTimes(1);
+    expect(mockSyncEngine.downloadAndImportStory).toHaveBeenCalledWith(
+      'server',
+      'new-story',
+      'me',
+      'reader',
+    );
+    expect(mockFetchStories).toHaveBeenCalledWith(mockStoryService);
+
+    await service.stop();
+  });
+
+  it('does not refresh the story list when there is nothing new to download', async () => {
+    const mockDb = {
+      query: {
+        stories: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'existing' }]),
+        },
+      },
+    };
+    mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([
+      { storyId: 'existing', role: 'owner' },
+    ]);
+
+    const service = new ServerRealtimeService(mockDb as any, server, 'me');
+    service.start('existing');
+    await flush();
+
+    const socket = MockWebSocket.instances[0];
+    socket.onmessage?.({ data: JSON.stringify({ type: 'stories.catalog-changed' }) });
+    await flush();
+
+    expect(mockSyncEngine.downloadAndImportStory).not.toHaveBeenCalled();
+    expect(mockFetchStories).not.toHaveBeenCalled();
+
+    await service.stop();
+  });
 });

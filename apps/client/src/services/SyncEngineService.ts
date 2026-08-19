@@ -422,19 +422,22 @@ export class SyncEngineService {
     tempClient.setTokenProvider(authTokenManager);
     tempClient.setActiveServer(server);
 
+    // Título só existe depois do download; até lá a notificação de erro cai no id mesmo.
+    let storyTitle = storyId;
     try {
       const exportUrl = `/stories/${storyId}/export`;
       console.log(`Attempting to download story ${storyId} from ${server.url}${exportUrl}`);
       const response = await tempClient.get(exportUrl);
       const fullStoryData = response.data;
+      storyTitle = fullStoryData?.story?.title || storyId;
 
       const storyService = createStoryService(this._db);
       await storyService.importFullStory(userId, fullStoryData, queriedServerId, role);
-      console.log(`Successfully downloaded and imported story ${storyId}`);
-      showNotification(`Story '${storyId}' downloaded and imported!`, 'success');
+      console.log(`Successfully downloaded and imported story ${storyId} (${storyTitle})`);
+      showNotification(i18n.t('story_downloaded_and_imported', { title: storyTitle }), 'success');
     } catch (error) {
       console.log(`Error downloading or importing story ${storyId} from ${server.url}:`, error);
-      showNotification(`Failed to download story '${storyId}'.`, 'error');
+      showNotification(i18n.t('failed_to_download_story_named', { title: storyTitle }), 'error');
     }
   }
 

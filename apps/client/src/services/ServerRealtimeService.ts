@@ -1,9 +1,11 @@
 import { AppDrizzleClient } from '../db';
 import { ServerSelect } from '../db/schema';
+import { useStoryListStore } from '../state/storyListStore';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
 import { SyncEngineService } from './SyncEngineService';
+import { createStoryService } from './storymanagement/StoryService';
 
 const RETRY_MS = 5_000;
 
@@ -136,6 +138,7 @@ export class ServerRealtimeService {
       const previews = await engine.fetchServerStoryPreviews(this.server);
       const localStories = await this.db.query.stories.findMany({ columns: { id: true } });
       const localIds = new Set(localStories.map((story) => story.id));
+      let downloadedAny = false;
       for (const preview of previews) {
         if (!localIds.has(preview.storyId)) {
           await engine.downloadAndImportStory(
@@ -144,7 +147,14 @@ export class ServerRealtimeService {
             this.server.idUser,
             preview.role,
           );
+          downloadedAny = true;
         }
+      }
+      // Sem isto, uma história nova chegando por este evento (ex.: alguém te adicionou como
+      // colaborador) fica salva no banco local mas invisível em `StorySelectionScreen`, que lê
+      // `useStoryListStore` - a lista só reflete o banco quando algo pede um `fetchStories` novo.
+      if (downloadedAny) {
+        await useStoryListStore.getState().fetchStories(createStoryService(this.db));
       }
     }
   }

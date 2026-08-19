@@ -1,5 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import { and, eq } from 'drizzle-orm';
+import { BCRYPT_COST } from '../config/bcrypt';
 import { db } from '../db';
 import { users, userRecoveryCodes } from '../db/schema';
 import { createAttemptLimiter } from '../utils/rateLimiter';
@@ -46,7 +47,7 @@ export class RecoveryCodeService {
     const rows = await Promise.all(
       plainCodes.map(async (code) => ({
         userId,
-        codeHash: await bcrypt.hash(code, 12),
+        codeHash: await bcrypt.hash(code, BCRYPT_COST),
       })),
     );
 
@@ -105,7 +106,7 @@ export class RecoveryCodeService {
       throw new InvalidRecoveryCodeError();
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_COST);
     await db.transaction(async (tx) => {
       await tx
         .update(userRecoveryCodes)

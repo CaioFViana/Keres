@@ -1,6 +1,7 @@
 import { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
 import * as bcrypt from 'bcrypt';
 import { eq, sql } from 'drizzle-orm';
+import { BCRYPT_COST } from '../config/bcrypt';
 import { db } from '../db'; // Assuming 'db' is exported from '../db/index.ts'
 import { users } from '../db/schema/tables/users'; // Import the users schema
 import { recoveryCodeService } from './RecoveryCodeService';
@@ -108,7 +109,7 @@ export class UserService {
       throw new InvalidCurrentPasswordError();
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_COST);
     await db
       .update(users)
       .set({ password: hashedPassword, updatedAt: new Date() })

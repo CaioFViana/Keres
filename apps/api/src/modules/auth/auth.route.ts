@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { and, eq } from 'drizzle-orm';
 import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
+import { BCRYPT_COST } from '../../config/bcrypt';
 import { env } from '../../config/env';
 import { jwtRefresh } from '../../config/jwt';
 import { db } from '../../db';
@@ -169,7 +170,7 @@ export const authRoutes = new Elysia()
         return { message: 'User already exists' };
       }
 
-      const hashedPassword = await bcrypt.hash(password, 12);
+      const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
       const newUserId = ulid();
       const { defaultTierId } = await registrationSettingsService.getOrCreate();
 

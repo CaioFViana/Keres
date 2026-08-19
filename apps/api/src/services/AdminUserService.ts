@@ -2,6 +2,7 @@ import { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/sha
 import * as bcrypt from 'bcrypt';
 import { and, asc, count, eq, ilike, or } from 'drizzle-orm';
 import { ulid } from 'ulid';
+import { BCRYPT_COST } from '../config/bcrypt';
 import { env } from '../config/env';
 import { db } from '../db';
 import { users } from '../db/schema';
@@ -121,7 +122,7 @@ export class AdminUserService {
       throw new UsernameAlreadyTakenError();
     }
 
-    const hashedPassword = await bcrypt.hash(input.password, 12);
+    const hashedPassword = await bcrypt.hash(input.password, BCRYPT_COST);
     const id = ulid();
     const desiredTag = input.tag ?? input.username;
 

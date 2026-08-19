@@ -136,29 +136,38 @@ a:hover {
 .app-shell {
   display: flex;
   min-height: 100vh;
+  align-items: flex-start;
 }
 
 .sidebar {
+  position: sticky;
+  top: 0;
   width: 220px;
   flex-shrink: 0;
+  height: 100vh;
   background: var(--color-sidebar-bg);
   color: var(--color-sidebar-text);
   display: flex;
   flex-direction: column;
   padding: 1.5rem 1rem;
   gap: 0.25rem;
+  overflow: hidden;
 }
 
 .sidebar h2 {
   font-size: 1.1rem;
   margin: 0 0 1rem;
   color: var(--color-sidebar-text);
+  flex-shrink: 0;
 }
 
 .sidebar-links {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .sidebar a {
@@ -177,6 +186,7 @@ a:hover {
 
 .sidebar-footer {
   margin-top: auto;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -243,7 +253,9 @@ section {
 
 .toolbar {
   display: flex;
-  align-items: center;
+  /* Labels stack caption above the control; align to the bottom so Search
+     sits on the same baseline as the inputs/selects, not the captions. */
+  align-items: flex-end;
   gap: 0.75rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
@@ -255,6 +267,11 @@ section {
   gap: 0.2rem;
   font-size: 0.8rem;
   color: var(--color-text-secondary);
+}
+
+.toolbar .checkbox-label {
+  /* Match roughly the vertical padding of adjacent inputs. */
+  min-height: 2.15rem;
 }
 
 .checkbox-label {
@@ -535,11 +552,21 @@ button.button-danger:hover {
 @media (max-width: 800px) {
   .app-shell {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .sidebar {
+    position: static;
     width: 100%;
+    height: auto;
+    max-height: none;
     padding: 1rem;
+    overflow: visible;
+  }
+
+  .sidebar-links {
+    flex: none;
+    overflow: visible;
   }
 
   .sidebar.collapsed .sidebar-links,

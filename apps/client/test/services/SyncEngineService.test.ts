@@ -617,6 +617,64 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     expect(JSON.parse(log!.payload).version).toBe(3);
   });
 
+  /**
+   * Regressão: `changedFields` sozinho só diz "alguém mais mexeu nisso", não "o valor que eu
+   * quero escrever é diferente do que já está lá". Duas pessoas renomeando pro mesmo texto (ou
+   * uma reenviando uma operação que já tinha ido) fazia o campo aparecer como disputado mesmo
+   * sem nada de fato pra decidir - um conflito de dois botões que só reforçava um valor já
+   * correto.
+   */
+  it('merges silently even when the changed field coincidentally ends up with the same value', async () => {
+    await seedStory({ lastOperationLog: 1 });
+    await seedLocalCharacter();
+    const operation = await seedPendingOperation({
+      operationType: 'update',
+      payload: JSON.stringify({ id: 'char-local', title: 'Título Novo do Servidor', version: 1 }),
+    });
+    pushResponse = {
+      message: 'ok',
+      processedUpdates: 1,
+      serverMaxOperationVersion: 5,
+      applied: [],
+      conflicts: [
+        {
+          entity: 'Character',
+          entityId: 'char-local',
+          type: 'update',
+          reason: 'version_conflict',
+          message: 'stale',
+          clientVersion: 1,
+          serverVersion: 2,
+          serverEntity: {
+            id: 'char-local',
+            storyId: STORY_ID,
+            name: 'Nyx',
+            title: 'Título Novo do Servidor',
+            motivation: 'Old Motivation',
+            createdAt: NOW.toISOString(),
+            updatedAt: NOW.toISOString(),
+            version: 2,
+            isDeleted: false,
+            deletedAt: null,
+          },
+          changedFields: ['title'],
+        },
+      ],
+    };
+
+    await runOneCycle();
+
+    expect(await database.db.query.syncConflicts.findMany()).toEqual([]);
+    expect(await readCharacter()).toMatchObject({ title: 'Título Novo do Servidor', version: 2 });
+
+    const log = await database.db.query.operationLogs.findFirst({
+      where: eq(schema.operationLogs.id, operation.id),
+    });
+    expect(log!.isSynced).toBe(false);
+    expect(log!.conflictState).toBeNull();
+    expect(JSON.parse(log!.payload).version).toBe(3);
+  });
+
   it('still opens a conflict when the same field was edited on both sides', async () => {
     await seedStory({ lastOperationLog: 1 });
     await seedLocalCharacter();

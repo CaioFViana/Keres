@@ -512,18 +512,25 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // Inclui o caso `deleted_on_server`: mandar `isDeleted: false` restaura a entidade
         // no servidor junto com os valores que o usuário escreveu.
         const restoreFields = conflict.isDeletedOnServer ? { isDeleted: false } : {};
+        const nextValues = { ...values, ...restoreFields };
         await writeEntity(
           conflict.entityType,
           conflict.entityId,
-          { ...values, ...restoreFields, deletedAt: null },
+          { ...nextValues, deletedAt: null },
           baseVersion + 1,
         );
-        await recordRebasedOperation(
-          conflict,
-          'update',
-          { ...values, ...restoreFields },
-          baseVersion,
+        // Só reenvia os campos que realmente divergem do que o servidor tem agora. Sem isto,
+        // "manter o meu" reenviava o valor inteiro mesmo quando ele já batia com o que está
+        // lá (ex.: os dois lados renomearam pra o mesmo texto) - uma operação nova no log
+        // sem nenhuma informação de fato nova, só ruído.
+        const changedValues = Object.fromEntries(
+          Object.entries(nextValues).filter(([field, value]) =>
+            valuesDiffer(value, conflict.serverValues?.[field]),
+          ),
         );
+        if (Object.keys(changedValues).length > 0) {
+          await recordRebasedOperation(conflict, 'update', changedValues, baseVersion);
+        }
       }
 
       await closeConflict(conflictId, chosenValues ? 'merge' : 'keep_local');

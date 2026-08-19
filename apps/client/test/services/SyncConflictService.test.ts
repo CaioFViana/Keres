@@ -212,6 +212,48 @@ describe('resolveKeepLocal', () => {
   });
 
   /**
+   * Regressão: se o valor que o usuário quer manter já é exatamente o que o servidor tem
+   * (ex.: os dois lados renomearam pro mesmo texto, ou uma operação atrasada reenviando algo
+   * que já foi aplicado), reenviar mesmo assim só cria uma entrada nova no log sem nenhuma
+   * informação de fato nova. A versão local ainda precisa avançar (pra não conflitar de novo
+   * na próxima edição), só a operação nova é que não deveria existir.
+   */
+  it('does not queue an operation when the kept value already matches the server', async () => {
+    await seedCharacter({ name: 'Original' });
+    await service.recordConflict(
+      baseConflict({
+        localValues: { name: 'Mesmo Nome' },
+        serverValues: { name: 'Mesmo Nome' },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepLocal(pending.id);
+
+    expect(await pushableOperations()).toEqual([]);
+    expect(await readCharacter()).toMatchObject({ name: 'Mesmo Nome', version: 4 });
+  });
+
+  it('only resends the fields that genuinely differ from the server, not the whole value set', async () => {
+    await seedCharacter({ name: 'Original' });
+    await service.recordConflict(
+      baseConflict({
+        localValues: { name: 'Mesmo Nome', title: 'Meu Título Novo' },
+        serverValues: { name: 'Mesmo Nome', title: 'Título Velho' },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepLocal(pending.id);
+
+    const [queued] = await pushableOperations();
+    expect(JSON.parse(queued.payload)).toMatchObject({ title: 'Meu Título Novo' });
+    expect(JSON.parse(queued.payload)).not.toHaveProperty('name');
+  });
+
+  /**
    * Rebasear é o que faz "manter o meu" funcionar: a edição é reenviada apoiada na versão que
    * o servidor tem agora, então passa na checagem de concorrência em vez de conflitar de novo.
    */

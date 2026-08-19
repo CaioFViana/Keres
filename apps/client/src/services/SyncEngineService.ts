@@ -1432,8 +1432,14 @@ export class SyncEngineService {
         first.serverEntity &&
         first.changedFields
       ) {
-        const contestedFields = Object.keys(localValues).filter((field) =>
-          first.changedFields!.includes(field),
+        // Um campo só é genuinamente disputado se (a) alguém mais mexeu nele desde a base do
+        // cliente E (b) o valor que o cliente quer escrever realmente diverge do que está lá
+        // agora - a segunda parte é o que faltava: pegar "changedFields" sozinho reconflita
+        // sempre que o valor final coincide por acaso (ex.: os dois lados renomearam pra o
+        // mesmo texto), mesmo não havendo nada de fato pra decidir. `findContestedFields` já
+        // faz a comparação de valor tolerante que o resto do sistema usa.
+        const contestedFields = findContestedFields(localValues, first.serverEntity).filter(
+          (field) => first.changedFields!.includes(field),
         );
         if (contestedFields.length === 0) {
           const mergeableValues: Record<string, any> = {};

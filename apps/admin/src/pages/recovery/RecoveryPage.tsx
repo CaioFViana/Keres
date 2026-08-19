@@ -11,6 +11,7 @@ export function RecoveryPage() {
   const [loading, setLoading] = useState(false);
 
   const [logStoryId, setLogStoryId] = useState('');
+  const [logSearchInput, setLogSearchInput] = useState('');
   const [logEntries, setLogEntries] = useState<OperationLogEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<OperationLogEntry | null>(null);
   const [logLoading, setLogLoading] = useState(false);
@@ -43,10 +44,15 @@ export function RecoveryPage() {
     }
   };
 
-  const searchLog = () => {
+  const searchLog = (e?: FormEvent) => {
+    e?.preventDefault();
     setLogLoading(true);
     setLogError(null);
-    RecoveryApiService.browseOperationLog({ storyId: logStoryId || undefined, pageSize: 50 })
+    RecoveryApiService.browseOperationLog({
+      storyId: logStoryId.trim() || undefined,
+      search: logSearchInput.trim() || undefined,
+      pageSize: 50,
+    })
       .then((res) => setLogEntries(res.items))
       .catch((err) => setLogError(err.message))
       .finally(() => setLogLoading(false));
@@ -157,21 +163,27 @@ export function RecoveryPage() {
 
       <section>
         <h2>Operation log</h2>
-        <div className="toolbar">
+        <form className="toolbar" onSubmit={searchLog}>
           <label>
             Story ID
             <input value={logStoryId} onChange={(e) => setLogStoryId(e.target.value)} />
           </label>
-          <button type="button" onClick={searchLog}>
+          <label>
             Search
-          </button>
-        </div>
+            <input
+              placeholder="Name, story, user…"
+              value={logSearchInput}
+              onChange={(e) => setLogSearchInput(e.target.value)}
+            />
+          </label>
+          <button type="submit">Search</button>
+        </form>
 
         {logError && <p className="error-text">{logError}</p>}
         {logLoading ? (
           <p className="loading-text">Loading...</p>
         ) : (
-          <div className="log-layout">
+          <div className={`log-layout${selectedEntry ? ' has-detail' : ''}`}>
             <div className="table-scroll">
               <table className="data-table">
                 <thead>
@@ -179,6 +191,8 @@ export function RecoveryPage() {
                     <th>When</th>
                     <th>Type</th>
                     <th>Entity</th>
+                    <th>Name</th>
+                    <th>Story</th>
                     <th>User</th>
                   </tr>
                 </thead>
@@ -195,15 +209,15 @@ export function RecoveryPage() {
                     >
                       <td>{new Date(entry.createdAt).toLocaleString()}</td>
                       <td>{entry.operationType}</td>
-                      <td>
-                        {entry.entityType}:{entry.entityId}
-                      </td>
-                      <td>{entry.userId}</td>
+                      <td>{entry.entityType}</td>
+                      <td>{entry.entityName ?? <span className="hint">{entry.entityId}</span>}</td>
+                      <td title={entry.storyId}>{entry.storyTitle ?? entry.storyId}</td>
+                      <td title={entry.userId}>{entry.username ?? entry.userId}</td>
                     </tr>
                   ))}
                   {logEntries.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="empty-state">
+                      <td colSpan={6} className="empty-state">
                         No entries. Search above.
                       </td>
                     </tr>
@@ -220,10 +234,19 @@ export function RecoveryPage() {
                   <dd>{selectedEntry.operationType}</dd>
                   <dt>Entity</dt>
                   <dd>
-                    {selectedEntry.entityType}:{selectedEntry.entityId}
+                    {selectedEntry.entityType}
+                    {selectedEntry.entityName ? ` · ${selectedEntry.entityName}` : ''}
+                  </dd>
+                  <dt>ID</dt>
+                  <dd className="mono-code">{selectedEntry.entityId}</dd>
+                  <dt>Story</dt>
+                  <dd title={selectedEntry.storyId}>
+                    {selectedEntry.storyTitle ?? selectedEntry.storyId}
                   </dd>
                   <dt>User</dt>
-                  <dd>{selectedEntry.userId}</dd>
+                  <dd title={selectedEntry.userId}>
+                    {selectedEntry.username ?? selectedEntry.userId}
+                  </dd>
                   <dt>Operation version</dt>
                   <dd>{selectedEntry.operationVersion}</dd>
                   <dt>Entity version</dt>

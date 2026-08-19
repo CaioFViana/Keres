@@ -99,6 +99,7 @@ export const adminRecoveryRoutes = new Elysia()
         to: t.Optional(t.String()),
         page: t.Optional(t.Numeric()),
         pageSize: t.Optional(t.Numeric()),
+        search: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Browse the operation log (paginated, filterable)',

@@ -15,11 +15,14 @@ export interface DeletedItem {
 export interface OperationLogEntry {
   id: string;
   storyId: string;
+  storyTitle: string | null;
   userId: string;
+  username: string | null;
   operationVersion: number;
   operationType: 'create' | 'update' | 'delete' | 'reorder';
   entityType: string;
   entityId: string;
+  entityName: string | null;
   payload: Record<string, unknown>;
   entityVersion: number | null;
   createdAt: string;
@@ -30,6 +33,7 @@ export interface OperationLogFilters {
   entityType?: string;
   userId?: string;
   operationType?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
 }

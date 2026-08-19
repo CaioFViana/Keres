@@ -191,7 +191,13 @@ describe('RecoveryApiService', () => {
 
   it('browses the operation log with pagination filters', async () => {
     mocks.get.mockResolvedValue({ data: { items: [], total: 0, page: 1, pageSize: 50 } });
-    const filters = { storyId: 'story-1', operationType: 'delete', page: 3, pageSize: 50 };
+    const filters = {
+      storyId: 'story-1',
+      operationType: 'delete',
+      search: 'ana',
+      page: 3,
+      pageSize: 50,
+    };
 
     const result = await RecoveryApiService.browseOperationLog(filters);
 

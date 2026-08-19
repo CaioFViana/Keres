@@ -4,6 +4,7 @@ import { db, withTransaction } from '../db';
 import { operationLog } from '../db/schema';
 import {
   enrichDeletedDisplayNames,
+  enrichOperationLogNames,
   type EnrichableDeletedRow,
 } from './AdminRecoveryDisplayNames';
 import type { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
@@ -174,18 +175,66 @@ export class AdminRecoveryService {
     if (filters.to) conditions.push(lte(operationLog.createdAt, filters.to));
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const [items, [{ total }]] = await Promise.all([
+    const search = filters.search?.trim();
+    const scanLimit = search ? 500 : filters.pageSize;
+    const scanOffset = search ? 0 : (filters.page - 1) * filters.pageSize;
+
+    const [rawItems, [{ total: sqlTotal }]] = await Promise.all([
       db
         .select()
         .from(operationLog)
         .where(where)
         .orderBy(desc(operationLog.createdAt))
-        .limit(filters.pageSize)
-        .offset((filters.page - 1) * filters.pageSize),
+        .limit(scanLimit)
+        .offset(scanOffset),
       db.select({ total: count() }).from(operationLog).where(where),
     ]);
 
-    return { items, total, page: filters.page, pageSize: filters.pageSize };
+    const enrichment = await enrichOperationLogNames(
+      rawItems.map((row) => ({
+        id: row.id,
+        entityType: row.entityType,
+        entityId: row.entityId,
+        storyId: row.storyId,
+        userId: row.userId,
+        payload: row.payload,
+      })),
+    );
+
+    const items = rawItems.map((row) => {
+      const extra = enrichment.get(row.id);
+      return {
+        ...row,
+        entityName: extra?.entityName ?? null,
+        storyTitle: extra?.storyTitle ?? null,
+        username: extra?.username ?? null,
+      };
+    });
+
+    if (!search) {
+      return { items, total: sqlTotal, page: filters.page, pageSize: filters.pageSize };
+    }
+
+    const q = search.toLowerCase();
+    const filtered = items.filter((item) => {
+      return (
+        (item.entityName?.toLowerCase().includes(q) ?? false) ||
+        (item.storyTitle?.toLowerCase().includes(q) ?? false) ||
+        (item.username?.toLowerCase().includes(q) ?? false) ||
+        item.entityType.toLowerCase().includes(q) ||
+        item.entityId.toLowerCase().includes(q) ||
+        item.userId.toLowerCase().includes(q) ||
+        item.storyId.toLowerCase().includes(q) ||
+        item.operationType.toLowerCase().includes(q)
+      );
+    });
+    const start = (filters.page - 1) * filters.pageSize;
+    return {
+      items: filtered.slice(start, start + filters.pageSize),
+      total: filtered.length,
+      page: filters.page,
+      pageSize: filters.pageSize,
+    };
   }
 }
 

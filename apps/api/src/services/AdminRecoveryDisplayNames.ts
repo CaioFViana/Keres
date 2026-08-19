@@ -2,18 +2,33 @@ import { getSimpleDisplayName } from '@keres/shared';
 import { inArray } from 'drizzle-orm';
 import { db } from '../db';
 import {
+  attributeValues,
   chapters,
+  characterRelations,
   characters,
-  choices,
+  characterScenes,
   choiceCheckGroups,
+  choiceChecks,
+  choices,
+  comments,
+  effects,
+  favorites,
   galleries,
+  galleryRelations,
+  itemJourneys,
   items,
+  locationRelations,
   locations,
+  noteRelations,
   notes,
   scenes,
+  seeAlsoRelations,
   stories,
   storySchemaFields,
+  suggestions,
+  tagRelations,
   tags,
+  users,
   worldRules,
 } from '../db/schema';
 
@@ -337,4 +352,128 @@ export async function enrichDeletedDisplayNames(
   }
 
   return { names, storyTitles };
+}
+
+const ENTITY_TABLES: Partial<Record<string, any>> = {
+  Character: characters,
+  Location: locations,
+  Item: items,
+  Tag: tags,
+  Scene: scenes,
+  Chapter: chapters,
+  Note: notes,
+  WorldRule: worldRules,
+  Story: stories,
+  Choice: choices,
+  StorySchemaField: storySchemaFields,
+  Suggestion: suggestions,
+  Gallery: galleries,
+  Comment: comments,
+  Effect: effects,
+  Favorite: favorites,
+  AttributeValue: attributeValues,
+  CharacterRelation: characterRelations,
+  LocationRelation: locationRelations,
+  CharacterScene: characterScenes,
+  ItemJourney: itemJourneys,
+  TagRelation: tagRelations,
+  NoteRelation: noteRelations,
+  GalleryRelation: galleryRelations,
+  SeeAlsoRelation: seeAlsoRelations,
+  ChoiceCheckGroup: choiceCheckGroups,
+  ChoiceCheck: choiceChecks,
+};
+
+function payloadAsRow(payload: unknown): Record<string, unknown> {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return {};
+  return payload as Record<string, unknown>;
+}
+
+async function loadEntityRows(
+  refs: Array<{ entityType: string; id: string }>,
+): Promise<Map<string, Record<string, unknown>>> {
+  const idsByType = new Map<string, Set<string>>();
+  for (const ref of refs) {
+    if (!ref.entityType || !ref.id) continue;
+    const set = idsByType.get(ref.entityType) ?? new Set<string>();
+    set.add(ref.id);
+    idsByType.set(ref.entityType, set);
+  }
+
+  const result = new Map<string, Record<string, unknown>>();
+  await Promise.all(
+    [...idsByType.entries()].map(async ([entityType, ids]) => {
+      const table = ENTITY_TABLES[entityType];
+      if (!table) return;
+      const rows = await db.select().from(table).where(inArray(table.id, [...ids]));
+      for (const row of rows as Array<{ id: string }>) {
+        result.set(nameKey(entityType, row.id), row as unknown as Record<string, unknown>);
+      }
+    }),
+  );
+  return result;
+}
+
+export interface OperationLogNameSource {
+  id: string;
+  entityType: string;
+  entityId: string;
+  storyId: string;
+  userId: string;
+  payload: unknown;
+}
+
+export interface OperationLogNameEnrichment {
+  entityName: string | null;
+  storyTitle: string | null;
+  username: string | null;
+}
+
+/**
+ * Same display-name pipeline as deleted-items, using the log payload plus the current
+ * (possibly tombstoned) entity row so deletes still resolve.
+ */
+export async function enrichOperationLogNames(
+  entries: OperationLogNameSource[],
+): Promise<Map<string, OperationLogNameEnrichment>> {
+  const refs = entries.map((e) => ({ entityType: e.entityType, id: e.entityId }));
+  const [dbRows, usernames] = await Promise.all([
+    loadEntityRows(refs),
+    (async () => {
+      const ids = [...new Set(entries.map((e) => e.userId).filter(Boolean))];
+      const map = new Map<string, string>();
+      if (ids.length === 0) return map;
+      const rows = await db
+        .select({ id: users.id, username: users.username })
+        .from(users)
+        .where(inArray(users.id, ids));
+      for (const row of rows) map.set(row.id, row.username);
+      return map;
+    })(),
+  ]);
+
+  const enrichable: EnrichableDeletedRow[] = entries.map((entry) => {
+    const key = nameKey(entry.entityType, entry.entityId);
+    const row = { ...(dbRows.get(key) ?? {}), ...payloadAsRow(entry.payload) };
+    return {
+      entityType: entry.entityType,
+      id: entry.entityId,
+      storyId: entry.storyId,
+      name: getSimpleDisplayName(entry.entityType, row),
+      row,
+    };
+  });
+
+  const { names, storyTitles } = await enrichDeletedDisplayNames(enrichable);
+  const result = new Map<string, OperationLogNameEnrichment>();
+  for (const entry of entries) {
+    const key = nameKey(entry.entityType, entry.entityId);
+    result.set(entry.id, {
+      entityName:
+        names.get(key) ?? getSimpleDisplayName(entry.entityType, payloadAsRow(entry.payload)),
+      storyTitle: storyTitles.get(entry.storyId) ?? null,
+      username: usernames.get(entry.userId) ?? null,
+    });
+  }
+  return result;
 }

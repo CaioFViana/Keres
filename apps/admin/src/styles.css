@@ -219,8 +219,8 @@ a:hover {
 .content {
   flex: 1;
   min-width: 0;
+  width: 100%;
   padding: 2rem;
-  max-width: 1100px;
 }
 
 .page-header {
@@ -488,18 +488,20 @@ button.button-danger:hover {
 .log-layout {
   display: flex;
   gap: 1.5rem;
-  align-items: flex-start;
+  align-items: stretch;
+  width: 100%;
 }
 
 .log-layout .table-scroll {
-  flex: 1;
+  flex: 1 1 50%;
   min-width: 0;
 }
 
 .detail-panel {
-  width: 360px;
-  max-width: 100%;
-  flex-shrink: 0;
+  flex: 1 1 50%;
+  min-width: min(28rem, 100%);
+  width: auto;
+  max-width: none;
   background: var(--color-card);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
@@ -523,9 +525,12 @@ button.button-danger:hover {
   background: var(--color-pre-bg);
   padding: 0.75rem;
   border-radius: var(--radius-sm);
-  overflow-x: auto;
+  overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
+  width: 100%;
+  max-height: min(70vh, 48rem);
+  box-sizing: border-box;
 }
 
 .level-error {
@@ -590,5 +595,7 @@ button.button-danger:hover {
 
   .detail-panel {
     width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 }

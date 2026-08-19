@@ -18,6 +18,8 @@ export const AdminOperationLogQuerySchema = z.object({
   to: z.coerce.date().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  /** Substring over enriched entityName / storyTitle / username (scans up to 500 matching SQL rows). */
+  search: z.string().trim().max(100).optional(),
 });
 export type AdminOperationLogQuery = z.infer<typeof AdminOperationLogQuerySchema>;
 

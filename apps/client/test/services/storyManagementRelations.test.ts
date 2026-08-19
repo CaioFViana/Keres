@@ -68,6 +68,32 @@ describe('AttributeValueService', () => {
     expect(await service.getValueUsageCounts('rank')).toEqual([['8', 2]]);
   });
 
+  it('counts each item in a suggestion list, not the JSON blob', async () => {
+    const service = createAttributeValueService(database.db);
+    await database.db.insert(schema.storySchemaFields).values({
+      id: 'traits',
+      storyId: STORY_ID,
+      entityType: 'Character',
+      name: 'Traços',
+      key: 'tracos',
+      type: AttributeType.SUGGESTION_LIST,
+      isRequired: false,
+      order: 0,
+      ...base,
+    });
+    await service.saveValuesForEntity(USER_ID, STORY_ID, 'Character', 'char-1', {
+      traits: '["a","b"]',
+    });
+    await service.saveValuesForEntity(USER_ID, STORY_ID, 'Character', 'char-2', {
+      traits: '["b"]',
+    });
+
+    expect(await service.getValueUsageCounts('traits')).toEqual([
+      ['a', 1],
+      ['b', 2],
+    ]);
+  });
+
   it('does not create a row or an operation for a wholly empty submission', async () => {
     const service = createAttributeValueService(database.db);
 

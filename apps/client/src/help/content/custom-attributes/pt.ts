@@ -39,8 +39,16 @@ const page: HelpPage = {
         {
           key: 'type',
           label: 'Tipo',
-          whatToWrite: 'Escolha Texto, Texto longo, Número, Sim/não, Data, Sugestão ou Entidade.',
+          whatToWrite:
+            'Escolha Texto, Texto longo, Número, Sim/não, Data, Sugestão, Lista de sugestões ou Entidade.',
           note: 'Define como o valor é preenchido.',
+        },
+        {
+          key: 'suggestionList',
+          label: 'Lista de sugestões',
+          whatToWrite:
+            'Vários valores de sugestão na mesma ficha. Digite um termo novo ou escolha no catálogo; os dois alimentam a lista compartilhada de Sugestões desse campo.',
+          note: 'Na tela de detalhe os valores aparecem separados por vírgula.',
         },
         {
           key: 'targetEntityType',

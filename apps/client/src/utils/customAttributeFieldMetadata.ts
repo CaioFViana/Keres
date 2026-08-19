@@ -1,4 +1,4 @@
-import { AttributeType } from '@keres/shared';
+import { AttributeType, isSuggestionAttributeType } from '@keres/shared';
 import { FieldType, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { StorySchemaFieldSelect } from '../db/schema';
 import { customAttributeSuggestionType } from '../services/storymanagement/SuggestionService';
@@ -14,7 +14,7 @@ function mapAttributeTypeToFieldType(type: string): FieldType {
     case AttributeType.ENTITY:
       return 'entity';
     default:
-      // TEXT, LONG_TEXT, SUGGESTION - all rendered/matched as free text.
+      // TEXT, LONG_TEXT, SUGGESTION, SUGGESTION_LIST - rendered/matched as free text.
       return 'string';
   }
 }
@@ -34,9 +34,10 @@ export function buildCustomAttributeFieldMetadata(
     rawLabel: field.name,
     type: mapAttributeTypeToFieldType(field.type),
     isSearchable: true,
-    isSuggestion: field.type === AttributeType.SUGGESTION,
-    suggestionsSource:
-      field.type === AttributeType.SUGGESTION ? customAttributeSuggestionType(field.id) : undefined,
+    isSuggestion: isSuggestionAttributeType(field.type),
+    suggestionsSource: isSuggestionAttributeType(field.type)
+      ? customAttributeSuggestionType(field.id)
+      : undefined,
     entityTargetType: field.targetEntityType,
   }));
 }

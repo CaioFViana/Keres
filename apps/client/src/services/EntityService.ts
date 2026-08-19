@@ -487,7 +487,10 @@ export class EntityService {
             value:
               decodedValue === null || decodedValue === undefined
                 ? t('common_na')
-                : entityReferenceName || String(decodedValue),
+                : entityReferenceName ||
+                  (Array.isArray(decodedValue)
+                    ? decodedValue.join(', ')
+                    : String(decodedValue)),
             entityname: owner.name || t('unknown_entity'),
             entitytype: owner.type || t('unknown_entity_type'),
           });

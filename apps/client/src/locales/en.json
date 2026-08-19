@@ -79,6 +79,7 @@
   "attribute_type_long_text": "Long Text",
   "attribute_type_number": "Number",
   "attribute_type_suggestion": "Suggestion",
+  "attribute_type_suggestion_list": "Suggestion list",
   "attribute_type_text": "Text",
   "attribute_value_attributed_to_entity": "{{fieldname}}: {{value}} - attributed to {{entityname}} ({{entitytype}})",
   "author": "Author",

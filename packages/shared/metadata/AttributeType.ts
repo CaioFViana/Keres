@@ -6,5 +6,11 @@ export enum AttributeType {
   BOOLEAN = 'boolean',
   DATE = 'date',
   SUGGESTION = 'suggestion',
+  SUGGESTION_LIST = 'suggestion_list',
   ENTITY = 'entity',
+}
+
+/** Single-value or multi-value suggestion fields share a catalog (`custom:<fieldId>`). */
+export function isSuggestionAttributeType(type: AttributeType | string): boolean {
+  return type === AttributeType.SUGGESTION || type === AttributeType.SUGGESTION_LIST;
 }

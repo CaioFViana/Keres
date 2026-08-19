@@ -1,9 +1,15 @@
-import { AttributeType, StorySchemaEntityType } from '@keres/shared';
+import {
+  AttributeType,
+  decodeAttributeValue,
+  encodeAttributeValue,
+  StorySchemaEntityType,
+} from '@keres/shared';
 import React from 'react';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import EntityPickerInput from '@/src/components/common/inputs/EntityPickerInput/EntityPickerInput';
@@ -105,6 +111,21 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
           style={[commonInputStyles.input, style]}
         />
       );
+
+    case AttributeType.SUGGESTION_LIST: {
+      const decoded = decodeAttributeValue(AttributeType.SUGGESTION_LIST, value);
+      const items = Array.isArray(decoded) ? decoded : [];
+      return (
+        <SuggestionListInput
+          values={items}
+          onChange={(next) => onChange(encodeAttributeValue(AttributeType.SUGGESTION_LIST, next))}
+          type={suggestionFieldId ? customAttributeSuggestionType(suggestionFieldId) : ''}
+          storyId={storyId ?? ''}
+          placeholder={placeholder}
+          style={style}
+        />
+      );
+    }
 
     case AttributeType.ENTITY:
       if (storyId && targetEntityType) {

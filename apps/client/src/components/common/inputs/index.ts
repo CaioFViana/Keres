@@ -4,6 +4,7 @@ export { default as IconPickerInput } from './IconPickerInput/IconPickerInput';
 export { default as IconPickerModal, AVATAR_ICON_OPTIONS } from './IconPickerInput/IconPickerModal';
 export { default as MultiSelectPill } from './MultiSelectPill/MultiSelectPill';
 export { default as Select } from './Select/Select';
+export { default as SuggestionListInput } from './SuggestionListInput/SuggestionListInput';
 export { default as SuggestionTextInput } from './SuggestionTextInput/SuggestionTextInput';
 export { default as TextInput } from './TextInput/TextInput';
 

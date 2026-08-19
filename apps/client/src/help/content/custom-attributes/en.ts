@@ -39,8 +39,16 @@ const page: HelpPage = {
         {
           key: 'type',
           label: 'Type',
-          whatToWrite: 'Choose Text, Long text, Number, Yes/no, Date, Suggestion, or Entity.',
+          whatToWrite:
+            'Choose Text, Long text, Number, Yes/no, Date, Suggestion, Suggestion list, or Entity.',
           note: 'It defines how the value is entered.',
+        },
+        {
+          key: 'suggestionList',
+          label: 'Suggestion list',
+          whatToWrite:
+            'Several suggestion values on the same profile. Type a new term or pick from the catalog; both feed the shared Suggestions list for that field.',
+          note: 'On the detail screen the values appear as a comma-separated list.',
         },
         {
           key: 'targetEntityType',

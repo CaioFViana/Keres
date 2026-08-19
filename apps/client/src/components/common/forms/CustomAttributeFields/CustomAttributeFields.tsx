@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { StorySchemaEntityType } from '@keres/shared';
+import { AttributeType, decodeAttributeValue, StorySchemaEntityType } from '@keres/shared';
 import { StorySchemaFieldSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
@@ -28,6 +28,13 @@ export function validateRequiredCustomAttributes(
   for (const field of fields) {
     if (!field.isRequired) continue;
     const value = values[field.id];
+    if (field.type === AttributeType.SUGGESTION_LIST) {
+      const decoded = decodeAttributeValue(AttributeType.SUGGESTION_LIST, value);
+      if (!Array.isArray(decoded) || decoded.length === 0) {
+        return field.name;
+      }
+      continue;
+    }
     if (value === null || value === undefined || value.trim() === '') {
       return field.name;
     }

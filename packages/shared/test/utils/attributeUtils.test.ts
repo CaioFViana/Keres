@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { AttributeType } from '../../metadata/AttributeType';
 import { deriveAttributeKey } from '../../utils/attributeKey';
+import { isSuggestionAttributeType } from '../../metadata/AttributeType';
 import {
   decodeAttributeValue,
   encodeAttributeValue,
+  explodeAttributeUsageValue,
   isEntityAttributeType,
+  joinSuggestionListForDisplay,
 } from '../../utils/attributeValueCodec';
 
 describe('deriveAttributeKey', () => {
@@ -38,5 +41,36 @@ describe('attribute value codec', () => {
     expect(encodeAttributeValue(AttributeType.ENTITY, '   ')).toBeNull();
     expect(isEntityAttributeType(AttributeType.ENTITY)).toBe(true);
     expect(isEntityAttributeType(AttributeType.TEXT)).toBe(false);
+  });
+
+  it('stores a suggestion list as JSON and drops empty or duplicate items', () => {
+    expect(encodeAttributeValue(AttributeType.SUGGESTION_LIST, ['elf', 'dwarf'])).toBe(
+      '["elf","dwarf"]',
+    );
+    expect(encodeAttributeValue(AttributeType.SUGGESTION_LIST, [' Elf ', 'elf', '', 'dwarf'])).toBe(
+      '["Elf","dwarf"]',
+    );
+    expect(encodeAttributeValue(AttributeType.SUGGESTION_LIST, [])).toBeNull();
+    expect(encodeAttributeValue(AttributeType.SUGGESTION_LIST, '["elf","dwarf"]')).toBe(
+      '["elf","dwarf"]',
+    );
+    expect(decodeAttributeValue(AttributeType.SUGGESTION_LIST, '["elf","dwarf"]')).toEqual([
+      'elf',
+      'dwarf',
+    ]);
+    expect(decodeAttributeValue(AttributeType.SUGGESTION_LIST, '[]')).toBeNull();
+    expect(decodeAttributeValue(AttributeType.SUGGESTION_LIST, 'not-json')).toEqual(['not-json']);
+  });
+
+  it('explodes list usage and joins items for display', () => {
+    expect(explodeAttributeUsageValue(AttributeType.SUGGESTION_LIST, '["a","b"]')).toEqual([
+      'a',
+      'b',
+    ]);
+    expect(explodeAttributeUsageValue(AttributeType.SUGGESTION, 'solo')).toEqual(['solo']);
+    expect(joinSuggestionListForDisplay(['a', 'b'])).toBe('a, b');
+    expect(joinSuggestionListForDisplay([])).toBeNull();
+    expect(isSuggestionAttributeType(AttributeType.SUGGESTION_LIST)).toBe(true);
+    expect(isSuggestionAttributeType(AttributeType.TEXT)).toBe(false);
   });
 });

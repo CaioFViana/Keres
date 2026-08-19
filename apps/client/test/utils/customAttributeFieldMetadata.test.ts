@@ -53,6 +53,7 @@ describe('buildCustomAttributeFieldMetadata', () => {
     [AttributeType.TEXT, 'string'],
     [AttributeType.LONG_TEXT, 'string'],
     [AttributeType.SUGGESTION, 'string'],
+    [AttributeType.SUGGESTION_LIST, 'string'],
     [AttributeType.ENTITY, 'entity'],
   ])('renders %s as a %s input', (attributeType, expected) => {
     const [metadata] = buildCustomAttributeFieldMetadata([field({ type: attributeType })]);
@@ -60,14 +61,15 @@ describe('buildCustomAttributeFieldMetadata', () => {
     expect(metadata.type).toBe(expected);
   });
 
-  it('wires a suggestion field to its own suggestions source', () => {
-    const [metadata] = buildCustomAttributeFieldMetadata([
-      field({ id: 'abc', type: AttributeType.SUGGESTION }),
-    ]);
+  it.each([AttributeType.SUGGESTION, AttributeType.SUGGESTION_LIST])(
+    'wires a %s field to its own suggestions source',
+    (type) => {
+      const [metadata] = buildCustomAttributeFieldMetadata([field({ id: 'abc', type })]);
 
-    expect(metadata.isSuggestion).toBe(true);
-    expect(metadata.suggestionsSource).toBe('custom:abc');
-  });
+      expect(metadata.isSuggestion).toBe(true);
+      expect(metadata.suggestionsSource).toBe('custom:abc');
+    },
+  );
 
   it('keeps an entity field target for the entity picker', () => {
     const [metadata] = buildCustomAttributeFieldMetadata([

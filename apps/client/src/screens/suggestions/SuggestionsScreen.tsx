@@ -1,7 +1,11 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { Ionicons } from '@expo/vector-icons';
-import { AttributeType, STORY_SCHEMA_ENTITY_TYPES, StorySchemaEntityType } from '@keres/shared';
+import {
+  isSuggestionAttributeType,
+  STORY_SCHEMA_ENTITY_TYPES,
+  StorySchemaEntityType,
+} from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -81,7 +85,7 @@ const SuggestionsScreen = () => {
     );
     const custom = batches.flatMap((fields, index) =>
       fields
-        .filter((field) => field.type === AttributeType.SUGGESTION)
+        .filter((field) => isSuggestionAttributeType(field.type))
         .map((field) => ({
           type: customAttributeSuggestionType(field.id),
           key: field.key,

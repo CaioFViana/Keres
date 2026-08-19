@@ -3,6 +3,7 @@ import {
   CommentEntityType,
   decodeAttributeValue,
   formatAttributeDateForDisplay,
+  joinSuggestionListForDisplay,
   StorySchemaEntityType,
 } from '@keres/shared';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -25,13 +26,16 @@ interface CustomAttributeDetailFieldsProps {
 
 function formatValueForDisplay(
   type: AttributeType | string,
-  decoded: string | number | boolean | null,
+  decoded: string | number | boolean | string[] | null,
   t: (key: string) => string,
   language: string,
   use24HourTime: boolean,
 ): string {
   if (decoded === null) {
     return t('common_na');
+  }
+  if (Array.isArray(decoded) || type === AttributeType.SUGGESTION_LIST) {
+    return joinSuggestionListForDisplay(Array.isArray(decoded) ? decoded : null) ?? t('common_na');
   }
   if (typeof decoded === 'boolean') {
     return decoded ? t('common_yes') : t('common_no');

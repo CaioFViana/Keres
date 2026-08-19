@@ -1,7 +1,4 @@
-import {
-  CharacterRelation,
-  ServerCharacterRelationPayload,
-} from '@keres/shared/entities/CharacterRelation';
+import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { and, asc, desc, eq, or, sql, SQL } from 'drizzle-orm'; // Import SQL
 import { alias } from 'drizzle-orm/sqlite-core'; // Import alias for table aliasing
 import { AppDrizzleClient, characterRelations, characters } from '../../db';
@@ -31,25 +28,6 @@ export interface CharacterRelationServiceInterface {
   ): Promise<CharacterRelationWithNames[]>;
 }
 
-// Helper function to map client-side CharacterRelation to server-side payload structure
-const toServerCharacterRelationPayload = (
-  clientRelation: Partial<CharacterRelation>,
-): Partial<ServerCharacterRelationPayload> => {
-  const serverPayload: Partial<ServerCharacterRelationPayload> = {
-    ...clientRelation,
-  };
-
-  if (clientRelation.charId1 !== undefined) {
-    serverPayload.character1Id = clientRelation.charId1;
-    delete (serverPayload as any).charId1; // Remove client-specific field
-  }
-  if (clientRelation.charId2 !== undefined) {
-    serverPayload.character2Id = clientRelation.charId2;
-    delete (serverPayload as any).charId2; // Remove client-specific field
-  }
-  return serverPayload;
-};
-
 // Helper function to find an existing non-deleted relation for a given pair of characters
 const getExistingRelationForPair = async (
   db: AppDrizzleClient,
@@ -62,8 +40,14 @@ const getExistingRelationForPair = async (
     eq(characterRelations.storyId, storyId),
     eq(characterRelations.isDeleted, false),
     or(
-      and(eq(characterRelations.charId1, charIdA), eq(characterRelations.charId2, charIdB)),
-      and(eq(characterRelations.charId1, charIdB), eq(characterRelations.charId2, charIdA)),
+      and(
+        eq(characterRelations.character1Id, charIdA),
+        eq(characterRelations.character2Id, charIdB),
+      ),
+      and(
+        eq(characterRelations.character1Id, charIdB),
+        eq(characterRelations.character2Id, charIdA),
+      ),
     ),
   ];
 
@@ -97,8 +81,8 @@ export const createCharacterRelationService = (
             and(
               eq(characterRelations.storyId, storyId),
               or(
-                eq(characterRelations.charId1, characterId),
-                eq(characterRelations.charId2, characterId),
+                eq(characterRelations.character1Id, characterId),
+                eq(characterRelations.character2Id, characterId),
               ),
               eq(characterRelations.isDeleted, false),
             ),
@@ -150,26 +134,26 @@ export const createCharacterRelationService = (
               );
             }
 
-            // Prevent changing charId1 or charId2 on update ---
+            // Prevent changing character1Id or character2Id on update ---
             if (
-              oldRelation.charId1 !== relation.charId1 ||
-              oldRelation.charId2 !== relation.charId2
+              oldRelation.character1Id !== relation.character1Id ||
+              oldRelation.character2Id !== relation.character2Id
             ) {
-              throw new Error(`Character IDs (charId1, charId2) cannot be changed on an existing CharacterRelation.
-                                 Old: ${oldRelation.charId1}, ${oldRelation.charId2} | New: ${relation.charId1}, ${relation.charId2}`);
+              throw new Error(`Character IDs (character1Id, character2Id) cannot be changed on an existing CharacterRelation.
+                                 Old: ${oldRelation.character1Id}, ${oldRelation.character2Id} | New: ${relation.character1Id}, ${relation.character2Id}`);
             }
 
             // Check for duplicate pair BEFORE update ---
             const duplicateExisting = await getExistingRelationForPair(
               db,
               relation.storyId,
-              relation.charId1,
-              relation.charId2,
+              relation.character1Id,
+              relation.character2Id,
               relation.id,
             );
             if (duplicateExisting) {
               throw new Error(
-                `A relation between character ${relation.charId1} and ${relation.charId2} already exists with ID ${duplicateExisting.id}.`,
+                `A relation between character ${relation.character1Id} and ${relation.character2Id} already exists with ID ${duplicateExisting.id}.`,
               );
             }
 
@@ -190,8 +174,8 @@ export const createCharacterRelationService = (
             const [updatedRelation] = await db
               .update(characterRelations)
               .set({
-                charId1: relation.charId1,
-                charId2: relation.charId2,
+                character1Id: relation.character1Id,
+                character2Id: relation.character2Id,
                 relationType: relation.relationType,
                 updatedAt: new Date(),
                 version: sql`${characterRelations.version} + 1`,
@@ -217,8 +201,6 @@ export const createCharacterRelationService = (
               updatedRelation.storyId,
               currentUserId,
             );
-            // Transform changedFields to server-compatible payload
-            const serverPayload = toServerCharacterRelationPayload(changedFields);
 
             await recordLocalOperation(
               db,
@@ -227,7 +209,7 @@ export const createCharacterRelationService = (
               'update',
               'CharacterRelation',
               relation.id,
-              serverPayload,
+              changedFields,
             );
             entityEventEmitter.emit(
               'character_relation_changed',
@@ -246,12 +228,12 @@ export const createCharacterRelationService = (
         const duplicateExisting = await getExistingRelationForPair(
           db,
           relation.storyId,
-          relation.charId1,
-          relation.charId2,
+          relation.character1Id,
+          relation.character2Id,
         );
         if (duplicateExisting) {
           throw new Error(
-            `A relation between character ${relation.charId1} and ${relation.charId2} already exists with ID ${duplicateExisting.id}.`,
+            `A relation between character ${relation.character1Id} and ${relation.character2Id} already exists with ID ${duplicateExisting.id}.`,
           );
         }
 
@@ -284,9 +266,6 @@ export const createCharacterRelationService = (
           currentUserId,
         );
 
-        // Transform resultRelation to server-compatible payload
-        const serverPayload = toServerCharacterRelationPayload(resultRelation);
-
         await recordLocalOperation(
           db,
           resultRelation.storyId,
@@ -294,7 +273,7 @@ export const createCharacterRelationService = (
           'create',
           'CharacterRelation',
           resultRelation.id,
-          serverPayload,
+          resultRelation,
         );
         entityEventEmitter.emit(
           'character_relation_changed',
@@ -412,8 +391,8 @@ export const createCharacterRelationService = (
           char2Name: char2.name,
         })
         .from(characterRelations)
-        .innerJoin(char1, eq(characterRelations.charId1, char1.id))
-        .innerJoin(char2, eq(characterRelations.charId2, char2.id))
+        .innerJoin(char1, eq(characterRelations.character1Id, char1.id))
+        .innerJoin(char2, eq(characterRelations.character2Id, char2.id))
         .where(and(...conditions))
         .$dynamic();
 

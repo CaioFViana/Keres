@@ -43,9 +43,9 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   useEffect(() => {
     if (initialRelation) {
       const relatedId =
-        initialRelation.charId1 === currentCharacterId
-          ? initialRelation.charId2
-          : initialRelation.charId1;
+        initialRelation.character1Id === currentCharacterId
+          ? initialRelation.character2Id
+          : initialRelation.character1Id;
       setRelatedCharId(relatedId);
       setRelationType(initialRelation.relationType);
     } else {

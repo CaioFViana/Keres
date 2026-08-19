@@ -53,13 +53,13 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
 
   // Filter relations relevant to the current character
   const filteredRelations = characterRelations.filter(
-    (rel) => rel.charId1 === currentCharacterId || rel.charId2 === currentCharacterId,
+    (rel) => rel.character1Id === currentCharacterId || rel.character2Id === currentCharacterId,
   );
 
   // Characters already related to this one - excluded from the "add" picker so a second
   // relation for the same pair can't be created (the modal only excludes self otherwise).
   const relatedCharacterIds = filteredRelations.map((rel) =>
-    rel.charId1 === currentCharacterId ? rel.charId2 : rel.charId1,
+    rel.character1Id === currentCharacterId ? rel.character2Id : rel.character1Id,
   );
 
   const handleAddRelation = () => {
@@ -99,8 +99,8 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
       // ALWAYS provide an ID. If editing, use the existing ID. If new, generate a ULID.
       id: idFromModal || createULID(), // Reverted to ensure id is always a string
       storyId: currentStoryId,
-      charId1: orderedChar1Id,
-      charId2: orderedChar2Id,
+      character1Id: orderedChar1Id,
+      character2Id: orderedChar2Id,
       relationType: relationType,
       createdAt: editingRelation?.createdAt || new Date(),
       updatedAt: new Date(),
@@ -143,7 +143,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
             <View>
               {filteredRelations.map((item) => {
                 const relatedChar =
-                  item.charId1 === currentCharacterId ? item.charId2 : item.charId1;
+                  item.character1Id === currentCharacterId ? item.character2Id : item.character1Id;
                 return (
                   <RelationRow
                     key={item.id}

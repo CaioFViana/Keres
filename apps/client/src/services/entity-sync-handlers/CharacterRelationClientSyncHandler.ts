@@ -1,8 +1,5 @@
 import { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import {
-  CharacterRelation,
-  ServerCharacterRelationPayload,
-} from '@keres/shared/entities/CharacterRelation'; // Import the CharacterRelation entity interface
+import { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { and, eq, or, sql } from 'drizzle-orm';
 import { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -21,12 +18,12 @@ const getExistingRelationForPair = async (
     eq(schema.characterRelations.isDeleted, false),
     or(
       and(
-        eq(schema.characterRelations.charId1, charIdA),
-        eq(schema.characterRelations.charId2, charIdB),
+        eq(schema.characterRelations.character1Id, charIdA),
+        eq(schema.characterRelations.character2Id, charIdB),
       ),
       and(
-        eq(schema.characterRelations.charId1, charIdB),
-        eq(schema.characterRelations.charId2, charIdA),
+        eq(schema.characterRelations.character1Id, charIdB),
+        eq(schema.characterRelations.character2Id, charIdA),
       ),
     ),
   ];
@@ -63,31 +60,23 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
       return;
     }
 
-    const serverRelationData = update.data as ServerCharacterRelationPayload;
-    const mappedRelationData: CharacterRelation = {
-      ...serverRelationData,
-      charId1: serverRelationData.character1Id,
-      charId2: serverRelationData.character2Id,
-    };
-    // Remove server-specific fields after mapping
-    delete (mappedRelationData as Partial<ServerCharacterRelationPayload>).character1Id;
-    delete (mappedRelationData as Partial<ServerCharacterRelationPayload>).character2Id;
+    const relationData = update.data as CharacterRelation;
 
     // Handle duplicate CharacterRelations during sync - applyCreate ---
     const existingDuplicate = await getExistingRelationForPair(
       this.db,
       storyId,
-      mappedRelationData.charId1,
-      mappedRelationData.charId2,
+      relationData.character1Id,
+      relationData.character2Id,
     );
 
     if (existingDuplicate) {
       // If the incoming data is newer, mark the existing one as deleted and apply the new one.
       // Otherwise, the existing one wins, and we discard the incoming create.
       if (
-        mappedRelationData.updatedAt &&
+        relationData.updatedAt &&
         existingDuplicate.updatedAt &&
-        new Date(mappedRelationData.updatedAt) > existingDuplicate.updatedAt
+        new Date(relationData.updatedAt) > existingDuplicate.updatedAt
       ) {
         console.log(
           `Sync conflict (create): Incoming CharacterRelation ${update.id} is newer than existing duplicate ${existingDuplicate.id}. Marking existing as deleted.`,
@@ -110,12 +99,12 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
     }
 
     await this.db.insert(schema.characterRelations).values({
-      ...mappedRelationData,
+      ...relationData,
       id: update.id,
       storyId: storyId,
-      createdAt: new Date(mappedRelationData.createdAt),
-      updatedAt: new Date(mappedRelationData.updatedAt),
-      deletedAt: mappedRelationData.deletedAt ? new Date(mappedRelationData.deletedAt) : null,
+      createdAt: new Date(relationData.createdAt),
+      updatedAt: new Date(relationData.updatedAt),
+      deletedAt: relationData.deletedAt ? new Date(relationData.deletedAt) : null,
     });
     console.log(`Applied create for CharacterRelation ${update.id} in story ${storyId}`);
   }
@@ -137,39 +126,26 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
       return;
     }
 
-    const serverRelationChanges = update.changes as Partial<ServerCharacterRelationPayload>;
-    const mappedRelationChanges: Partial<CharacterRelation> = { ...serverRelationChanges };
+    const relationChanges = update.changes as Partial<CharacterRelation>;
 
-    // Determine the effective charIds after this update, for duplicate checking
-    const effectiveCharId1 =
-      mappedRelationChanges.charId1 || serverRelationChanges.character1Id || localRelation.charId1;
-    const effectiveCharId2 =
-      mappedRelationChanges.charId2 || serverRelationChanges.character2Id || localRelation.charId2;
-
-    // Remove server-specific fields after mapping
-    if (serverRelationChanges.character1Id !== undefined) {
-      mappedRelationChanges.charId1 = serverRelationChanges.character1Id;
-      delete (mappedRelationChanges as Partial<ServerCharacterRelationPayload>).character1Id;
-    }
-    if (serverRelationChanges.character2Id !== undefined) {
-      mappedRelationChanges.charId2 = serverRelationChanges.character2Id;
-      delete (mappedRelationChanges as Partial<ServerCharacterRelationPayload>).character2Id;
-    }
+    // Determine the effective character ids after this update, for duplicate checking
+    const effectiveCharacter1Id = relationChanges.character1Id || localRelation.character1Id;
+    const effectiveCharacter2Id = relationChanges.character2Id || localRelation.character2Id;
 
     // Handle duplicate CharacterRelations during sync - applyUpdate ---
     // Check if applying this update would create a duplicate with another *active* relation
     const existingDuplicate = await getExistingRelationForPair(
       this.db,
       storyId,
-      effectiveCharId1,
-      effectiveCharId2,
+      effectiveCharacter1Id,
+      effectiveCharacter2Id,
       update.id, // Exclude the relation currently being updated
     );
 
     if (existingDuplicate) {
       // Assuming the incoming update carries an 'updatedAt' timestamp or we use current time
-      const incomingUpdatedAt = mappedRelationChanges.updatedAt
-        ? new Date(mappedRelationChanges.updatedAt)
+      const incomingUpdatedAt = relationChanges.updatedAt
+        ? new Date(relationChanges.updatedAt)
         : new Date();
 
       if (incomingUpdatedAt > existingDuplicate.updatedAt) {
@@ -196,16 +172,12 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
     await this.db
       .update(schema.characterRelations)
       .set({
-        ...mappedRelationChanges,
+        ...relationChanges,
         storyId: storyId,
         updatedAt: new Date(update.operationTime || new Date()), // Use incoming updatedAt if present, else new Date
         // Ensure date fields are correctly converted if they come as strings
-        createdAt: mappedRelationChanges.createdAt
-          ? new Date(mappedRelationChanges.createdAt)
-          : undefined,
-        deletedAt: mappedRelationChanges.deletedAt
-          ? new Date(mappedRelationChanges.deletedAt)
-          : undefined,
+        createdAt: relationChanges.createdAt ? new Date(relationChanges.createdAt) : undefined,
+        deletedAt: relationChanges.deletedAt ? new Date(relationChanges.deletedAt) : undefined,
       })
       .where(eq(schema.characterRelations.id, update.id));
     console.log(`Applied update for CharacterRelation ${update.id}`);

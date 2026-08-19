@@ -408,12 +408,6 @@ describe('resolveKeepServer', () => {
     await expect(service.resolveKeepServer('nao-existe')).resolves.toBeUndefined();
   });
 
-  /**
-   * Regressão: `CharacterRelation` é a única relação onde o payload de servidor
-   * (`character1Id`/`character2Id`) não bate com o nome de coluna da tabela local
-   * (`charId1`/`charId2`). Sem o alias em `toEntityColumns`, esta chamada não lançava erro,
-   * mas também não reescrevia quem estava relacionado - o bug era inteiramente silencioso.
-   */
   it('rewrites which characters are related for a CharacterRelation conflict', async () => {
     await database.db.insert(schema.characters).values([
       {
@@ -447,8 +441,8 @@ describe('resolveKeepServer', () => {
     await database.db.insert(schema.characterRelations).values({
       id: 'relation-1',
       storyId: STORY_ID,
-      charId1: 'char-a',
-      charId2: 'char-b',
+      character1Id: 'char-a',
+      character2Id: 'char-b',
       relationType: 'allies',
       createdAt: NOW,
       updatedAt: NOW,
@@ -473,8 +467,8 @@ describe('resolveKeepServer', () => {
       where: eq(schema.characterRelations.id, 'relation-1'),
     });
     expect(relation).toMatchObject({
-      charId1: 'char-a',
-      charId2: 'char-c',
+      character1Id: 'char-a',
+      character2Id: 'char-c',
       relationType: 'rivals',
     });
   });

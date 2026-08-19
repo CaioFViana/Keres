@@ -31,8 +31,8 @@ export interface GraphCharacter {
 
 export interface GraphRelation {
   id: string;
-  charId1: string;
-  charId2: string;
+  character1Id: string;
+  character2Id: string;
   relationType: string;
 }
 
@@ -109,8 +109,8 @@ export function buildCharacterRelationGraphLayout(
 
   const workEdges: WorkEdge[] = [];
   for (const relation of relations) {
-    const a = nodeById.get(relation.charId1);
-    const b = nodeById.get(relation.charId2);
+    const a = nodeById.get(relation.character1Id);
+    const b = nodeById.get(relation.character2Id);
     // Personagem excluído mas a relação ainda não foi limpa - mesmo tratamento que uma
     // escolha pendurada no mapa de história: ignorada em vez de quebrar o desenho.
     if (!a || !b) continue;

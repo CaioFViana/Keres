@@ -44,8 +44,8 @@ it('round-trips portable story data after a permanent local purge and clears sta
   await database.db.insert(schema.characterRelations).values({
     id: RELATION_ID,
     storyId: STORY_ID,
-    charId1: CHARACTER_ID,
-    charId2: DELETED_CHARACTER_ID,
+    character1Id: CHARACTER_ID,
+    character2Id: DELETED_CHARACTER_ID,
     relationType: 'mentor',
     ...entityBase,
   });

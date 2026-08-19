@@ -83,8 +83,8 @@ describe('core narrative entity write lifecycles', () => {
     const relation: CharacterRelation = {
       id: '',
       storyId: TEST_STORY_ID,
-      charId1: 'character-a',
-      charId2: 'character-b',
+      character1Id: 'character-a',
+      character2Id: 'character-b',
       relationType: 'mentor',
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -426,7 +426,7 @@ const CharacterFormScreen = () => {
 
   /**
    * Grava de verdade as relações acumuladas enquanto o personagem ainda não existia -
-   * `charId1`/`charId2` guardaram '' no lugar do id (placeholder do form, ver
+   * `character1Id`/`character2Id` guardaram '' no lugar do id (placeholder do form, ver
    * `CharacterRelationManager`); troca pelo id de verdade aqui.
    */
   const persistPendingCharacterRelations = async (targetCharacterId: string) => {
@@ -434,8 +434,8 @@ const CharacterFormScreen = () => {
     for (const pending of pendingCharacterRelations) {
       await characterRelationServiceRef.current.saveCharacterRelation(userId, {
         ...pending,
-        charId1: pending.charId1 === '' ? targetCharacterId : pending.charId1,
-        charId2: pending.charId2 === '' ? targetCharacterId : pending.charId2,
+        character1Id: pending.character1Id === '' ? targetCharacterId : pending.character1Id,
+        character2Id: pending.character2Id === '' ? targetCharacterId : pending.character2Id,
       });
     }
     setPendingCharacterRelations([]);

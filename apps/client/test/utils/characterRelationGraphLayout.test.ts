@@ -11,13 +11,13 @@ const character = (id: string, name = `Personagem ${id}`): GraphCharacter => ({ 
 
 const relation = (
   id: string,
-  charId1: string,
-  charId2: string,
+  character1Id: string,
+  character2Id: string,
   relationType = 'irmão',
 ): GraphRelation => ({
   id,
-  charId1,
-  charId2,
+  character1Id,
+  character2Id,
   relationType,
 });
 

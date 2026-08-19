@@ -108,7 +108,7 @@ export interface StoryAnalysisInput {
   storyType: 'linear' | 'branching';
   characters: AnalysisEntityRef[];
   characterScenes: { characterId: string }[];
-  characterRelations: { charId1: string; charId2: string }[];
+  characterRelations: { character1Id: string; character2Id: string }[];
   locations: AnalysisEntityRef[];
   locationRelations: { locationAId: string; locationBId: string }[];
   scenes: AnalysisScene[];
@@ -204,8 +204,8 @@ function checkCharacters(input: StoryAnalysisInput): StoryAnalysisFinding[] {
   const charactersWithScenes = new Set(input.characterScenes.map((cs) => cs.characterId));
   const charactersWithRelations = new Set<string>();
   for (const relation of input.characterRelations) {
-    charactersWithRelations.add(relation.charId1);
-    charactersWithRelations.add(relation.charId2);
+    charactersWithRelations.add(relation.character1Id);
+    charactersWithRelations.add(relation.character2Id);
   }
 
   for (const character of input.characters) {

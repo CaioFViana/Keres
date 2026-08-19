@@ -31,7 +31,7 @@ const connected = () =>
       { id: 'a', name: 'Aragorn' },
       { id: 'b', name: 'Boromir' },
     ],
-    [{ id: 'r1', charId1: 'a', charId2: 'b', relationType: 'aliado' }],
+    [{ id: 'r1', character1Id: 'a', character2Id: 'b', relationType: 'aliado' }],
   );
 
 describe('renderCharacterRelationMapSvg', () => {
@@ -93,7 +93,7 @@ describe('renderCharacterRelationMapSvg', () => {
         { id: 'a', name: 'Ana' },
         { id: 'b', name: 'Bia' },
       ],
-      [{ id: 'r1', charId1: 'a', charId2: 'b', relationType: `x${raw}y` }],
+      [{ id: 'r1', character1Id: 'a', character2Id: 'b', relationType: `x${raw}y` }],
     );
 
     expect(renderCharacterRelationMapSvg(layout, options())).toContain(`x${escaped}y`);
@@ -145,7 +145,7 @@ describe('renderCharacterRelationMapSvg', () => {
         { id: 'a', name: 'Ana' },
         { id: 'b', name: 'Bia' },
       ],
-      [{ id: 'r1', charId1: 'a', charId2: 'b', relationType: 'x'.repeat(80) }],
+      [{ id: 'r1', character1Id: 'a', character2Id: 'b', relationType: 'x'.repeat(80) }],
     );
 
     const svg = renderCharacterRelationMapSvg(layout, options());

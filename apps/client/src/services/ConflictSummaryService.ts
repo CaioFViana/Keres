@@ -79,9 +79,8 @@ type RelationFieldTarget =
  * Quais campos de cada relação são IDs, e para que tipo de entidade cada um aponta - usado
  * tanto para montar o lote de referências a resolver (`collectEntityRefs`) quanto para montar
  * a frase legível de cada conflito (`buildRelationSummary`). Nomes de campo aqui são os do
- * payload de sincronização (localValues/serverValues de um `PendingConflict`), não
- * necessariamente os da tabela local - `CharacterRelation` é a única que difere
- * (`character1Id`/`character2Id`, não `charId1`/`charId2` - ver `entityTableRegistry.ts`).
+ * payload de sincronização (localValues/serverValues de um `PendingConflict`), que também são
+ * os nomes de coluna da tabela local para todas as relações.
  */
 const RELATION_FIELD_TARGETS: Record<string, RelationFieldTarget[]> = {
   CharacterRelation: [

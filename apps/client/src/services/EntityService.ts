@@ -280,16 +280,22 @@ export class EntityService {
       case OperationLogEntityType.CharacterRelation:
         const charRelation = await db.query.characterRelations.findFirst({
           where: and(eq(characterRelations.id, entityId), eq(characterRelations.isDeleted, false)),
-          columns: { charId1: true, charId2: true },
+          columns: { character1Id: true, character2Id: true },
         });
 
         if (charRelation) {
           const char1 = await db.query.characters.findFirst({
-            where: and(eq(characters.id, charRelation.charId1), eq(characters.isDeleted, false)),
+            where: and(
+              eq(characters.id, charRelation.character1Id),
+              eq(characters.isDeleted, false),
+            ),
             columns: { name: true },
           });
           const char2 = await db.query.characters.findFirst({
-            where: and(eq(characters.id, charRelation.charId2), eq(characters.isDeleted, false)),
+            where: and(
+              eq(characters.id, charRelation.character2Id),
+              eq(characters.isDeleted, false),
+            ),
             columns: { name: true },
           });
           entitySpecificName = `${char1?.name || t('unknown_character')} - ${char2?.name || t('unknown_character')} ${t('relation')}`;
@@ -825,19 +831,19 @@ export class EntityService {
             eq(characterRelations.id, relationId),
             eq(characterRelations.isDeleted, false),
           ),
-          columns: { charId1: true, charId2: true },
+          columns: { character1Id: true, character2Id: true },
         });
         if (characterRelation) {
           const char1 = await db.query.characters.findFirst({
             where: and(
-              eq(characters.id, characterRelation.charId1),
+              eq(characters.id, characterRelation.character1Id),
               eq(characters.isDeleted, false),
             ),
             columns: { name: true },
           });
           const char2 = await db.query.characters.findFirst({
             where: and(
-              eq(characters.id, characterRelation.charId2),
+              eq(characters.id, characterRelation.character2Id),
               eq(characters.isDeleted, false),
             ),
             columns: { name: true },

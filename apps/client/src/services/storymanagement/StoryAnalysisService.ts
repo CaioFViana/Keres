@@ -70,8 +70,8 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         .where(belongsToStory(schema.characterScenes)),
       db
         .select({
-          charId1: schema.characterRelations.charId1,
-          charId2: schema.characterRelations.charId2,
+          character1Id: schema.characterRelations.character1Id,
+          character2Id: schema.characterRelations.character2Id,
         })
         .from(schema.characterRelations)
         .where(belongsToStory(schema.characterRelations)),

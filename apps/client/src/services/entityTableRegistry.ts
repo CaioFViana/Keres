@@ -50,23 +50,8 @@ const DATE_FIELDS = new Set(['createdAt', 'updatedAt', 'deletedAt']);
 const PROTECTED_FIELDS = new Set(['id', 'storyId']);
 
 /**
- * `CharacterRelation` é a única relação onde o nome do campo na tabela local (`charId1`/
- * `charId2`) difere do nome usado no payload logado e no servidor (`character1Id`/
- * `character2Id`) - `CharacterRelationService.toServerCharacterRelationPayload` já renomeia
- * antes de logar a operação. Sem este mapa, `toEntityColumns` descartava silenciosamente
- * `character1Id`/`character2Id` (nenhuma coluna da tabela local bate com esses nomes), e
- * "manter do servidor"/"manter o meu" numa relação de personagens nunca reescrevia de fato
- * quem está relacionado. Nenhuma outra relação precisa de entrada aqui: todas as outras
- * logam usando o próprio nome de coluna da tabela local.
- */
-const SERVER_FIELD_ALIASES: Partial<Record<SyncableEntityName, Record<string, string>>> = {
-  CharacterRelation: { character1Id: 'charId1', character2Id: 'charId2' },
-};
-
-/**
  * Normaliza um objeto vindo de JSON para algo que o drizzle aceite num `.set()`:
- * traduz nomes de campo em nomenclatura de servidor para os da tabela local, converte
- * datas, descarta campos protegidos e ignora chaves que não existem na tabela.
+ * converte datas, descarta campos protegidos e ignora chaves que não existem na tabela.
  */
 export function toEntityColumns(
   entityType: string,
@@ -77,12 +62,10 @@ export function toEntityColumns(
     return {};
   }
 
-  const aliasMap = SERVER_FIELD_ALIASES[entityType as SyncableEntityName];
   const columns = new Set(Object.keys(getTableColumns(table)));
   const normalized: Record<string, any> = {};
 
-  for (const [rawKey, value] of Object.entries(values)) {
-    const key = aliasMap?.[rawKey] ?? rawKey;
+  for (const [key, value] of Object.entries(values)) {
     if (PROTECTED_FIELDS.has(key) || !columns.has(key)) {
       continue;
     }

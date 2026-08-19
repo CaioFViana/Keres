@@ -62,7 +62,11 @@ describe('CharacterRelationClientSyncHandler', () => {
     const rows = await database.db.select().from(schema.characterRelations).all();
     expect(rows).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'new', charId1: 'character-a', charId2: 'character-b' }),
+        expect.objectContaining({
+          id: 'new',
+          character1Id: 'character-a',
+          character2Id: 'character-b',
+        }),
         expect.objectContaining({ id: 'old', isDeleted: true, version: 2 }),
       ]),
     );
@@ -110,7 +114,11 @@ describe('CharacterRelationClientSyncHandler', () => {
 
     expect(await handler.getById('old')).toEqual(expect.objectContaining({ isDeleted: true }));
     expect(await handler.getById('moving')).toEqual(
-      expect.objectContaining({ charId1: 'character-a', charId2: 'character-b', isDeleted: false }),
+      expect.objectContaining({
+        character1Id: 'character-a',
+        character2Id: 'character-b',
+        isDeleted: false,
+      }),
     );
   });
 
@@ -142,7 +150,11 @@ describe('CharacterRelationClientSyncHandler', () => {
 
     expect(await handler.getById('kept')).toEqual(expect.objectContaining({ isDeleted: false }));
     expect(await handler.getById('moving')).toEqual(
-      expect.objectContaining({ charId1: 'character-c', charId2: 'character-d', isDeleted: true }),
+      expect.objectContaining({
+        character1Id: 'character-c',
+        character2Id: 'character-d',
+        isDeleted: true,
+      }),
     );
   });
 });

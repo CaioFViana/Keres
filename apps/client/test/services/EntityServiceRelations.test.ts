@@ -85,8 +85,8 @@ describe('EntityService relationship labels', () => {
     await database.db.insert(schema.characterRelations).values({
       id: 'relation',
       storyId: STORY_ID,
-      charId1: 'mira',
-      charId2: 'oren',
+      character1Id: 'mira',
+      character2Id: 'oren',
       relationType: 'allies',
       ...base,
     });
@@ -313,8 +313,8 @@ describe('EntityService.getEntityIdentifier', () => {
     await database.db.insert(schema.characterRelations).values({
       id: 'relation',
       storyId: STORY_ID,
-      charId1: 'mira',
-      charId2: 'oren',
+      character1Id: 'mira',
+      character2Id: 'oren',
       relationType: 'allies',
       ...base,
     });

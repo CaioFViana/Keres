@@ -1142,15 +1142,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         tags: storyTags,
         tagRelations: storyTagRelations,
         suggestions: storySuggestions,
-        // A tabela local chama os lados da relação de `charId1`/`charId2`, mas o formato de
-        // arquivo (e o servidor) usa `character1Id`/`character2Id`. `importFullStory` faz a
-        // tradução na entrada; sem a simétrica aqui, o arquivo gerado seria recusado na
-        // volta.
-        characterRelations: storyCharacterRelations.map((relation) => ({
-          ...relation,
-          character1Id: relation.charId1,
-          character2Id: relation.charId2,
-        })),
+        characterRelations: storyCharacterRelations,
         characterScenes: storyCharacterScenes,
         galleryItems: storyGalleryItems,
         galleryRelations: storyGalleryRelations,
@@ -1449,8 +1441,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
           const charRelationToInsert: CharacterRelationInsert = {
             ...charRelation,
             storyId: charRelation.storyId,
-            charId1: charRelation.character1Id,
-            charId2: charRelation.character2Id,
             createdAt: new Date(charRelation.createdAt),
             updatedAt: new Date(),
             version: charRelation.version,

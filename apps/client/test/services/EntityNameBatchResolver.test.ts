@@ -144,13 +144,7 @@ describe('createEntitySnapshotResolver', () => {
     });
   });
 
-  /**
-   * `CharacterRelation` é a única relação onde o nome de coluna local (`charId1`/`charId2`)
-   * difere do que o resto de `ConflictSummaryService.ts` espera (`character1Id`/
-   * `character2Id`) - sem a tradução, o snapshot preenchia campos que o switch de relações
-   * nunca ia reconhecer.
-   */
-  it('translates CharacterRelation column names to the server-shaped field names', async () => {
+  it('resolves a CharacterRelation snapshot using the same field names as the sync payload', async () => {
     await database.db.insert(schema.characters).values([
       { id: 'mira', storyId: STORY_ID, name: 'Mira', ...base },
       { id: 'oren', storyId: STORY_ID, name: 'Oren', ...base },
@@ -158,8 +152,8 @@ describe('createEntitySnapshotResolver', () => {
     await database.db.insert(schema.characterRelations).values({
       id: 'relation-1',
       storyId: STORY_ID,
-      charId1: 'mira',
-      charId2: 'oren',
+      character1Id: 'mira',
+      character2Id: 'oren',
       relationType: 'allies',
       ...base,
     });
@@ -174,7 +168,6 @@ describe('createEntitySnapshotResolver', () => {
       character2Id: 'oren',
       relationType: 'allies',
     });
-    expect(snapshots.get('CharacterRelation:relation-1')).not.toHaveProperty('charId1');
   });
 
   /**

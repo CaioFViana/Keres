@@ -878,18 +878,6 @@ export class SyncEngineService {
               delete filteredPayloadData.deletedAt;
               delete filteredPayloadData.storyId; // Remove storyId if it somehow got into payloadData
 
-              // Adjust field names for CharacterRelation to match server schema
-              if (op.entityType === 'CharacterRelation') {
-                if (filteredPayloadData.charId1 !== undefined) {
-                  filteredPayloadData.character1Id = filteredPayloadData.charId1;
-                  delete filteredPayloadData.charId1;
-                }
-                if (filteredPayloadData.charId2 !== undefined) {
-                  filteredPayloadData.character2Id = filteredPayloadData.charId2;
-                  delete filteredPayloadData.charId2;
-                }
-              }
-
               switch (op.operationType) {
                 case 'create':
                   return {

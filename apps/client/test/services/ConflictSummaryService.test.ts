@@ -227,8 +227,8 @@ describe('buildConflictSummaries - relation conflicts', () => {
   /**
    * Regressão: personagem A excluído no dispositivo 1, relação editada (só `relationType`) no
    * dispositivo 2 offline. `localValues`/`serverValues` não têm `character1Id`/`character2Id`
-   * - só o snapshot da linha local (em nomenclatura local, `charId1`/`charId2`, traduzida pro
-   * nome de servidor por `EntitySnapshotResolver`) sabe quem são os dois personagens.
+   * - só o snapshot da linha local (resolvido por `EntitySnapshotResolver`) sabe quem são os
+   * dois personagens.
    */
   it('resolves relation participants from the local snapshot when deleted_on_server leaves both sides sparse', () => {
     const snapshots = new Map([

@@ -7,7 +7,9 @@ export interface ApiLogEntry {
   message: string;
   meta: Record<string, unknown> | null;
   userId: string | null;
+  username: string | null;
   storyId: string | null;
+  storyTitle: string | null;
   createdAt: string;
 }
 

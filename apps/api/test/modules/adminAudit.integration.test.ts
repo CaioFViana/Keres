@@ -106,7 +106,13 @@ describe('admin API log', () => {
     expect(response.status).toBe(200);
     expect(response.data).toMatchObject({ total: 1, page: 1, pageSize: 10 });
     expect(response.data.items).toEqual([
-      expect.objectContaining({ level: 'error', message: 'Media upload failed', storyId }),
+      expect.objectContaining({
+        level: 'error',
+        message: 'Media upload failed',
+        storyId,
+        storyTitle: 'Auditada',
+        username: admin.username,
+      }),
     ]);
   });
 

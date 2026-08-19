@@ -108,16 +108,24 @@ export function LogsPage() {
         </label>
         <label>
           Story ID
-          <input value={storyIdInput} onChange={(e) => setStoryIdInput(e.target.value)} />
+          <input
+            placeholder="Optional"
+            value={storyIdInput}
+            onChange={(e) => setStoryIdInput(e.target.value)}
+          />
         </label>
         <label>
           User ID
-          <input value={userIdInput} onChange={(e) => setUserIdInput(e.target.value)} />
+          <input
+            placeholder="Optional"
+            value={userIdInput}
+            onChange={(e) => setUserIdInput(e.target.value)}
+          />
         </label>
         <label>
           Search
           <input
-            placeholder="Message..."
+            placeholder="Message, story, user…"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -137,7 +145,7 @@ export function LogsPage() {
       {loading ? (
         <p className="loading-text">Loading...</p>
       ) : (
-        <div className="log-layout">
+        <div className={`log-layout${selectedEntry ? ' has-detail' : ''}`}>
           <div className="table-scroll">
             <table className="data-table">
               <thead>
@@ -163,8 +171,12 @@ export function LogsPage() {
                     <td>{new Date(entry.createdAt).toLocaleString()}</td>
                     <td className={LEVEL_CLASS[entry.level]}>{entry.level}</td>
                     <td className="message-cell">{entry.message}</td>
-                    <td>{entry.storyId ?? '-'}</td>
-                    <td>{entry.userId ?? '-'}</td>
+                    <td title={entry.storyId ?? undefined}>
+                      {entry.storyTitle ?? entry.storyId ?? '-'}
+                    </td>
+                    <td title={entry.userId ?? undefined}>
+                      {entry.username ?? entry.userId ?? '-'}
+                    </td>
                   </tr>
                 ))}
                 {entries.length === 0 && (
@@ -185,9 +197,13 @@ export function LogsPage() {
                 <dt>Level</dt>
                 <dd className={LEVEL_CLASS[selectedEntry.level]}>{selectedEntry.level}</dd>
                 <dt>Story</dt>
-                <dd>{selectedEntry.storyId ?? '-'}</dd>
+                <dd title={selectedEntry.storyId ?? undefined}>
+                  {selectedEntry.storyTitle ?? selectedEntry.storyId ?? '-'}
+                </dd>
                 <dt>User</dt>
-                <dd>{selectedEntry.userId ?? '-'}</dd>
+                <dd title={selectedEntry.userId ?? undefined}>
+                  {selectedEntry.username ?? selectedEntry.userId ?? '-'}
+                </dd>
                 <dt>When</dt>
                 <dd>{new Date(selectedEntry.createdAt).toLocaleString()}</dd>
               </dl>

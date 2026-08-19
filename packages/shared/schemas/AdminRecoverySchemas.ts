@@ -27,6 +27,7 @@ export const AdminApiLogQuerySchema = z.object({
   level: z.enum(['info', 'warn', 'error']).optional(),
   storyId: z.string().optional(),
   userId: z.string().optional(),
+  /** Substring over log message, story title, or username. */
   search: z.string().optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),

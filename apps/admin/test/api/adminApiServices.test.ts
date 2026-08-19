@@ -174,9 +174,9 @@ describe('LogsApiService', () => {
 });
 
 describe('RecoveryApiService', () => {
-  it('lists deleted rows filtered by entity type and story', async () => {
+  it('lists deleted rows filtered by entity type, story, and search', async () => {
     mocks.get.mockResolvedValue({ data: [] });
-    const filters = { entityType: 'Character', storyId: 'story-1' };
+    const filters = { entityType: 'Character', storyId: 'story-1', search: 'ana' };
 
     await RecoveryApiService.listDeleted(filters);
 

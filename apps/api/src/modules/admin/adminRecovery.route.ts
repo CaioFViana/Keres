@@ -31,11 +31,12 @@ export const adminRecoveryRoutes = new Elysia()
       query: t.Object({
         entityType: t.Optional(t.String()),
         storyId: t.Optional(t.String()),
+        search: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Browse soft-deleted entities/Stories',
         description:
-          'Lists tombstoned rows across all sync entity types (or a single one via ?entityType=), optionally scoped to a story.',
+          'Lists tombstoned rows across all sync entity types (or a single one via ?entityType=), optionally scoped to a story. Optional search filters by enriched display name, story title, id, or entity type.',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
       },

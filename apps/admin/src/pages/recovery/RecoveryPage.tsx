@@ -1,10 +1,11 @@
-import { KeyboardEvent, useState } from 'react';
+import { FormEvent, KeyboardEvent, useState } from 'react';
 import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared';
 import { DeletedItem, OperationLogEntry, RecoveryApiService } from '../../api/RecoveryApiService';
 
 export function RecoveryPage() {
   const [entityType, setEntityType] = useState('');
   const [storyId, setStoryId] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [items, setItems] = useState<DeletedItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -15,12 +16,14 @@ export function RecoveryPage() {
   const [logLoading, setLogLoading] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
 
-  const search = () => {
+  const search = (e?: FormEvent) => {
+    e?.preventDefault();
     setLoading(true);
     setError(null);
     RecoveryApiService.listDeleted({
       entityType: entityType || undefined,
-      storyId: storyId || undefined,
+      storyId: storyId.trim() || undefined,
+      search: searchInput.trim() || undefined,
     })
       .then(setItems)
       .catch((err) => setError(err.message))
@@ -28,7 +31,8 @@ export function RecoveryPage() {
   };
 
   const restore = async (item: DeletedItem) => {
-    if (!confirm(`Restore ${item.entityType} ${item.id}?`)) return;
+    const label = item.name ? `"${item.name}"` : item.id;
+    if (!confirm(`Restore ${item.entityType} ${label}?`)) return;
     try {
       await RecoveryApiService.restore(item.entityType, item.id);
       setItems((prev) =>
@@ -55,6 +59,17 @@ export function RecoveryPage() {
     }
   };
 
+  const storyCell = (item: DeletedItem) => {
+    if (item.storyTitle) {
+      return (
+        <span title={item.storyId ?? undefined}>
+          {item.storyTitle}
+        </span>
+      );
+    }
+    return item.storyId ?? '-';
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -63,7 +78,7 @@ export function RecoveryPage() {
 
       <section>
         <h2>Deleted items</h2>
-        <div className="toolbar">
+        <form className="toolbar" onSubmit={search}>
           <label>
             Entity type
             <select value={entityType} onChange={(e) => setEntityType(e.target.value)}>
@@ -83,10 +98,16 @@ export function RecoveryPage() {
               onChange={(e) => setStoryId(e.target.value)}
             />
           </label>
-          <button type="button" onClick={search}>
+          <label>
             Search
-          </button>
-        </div>
+            <input
+              placeholder="Name, story title, id…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </label>
+          <button type="submit">Search</button>
+        </form>
 
         {error && <p className="error-text">{error}</p>}
         {loading ? (
@@ -110,8 +131,8 @@ export function RecoveryPage() {
                   <tr key={`${item.entityType}:${item.id}`}>
                     <td>{item.entityType}</td>
                     <td>{item.name ?? <span className="hint">(unnamed)</span>}</td>
-                    <td>{item.id}</td>
-                    <td>{item.storyId ?? '-'}</td>
+                    <td className="mono-code">{item.id}</td>
+                    <td>{storyCell(item)}</td>
                     <td>{item.deletedAt ? new Date(item.deletedAt).toLocaleString() : '-'}</td>
                     <td>{item.version}</td>
                     <td>

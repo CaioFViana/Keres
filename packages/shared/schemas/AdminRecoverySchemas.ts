@@ -4,6 +4,8 @@ export const AdminDeletedItemsQuerySchema = z.object({
   /** Nome da entidade (ex: 'Story', 'Character'). Ausente = busca em todas. */
   entityType: z.string().optional(),
   storyId: z.string().optional(),
+  /** Substring case-insensitive sobre name / storyTitle / id / entityType (após enriquecimento). */
+  search: z.string().trim().max(100).optional(),
 });
 export type AdminDeletedItemsQuery = z.infer<typeof AdminDeletedItemsQuerySchema>;
 

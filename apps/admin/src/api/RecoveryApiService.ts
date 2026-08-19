@@ -5,9 +5,10 @@ export interface DeletedItem {
   entityType: string;
   id: string;
   storyId: string | null;
+  storyTitle: string | null;
   deletedAt: string | null;
   version: number;
-  /** Melhor esforço vindo do servidor (title/name/text/value/fileName); `null` para tabelas de relação. */
+  /** Enriched display name (simple field or shallow composite); null when still unknown. */
   name: string | null;
 }
 
@@ -33,8 +34,14 @@ export interface OperationLogFilters {
   pageSize?: number;
 }
 
+export interface DeletedItemsFilters {
+  entityType?: string;
+  storyId?: string;
+  search?: string;
+}
+
 export const RecoveryApiService = {
-  async listDeleted(filters: { entityType?: string; storyId?: string }): Promise<DeletedItem[]> {
+  async listDeleted(filters: DeletedItemsFilters): Promise<DeletedItem[]> {
     const { data } = await apiClient.get('/admin/api/recovery/deleted', { params: filters });
     return data;
   },

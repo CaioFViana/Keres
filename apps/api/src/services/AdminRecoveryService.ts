@@ -1,7 +1,11 @@
-import { AdminOperationLogQuery, UpdateStoryUpdate } from '@keres/shared';
+import { AdminDeletedItemsQuery, AdminOperationLogQuery, UpdateStoryUpdate } from '@keres/shared';
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
 import { db, withTransaction } from '../db';
 import { operationLog } from '../db/schema';
+import {
+  enrichDeletedDisplayNames,
+  type EnrichableDeletedRow,
+} from './AdminRecoveryDisplayNames';
 import type { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { syncService } from './SyncService';
 
@@ -23,10 +27,23 @@ export interface DeletedItem {
   entityType: string;
   id: string;
   storyId: string | null;
+  /** Resolved Story.title when storyId is known (includes soft-deleted stories). */
+  storyTitle: string | null;
   deletedAt: Date | null;
   version: number;
-  /** Melhor esforço (title/name/text/value/fileName da própria linha); `null` para tabelas de relação sem um campo assim. */
+  /** Simple or composite display name; null only when enrichment still cannot label the row. */
   name: string | null;
+}
+
+function matchesSearch(item: DeletedItem, search: string): boolean {
+  const q = search.toLowerCase();
+  return (
+    (item.name?.toLowerCase().includes(q) ?? false) ||
+    (item.storyTitle?.toLowerCase().includes(q) ?? false) ||
+    item.id.toLowerCase().includes(q) ||
+    item.entityType.toLowerCase().includes(q) ||
+    (item.storyId?.toLowerCase().includes(q) ?? false)
+  );
 }
 
 export class AdminRecoveryService {
@@ -35,8 +52,11 @@ export class AdminRecoveryService {
    * a mesma fonte de tabelas usadas pelo pipeline de sync, então nunca diverge dela.
    * Sem `entityType`, varre todos os tipos; sem paginação de verdade (soft-deletes são
    * tipicamente uma pequena minoria das linhas, e isto é uma ferramenta interna de admin).
+   *
+   * Nomes: campo simples por tipo (`getSimpleDisplayName`) + compostos rasos com batch de FKs.
+   * `search` filtra depois do enriquecimento (substring case-insensitive).
    */
-  async listDeleted(filters: { entityType?: string; storyId?: string }): Promise<DeletedItem[]> {
+  async listDeleted(filters: AdminDeletedItemsQuery): Promise<DeletedItem[]> {
     const handlers = syncService.getEntityHandlers();
     const entityTypes = filters.entityType ? [filters.entityType] : [...handlers.keys()];
 
@@ -48,18 +68,46 @@ export class AdminRecoveryService {
       .map((entityType) => [entityType, handlers.get(entityType)] as const)
       .filter((entry): entry is [string, SyncEntityHandler] => !!entry[1]);
 
-    // Consultas independentes por tipo de entidade, então rodam em paralelo em vez de
-    // serializadas uma atrás da outra - cada `findDeleted` já é seu próprio SELECT isolado.
     const rowsByType = await Promise.all(
       entries.map(([, handler]) => handler.findDeleted(filters.storyId)),
     );
 
-    const results: DeletedItem[] = [];
+    const enrichable: Array<EnrichableDeletedRow & { deletedAt: Date | null; version: number }> =
+      [];
     entries.forEach(([entityType], index) => {
       for (const row of rowsByType[index]) {
-        results.push({ entityType, ...row });
+        enrichable.push({
+          entityType,
+          id: row.id,
+          storyId: row.storyId,
+          deletedAt: row.deletedAt,
+          version: row.version,
+          name: row.name,
+          row: row.row,
+        });
       }
     });
+
+    const { names, storyTitles } = await enrichDeletedDisplayNames(enrichable);
+
+    let results: DeletedItem[] = enrichable.map((item) => {
+      const key = `${item.entityType}:${item.id}`;
+      const storyId = item.entityType === 'Story' ? item.id : item.storyId;
+      return {
+        entityType: item.entityType,
+        id: item.id,
+        storyId: item.storyId,
+        storyTitle: storyId ? (storyTitles.get(storyId) ?? null) : null,
+        deletedAt: item.deletedAt,
+        version: item.version,
+        name: names.get(key) ?? item.name,
+      };
+    });
+
+    const search = filters.search?.trim();
+    if (search) {
+      results = results.filter((item) => matchesSearch(item, search));
+    }
 
     results.sort((a, b) => (b.deletedAt?.getTime() ?? 0) - (a.deletedAt?.getTime() ?? 0));
     return results;

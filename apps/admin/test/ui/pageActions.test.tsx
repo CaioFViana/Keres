@@ -176,6 +176,7 @@ describe('admin page actions', () => {
         id: 'char-1',
         name: 'Ana',
         storyId: 'story-1',
+        storyTitle: 'Demo Story',
         deletedAt: '2026-01-01',
         version: 4,
       },
@@ -195,7 +196,11 @@ describe('admin page actions', () => {
     );
     await flush();
 
-    expect(mocks.listDeleted).toHaveBeenCalledWith({ entityType: undefined, storyId: undefined });
+    expect(mocks.listDeleted).toHaveBeenCalledWith({
+      entityType: undefined,
+      storyId: undefined,
+      search: undefined,
+    });
     expect(mocks.restoreDeleted).toHaveBeenCalledWith('Character', 'char-1');
     await view.unmount();
   });

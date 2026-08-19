@@ -398,6 +398,7 @@ describe('findDeleted', () => {
       version: 2,
     });
     expect(deleted[0].deletedAt).toBeInstanceOf(Date);
+    expect(deleted[0].row).toMatchObject({ name: 'Keres' });
   });
 
   it('does not list live rows', async () => {

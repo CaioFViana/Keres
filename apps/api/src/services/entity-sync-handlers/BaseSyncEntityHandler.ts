@@ -1,6 +1,7 @@
 import {
   CreateStoryUpdate,
   DeleteStoryUpdate,
+  getSimpleDisplayName,
   SyncConflictReason,
   UpdateStoryUpdate,
 } from '@keres/shared';
@@ -65,29 +66,10 @@ export interface SyncEntityHandler {
       deletedAt: Date | null;
       version: number;
       name: string | null;
+      /** Linha crua para enriquecimento composto no AdminRecoveryService (não vai na resposta HTTP). */
+      row: Record<string, unknown>;
     }>
   >;
-}
-
-/**
- * Colunas candidatas a "nome de exibição", nesta ordem de preferência, testadas contra a
- * linha crua. Cobre a maioria das entidades (Story.title, Character.name, Choice.text,
- * Suggestion.value, Gallery.fileName) sem precisar de configuração por handler; tabelas de
- * relação (CharacterRelation, TagRelation, ...) não têm nenhuma dessas colunas e ficam com
- * `name: null` - resolver "Personagem A - Personagem B" exigiria a mesma cadeia de joins
- * que `EntityService.getEntityIdentifier` já faz no cliente, o que é mais do que a lista de
- * recuperação do admin precisa.
- */
-const DISPLAY_NAME_CANDIDATE_COLUMNS = ['title', 'name', 'text', 'value', 'fileName'] as const;
-
-function extractDisplayName(row: Record<string, any>): string | null {
-  for (const column of DISPLAY_NAME_CANDIDATE_COLUMNS) {
-    const value = row[column];
-    if (typeof value === 'string' && value.length > 0) {
-      return value;
-    }
-  }
-  return null;
 }
 
 export abstract class BaseSyncEntityHandler<
@@ -170,6 +152,7 @@ export abstract class BaseSyncEntityHandler<
       deletedAt: Date | null;
       version: number;
       name: string | null;
+      row: Record<string, unknown>;
     }>
   > {
     if (!this.isDeletedColumnName) {
@@ -183,13 +166,17 @@ export abstract class BaseSyncEntityHandler<
       .select()
       .from(this.table)
       .where(and(...conditions));
-    return rows.map((r: any) => ({
-      id: r[this.idColumnName],
-      storyId: this.storyIdColumnName ? r[this.storyIdColumnName] : null,
-      deletedAt: this.deletedAtColumnName ? r[this.deletedAtColumnName] : null,
-      version: r[this.versionColumnName],
-      name: extractDisplayName(r),
-    }));
+    return rows.map((r: any) => {
+      const row = r as Record<string, unknown>;
+      return {
+        id: r[this.idColumnName],
+        storyId: this.storyIdColumnName ? r[this.storyIdColumnName] : null,
+        deletedAt: this.deletedAtColumnName ? r[this.deletedAtColumnName] : null,
+        version: r[this.versionColumnName],
+        name: getSimpleDisplayName(this.entityName, row),
+        row,
+      };
+    });
   }
 
   abstract create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void>;

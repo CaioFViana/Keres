@@ -1,5 +1,5 @@
 import type { AdminCreateUser, AdminUpdateUser, AdminUserInfo } from '@keres/shared';
-import { apiClient } from './apiClient';
+import { apiClient, assertSafePathSegment } from './apiClient';
 
 export interface Paginated<T> {
   items: T[];
@@ -23,7 +23,8 @@ export const AdminUserApiService = {
     return data;
   },
   async get(id: string): Promise<AdminUserInfo> {
-    const { data } = await apiClient.get(`/admin/api/users/${id}`);
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.get(`/admin/api/users/${safeId}`);
     return data;
   },
   async create(input: AdminCreateUser): Promise<AdminUserInfo & { recoveryCodes: string[] }> {
@@ -31,19 +32,23 @@ export const AdminUserApiService = {
     return data;
   },
   async update(id: string, patch: AdminUpdateUser): Promise<AdminUserInfo> {
-    const { data } = await apiClient.put(`/admin/api/users/${id}`, patch);
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.put(`/admin/api/users/${safeId}`, patch);
     return data;
   },
   async softDelete(id: string): Promise<AdminUserInfo> {
-    const { data } = await apiClient.delete(`/admin/api/users/${id}`);
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.delete(`/admin/api/users/${safeId}`);
     return data;
   },
   async restore(id: string): Promise<AdminUserInfo> {
-    const { data } = await apiClient.post(`/admin/api/users/${id}/restore`);
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.post(`/admin/api/users/${safeId}/restore`);
     return data;
   },
   async regenerateRecoveryCodes(id: string): Promise<{ recoveryCodes: string[] }> {
-    const { data } = await apiClient.post(`/admin/api/users/${id}/regenerate-recovery-codes`);
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.post(`/admin/api/users/${safeId}/regenerate-recovery-codes`);
     return data;
   },
 };

@@ -2,7 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
+import { applyResolvedTheme, readThemePreference, resolveTheme } from './theme/theme';
 import './styles.css';
+
+// Apply theme before first paint to avoid a light flash when preference is dark.
+applyResolvedTheme(resolveTheme(readThemePreference()));
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

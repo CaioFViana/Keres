@@ -14,33 +14,46 @@ export function UserFormPage() {
   const [password, setPassword] = useState('');
   const [tag, setTag] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [initialIsAdmin, setInitialIsAdmin] = useState(false);
   const [tierId, setTierId] = useState<string>('');
   const [bio, setBio] = useState('');
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tierError, setTierError] = useState<string | null>(null);
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
   /** Mostrados só uma vez - depois disto só o hash de cada um existe no servidor. */
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 
   useEffect(() => {
     TierApiService.list()
       .then(setTiers)
-      .catch(() => {});
+      .catch((err) => setTierError(err instanceof Error ? err.message : 'Failed to load tiers.'));
   }, []);
 
   useEffect(() => {
     if (isNew || !id) return;
+    let ignore = false;
     AdminUserApiService.get(id)
       .then((u) => {
+        if (ignore) return;
         setUsername(u.username);
         setTag(u.tag);
         setIsAdmin(u.isAdmin);
+        setInitialIsAdmin(u.isAdmin);
         setTierId(u.tierId ?? '');
         setBio(u.bio ?? '');
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!ignore) setError(err.message);
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [id, isNew]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -48,6 +61,18 @@ export function UserFormPage() {
     setSaving(true);
     setError(null);
     try {
+      const grantingAdmin = isAdmin && (isNew || !initialIsAdmin);
+      if (
+        grantingAdmin &&
+        !confirm(
+          isNew
+            ? 'Create this user with admin access? They will be able to manage the panel.'
+            : `Grant admin access to "${username}"? They will be able to manage the panel.`,
+        )
+      ) {
+        return;
+      }
+
       if (isNew) {
         const created = await AdminUserApiService.create({
           username,
@@ -56,8 +81,6 @@ export function UserFormPage() {
           isAdmin,
           tierId: tierId || null,
         });
-        // Fica na tela mostrando os códigos em vez de navegar - é a única vez que eles
-        // aparecem em texto puro, e o admin precisa repassá-los pra pessoa (não há e-mail).
         setRecoveryCodes(created.recoveryCodes);
         return;
       } else if (id) {
@@ -97,12 +120,24 @@ export function UserFormPage() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  const copyCodes = async () => {
+    if (!recoveryCodes) return;
+    try {
+      await navigator.clipboard.writeText(recoveryCodes.join('\n'));
+      setCopyMessage('Copied to clipboard.');
+    } catch {
+      setCopyMessage('Could not copy automatically — select the codes manually.');
+    }
+  };
+
+  if (loading) return <p className="loading-text">Loading...</p>;
 
   if (recoveryCodes) {
     return (
       <div>
-        <h1>Recovery codes for {username}</h1>
+        <div className="page-header">
+          <h1>Recovery codes for {username}</h1>
+        </div>
         <div className="form-card">
           <p className="hint">
             Each code can be used once to reset the password without knowing the current one. Shown
@@ -110,14 +145,20 @@ export function UserFormPage() {
           </p>
           <ul>
             {recoveryCodes.map((code) => (
-              <li key={code} style={{ fontFamily: 'monospace', fontSize: '1.1em' }}>
+              <li key={code} className="mono-code">
                 {code}
               </li>
             ))}
           </ul>
-          <button type="button" onClick={() => navigate('/users')}>
-            Done
-          </button>
+          {copyMessage && <p className="success-text">{copyMessage}</p>}
+          <div className="form-actions">
+            <button type="button" onClick={() => void copyCodes()}>
+              Copy codes
+            </button>
+            <button type="button" className="button-secondary" onClick={() => navigate('/users')}>
+              Done
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -125,8 +166,10 @@ export function UserFormPage() {
 
   return (
     <div>
-      <h1>{isNew ? 'New user' : `Edit ${username}`}</h1>
-      <form className="form-card" onSubmit={onSubmit}>
+      <div className="page-header">
+        <h1>{isNew ? 'New user' : `Edit ${username}`}</h1>
+      </div>
+      <form className="form-card" onSubmit={(e) => void onSubmit(e)}>
         {isNew && (
           <>
             <label>
@@ -170,8 +213,13 @@ export function UserFormPage() {
             ))}
           </select>
         </label>
+        {tierError && <p className="error-text">{tierError}</p>}
         <label className="checkbox-label">
-          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={isAdmin}
+            onChange={(e) => setIsAdmin(e.target.checked)}
+          />
           Admin access
         </label>
         {error && <p className="error-text">{error}</p>}
@@ -179,7 +227,7 @@ export function UserFormPage() {
           <button type="submit" disabled={saving}>
             {saving ? 'Saving...' : 'Save'}
           </button>
-          <button type="button" onClick={() => navigate('/users')}>
+          <button type="button" className="button-secondary" onClick={() => navigate('/users')}>
             Cancel
           </button>
         </div>
@@ -192,7 +240,11 @@ export function UserFormPage() {
             Issues a fresh batch of recovery codes and invalidates any old ones. Hand a code to the
             user - they use it to set their own new password, which you never see.
           </p>
-          <button type="button" onClick={onRegenerateRecoveryCodes} disabled={regeneratingCodes}>
+          <button
+            type="button"
+            onClick={() => void onRegenerateRecoveryCodes()}
+            disabled={regeneratingCodes}
+          >
             {regeneratingCodes ? 'Regenerating...' : 'Regenerate recovery codes'}
           </button>
         </div>

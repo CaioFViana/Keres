@@ -23,11 +23,15 @@ export function TiersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<TierCreateInput>(emptyForm);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const load = () => {
+    setLoading(true);
     TierApiService.list(true)
       .then(setTiers)
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   };
   useEffect(load, []);
 
@@ -57,6 +61,7 @@ export function TiersPage() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSaving(true);
     try {
       if (editingId === 'new') {
         await TierApiService.create(form);
@@ -67,6 +72,8 @@ export function TiersPage() {
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -95,13 +102,15 @@ export function TiersPage() {
     <div>
       <div className="page-header">
         <h1>Tiers</h1>
-        <button onClick={startNew}>New tier</button>
+        <button type="button" onClick={startNew}>
+          New tier
+        </button>
       </div>
 
       {error && <p className="error-text">{error}</p>}
 
       {editingId && (
-        <form className="form-card" onSubmit={save}>
+        <form className="form-card" onSubmit={(e) => void save(e)}>
           <h3>{editingId === 'new' ? 'New tier' : 'Edit tier'}</h3>
           <label>
             Name
@@ -111,53 +120,83 @@ export function TiersPage() {
               required
             />
           </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={form.isDefault}
+              onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
+            />
+            Default tier for new signups
+          </label>
           {limitInput('Max stories', 'maxStories')}
           {limitInput('Max entities per story', 'maxEntitiesPerStory')}
           {limitInput('Max entities total', 'maxEntitiesTotal')}
           {limitInput('Max storage bytes per story', 'maxStorageBytesPerStory')}
           {limitInput('Max storage bytes total', 'maxStorageBytesTotal')}
           <div className="form-actions">
-            <button type="submit">Save</button>
-            <button type="button" onClick={cancel}>
+            <button type="submit" disabled={saving}>
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button type="button" className="button-secondary" onClick={cancel}>
               Cancel
             </button>
           </div>
         </form>
       )}
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Max stories</th>
-            <th>Max entities/story</th>
-            <th>Max entities total</th>
-            <th>Max storage/story</th>
-            <th>Max storage total</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {tiers.map((t) => (
-            <tr key={t.id} className={t.isDeleted ? 'row-deleted' : ''}>
-              <td>{t.name}</td>
-              <td>{t.maxStories ?? '∞'}</td>
-              <td>{t.maxEntitiesPerStory ?? '∞'}</td>
-              <td>{t.maxEntitiesTotal ?? '∞'}</td>
-              <td>{t.maxStorageBytesPerStory ?? '∞'}</td>
-              <td>{t.maxStorageBytesTotal ?? '∞'}</td>
-              <td>
-                {!t.isDeleted && (
-                  <>
-                    <button onClick={() => startEdit(t)}>Edit</button>
-                    <button onClick={() => remove(t)}>Delete</button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {loading ? (
+        <p className="loading-text">Loading...</p>
+      ) : (
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Default</th>
+                <th>Max stories</th>
+                <th>Max entities/story</th>
+                <th>Max entities total</th>
+                <th>Max storage/story</th>
+                <th>Max storage total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiers.map((t) => (
+                <tr key={t.id} className={t.isDeleted ? 'row-deleted' : ''}>
+                  <td>{t.name}</td>
+                  <td>{t.isDefault ? 'Yes' : ''}</td>
+                  <td>{t.maxStories ?? '∞'}</td>
+                  <td>{t.maxEntitiesPerStory ?? '∞'}</td>
+                  <td>{t.maxEntitiesTotal ?? '∞'}</td>
+                  <td>{t.maxStorageBytesPerStory ?? '∞'}</td>
+                  <td>{t.maxStorageBytesTotal ?? '∞'}</td>
+                  <td>
+                    {!t.isDeleted && (
+                      <div className="table-actions">
+                        <button type="button" onClick={() => startEdit(t)}>
+                          Edit
+                        </button>
+                        <button type="button" className="button-danger" onClick={() => void remove(t)}>
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                    {t.isDeleted && <span className="status-badge deleted">Deleted</span>}
+                  </td>
+                </tr>
+              ))}
+              {tiers.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="empty-state">
+                    No tiers yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

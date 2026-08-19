@@ -40,6 +40,21 @@ const adminDistPath = path.join(apiSourceDirectory, '..', '..', 'admin', 'dist')
 const adminDistIndexPath = path.join(adminDistPath, 'index.html');
 const adminUiAvailable = existsSync(adminDistIndexPath);
 
+/** Headers for the co-hosted admin SPA (static assets + HTML fallback). Not applied to `/admin/api/*`. */
+const ADMIN_UI_SECURITY_HEADERS: Record<string, string> = {
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'X-Frame-Options': 'DENY',
+};
+
+function applyAdminUiSecurityHeaders(set: { headers: Record<string, string | number> }): void {
+  for (const [name, value] of Object.entries(ADMIN_UI_SECURITY_HEADERS)) {
+    set.headers[name] = value;
+  }
+}
+
 if (!adminUiAvailable) {
   logger.warn(
     `Admin UI not built - /admin will 404. Run 'bun run build' in apps/api (or apps/admin) to enable it.`,
@@ -279,6 +294,12 @@ export async function createApp() {
       },
     )
     .group('/admin/api', (app) => app.use(adminRoutes))
+    .onAfterHandle(({ request, set }) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/api')) {
+        applyAdminUiSecurityHeaders(set);
+      }
+    })
     .use(
       adminUiAvailable
         ? await staticPlugin({ assets: adminDistPath, prefix: '/admin', alwaysStatic: true })
@@ -291,6 +312,7 @@ export async function createApp() {
           set.status = 404;
           return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
         }
+        applyAdminUiSecurityHeaders(set);
         // Fallback de SPA: qualquer rota do painel que não seja um arquivo estático real (ex:
         // /admin/users, uma rota de cliente do React Router) recebe o mesmo index.html, que
         // então resolve a rota no navegador. Sem isto, um F5 em /admin/users daria 404.

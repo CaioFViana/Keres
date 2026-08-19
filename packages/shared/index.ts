@@ -67,6 +67,7 @@ export * from './schemas/FriendshipSchemas';
 export * from './schemas/UserTagSchemas';
 export * from './schemas/UserSchemas';
 export * from './metadata/OperationLogEntityType';
+export * from './metadata/recoverableEntityTypes';
 export * from './metadata/FriendStatus';
 export * from './metadata/AttributeType';
 export * from './metadata/StorySchemaEntityType';

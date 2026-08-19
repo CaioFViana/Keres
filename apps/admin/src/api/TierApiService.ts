@@ -1,5 +1,5 @@
 import type { PartialTier, Tier, TierCreateInput } from '@keres/shared';
-import { apiClient } from './apiClient';
+import { apiClient, assertSafePathSegment } from './apiClient';
 
 export const TierApiService = {
   async list(includeDeleted = false): Promise<Tier[]> {
@@ -7,7 +7,8 @@ export const TierApiService = {
     return data;
   },
   async get(id: string): Promise<Tier> {
-    const { data } = await apiClient.get(`/admin/api/tiers/${id}`);
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.get(`/admin/api/tiers/${safeId}`);
     return data;
   },
   async create(input: TierCreateInput): Promise<Tier> {
@@ -15,11 +16,13 @@ export const TierApiService = {
     return data;
   },
   async update(id: string, patch: PartialTier): Promise<Tier> {
-    const { data } = await apiClient.put(`/admin/api/tiers/${id}`, patch);
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.put(`/admin/api/tiers/${safeId}`, patch);
     return data;
   },
   async softDelete(id: string): Promise<Tier> {
-    const { data } = await apiClient.delete(`/admin/api/tiers/${id}`);
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.delete(`/admin/api/tiers/${safeId}`);
     return data;
   },
 };

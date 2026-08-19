@@ -7,7 +7,10 @@ const mocks = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
-vi.mock('../../src/api/apiClient', () => ({ apiClient: mocks }));
+vi.mock('../../src/api/apiClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/api/apiClient')>();
+  return { ...actual, apiClient: mocks };
+});
 
 import { AdminUserApiService } from '../../src/api/AdminUserApiService';
 import { LogsApiService } from '../../src/api/LogsApiService';

@@ -25,7 +25,12 @@ const mocks = vi.hoisted(() => ({
   listLogs: vi.fn(),
 }));
 
-vi.mock('../../src/api/AdminAuthService', () => ({ login: mocks.login }));
+vi.mock('../../src/api/AdminAuthService', () => ({
+  login: mocks.login,
+  logout: vi.fn().mockResolvedValue(undefined),
+  probeAdminAccess: vi.fn().mockResolvedValue(undefined),
+  clearServerSession: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('../../src/api/AdminUserApiService', () => ({
   AdminUserApiService: {
     list: mocks.listUsers,

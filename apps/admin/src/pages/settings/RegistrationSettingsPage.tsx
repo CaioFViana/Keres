@@ -8,6 +8,7 @@ export function RegistrationSettingsPage() {
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tierError, setTierError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -16,10 +17,12 @@ export function RegistrationSettingsPage() {
       .catch((err) => setError(err.message));
     TierApiService.list()
       .then(setTiers)
-      .catch(() => {});
+      .catch((err) => setTierError(err instanceof Error ? err.message : 'Failed to load tiers.'));
   }, []);
 
-  if (!settings) return <p>{error ? <span className="error-text">{error}</span> : 'Loading...'}</p>;
+  if (!settings) {
+    return <p className="loading-text">{error ? <span className="error-text">{error}</span> : 'Loading...'}</p>;
+  }
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +47,10 @@ export function RegistrationSettingsPage() {
 
   return (
     <div>
-      <h1>Registration Settings</h1>
-      <form className="form-card" onSubmit={save}>
+      <div className="page-header">
+        <h1>Registration Settings</h1>
+      </div>
+      <form className="form-card" onSubmit={(e) => void save(e)}>
         <label className="checkbox-label">
           <input
             type="checkbox"
@@ -95,6 +100,7 @@ export function RegistrationSettingsPage() {
           </select>
         </label>
 
+        {tierError && <p className="error-text">{tierError}</p>}
         {error && <p className="error-text">{error}</p>}
         {message && <p className="success-text">{message}</p>}
         <div className="form-actions">

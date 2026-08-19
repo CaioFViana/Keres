@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, assertSafePathSegment } from './apiClient';
 import type { Paginated } from './AdminUserApiService';
 
 export interface DeletedItem {
@@ -39,7 +39,9 @@ export const RecoveryApiService = {
     return data;
   },
   async restore(entityType: string, id: string): Promise<unknown> {
-    const { data } = await apiClient.post(`/admin/api/recovery/${entityType}/${id}/restore`);
+    const safeType = assertSafePathSegment(entityType, 'entityType');
+    const safeId = assertSafePathSegment(id);
+    const { data } = await apiClient.post(`/admin/api/recovery/${safeType}/${safeId}/restore`);
     return data;
   },
   async browseOperationLog(filters: OperationLogFilters): Promise<Paginated<OperationLogEntry>> {

@@ -216,6 +216,27 @@ describe('POST /auth/refresh', () => {
   });
 });
 
+describe('POST /auth/logout', () => {
+  it('clears session cookies and remains idempotent when already logged out', async () => {
+    const user = await registerUser('ana');
+
+    const loggedOut = await request('POST', '/auth/logout', {
+      headers: { cookie: `access_token=${user.token}; refresh_token=${user.refreshToken}` },
+    });
+    expect(loggedOut.status).toBe(200);
+    expect(loggedOut.data.message).toBe('Logged out');
+
+    const setCookies = loggedOut.headers.getSetCookie().join(';').toLowerCase();
+    expect(setCookies).toMatch(/access_token=/);
+    expect(setCookies).toMatch(/refresh_token=/);
+    expect(setCookies).toMatch(/max-age=0/);
+
+    const again = await request('POST', '/auth/logout', { body: {} });
+    expect(again.status).toBe(200);
+    expect(again.data.message).toBe('Logged out');
+  });
+});
+
 describe('POST /auth/login rate limiting', () => {
   /**
    * /login had no attempt limiting at all until this - the concept was introduced with

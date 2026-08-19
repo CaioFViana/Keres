@@ -90,12 +90,17 @@ describe('response interceptor', () => {
     await expect(apiClient.get('/admin/api/users')).resolves.toMatchObject({ data: { items: [] } });
   });
 
-  it('drops the session on a 401, so the app falls back to the login screen', async () => {
+  it('drops the session on a 401 and notifies listeners so the app can return to login', async () => {
     setToken('expired-token');
+    const events: Event[] = [];
+    const onCleared = (event: Event) => events.push(event);
+    window.addEventListener('keres-admin-session-cleared', onCleared);
     respondWith({ status: 401, data: { message: 'Token expired.' } });
 
     await expect(apiClient.get('/admin/api/users')).rejects.toThrow('Token expired.');
     expect(getToken()).toBeNull();
+    expect(events).toHaveLength(1);
+    window.removeEventListener('keres-admin-session-cleared', onCleared);
   });
 
   it.each([403, 404, 409, 500])('keeps the session on a %d', async (status) => {

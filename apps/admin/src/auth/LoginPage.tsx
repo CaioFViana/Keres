@@ -1,14 +1,22 @@
 import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, isAuthenticated, isBootstrapping } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  if (isBootstrapping) {
+    return <p className="loading-text">Loading...</p>;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/users" replace />;
+  }
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,6 +43,7 @@ export function LoginPage() {
             onChange={(e) => setUsername(e.target.value)}
             autoFocus
             required
+            autoComplete="username"
           />
         </label>
         <label>
@@ -44,6 +53,7 @@ export function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
           />
         </label>
         {error && <p className="error-text">{error}</p>}

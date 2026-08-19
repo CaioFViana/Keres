@@ -427,4 +427,33 @@ export const authRoutes = new Elysia()
         tags: ['Auth'],
       },
     },
+  )
+  .post(
+    '/logout',
+    ({ cookie }) => {
+      // Same path/flags as login/refresh so the browser actually drops the cookies.
+      // Always 200: logout is idempotent whether a session existed or not.
+      const clear = {
+        value: '',
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'lax' as const,
+        path: '/',
+        maxAge: 0,
+      };
+      cookie['access_token'].set(clear);
+      cookie['refresh_token'].set(clear);
+      return { message: 'Logged out' };
+    },
+    {
+      response: {
+        200: MessageResponseSchema,
+      },
+      detail: {
+        summary: 'Clear session cookies',
+        description:
+          'Clears httpOnly access_token and refresh_token cookies. Idempotent. The admin SPA also drops its Bearer token from localStorage on its side.',
+        tags: ['Auth'],
+      },
+    },
   );

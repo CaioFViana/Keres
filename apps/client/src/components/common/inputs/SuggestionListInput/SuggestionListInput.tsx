@@ -6,7 +6,6 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   useWindowDimensions,
@@ -18,8 +17,10 @@ import {
   SuggestionType,
 } from '../../../../services/storymanagement/SuggestionService';
 import { useTheme } from '../../../../theme';
+import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import { getContrastTextColor } from '../../../../utils/colorUtils';
 import Button from '@/src/components/common/controls/Button/Button';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
 interface SuggestionListInputProps {
@@ -56,6 +57,7 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
   const { t } = useTranslation();
   const drizzleDb = useDrizzle();
   const { height: screenHeight } = useWindowDimensions();
+  const commonInputStyles = getCommonInputStyles(colors);
 
   const [draft, setDraft] = useState('');
   const draftRef = useRef(draft);
@@ -174,13 +176,12 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       borderRadius: 5,
       backgroundColor: colors.surface,
       minHeight: 50,
-      overflow: 'hidden',
     },
     draftInput: {
       flex: 1,
-      paddingHorizontal: 10,
-      color: colors.text,
-      fontSize: 16,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      marginBottom: 0,
     },
     suggestionButton: {
       paddingHorizontal: 10,
@@ -267,11 +268,11 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
           value={draft}
           onChangeText={setDraft}
           placeholder={placeholder}
-          placeholderTextColor={colors.textSecondary}
           onSubmitEditing={addDraft}
           returnKeyType="done"
           blurOnSubmit={false}
-          style={styles.draftInput}
+          style={[commonInputStyles.input, styles.draftInput]}
+          suppressInteractionBorder
         />
         <TouchableOpacity
           testID="suggestion-list-add"
@@ -305,7 +306,6 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder={t('search')}
-          placeholderTextColor={colors.textSecondary}
           style={styles.searchInput}
         />
         {loadingSuggestions ? (

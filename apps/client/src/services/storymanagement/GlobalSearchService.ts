@@ -1,4 +1,9 @@
-import { FavoriteEntityType } from '@keres/shared';
+import {
+  AttributeType,
+  decodeAttributeValue,
+  FavoriteEntityType,
+  joinSuggestionListForDisplay,
+} from '@keres/shared';
 import {
   globalSearchFieldConfig,
   GlobalSearchEntityType,
@@ -44,6 +49,14 @@ const FAVORITABLE_ENTITY_TYPES = new Set<GlobalSearchEntityType>([
   'Note',
   'WorldRule',
 ]);
+
+function formatAttributeSearchValue(type: string, stored: string | null | undefined): string {
+  if (type !== AttributeType.SUGGESTION_LIST) {
+    return stored ?? '';
+  }
+  const decoded = decodeAttributeValue(AttributeType.SUGGESTION_LIST, stored);
+  return joinSuggestionListForDisplay(Array.isArray(decoded) ? decoded : null) ?? stored ?? '';
+}
 
 function buildSnippet(fieldLabel: string, value: unknown): string {
   return truncate(`${fieldLabel}: ${String(value)}`, SNIPPET_MAX_LENGTH);
@@ -174,7 +187,10 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
             entityType,
             id: row.attribute.entityId,
             title,
-            snippet: buildSnippet(row.field.name, row.attribute.value),
+            snippet: buildSnippet(
+              row.field.name,
+              formatAttributeSearchValue(row.field.type, row.attribute.value),
+            ),
             isFavorite: null,
           });
         }

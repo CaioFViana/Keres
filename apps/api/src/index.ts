@@ -4,7 +4,7 @@ import { jwt } from '@elysiajs/jwt';
 import { staticPlugin } from '@elysiajs/static';
 import { swagger } from '@elysiajs/swagger';
 import { Elysia, t } from 'elysia';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { env } from './config/env';
@@ -302,7 +302,9 @@ export async function createApp() {
         }
         set.headers['content-type'] = useGeneratedIco ? 'image/x-icon' : 'image/png';
         set.headers['cache-control'] = 'public, max-age=86400';
-        return Bun.file(filePath);
+        // `readFileSync` instead of `Bun.file`: this route is hit by the Node/Vitest suite
+        // (`kerescheck.test.ts`) as well as Bun in production. The file is a few KB.
+        return new Uint8Array(readFileSync(filePath));
       },
       {
         detail: {
@@ -350,7 +352,9 @@ export async function createApp() {
         // Fallback de SPA: qualquer rota do painel que não seja um arquivo estático real (ex:
         // /admin/users, uma rota de cliente do React Router) recebe o mesmo index.html, que
         // então resolve a rota no navegador. Sem isto, um F5 em /admin/users daria 404.
-        return Bun.file(adminDistIndexPath);
+        // Node/Vitest has no `Bun.file`; the HTML is tiny so a sync read is fine.
+        set.headers['content-type'] = 'text/html; charset=utf-8';
+        return readFileSync(adminDistIndexPath, 'utf8');
       },
       {
         detail: {

@@ -259,7 +259,7 @@ Uma release publica:
 - [Plano e arquitetura do projeto](docs/project_plan.md)
 - [Fluxo de telas](docs/screen_flow.md)
 - [Mecânicas de escolhas](docs/choice_mechanics.md)
-- [Resolução de conflitos no cliente](docs/conflict_resolution_client_strategy.md)
+- [Sincronização e resolução de conflitos](docs/conflict_resolution_client_strategy.md)
 
 ## Segurança operacional
 

@@ -5,9 +5,11 @@ import { eq } from 'drizzle-orm';
 import { operationLogs, stories } from '../../src/db/schema';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 import {
+  assertStoryIsOwned,
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperation,
+  StoryOwnerOnlyError,
   StoryReadOnlyError,
 } from '../../src/utils/syncUtils';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -272,6 +274,48 @@ describe('assertStoryIsWritable', () => {
 
   it('allows a story it cannot find, since there is nothing to protect', async () => {
     await expect(assertStoryIsWritable(database.db, 'nao-existe')).resolves.toBeUndefined();
+  });
+});
+
+/**
+ * Política e identidade da história são só do dono no servidor. Sem esta guarda, um writer
+ * gravaria type/favoriteBehavior/allowReaderComments (ou apagaria a história) localmente e
+ * o push voltaria `unauthorized` em todo ciclo.
+ */
+describe('assertStoryIsOwned', () => {
+  it('allows a story that was never linked to a server', async () => {
+    await seedStory({ serverId: null, myRole: null });
+
+    await expect(assertStoryIsOwned(database.db, STORY_ID)).resolves.toBeUndefined();
+  });
+
+  it('allows a linked story where the user is the owner', async () => {
+    await seedStory({ serverId: 'server-1', myRole: 'owner' });
+
+    await expect(assertStoryIsOwned(database.db, STORY_ID)).resolves.toBeUndefined();
+  });
+
+  it.each(['writer', 'reader'] as const)(
+    'refuses a linked story where the user is only a %s',
+    async (myRole) => {
+      await seedStory({ serverId: 'server-1', myRole });
+
+      await expect(assertStoryIsOwned(database.db, STORY_ID)).rejects.toBeInstanceOf(
+        StoryOwnerOnlyError,
+      );
+    },
+  );
+
+  it('fails closed while the role has not resolved yet', async () => {
+    await seedStory({ serverId: 'server-1', myRole: null });
+
+    await expect(assertStoryIsOwned(database.db, STORY_ID)).rejects.toBeInstanceOf(
+      StoryOwnerOnlyError,
+    );
+  });
+
+  it('allows a story it cannot find, since there is nothing to protect', async () => {
+    await expect(assertStoryIsOwned(database.db, 'nao-existe')).resolves.toBeUndefined();
   });
 });
 

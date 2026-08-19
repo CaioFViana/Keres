@@ -459,8 +459,9 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         return;
       }
 
-      // Sem versão do servidor não há em que rebasear; 0 faz o servidor tratar como
-      // last-write-wins, que é o resultado desejado quando ele não informou a versão.
+      // Sem versão do servidor não há em que rebasear. 0 só serve quando a entidade
+      // ainda não existe lá (create); num update/delete contra uma linha viva isso
+      // volta como `version_conflict` em vez de last-write-wins.
       const baseVersion = conflict.serverVersion ?? 0;
       const values = chosenValues ?? conflict.localValues;
 

@@ -75,10 +75,13 @@ import {
 } from '../../db/schema';
 import { Create, getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import i18n from '../../utils/i18n';
 import {
+  assertStoryIsOwned,
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperation,
+  StoryOwnerOnlyError,
 } from '../../utils/syncUtils';
 import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
@@ -300,6 +303,23 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       await assertStoryIsWritable(db, storyId);
 
       const dataToPersist = { ...storyData };
+      // Same owner-only fields the server rejects on Story update (`SyncService`). A writer
+      // sending an unchanged value is stripped so it never lands in the op-log; a real
+      // change is refused so we don't persist a policy the push would bounce forever.
+      if (originalStory.serverId && originalStory.myRole !== 'owner') {
+        const ownerOnlyFields = ['type', 'favoriteBehavior', 'allowReaderComments'] as const;
+        const attempted = ownerOnlyFields.filter(
+          (field) =>
+            dataToPersist[field] !== undefined && dataToPersist[field] !== originalStory[field],
+        );
+        if (attempted.length > 0) {
+          throw new StoryOwnerOnlyError(i18n.t('story_owner_only_error'));
+        }
+        for (const field of ownerOnlyFields) {
+          delete dataToPersist[field];
+        }
+      }
+
       const targetFavoriteBehavior =
         dataToPersist.favoriteBehavior ?? originalStory.favoriteBehavior;
       if (targetFavoriteBehavior !== 'global' && dataToPersist.isFavorite !== undefined) {
@@ -748,6 +768,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       if (!story) {
         throw new Error(`Story with ID ${storyId} not found.`);
       }
+      await assertStoryIsWritable(db, storyId);
+      await assertStoryIsOwned(db, storyId);
       if (story.type === targetType) {
         return;
       }
@@ -887,6 +909,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         return;
       }
       await assertStoryIsWritable(db, storyId);
+      await assertStoryIsOwned(db, storyId);
 
       // Story deletion is always permanent and always local-first (see purgeStoryLocally).
       // If the story is attached to a server, make a best-effort attempt to tell it first
@@ -954,6 +977,8 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       if (!story.serverId) {
         return; // Already fully local.
       }
+      await assertStoryIsWritable(db, storyId);
+      await assertStoryIsOwned(db, storyId);
 
       const server = await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) });
       if (!server?.url) {

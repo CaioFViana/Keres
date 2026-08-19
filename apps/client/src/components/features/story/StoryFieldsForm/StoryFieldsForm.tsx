@@ -16,6 +16,8 @@ interface StoryFieldsFormProps {
   type: 'linear' | 'branching';
   onTypeChange: (value: 'linear' | 'branching') => void;
   typeDisabled?: boolean;
+  /** `true` to lock favorite-behavior independently of `editable` (owner-only policy). */
+  favoriteBehaviorDisabled?: boolean;
   description: string | null;
   onDescriptionChange: (value: string | null) => void;
   genre: string | null;
@@ -40,8 +42,9 @@ interface StoryFieldsFormProps {
  * Campos "núcleo" de uma história (título, tipo, descrição, gênero, autor, idioma, favorito,
  * comportamento de favorito, notas extras, tema) - o que `StorySettingsScreen` (dentro do
  * drawer, só edição) e `StoryFormScreen` (fora do stack da história, criação+edição)
- * duplicavam quase byte a byte. O que não é comum a ambos (permissão além do editable geral,
- * conversão de tipo linear/branching, vínculo com servidor, colaboradores,
+ * duplicavam quase byte a byte. Tipo e `favoriteBehavior` são política de dono no servidor;
+ * as telas passam `typeDisabled` / `favoriteBehaviorDisabled` para writers. O que não é
+ * comum a ambos (conversão de tipo linear/branching, vínculo com servidor, colaboradores,
  * normalizeSceneTiming/allowReaderComments) fica em cada tela, não aqui.
  */
 const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
@@ -50,6 +53,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
   type,
   onTypeChange,
   typeDisabled,
+  favoriteBehaviorDisabled,
   description,
   onDescriptionChange,
   genre,
@@ -161,7 +165,7 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
         value={favoriteBehavior}
         onValueChange={(value) => onFavoriteBehaviorChange(value as FavoriteBehavior)}
         placeholder={t('favorite_behavior')}
-        disabled={!editable}
+        disabled={favoriteBehaviorDisabled ?? !editable}
       />
       <Text style={{ color: colors.textSecondary, marginBottom: 0 }}>
         {t(`favorite_behavior_${favoriteBehavior}_description`)}

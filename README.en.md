@@ -261,7 +261,7 @@ The documents below are currently maintained in Portuguese:
 - [Project plan and architecture](docs/project_plan.md)
 - [Screen flow](docs/screen_flow.md)
 - [Choice mechanics](docs/choice_mechanics.md)
-- [Client conflict resolution](docs/conflict_resolution_client_strategy.md)
+- [Sync and conflict resolution](docs/conflict_resolution_client_strategy.md)
 
 ## Operational security
 

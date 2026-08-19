@@ -191,7 +191,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
       }
       await assertStoryIsWritable(db, itemJourneyToDelete.storyId);
 
-      await db
+      const [removed] = await db
         .update(itemJourneys)
         .set({
           isDeleted: true,
@@ -200,7 +200,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
           version: sql`${itemJourneys.version} + 1`,
         })
         .where(eq(itemJourneys.id, id))
-        .run();
+        .returning({ id: itemJourneys.id, version: itemJourneys.version });
 
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -215,7 +215,7 @@ export const createItemJourneyService = (db: AppDrizzleClient): ItemJourneyServi
         'delete',
         OperationLogEntityType.ItemJourney,
         id,
-        { id },
+        { id, version: removed?.version },
       );
     },
   };

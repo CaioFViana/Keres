@@ -64,33 +64,48 @@ describe('useStoryRole', () => {
 
     const { result } = await renderStoryRole();
 
-    expect(result.current).toMatchObject({ role: 'owner', canEdit: true });
+    expect(result.current).toMatchObject({
+      role: 'owner',
+      canEdit: true,
+      canManageStoryPolicy: true,
+    });
   });
 
   it.each([
-    ['owner', true],
-    ['writer', true],
-    ['reader', false],
-  ] as const)('reports %s on a linked story', async (myRole, canEdit) => {
-    await seedStory({ serverId: 'server-1', myRole });
+    ['owner', true, true],
+    ['writer', true, false],
+    ['reader', false, false],
+  ] as const)(
+    'reports %s on a linked story',
+    async (myRole, canEdit, canManageStoryPolicy) => {
+      await seedStory({ serverId: 'server-1', myRole });
 
-    const { result } = await renderStoryRole();
+      const { result } = await renderStoryRole();
 
-    expect(result.current).toMatchObject({ role: myRole, canEdit });
-  });
+      expect(result.current).toMatchObject({ role: myRole, canEdit, canManageStoryPolicy });
+    },
+  );
 
   it('fails closed while the role of a linked story has not resolved', async () => {
     await seedStory({ serverId: 'server-1', myRole: null });
 
     const { result } = await renderStoryRole();
 
-    expect(result.current).toMatchObject({ role: null, canEdit: false });
+    expect(result.current).toMatchObject({
+      role: null,
+      canEdit: false,
+      canManageStoryPolicy: false,
+    });
   });
 
   it('reports no role at all without a story', async () => {
     const { result } = await renderStoryRole(null);
 
-    expect(result.current).toMatchObject({ role: null, canEdit: false });
+    expect(result.current).toMatchObject({
+      role: null,
+      canEdit: false,
+      canManageStoryPolicy: false,
+    });
   });
 
   /**
@@ -102,7 +117,7 @@ describe('useStoryRole', () => {
   it('treats a story that is not here as owned, since there is nothing to protect', async () => {
     const { result } = await renderStoryRole('nao-existe');
 
-    expect(result.current).toMatchObject({ role: 'owner' });
+    expect(result.current).toMatchObject({ role: 'owner', canManageStoryPolicy: true });
   });
 
   it('starts out loading, so no screen renders an editable state too early', async () => {
@@ -121,7 +136,11 @@ describe('useStoryRole', () => {
 
     const { result } = await renderStoryRole();
 
-    expect(result.current).toMatchObject({ role: null, canEdit: false });
+    expect(result.current).toMatchObject({
+      role: null,
+      canEdit: false,
+      canManageStoryPolicy: false,
+    });
   });
 
   /** Um colaborador rebaixado no servidor precisa perder a edição sem reabrir a tela. */

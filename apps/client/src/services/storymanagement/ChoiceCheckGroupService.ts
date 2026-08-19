@@ -181,7 +181,7 @@ export const createChoiceCheckGroupService = (db: AppDrizzleClient): ChoiceCheck
       }
       await assertStoryIsWritable(db, choiceCheckGroupToDelete.storyId);
 
-      await db
+      const [removed] = await db
         .update(choiceCheckGroups)
         .set({
           isDeleted: true,
@@ -190,7 +190,7 @@ export const createChoiceCheckGroupService = (db: AppDrizzleClient): ChoiceCheck
           version: sql`${choiceCheckGroups.version} + 1`,
         })
         .where(eq(choiceCheckGroups.id, id))
-        .run();
+        .returning({ id: choiceCheckGroups.id, version: choiceCheckGroups.version });
 
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -205,7 +205,7 @@ export const createChoiceCheckGroupService = (db: AppDrizzleClient): ChoiceCheck
         'delete',
         'ChoiceCheckGroup',
         id,
-        { id },
+        { id, version: removed?.version },
       );
     },
   };

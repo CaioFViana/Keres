@@ -180,7 +180,7 @@ export const createEffectService = (db: AppDrizzleClient): EffectService => {
       }
       await assertStoryIsWritable(db, effectToDelete.storyId);
 
-      await db
+      const [removed] = await db
         .update(effects)
         .set({
           isDeleted: true,
@@ -189,7 +189,7 @@ export const createEffectService = (db: AppDrizzleClient): EffectService => {
           version: sql`${effects.version} + 1`,
         })
         .where(eq(effects.id, id))
-        .run();
+        .returning({ id: effects.id, version: effects.version });
 
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -199,6 +199,7 @@ export const createEffectService = (db: AppDrizzleClient): EffectService => {
       );
       await recordLocalOperation(db, effectToDelete.storyId, userIdToLog, 'delete', 'Effect', id, {
         id,
+        version: removed?.version,
       });
     },
   };

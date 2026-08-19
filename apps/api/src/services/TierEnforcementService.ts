@@ -23,8 +23,7 @@ type TierRow = typeof tiers.$inferSelect;
  * dedicada - existe uma janela de corrida onde duas escritas concorrentes bem no limite
  * podem ambas passar e estourar o teto em 1. Isto é uma escolha deliberada: é um teto de
  * plano, não um limite financeiro/de integridade, e o resto do schema não usa nenhum lock
- * otimista/pessimista para nada parecido (o próprio controle de versão do sync é
- * last-write-wins quando o cliente não informa uma base). Se o rigor estrito vier a ser
+ * otimista/pessimista para nada parecido. Se o rigor estrito vier a ser
  * necessário, a correção é um `SELECT ... FOR UPDATE` por usuário, não infraestrutura nova.
  */
 export class TierEnforcementService {

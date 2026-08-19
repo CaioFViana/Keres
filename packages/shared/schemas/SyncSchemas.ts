@@ -67,11 +67,9 @@ export const BaseStoryUpdateSchema = z
      *
      * ATENÇÃO, para operações `update`: quem o servidor lê como base é `changes.version`,
      * não este campo (ver `BaseSyncEntityHandler.checkVersionConflict`, alimentado por
-     * `update.changes.version`). Este aqui continua sendo preenchido e é o que a resposta
-     * de conflito ecoa, mas um push que traga só ele e omita `changes.version` não é
-     * comparado com nada: o servidor aceita a escrita, e a detecção de conflito daquela
-     * operação simplesmente não acontece. `SyncEngineService` duplica o valor nos dois
-     * lugares justamente por isso.
+     * `update.changes.version`). `UpdateStoryUpdateSchema` exige `changes.version`; um push
+     * que omita esse campo é recusado na validação (422), não vira last-write-wins.
+     * `SyncEngineService` duplica o valor nos dois lugares.
      *
      * Nunca deve receber a versão da *operação* (`operationVersion`): são contadores
      * diferentes e confundi-los desliga a detecção de conflitos.
@@ -111,8 +109,8 @@ export type CreateStoryUpdate = z.infer<typeof CreateStoryUpdateSchema>;
 export const UpdateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('update'),
   id: UlidSchema, // ID é obrigatório para atualizações
-  // Sem `version` a detecção de conflito desliga (last-write-wins). O motor do cliente
-  // sempre envia a base aqui; recusar o omitido fecha a porta para um cliente adulterado.
+  // Sem `version` o schema recusa o lote (422). O motor do cliente sempre envia a base
+  // aqui; recusar o omitido fecha a porta para um cliente adulterado.
   changes: z
     .object({ version: z.number().int().min(0) })
     .passthrough(),

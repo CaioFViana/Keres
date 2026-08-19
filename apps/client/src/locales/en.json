@@ -1114,6 +1114,7 @@
   "story_map_zoom_out": "Zoom out",
   "story_not_found": "Story not found.",
   "story_overview": "Story Overview",
+  "story_owner_only_error": "Only the story owner can change this story's type, favorite policy, or reader-comment setting, or delete the story.",
   "story_plural": "Stories",
   "story_read_only_error": "You only have read access to this story and can't make changes.",
   "story_schema_management_description": "Define custom attributes shared by every Character, Location, Item, and other entity of a given type in this story.",

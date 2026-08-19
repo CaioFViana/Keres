@@ -44,7 +44,7 @@ Backend em **Elysia** (framework HTTP para **Bun**), **Drizzle ORM** sobre **Pos
 
 - **`src/db/`** - `schema/tables/*.ts`: 24 tabelas Drizzle do lado do servidor, uma por entidade sincronizável.
 - **`src/modules/`** - um subdiretório por recurso, cada um com seu `*.route.ts`: `auth`, `sync`, `story`, `storyPermission`, `friend`, `user`, `media`, `websocket`, `admin` (que por sua vez agrupa `adminUser`, `adminTier`, `adminRegistration`, `adminRecovery`).
-- **`src/services/`** - lógica de negócio (`SyncService`, `StoryPermissionService`, `FriendshipService`, `TierService`/`TierEnforcementService`, `MediaStorageService`, `StoryExportImportService`, etc.) e **`entity-sync-handlers/`** - um handler por entidade sincronizável (estende `BaseSyncEntityHandler`), responsável por aplicar operações de sync recebidas do cliente com a resolução de conflito baseada em `version`/tombstone descrita em `project_plan.md`.
+- **`src/services/`** - lógica de negócio (`SyncService`, `StoryPermissionService`, `FriendshipService`, `TierService`/`TierEnforcementService`, `MediaStorageService`, `StoryExportImportService`, etc.) e **`entity-sync-handlers/`** - um handler por entidade sincronizável (estende `BaseSyncEntityHandler`). OCC por `version`, lote não-atômico e mescla/conflito descritos em `conflict_resolution_client_strategy.md`.
 - A API também serve o SPA compilado de `apps/admin` sob `/admin/*`, além de expor Swagger em `/swagger`.
 
 ---

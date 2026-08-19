@@ -1114,6 +1114,7 @@
   "story_map_zoom_out": "Afastar",
   "story_not_found": "História não encontrada.",
   "story_overview": "Visão Geral da História",
+  "story_owner_only_error": "Só o dono da história pode alterar o tipo, a política de favoritos ou o ajuste de comentários de leitores, ou apagar a história.",
   "story_plural": "Histórias",
   "story_read_only_error": "Você só tem acesso de leitura a esta história e não pode fazer alterações.",
   "story_schema_management_description": "Defina atributos customizados compartilhados por todo Personagem, Local, Item e outros tipos de entidade nesta história.",

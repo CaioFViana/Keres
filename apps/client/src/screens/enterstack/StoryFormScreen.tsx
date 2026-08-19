@@ -41,9 +41,12 @@ const StoryFormScreen = () => {
   const scrollBottomPadding = useFormScrollBottomPadding();
   // Criar é sempre permitido (não existe papel antes de a história existir); editar respeita
   // o papel real - o botão de editar em StorySelectionScreen não é filtrado por papel, então
-  // um colaborador leitor pode abrir esta tela pra uma história de terceiro.
-  const { canEdit: canEditExisting } = useStoryRole(storyId);
+  // um colaborador leitor pode abrir esta tela pra uma história de terceiro. Política
+  // (tipo / favoritos / exclusão) é só do dono; um writer ainda edita título e conteúdo.
+  const { canEdit: canEditExisting, canManageStoryPolicy: canManageExistingPolicy } =
+    useStoryRole(storyId);
   const canEdit = !storyId || canEditExisting;
+  const canManageStoryPolicy = !storyId || canManageExistingPolicy;
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState<'linear' | 'branching'>('linear');
@@ -111,31 +114,44 @@ const StoryFormScreen = () => {
     setError(null);
 
     try {
-      const storyData: Omit<
-        Story,
-        'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'
-      > = {
-        userId: userId!, // Include userId here, asserted as non-null
-        title: title.trim(),
-        type,
-        description,
-        genre,
-        language,
-        author,
-        isFavorite,
-        favoriteBehavior,
-        extraNotes,
-        theme,
-        normalizeSceneTiming: false,
-        allowReaderComments: false,
-        lastOperationLog: 0,
-        lastServerSyncedLog: 0,
-      };
-
       if (storyId) {
-        await storyService().updateStory(userId, storyId, storyData);
+        // Update never sends `type` (conversion lives on Story Settings), nor
+        // `allowReaderComments` / `normalizeSceneTiming` / log cursors (this form doesn't
+        // edit them). Sending hardcoded defaults used to reset those fields, and a writer
+        // sending `allowReaderComments: false` would now be rejected as owner-only policy.
+        await storyService().updateStory(userId, storyId, {
+          title: title.trim(),
+          description,
+          genre,
+          language,
+          author,
+          isFavorite,
+          extraNotes,
+          theme,
+          ...(canManageStoryPolicy ? { favoriteBehavior } : {}),
+        });
         AppAlert.alert(t('success'), t('story_updated_successfully'));
       } else {
+        const storyData: Omit<
+          Story,
+          'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'serverId'
+        > = {
+          userId: userId!,
+          title: title.trim(),
+          type,
+          description,
+          genre,
+          language,
+          author,
+          isFavorite,
+          favoriteBehavior,
+          extraNotes,
+          theme,
+          normalizeSceneTiming: false,
+          allowReaderComments: false,
+          lastOperationLog: 0,
+          lastServerSyncedLog: 0,
+        };
         await storyService().createStory(userId, storyData);
         AppAlert.alert(t('success'), t('story_created_successfully'));
       }
@@ -150,7 +166,7 @@ const StoryFormScreen = () => {
   };
 
   const handleDelete = () => {
-    if (!canEdit) return;
+    if (!canManageStoryPolicy) return;
 
     if (!userId) {
       AppAlert.alert(t('error'), t('user_not_identified'));
@@ -226,6 +242,11 @@ const StoryFormScreen = () => {
           {t('story_read_only_error')}
         </Text>
       )}
+      {canEdit && !canManageStoryPolicy && (
+        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+          {t('story_owner_only_error')}
+        </Text>
+      )}
 
       <StoryFieldsForm
         title={title}
@@ -233,6 +254,7 @@ const StoryFormScreen = () => {
         type={type}
         onTypeChange={setType}
         typeDisabled={!!storyId || !canEdit}
+        favoriteBehaviorDisabled={!canManageStoryPolicy}
         description={description}
         onDescriptionChange={setDescription}
         genre={genre}
@@ -260,7 +282,7 @@ const StoryFormScreen = () => {
         <Button
           onPress={handleDelete}
           style={[styles.saveButton, styles.deleteButton]}
-          disabled={!canEdit}
+          disabled={!canManageStoryPolicy}
         >
           {t('delete_story_title')}
         </Button>

@@ -41,7 +41,7 @@ const StorySettingsScreen = () => {
   // Removed useRoute and route.params
   const { selectedStory, setSelectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
-  const { canEdit } = useStoryRole(storyId);
+  const { canEdit, canManageStoryPolicy } = useStoryRole(storyId);
   const commonContainerStyles = getCommonContainerStyles(colors);
   const drizzleDb = useDrizzle();
   const scrollBottomPadding = useFormScrollBottomPadding();
@@ -244,11 +244,12 @@ const StorySettingsScreen = () => {
         language,
         author,
         isFavorite,
-        favoriteBehavior,
         extraNotes,
         theme,
         normalizeSceneTiming,
-        allowReaderComments,
+        // `type` / `favoriteBehavior` / `allowReaderComments` são política de dono - um
+        // writer que os mandasse gravaria localmente e levaria `unauthorized` em todo push.
+        ...(canManageStoryPolicy ? { favoriteBehavior, allowReaderComments } : {}),
         // `serverId` não entra aqui - vincular/desvincular tem efeitos colaterais de rede
         // (enviar a história, avisar o servidor) que não fazem sentido como campo de
         // formulário comum; ver handleSendToServer/handleUnlinkFromServer.
@@ -270,7 +271,7 @@ const StorySettingsScreen = () => {
   };
 
   const handleTypeChange = (newType: 'linear' | 'branching') => {
-    if (!storyId || !userId || newType === type) return;
+    if (!storyId || !userId || !canManageStoryPolicy || newType === type) return;
 
     if (newType === 'branching') {
       AppAlert.alert(
@@ -520,7 +521,7 @@ const StorySettingsScreen = () => {
   };
 
   const handleDelete = () => {
-    if (!storyId) return;
+    if (!storyId || !canManageStoryPolicy) return;
 
     if (!userId) {
       AppAlert.alert(t('error'), t('user_not_identified'));
@@ -633,13 +634,19 @@ const StorySettingsScreen = () => {
           {t('story_read_only_error')}
         </Text>
       )}
+      {canEdit && !canManageStoryPolicy && (
+        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+          {t('story_owner_only_error')}
+        </Text>
+      )}
 
       <StoryFieldsForm
         title={title}
         onTitleChange={setTitle}
         type={type}
         onTypeChange={(value) => handleTypeChange(value)}
-        typeDisabled={!canEdit}
+        typeDisabled={!canManageStoryPolicy}
+        favoriteBehaviorDisabled={!canManageStoryPolicy}
         description={description}
         onDescriptionChange={setDescription}
         genre={genre}
@@ -686,7 +693,7 @@ const StorySettingsScreen = () => {
           <ThemedSwitch
             value={allowReaderComments}
             onValueChange={setAllowReaderComments}
-            disabled={!canEdit}
+            disabled={!canManageStoryPolicy}
           />
         </View>
       )}
@@ -814,7 +821,7 @@ const StorySettingsScreen = () => {
       <Button
         onPress={handleDelete}
         style={[styles.saveButton, styles.deleteButton]}
-        disabled={!canEdit}
+        disabled={!canManageStoryPolicy}
       >
         {t('delete_story_title')}
       </Button>

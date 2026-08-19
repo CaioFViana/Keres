@@ -178,7 +178,7 @@ export const createChoiceCheckService = (db: AppDrizzleClient): ChoiceCheckServi
       }
       await assertStoryIsWritable(db, choiceCheckToDelete.storyId);
 
-      await db
+      const [removed] = await db
         .update(choiceChecks)
         .set({
           isDeleted: true,
@@ -187,7 +187,7 @@ export const createChoiceCheckService = (db: AppDrizzleClient): ChoiceCheckServi
           version: sql`${choiceChecks.version} + 1`,
         })
         .where(eq(choiceChecks.id, id))
-        .run();
+        .returning({ id: choiceChecks.id, version: choiceChecks.version });
 
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -202,7 +202,7 @@ export const createChoiceCheckService = (db: AppDrizzleClient): ChoiceCheckServi
         'delete',
         'ChoiceCheck',
         id,
-        { id },
+        { id, version: removed?.version },
       );
     },
   };

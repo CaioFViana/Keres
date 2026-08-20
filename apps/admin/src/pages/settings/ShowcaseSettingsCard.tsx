@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ShowcaseSettingsApiService,
   type ShowcaseSettings,
@@ -12,6 +13,7 @@ import {
  * já estava publicado.
  */
 export function ShowcaseSettingsCard() {
+  const { t } = useTranslation('admin');
   const [settings, setSettings] = useState<ShowcaseSettings | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,9 @@ export function ShowcaseSettingsCard() {
   useEffect(() => {
     ShowcaseSettingsApiService.get()
       .then(setSettings)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load.'));
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : t('showcaseSettings.loadFailed')),
+      );
   }, []);
 
   const toggle = async (isShowcaseEnabled: boolean) => {
@@ -29,9 +33,9 @@ export function ShowcaseSettingsCard() {
     setMessage(null);
     try {
       setSettings(await ShowcaseSettingsApiService.update({ isShowcaseEnabled }));
-      setMessage('Saved.');
+      setMessage(t('settings.saved'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed.');
+      setError(err instanceof Error ? err.message : t('common.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -39,14 +43,10 @@ export function ShowcaseSettingsCard() {
 
   return (
     <div className="form-card">
-      <h2>Public Showcase</h2>
-      <p className="hint">
-        When enabled, this server serves a public page at its root address, listing the stories its
-        users chose to publish. Anyone can browse and download those stories - no account needed.
-        Password-protected stories stay unlisted either way.
-      </p>
+      <h2>{t('showcaseSettings.title')}</h2>
+      <p className="hint">{t('showcaseSettings.description')}</p>
 
-      {!settings && !error && <p className="loading-text">Loading...</p>}
+      {!settings && !error && <p className="loading-text">{t('common.loading')}</p>}
 
       {settings && (
         <label className="checkbox-label">
@@ -56,7 +56,7 @@ export function ShowcaseSettingsCard() {
             disabled={saving}
             onChange={(e) => void toggle(e.target.checked)}
           />
-          Showcase enabled
+          {t('showcaseSettings.enabled')}
         </label>
       )}
 

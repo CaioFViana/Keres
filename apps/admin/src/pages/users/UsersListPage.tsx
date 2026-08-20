@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { AdminUserInfo, Tier } from '@keres/shared';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
 import { TierApiService } from '../../api/TierApiService';
 
 export function UsersListPage() {
+  const { t, i18n } = useTranslation('admin');
   const [users, setUsers] = useState<AdminUserInfo[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [total, setTotal] = useState(0);
@@ -69,34 +71,34 @@ export function UsersListPage() {
         await AdminUserApiService.restore(user.id);
       } else {
         const message = user.isAdmin
-          ? `Soft-delete admin "${user.username}"? They will lose access until restored.`
-          : `Soft-delete user "${user.username}"?`;
+          ? t('users.confirmDeleteAdmin', { username: user.username })
+          : t('users.confirmDelete', { username: user.username });
         if (!confirm(message)) return;
         await AdminUserApiService.softDelete(user.id);
       }
       setReloadToken((n) => n + 1);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Action failed.');
+      alert(err instanceof Error ? err.message : t('common.actionFailed'));
     }
   };
 
   return (
     <div>
       <div className="page-header">
-        <h1>Users</h1>
+        <h1>{t('users.title')}</h1>
         <Link to="/users/new" className="button">
-          New user
+          {t('users.newUser')}
         </Link>
       </div>
 
       <form className="toolbar" onSubmit={onSearchSubmit}>
         <label>
-          Search
+          {t('common.search')}
           <input
-            placeholder="Username or tag..."
+            placeholder={t('users.searchPlaceholder')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            aria-label="Search username or tag"
+            aria-label={t('users.searchAriaLabel')}
           />
         </label>
         <label className="checkbox-label">
@@ -108,25 +110,25 @@ export function UsersListPage() {
               setPage(1);
             }}
           />
-          Show deleted
+          {t('users.showDeleted')}
         </label>
-        <button type="submit">Search</button>
+        <button type="submit">{t('common.search')}</button>
       </form>
 
       {error && <p className="error-text">{error}</p>}
       {loading ? (
-        <p className="loading-text">Loading...</p>
+        <p className="loading-text">{t('common.loading')}</p>
       ) : (
         <div className="table-scroll">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Username</th>
-                <th>Tag</th>
-                <th>Admin</th>
-                <th>Tier</th>
-                <th>Created</th>
-                <th>Status</th>
+                <th>{t('users.columnUsername')}</th>
+                <th>{t('users.columnTag')}</th>
+                <th>{t('users.columnAdmin')}</th>
+                <th>{t('users.columnTier')}</th>
+                <th>{t('users.columnCreated')}</th>
+                <th>{t('users.columnStatus')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -137,12 +139,12 @@ export function UsersListPage() {
                     <Link to={`/users/${u.id}`}>{u.username}</Link>
                   </td>
                   <td>@{u.tag}</td>
-                  <td>{u.isAdmin ? 'Yes' : ''}</td>
+                  <td>{u.isAdmin ? t('common.yes') : ''}</td>
                   <td>{tierName(u.tierId)}</td>
-                  <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td>{new Date(u.createdAt).toLocaleDateString(i18n.language)}</td>
                   <td>
                     <span className={`status-badge${u.isDeleted ? ' deleted' : ''}`}>
-                      {u.isDeleted ? 'Deleted' : 'Active'}
+                      {u.isDeleted ? t('users.statusDeleted') : t('users.statusActive')}
                     </span>
                   </td>
                   <td>
@@ -151,7 +153,7 @@ export function UsersListPage() {
                       className={u.isDeleted ? undefined : 'button-danger'}
                       onClick={() => void toggleDelete(u)}
                     >
-                      {u.isDeleted ? 'Restore' : 'Delete'}
+                      {u.isDeleted ? t('common.restore') : t('common.delete')}
                     </button>
                   </td>
                 </tr>
@@ -159,7 +161,7 @@ export function UsersListPage() {
               {users.length === 0 && (
                 <tr>
                   <td colSpan={7} className="empty-state">
-                    No users found.
+                    {t('users.empty')}
                   </td>
                 </tr>
               )}
@@ -170,17 +172,21 @@ export function UsersListPage() {
 
       <div className="pagination">
         <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          Previous
+          {t('common.previous')}
         </button>
         <span>
-          Page {page} of {Math.max(1, Math.ceil(total / pageSize))} ({total} total)
+          {t('common.pagination', {
+            page,
+            pages: Math.max(1, Math.ceil(total / pageSize)),
+            total,
+          })}
         </span>
         <button
           type="button"
           disabled={page * pageSize >= total}
           onClick={() => setPage((p) => p + 1)}
         >
-          Next
+          {t('common.next')}
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import type { ShowcaseStoryCard } from '@keres/shared';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
 import { paletteVars } from '../theme/paletteVars';
@@ -7,6 +8,7 @@ import { formatBytes, formatDate, genreList } from '../format';
 
 export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
   const { resolved } = useShowcaseTheme();
+  const { t, i18n } = useTranslation('showcase');
   const { snapshot, owner, latestVersion } = story;
 
   return (
@@ -21,7 +23,7 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
       <div className="story-card-body">
         <div className="story-card-head">
           <h3>{snapshot.title}</h3>
-          <span className={`badge badge-${snapshot.type}`}>{snapshot.type}</span>
+          <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
         </div>
 
         {snapshot.description && <p className="story-card-desc">{snapshot.description}</p>}
@@ -51,13 +53,15 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
                 <>
                   {snapshot.author}
                   <span className="owner-tag">
-                    published by {owner.username}#{owner.tag}
+                    {t('story.publishedBy', { username: owner.username, tag: owner.tag })}
                   </span>
                 </>
               ) : (
                 <>
                   {owner.username}
-                  <span className="owner-tag">#{owner.tag} · published this</span>
+                  <span className="owner-tag">
+                    #{owner.tag} · {t('story.publishedThisShort')}
+                  </span>
                 </>
               )}
             </span>
@@ -65,7 +69,7 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
           <div className="version-meta">
             <span className="version-label">{latestVersion.label}</span>
             <span className="dot">·</span>
-            <span>{formatDate(latestVersion.createdAt)}</span>
+            <span>{formatDate(latestVersion.createdAt, i18n.language)}</span>
             <span className="dot">·</span>
             <span>{formatBytes(latestVersion.byteSize)}</span>
           </div>

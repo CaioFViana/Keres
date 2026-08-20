@@ -12,7 +12,6 @@ import {
   cycleThemePreference,
   readThemePreference,
   resolveTheme,
-  themePreferenceLabel,
   writeThemePreference,
   type ResolvedTheme,
   type ThemePreference,
@@ -24,7 +23,6 @@ interface ShowcaseThemeState {
   preference: ThemePreference;
   resolved: ResolvedTheme;
   cyclePreference: () => void;
-  preferenceLabel: string;
 }
 
 const ShowcaseThemeContext = createContext<ShowcaseThemeState | null>(null);
@@ -73,14 +71,11 @@ export function ShowcaseThemeProvider({ children }: { children: ReactNode }) {
       preference,
       resolved,
       cyclePreference,
-      preferenceLabel: themePreferenceLabel(preference),
     }),
     [preference, resolved, cyclePreference],
   );
 
-  return (
-    <ShowcaseThemeContext.Provider value={value}>{children}</ShowcaseThemeContext.Provider>
-  );
+  return <ShowcaseThemeContext.Provider value={value}>{children}</ShowcaseThemeContext.Provider>;
 }
 
 export function useShowcaseTheme(): ShowcaseThemeState {

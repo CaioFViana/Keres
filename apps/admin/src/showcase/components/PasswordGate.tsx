@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 /**
@@ -9,6 +10,7 @@ import { Link } from 'react-router-dom';
  * exista a história ou não.
  */
 export function PasswordGate({ onSubmit }: { onSubmit: (password: string) => Promise<void> }) {
+  const { t } = useTranslation('showcase');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -20,7 +22,8 @@ export function PasswordGate({ onSubmit }: { onSubmit: (password: string) => Pro
     try {
       await onSubmit(password);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Incorrect password.');
+      // A mensagem do servidor não é traduzida; a local cobre o caso comum.
+      setError(caught instanceof Error ? caught.message : t('gate.failed'));
     } finally {
       setBusy(false);
     }
@@ -29,27 +32,24 @@ export function PasswordGate({ onSubmit }: { onSubmit: (password: string) => Pro
   return (
     <section className="gate">
       <div className="gate-card">
-        <h1>This story is private</h1>
-        <p className="muted">
-          Its author published it without listing it. Enter the password they gave you to open
-          the page.
-        </p>
+        <h1>{t('gate.title')}</h1>
+        <p className="muted">{t('gate.intro')}</p>
         <form onSubmit={(event) => void submit(event)}>
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="Password"
+            placeholder={t('gate.password')}
             autoFocus
             required
           />
           <button type="submit" disabled={busy || !password}>
-            {busy ? 'Opening…' : 'Open story'}
+            {busy ? t('gate.opening') : t('gate.open')}
           </button>
         </form>
         {error && <p className="error-text">{error}</p>}
         <Link to="/" className="back-link">
-          ← All stories
+          {t('story.back')}
         </Link>
       </div>
     </section>

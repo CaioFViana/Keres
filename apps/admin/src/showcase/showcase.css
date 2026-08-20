@@ -136,6 +136,23 @@ a {
   color: var(--color-text);
 }
 
+/* Mesma forma do botão de tema ao lado, para os dois lerem como um par de controles. */
+.language-select {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.language-select:hover {
+  color: var(--color-text);
+  border-color: var(--color-primary);
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;

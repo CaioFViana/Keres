@@ -1,4 +1,5 @@
 import { KeyboardEvent, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ApiLogEntry, ApiLogFilters, LogsApiService } from '../../api/LogsApiService';
 
 const LEVEL_CLASS: Record<ApiLogEntry['level'], string> = {
@@ -10,6 +11,7 @@ const LEVEL_CLASS: Record<ApiLogEntry['level'], string> = {
 const LEVELS = ['info', 'warn', 'error'] as const;
 
 export function LogsPage() {
+  const { t, i18n } = useTranslation('admin');
   const [levelInput, setLevelInput] = useState('');
   const [storyIdInput, setStoryIdInput] = useState('');
   const [userIdInput, setUserIdInput] = useState('');
@@ -93,68 +95,68 @@ export function LogsPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>Logs</h1>
+        <h1>{t('logs.title')}</h1>
       </div>
 
       <form className="toolbar" onSubmit={onSearchSubmit}>
         <label>
-          Level
+          {t('logs.level')}
           <select value={levelInput} onChange={(e) => setLevelInput(e.target.value)}>
-            <option value="">All levels</option>
+            <option value="">{t('logs.allLevels')}</option>
             <option value="info">info</option>
             <option value="warn">warn</option>
             <option value="error">error</option>
           </select>
         </label>
         <label>
-          Story ID
+          {t('logs.storyId')}
           <input
-            placeholder="Optional"
+            placeholder={t('common.optional')}
             value={storyIdInput}
             onChange={(e) => setStoryIdInput(e.target.value)}
           />
         </label>
         <label>
-          User ID
+          {t('logs.userId')}
           <input
-            placeholder="Optional"
+            placeholder={t('common.optional')}
             value={userIdInput}
             onChange={(e) => setUserIdInput(e.target.value)}
           />
         </label>
         <label>
-          Search
+          {t('common.search')}
           <input
-            placeholder="Message, story, user…"
+            placeholder={t('logs.searchPlaceholder')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
         </label>
         <label>
-          From
+          {t('logs.from')}
           <input type="date" value={fromInput} onChange={(e) => setFromInput(e.target.value)} />
         </label>
         <label>
-          To
+          {t('logs.to')}
           <input type="date" value={toInput} onChange={(e) => setToInput(e.target.value)} />
         </label>
-        <button type="submit">Search</button>
+        <button type="submit">{t('common.search')}</button>
       </form>
 
       {error && <p className="error-text">{error}</p>}
       {loading ? (
-        <p className="loading-text">Loading...</p>
+        <p className="loading-text">{t('common.loading')}</p>
       ) : (
         <div className={`log-layout${selectedEntry ? ' has-detail' : ''}`}>
           <div className="table-scroll">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>When</th>
-                  <th>Level</th>
-                  <th>Message</th>
-                  <th>Story</th>
-                  <th>User</th>
+                  <th>{t('logs.columnWhen')}</th>
+                  <th>{t('logs.columnLevel')}</th>
+                  <th>{t('logs.columnMessage')}</th>
+                  <th>{t('logs.columnStory')}</th>
+                  <th>{t('logs.columnUser')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,7 +170,7 @@ export function LogsPage() {
                     aria-pressed={selectedEntry?.id === entry.id}
                     className={`clickable-row${selectedEntry?.id === entry.id ? ' is-selected' : ''}`}
                   >
-                    <td>{new Date(entry.createdAt).toLocaleString()}</td>
+                    <td>{new Date(entry.createdAt).toLocaleString(i18n.language)}</td>
                     <td className={LEVEL_CLASS[entry.level]}>{entry.level}</td>
                     <td className="message-cell">{entry.message}</td>
                     <td title={entry.storyId ?? undefined}>
@@ -182,7 +184,7 @@ export function LogsPage() {
                 {entries.length === 0 && (
                   <tr>
                     <td colSpan={5} className="empty-state">
-                      No entries. Search above.
+                      {t('logs.empty')}
                     </td>
                   </tr>
                 )}
@@ -192,20 +194,20 @@ export function LogsPage() {
 
           {selectedEntry && (
             <div className="detail-panel">
-              <h3>Log detail</h3>
+              <h3>{t('logs.detail')}</h3>
               <dl>
-                <dt>Level</dt>
+                <dt>{t('logs.columnLevel')}</dt>
                 <dd className={LEVEL_CLASS[selectedEntry.level]}>{selectedEntry.level}</dd>
-                <dt>Story</dt>
+                <dt>{t('logs.columnStory')}</dt>
                 <dd title={selectedEntry.storyId ?? undefined}>
                   {selectedEntry.storyTitle ?? selectedEntry.storyId ?? '-'}
                 </dd>
-                <dt>User</dt>
+                <dt>{t('logs.columnUser')}</dt>
                 <dd title={selectedEntry.userId ?? undefined}>
                   {selectedEntry.username ?? selectedEntry.userId ?? '-'}
                 </dd>
-                <dt>When</dt>
-                <dd>{new Date(selectedEntry.createdAt).toLocaleString()}</dd>
+                <dt>{t('logs.columnWhen')}</dt>
+                <dd>{new Date(selectedEntry.createdAt).toLocaleString(i18n.language)}</dd>
               </dl>
               <p>{selectedEntry.message}</p>
               <pre>{JSON.stringify(selectedEntry.meta, null, 2)}</pre>
@@ -216,17 +218,21 @@ export function LogsPage() {
 
       <div className="pagination">
         <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          Previous
+          {t('common.previous')}
         </button>
         <span>
-          Page {page} of {Math.max(1, Math.ceil(total / pageSize))} ({total} total)
+          {t('common.pagination', {
+            page,
+            pages: Math.max(1, Math.ceil(total / pageSize)),
+            total,
+          })}
         </span>
         <button
           type="button"
           disabled={page * pageSize >= total}
           onClick={() => setPage((p) => p + 1)}
         >
-          Next
+          {t('common.next')}
         </button>
       </div>
     </div>

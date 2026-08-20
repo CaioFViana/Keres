@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [keresLogo(), keresAvatarIcons()],
   test: {
     environment: 'jsdom',
+    setupFiles: ['test/setup.ts'],
     include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],
     coverage: {
       provider: 'v8',

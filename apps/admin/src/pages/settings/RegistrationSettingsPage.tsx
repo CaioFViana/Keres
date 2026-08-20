@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { RegistrationSettings, Tier } from '@keres/shared';
 import { RegistrationSettingsApiService } from '../../api/RegistrationSettingsApiService';
 import { TierApiService } from '../../api/TierApiService';
@@ -6,6 +7,7 @@ import { AppearanceCard } from './AppearanceCard';
 import { ShowcaseSettingsCard } from './ShowcaseSettingsCard';
 
 export function RegistrationSettingsPage() {
+  const { t } = useTranslation('admin');
   const [settings, setSettings] = useState<RegistrationSettings | null>(null);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [saving, setSaving] = useState(false);
@@ -19,7 +21,9 @@ export function RegistrationSettingsPage() {
       .catch((err) => setError(err.message));
     TierApiService.list()
       .then(setTiers)
-      .catch((err) => setTierError(err instanceof Error ? err.message : 'Failed to load tiers.'));
+      .catch((err) =>
+        setTierError(err instanceof Error ? err.message : t('settings.loadTiersFailed')),
+      );
   }, []);
 
   const save = async (e: React.FormEvent) => {
@@ -36,9 +40,9 @@ export function RegistrationSettingsPage() {
         defaultTierId: settings.defaultTierId,
       });
       setSettings(updated);
-      setMessage('Saved.');
+      setMessage(t('settings.saved'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed.');
+      setError(err instanceof Error ? err.message : t('common.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -49,16 +53,16 @@ export function RegistrationSettingsPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>Settings</h1>
+        <h1>{t('settings.title')}</h1>
       </div>
 
       {!settings ? (
         <p className="loading-text">
-          {error ? <span className="error-text">{error}</span> : 'Loading...'}
+          {error ? <span className="error-text">{error}</span> : t('common.loading')}
         </p>
       ) : (
         <form className="form-card" onSubmit={(e) => void save(e)}>
-          <h2>Registration</h2>
+          <h2>{t('settings.registration')}</h2>
           <label className="checkbox-label">
             <input
               type="checkbox"
@@ -80,7 +84,7 @@ export function RegistrationSettingsPage() {
           )}
 
           <label>
-            Max users <span className="hint">(blank = no cap)</span>
+            {t('settings.maxUsers')} <span className="hint">{t('settings.maxUsersHint')}</span>
             <input
               type="number"
               value={settings.maxUsers ?? ''}
@@ -94,12 +98,12 @@ export function RegistrationSettingsPage() {
           </label>
 
           <label>
-            Default tier for new signups
+            {t('settings.defaultTier')}
             <select
               value={settings.defaultTierId ?? ''}
               onChange={(e) => setSettings({ ...settings, defaultTierId: e.target.value || null })}
             >
-              <option value="">(none / unlimited)</option>
+              <option value="">{t('settings.defaultTierNone')}</option>
               {tiers.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -113,7 +117,7 @@ export function RegistrationSettingsPage() {
           {message && <p className="success-text">{message}</p>}
           <div className="form-actions">
             <button type="submit" disabled={saving}>
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? t('common.saving') : t('common.save')}
             </button>
           </div>
         </form>

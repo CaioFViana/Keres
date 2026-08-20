@@ -30,6 +30,29 @@ function emitAsIndexHtml(): Plugin {
 }
 
 /**
+ * Serve `showcase.html` em desenvolvimento.
+ *
+ * `rollupOptions.input` só vale no build: sem isto, `vite dev` entrega o `index.html` da pasta,
+ * que é o do painel admin - o servidor de desenvolvimento do site subia mostrando o painel.
+ */
+function serveShowcaseHtmlInDev(): Plugin {
+  return {
+    name: 'keres-showcase-dev-html',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const url = req.url?.split('?')[0];
+        // Só navegação: qualquer pedido de módulo ou asset segue o caminho normal.
+        if (url && !url.includes('.') && req.headers.accept?.includes('text/html')) {
+          req.url = '/showcase.html';
+        }
+        next();
+      });
+    },
+  };
+}
+
+/**
  * A segunda saída de build deste mesmo projeto: o site público (Showcase).
  *
  * `base: '/_showcase/'` com as *páginas* na raiz é deliberado. Montar os arquivos estáticos
@@ -42,9 +65,19 @@ function emitAsIndexHtml(): Plugin {
  * Favicon e marca saem do mesmo ícone do app de desktop que o painel já usa - ver
  * vite.keresIcon.ts.
  */
-export default defineConfig({
-  plugins: [react(), emitAsIndexHtml(), keresFavicon(), keresLogo(), keresAvatarIcons()],
-  base: '/_showcase/',
+export default defineConfig(({ command }) => ({
+  plugins: [
+    react(),
+    serveShowcaseHtmlInDev(),
+    emitAsIndexHtml(),
+    keresFavicon(),
+    keresLogo(),
+    keresAvatarIcons(),
+  ],
+  // O prefixo só existe por causa de como a API monta os estáticos em produção. Em
+  // desenvolvimento o site tem uma porta só para ele, e usar o prefixo aqui faria as páginas
+  // responderem num caminho que não é o de verdade.
+  base: command === 'build' ? '/_showcase/' : '/',
   build: {
     outDir: 'dist-showcase',
     emptyOutDir: true,
@@ -62,4 +95,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

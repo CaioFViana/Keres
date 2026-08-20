@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ShowcaseStoryCard } from '@keres/shared';
 import { fetchStories } from '../api/showcaseApi';
 import { StoryCard } from '../components/StoryCard';
@@ -7,6 +8,7 @@ import { StoryCard } from '../components/StoryCard';
 const POLL_INTERVAL_MS = 30_000;
 
 export function HomePage() {
+  const { t } = useTranslation('showcase');
   const [stories, setStories] = useState<ShowcaseStoryCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const etagRef = useRef<string | null>(null);
@@ -21,9 +23,9 @@ export function HomePage() {
       }
       setError(null);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not load the stories.');
+      setError(caught instanceof Error ? caught.message : t('home.loadFailed'));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void refresh();
@@ -42,32 +44,23 @@ export function HomePage() {
     <>
       <section className="hero">
         <div className="hero-inner">
-          <p className="hero-eyebrow">Keres Showcase</p>
-          <h1 className="hero-title">Stories, laid open.</h1>
-          <p className="hero-text">
-            Every story below was written in Keres and published here by its author. Open one to
-            read what it is about, then download the whole thing - characters, chapters, scenes,
-            locations and all - and open it in your own copy of Keres.
-          </p>
+          <p className="hero-eyebrow">{t('home.eyebrow')}</p>
+          <h1 className="hero-title">{t('home.title')}</h1>
+          <p className="hero-text">{t('home.intro')}</p>
         </div>
       </section>
 
       <section className="stories" id="stories">
         <div className="section-head">
-          <h2>Published stories</h2>
+          <h2>{t('home.publishedStories')}</h2>
           {stories && <span className="count">{stories.length}</span>}
         </div>
 
         {error && <p className="error-text">{error}</p>}
 
-        {!stories && !error && <p className="muted">Loading…</p>}
+        {!stories && !error && <p className="muted">{t('home.loading')}</p>}
 
-        {stories && stories.length === 0 && (
-          <p className="empty">
-            Nothing has been published on this server yet. When an author publishes a story, it
-            shows up here.
-          </p>
-        )}
+        {stories && stories.length === 0 && <p className="empty">{t('home.empty')}</p>}
 
         {stories && stories.length > 0 && (
           <div className="story-grid">

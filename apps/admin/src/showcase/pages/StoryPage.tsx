@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import type { ShowcaseStoryDetail } from '@keres/shared';
 import { fetchDownloadUrl, fetchStory, unlockStory } from '../api/showcaseApi';
@@ -11,6 +12,7 @@ import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
 export function StoryPage() {
   const { storyId = '' } = useParams();
   const { resolved } = useShowcaseTheme();
+  const { t, i18n } = useTranslation('showcase');
 
   const [detail, setDetail] = useState<ShowcaseStoryDetail | null>(null);
   const [locked, setLocked] = useState(false);
@@ -28,9 +30,9 @@ export function StoryPage() {
       setLocked(false);
       setDetail(result);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not load this story.');
+      setError(caught instanceof Error ? caught.message : t('story.loadFailed'));
     }
-  }, [storyId]);
+  }, [storyId, t]);
 
   useEffect(() => {
     void load();
@@ -44,7 +46,7 @@ export function StoryPage() {
       // segundos, curto demais para valer a pena guardar na página.
       window.location.href = await fetchDownloadUrl(storyId, publicationId);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not start the download.');
+      setError(caught instanceof Error ? caught.message : t('story.downloadFailed'));
     } finally {
       setDownloading(null);
     }
@@ -55,7 +57,7 @@ export function StoryPage() {
       <section className="story-page">
         <p className="error-text">{error}</p>
         <Link to="/" className="back-link">
-          ← All stories
+          {t('story.back')}
         </Link>
       </section>
     );
@@ -74,7 +76,7 @@ export function StoryPage() {
   }
 
   if (!detail) {
-    return <p className="muted story-page">Loading…</p>;
+    return <p className="muted story-page">{t('story.loading')}</p>;
   }
 
   const { snapshot, owner, versions } = detail;
@@ -84,11 +86,11 @@ export function StoryPage() {
     // Aqui sim a paleta da história pinta a página inteira: é a página *dela*.
     <section className="story-page themed" style={paletteVars(snapshot.theme, resolved)}>
       <Link to="/" className="back-link">
-        ← All stories
+        {t('story.back')}
       </Link>
 
       <header className="story-head">
-        <span className={`badge badge-${snapshot.type}`}>{snapshot.type}</span>
+        <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
         <h1>{snapshot.title}</h1>
         {/*
           Quem publicou, sempre - é um fato sobre esta página. O autor da obra é outra coisa e
@@ -98,7 +100,9 @@ export function StoryPage() {
           <OwnerAvatar owner={owner} size={34} />
           <span className="owner-name">
             {owner.username}
-            <span className="owner-tag">#{owner.tag} · published this story</span>
+            <span className="owner-tag">
+              #{owner.tag} · {t('story.publishedThis')}
+            </span>
           </span>
         </div>
       </header>
@@ -113,13 +117,13 @@ export function StoryPage() {
         */}
         {snapshot.author && (
           <div>
-            <dt>Author</dt>
+            <dt>{t('story.author')}</dt>
             <dd>{snapshot.author}</dd>
           </div>
         )}
         {genreList(snapshot.genre).length > 0 && (
           <div>
-            <dt>Genre</dt>
+            <dt>{t('story.genre')}</dt>
             <dd className="chips">
               {genreList(snapshot.genre).map((genre) => (
                 <span className="chip" key={genre}>
@@ -131,34 +135,35 @@ export function StoryPage() {
         )}
         {snapshot.language && (
           <div>
-            <dt>Language</dt>
+            <dt>{t('story.language')}</dt>
             <dd>{snapshot.language}</dd>
           </div>
         )}
         <div>
-          <dt>Structure</dt>
-          <dd>{snapshot.type === 'branching' ? 'Branching' : 'Linear'}</dd>
+          <dt>{t('story.structure')}</dt>
+          <dd>{t(`story.${snapshot.type}`)}</dd>
         </div>
         <div>
-          <dt>Theme</dt>
+          <dt>{t('story.theme')}</dt>
           <dd>{paletteDisplayName(snapshot.theme)}</dd>
         </div>
       </dl>
 
       <section className="versions">
-        <h2>Download</h2>
-        <p className="muted">
-          Each version is a complete Keres package - the story and its media - that imports straight
-          back into the app.
-        </p>
+        <h2>{t('story.downloadTitle')}</h2>
+        <p className="muted">{t('story.downloadIntro')}</p>
 
         <ul className="version-list">
           <li className="version newest">
             <div>
               <span className="version-label">{newest.label}</span>
               <span className="version-sub">
-                {formatDate(newest.createdAt)} · {formatBytes(newest.byteSize)}
-                {newest.mediaTotal > 0 && ` · ${newest.mediaIncluded}/${newest.mediaTotal} media`}
+                {formatDate(newest.createdAt, i18n.language)} · {formatBytes(newest.byteSize)}
+                {newest.mediaTotal > 0 &&
+                  ` · ${t('story.mediaCount', {
+                    included: newest.mediaIncluded,
+                    total: newest.mediaTotal,
+                  })}`}
               </span>
             </div>
             <button
@@ -167,7 +172,7 @@ export function StoryPage() {
               disabled={downloading === newest.id}
               onClick={() => void download(newest.id)}
             >
-              {downloading === newest.id ? 'Preparing…' : 'Download latest'}
+              {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
             </button>
           </li>
 
@@ -176,7 +181,7 @@ export function StoryPage() {
               <div>
                 <span className="version-label">{version.label}</span>
                 <span className="version-sub">
-                  {formatDate(version.createdAt)} · {formatBytes(version.byteSize)}
+                  {formatDate(version.createdAt, i18n.language)} · {formatBytes(version.byteSize)}
                 </span>
               </div>
               <button
@@ -185,7 +190,7 @@ export function StoryPage() {
                 disabled={downloading === version.id}
                 onClick={() => void download(version.id)}
               >
-                {downloading === version.id ? 'Preparing…' : 'Download'}
+                {downloading === version.id ? t('story.preparing') : t('story.download')}
               </button>
             </li>
           ))}

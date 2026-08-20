@@ -196,6 +196,35 @@ a:hover {
   border-top: 1px solid var(--color-sidebar-hover);
 }
 
+/*
+ * O seletor de idioma da barra lateral usa as cores dela, não as do formulário: ele fica sobre
+ * o fundo da barra, que em várias paletas é bem diferente do fundo dos cartões.
+ */
+.sidebar-footer select {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-sidebar-hover);
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* No login não há barra lateral: o seletor acompanha o cartão. */
+.login-language {
+  align-self: center;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 .sidebar button,
 .sidebar button.button-secondary,
 .sidebar .button {

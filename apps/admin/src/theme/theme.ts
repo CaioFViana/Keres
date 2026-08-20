@@ -46,12 +46,6 @@ export function applyResolvedTheme(theme: ResolvedTheme): void {
   document.documentElement.setAttribute('data-theme', theme);
 }
 
-export function themePreferenceLabel(preference: ThemePreference): string {
-  if (preference === 'system') return 'Theme: System';
-  if (preference === 'light') return 'Theme: Light';
-  return 'Theme: Dark';
-}
-
 /**
  * Paleta do painel.
  *

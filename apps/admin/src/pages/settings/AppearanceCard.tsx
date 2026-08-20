@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { PALETTE_NAMES, paletteLabel } from '../../theme/theme';
 import { useTheme } from '../../theme/ThemeProvider';
 
@@ -10,15 +11,16 @@ import { useTheme } from '../../theme/ThemeProvider';
  * servidor, então nada disso vai para a API.
  */
 export function AppearanceCard() {
-  const { palette, setPalette, preference, cyclePreference, preferenceLabel } = useTheme();
+  const { t } = useTranslation('admin');
+  const { palette, setPalette, preference, cyclePreference } = useTheme();
 
   return (
     <div className="form-card">
-      <h2>Appearance</h2>
-      <p className="hint">Saved in this browser only.</p>
+      <h2>{t('appearance.title')}</h2>
+      <p className="hint">{t('appearance.hint')}</p>
 
       <label>
-        Palette
+        {t('appearance.palette')}
         <select value={palette} onChange={(e) => setPalette(e.target.value)}>
           {PALETTE_NAMES.map((name) => (
             <option key={name} value={name}>
@@ -30,9 +32,9 @@ export function AppearanceCard() {
 
       <div className="form-actions">
         <button type="button" onClick={cyclePreference}>
-          {preferenceLabel}
+          {t(`theme.${preference}`)}
         </button>
-        {preference === 'system' && <span className="hint">Following your device setting.</span>}
+        {preference === 'system' && <span className="hint">{t('appearance.followingSystem')}</span>}
       </div>
     </div>
   );

@@ -1,8 +1,10 @@
 import { FormEvent, KeyboardEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared';
 import { DeletedItem, OperationLogEntry, RecoveryApiService } from '../../api/RecoveryApiService';
 
 export function RecoveryPage() {
+  const { t, i18n } = useTranslation('admin');
   const [entityType, setEntityType] = useState('');
   const [storyId, setStoryId] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -33,14 +35,14 @@ export function RecoveryPage() {
 
   const restore = async (item: DeletedItem) => {
     const label = item.name ? `"${item.name}"` : item.id;
-    if (!confirm(`Restore ${item.entityType} ${label}?`)) return;
+    if (!confirm(t('recovery.confirmRestore', { entityType: item.entityType, label }))) return;
     try {
       await RecoveryApiService.restore(item.entityType, item.id);
       setItems((prev) =>
         prev.filter((i) => !(i.entityType === item.entityType && i.id === item.id)),
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Restore failed.');
+      alert(err instanceof Error ? err.message : t('common.restoreFailed'));
     }
   };
 
@@ -69,22 +71,22 @@ export function RecoveryPage() {
     if (item.storyTitle) {
       return <span title={item.storyId ?? undefined}>{item.storyTitle}</span>;
     }
-    return item.storyId ?? '-';
+    return item.storyId ?? t('common.none');
   };
 
   return (
     <div>
       <div className="page-header">
-        <h1>Recovery</h1>
+        <h1>{t('recovery.title')}</h1>
       </div>
 
       <section>
-        <h2>Deleted items</h2>
+        <h2>{t('recovery.deletedItems')}</h2>
         <form className="toolbar" onSubmit={search}>
           <label>
-            Entity type
+            {t('recovery.entityType')}
             <select value={entityType} onChange={(e) => setEntityType(e.target.value)}>
-              <option value="">All entity types</option>
+              <option value="">{t('recovery.allEntityTypes')}</option>
               {RECOVERABLE_ENTITY_TYPES.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -93,38 +95,38 @@ export function RecoveryPage() {
             </select>
           </label>
           <label>
-            Story ID
+            {t('recovery.storyId')}
             <input
-              placeholder="Optional"
+              placeholder={t('common.optional')}
               value={storyId}
               onChange={(e) => setStoryId(e.target.value)}
             />
           </label>
           <label>
-            Search
+            {t('common.search')}
             <input
-              placeholder="Name, story title, id…"
+              placeholder={t('recovery.searchPlaceholder')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </label>
-          <button type="submit">Search</button>
+          <button type="submit">{t('common.search')}</button>
         </form>
 
         {error && <p className="error-text">{error}</p>}
         {loading ? (
-          <p className="loading-text">Loading...</p>
+          <p className="loading-text">{t('common.loading')}</p>
         ) : (
           <div className="table-scroll">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Entity</th>
-                  <th>Name</th>
-                  <th>ID</th>
-                  <th>Story</th>
-                  <th>Deleted at</th>
-                  <th>Version</th>
+                  <th>{t('recovery.columnEntity')}</th>
+                  <th>{t('recovery.columnName')}</th>
+                  <th>{t('recovery.columnId')}</th>
+                  <th>{t('recovery.columnStory')}</th>
+                  <th>{t('recovery.columnDeletedAt')}</th>
+                  <th>{t('recovery.columnVersion')}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -132,14 +134,18 @@ export function RecoveryPage() {
                 {items.map((item) => (
                   <tr key={`${item.entityType}:${item.id}`}>
                     <td>{item.entityType}</td>
-                    <td>{item.name ?? <span className="hint">(unnamed)</span>}</td>
+                    <td>{item.name ?? <span className="hint">{t('recovery.unnamed')}</span>}</td>
                     <td className="mono-code">{item.id}</td>
                     <td>{storyCell(item)}</td>
-                    <td>{item.deletedAt ? new Date(item.deletedAt).toLocaleString() : '-'}</td>
+                    <td>
+                      {item.deletedAt
+                        ? new Date(item.deletedAt).toLocaleString(i18n.language)
+                        : t('common.none')}
+                    </td>
                     <td>{item.version}</td>
                     <td>
                       <button type="button" onClick={() => void restore(item)}>
-                        Restore
+                        {t('common.restore')}
                       </button>
                     </td>
                   </tr>
@@ -147,7 +153,7 @@ export function RecoveryPage() {
                 {items.length === 0 && (
                   <tr>
                     <td colSpan={7} className="empty-state">
-                      No deleted items found. Search above.
+                      {t('recovery.empty')}
                     </td>
                   </tr>
                 )}
@@ -158,38 +164,38 @@ export function RecoveryPage() {
       </section>
 
       <section>
-        <h2>Operation log</h2>
+        <h2>{t('recovery.operationLog')}</h2>
         <form className="toolbar" onSubmit={searchLog}>
           <label>
-            Story ID
+            {t('recovery.storyId')}
             <input value={logStoryId} onChange={(e) => setLogStoryId(e.target.value)} />
           </label>
           <label>
-            Search
+            {t('common.search')}
             <input
-              placeholder="Name, story, user…"
+              placeholder={t('recovery.logSearchPlaceholder')}
               value={logSearchInput}
               onChange={(e) => setLogSearchInput(e.target.value)}
             />
           </label>
-          <button type="submit">Search</button>
+          <button type="submit">{t('common.search')}</button>
         </form>
 
         {logError && <p className="error-text">{logError}</p>}
         {logLoading ? (
-          <p className="loading-text">Loading...</p>
+          <p className="loading-text">{t('common.loading')}</p>
         ) : (
           <div className={`log-layout${selectedEntry ? ' has-detail' : ''}`}>
             <div className="table-scroll">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>When</th>
-                    <th>Type</th>
-                    <th>Entity</th>
-                    <th>Name</th>
-                    <th>Story</th>
-                    <th>User</th>
+                    <th>{t('recovery.columnWhen')}</th>
+                    <th>{t('recovery.columnType')}</th>
+                    <th>{t('recovery.columnEntity')}</th>
+                    <th>{t('recovery.columnName')}</th>
+                    <th>{t('recovery.columnStory')}</th>
+                    <th>{t('recovery.columnUser')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -203,7 +209,7 @@ export function RecoveryPage() {
                       aria-pressed={selectedEntry?.id === entry.id}
                       className={`clickable-row${selectedEntry?.id === entry.id ? ' is-selected' : ''}`}
                     >
-                      <td>{new Date(entry.createdAt).toLocaleString()}</td>
+                      <td>{new Date(entry.createdAt).toLocaleString(i18n.language)}</td>
                       <td>{entry.operationType}</td>
                       <td>{entry.entityType}</td>
                       <td>{entry.entityName ?? <span className="hint">{entry.entityId}</span>}</td>
@@ -214,7 +220,7 @@ export function RecoveryPage() {
                   {logEntries.length === 0 && (
                     <tr>
                       <td colSpan={6} className="empty-state">
-                        No entries. Search above.
+                        {t('recovery.logEmpty')}
                       </td>
                     </tr>
                   )}
@@ -224,31 +230,31 @@ export function RecoveryPage() {
 
             {selectedEntry && (
               <div className="detail-panel">
-                <h3>Operation detail</h3>
+                <h3>{t('recovery.operationDetail')}</h3>
                 <dl>
-                  <dt>Type</dt>
+                  <dt>{t('recovery.columnType')}</dt>
                   <dd>{selectedEntry.operationType}</dd>
-                  <dt>Entity</dt>
+                  <dt>{t('recovery.columnEntity')}</dt>
                   <dd>
                     {selectedEntry.entityType}
                     {selectedEntry.entityName ? ` · ${selectedEntry.entityName}` : ''}
                   </dd>
-                  <dt>ID</dt>
+                  <dt>{t('recovery.columnId')}</dt>
                   <dd className="mono-code">{selectedEntry.entityId}</dd>
-                  <dt>Story</dt>
+                  <dt>{t('recovery.columnStory')}</dt>
                   <dd title={selectedEntry.storyId}>
                     {selectedEntry.storyTitle ?? selectedEntry.storyId}
                   </dd>
-                  <dt>User</dt>
+                  <dt>{t('recovery.columnUser')}</dt>
                   <dd title={selectedEntry.userId}>
                     {selectedEntry.username ?? selectedEntry.userId}
                   </dd>
-                  <dt>Operation version</dt>
+                  <dt>{t('recovery.operationVersion')}</dt>
                   <dd>{selectedEntry.operationVersion}</dd>
-                  <dt>Entity version</dt>
-                  <dd>{selectedEntry.entityVersion ?? '-'}</dd>
-                  <dt>When</dt>
-                  <dd>{new Date(selectedEntry.createdAt).toLocaleString()}</dd>
+                  <dt>{t('recovery.entityVersion')}</dt>
+                  <dd>{selectedEntry.entityVersion ?? t('common.none')}</dd>
+                  <dt>{t('recovery.columnWhen')}</dt>
+                  <dd>{new Date(selectedEntry.createdAt).toLocaleString(i18n.language)}</dd>
                 </dl>
                 <pre>{JSON.stringify(selectedEntry.payload, null, 2)}</pre>
               </div>

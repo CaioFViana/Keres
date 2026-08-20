@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { fetchConfig } from '../api/showcaseApi';
 
 export function AboutPage() {
+  const { t } = useTranslation('showcase');
   const [version, setVersion] = useState<string | null>(null);
 
   useEffect(() => {
@@ -12,34 +14,23 @@ export function AboutPage() {
 
   return (
     <section className="prose">
-      <h1>About this page</h1>
+      <h1>{t('about.title')}</h1>
+      <p>{t('about.intro')}</p>
+
+      <h2>{t('about.downloadTitle')}</h2>
+      <p>{t('about.downloadBody')}</p>
+      {/*
+        `Trans` porque a frase tem um trecho em negrito no meio: o nome da tela do app. Partir a
+        string em três pedaços deixaria a ordem das palavras presa ao inglês.
+      */}
       <p>
-        Keres is a tool for planning stories: characters, chapters, scenes, locations, items,
-        world rules, and how they all connect. This page is the public face of one Keres server -
-        a place where the people writing on it can put a story where anyone can see it.
+        <Trans ns="showcase" i18nKey="about.importBody" components={{ strong: <strong /> }} />
       </p>
 
-      <h2>What you can download here</h2>
-      <p>
-        Each published version is a complete package of a story&apos;s Keres base: its structure
-        and everything written around it, plus the media the author attached. It is not the story
-        as a finished work - Keres is always a companion to whatever the story is actually being
-        made in, whether that is a novel, a game, or a campaign.
-      </p>
-      <p>
-        Open a package in Keres through <strong>Import / Export</strong>. Importing makes a
-        separate copy on your device; it does not join the author&apos;s story or send anything
-        back to them.
-      </p>
+      <h2>{t('about.responsibilityTitle')}</h2>
+      <p>{t('about.responsibilityBody')}</p>
 
-      <h2>Who is responsible for what</h2>
-      <p>
-        The stories here belong to the people who published them, and this server is run by
-        whoever chose to run it. Keres, the application, is not affiliated with either, does not
-        host or moderate these stories, and takes no position on them.
-      </p>
-
-      {version && <p className="muted">Server version {version}</p>}
+      {version && <p className="muted">{t('about.serverVersion', { version })}</p>}
     </section>
   );
 }

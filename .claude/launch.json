@@ -4,8 +4,35 @@
     {
       "name": "client-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "web", "--prefix", "apps/client"],
+      "runtimeArgs": [
+        "run",
+        "web",
+        "--prefix",
+        "apps/client"
+      ],
       "port": 8081
+    },
+    {
+      "name": "showcase",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:showcase",
+        "--prefix",
+        "apps/admin"
+      ],
+      "port": 5174
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "apps/admin"
+      ],
+      "port": 5173
     }
   ]
 }

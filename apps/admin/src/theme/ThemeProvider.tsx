@@ -15,7 +15,6 @@ import {
   readThemePreference,
   resolveTheme,
   ThemePreference,
-  themePreferenceLabel,
   writePaletteName,
   writeThemePreference,
   type ResolvedTheme,
@@ -25,7 +24,6 @@ interface ThemeState {
   preference: ThemePreference;
   resolved: ResolvedTheme;
   cyclePreference: () => void;
-  preferenceLabel: string;
   /** Nome da paleta de `@keres/shared`; `default` reproduz o visual original do painel. */
   palette: string;
   setPalette: (name: string) => void;
@@ -76,7 +74,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       preference,
       resolved,
       cyclePreference,
-      preferenceLabel: themePreferenceLabel(preference),
       palette,
       setPalette,
     }),

@@ -2,6 +2,11 @@ export type LauncherArgs =
   | { kind: 'help' }
   | { kind: 'version' }
   | {
+      kind: 'backup';
+      configPath?: string;
+      destinationParent?: string;
+    }
+  | {
       kind: 'run';
       setup: boolean;
       nonInteractive: boolean;
@@ -19,6 +24,8 @@ export function parseLauncherArgs(argv: string[]): LauncherArgs {
   let configPath: string | undefined;
   let setup = false;
   let nonInteractive = false;
+  let backup = false;
+  let destinationParent: string | undefined;
 
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
@@ -28,6 +35,20 @@ export function parseLauncherArgs(argv: string[]): LauncherArgs {
     }
     if (token === '--non-interactive') {
       nonInteractive = true;
+      continue;
+    }
+    if (token === '--backup') {
+      backup = true;
+      const next = argv[index + 1];
+      if (next && !next.startsWith('-')) {
+        destinationParent = next;
+        index += 1;
+      }
+      continue;
+    }
+    if (token.startsWith('--backup=')) {
+      backup = true;
+      destinationParent = token.slice('--backup='.length);
       continue;
     }
     if (token === '--config') {
@@ -44,6 +65,13 @@ export function parseLauncherArgs(argv: string[]): LauncherArgs {
       continue;
     }
     throw new Error(`Unknown argument: ${token}`);
+  }
+
+  if (backup) {
+    if (setup) {
+      throw new Error('--backup cannot be combined with --setup');
+    }
+    return { kind: 'backup', configPath, destinationParent };
   }
 
   return { kind: 'run', setup, nonInteractive, configPath };

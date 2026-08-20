@@ -9,6 +9,7 @@ Usage:
   keres-server --config PATH   Use this config.json
   keres-server --non-interactive
                                Fail if config is missing (no prompts)
+  keres-server --backup [DIR]  Copy data into a dated folder (stop the server first)
   keres-server --help
   keres-server --version`,
   language_title: 'Language / Idioma',
@@ -47,7 +48,14 @@ Usage:
   admin: 'Admin: {{url}}',
   swagger: 'Swagger: {{url}}',
   data_dir: 'Data: {{path}}',
-  backup_hint: 'Backup: stop the server, then copy keres.db and media-storage/.',
+  backup_hint:
+    'Backup at least monthly: Ctrl+C, then keres-server --backup. See README.md next to this program.',
+  backup_done: 'Backup saved at {{path}}',
+  backup_empty: 'Nothing was copied — the data folder has no files yet.',
+  backup_postgres_note:
+    'PostgreSQL was not dumped. Copy that database with the tools you already use for that server.',
+  backup_s3_note: 'Gallery files on S3 were not copied; they already live in the bucket.',
+  backup_restart: 'Start Keres Server again when you want it running.',
   lan_addresses: 'This computer on the LAN: {{urls}}',
   lan_none: 'No LAN IPv4 address found.',
   lan_localhost_note:
@@ -72,6 +80,7 @@ Uso:
   keres-server --config PATH   Usa este config.json
   keres-server --non-interactive
                                Falha se não houver config (sem perguntas)
+  keres-server --backup [DIR]  Copia os dados para uma pasta com data (pare o servidor antes)
   keres-server --help
   keres-server --version`,
   language_title: 'Idioma / Language',
@@ -110,7 +119,14 @@ Uso:
   admin: 'Admin: {{url}}',
   swagger: 'Swagger: {{url}}',
   data_dir: 'Dados: {{path}}',
-  backup_hint: 'Cópia de segurança: pare o servidor e copie keres.db e media-storage/.',
+  backup_hint:
+    'Cópia de segurança no mínimo mensal: Ctrl+C e depois keres-server --backup. Ver README.md ao lado deste programa.',
+  backup_done: 'Cópia gravada em {{path}}',
+  backup_empty: 'Nada foi copiado — a pasta de dados ainda não tem ficheiros.',
+  backup_postgres_note:
+    'O PostgreSQL não foi descarregado. Use as ferramentas que já usa nesse servidor.',
+  backup_s3_note: 'Ficheiros de galeria no S3 não foram copiados; já estão no bucket.',
+  backup_restart: 'Volte a iniciar o Keres Server quando quiser que esteja a correr.',
   lan_addresses: 'Este computador na rede local: {{urls}}',
   lan_none: 'Nenhum IPv4 de rede local encontrado.',
   lan_localhost_note:

@@ -141,6 +141,7 @@ cpSync(
   path.join(repoRoot, 'apps', 'client', 'assets', 'images', 'desktop_icon.png'),
   path.join(bundleDir, 'desktop_icon.png'),
 );
+cpSync(path.join(apiRoot, 'packaging', 'README.md'), path.join(bundleDir, 'README.md'));
 
 const nativeName = libsqlNativePackage();
 const nativeSource = path.join(repoRoot, 'node_modules', ...nativeName.split('/'));

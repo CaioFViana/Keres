@@ -152,23 +152,44 @@ Consulte o [guia específico do cliente](apps/client/README.md) para builds nati
 
 ## Keres Server (sem Docker)
 
-Para um PC em casa sincronizar com o telemóvel **sem** PostgreSQL nem Compose, a API também corre em SQLite. O pacote **Keres Server** é essa API mais um assistente em linha de comando (português/inglês).
+Para um PC em casa sincronizar com o telemóvel **sem** PostgreSQL nem Compose, a API também corre em SQLite. O pacote **Keres Server** é essa API mais um assistente em linha de comando (português/inglês). Não substitui a imagem Docker: Postgres em produção continua no GHCR.
 
-```bash
-bun run package:server
-```
+### Download (utilizadores)
 
-O resultado fica em `apps/api/dist-server/keres-server/` e num zip `Keres-Server-<os>-<arch>-<versão>.zip`. Não é um único ficheiro — o compile do Bun não consegue embutir o addon `@libsql/<plataforma>` — mas no destino não é preciso instalar Bun, Node nem Docker. As tags `v*.*.*` publicam esses zips na GitHub Release (Windows, Linux e macOS), ao lado dos instaladores do cliente e da imagem Docker.
+Cada tag `v*.*.*` anexa os zips à [GitHub Release](https://github.com/caiofviana/keres/releases) correspondente, junto com o cliente desktop, o Android e a imagem Docker. Escolha o ficheiro do seu sistema:
 
-Na primeira execução o assistente pergunta banco (SQLite por omissão), mídia local ou S3, porta e se escuta só neste computador ou na rede local. Os dados vão para `%APPDATA%\KeresServer` / `~/Library/Application Support/KeresServer` / `~/.local/share/keres-server`. Enquanto corre, o CLI imprime os IPv4 atuais da LAN (`http://192.168.x.x:<porta>`) e volta a listá-los se o router mudar o endereço. Não há DNS local.
+| Sistema | Ficheiro |
+| --- | --- |
+| Windows x64 | `Keres-Server-windows-x64-<versão>.zip` |
+| Linux x64 | `Keres-Server-linux-x64-<versão>.zip` |
+| macOS Apple Silicon | `Keres-Server-macos-arm64-<versão>.zip` |
 
-Desenvolvimento sem empacotar:
+Descompacte, execute `keres-server` / `keres-server.exe`. Não é preciso Bun, Node nem Docker. O zip contém o executável, o addon nativo do libSQL, as migrações, o painel `/admin` e um `README.md` (instruções e cópia de segurança). O compile da Bun não embute o `.node` do libSQL, por isso não é um único ficheiro.
+
+Na primeira execução o assistente pergunta banco (SQLite por omissão), mídia local ou S3, porta e se escuta só neste computador ou na rede local. Os dados ficam **fora** da pasta do zip (atualizar o executável não apaga o banco):
+
+| Sistema | Pasta |
+| --- | --- |
+| Windows | `%APPDATA%\KeresServer` |
+| macOS | `~/Library/Application Support/KeresServer` |
+| Linux | `~/.local/share/keres-server` |
+
+Enquanto corre, o CLI imprime os IPv4 atuais da LAN (`http://192.168.x.x:<porta>`) e volta a listá-los se o router mudar o endereço. Não há DNS local.
+
+### Cópia de segurança (deve ser feita)
+
+O zip traz um `README.md` (português e inglês) ao lado do executável. **Faça uma cópia no mínimo uma vez por mês:** pare o servidor (`Ctrl+C`), na pasta do programa corra `keres-server --backup`, volte a iniciar. Cada cópia vai para uma pasta com data e hora (`KeresServer-backups\…`). Guarde essa pasta noutro disco.
+
+Se o pior acontecer: pare o servidor, esvazie a pasta de dados e copie para lá o conteúdo da pasta datada. O README do zip detalha os ficheiros. Quem usa PostgreSQL ou S3 fora desta máquina trata esse backup como operador.
+
+### Desenvolvimento
 
 ```bash
 bun run start:launcher
+bun run package:server
 ```
 
-`bun run start:api` e o Compose **não** passam pelo assistente: continuam a ler `.env` como hoje. PostgreSQL em produção continua a ser a imagem Docker.
+`package:server` gera a mesma pasta e o mesmo zip que a release. `start:api` e o Compose **não** passam pelo assistente: leem `.env` como hoje.
 
 ## Deploy da API
 
@@ -247,7 +268,7 @@ docker compose up -d api
 docker compose logs -f api
 ```
 
-Para rollback, altere `KERES_IMAGE_TAG` para uma versão anterior compatível e repita os comandos. Antes de qualquer atualização, faça backup tanto do PostgreSQL quanto do volume de mídia; histórias sincronizadas e uploads são conjuntos de dados distintos. Um dump lógico do banco pode ser criado com:
+Para rollback, altere `KERES_IMAGE_TAG` para uma versão anterior compatível e repita os comandos. Backup deste deploy Compose é responsabilidade de quem opera o host (a API aceita qualquer Postgres que lhe apontem; não corre `pg_dump` sozinha). Antes de qualquer atualização, copie o PostgreSQL **e** o volume de mídia; histórias sincronizadas e uploads são conjuntos distintos. Um dump lógico:
 
 ```bash
 docker compose exec -T db pg_dump -U keres -d keres -Fc > keres.dump
@@ -267,12 +288,11 @@ git push origin v1.2.3
 Uma release publica:
 
 - imagem Docker `ghcr.io/caiofviana/keres:1.2.3` e `:latest`;
-- Keres Server (API sem Docker) em zip para Windows, Linux e macOS;
+- `Keres-Server-windows-x64-<versão>.zip`, `Keres-Server-linux-x64-<versão>.zip` e `Keres-Server-macos-arm64-<versão>.zip` (API caseira, sem Docker);
 - instalador e executável portátil para Windows;
 - DMG para macOS;
 - AppImage e Flatpak para Linux;
-- APK e AAB assinados para Android;
-- GitHub Release com os artefatos gerados.
+- APK e AAB assinados para Android.
 
 ## Documentação técnica
 
@@ -287,5 +307,5 @@ Uma release publica:
 - Nunca reutilize os segredos de desenvolvimento em produção.
 - Mantenha a API atrás de HTTPS; tokens e credenciais não devem trafegar em HTTP público.
 - Restrinja acesso a `/admin` no proxy quando o painel não precisar ser público.
-- Faça backup de `db_data` e `media_storage`; remover volumes destrói dados persistidos.
+- Faça backup de `db_data` e `media_storage`; remover volumes destrói dados persistidos. No Keres Server, siga o `README.md` do zip (cópia mensal da pasta de dados, servidor parado).
 - Fixe uma tag de imagem em produção e valide migrations e logs antes de descartar backups.

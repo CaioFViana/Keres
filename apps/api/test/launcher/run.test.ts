@@ -63,6 +63,23 @@ describe('runLauncher', () => {
     Object.assign(process.env, previousEnv);
   });
 
+  it('runs --backup without starting the HTTP server', async () => {
+    const dataDir = mkdtempSync(path.join(os.tmpdir(), 'keres-run-bak-'));
+    writeFileSync(path.join(dataDir, 'keres.db'), 'db');
+    const configPath = writeConfig(dataDir);
+    const parent = mkdtempSync(path.join(os.tmpdir(), 'keres-out-bak-'));
+    const { lines, io } = fakeIo([], false);
+    let booted = false;
+    await runLauncher(['--backup', parent, '--config', configPath], {
+      io,
+      boot: async () => {
+        booted = true;
+      },
+    });
+    expect(booted).toBe(false);
+    expect(lines.join('\n')).toMatch(/Backup saved at/);
+  });
+
   it('prints help without booting', async () => {
     const { lines, io } = fakeIo();
     let booted = false;

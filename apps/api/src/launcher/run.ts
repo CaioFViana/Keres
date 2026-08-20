@@ -13,6 +13,7 @@ import { describeLanAddresses, startLanAddressHeartbeat } from './heartbeat';
 import { createTranslator } from './i18n';
 import { createStdio, type LauncherIo } from './io';
 import { detectSystemLanguage } from './language';
+import { createDataBackup, describeBackupResult } from './backup';
 import { configPathFor, defaultDataDir } from './paths';
 import { assertDriverNotChanged, runSetupWizard } from './wizard';
 import apiPackage from '../../package.json';
@@ -57,6 +58,28 @@ export async function runLauncher(
 
   const configFilePath = resolveConfigPath(args.configPath);
   const existing = existsSync(configFilePath) ? loadPublicConfig(configFilePath) : undefined;
+
+  if (args.kind === 'backup') {
+    if (!existing) {
+      io.print(t0('missing_config'));
+      process.exitCode = 1;
+      return;
+    }
+    const t = createTranslator(existing.language);
+    try {
+      const result = createDataBackup({
+        config: existing,
+        destinationParent: args.destinationParent,
+      });
+      for (const line of describeBackupResult(t, result, existing)) {
+        io.print(line);
+      }
+    } catch (error) {
+      io.print(t('fatal', { message: error instanceof Error ? error.message : String(error) }));
+      process.exitCode = 1;
+    }
+    return;
+  }
   const needsWizard = args.setup || !existing;
 
   if (needsWizard && (args.nonInteractive || !io.isInteractive())) {

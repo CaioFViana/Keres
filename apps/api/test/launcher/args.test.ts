@@ -29,4 +29,21 @@ describe('parseLauncherArgs', () => {
     expect(() => parseLauncherArgs(['--nope'])).toThrow(/Unknown argument/);
     expect(() => parseLauncherArgs(['--config'])).toThrow(/requires a path/);
   });
+
+  it('parses --backup with an optional destination', () => {
+    expect(parseLauncherArgs(['--backup'])).toEqual({
+      kind: 'backup',
+      configPath: undefined,
+      destinationParent: undefined,
+    });
+    expect(parseLauncherArgs(['--backup', 'D:/Backups', '--config', './config.json'])).toEqual({
+      kind: 'backup',
+      configPath: './config.json',
+      destinationParent: 'D:/Backups',
+    });
+  });
+
+  it('rejects --backup together with --setup', () => {
+    expect(() => parseLauncherArgs(['--backup', '--setup'])).toThrow(/cannot be combined/);
+  });
 });

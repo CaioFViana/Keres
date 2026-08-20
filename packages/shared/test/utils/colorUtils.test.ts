@@ -1,9 +1,10 @@
+import { describe, expect, it } from 'vitest';
 import {
   getColorLuminance,
   getContrastTextColor,
   isColorLight,
   isValidHexColor,
-} from '../../src/utils/colorUtils';
+} from '../../utils/colorUtils';
 
 describe('color utilities', () => {
   it('validates supported hexadecimal colors', () => {

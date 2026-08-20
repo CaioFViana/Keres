@@ -1291,5 +1291,16 @@
   "publish_unpublish_message": "Remove this story and all of its published versions from the public page? Nothing is deleted from the story itself.",
   "publish_unpublish_confirm": "Unpublish story",
   "story_version_published": "{{title}} published version {{label}}",
-  "a_story": "A story"
+  "a_story": "A story",
+  "publish_link_intro": "Version {{label}} is live at:",
+  "publish_link_password_reminder": "Anyone opening it will need the password you just set.",
+  "publish_open_link": "Open page",
+  "publish_public_link": "Public link",
+  "publish_password_replaces_previous": "Publishing replaces the current password with what you type here.",
+  "publish_visibility_applies_to_all": "This choice applies to the whole story, so it also covers the {{count}} version already published.",
+  "publish_visibility_applies_to_all_plural": "This choice applies to the whole story, so it also covers the {{count}} versions already published.",
+  "publish_opening_protected_title": "This will make the story public",
+  "publish_opening_protected_message": "The public page is one page per story, so the password covers all of its versions. Publishing without a password now also opens the {{count}} version already published behind it.",
+  "publish_opening_protected_message_plural": "The public page is one page per story, so the password covers all of its versions. Publishing without a password now also opens the {{count}} versions already published behind it.",
+  "publish_opening_protected_confirm": "Publish publicly"
 }

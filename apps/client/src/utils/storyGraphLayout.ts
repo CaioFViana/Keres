@@ -1,3 +1,4 @@
+import { AVATAR_FALLBACK_PALETTE } from '@keres/shared';
 /**
  * Posicionamento do grafo de uma história: cenas viram nós, escolhas viram arestas.
  *
@@ -72,18 +73,8 @@ const SELF_LOOP_BULGE = 46;
  * Puxar do tema daria cores mais integradas, mas o mapa exportado sai do app e é visto em
  * qualquer lugar; daí saturação média em vez de tons extremos.
  */
-export const CHAPTER_PALETTE = [
-  '#4F8DF7',
-  '#E4713C',
-  '#39A867',
-  '#B563D6',
-  '#D8A22B',
-  '#3FA9B8',
-  '#D7566F',
-  '#7C8CF0',
-  '#6FA130',
-  '#C4693F',
-];
+/** A mesma paleta que serve de reserva para avatares - uma cópia só, em `@keres/shared`. */
+export const CHAPTER_PALETTE = AVATAR_FALLBACK_PALETTE;
 
 export interface GraphPoint {
   x: number;

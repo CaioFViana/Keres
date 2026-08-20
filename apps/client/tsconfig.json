@@ -1,6 +1,8 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    // `@keres/shared` guarda a lista de ícones de avatar num .json (ver metadata/avatar.ts).
+    "resolveJsonModule": true,
     "strict": true,
     "types": ["jest"],
     "paths": {

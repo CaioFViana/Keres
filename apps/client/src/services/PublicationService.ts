@@ -69,7 +69,7 @@ export class PublicationService {
       throw error;
     }
 
-    const titles = await this.storyTitles(remote.map((publication) => publication.storyId));
+    const stories = await this.localStories(remote.map((publication) => publication.storyId));
     const notifications: string[] = [];
 
     await this.db.transaction(async (tx) => {
@@ -113,12 +113,18 @@ export class PublicationService {
           .run();
 
         if (isNew && !firstSync) {
-          notifications.push(
-            i18n.t('story_version_published', {
-              title: titles.get(publication.storyId) ?? i18n.t('a_story'),
-              label: publication.label,
-            }),
-          );
+          const story = stories.get(publication.storyId);
+          // Quem publica é o dono, então avisá-lo do que ele mesmo acabou de fazer é ruído. O
+          // evento continua chegando aos aparelhos dele - é o que mantém esta lista em dia -,
+          // mas o aviso na tela é só para quem lê ou escreve a história de outra pessoa.
+          if (story?.myRole !== 'owner') {
+            notifications.push(
+              i18n.t('story_version_published', {
+                title: story?.title ?? i18n.t('a_story'),
+                label: publication.label,
+              }),
+            );
+          }
           await tx
             .update(storyPublications)
             .set({ notified: true })
@@ -136,17 +142,22 @@ export class PublicationService {
     entityEventEmitter.emit('publications_changed');
   }
 
-  /** Os títulos locais das histórias citadas, para o aviso não dizer só um id. */
-  private async storyTitles(storyIds: string[]): Promise<Map<string, string>> {
+  /**
+   * As histórias citadas, como este aparelho as conhece: o título (para o aviso não dizer só um
+   * id) e o papel da pessoa nelas (para o dono não ser avisado da própria publicação).
+   */
+  private async localStories(
+    storyIds: string[],
+  ): Promise<Map<string, { title: string; myRole: string | null }>> {
     const unique = [...new Set(storyIds)];
     if (unique.length === 0) {
       return new Map();
     }
     const rows = await this.db
-      .select({ id: stories.id, title: stories.title })
+      .select({ id: stories.id, title: stories.title, myRole: stories.myRole })
       .from(stories)
       .where(and(inArray(stories.id, unique), eq(stories.isDeleted, false)))
       .all();
-    return new Map(rows.map((row) => [row.id, row.title]));
+    return new Map(rows.map((row) => [row.id, { title: row.title, myRole: row.myRole }]));
   }
 }

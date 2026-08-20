@@ -1,3 +1,5 @@
+import { readdir } from 'node:fs/promises';
+import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
@@ -9,6 +11,21 @@ import { truncateAll } from '../helpers/database';
 
 // O empacotamento da publicação grava o .zip pelo backend local de blobs, que usa `Bun.write`.
 installBunShim();
+
+/**
+ * Os .zip guardados para uma história, direto no disco do backend local de blobs.
+ *
+ * Um pacote sem linha correspondente é invisível para a API, então só olhando o armazenamento
+ * dá para afirmar que uma publicação recusada não deixou lixo para trás.
+ */
+async function storedPublicationFiles(storyId: string): Promise<string[]> {
+  const directory = path.join(process.env.MEDIA_STORAGE_PATH!, 'publications', storyId);
+  try {
+    return (await readdir(directory)).sort();
+  } catch {
+    return [];
+  }
+}
 
 let ana: TestUser;
 
@@ -288,5 +305,99 @@ describe('PUT /stories/:storyId/showcase', () => {
       body: { visibility: 'public' },
     });
     expect(status).toBe(404);
+  });
+});
+
+describe('publishing and visibility together', () => {
+  // A regressão que motivou isto: a visibilidade só era gravada por uma chamada separada, então
+  // publicar com o cadeado desligado não desfazia uma senha posta antes - a ação parecia não
+  // ter efeito nenhum.
+  it('publishing without a password makes a password-protected story public again', async () => {
+    const story = await createStory(ana.token);
+    await request('POST', `/stories/${story.id}/publications`, {
+      token: ana.token,
+      body: {
+        operationVersion: await serverOperationVersion(story.id),
+        labelMode: 'date',
+        visibility: 'password',
+        password: 'hunter2',
+      },
+    });
+
+    const locked = await request('GET', `/stories/${story.id}/publications`, { token: ana.token });
+    expect(locked.data.visibility).toBe('password');
+    expect(locked.data.hasPassword).toBe(true);
+
+    await request('POST', `/stories/${story.id}/publications`, {
+      token: ana.token,
+      body: { operationVersion: await serverOperationVersion(story.id), labelMode: 'date' },
+    });
+
+    const opened = await request('GET', `/stories/${story.id}/publications`, { token: ana.token });
+    expect(opened.data.visibility).toBe('public');
+    expect(opened.data.hasPassword).toBe(false);
+    // As duas versões continuam publicadas: mudar a visibilidade não apaga nada.
+    expect(opened.data.publications).toHaveLength(2);
+  });
+
+  it('publishes straight into password visibility without a second call', async () => {
+    const story = await createStory(ana.token);
+    const { status } = await request('POST', `/stories/${story.id}/publications`, {
+      token: ana.token,
+      body: {
+        operationVersion: await serverOperationVersion(story.id),
+        visibility: 'password',
+        password: 'hunter2',
+      },
+    });
+
+    expect(status).toBe(200);
+    const listed = await request('GET', `/stories/${story.id}/publications`, { token: ana.token });
+    expect(listed.data.visibility).toBe('password');
+  });
+
+  it('refuses to publish as password-protected with no password', async () => {
+    const story = await createStory(ana.token);
+    const { status } = await request('POST', `/stories/${story.id}/publications`, {
+      token: ana.token,
+      body: { operationVersion: await serverOperationVersion(story.id), visibility: 'password' },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('stores exactly one package per accepted publication', async () => {
+    const story = await createStory(ana.token);
+    await publish(ana.token, story.id, 'date');
+    await publish(ana.token, story.id, 'date');
+
+    const rows = await db
+      .select()
+      .from(storyPublications)
+      .where(eq(storyPublications.storyId, story.id));
+    expect(await storedPublicationFiles(story.id)).toHaveLength(rows.length);
+  });
+
+  // Estas recusas acontecem antes de o pacote ser montado, então o que se garante aqui é que
+  // nenhuma delas grava arquivo. A falha *dentro* da transação (erro de banco), que é o caso
+  // que `runPublishTransaction` limpa, não é alcançável por HTTP.
+  it.each([
+    ['out of sync', { offset: 1 }],
+    ['password-protected with no password', { visibility: 'password' as const }],
+  ])('writes no package when the publication is rejected as %s', async (_case, overrides) => {
+    const story = await createStory(ana.token);
+    const before = await storedPublicationFiles(story.id);
+
+    const { status } = await request('POST', `/stories/${story.id}/publications`, {
+      token: ana.token,
+      body: {
+        operationVersion:
+          (await serverOperationVersion(story.id)) + ('offset' in overrides ? 1 : 0),
+        ...('visibility' in overrides ? { visibility: overrides.visibility } : {}),
+      },
+    });
+
+    expect(status).toBeGreaterThanOrEqual(400);
+    expect(await storedPublicationFiles(story.id)).toEqual(before);
   });
 });

@@ -1,13 +1,21 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const electronMocks = vi.hoisted(() => {
   const events = new Map<string, (...args: any[]) => unknown>();
   const windows: Array<{
     loadURL: ReturnType<typeof vi.fn>;
-    webContents: { on: ReturnType<typeof vi.fn> };
+    webContents: {
+      on: ReturnType<typeof vi.fn>;
+      setWindowOpenHandler: ReturnType<typeof vi.fn>;
+    };
   }> = [];
   const BrowserWindow = vi.fn(function () {
-    const window = { loadURL: vi.fn(async () => {}), webContents: { on: vi.fn() } };
+    const window = {
+      loadURL: vi.fn(async () => {}),
+      // `setWindowOpenHandler` faz parte do desvio de links para o navegador do sistema
+      // (main.ts); sem ele no dublê, `createWindow` explode antes de carregar a página.
+      webContents: { on: vi.fn(), setWindowOpenHandler: vi.fn() },
+    };
     windows.push(window);
     return window;
   });
@@ -17,6 +25,7 @@ const electronMocks = vi.hoisted(() => {
     clearCache: vi.fn(async () => {}),
     clearCodeCaches: vi.fn(async () => {}),
     events,
+    openExternal: vi.fn(async () => {}),
     fetch: vi.fn(
       async () => new Response('client export', { headers: { 'content-type': 'text/html' } }),
     ),
@@ -43,6 +52,7 @@ vi.mock('electron', () => ({
   BrowserWindow: Object.assign(electronMocks.BrowserWindow, { getAllWindows: vi.fn(() => []) }),
   ipcMain: { handle: electronMocks.handle },
   Menu: { setApplicationMenu: vi.fn() },
+  shell: { openExternal: electronMocks.openExternal },
   net: { fetch: electronMocks.fetch },
   protocol: {
     registerSchemesAsPrivileged: electronMocks.registerSchemesAsPrivileged,
@@ -113,5 +123,58 @@ describe('desktop startup', () => {
     electronMocks.events.get('window-all-closed')?.();
 
     expect(electronMocks.quit).toHaveBeenCalledOnce();
+  });
+});
+
+describe('external links', () => {
+  /** O handler que `createWindow` registrou para `window.open`. */
+  function windowOpenHandler() {
+    return electronMocks.windows[0].webContents.setWindowOpenHandler.mock.calls[0][0] as (details: {
+      url: string;
+    }) => { action: string };
+  }
+
+  /** O handler de `will-navigate`, procurado entre os listeners registrados. */
+  function willNavigateHandler() {
+    const call = electronMocks.windows[0].webContents.on.mock.calls.find(
+      (args: any[]) => args[0] === 'will-navigate',
+    );
+    return call?.[1] as (event: { preventDefault: () => void }, url: string) => void;
+  }
+
+  beforeEach(() => {
+    electronMocks.openExternal.mockClear();
+  });
+
+  it('hands a story link to the system browser instead of opening it in the app', () => {
+    const result = windowOpenHandler()({ url: 'https://keres.example/story/01ARZ3ND' });
+
+    expect(electronMocks.openExternal).toHaveBeenCalledWith('https://keres.example/story/01ARZ3ND');
+    // Nunca abre uma janela do Electron, nem para o endereço que aceitou.
+    expect(result).toEqual({ action: 'deny' });
+  });
+
+  it('refuses to hand a dangerous scheme to the operating system', () => {
+    const result = windowOpenHandler()({ url: 'javascript:alert(1)' });
+
+    expect(electronMocks.openExternal).not.toHaveBeenCalled();
+    expect(result).toEqual({ action: 'deny' });
+  });
+
+  it('diverts a same-window navigation to the browser', () => {
+    const event = { preventDefault: vi.fn() };
+    willNavigateHandler()(event, 'https://keres.example/');
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(electronMocks.openExternal).toHaveBeenCalledWith('https://keres.example/');
+  });
+
+  // A navegação interna do próprio app não pode ser interrompida.
+  it('lets the app navigate within itself', () => {
+    const event = { preventDefault: vi.fn() };
+    willNavigateHandler()(event, 'app://app/story');
+
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(electronMocks.openExternal).not.toHaveBeenCalled();
   });
 });

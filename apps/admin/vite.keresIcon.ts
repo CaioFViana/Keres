@@ -35,6 +35,17 @@ export const KERES_ICON_SOURCE = path.resolve(
  */
 const LOGO_SIZE = 128;
 
+/** A lista canônica de ícones de avatar, compartilhada com o app e a API. */
+const AVATAR_ICON_NAMES_SOURCE = path.resolve(
+  adminDirectory,
+  '..',
+  '..',
+  'packages',
+  'shared',
+  'metadata',
+  'avatarIcons.json',
+);
+
 /**
  * Reduz um PNG quadrado por média de blocos.
  *
@@ -131,6 +142,65 @@ export function keresFavicon(devUrls: string[] = ['/favicon.ico']): Plugin {
     },
     async generateBundle() {
       this.emitFile({ type: 'asset', fileName: 'favicon.ico', source: await ico() });
+    },
+  };
+}
+
+/** O módulo virtual com os desenhos dos ícones de avatar. */
+export const KERES_AVATAR_ICONS_MODULE_ID = 'virtual:keres-avatar-icons';
+const RESOLVED_AVATAR_ICONS_MODULE_ID = `\0${KERES_AVATAR_ICONS_MODULE_ID}`;
+
+/**
+ * O conteúdo interno dos SVGs do Ionicons, só para os ícones que uma pessoa pode escolher como
+ * avatar (`AVATAR_ICON_OPTIONS`).
+ *
+ * Recortado em tempo de build em vez de embarcar a fonte inteira do Ionicons: são 28 desenhos
+ * contra 1357 glifos, alguns KB contra ~380 KB. O `<svg>` externo é descartado porque o
+ * componente monta o seu próprio, com o tamanho e a cor que precisa.
+ */
+async function buildAvatarIconPaths(): Promise<Record<string, string>> {
+  const { readFile } = await import('node:fs/promises');
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.url);
+  // Resolvido pela entrada principal, e não por `ionicons/package.json`: o pacote declara
+  // `exports` e não expõe o package.json como subcaminho. `dist/index.js` -> `dist/svg`.
+  const iconDirectory = path.join(path.dirname(require.resolve('ionicons')), 'svg');
+
+  // Lido do `.json` e não importado de `@keres/shared`: este arquivo roda em Node, que não
+  // carrega os `.ts` daquele pacote (ele é consumido como fonte, por bundlers).
+  const iconNames: string[] = JSON.parse(await readFile(AVATAR_ICON_NAMES_SOURCE, 'utf8'));
+
+  const entries = await Promise.all(
+    iconNames.map(async (name) => {
+      const markup = await readFile(path.join(iconDirectory, `${name}.svg`), 'utf8');
+      const inner = markup.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+      return [name, inner.trim()] as const;
+    }),
+  );
+  return Object.fromEntries(entries);
+}
+
+/**
+ * Publica os ícones de avatar como `virtual:keres-avatar-icons`.
+ *
+ * Os SVGs vêm do pacote `ionicons`, que é a mesma fonte de desenhos que o `@expo/vector-icons`
+ * do app empacota como fonte - então o avatar no site é o mesmo desenho que a pessoa escolheu
+ * no aplicativo, não uma aproximação.
+ */
+export function keresAvatarIcons(): Plugin {
+  let iconsPromise: Promise<Record<string, string>> | null = null;
+
+  return {
+    name: 'keres-avatar-icons',
+    resolveId(id) {
+      return id === KERES_AVATAR_ICONS_MODULE_ID ? RESOLVED_AVATAR_ICONS_MODULE_ID : null;
+    },
+    async load(id) {
+      if (id !== RESOLVED_AVATAR_ICONS_MODULE_ID) {
+        return null;
+      }
+      iconsPromise ??= buildAvatarIconPaths();
+      return `export default ${JSON.stringify(await iconsPromise)};`;
     },
   };
 }

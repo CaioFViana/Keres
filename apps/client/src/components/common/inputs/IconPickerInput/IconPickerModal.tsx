@@ -1,3 +1,4 @@
+import { AVATAR_ICON_OPTIONS as SHARED_AVATAR_ICON_OPTIONS } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,39 +15,12 @@ import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 
 /**
- * Conjunto pequeno e escolhido a dedo, não uma busca entre milhares de ícones - o pedido foi
- * um sistema "simples e leve", e o app já usa só Ionicons em todo o resto (ver Avatar.tsx).
+ * A lista mora em `@keres/shared` porque o site público desenha o mesmo avatar - ver
+ * `metadata/avatar.ts`. Reexportada aqui para os imports existentes continuarem válidos, e
+ * tipada como glifo do Ionicons, que é o que este app precisa.
  */
-export const AVATAR_ICON_OPTIONS: (keyof typeof Ionicons.glyphMap)[] = [
-  'person',
-  'happy',
-  'skull',
-  'paw',
-  'leaf',
-  'flame',
-  'star',
-  'shield',
-  'book',
-  'telescope',
-  'planet',
-  'moon',
-  'sunny',
-  'rose',
-  'diamond',
-  'flash',
-  'rocket',
-  'sparkles',
-  'heart',
-  'game-controller',
-  'color-wand',
-  'compass',
-  'key',
-  'trophy',
-  'flower',
-  'eye',
-  'glasses',
-  'water',
-];
+export const AVATAR_ICON_OPTIONS =
+  SHARED_AVATAR_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[];
 
 interface IconPickerModalProps {
   currentIcon: string | null;

@@ -1,10 +1,25 @@
-import { app, BrowserWindow, ipcMain, Menu, net, protocol, safeStorage, session } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  net,
+  protocol,
+  safeStorage,
+  session,
+  shell,
+} from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { resolveClientFile, resolveMediaPath as resolveMediaPathIn } from './paths';
-import { assertValidServerId, isTrustedRendererUrl } from './security';
+import {
+  assertValidServerId,
+  isExternalBrowserUrl,
+  isInAppNavigation,
+  isTrustedRendererUrl,
+} from './security';
 
 // package.json's "name" is "@keres/desktop" (the workspace naming convention, "@keres/*"
 // everywhere) - Electron otherwise derives the userData path directly from it, and the "/"
@@ -109,6 +124,32 @@ async function createWindow() {
   });
   win.webContents.on('render-process-gone', (_e, details) => {
     console.error('[desktop] renderer process gone:', details.reason);
+  });
+
+  // Um link para fora (o endereço público de uma história, a documentação, um servidor) vai
+  // para o navegador do sistema, não para dentro desta janela: o app não tem barra de
+  // endereço, botão de voltar nem as sessões que a pessoa já tem no navegador dela.
+  //
+  // Os dois caminhos precisam ser cobertos, porque o `Linking.openURL` do React Native Web
+  // pode virar tanto um `window.open` quanto uma navegação da própria página, dependendo da
+  // plataforma e do alvo:
+  //   - setWindowOpenHandler: `window.open` / `target="_blank"`
+  //   - will-navigate: `location.href = ...` / clique num link comum
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isExternalBrowserUrl(url)) {
+      void shell.openExternal(url);
+    }
+    // `deny` sempre: nem mesmo um esquema recusado deve abrir uma janela nova do Electron.
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (event, url) => {
+    if (isInAppNavigation(url)) {
+      return;
+    }
+    event.preventDefault();
+    if (isExternalBrowserUrl(url)) {
+      void shell.openExternal(url);
+    }
   });
   if (SQLITE_WEB_SMOKE_TEST) {
     win.webContents.on('console-message', (_event, level, message, line, sourceId) => {

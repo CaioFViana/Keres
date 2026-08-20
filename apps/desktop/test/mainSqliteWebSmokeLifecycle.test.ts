@@ -10,13 +10,19 @@ const electronMocks = vi.hoisted(() => {
   const events = new Map<string, (...args: any[]) => unknown>();
   const windows: Array<{
     loadURL: ReturnType<typeof vi.fn>;
-    webContents: { on: ReturnType<typeof vi.fn>; executeJavaScript: ReturnType<typeof vi.fn> };
+    webContents: {
+      on: ReturnType<typeof vi.fn>;
+      executeJavaScript: ReturnType<typeof vi.fn>;
+      setWindowOpenHandler: ReturnType<typeof vi.fn>;
+    };
   }> = [];
   const executeJavaScript = vi.fn(async () => ({ status: 'passed', checks: 3 }));
   const BrowserWindow = vi.fn(function () {
     const window = {
       loadURL: vi.fn(async () => {}),
-      webContents: { on: vi.fn(), executeJavaScript },
+      // `setWindowOpenHandler` faz parte do desvio de links para o navegador do sistema
+      // (main.ts); sem ele no dublê, `createWindow` explode antes de carregar a página.
+      webContents: { on: vi.fn(), executeJavaScript, setWindowOpenHandler: vi.fn() },
     };
     windows.push(window);
     return window;
@@ -27,6 +33,7 @@ const electronMocks = vi.hoisted(() => {
     clearCache: vi.fn(async () => {}),
     clearCodeCaches: vi.fn(async () => {}),
     events,
+    openExternal: vi.fn(async () => {}),
     executeJavaScript,
     exit: vi.fn(),
     handle: vi.fn(),
@@ -52,6 +59,7 @@ vi.mock('electron', () => ({
   BrowserWindow: Object.assign(electronMocks.BrowserWindow, { getAllWindows: vi.fn(() => []) }),
   ipcMain: { handle: electronMocks.handle },
   Menu: { setApplicationMenu: vi.fn() },
+  shell: { openExternal: electronMocks.openExternal },
   net: { fetch: vi.fn() },
   protocol: {
     registerSchemesAsPrivileged: electronMocks.registerSchemesAsPrivileged,

@@ -75,7 +75,14 @@ export class StoryPublicationService {
     };
   }
 
-  /** Dono + todo mundo com permissão viva na história. */
+  /**
+   * Dono + todo mundo com permissão viva na história.
+   *
+   * O dono entra porque o evento também serve para os *outros* aparelhos dele atualizarem a
+   * lista de versões - não só para avisar alguém. Quem decide se isso vira um aviso na tela é
+   * o cliente, que silencia histórias das quais a pessoa é dona: ela acabou de publicar, não
+   * precisa ser informada disso (ver `PublicationService.performPublicationSync`).
+   */
   private async audienceFor(storyId: string, ownerUserId: string): Promise<string[]> {
     const collaborators = await db
       .select({ userId: storyPermissions.userId })
@@ -90,11 +97,32 @@ export class StoryPublicationService {
     }
   }
 
+  /**
+   * Roda a transação de publicação, removendo o pacote já gravado se ela não vingar.
+   *
+   * O .zip é gravado antes da transação de propósito (ver `publish`), então o caminho de erro
+   * precisa desfazer isso explicitamente - caso contrário uma publicação recusada, por exemplo
+   * por um nome de versão repetido, deixaria um arquivo que nenhuma linha referencia.
+   */
+  private async runPublishTransaction<T>(
+    work: Parameters<typeof db.transaction<T>>[0],
+    onFailure: () => Promise<void>,
+  ): Promise<T> {
+    try {
+      return await db.transaction(work);
+    } catch (error) {
+      await onFailure().catch(() => undefined);
+      throw error;
+    }
+  }
+
   async publish(
     userId: string,
     storyId: string,
     clientOperationVersion: number,
     labelMode: PublicationLabelMode,
+    visibility: ShowcaseVisibility = 'public',
+    password?: string,
   ) {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
@@ -109,60 +137,75 @@ export class StoryPublicationService {
       );
     }
 
+    if (visibility === 'password' && !password) {
+      throw new AppError(400, 'A password is required for password-protected stories.');
+    }
+
     const storyExport = await this.exportImportService.exportStory(storyId, userId);
     const publicationId = ulid();
     const zip = await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash));
 
-    // Bytes antes da linha: um blob órfão é lixo silencioso que a limpeza resolve, enquanto
-    // uma linha sem blob é um download quebrado exposto no site.
+    // Bytes antes da linha: uma linha sem blob é um download quebrado exposto no site, enquanto
+    // um blob sem linha é invisível. Se a transação abaixo falhar, o arquivo é removido no
+    // `catch` - sem isso, cada publicação recusada deixaria um .zip órfão ocupando disco.
     await publicationStorageService.store(storyId, publicationId, zip.bytes);
 
-    const prunedIds = await db.transaction(async (tx) => {
-      const existing = await tx
-        .select({ label: storyPublications.label })
-        .from(storyPublications)
-        .where(eq(storyPublications.storyId, storyId));
+    const passwordHash =
+      visibility === 'password' ? await bcrypt.hash(password!, BCRYPT_COST) : null;
 
-      await tx
-        .insert(storyShowcaseEntries)
-        .values({ storyId, ownerUserId: userId, labelMode })
-        .onConflictDoUpdate({
-          target: storyShowcaseEntries.storyId,
-          set: { labelMode, updatedAt: new Date() },
+    const prunedIds = await this.runPublishTransaction(
+      async (tx) => {
+        const existing = await tx
+          .select({ label: storyPublications.label })
+          .from(storyPublications)
+          .where(eq(storyPublications.storyId, storyId));
+
+        // A visibilidade é gravada em toda publicação, não só quando muda: ela faz parte do que
+        // a pessoa escolheu *nesta* publicação. Sem reescrever, publicar com o cadeado desligado
+        // deixaria silenciosamente uma história que já estava protegida como estava - a ação
+        // pareceria não ter efeito nenhum.
+        await tx
+          .insert(storyShowcaseEntries)
+          .values({ storyId, ownerUserId: userId, labelMode, visibility, passwordHash })
+          .onConflictDoUpdate({
+            target: storyShowcaseEntries.storyId,
+            set: { labelMode, visibility, passwordHash, updatedAt: new Date() },
+          });
+
+        await tx.insert(storyPublications).values({
+          id: publicationId,
+          storyId,
+          ownerUserId: userId,
+          label: buildPublicationLabel(
+            labelMode,
+            story.lastOperationVersion,
+            new Date(),
+            existing.map((row) => row.label),
+          ),
+          operationVersion: story.lastOperationVersion,
+          formatVersion: CURRENT_STORY_FORMAT_VERSION,
+          byteSize: zip.bytes.byteLength,
+          mediaIncluded: zip.includedCount,
+          mediaTotal: zip.totalCount,
+          snapshot: this.snapshotOf(story),
         });
 
-      await tx.insert(storyPublications).values({
-        id: publicationId,
-        storyId,
-        ownerUserId: userId,
-        label: buildPublicationLabel(
-          labelMode,
-          story.lastOperationVersion,
-          new Date(),
-          existing.map((row) => row.label),
-        ),
-        operationVersion: story.lastOperationVersion,
-        formatVersion: CURRENT_STORY_FORMAT_VERSION,
-        byteSize: zip.bytes.byteLength,
-        mediaIncluded: zip.includedCount,
-        mediaTotal: zip.totalCount,
-        snapshot: this.snapshotOf(story),
-      });
+        const surplus = await tx
+          .select({ id: storyPublications.id })
+          .from(storyPublications)
+          .where(eq(storyPublications.storyId, storyId))
+          .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id))
+          .offset(MAX_PUBLICATIONS_PER_STORY);
 
-      const surplus = await tx
-        .select({ id: storyPublications.id })
-        .from(storyPublications)
-        .where(eq(storyPublications.storyId, storyId))
-        .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id))
-        .offset(MAX_PUBLICATIONS_PER_STORY);
-
-      if (surplus.length > 0) {
-        const ids = surplus.map((row) => row.id);
-        await tx.delete(storyPublications).where(inArray(storyPublications.id, ids));
-        return ids;
-      }
-      return [];
-    });
+        if (surplus.length > 0) {
+          const ids = surplus.map((row) => row.id);
+          await tx.delete(storyPublications).where(inArray(storyPublications.id, ids));
+          return ids;
+        }
+        return [];
+      },
+      () => publicationStorageService.delete(storyId, publicationId),
+    );
 
     // Depois do commit: se um delete de blob falhar, o pior caso é um arquivo órfão, não uma
     // versão listada no site cujo download não existe mais.

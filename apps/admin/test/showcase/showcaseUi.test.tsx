@@ -225,3 +225,83 @@ describe('password-protected story', () => {
     await unmount();
   });
 });
+
+describe('author and uploader', () => {
+  /**
+   * São coisas diferentes: o autor é texto livre da história (um pseudônimo, uma equipe, uma
+   * obra de domínio público que a pessoa só transcreveu), e quem publicou é a conta que subiu
+   * o pacote. Confundir os dois atribui a alguém uma obra que pode não ser dela.
+   */
+  it('credits the story author and the uploading account separately', async () => {
+    const { container, unmount } = await renderAt('/story/story-1');
+    await flush();
+
+    const text = container.textContent ?? '';
+    expect(text).toContain('Ana'); // autor declarado na história
+    expect(text).toContain('published this story'); // conta que publicou
+    expect(text).toContain('#ana');
+    await unmount();
+  });
+
+  it('never presents the account name as the author', async () => {
+    const anonymous = {
+      ...detail,
+      snapshot: { ...detail.snapshot, author: null },
+    };
+    mocks.fetchStory.mockResolvedValue(anonymous);
+
+    const { container, unmount } = await renderAt('/story/story-1');
+    await flush();
+
+    const facts = container.querySelector('.story-facts')?.textContent ?? '';
+    expect(facts).not.toContain('Author');
+    // Quem publicou continua sendo dito - isso é um fato sobre a página.
+    expect(container.textContent).toContain('published this story');
+    await unmount();
+  });
+
+  it('falls back to the uploader on a card with no declared author', async () => {
+    mocks.fetchStories.mockResolvedValue({
+      stories: [{ ...card, snapshot: { ...card.snapshot, author: null } }],
+      etag: null,
+    });
+
+    const { container, unmount } = await renderAt('/');
+    await flush();
+
+    const foot = container.querySelector('.story-card-foot')?.textContent ?? '';
+    expect(foot).toContain('ana');
+    expect(foot).toContain('published this');
+    await unmount();
+  });
+});
+
+describe('owner avatar', () => {
+  // O app deixa a pessoa escolher um ícone e uma cor; o site desenha os dois, não uma inicial.
+  it('draws the chosen icon on the chosen color', async () => {
+    const { container, unmount } = await renderAt('/');
+    await flush();
+
+    const avatar = container.querySelector('.avatar') as HTMLElement;
+    expect(avatar.style.background).toBe('rgb(98, 0, 238)');
+    expect(avatar.querySelector('svg')).not.toBeNull();
+    expect(avatar.textContent).toBe('');
+    await unmount();
+  });
+
+  it('gives a profile with no chosen color a stable one of its own', async () => {
+    mocks.fetchStories.mockResolvedValue({
+      stories: [{ ...card, owner: { ...card.owner, avatarColor: null, avatarIcon: null } }],
+      etag: null,
+    });
+
+    const { container, unmount } = await renderAt('/');
+    await flush();
+
+    const avatar = container.querySelector('.avatar') as HTMLElement;
+    expect(avatar.style.background).not.toBe('');
+    // Ainda desenha um ícone: o padrão, já que a pessoa não escolheu nenhum.
+    expect(avatar.querySelector('svg')).not.toBeNull();
+    await unmount();
+  });
+});

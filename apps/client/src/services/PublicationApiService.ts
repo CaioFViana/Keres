@@ -37,15 +37,25 @@ export class PublicationApiService {
     return response.data;
   }
 
+  /**
+   * `visibility` viaja junto da publicação de propósito: ela descreve como *esta* publicação
+   * deve ficar exposta, e o servidor a regrava em toda publicação. Uma chamada separada só
+   * quando há senha faria o caminho "publicar sem senha" não mexer em nada, deixando uma
+   * proteção anterior valendo sem ninguém pedir.
+   */
   async publish(
     server: ServerSelect,
     storyId: string,
     operationVersion: number,
     labelMode: PublicationLabelMode,
+    visibility: ShowcaseVisibility = 'public',
+    password?: string,
   ): Promise<StoryPublication> {
     const response = await this.clientFor(server).post(`/stories/${storyId}/publications`, {
       operationVersion,
       labelMode,
+      visibility,
+      password,
     });
     return response.data;
   }

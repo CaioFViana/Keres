@@ -1,10 +1,10 @@
 import { defineConfig } from 'vitest/config';
-import { keresLogo } from './vite.keresIcon';
+import { keresAvatarIcons, keresLogo } from './vite.keresIcon';
 
 export default defineConfig({
   // A marca do site é um módulo virtual gerado no build (vite.keresIcon.ts). Sem o plugin
   // aqui, qualquer teste que renderize o layout do site falha ao resolver o import.
-  plugins: [keresLogo()],
+  plugins: [keresLogo(), keresAvatarIcons()],
   test: {
     environment: 'jsdom',
     include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],

@@ -7,3 +7,12 @@ declare module 'virtual:keres-logo' {
   const url: string;
   export default url;
 }
+
+/**
+ * Os desenhos dos ícones de avatar, recortados do pacote `ionicons` em tempo de build pelo
+ * plugin `keresAvatarIcons` - o conteúdo interno de cada `<svg>`, indexado pelo nome do ícone.
+ */
+declare module 'virtual:keres-avatar-icons' {
+  const icons: Record<string, string>;
+  export default icons;
+}

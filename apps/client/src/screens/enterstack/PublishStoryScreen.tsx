@@ -3,15 +3,16 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import type { PublicationLabelMode, StoryPublication } from '@keres/shared';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { and, eq, isNull } from 'drizzle-orm';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Linking,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -53,6 +54,17 @@ interface StoryRow {
   server: ServerSelect;
   /** Operações locais ainda não enviadas ao servidor. */
   pendingOperations: number;
+}
+
+/**
+ * O endereço público de uma história.
+ *
+ * Montado aqui a partir de `servers.url` porque o app já sabe onde o servidor mora - o site é
+ * servido pelo mesmo processo e na mesma origem da API (ver o catch-all em
+ * apps/api/src/index.ts), então não há nada a perguntar ao servidor.
+ */
+export function buildStoryPublicUrl(serverUrl: string, storyId: string): string {
+  return `${serverUrl.replace(/\/+$/, '')}/story/${storyId}`;
 }
 
 const PublishStoryScreen = () => {
@@ -173,34 +185,37 @@ const PublishStoryScreen = () => {
     [isOffline, t],
   );
 
-  const handlePublish = useCallback(
+  const runPublish = useCallback(
     async (row: StoryRow) => {
-      if (usePassword && password.trim().length < 4) {
-        showNotification(t('publish_password_too_short'), 'error');
-        return;
-      }
-
       setBusyStoryId(row.story.id);
       try {
-        await publicationApiService.publish(
+        // A visibilidade vai junto da publicação, em vez de numa segunda chamada só quando há
+        // senha: assim publicar com o cadeado desligado realmente torna a história pública, e
+        // não deixa em silêncio uma senha antiga valendo.
+        const published = await publicationApiService.publish(
           row.server,
           row.story.id,
           row.story.lastOperationLog ?? 0,
           labelMode,
+          usePassword ? 'password' : 'public',
+          usePassword ? password.trim() : undefined,
         );
-        if (usePassword) {
-          await publicationApiService.setVisibility(
-            row.server,
-            row.story.id,
-            'password',
-            password.trim(),
-          );
-        }
         await createPublicationService(drizzleDb).syncPublicationsWithServer(row.server);
-        showNotification(t('publish_version_created'), 'success');
+
+        // Publicar sem dizer onde a história foi parar deixa a pessoa sem nada em mãos - o
+        // endereço é o resultado da ação, então ele aparece de imediato e continua na tela.
+        const url = buildStoryPublicUrl(row.server.url, row.story.id);
+        AppAlert.alert(
+          t('publish_version_created'),
+          `${t('publish_link_intro', { label: published.label })}\n\n${url}${
+            usePassword ? `\n\n${t('publish_link_password_reminder')}` : ''
+          }`,
+          [
+            { text: t('publish_open_link'), onPress: () => void Linking.openURL(url) },
+            { text: t('close'), style: 'cancel' },
+          ],
+        );
         setPassword('');
-        setUsePassword(false);
-        setExpandedStoryId(null);
         await load();
       } catch (publishError) {
         const status = (publishError as { response?: { status?: number } })?.response?.status;
@@ -220,6 +235,37 @@ const PublishStoryScreen = () => {
       }
     },
     [drizzleDb, labelMode, load, password, showNotification, t, usePassword],
+  );
+
+  const handlePublish = useCallback(
+    (row: StoryRow) => {
+      if (usePassword && password.trim().length < 4) {
+        showNotification(t('publish_password_too_short'), 'error');
+        return;
+      }
+
+      // A visibilidade vale para a história inteira: tirar a senha agora também abre as versões
+      // que já estavam publicadas atrás dela. Isso não é óbvio a partir de um botão "publicar",
+      // então é dito antes de acontecer, e não depois.
+      const showcase = showcaseByStory[row.story.id];
+      const opensProtectedVersions =
+        !usePassword && showcase?.visibility === 'password' && showcase.publications.length > 0;
+
+      if (!opensProtectedVersions) {
+        void runPublish(row);
+        return;
+      }
+
+      AppAlert.alert(
+        t('publish_opening_protected_title'),
+        t('publish_opening_protected_message', { count: showcase.publications.length }),
+        [
+          { text: t('cancel'), style: 'cancel' },
+          { text: t('publish_opening_protected_confirm'), onPress: () => void runPublish(row) },
+        ],
+      );
+    },
+    [password, runPublish, showcaseByStory, showNotification, t, usePassword],
   );
 
   const handleDeleteVersion = useCallback(
@@ -369,6 +415,18 @@ const PublishStoryScreen = () => {
     unpublishButton: { marginTop: 14, alignItems: 'center' },
     unpublishText: { color: colors.error, fontSize: 14 },
     emptyText: { fontSize: 14, color: colors.textSecondary, fontStyle: 'italic' },
+    hint: { fontSize: 12, color: colors.textSecondary, marginTop: -8, marginBottom: 16 },
+    linkBox: {
+      marginTop: 16,
+      padding: 12,
+      borderRadius: 6,
+      backgroundColor: colors.background,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    linkText: { fontSize: 13, color: colors.text, marginBottom: 8 },
+    linkButton: { flexDirection: 'row', alignItems: 'center' },
+    linkButtonText: { color: colors.primary, fontSize: 13, marginLeft: 6 },
   });
 
   if (loading) {
@@ -398,7 +456,17 @@ const PublishStoryScreen = () => {
             <View key={row.story.id} style={styles.storyCard}>
               <TouchableOpacity
                 style={styles.storyHeader}
-                onPress={() => setExpandedStoryId(expanded ? null : row.story.id)}
+                onPress={() => {
+                  // Ao abrir, o cadeado começa refletindo como a história está publicada hoje:
+                  // um controle que diz "sem senha" numa história protegida faria a pessoa
+                  // acreditar que já a tornou pública sem ter feito nada.
+                  if (!expanded) {
+                    setUsePassword(showcase?.visibility === 'password');
+                    setPassword('');
+                    setLabelMode(showcase?.labelMode ?? 'both');
+                  }
+                  setExpandedStoryId(expanded ? null : row.story.id);
+                }}
               >
                 <View style={styles.storyInfo}>
                   <Text style={styles.storyTitle}>{row.story.title}</Text>
@@ -444,17 +512,41 @@ const PublishStoryScreen = () => {
 
                   <View style={styles.switchRow}>
                     <Text style={styles.label}>{t('publish_use_password')}</Text>
-                    <Switch value={usePassword} onValueChange={setUsePassword} />
-                  </View>
-                  {usePassword && (
-                    <TextInput
-                      style={styles.input}
-                      value={password}
-                      onChangeText={setPassword}
-                      placeholder={t('publish_password_placeholder')}
-                      placeholderTextColor={colors.textSecondary}
-                      secureTextEntry
+                    <ThemedSwitch
+                      value={usePassword}
+                      onValueChange={setUsePassword}
+                      testID={`publish-password-switch-${row.story.id}`}
                     />
+                  </View>
+                  {/*
+                    A proteção é da história, não de cada versão: o site mostra uma página por
+                    história, com todas as versões dentro dela. Quem tem mais de uma versão
+                    publicada precisa saber que esta escolha vale para todas - inclusive as que
+                    já estavam no ar.
+                  */}
+                  {(showcase?.publications.length ?? 0) > 1 && (
+                    <Text style={styles.hint}>
+                      {t('publish_visibility_applies_to_all', {
+                        count: showcase?.publications.length ?? 0,
+                      })}
+                    </Text>
+                  )}
+                  {usePassword && (
+                    <>
+                      <TextInput
+                        style={styles.input}
+                        value={password}
+                        onChangeText={setPassword}
+                        placeholder={t('publish_password_placeholder')}
+                        placeholderTextColor={colors.textSecondary}
+                        secureTextEntry
+                      />
+                      {showcase?.hasPassword && (
+                        // Publicar de novo grava a senha digitada agora, então deixar o campo
+                        // em branco não é "manter a que já existe" - é publicar sem senha.
+                        <Text style={styles.hint}>{t('publish_password_replaces_previous')}</Text>
+                      )}
+                    </>
                   )}
 
                   <TouchableOpacity
@@ -470,6 +562,27 @@ const PublishStoryScreen = () => {
                       {busy ? t('publish_in_progress') : t('publish_create_version')}
                     </Text>
                   </TouchableOpacity>
+
+                  {showcase?.isPublished && (
+                    // O endereço fica à vista sempre que a história está publicada, não só no
+                    // instante em que ela é publicada: é o que a pessoa precisa copiar para
+                    // mandar a alguém, e ela não vai republicar só para vê-lo de novo.
+                    <View style={styles.linkBox}>
+                      <Text style={styles.label}>{t('publish_public_link')}</Text>
+                      <Text style={styles.linkText} selectable>
+                        {buildStoryPublicUrl(row.server.url, row.story.id)}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.linkButton}
+                        onPress={() =>
+                          void Linking.openURL(buildStoryPublicUrl(row.server.url, row.story.id))
+                        }
+                      >
+                        <Ionicons name="open-outline" size={16} color={colors.primary} />
+                        <Text style={styles.linkButtonText}>{t('publish_open_link')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
 
                   {showcase?.publications.map((publication) => (
                     <View key={publication.id} style={styles.versionRow}>

@@ -90,13 +90,15 @@ export function StoryPage() {
       <header className="story-head">
         <span className={`badge badge-${snapshot.type}`}>{snapshot.type}</span>
         <h1>{snapshot.title}</h1>
+        {/*
+          Quem publicou, sempre - é um fato sobre esta página. O autor da obra é outra coisa e
+          aparece entre os dados da história, abaixo.
+        */}
         <div className="owner">
           <OwnerAvatar owner={owner} size={34} />
           <span className="owner-name">
-            {snapshot.author || owner.username}
-            <span className="owner-tag">
-              {owner.username}#{owner.tag}
-            </span>
+            {owner.username}
+            <span className="owner-tag">#{owner.tag} · published this story</span>
           </span>
         </div>
       </header>
@@ -104,6 +106,17 @@ export function StoryPage() {
       {snapshot.description && <p className="story-description">{snapshot.description}</p>}
 
       <dl className="story-facts">
+        {/*
+          Texto livre da própria história: pode ser um pseudônimo, uma equipe, ou uma atribuição
+          de domínio público. Não tem relação com a conta que publicou, e por isso não cai para
+          o nome dela quando está vazio.
+        */}
+        {snapshot.author && (
+          <div>
+            <dt>Author</dt>
+            <dd>{snapshot.author}</dd>
+          </div>
+        )}
         {genreList(snapshot.genre).length > 0 && (
           <div>
             <dt>Genre</dt>
@@ -135,8 +148,8 @@ export function StoryPage() {
       <section className="versions">
         <h2>Download</h2>
         <p className="muted">
-          Each version is a complete Keres package - the story and its media - that imports
-          straight back into the app.
+          Each version is a complete Keres package - the story and its media - that imports straight
+          back into the app.
         </p>
 
         <ul className="version-list">
@@ -145,8 +158,7 @@ export function StoryPage() {
               <span className="version-label">{newest.label}</span>
               <span className="version-sub">
                 {formatDate(newest.createdAt)} · {formatBytes(newest.byteSize)}
-                {newest.mediaTotal > 0 &&
-                  ` · ${newest.mediaIncluded}/${newest.mediaTotal} media`}
+                {newest.mediaTotal > 0 && ` · ${newest.mediaIncluded}/${newest.mediaTotal} media`}
               </span>
             </div>
             <button

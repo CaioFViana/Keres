@@ -2,7 +2,8 @@ import { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'publish-story',
   title: 'Publicar uma história',
-  summary: 'Coloque uma história sua na página pública de um servidor, para qualquer pessoa baixar.',
+  summary:
+    'Coloque uma história sua na página pública de um servidor, para qualquer pessoa baixar.',
   keywords: ['publicar', 'público', 'vitrine', 'compartilhar', 'baixar', 'senha'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
@@ -45,6 +46,11 @@ const page: HelpPage = {
         'Escolha Criar nova versão pública.',
       ],
     },
+    { type: 'heading', level: 2, text: 'O link' },
+    {
+      type: 'paragraph',
+      text: 'Ao publicar, o endereço público da história é mostrado, e a tela continua exibindo esse endereço enquanto ela estiver publicada. É ele que você compartilha, e ele não muda quando uma versão nova é publicada.',
+    },
     { type: 'heading', level: 2, text: 'Nomes das versões' },
     {
       type: 'table',
@@ -62,7 +68,12 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Pública ou atrás de senha' },
     {
       type: 'paragraph',
-      text: 'Uma história pública aparece na lista da página, para qualquer pessoa encontrar. Uma história protegida por senha não aparece em lugar nenhum: só abre para quem tem o link e a senha. Serve para mostrar uma história a alguém que não tem conta naquele servidor, sem colocá-la diante do mundo.',
+      text: 'Uma história pública aparece na lista da página, para qualquer pessoa encontrar. Uma história protegida por senha não aparece em lugar nenhum: só abre para quem tem o link e a senha. Serve para mostrar uma história a alguém que não tem conta naquele servidor, sem colocá-la diante do mundo. Cada publicação aplica a escolha feita naquele momento: publicar com o cadeado desligado torna a história pública de novo, e publicar com ele ligado troca a senha antiga pela que você digitou.',
+    },
+    {
+      type: 'callout',
+      tone: 'warning',
+      text: 'A escolha vale para a história inteira, não para uma versão. A página pública mostra uma história com todas as versões dentro dela, então publicar sem senha abre todas as versões que estavam atrás da senha antiga - inclusive as que já estavam no ar. O app avisa antes de isso acontecer.',
     },
     {
       type: 'callout',

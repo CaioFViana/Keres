@@ -4,7 +4,7 @@ import { rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
-import { keresFavicon, keresLogo } from './vite.keresIcon';
+import { keresAvatarIcons, keresFavicon, keresLogo } from './vite.keresIcon';
 
 const adminDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -43,7 +43,7 @@ function emitAsIndexHtml(): Plugin {
  * vite.keresIcon.ts.
  */
 export default defineConfig({
-  plugins: [react(), emitAsIndexHtml(), keresFavicon(), keresLogo()],
+  plugins: [react(), emitAsIndexHtml(), keresFavicon(), keresLogo(), keresAvatarIcons()],
   base: '/_showcase/',
   build: {
     outDir: 'dist-showcase',

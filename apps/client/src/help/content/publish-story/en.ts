@@ -45,6 +45,11 @@ const page: HelpPage = {
         'Choose Create new public version.',
       ],
     },
+    { type: 'heading', level: 2, text: 'The link' },
+    {
+      type: 'paragraph',
+      text: 'Publishing shows you the story’s public address, and the screen keeps showing it for as long as the story stays published. That address is what you share; it does not change when you publish a new version.',
+    },
     { type: 'heading', level: 2, text: 'Version names' },
     {
       type: 'table',
@@ -62,7 +67,12 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Public or behind a password' },
     {
       type: 'paragraph',
-      text: 'A public story appears in the list on the page, for anyone to find. A password-protected story does not appear anywhere: only someone with both the link and the password can open it. That is useful for showing a story to a friend who has no account on that server, without putting it in front of the world.',
+      text: 'A public story appears in the list on the page, for anyone to find. A password-protected story does not appear anywhere: only someone with both the link and the password can open it. That is useful for showing a story to a friend who has no account on that server, without putting it in front of the world. Each publish applies the choice you made at that moment: publishing with the password switch off makes the story public again, and publishing with it on replaces the old password with the one you typed.',
+    },
+    {
+      type: 'callout',
+      tone: 'warning',
+      text: 'The choice covers the whole story, not one version. The public page shows a story with all of its versions inside it, so publishing without a password opens every version that was behind the old one - including the ones already up. The app warns you before that happens.',
     },
     {
       type: 'callout',

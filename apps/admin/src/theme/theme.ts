@@ -1,4 +1,4 @@
-import { themes, type ThemeColors } from '@keres/shared';
+import { getContrastTextColor, themes, type ThemeColors } from '@keres/shared';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
@@ -78,11 +78,10 @@ export function paletteLabel(name: string): string {
     .trim();
 }
 
-/** Tokens da paleta -> as variáveis que `styles.css` já consome. */
+/** Tokens que podem ser copiados direto: cada um já é usado no seu próprio fundo. */
 const PALETTE_TO_CSS_VAR: Array<[keyof ThemeColors, string]> = [
   ['primary', '--color-primary'],
   ['primaryVariant', '--color-primary-variant'],
-  ['onPrimary', '--color-on-primary'],
   ['background', '--color-bg'],
   ['surface', '--color-surface'],
   ['card', '--color-card'],
@@ -91,14 +90,81 @@ const PALETTE_TO_CSS_VAR: Array<[keyof ThemeColors, string]> = [
   ['border', '--color-border'],
   ['error', '--color-error'],
   ['accent', '--color-accent'],
-  ['primaryVariant', '--color-sidebar-bg'],
-  ['onPrimary', '--color-sidebar-text'],
-  ['accent', '--color-focus'],
+  ['primary', '--color-focus'],
+];
+
+/** Mistura duas cores hexadecimais; `amount` é quanto da segunda entra (0 a 1). */
+function mixHexColors(base: string, blend: string, amount: number): string {
+  const parse = (hex: string) => {
+    const value = hex.replace('#', '');
+    const full =
+      value.length === 3
+        ? value
+            .split('')
+            .map((character) => character + character)
+            .join('')
+        : value.slice(0, 6);
+    return [0, 2, 4].map((offset) => parseInt(full.slice(offset, offset + 2), 16));
+  };
+
+  const [baseRed, baseGreen, baseBlue] = parse(base);
+  const [blendRed, blendGreen, blendBlue] = parse(blend);
+  const channel = (from: number, to: number) =>
+    Math.round(from + (to - from) * amount)
+      .toString(16)
+      .padStart(2, '0');
+
+  return `#${channel(baseRed, blendRed)}${channel(baseGreen, blendGreen)}${channel(baseBlue, blendBlue)}`;
+}
+
+/**
+ * Cores derivadas, calculadas a partir do fundo em que cada uma vai ser desenhada.
+ *
+ * A barra lateral é o caso que obrigou isto: ela usa `primaryVariant` como fundo e antes usava
+ * `onPrimary` como texto. Nas paletas do app esses dois tokens não são um par - `onPrimary`
+ * acompanha `primary`, não `primaryVariant` - e em boa parte dos temas o resultado era texto
+ * claro sobre fundo claro, ilegível. Aqui o texto sai da luminância do fundo real
+ * (`getContrastTextColor`, a mesma função que o app usa), então qualquer paleta serve.
+ */
+function derivedPaletteVars(colors: ThemeColors): Array<[string, string]> {
+  const sidebarBackground = colors.primaryVariant;
+  const sidebarForeground =
+    getContrastTextColor(sidebarBackground) === 'black' ? '#000000' : '#ffffff';
+
+  return [
+    ['--color-sidebar-bg', sidebarBackground],
+    ['--color-sidebar-text', sidebarForeground],
+    // Secundário e hover são o mesmo texto/fundo puxados um para o outro, em vez de tokens
+    // separados: assim continuam legíveis em qualquer paleta, clara ou escura.
+    ['--color-sidebar-muted', mixHexColors(sidebarForeground, sidebarBackground, 0.35)],
+    ['--color-sidebar-hover', mixHexColors(sidebarBackground, sidebarForeground, 0.18)],
+    // O texto sobre os botões primários segue a mesma regra, pelo mesmo motivo.
+    [
+      '--color-on-primary',
+      getContrastTextColor(colors.primary) === 'black' ? '#000000' : '#ffffff',
+    ],
+    ['--color-row-hover', mixHexColors(colors.surface, colors.primary, 0.08)],
+    ['--color-table-head', mixHexColors(colors.surface, colors.text, 0.05)],
+    ['--color-pre-bg', mixHexColors(colors.surface, colors.text, 0.07)],
+  ];
+}
+
+/** Todas as variáveis que uma paleta escreve - usada também para limpá-las. */
+const MANAGED_CSS_VARS = [
+  ...PALETTE_TO_CSS_VAR.map(([, cssVar]) => cssVar),
+  '--color-sidebar-bg',
+  '--color-sidebar-text',
+  '--color-sidebar-muted',
+  '--color-sidebar-hover',
+  '--color-on-primary',
+  '--color-row-hover',
+  '--color-table-head',
+  '--color-pre-bg',
 ];
 
 export function applyPalette(name: string, mode: ResolvedTheme): void {
   const root = document.documentElement;
-  for (const [, cssVar] of PALETTE_TO_CSS_VAR) {
+  for (const cssVar of MANAGED_CSS_VARS) {
     root.style.removeProperty(cssVar);
   }
   if (name === 'default' || !(name in themes)) {
@@ -107,5 +173,8 @@ export function applyPalette(name: string, mode: ResolvedTheme): void {
   const colors = mode === 'dark' ? themes[name].darkColors : themes[name].lightColors;
   for (const [token, cssVar] of PALETTE_TO_CSS_VAR) {
     root.style.setProperty(cssVar, colors[token]);
+  }
+  for (const [cssVar, value] of derivedPaletteVars(colors)) {
+    root.style.setProperty(cssVar, value);
   }
 }

@@ -18,6 +18,7 @@ jest.mock('../../src/utils/i18n', () => ({
   },
 }));
 
+import { eq } from 'drizzle-orm';
 import { servers, stories, storyPublications } from '../../src/db/schema';
 import { publicationApiService } from '../../src/services/PublicationApiService';
 import { createPublicationService } from '../../src/services/PublicationService';
@@ -65,7 +66,9 @@ function publication(id: string, label: string, overrides: Record<string, unknow
   };
 }
 
-async function seedStory() {
+type StoryRole = 'owner' | 'writer' | 'reader' | null;
+
+async function seedStory(myRole: StoryRole = 'reader') {
   await database.db.insert(stories).values({
     id: STORY_ID,
     userId: 'user-1',
@@ -76,7 +79,13 @@ async function seedStory() {
     version: 1,
     isDeleted: false,
     lastOperationLog: 7,
+    myRole,
   } as typeof stories.$inferInsert);
+}
+
+/** Troca o papel desta pessoa na história, sem recriar o resto do cenário. */
+async function setMyRole(myRole: StoryRole) {
+  await database.db.update(stories).set({ myRole }).where(eq(stories.id, STORY_ID)).run();
 }
 
 beforeEach(async () => {
@@ -208,5 +217,42 @@ describe('syncPublicationsWithServer', () => {
     // Sem linha local, o primeiro sync desta rodada volta a ser "primeiro" e não avisa;
     // o que importa aqui é que a busca de título não quebra sem a história.
     await expect(service.syncPublicationsWithServer(server() as never)).resolves.toBeUndefined();
+  });
+});
+
+describe('who gets notified', () => {
+  async function publishOneMore() {
+    listVisible.mockResolvedValue([publication('pub-1', 'v7-2026-08-19')]);
+    await service.syncPublicationsWithServer(server() as never);
+    listVisible.mockResolvedValue([
+      publication('pub-1', 'v7-2026-08-19'),
+      publication('pub-2', 'v8-2026-08-20'),
+    ]);
+    await service.syncPublicationsWithServer(server() as never);
+  }
+
+  // Quem publica é o dono: avisá-lo do que ele mesmo acabou de fazer é ruído. O evento continua
+  // chegando (é o que mantém a lista dos outros aparelhos dele em dia), só o aviso é silenciado.
+  it('says nothing to the owner of the story', async () => {
+    await setMyRole('owner');
+    await publishOneMore();
+
+    expect(shown).toEqual([]);
+  });
+
+  it('still mirrors the new version for the owner', async () => {
+    await setMyRole('owner');
+    await publishOneMore();
+
+    const rows = await service.getPublicationsForStory(STORY_ID);
+    expect(rows.map((row) => row.id).sort()).toEqual(['pub-1', 'pub-2']);
+  });
+
+  it.each<StoryRole>(['reader', 'writer'])('notifies a %s of the story', async (role) => {
+    await setMyRole(role);
+    await publishOneMore();
+
+    expect(shown).toHaveLength(1);
+    expect(shown[0].message).toContain('v8-2026-08-20');
   });
 });

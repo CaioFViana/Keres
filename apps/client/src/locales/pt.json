@@ -1291,5 +1291,16 @@
   "publish_unpublish_message": "Remover esta história e todas as versões publicadas da página pública? Nada é apagado da história em si.",
   "publish_unpublish_confirm": "Despublicar história",
   "story_version_published": "{{title}} publicou a versão {{label}}",
-  "a_story": "Uma história"
+  "a_story": "Uma história",
+  "publish_link_intro": "A versão {{label}} está no ar em:",
+  "publish_link_password_reminder": "Quem abrir vai precisar da senha que você acabou de definir.",
+  "publish_open_link": "Abrir página",
+  "publish_public_link": "Link público",
+  "publish_password_replaces_previous": "Publicar troca a senha atual pela que você digitar aqui.",
+  "publish_visibility_applies_to_all": "Esta escolha vale para a história inteira, então também alcança a {{count}} versão já publicada.",
+  "publish_visibility_applies_to_all_plural": "Esta escolha vale para a história inteira, então também alcança as {{count}} versões já publicadas.",
+  "publish_opening_protected_title": "Isto vai tornar a história pública",
+  "publish_opening_protected_message": "A página pública é uma por história, então a senha vale para todas as versões dela. Publicar sem senha agora também abre a {{count}} versão que já estava protegida.",
+  "publish_opening_protected_message_plural": "A página pública é uma por história, então a senha vale para todas as versões dela. Publicar sem senha agora também abre as {{count}} versões que já estavam protegidas.",
+  "publish_opening_protected_confirm": "Publicar publicamente"
 }

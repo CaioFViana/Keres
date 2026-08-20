@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   updateTier: vi.fn(),
   softDeleteTier: vi.fn(),
   getSettings: vi.fn(),
+  getShowcaseSettings: vi.fn(),
+  updateShowcaseSettings: vi.fn(),
   updateSettings: vi.fn(),
   listDeleted: vi.fn(),
   restoreDeleted: vi.fn(),
@@ -47,6 +49,12 @@ vi.mock('../../src/api/TierApiService', () => ({
     create: mocks.createTier,
     update: mocks.updateTier,
     softDelete: mocks.softDeleteTier,
+  },
+}));
+vi.mock('../../src/api/ShowcaseSettingsApiService', () => ({
+  ShowcaseSettingsApiService: {
+    get: mocks.getShowcaseSettings,
+    update: mocks.updateShowcaseSettings,
   },
 }));
 vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
@@ -75,6 +83,11 @@ beforeEach(() => {
   mocks.listUsers.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
   mocks.createUser.mockResolvedValue({ id: 'user-1', recoveryCodes: ['AAAAA-11111'] });
   mocks.listTiers.mockResolvedValue([]);
+  mocks.getShowcaseSettings.mockResolvedValue({
+    id: 'singleton',
+    isShowcaseEnabled: false,
+    updatedAt: '2026-08-19T00:00:00.000Z',
+  });
   mocks.getSettings.mockResolvedValue({
     isRegistrationOpen: true,
     autoManage: false,

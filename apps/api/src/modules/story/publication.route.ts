@@ -50,6 +50,8 @@ export const publicationRoutes = new Elysia()
         params.storyId,
         body.operationVersion,
         (body.labelMode ?? 'both') as PublicationLabelMode,
+        (body.visibility ?? 'public') as ShowcaseVisibility,
+        body.password,
       ),
     {
       params: t.Object({ storyId: t.String() }),
@@ -58,6 +60,13 @@ export const publicationRoutes = new Elysia()
         labelMode: t.Optional(
           t.Union([t.Literal('version'), t.Literal('date'), t.Literal('both')]),
         ),
+        /**
+         * Enviada em toda publicação, e não só quando muda: é a escolha que a pessoa fez nesta
+         * publicação. Omitir equivale a `public`, então publicar sem pedir senha realmente
+         * torna a história pública, mesmo que uma publicação anterior tivesse senha.
+         */
+        visibility: t.Optional(t.Union([t.Literal('public'), t.Literal('password')])),
+        password: t.Optional(t.String({ minLength: 4, maxLength: 200 })),
       }),
       detail: {
         summary: 'Publish a new public version of a story',

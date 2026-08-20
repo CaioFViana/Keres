@@ -82,6 +82,7 @@ import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import HelpStackNavigator, { HelpStackParamList } from './HelpStack';
+import StoryDevicesStackNavigator, { StoryDevicesStackParamList } from './StoryDevicesStack';
 
 export type MainSystemDrawerParamList = {
   MainDashboard: undefined;
@@ -110,6 +111,7 @@ export type MainSystemDrawerParamList = {
   StorySchemaStack: NavigatorScreenParams<StorySchemaStackParamList> | undefined;
   Suggestions: undefined;
   StorySelection: undefined;
+  StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
 
@@ -481,6 +483,7 @@ const MainSystemNavigator = () => {
   const { selectedStory } = useStoryStore();
   const { t } = useTranslation();
   const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
+  const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
@@ -859,6 +862,26 @@ const MainSystemNavigator = () => {
           name="StorySettings"
           component={StorySettingsScreen}
           options={{ title: t('story_settings_title') }}
+        />
+        <Drawer.Screen
+          name="StoryDevicesDrawer"
+          component={StoryDevicesStackNavigator}
+          options={{
+            title: t('story_devices_title'),
+            drawerLabel: t('story_devices_title'),
+            // A tela continua registrada quando o ajuste está desligado para que uma navegação
+            // direta ou um link de ajuda não quebre; só o item do menu some.
+            drawerItemStyle: {
+              height: suggestLiteraryDevices ? undefined : 0,
+              overflow: 'hidden',
+            },
+          }}
+          listeners={({ navigation }) => ({
+            drawerItemPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('StoryDevicesDrawer', { screen: 'DeviceIndex' });
+            },
+          })}
         />
         <Drawer.Screen
           name="HelpDrawer"

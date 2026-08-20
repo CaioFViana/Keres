@@ -104,6 +104,7 @@ const ColdInstallScreen = () => {
       darkMode: false, // Default to light mode
       use24HourTime: true, // Default to 24-hour clock
       showContextualHelp: true,
+      suggestLiteraryDevices: true,
     });
 
     // Initialize stores with the newly created settings

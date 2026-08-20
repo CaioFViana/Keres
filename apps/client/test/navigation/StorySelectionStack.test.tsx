@@ -151,7 +151,7 @@ beforeEach(() => {
 
 async function renderDrawer() {
   await render(<StorySelectionStack />);
-  expect(mockDrawerScreens).toHaveLength(8);
+  expect(mockDrawerScreens).toHaveLength(9);
 }
 
 it('keeps the wide story-selection menu permanently open with its main routes', async () => {
@@ -169,6 +169,7 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
     'PublishStory',
     'ExampleStories',
     'Settings',
+    'StoryDevicesDrawer',
     'HelpDrawer',
   ]);
 });
@@ -177,6 +178,7 @@ it.each([
   ['StorySelectionMain', 'StorySelectionScreen'],
   ['ServerManagementDrawer', 'ServerManagement'],
   ['FriendshipDrawer', 'FriendshipList'],
+  ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its root screen from a drawer press', async (drawerName, screen) => {
   await renderDrawer();

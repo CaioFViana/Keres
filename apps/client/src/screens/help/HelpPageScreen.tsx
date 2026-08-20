@@ -4,28 +4,30 @@ import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
 import { HelpBlockRenderer } from '../../components/features/help/HelpBlockRenderer/HelpBlockRenderer';
-import { getHelpPage, resolveHelpPage } from '../../help/repository';
+import { DocLibrary, helpLibrary } from '../../help/library';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
 
-type HelpNavigation = NativeStackNavigationProp<{
-  HelpIndex: undefined;
-  HelpPage: { pageId: string };
-}>;
+type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;
 
-export function HelpPageScreen() {
+type HelpPageScreenProps = {
+  /** Qual biblioteca renderizar. O padrão mantém esta tela como a página da Ajuda. */
+  library?: DocLibrary;
+};
+
+export function HelpPageScreen({ library = helpLibrary }: HelpPageScreenProps) {
   useBackButtonHandler({ showWebBackButton: true });
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HelpNavigation>();
-  const route = useRoute<{ key: string; name: 'HelpPage'; params: { pageId: string } }>();
+  const route = useRoute<{ key: string; name: string; params: { pageId: string } }>();
   const { colors } = useTheme();
-  const { page, usedFallback } = resolveHelpPage(route.params.pageId, i18n.language);
+  const { page, usedFallback } = library.resolvePage(route.params.pageId, i18n.language);
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(page?.title ?? t('help_page_not_found'));
-    }, [page?.title, t]),
+      setDocumentTitle(page?.title ?? t(library.notFoundKey));
+    }, [page?.title, t, library.notFoundKey]),
   );
 
   return (
@@ -40,20 +42,20 @@ export function HelpPageScreen() {
           </Text>
           {usedFallback ? (
             <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
-              {t('help_language_fallback_notice')}
+              {t(library.fallbackNoticeKey)}
             </Text>
           ) : null}
           {page.blocks.map((block, index) => (
             <HelpBlockRenderer
               key={index}
               block={block}
-              onOpenPage={(pageId) => navigation.push('HelpPage', { pageId })}
-              pageTitle={(pageId) => getHelpPage(pageId, i18n.language)?.title ?? pageId}
+              onOpenPage={(pageId) => navigation.push(library.pageRouteName, { pageId })}
+              pageTitle={(pageId) => library.getPage(pageId, i18n.language)?.title ?? pageId}
             />
           ))}
         </>
       ) : (
-        <Text style={{ color: colors.text, fontSize: 16 }}>{t('help_page_not_found')}</Text>
+        <Text style={{ color: colors.text, fontSize: 16 }}>{t(library.notFoundKey)}</Text>
       )}
     </ScrollView>
   );

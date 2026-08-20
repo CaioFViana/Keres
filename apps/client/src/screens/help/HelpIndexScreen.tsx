@@ -13,35 +13,37 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
 import { HighlightedText } from '../../components/features/help/HelpSearchBar/HighlightedText';
-import { helpSections } from '../../help/catalog';
-import { getHelpPage, getHelpPages } from '../../help/repository';
+import { DocLibrary, helpLibrary } from '../../help/library';
 import { createHelpSearchIndex, searchHelp } from '../../help/search';
 import { useTheme } from '../../theme';
 import { debounce } from '../../utils/debounce';
 import { setDocumentTitle } from '../../utils/documentTitle';
 
-type HelpNavigation = NativeStackNavigationProp<{
-  HelpIndex: undefined;
-  HelpPage: { pageId: string };
-}>;
+type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;
 
 type HelpIndexScreenProps = {
   openSections?: Record<string, boolean>;
   onOpenSectionsChange?: Dispatch<SetStateAction<Record<string, boolean>>>;
+  /** Qual biblioteca renderizar. O padrão mantém esta tela como o índice da Ajuda. */
+  library?: DocLibrary;
 };
 
-export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpIndexScreenProps) {
+export function HelpIndexScreen({
+  openSections,
+  onOpenSectionsChange,
+  library = helpLibrary,
+}: HelpIndexScreenProps) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<HelpNavigation>();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [defaultOpenSections, setDefaultOpenSections] = useState<Record<string, boolean>>({
-    start: true,
+    [library.defaultOpenSectionId]: true,
   });
   const open = openSections ?? defaultOpenSections;
   const setOpen = onOpenSectionsChange ?? setDefaultOpenSections;
-  const pages = useMemo(() => getHelpPages(i18n.language), [i18n.language]);
+  const pages = useMemo(() => library.getPages(i18n.language), [library, i18n.language]);
   const searchIndex = useMemo(() => createHelpSearchIndex(pages), [pages]);
   const results = useMemo(
     () => searchHelp(searchIndex, debouncedQuery),
@@ -59,8 +61,8 @@ export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpInde
 
   useFocusEffect(
     useCallback(() => {
-      setDocumentTitle(t('help_index_title'));
-    }, [t]),
+      setDocumentTitle(t(library.indexTitleKey));
+    }, [t, library.indexTitleKey]),
   );
 
   const styles = StyleSheet.create({
@@ -86,7 +88,7 @@ export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpInde
     label: { color: colors.textSecondary, fontSize: 12, marginBottom: 3 },
     empty: { padding: 24, color: colors.textSecondary, textAlign: 'center' },
   });
-  const openPage = (id: string) => navigation.navigate('HelpPage', { pageId: id });
+  const openPage = (id: string) => navigation.navigate(library.pageRouteName, { pageId: id });
 
   return (
     <View style={styles.container}>
@@ -94,8 +96,8 @@ export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpInde
         value={query}
         onChangeText={setQuery}
         onClear={() => setQuery('')}
-        placeholder={t('help_search_placeholder')}
-        clearAccessibilityLabel={t('help_search_clear')}
+        placeholder={t(library.searchPlaceholderKey)}
+        clearAccessibilityLabel={t(library.searchClearKey)}
         color={colors.textSecondary}
         borderColor={colors.border}
       />
@@ -104,7 +106,7 @@ export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpInde
           {results.length ? (
             <>
               <Text style={styles.label}>
-                {t('help_search_results_count', { count: results.length })}
+                {t(library.searchResultsCountKey, { count: results.length })}
               </Text>
               {results.map(({ page, excerpt }) => (
                 <TouchableOpacity
@@ -114,8 +116,8 @@ export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpInde
                 >
                   <Text style={styles.label}>
                     {t(
-                      helpSections.find((section) => section.pageIds.includes(page.id))?.titleKey ??
-                        'help_title',
+                      library.sections.find((section) => section.pageIds.includes(page.id))
+                        ?.titleKey ?? library.titleKey,
                     )}
                   </Text>
                   <Text style={styles.title}>{page.title}</Text>
@@ -130,19 +132,18 @@ export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpInde
             </>
           ) : (
             <>
-              <Text style={styles.empty}>{t('help_no_results')}</Text>
-              <TouchableOpacity onPress={() => openPage('using-this-help')}>
-                <Text style={styles.empty}>{t('help_no_results_hint')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => openPage('faq')}>
-                <Text style={styles.empty}>{t('help_no_results_faq_link')}</Text>
-              </TouchableOpacity>
+              <Text style={styles.empty}>{t(library.noResultsKey)}</Text>
+              {library.emptyStateLinks.map((link) => (
+                <TouchableOpacity key={link.pageId} onPress={() => openPage(link.pageId)}>
+                  <Text style={styles.empty}>{t(link.labelKey)}</Text>
+                </TouchableOpacity>
+              ))}
             </>
           )}
         </ScrollView>
       ) : (
         <ScrollView>
-          {helpSections.map((section) => {
+          {library.sections.map((section) => {
             const isOpen = !!open[section.id];
             return (
               <View key={section.id} style={styles.section}>
@@ -166,7 +167,7 @@ export function HelpIndexScreen({ openSections, onOpenSectionsChange }: HelpInde
                 </TouchableOpacity>
                 {isOpen &&
                   section.pageIds.map((id) => {
-                    const page = getHelpPage(id, i18n.language);
+                    const page = library.getPage(id, i18n.language);
                     return (
                       page && (
                         <TouchableOpacity key={id} style={styles.card} onPress={() => openPage(id)}>

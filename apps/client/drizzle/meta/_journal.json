@@ -78,6 +78,13 @@
       "when": 1787177033280,
       "tag": "0010_orange_blazing_skull",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1787252913734,
+      "tag": "0011_lumpy_groot",
+      "breakpoints": true
     }
   ]
 }

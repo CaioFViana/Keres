@@ -57,6 +57,9 @@ const sharedSrcPath = path.join(__dirname, '..', '..', '..', 'packages', 'shared
 // package whose `entityFields.ts` feeds form-field labels into `t()` indirectly.
 const SCAN_ROOTS = [clientSrcPath, sharedSrcPath];
 const HELP_CONTENT_PATH = path.join(clientSrcPath, 'help', 'content');
+const STORY_DEVICES_CONTENT_PATH = path.join(clientSrcPath, 'storyDevices', 'content');
+// Prosa autorada por idioma: não usa chaves de tradução e não deve entrar na auditoria.
+const DOC_CONTENT_PATHS = [HELP_CONTENT_PATH, STORY_DEVICES_CONTENT_PATH];
 
 // --- JSON helpers -----------------------------------------------------------------
 
@@ -139,7 +142,7 @@ function walkSourceFiles(rootDir: string): string[] {
         entry === 'node_modules' ||
         entry === 'dist' ||
         entry === '.expo' ||
-        entryPath === HELP_CONTENT_PATH
+        DOC_CONTENT_PATHS.includes(entryPath)
       )
         continue;
       const stat = fs.statSync(entryPath);

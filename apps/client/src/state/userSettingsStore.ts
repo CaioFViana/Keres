@@ -11,12 +11,17 @@ interface UserSettingsState {
   /** `true` = 24h, `false` = AM/PM. Vale para toda exibição/edição de hora das features de Data. */
   use24HourTime: boolean;
   showContextualHelp: boolean;
+  suggestLiteraryDevices: boolean;
   activeServer: ServerSelect | null;
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
   setLanguage: (db: AppDrizzleClient, language: string) => Promise<void>;
   setUse24HourTime: (db: AppDrizzleClient, use24HourTime: boolean) => Promise<void>;
   setShowContextualHelp: (db: AppDrizzleClient, showContextualHelp: boolean) => Promise<void>;
+  setSuggestLiteraryDevices: (
+    db: AppDrizzleClient,
+    suggestLiteraryDevices: boolean,
+  ) => Promise<void>;
   setActiveServer: (server: ServerSelect | null) => void;
   clearActiveServer: () => void;
   resetSettings: () => void;
@@ -28,6 +33,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   language: null,
   use24HourTime: true,
   showContextualHelp: true,
+  suggestLiteraryDevices: true,
   activeServer: null,
 
   initializeSettings: async (db: AppDrizzleClient) => {
@@ -39,6 +45,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
         language: settings.language,
         use24HourTime: settings.use24HourTime,
         showContextualHelp: settings.showContextualHelp,
+        suggestLiteraryDevices: settings.suggestLiteraryDevices,
       }); // Set userId
     }
     return settings; // Return the settings object
@@ -64,6 +71,11 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
     set({ showContextualHelp });
   },
 
+  setSuggestLiteraryDevices: async (db: AppDrizzleClient, suggestLiteraryDevices: boolean) => {
+    await updateClientSettings(db, { suggestLiteraryDevices });
+    set({ suggestLiteraryDevices });
+  },
+
   setActiveServer: (server: ServerSelect | null) => {
     set({ activeServer: server });
   },
@@ -79,6 +91,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
       language: null,
       use24HourTime: true,
       showContextualHelp: true,
+      suggestLiteraryDevices: true,
       activeServer: null,
     }); // Reset all settings including activeServer
   },

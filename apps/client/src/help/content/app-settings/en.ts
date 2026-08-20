@@ -26,15 +26,19 @@ const page: HelpPage = {
         'Under Language, choose the interface language. Help follows this choice.',
         'Turn Dark mode on or off to change the app appearance.',
         'Turn 24-hour time on or off to choose how custom Date attributes show and edit their time.',
+        'Turn Suggest literary devices on or off to show or hide the Literary devices list in the menu.',
         'Use Reset application only when you want to erase local data and return to initial setup. Read the confirmation before accepting.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Language and appearance apply throughout this device. Show help controls the contextual help shortcut in supported page headers. The local name is not the same as a server account name, @tag, or profile. Resetting removes local stories, media, and saved connections from this device.',
+      text: 'Language and appearance apply throughout this device. Show help controls the contextual help shortcut in supported page headers. Suggest literary devices only shows or hides that menu item; nothing is deleted. The local name is not the same as a server account name, @tag, or profile. Resetting removes local stories, media, and saved connections from this device.',
     },
-    { type: 'seeAlso', pages: ['your-profile', 'data-and-backup', 'using-this-help'] },
+    {
+      type: 'seeAlso',
+      pages: ['your-profile', 'data-and-backup', 'using-this-help', 'story-devices'],
+    },
   ],
 };
 export default page;

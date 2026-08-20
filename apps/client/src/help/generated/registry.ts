@@ -79,6 +79,8 @@ import storyAnalysis_en from '../content/story-analysis/en';
 import storyAnalysis_pt from '../content/story-analysis/pt';
 import storyDashboard_en from '../content/story-dashboard/en';
 import storyDashboard_pt from '../content/story-dashboard/pt';
+import storyDevices_en from '../content/story-devices/en';
+import storyDevices_pt from '../content/story-devices/pt';
 import storyList_en from '../content/story-list/en';
 import storyList_pt from '../content/story-list/pt';
 import storyMap_en from '../content/story-map/en';
@@ -150,6 +152,7 @@ export type GeneratedHelpPageId =
   | 'see-also'
   | 'story-analysis'
   | 'story-dashboard'
+  | 'story-devices'
   | 'story-list'
   | 'story-map'
   | 'story-settings'
@@ -322,6 +325,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'story-dashboard': {
     en: storyDashboard_en,
     pt: storyDashboard_pt,
+  },
+  'story-devices': {
+    en: storyDevices_en,
+    pt: storyDevices_pt,
   },
   'story-list': {
     en: storyList_en,

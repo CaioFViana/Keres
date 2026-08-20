@@ -45,10 +45,12 @@ const SettingsScreen = () => {
     language,
     use24HourTime,
     showContextualHelp,
+    suggestLiteraryDevices,
     setUsername,
     setLanguage,
     setUse24HourTime,
     setShowContextualHelp,
+    setSuggestLiteraryDevices,
     resetSettings,
   } = useUserSettingsStore();
   const { darkMode, setDarkMode, resetTheme } = useThemeStore();
@@ -74,6 +76,10 @@ const SettingsScreen = () => {
 
   const handleContextualHelpToggle = (value: boolean) => {
     setShowContextualHelp(drizzleClient, value);
+  };
+
+  const handleLiteraryDevicesToggle = (value: boolean) => {
+    setSuggestLiteraryDevices(drizzleClient, value);
   };
 
   const handleResetApplication = () => {
@@ -180,6 +186,24 @@ const SettingsScreen = () => {
             </Text>
           </View>
           <ThemedSwitch value={use24HourTime} onValueChange={handleTimeFormatToggle} />
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {t('suggest_literary_devices')}
+            </Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {suggestLiteraryDevices
+                ? t('suggest_literary_devices_on')
+                : t('suggest_literary_devices_off')}
+            </Text>
+          </View>
+          <ThemedSwitch
+            value={suggestLiteraryDevices}
+            onValueChange={handleLiteraryDevicesToggle}
+            style={styles.contextualHelpSwitch}
+          />
         </View>
 
         <View style={styles.settingItem}>

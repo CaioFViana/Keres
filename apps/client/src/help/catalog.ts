@@ -12,6 +12,7 @@ export const helpSections: HelpSection[] = [
       'getting-around',
       'lists-and-search',
       'using-this-help',
+      'story-devices',
     ],
   },
   {

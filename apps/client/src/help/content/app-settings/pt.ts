@@ -26,6 +26,7 @@ const page: HelpPage = {
         'Em Idioma, escolha o idioma da interface. A Ajuda acompanha essa escolha.',
         'Ative ou desative Modo escuro para mudar a aparência do aplicativo.',
         'Ative ou desative Formato 24 horas para escolher como os atributos personalizados de Data mostram e editam a hora.',
+        'Ative ou desative Sugerir recursos literários para mostrar ou ocultar a lista de Recursos literários no menu.',
         'Use Redefinir aplicativo somente quando quiser apagar os dados locais e voltar à instalação inicial. Leia a confirmação antes de aceitar.',
       ],
     },
@@ -36,9 +37,12 @@ const page: HelpPage = {
     },
     {
       type: 'paragraph',
-      text: 'Mostrar ajuda controla o atalho de ajuda contextual nos cabeçalhos das páginas compatíveis.',
+      text: 'Mostrar ajuda controla o atalho de ajuda contextual nos cabeçalhos das páginas compatíveis. Sugerir recursos literários apenas mostra ou oculta aquele item do menu; nada é apagado.',
     },
-    { type: 'seeAlso', pages: ['your-profile', 'data-and-backup', 'using-this-help'] },
+    {
+      type: 'seeAlso',
+      pages: ['your-profile', 'data-and-backup', 'using-this-help', 'story-devices'],
+    },
   ],
 };
 export default page;

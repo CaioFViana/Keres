@@ -13,7 +13,7 @@ export type HelpBlock =
   | { type: 'fields'; rows: HelpFieldRow[] }
   | { type: 'table'; headers: string[]; rows: string[][] }
   | { type: 'faq'; items: { question: string; answer: string }[] }
-  | { type: 'seeAlso'; pages: HelpPageId[] };
+  | { type: 'seeAlso'; pages: string[] };
 
 export interface HelpFieldRow {
   key: string;
@@ -22,7 +22,7 @@ export interface HelpFieldRow {
   note?: string;
 }
 export interface HelpPage {
-  id: HelpPageId;
+  id: string;
   title: string;
   summary: string;
   keywords: string[];
@@ -32,5 +32,5 @@ export interface HelpSection {
   id: string;
   titleKey: string;
   icon: string;
-  pageIds: HelpPageId[];
+  pageIds: string[];
 }

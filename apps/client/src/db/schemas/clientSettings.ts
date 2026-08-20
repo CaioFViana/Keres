@@ -10,6 +10,10 @@ export const clientSettings = sqliteTable('client_settings', {
   use24HourTime: integer('use_24_hour_time', { mode: 'boolean' }).notNull().default(true),
   /** Controla a disponibilidade do atalho de ajuda contextual nos headers. */
   showContextualHelp: integer('show_contextual_help', { mode: 'boolean' }).notNull().default(true),
+  /** Controla a presença do item de recursos literários nos menus laterais. */
+  suggestLiteraryDevices: integer('suggest_literary_devices', { mode: 'boolean' })
+    .notNull()
+    .default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

@@ -4,8 +4,9 @@ const path = require('path');
 const applications = [
   ['API', 'apps/api'],
   ['ADM', 'apps/admin'],
-  ['Client', 'apps/client', ['apps/client/src/help']],
+  ['Client', 'apps/client', ['apps/client/src/help', 'apps/client/src/storyDevices']],
   ['Client-Help', 'apps/client/src/help'],
+  ['Client-StoryDevices', 'apps/client/src/storyDevices'],
   ['Desktop', 'apps/desktop'],
 ];
 

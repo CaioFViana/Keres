@@ -4,6 +4,7 @@ import { rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
+import { keresFavicon, keresLogo } from './vite.keresIcon';
 
 const adminDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,9 +38,12 @@ function emitAsIndexHtml(): Plugin {
  * que não seja da API (ver o catch-all em apps/api/src/index.ts).
  *
  * O painel admin continua saindo em `dist/` com `base: '/admin/'`, intocado.
+ *
+ * Favicon e marca saem do mesmo ícone do app de desktop que o painel já usa - ver
+ * vite.keresIcon.ts.
  */
 export default defineConfig({
-  plugins: [react(), emitAsIndexHtml()],
+  plugins: [react(), emitAsIndexHtml(), keresFavicon(), keresLogo()],
   base: '/_showcase/',
   build: {
     outDir: 'dist-showcase',

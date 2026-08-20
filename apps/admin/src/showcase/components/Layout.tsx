@@ -1,34 +1,39 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import keresLogoUrl from 'virtual:keres-logo';
 import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
 
+/**
+ * O ícone do Keres - o mesmo desenho do app de desktop e do favicon, reduzido em tempo de
+ * build a partir de `apps/client/assets/images/desktop_icon.png` (ver vite.keresIcon.ts).
+ */
 function KeresMark({ size = 28 }: { size?: number }) {
   return (
-    <svg
+    <img
+      src={keresLogoUrl}
       width={size}
       height={size}
-      viewBox="0 0 32 32"
-      role="img"
-      aria-label="Keres"
+      alt=""
       className="mark"
-    >
-      <path
-        d="M16 2 L29 9 V23 L16 30 L3 23 V9 Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path d="M11 10 V22 M11 16 L20 10 M11 16 L20 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+      // Decorativo: o nome "Keres" aparece escrito ao lado em todos os usos, então anunciar a
+      // imagem também só faria o leitor de tela repetir a mesma palavra duas vezes.
+      aria-hidden="true"
+    />
   );
 }
 
 function ThemeToggle() {
   const { preference, cyclePreference, preferenceLabel } = useShowcaseTheme();
   return (
-    <button type="button" className="theme-toggle" onClick={cyclePreference} title={preferenceLabel}>
-      <span aria-hidden="true">{preference === 'dark' ? '🌙' : preference === 'light' ? '☀️' : '🖥️'}</span>
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={cyclePreference}
+      title={preferenceLabel}
+    >
+      <span aria-hidden="true">
+        {preference === 'dark' ? '🌙' : preference === 'light' ? '☀️' : '🖥️'}
+      </span>
       <span className="theme-toggle-text">{preferenceLabel}</span>
     </button>
   );
@@ -66,9 +71,9 @@ export function Layout({ children }: { children: ReactNode }) {
             <span className="brand-name">Keres</span>
           </div>
           <p className="disclaimer">
-            Keres is a writing companion for planning stories. It is not affiliated with the
-            server hosting this page, nor with the stories published on it, and it does not
-            endorse or moderate them. Every story here belongs to the person who published it.
+            Keres is a writing companion for planning stories. It is not affiliated with the server
+            hosting this page, nor with the stories published on it, and it does not endorse or
+            moderate them. Every story here belongs to the person who published it.
           </p>
         </div>
       </footer>

@@ -9,7 +9,7 @@
  */
 
 :root,
-[data-theme='light'] {
+[data-theme="light"] {
   --color-bg: #fbfaff;
   --color-bg-elevated: #ffffff;
   --color-surface: #ffffff;
@@ -30,7 +30,7 @@
   --radius-lg: 22px;
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   --color-bg: #0e0d13;
   --color-bg-elevated: #17161f;
   --color-surface: #17161f;
@@ -56,7 +56,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
@@ -111,6 +111,17 @@ a {
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--color-text);
+}
+
+/*
+ * O ícone é um PNG recortado, desenhado bem abaixo do seu tamanho nativo: sem
+ * `object-fit: contain` uma proporção diferente o esticaria, e o `display: block` evita a
+ * folga de linha de base que uma imagem inline abriria dentro do flex do cabeçalho.
+ */
+.mark {
+  display: block;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .site-nav {

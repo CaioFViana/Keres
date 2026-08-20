@@ -53,6 +53,8 @@ const adminFaviconPath = path.join(adminDistPath, 'favicon.ico');
 const showcaseDistPath = path.join(apiSourceDirectory, '..', '..', 'admin', 'dist-showcase');
 const showcaseDistIndexPath = path.join(showcaseDistPath, 'index.html');
 const showcaseUiAvailable = existsSync(showcaseDistIndexPath);
+/** O mesmo .ico, gerado do mesmo PNG, pelo build do site público. */
+const showcaseFaviconPath = path.join(showcaseDistPath, 'favicon.ico');
 
 /** Fallback before an admin build exists — same PNG desktop uses, not copied into admin. */
 const desktopIconPath = path.join(
@@ -350,8 +352,15 @@ export async function createApp() {
       .get(
         '/favicon.ico',
         ({ set }) => {
-          const useGeneratedIco = existsSync(adminFaviconPath);
-          const filePath = useGeneratedIco ? adminFaviconPath : desktopIconPath;
+          // Painel e site público geram o mesmo .ico, do mesmo PNG - qualquer um dos dois
+          // serve. Procurar nos dois evita que a aba fique sem ícone num servidor que só
+          // buildou o site (ou só o painel); o PNG do cliente é o último recurso, para quando
+          // nenhum build existe ainda.
+          const generatedIcoPath = [adminFaviconPath, showcaseFaviconPath].find((candidate) =>
+            existsSync(candidate),
+          );
+          const filePath = generatedIcoPath ?? desktopIconPath;
+          const useGeneratedIco = !!generatedIcoPath;
           if (!existsSync(filePath)) {
             set.status = 404;
             return { message: 'Not found' };
@@ -366,7 +375,7 @@ export async function createApp() {
           detail: {
             summary: 'Favicon',
             description:
-              'Serves the ICO generated at admin build time from apps/client desktop_icon.png (same source as apps/desktop).',
+              'Serves the ICO generated at web build time from apps/client desktop_icon.png (same source as apps/desktop).',
             tags: ['Admin'],
           },
         },

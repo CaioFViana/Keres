@@ -251,10 +251,7 @@ export const publicRoutes = new Elysia()
             return;
           }
 
-          const body = await publicationStorageService.read(
-            params.storyId,
-            params.publicationId,
-          );
+          const body = await publicationStorageService.read(params.storyId, params.publicationId);
           if (!body) {
             set.status = 404;
             throw new AppError(404, 'Not found.');

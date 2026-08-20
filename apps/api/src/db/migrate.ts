@@ -1,9 +1,9 @@
-import * as path from 'path';
 import { migrate as migrateLibsql } from 'drizzle-orm/libsql/migrator';
 import { migrate as migratePostgres } from 'drizzle-orm/node-postgres/migrator';
-import { db } from './index';
-import { usingSqlite } from './dialect';
+import { migrationsFolder } from '../config/resourceRoot';
 import { logger } from '../utils/logger';
+import { usingSqlite } from './dialect';
+import { db } from './index';
 
 /**
  * Applies any pending SQL migrations before the app accepts traffic - without this, a brand
@@ -13,23 +13,18 @@ import { logger } from '../utils/logger';
  * of the production image to keep it small, and this runtime migrator is a lighter-weight,
  * already-a-dependency alternative that does the exact same "apply what's not applied yet" job.
  *
- * Resolved from `import.meta.dir`, not `process.cwd()` - same reasoning as `adminDistPath` in
- * `index.ts`: needs to find `apps/api/drizzle` regardless of where the process was started from.
+ * Resolved via `resourceRoot` (not `process.cwd()`): the compiled/zip layout keeps the SQL
+ * next to the executable, while `bun run` still finds `apps/api/drizzle`.
  */
 export async function runMigrations(): Promise<void> {
   // Cada motor tem o seu conjunto: o SQL gerado difere de dialeto para dialeto (tipos de
   // coluna, ENUM que só o Postgres tem), então são duas pastas, não uma compartilhada.
-  const migrationsFolder = path.join(
-    import.meta.dir,
-    '..',
-    '..',
-    usingSqlite ? 'drizzle-sqlite' : 'drizzle',
-  );
-  logger.info(`Applying database migrations from ${migrationsFolder}...`);
+  const folder = migrationsFolder(usingSqlite);
+  logger.info(`Applying database migrations from ${folder}...`);
   if (usingSqlite) {
-    await migrateLibsql(db as never, { migrationsFolder });
+    await migrateLibsql(db as never, { migrationsFolder: folder });
   } else {
-    await migratePostgres(db, { migrationsFolder });
+    await migratePostgres(db, { migrationsFolder: folder });
   }
   logger.info('Database migrations up to date.');
 }

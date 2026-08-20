@@ -242,9 +242,43 @@ jobs:
           path: apps/client/android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
 
+  # ---- Keres Server: zip portátil da API (SQLite, sem Docker) por SO ----
+  # Compila no runner de cada plataforma porque o sidecar nativo do libSQL tem de
+  # coincidir com o destino; `--target` da Bun não traz o `.node` certo.
+  keres-server:
+    needs: [version, verify]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: keres-server-windows
+          - os: ubuntu-latest
+            artifact: keres-server-linux
+          - os: macos-latest
+            artifact: keres-server-macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: node scripts/ci/set-version.mjs ${{ needs.version.outputs.version }}
+      - name: Install zip (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y zip
+      - name: Package Keres Server
+        run: bun run package:server
+      - uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.artifact }}
+          path: apps/api/dist-server/Keres-Server-*.zip
+          if-no-files-found: error
+
   # ---- Collect every platform's artifacts onto one GitHub Release ----
   create-release:
-    needs: [version, docker, desktop-windows, desktop-mac, desktop-linux, mobile-android]
+    needs: [version, docker, desktop-windows, desktop-mac, desktop-linux, mobile-android, keres-server]
     runs-on: ubuntu-latest
     permissions:
       contents: write

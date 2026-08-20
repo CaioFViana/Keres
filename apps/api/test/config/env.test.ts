@@ -16,6 +16,7 @@ const BASE_ENV: Record<string, string> = {
   JWT_SECRET: 'test-jwt-secret-that-is-at-least-thirty-two-characters',
   JWT_SECRET_REFRESH: 'test-refresh-secret-that-is-at-least-thirty-two-characters',
   PORT: '',
+  HOST: '',
   SERVER_VERSION: '',
   MEDIA_STORAGE_DRIVER: '',
   MEDIA_STORAGE_PATH: '',
@@ -34,6 +35,7 @@ const BASE_ENV: Record<string, string> = {
 /** Campos com `.default()` puro: string vazia é inválida, então precisam ser removidos. */
 const DEFAULTED_KEYS = [
   'PORT',
+  'HOST',
   'SERVER_VERSION',
   'MEDIA_STORAGE_DRIVER',
   'MEDIA_STORAGE_PATH',
@@ -72,6 +74,7 @@ describe('env', () => {
   it('applies the local-first defaults when only the required secrets are set', async () => {
     const env = await loadEnv();
 
+    expect(env.HOST).toBeUndefined();
     expect(env).toMatchObject({
       PORT: '3000',
       SERVER_VERSION: '1.0.0',
@@ -152,6 +155,10 @@ describe('env', () => {
     expect(env.MEDIA_STORAGE_DRIVER).toBe('s3');
     expect(env.MEDIA_S3_FORCE_PATH_STYLE).toBe(true);
     expect(env.MEDIA_S3_ENDPOINT).toBe('http://127.0.0.1:8333');
+  });
+
+  it('accepts an explicit listen HOST from the home-server launcher', async () => {
+    expect((await loadEnv({ HOST: '127.0.0.1' })).HOST).toBe('127.0.0.1');
   });
 
   it('rejects a storage driver that has no implementation', async () => {

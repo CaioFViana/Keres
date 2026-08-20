@@ -8,6 +8,9 @@ apps/admin/dist-showcase
 
 # Arquivos de mídia da galeria, gravados em disco pelo servidor e endereçados por hash.
 # São conteúdo de usuário, não código - o caminho é configurável por MEDIA_STORAGE_PATH.
+apps/api/dist-server/
+apps/api/.tools/
+
 apps/api/media-storage/
 # Banco local do modo DATABASE_DRIVER=sqlite (e os arquivos auxiliares do SQLite).
 apps/api/*.db

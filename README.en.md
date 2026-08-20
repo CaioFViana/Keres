@@ -150,6 +150,26 @@ cd apps/client && bun run locales:audit
 
 See the [client-specific guide](apps/client/README.en.md) for native builds, the local database, and Expo troubleshooting.
 
+## Keres Server (no Docker)
+
+To sync a home PC with a phone **without** PostgreSQL or Compose, the API can also run on SQLite. **Keres Server** is that API plus a command-line setup wizard (Portuguese/English).
+
+```bash
+bun run package:server
+```
+
+Output lands in `apps/api/dist-server/keres-server/` and a `Keres-Server-<os>-<arch>-<version>.zip`. It is not a single file — Bun's compiler cannot embed the `@libsql/<platform>` addon — but the destination machine does not need Bun, Node, or Docker. Tags `v*.*.*` attach those zips to the GitHub Release (Windows, Linux, and macOS), next to the client installers and the Docker image.
+
+On first run the wizard asks for the database (SQLite by default), local vs S3 media, the port, and whether to listen on this computer only or on the LAN. Data lives in `%APPDATA%\KeresServer` / `~/Library/Application Support/KeresServer` / `~/.local/share/keres-server`. While running, the CLI prints this machine's current LAN IPv4 addresses (`http://192.168.x.x:<port>`) and reprints them if the router assigns a new one. There is no local DNS.
+
+Development without packaging:
+
+```bash
+bun run start:launcher
+```
+
+`bun run start:api` and Compose **do not** go through the wizard: they still read `.env`. Production PostgreSQL remains the Docker image.
+
 ## API deployment
 
 Versioned releases publish the API and administration panel to GitHub Container Registry:
@@ -247,6 +267,7 @@ git push origin v1.2.3
 A release publishes:
 
 - Docker images `ghcr.io/caiofviana/keres:1.2.3` and `:latest`;
+- Keres Server (API without Docker) zips for Windows, Linux, and macOS;
 - a Windows installer and portable executable;
 - a macOS DMG;
 - Linux AppImage and Flatpak packages;

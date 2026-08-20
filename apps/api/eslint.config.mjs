@@ -2,7 +2,7 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 
 export default [
-  { ignores: ['node_modules/', 'dist/', 'drizzle/', 'coverage/'] },
+  { ignores: ['node_modules/', 'dist/', 'dist-server/', 'drizzle/', 'coverage/'] },
   {
     files: ['src/**/*.ts', 'test/**/*.ts', 'vitest.config.ts', 'vitest.integration.config.ts'],
     languageOptions: {

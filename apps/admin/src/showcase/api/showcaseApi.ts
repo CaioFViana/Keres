@@ -1,8 +1,4 @@
-import type {
-  ShowcaseStoryCard,
-  ShowcaseStoryDetail,
-  ShowcaseStoryResponse,
-} from '@keres/shared';
+import type { ShowcaseStoryCard, ShowcaseStoryDetail, ShowcaseStoryResponse } from '@keres/shared';
 
 /**
  * O cliente HTTP do site público.
@@ -35,7 +31,9 @@ function unlockHeaders(storyId: string): Record<string, string> {
 async function readError(response: Response): Promise<string> {
   try {
     const body = await response.json();
-    return typeof body?.message === 'string' ? body.message : `Request failed (${response.status}).`;
+    return typeof body?.message === 'string'
+      ? body.message
+      : `Request failed (${response.status}).`;
   } catch {
     return `Request failed (${response.status}).`;
   }

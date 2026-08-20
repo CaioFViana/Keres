@@ -1,7 +1,7 @@
 {
   "name": "@keres/client",
   "main": "expo-router/entry",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "scripts": {
     "prestart": "node scripts/generate-migrations-index.js && node scripts/generate-example-stories-index.js && node scripts/generate-help-index.js",
     "example-stories:generate": "node scripts/generate-example-stories-index.js",

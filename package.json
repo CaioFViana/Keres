@@ -16,6 +16,8 @@
     "build:showcase": "cd apps/admin && bun run build:showcase",
     "build:web": "bun run build:admin && bun run build:showcase",
     "start:api": "cd apps/api && bun run src/server.ts",
+    "start:launcher": "cd apps/api && bun run src/launcher.ts",
+    "package:server": "cd apps/api && bun run package:server",
     "docker:build": "docker compose -f apps/api/docker-compose.yml build",
     "docker:up": "docker compose -f apps/api/docker-compose.yml up -d",
     "docker:down": "docker compose -f apps/api/docker-compose.yml down",

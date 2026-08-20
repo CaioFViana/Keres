@@ -1,9 +1,11 @@
 {
   "name": "@keres/api",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "main": "index.ts",
   "scripts": {
     "start": "bun run src/server.ts",
+    "start:launcher": "bun run src/launcher.ts",
+    "package:server": "bun run scripts/package-server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src test vitest.config.ts vitest.integration.config.ts --ext .ts",
     "test": "vitest run",

@@ -52,7 +52,14 @@ Pushing the tag runs `.github/workflows/release.yml`, which:
    code-signing certificate configured yet).
 4. Builds a signed Android APK + AAB. iOS is out of scope (no paid Apple
    Developer account or bundle identifier configured).
-5. Collects every artifact into a single GitHub Release on the tag, with
+5. Packages **Keres Server** zips for Windows x64, Linux x64, and
+   macOS arm64 (`Keres-Server-<os>-<arch>-<version>.zip`) — the home API
+   without Docker. Docker/GHCR remains the production PostgreSQL channel.
+6. Collects every artifact into a single GitHub Release on the tag, with
    auto-generated release notes.
+
+Local packaging of **Keres Server** is `bun run package:server` (same
+script the release job runs). It writes `apps/api/dist-server/keres-server/`
+and a versioned zip next to it.
 
 Nothing here needs manual intervention unless a job fails.

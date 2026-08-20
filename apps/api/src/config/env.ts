@@ -18,7 +18,7 @@ const optionalEnvironmentString = z.preprocess(
 const envSchema = z.object({
   /**
    * Qual motor de banco usar. `postgres` exige um servidor; `sqlite` guarda tudo num arquivo
-   * local, para subir a API sem manter um banco à parte.
+   * local (Keres Server caseiro, sem Docker).
    */
   DATABASE_DRIVER: z.enum(['postgres', 'sqlite']).optional().default('postgres'),
   /**
@@ -32,6 +32,11 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   JWT_SECRET_REFRESH: z.string().min(32, 'JWT_SECRET_REFRESH must be at least 32 characters long'),
   PORT: z.string().optional().default('3000'),
+  /**
+   * Interface HTTP. Ausente deixa o Bun escutar em todas (Compose / `bun run start:api`).
+   * O launcher caseiro preenche `127.0.0.1` ou `0.0.0.0`.
+   */
+  HOST: optionalEnvironmentString,
   SERVER_VERSION: z.string().optional().default('1.0.0'),
   NODE_ENV: z.string().optional().default('development'),
   /** Backend físico da galeria. Não altere em um banco que já possua mídia sem migrá-la. */

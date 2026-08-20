@@ -110,6 +110,9 @@ function createSqliteDb(): Db {
   // Sem chaves estrangeiras o SQLite aceita, em silêncio, uma linha apontando para um id que
   // não existe - o Postgres nunca aceitou, e o schema conta com isso. É desligado por padrão.
   void client.execute('PRAGMA foreign_keys = ON');
+  // Casa com 2–5 clientes: leitores não bloqueiam uns aos outros; o ficheiro aguenta um
+  // reboot do processo sem perder o journal. Produção multi-instância continua a ser Postgres.
+  void client.execute('PRAGMA journal_mode = WAL');
   return drizzleLibsql(client, { schema, logger: false }) as unknown as Db;
 }
 

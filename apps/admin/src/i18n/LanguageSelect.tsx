@@ -20,9 +20,7 @@ export function LanguageSelect({
   className?: string;
 }) {
   const { i18n, t } = useTranslation();
-  const current = (
-    SUPPORTED_LANGUAGES as readonly string[]
-  ).includes(i18n.language)
+  const current = (SUPPORTED_LANGUAGES as readonly string[]).includes(i18n.language)
     ? (i18n.language as SupportedLanguage)
     : 'en';
 

@@ -28,13 +28,11 @@ describe('theme preference resolution', () => {
   it('resolves system from prefers-color-scheme', () => {
     vi.stubGlobal(
       'matchMedia',
-      vi
-        .fn()
-        .mockReturnValue({
-          matches: true,
-          addEventListener: vi.fn(),
-          removeEventListener: vi.fn(),
-        }),
+      vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }),
     );
     expect(resolveTheme('system')).toBe('dark');
 

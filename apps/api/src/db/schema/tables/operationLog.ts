@@ -1,10 +1,10 @@
 import { relations } from 'drizzle-orm';
-import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { index, integer, json, table, text, timestampNow, uniqueIndex } from '../columns';
 import { stories } from './stories';
 import { users } from './users';
 import { operationTypeEnum } from '../enums';
 
-export const operationLog = pgTable(
+export const operationLog = table(
   'operation_log',
   {
     id: text('id').primaryKey(),
@@ -18,7 +18,7 @@ export const operationLog = pgTable(
     operationType: operationTypeEnum('operation_type').notNull(),
     entityType: text('entity_type').notNull(),
     entityId: text('entity_id').notNull(),
-    payload: jsonb('payload').notNull(), // Store the data/changes as JSONB
+    payload: json('payload').notNull(), // Store the data/changes as JSONB
     /**
      * Versão da *entidade* depois desta operação, distinta de `operationVersion` (que é a
      * posição da operação na sequência da história). Sem esta coluna o pull não tem como
@@ -29,7 +29,7 @@ export const operationLog = pgTable(
      * Nulo nas linhas gravadas antes desta coluna existir.
      */
     entityVersion: integer('entity_version'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
   },
   (table) => [
     /**

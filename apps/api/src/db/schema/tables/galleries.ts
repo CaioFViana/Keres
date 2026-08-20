@@ -3,11 +3,12 @@ import {
   boolean,
   index,
   integer,
-  pgTable,
+  table,
   text,
   timestamp,
+  timestampNow,
   uniqueIndex,
-} from 'drizzle-orm/pg-core';
+} from '../columns';
 import { stories } from './stories';
 
 /**
@@ -15,7 +16,7 @@ import { stories } from './stories';
  * tabela guarda só os metadados, que sincronizam pelo log de operações como qualquer
  * outra entidade.
  */
-export const galleries = pgTable(
+export const galleries = table(
   'galleries',
   {
     id: text('id').primaryKey(),
@@ -31,8 +32,8 @@ export const galleries = pgTable(
     title: text('title'),
     isFavorite: boolean('is_favorite').notNull().default(false),
     extraNotes: text('extra_notes'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),
@@ -49,7 +50,7 @@ export const galleries = pgTable(
  * `Note`, `Scene` ou `Item`). O dono é polimórfico, então não há foreign key: a
  * existência do dono é validada no handler de sincronização, como em `tag_relations`.
  */
-export const galleryRelations = pgTable(
+export const galleryRelations = table(
   'gallery_relations',
   {
     id: text('id').primaryKey(),
@@ -61,8 +62,8 @@ export const galleryRelations = pgTable(
       .references(() => galleries.id),
     ownerId: text('owner_id').notNull(),
     ownerType: text('owner_type').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),
@@ -81,7 +82,7 @@ export const galleryRelations = pgTable(
  * download só serve um hash depois de confirmar que a história pedida tem permissão de
  * leitura *e* referencia aquele hash em `galleries`.
  */
-export const mediaBlobs = pgTable(
+export const mediaBlobs = table(
   'media_blobs',
   {
     hash: text('hash').primaryKey(),
@@ -89,7 +90,7 @@ export const mediaBlobs = pgTable(
     sizeBytes: integer('size_bytes').notNull(),
     /** Caminho relativo à raiz de armazenamento configurada. */
     storagePath: text('storage_path').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
   },
   (table) => [uniqueIndex('media_blobs_storage_path_idx').on(table.storagePath)],
 );

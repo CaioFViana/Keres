@@ -1,8 +1,8 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { stories } from './stories';
 
-export const storySchemaFields = pgTable(
+export const storySchemaFields = table(
   'story_schema_fields',
   {
     id: text('id').primaryKey(),
@@ -18,8 +18,8 @@ export const storySchemaFields = pgTable(
     isRequired: boolean('is_required').notNull().default(false),
     defaultValue: text('default_value'),
     order: integer('order').notNull().default(0),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),

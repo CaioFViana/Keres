@@ -1,8 +1,8 @@
-import { boolean, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { locations } from './locations';
 import { stories } from './stories';
 
-export const locationRelations = pgTable(
+export const locationRelations = table(
   'location_relations',
   {
     id: text('id').primaryKey(),
@@ -16,8 +16,8 @@ export const locationRelations = pgTable(
       .notNull()
       .references(() => locations.id),
     relationType: text('relation_type').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),

@@ -1,7 +1,7 @@
-import { boolean, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { stories } from './stories';
 
-export const suggestions = pgTable(
+export const suggestions = table(
   'suggestions',
   {
     id: text('id').primaryKey(),
@@ -10,8 +10,8 @@ export const suggestions = pgTable(
       .references(() => stories.id),
     type: text('type').notNull(),
     value: text('value').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),

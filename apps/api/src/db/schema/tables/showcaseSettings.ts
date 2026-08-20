@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, table, text, timestampNow } from '../columns';
 
 /**
  * Configuração global do Showcase. Tabela de uma linha só, mesmo padrão de
@@ -10,8 +10,8 @@ import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
  */
 export const SHOWCASE_SETTINGS_SINGLETON_ID = 'singleton';
 
-export const showcaseSettings = pgTable('showcase_settings', {
+export const showcaseSettings = table('showcase_settings', {
   id: text('id').primaryKey(),
   isShowcaseEnabled: boolean('is_showcase_enabled').notNull().default(false),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestampNow('updated_at'),
 });

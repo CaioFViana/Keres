@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, count, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { galleries, registrationSettings, stories, tiers, users } from '../db/schema';
 import { syncService } from './SyncService';
@@ -58,11 +58,11 @@ export class TierEnforcementService {
     if (!tier || tier.maxStories === null) {
       return;
     }
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)::int` })
+    const [{ total }] = await db
+      .select({ total: count() })
       .from(stories)
       .where(and(eq(stories.userId, userId), eq(stories.isDeleted, false)));
-    if (count >= tier.maxStories) {
+    if (total >= tier.maxStories) {
       throw new TierLimitExceededError(`Story limit reached for your plan (${tier.maxStories}).`);
     }
   }
@@ -124,13 +124,13 @@ export class TierEnforcementService {
     }
 
     if (tier.maxStorageBytesPerStory !== null) {
-      // `::int` here would raise "integer out of range" (Postgres doesn't silently wrap a
-      // CAST) the moment a story's total crosses ~2.1GB, breaking every upload to that story
-      // with an opaque 500 - not hypothetical, since a single tier's *limit* is capped there
-      // by the column type, but actual usage isn't (e.g. an unlimited tier, or a story that
-      // predates a tightened limit). Postgres returns bigint as a string, hence `Number(...)`.
+      // Sem cast de propósito: um `::int` estouraria ("integer out of range" - o Postgres não
+      // trunca em silêncio) assim que o total de uma história passasse de ~2,1 GB, quebrando
+      // todo upload dela com um 500 opaco. Não é hipotético: o *limite* de um tier é limitado a
+      // isso pelo tipo da coluna, mas o uso real não é. O Postgres devolve `sum` de inteiro
+      // como bigint (string) e o SQLite como número, daí o `Number(...)` servir para os dois.
       const [{ used }] = await db
-        .select({ used: sql<string>`coalesce(sum(${galleries.sizeBytes}), 0)::bigint` })
+        .select({ used: sql<string | number>`coalesce(sum(${galleries.sizeBytes}), 0)` })
         .from(galleries)
         .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)));
       if (Number(used) + incomingBytes > tier.maxStorageBytesPerStory) {
@@ -142,7 +142,7 @@ export class TierEnforcementService {
 
     if (tier.maxStorageBytesTotal !== null) {
       const [{ used }] = await db
-        .select({ used: sql<string>`coalesce(sum(${galleries.sizeBytes}), 0)::bigint` })
+        .select({ used: sql<string | number>`coalesce(sum(${galleries.sizeBytes}), 0)` })
         .from(galleries)
         .innerJoin(stories, eq(galleries.storyId, stories.id))
         .where(and(eq(stories.userId, userId), eq(galleries.isDeleted, false)));

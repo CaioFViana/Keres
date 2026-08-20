@@ -1,6 +1,7 @@
 import { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/shared';
 import * as bcrypt from 'bcrypt';
-import { and, asc, count, eq, ilike, or } from 'drizzle-orm';
+import { and, asc, count, eq, or } from 'drizzle-orm';
+import { insensitiveLike } from '../db/sqlOperators';
 import { ulid } from 'ulid';
 import { BCRYPT_COST } from '../config/bcrypt';
 import { env } from '../config/env';
@@ -82,7 +83,10 @@ export class AdminUserService {
     const conditions = [];
     if (query.search) {
       conditions.push(
-        or(ilike(users.username, `%${query.search}%`), ilike(users.tag, `%${query.search}%`)),
+        or(
+          insensitiveLike(users.username, `%${query.search}%`),
+          insensitiveLike(users.tag, `%${query.search}%`),
+        ),
       );
     }
     if (query.isAdmin !== undefined) {
@@ -143,17 +147,26 @@ export class AdminUserService {
         .returning(ADMIN_USER_RETURNING);
     } catch (error) {
       if (isUniqueViolation(error) && postgresErrorConstraint(error) === 'users_tag_lower_idx') {
-        [created] = await db
-          .insert(users)
-          .values({
-            id,
-            username: input.username,
-            tag: `${desiredTag}${id.slice(-4)}`,
-            password: hashedPassword,
-            isAdmin: input.isAdmin,
-            tierId: input.tierId ?? null,
-          })
-          .returning(ADMIN_USER_RETURNING);
+        try {
+          [created] = await db
+            .insert(users)
+            .values({
+              id,
+              username: input.username,
+              tag: `${desiredTag}${id.slice(-4)}`,
+              password: hashedPassword,
+              isAdmin: input.isAdmin,
+              tierId: input.tierId ?? null,
+            })
+            .returning(ADMIN_USER_RETURNING);
+        } catch (retryError) {
+          // Mesmo caso de `auth.route.ts`: a tag era só a primeira restrição reclamada, e o
+          // username também está tomado. Qual delas o banco acusa primeiro varia por motor.
+          if (isUniqueViolation(retryError)) {
+            throw new UsernameAlreadyTakenError();
+          }
+          throw retryError;
+        }
       } else if (isUniqueViolation(error)) {
         // Not the tag constraint - a concurrent request created this exact username between
         // the pre-check above and this insert. Retrying with a suffixed tag (the tag-collision

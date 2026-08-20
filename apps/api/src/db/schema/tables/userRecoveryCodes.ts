@@ -1,5 +1,5 @@
 // apps/api/src/db/schema/tables/userRecoveryCodes.ts
-import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, table, text, timestamp, timestampNow } from '../columns';
 import { ulid } from 'ulid';
 import { users } from './users';
 
@@ -9,7 +9,7 @@ import { users } from './users';
  * usado nunca é reaproveitado, só marcado `isUsed` para preservar o histórico de quantos
  * restam sem precisar contar linhas deletadas.
  */
-export const userRecoveryCodes = pgTable('user_recovery_codes', {
+export const userRecoveryCodes = table('user_recovery_codes', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => ulid()),
@@ -20,5 +20,5 @@ export const userRecoveryCodes = pgTable('user_recovery_codes', {
   codeHash: text('code_hash').notNull(),
   isUsed: boolean('is_used').notNull().default(false),
   usedAt: timestamp('used_at'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
 });

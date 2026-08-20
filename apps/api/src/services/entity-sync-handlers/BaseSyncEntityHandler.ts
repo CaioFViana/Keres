@@ -8,7 +8,7 @@ import {
   SyncConflictReason,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, eq, inArray, SQL, sql } from 'drizzle-orm';
+import { SQL, and, count, eq, inArray, sql } from 'drizzle-orm';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { z } from 'zod'; // Import Zod
 import { db } from '../../db';
@@ -145,7 +145,7 @@ export abstract class BaseSyncEntityHandler<
       conditions.push(eq((this.table as any)[this.isDeletedColumnName], false));
     }
     const [row] = await db
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: count() })
       .from(this.table)
       .where(and(...conditions));
     return row?.count ?? 0;

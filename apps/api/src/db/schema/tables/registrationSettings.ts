@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestampNow } from '../columns';
 import { tiers } from './tiers';
 
 /**
@@ -11,7 +11,7 @@ import { tiers } from './tiers';
  */
 export const REGISTRATION_SETTINGS_SINGLETON_ID = 'singleton';
 
-export const registrationSettings = pgTable('registration_settings', {
+export const registrationSettings = table('registration_settings', {
   id: text('id').primaryKey(),
   isRegistrationOpen: boolean('is_registration_open').notNull().default(true),
   /** null = sem teto de usuários. */
@@ -23,7 +23,7 @@ export const registrationSettings = pgTable('registration_settings', {
    */
   autoManage: boolean('auto_manage').notNull().default(false),
   defaultTierId: text('default_tier_id').references(() => tiers.id),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestampNow('updated_at'),
 });
 
 export const registrationSettingsRelations = relations(registrationSettings, ({ one }) => ({

@@ -1,14 +1,5 @@
 import { relations } from 'drizzle-orm';
-import {
-  bigint,
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-} from 'drizzle-orm/pg-core';
+import { bigintNumber, index, integer, json, table, text, timestampNow, unique } from '../columns';
 import type { StoryPublicationSnapshot } from '@keres/shared';
 import { stories } from './stories';
 import { users } from './users';
@@ -25,7 +16,7 @@ import { users } from './users';
  * naquela versão. Se o autor renomear a história amanhã, a versão publicada continua
  * anunciando o nome com que foi publicada.
  */
-export const storyPublications = pgTable(
+export const storyPublications = table(
   'story_publications',
   {
     id: text('id').primaryKey(),
@@ -43,11 +34,11 @@ export const storyPublications = pgTable(
     /** `CURRENT_STORY_FORMAT_VERSION` no instante da publicação. */
     formatVersion: integer('format_version').notNull(),
     /** `bigint` porque um pacote com galeria passa folgado de 2 GB no limite teórico. */
-    byteSize: bigint('byte_size', { mode: 'number' }).notNull(),
+    byteSize: bigintNumber('byte_size').notNull(),
     mediaIncluded: integer('media_included').notNull().default(0),
     mediaTotal: integer('media_total').notNull().default(0),
-    snapshot: jsonb('snapshot').$type<StoryPublicationSnapshot>().notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    snapshot: json('snapshot').$type<StoryPublicationSnapshot>().notNull(),
+    createdAt: timestampNow('created_at'),
   },
   (table) => [
     unique('story_publication_label_unq').on(table.storyId, table.label),

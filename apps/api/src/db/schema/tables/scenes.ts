@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
 import { chapters } from './chapters';
 import { locations } from './locations';
@@ -7,7 +7,7 @@ import { choices } from './choices'; // Will be created later
 import { characterScenes } from './characterScenes'; // Will be created later
 import { itemJourneys } from './itemJourneys'; // Will be created later
 
-export const scenes = pgTable('scenes', {
+export const scenes = table('scenes', {
   id: text('id').primaryKey(),
   storyId: text('story_id')
     .notNull()
@@ -29,8 +29,8 @@ export const scenes = pgTable('scenes', {
   isFinish: boolean('is_finish').notNull().default(false),
   isFavorite: boolean('is_favorite').notNull().default(false),
   extraNotes: text('extra_notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

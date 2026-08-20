@@ -1,11 +1,11 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { notes } from './notes';
 import { stories } from './stories';
 // Import other relevant entities (locations, scenes, etc.) if NoteRelation can link to them
 // For now, assuming only characters for relationId, but this might need expansion
 
-export const noteRelations = pgTable('note_relations', {
+export const noteRelations = table('note_relations', {
   id: text('id').primaryKey(),
   storyId: text('story_id')
     .notNull()
@@ -15,8 +15,8 @@ export const noteRelations = pgTable('note_relations', {
     .references(() => notes.id),
   relationId: text('relation_id').notNull(),
   relationType: text('relation_type').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

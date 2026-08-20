@@ -1,11 +1,11 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { boolean, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { operationLog } from './operationLog';
 import { stories } from './stories';
 import { storyPermissions } from './storyPermissions';
 import { tiers } from './tiers';
 
-export const users = pgTable(
+export const users = table(
   'users',
   {
     id: text('id').primaryKey(),
@@ -28,8 +28,8 @@ export const users = pgTable(
     isAdmin: boolean('is_admin').notNull().default(false),
     /** `null` = no tier assigned; TierEnforcementService falls back to the registration settings' default tier, then to unlimited. */
     tierId: text('tier_id').references(() => tiers.id),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestampNow('updated_at'),
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),
   },

@@ -6,7 +6,7 @@ import type {
   StoryPublicationSnapshot,
 } from '@keres/shared';
 import * as bcrypt from 'bcrypt';
-import { desc, eq, sql } from 'drizzle-orm';
+import { count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { storyPublications, storyShowcaseEntries, users } from '../db/schema';
 
@@ -50,7 +50,7 @@ export class ShowcaseService {
   async listEtag(): Promise<string> {
     const [row] = await db
       .select({
-        count: sql<number>`count(*)::int`,
+        count: count(),
         latest: sql<string | null>`max(${storyShowcaseEntries.updatedAt})`,
       })
       .from(storyShowcaseEntries)

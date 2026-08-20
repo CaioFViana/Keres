@@ -1,6 +1,8 @@
 import * as path from 'path';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { migrate as migrateLibsql } from 'drizzle-orm/libsql/migrator';
+import { migrate as migratePostgres } from 'drizzle-orm/node-postgres/migrator';
 import { db } from './index';
+import { usingSqlite } from './dialect';
 import { logger } from '../utils/logger';
 
 /**
@@ -15,8 +17,19 @@ import { logger } from '../utils/logger';
  * `index.ts`: needs to find `apps/api/drizzle` regardless of where the process was started from.
  */
 export async function runMigrations(): Promise<void> {
-  const migrationsFolder = path.join(import.meta.dir, '..', '..', 'drizzle');
+  // Cada motor tem o seu conjunto: o SQL gerado difere de dialeto para dialeto (tipos de
+  // coluna, ENUM que só o Postgres tem), então são duas pastas, não uma compartilhada.
+  const migrationsFolder = path.join(
+    import.meta.dir,
+    '..',
+    '..',
+    usingSqlite ? 'drizzle-sqlite' : 'drizzle',
+  );
   logger.info(`Applying database migrations from ${migrationsFolder}...`);
-  await migrate(db, { migrationsFolder });
+  if (usingSqlite) {
+    await migrateLibsql(db as never, { migrationsFolder });
+  } else {
+    await migratePostgres(db, { migrationsFolder });
+  }
   logger.info('Database migrations up to date.');
 }

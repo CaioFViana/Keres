@@ -190,12 +190,14 @@ export class StoryPublicationService {
           snapshot: this.snapshotOf(story),
         });
 
-        const surplus = await tx
+        // O corte é feito aqui e não no SQL porque `OFFSET` sem `LIMIT` é inválido no SQLite,
+        // e são no máximo seis linhas por história - não vale um `LIMIT` artificial só por isso.
+        const existingIds = await tx
           .select({ id: storyPublications.id })
           .from(storyPublications)
           .where(eq(storyPublications.storyId, storyId))
-          .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id))
-          .offset(MAX_PUBLICATIONS_PER_STORY);
+          .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id));
+        const surplus = existingIds.slice(MAX_PUBLICATIONS_PER_STORY);
 
         if (surplus.length > 0) {
           const ids = surplus.map((row) => row.id);

@@ -5,6 +5,7 @@ import { ulid } from 'ulid';
 import { db } from '../db';
 import { friendships } from '../db/schema/tables/friendships';
 import { users } from '../db/schema/tables/users';
+import { lockUserPair, writeTransactionConfig } from '../db/sqlOperators';
 import { AppError } from '../utils/errors';
 import { storyPermissionService } from './StoryPermissionService';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
@@ -59,12 +60,9 @@ export class FriendshipService {
       // either direction. Without this, two requests racing in opposite directions (A→B and
       // B→A) can both read "no existing row" before either commits and create two independent
       // rows - the unique constraint on (senderId, receiverId) only catches an exact duplicate
-      // (A→B twice), not the reverse direction. Sorting the pair before locking means A→B and
-      // B→A always contend for the same lock, regardless of who's sender vs receiver.
-      const [lockKeyA, lockKeyB] = [senderId, receiverId].sort();
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtext(${lockKeyA}), hashtext(${lockKeyB}))`,
-      );
+      // (A→B twice), not the reverse direction. Como cada motor faz isso de um jeito, o
+      // detalhe mora em `lockUserPair`.
+      await lockUserPair(tx, senderId, receiverId);
 
       // Check for an existing direct pending request (sender -> receiver)
       const existingDirectPending = await tx.query.friendships.findFirst({
@@ -125,7 +123,7 @@ export class FriendshipService {
 
       const newFriendship = await tx.insert(friendships).values(newFriendshipData).returning();
       return newFriendship[0];
-    });
+    }, writeTransactionConfig);
 
     this.notifyChanged(senderId, receiverId);
     return created;

@@ -1,8 +1,8 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { stories } from './stories';
 
-export const seeAlsoRelations = pgTable(
+export const seeAlsoRelations = table(
   'see_also_relations',
   {
     id: text('id').primaryKey(),
@@ -15,8 +15,8 @@ export const seeAlsoRelations = pgTable(
     entityAId: text('entity_a_id').notNull(),
     entityBType: text('entity_b_type').notNull(),
     entityBId: text('entity_b_id').notNull(),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),

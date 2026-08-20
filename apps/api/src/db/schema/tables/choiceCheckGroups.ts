@@ -1,9 +1,9 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { choices } from './choices';
 import { stories } from './stories';
 
-export const choiceCheckGroups = pgTable('choice_check_groups', {
+export const choiceCheckGroups = table('choice_check_groups', {
   id: text('id').primaryKey(),
   storyId: text('story_id')
     .notNull()
@@ -15,8 +15,8 @@ export const choiceCheckGroups = pgTable('choice_check_groups', {
     .notNull()
     .default('AND'),
   order: integer('order').notNull().default(0),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

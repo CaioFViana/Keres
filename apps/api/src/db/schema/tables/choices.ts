@@ -1,9 +1,9 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { scenes } from './scenes';
 import { stories } from './stories';
 
-export const choices = pgTable('choices', {
+export const choices = table('choices', {
   id: text('id').primaryKey(),
   storyId: text('story_id')
     .notNull()
@@ -16,8 +16,8 @@ export const choices = pgTable('choices', {
     .references(() => scenes.id),
   text: text('text').notNull(),
   notes: text('notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

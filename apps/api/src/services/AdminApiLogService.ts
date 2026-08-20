@@ -1,5 +1,6 @@
 import { AdminApiLogQuery } from '@keres/shared';
-import { and, count, desc, eq, gte, ilike, inArray, lte, or } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, lte, or } from 'drizzle-orm';
+import { insensitiveLike } from '../db/sqlOperators';
 import { db } from '../db';
 import { apiLogs, stories, users } from '../db/schema';
 
@@ -13,14 +14,14 @@ export class AdminApiLogService {
       const q = `%${filters.search}%`;
       conditions.push(
         or(
-          ilike(apiLogs.message, q),
+          insensitiveLike(apiLogs.message, q),
           inArray(
             apiLogs.storyId,
-            db.select({ id: stories.id }).from(stories).where(ilike(stories.title, q)),
+            db.select({ id: stories.id }).from(stories).where(insensitiveLike(stories.title, q)),
           ),
           inArray(
             apiLogs.userId,
-            db.select({ id: users.id }).from(users).where(ilike(users.username, q)),
+            db.select({ id: users.id }).from(users).where(insensitiveLike(users.username, q)),
           ),
         ),
       );

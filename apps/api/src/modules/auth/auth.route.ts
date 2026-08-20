@@ -193,16 +193,28 @@ export const authRoutes = new Elysia()
           .returning({ id: users.id, username: users.username, tag: users.tag });
       } catch (error) {
         if (isUniqueViolation(error) && postgresErrorConstraint(error) === 'users_tag_lower_idx') {
-          [newUser] = await db
-            .insert(users)
-            .values({
-              id: newUserId,
-              username,
-              tag: `${username}${newUserId.slice(-4)}`,
-              password: hashedPassword,
-              tierId: defaultTierId,
-            })
-            .returning({ id: users.id, username: users.username, tag: users.tag });
+          try {
+            [newUser] = await db
+              .insert(users)
+              .values({
+                id: newUserId,
+                username,
+                tag: `${username}${newUserId.slice(-4)}`,
+                password: hashedPassword,
+                tierId: defaultTierId,
+              })
+              .returning({ id: users.id, username: users.username, tag: users.tag });
+          } catch (retryError) {
+            // A tag era só a primeira restrição que o banco reclamou: o username também está
+            // tomado, e a tag nova não muda isso. Qual das duas o banco reporta primeiro varia
+            // de motor para motor - o Postgres acusa o username, o SQLite acusa a tag -, então
+            // o desfecho não pode depender disso.
+            if (isUniqueViolation(retryError)) {
+              set.status = 409;
+              return { message: 'User already exists' };
+            }
+            throw retryError;
+          }
         } else if (isUniqueViolation(error)) {
           // Not the tag constraint - a concurrent registration for this exact username
           // landed between the pre-check above and this insert. Blindly retrying with a

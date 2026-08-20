@@ -1,5 +1,5 @@
 import { desc, relations } from 'drizzle-orm';
-import { index, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, json, table, text, timestampNow } from '../columns';
 import { apiLogLevelEnum } from '../enums';
 import { stories } from './stories';
 import { users } from './users';
@@ -9,16 +9,16 @@ import { users } from './users';
  * domínio) - nem toda linha tem `userId`/`storyId`, por isso ambos ficam nullable (ex:
  * eventos do sistema de amizades não pertencem a uma história).
  */
-export const apiLogs = pgTable(
+export const apiLogs = table(
   'api_logs',
   {
     id: text('id').primaryKey(),
     level: apiLogLevelEnum('level').notNull(),
     message: text('message').notNull(),
-    meta: jsonb('meta'),
+    meta: json('meta'),
     userId: text('user_id').references(() => users.id),
     storyId: text('story_id').references(() => stories.id),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
   },
   (table) => [
     // Os quatro filtros que a tabela do admin oferece - sem estes índices, a paginação por

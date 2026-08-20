@@ -16,14 +16,19 @@ const optionalEnvironmentString = z.preprocess(
 );
 
 const envSchema = z.object({
-  // `z.url()` sozinho só exige que `new URL(value)` funcione, então "localhost:5432" passa
-  // (vira protocolo "localhost:") e o erro só aparece como falha de conexão do pg no boot.
-  DATABASE_URL: z
-    .url()
-    .refine(
-      (value) => /^postgres(ql)?:\/\//.test(value),
-      'DATABASE_URL must start with postgres:// or postgresql://',
-    ),
+  /**
+   * Qual motor de banco usar. `postgres` exige um servidor; `sqlite` guarda tudo num arquivo
+   * local, para subir a API sem manter um banco à parte.
+   */
+  DATABASE_DRIVER: z.enum(['postgres', 'sqlite']).optional().default('postgres'),
+  /**
+   * Com `postgres`, a URL de conexão. Com `sqlite`, o arquivo - `file:./keres.db` ou um
+   * caminho absoluto.
+   *
+   * A validação depende do motor: `z.url()` sozinho aceitaria "localhost:5432" (vira protocolo
+   * "localhost:") e o erro só apareceria como falha de conexão no boot.
+   */
+  DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   JWT_SECRET_REFRESH: z.string().min(32, 'JWT_SECRET_REFRESH must be at least 32 characters long'),
   PORT: z.string().optional().default('3000'),
@@ -67,6 +72,18 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+
+if (env.DATABASE_DRIVER === 'postgres' && !/^postgres(ql)?:\/\//.test(env.DATABASE_URL)) {
+  throw new Error(
+    'DATABASE_URL must start with postgres:// or postgresql:// when DATABASE_DRIVER=postgres.',
+  );
+}
+
+if (env.DATABASE_DRIVER === 'sqlite' && !/^(file:|\/|[A-Za-z]:)/.test(env.DATABASE_URL)) {
+  throw new Error(
+    'DATABASE_URL must be a file path (file:./keres.db, or an absolute path) when DATABASE_DRIVER=sqlite.',
+  );
+}
 
 if (env.MEDIA_STORAGE_DRIVER === 's3') {
   const missing = [

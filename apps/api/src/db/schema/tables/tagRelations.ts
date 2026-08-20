@@ -1,8 +1,8 @@
-import { boolean, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
 import { stories } from './stories';
 import { tags } from './tags';
 
-export const tagRelations = pgTable(
+export const tagRelations = table(
   'tag_relations',
   {
     id: text('id').primaryKey(),
@@ -14,8 +14,8 @@ export const tagRelations = pgTable(
       .references(() => tags.id),
     relationId: text('relation_id').notNull(),
     relationType: text('relation_type').notNull(), // e.g., 'Character', 'Location', 'Scene'
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestampNow('created_at'),
+    updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),

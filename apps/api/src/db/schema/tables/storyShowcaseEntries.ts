@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { table, text, timestampNow } from '../columns';
 import { showcaseVisibilityEnum, publicationLabelModeEnum } from '../enums';
 import { stories } from './stories';
 import { storyPublications } from './storyPublications';
@@ -13,7 +13,7 @@ import { users } from './users';
  * A existência da linha *é* o "está publicada": despublicar apaga esta linha e todas as
  * versões na mesma transação, então uma versão órfã não é um estado alcançável.
  */
-export const storyShowcaseEntries = pgTable('story_showcase_entries', {
+export const storyShowcaseEntries = table('story_showcase_entries', {
   storyId: text('story_id')
     .primaryKey()
     .references(() => stories.id),
@@ -29,9 +29,9 @@ export const storyShowcaseEntries = pgTable('story_showcase_entries', {
   passwordHash: text('password_hash'),
   /** Último estilo de nome usado pelo dono, só para o app já vir marcado no estilo certo. */
   labelMode: publicationLabelModeEnum('label_mode').notNull().default('both'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
   /** Move a cada publicação/remoção - é dele que sai o ETag da listagem pública. */
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestampNow('updated_at'),
 });
 
 export const storyShowcaseEntriesRelations = relations(storyShowcaseEntries, ({ one, many }) => ({

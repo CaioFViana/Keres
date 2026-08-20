@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { users } from './users';
 import { characters } from './characters';
 import { storyPermissions } from './storyPermissions';
@@ -23,7 +23,7 @@ import { seeAlsoRelations } from './seeAlsoRelations';
 import { comments } from './comments';
 import { storyTypeEnum } from '../enums';
 
-export const stories = pgTable('stories', {
+export const stories = table('stories', {
   id: text('id').primaryKey(),
   userId: text('user_id')
     .notNull()
@@ -44,8 +44,8 @@ export const stories = pgTable('stories', {
   theme: text('theme'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

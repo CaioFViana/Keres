@@ -1,9 +1,9 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { items } from './items';
 import { stories } from './stories';
 
-export const effects = pgTable('effects', {
+export const effects = table('effects', {
   id: text('id').primaryKey(),
   storyId: text('story_id')
     .notNull()
@@ -18,8 +18,8 @@ export const effects = pgTable('effects', {
   itemId: text('item_id').references(() => items.id),
   // Usado quando effectType = 'triggerSet' | 'triggerUnset'
   triggerName: text('trigger_name'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestampNow('created_at'),
+  updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

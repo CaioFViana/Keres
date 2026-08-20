@@ -10,8 +10,9 @@ COPY apps/admin/package.json apps/admin/package.json
 # patchedDependencies (root package.json) applies repo-wide during install, regardless of
 # whether this particular image ends up using the patched package - bun still needs the
 # .patch file on disk to apply it. Neither patch here (expo-sqlite, drizzle-orm/expo-sqlite)
-# affects the API at runtime (it uses drizzle-orm/node-postgres, not the expo-sqlite driver;
-# expo-sqlite itself isn't even a dependency of apps/api) - only `bun install` needs this.
+# affects the API at runtime (ela fala com Postgres por node-postgres ou com SQLite por libSQL,
+# nunca pelo driver do expo-sqlite, que nem é dependência de apps/api) - only `bun install`
+# needs this.
 COPY patches patches
 # Not --frozen-lockfile: bun.lock was generated across the whole workspace (including
 # apps/client, deliberately not copied here to keep this image free of the RN/Expo
@@ -62,7 +63,10 @@ COPY apps/api/package.json apps/api/tsconfig.json ./apps/api/
 COPY apps/api/src ./apps/api/src
 # Needed at runtime, not just dev: `runMigrations()` (src/db/migrate.ts) reads these SQL files
 # and applies whatever's pending on every boot - a fresh database has no tables at all otherwise.
+# Os dois conjuntos entram na imagem: qual deles é aplicado depende de `DATABASE_DRIVER`, que é
+# escolhido em tempo de execução, não de build.
 COPY apps/api/drizzle ./apps/api/drizzle
+COPY apps/api/drizzle-sqlite ./apps/api/drizzle-sqlite
 
 # apps/api/src/index.ts looks for this at apps/admin/dist relative to its own
 # location (import.meta.dir), regardless of process.cwd() - see the comment there.

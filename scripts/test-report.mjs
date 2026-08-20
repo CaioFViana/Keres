@@ -27,7 +27,7 @@ const projects = [
 const ratchets = {
   shared: { lines: 93, functions: 86, branches: 77 },
   client: { lines: 34, functions: 32, branches: 24 },
-  api: { lines: 72, functions: 72, branches: 58 },
+  api: { lines: 78, functions: 76, branches: 65 },
   admin: { lines: 70, functions: 53, branches: 47 },
   desktop: { lines: 95, functions: 94, branches: 81 },
 };

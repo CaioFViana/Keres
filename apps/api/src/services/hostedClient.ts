@@ -56,7 +56,10 @@ export function rewriteHostedClientHtml(html: string): string {
       ? next.replace(/<head>/i, `<head>${HOSTED_CLIENT_META}`)
       : `${HOSTED_CLIENT_META}${next}`;
   }
-  if (!next.includes('HOSTED_CLIENT_HISTORY_GUARD') && !next.includes('history.pushState=function()')) {
+  if (
+    !next.includes('HOSTED_CLIENT_HISTORY_GUARD') &&
+    !next.includes('history.pushState=function()')
+  ) {
     next = /<head>/i.test(next)
       ? next.replace(/<head>/i, `<head>${HOSTED_CLIENT_HISTORY_GUARD}`)
       : `${HOSTED_CLIENT_HISTORY_GUARD}${next}`;

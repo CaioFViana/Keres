@@ -32,7 +32,10 @@ describe('rewriteHostedClientHtml', () => {
 describe('resolveHostedClientFile', () => {
   it('serves index.html for / and real files under it, refusing path escape', () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'keres-hosted-'));
-    writeFileSync(path.join(root, 'index.html'), '<head></head><script src="/_expo/a.js"></script>');
+    writeFileSync(
+      path.join(root, 'index.html'),
+      '<head></head><script src="/_expo/a.js"></script>',
+    );
     mkdirSync(path.join(root, '_expo'));
     writeFileSync(path.join(root, '_expo', 'a.js'), 'console.log(1)');
 

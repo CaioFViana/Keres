@@ -111,4 +111,30 @@ describe('API log services', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.message).toBe('segundo');
   });
+
+  it('persists a rejected-request log even when userId/storyId do not exist here', async () => {
+    // O caso que o servidor empacotado batia: GET /sync/:storyId/pull sem auth, com um
+    // storyId que só existe no cliente. A FK em api_logs fazia o próprio insert do log
+    // falhar com SQLITE_CONSTRAINT_FOREIGNKEY.
+    const missingStoryId = newId();
+    await persistApiLog({
+      level: 'warn',
+      message: `Rejected request: GET /sync/${missingStoryId}/pull`,
+      meta: {
+        status: 401,
+        message: 'Unauthorized: User not authenticated.',
+        userId: null,
+        storyId: missingStoryId,
+      },
+      timestamp: '2025-01-05T03:04:05.000Z',
+    });
+
+    const logs = await db.select().from(apiLogs);
+    expect(logs).toHaveLength(1);
+    expect(logs[0]).toMatchObject({
+      level: 'warn',
+      userId: null,
+      storyId: missingStoryId,
+    });
+  });
 });

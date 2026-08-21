@@ -15,6 +15,13 @@
       "when": 1787269668429,
       "tag": "0001_slimy_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787339414224,
+      "tag": "0002_swift_liz_osborn",
+      "breakpoints": true
     }
   ]
 }

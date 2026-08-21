@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { isUniqueViolation, postgresErrorConstraint } from '../../src/utils/errors';
+import {
+  isForeignKeyConstraint,
+  isUniqueViolation,
+  postgresErrorConstraint,
+} from '../../src/utils/errors';
 
 /**
  * As diferenças entre os dois motores que o código precisa reconhecer.
@@ -40,6 +44,28 @@ describe('unique violations, in either engine', () => {
   it('says no to an error that is not about constraints', () => {
     expect(isUniqueViolation(new Error('connection refused'))).toBe(false);
     expect(isUniqueViolation(undefined)).toBe(false);
+  });
+});
+
+describe('foreign key violations, in either engine', () => {
+  it('recognises the Postgres code', () => {
+    expect(isForeignKeyConstraint(drizzleError({ code: '23503' }))).toBe(true);
+  });
+
+  it('recognises the SQLite constraint', () => {
+    const error = drizzleError({
+      code: 'SQLITE_CONSTRAINT',
+      message: 'SQLITE_CONSTRAINT: FOREIGN KEY constraint failed',
+    });
+    expect(isForeignKeyConstraint(error)).toBe(true);
+  });
+
+  it('does not mistake a unique SQLite constraint for a foreign key one', () => {
+    const error = drizzleError({
+      code: 'SQLITE_CONSTRAINT',
+      message: 'SQLITE_CONSTRAINT: UNIQUE constraint failed: users.username',
+    });
+    expect(isForeignKeyConstraint(error)).toBe(false);
   });
 });
 

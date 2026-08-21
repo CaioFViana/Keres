@@ -18,6 +18,8 @@ export class AppError extends Error {
 
 /** `unique_violation` do Postgres. */
 const UNIQUE_VIOLATION = '23505';
+/** `foreign_key_violation` do Postgres. */
+const FOREIGN_KEY_VIOLATION = '23503';
 /** O SQLite não distingue qual restrição foi violada pelo código; o texto é que diz. */
 const SQLITE_CONSTRAINT = 'SQLITE_CONSTRAINT';
 
@@ -69,6 +71,25 @@ export function isUniqueViolation(error: unknown): boolean {
     return true;
   }
   return code === SQLITE_CONSTRAINT && /UNIQUE constraint failed/i.test(errorMessageChain(error));
+}
+
+/**
+ * Violação de chave estrangeira, não importa o motor.
+ *
+ * Espelho de `isUniqueViolation`: o Postgres tem código próprio (`23503`); o SQLite devolve
+ * o mesmo `SQLITE_CONSTRAINT` de qualquer restrição e só o texto ("FOREIGN KEY constraint
+ * failed") diz qual foi. Usado pelo sink de `api_logs`, que tenta gravar `userId`/`storyId`
+ * extraídos do meta e não pode deixar um 401 contra uma história inexistente neste servidor
+ * virar um stack dump no lugar do próprio log.
+ */
+export function isForeignKeyConstraint(error: unknown): boolean {
+  const code = postgresErrorCode(error);
+  if (code === FOREIGN_KEY_VIOLATION) {
+    return true;
+  }
+  return (
+    code === SQLITE_CONSTRAINT && /FOREIGN KEY constraint failed/i.test(errorMessageChain(error))
+  );
 }
 
 /**

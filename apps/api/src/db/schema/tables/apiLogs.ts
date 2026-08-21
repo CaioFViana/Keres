@@ -8,6 +8,10 @@ import { users } from './users';
  * Persistência do que já passa por `utils/logger.ts` (erros tratados + eventos de
  * domínio) - nem toda linha tem `userId`/`storyId`, por isso ambos ficam nullable (ex:
  * eventos do sistema de amizades não pertencem a uma história).
+ *
+ * Sem foreign key de propósito: um 401 em `/sync/:storyId/pull` registra o id da URL
+ * mesmo quando a história não existe neste servidor (cliente local, token inválido,
+ * probe). Log é observação - uma FK faria o próprio registro do rejeite falhar.
  */
 export const apiLogs = table(
   'api_logs',
@@ -16,8 +20,8 @@ export const apiLogs = table(
     level: apiLogLevelEnum('level').notNull(),
     message: text('message').notNull(),
     meta: json('meta'),
-    userId: text('user_id').references(() => users.id),
-    storyId: text('story_id').references(() => stories.id),
+    userId: text('user_id'),
+    storyId: text('story_id'),
     createdAt: timestampNow('created_at'),
   },
   (table) => [

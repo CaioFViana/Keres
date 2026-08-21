@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   AppError,
+  isForeignKeyConstraint,
   isUniqueViolation,
   postgresErrorCode,
   postgresErrorConstraint,
@@ -112,5 +113,28 @@ describe('isUniqueViolation', () => {
 
   it('is false for an ordinary application error', () => {
     expect(isUniqueViolation(new Error('boom'))).toBe(false);
+  });
+});
+
+describe('isForeignKeyConstraint', () => {
+  it('recognises a foreign key violation raised by pg', () => {
+    expect(isForeignKeyConstraint(withCode('23503'))).toBe(true);
+  });
+
+  it('recognises one wrapped by drizzle', () => {
+    expect(isForeignKeyConstraint(wrappedByDrizzle(withCode('23503')))).toBe(true);
+  });
+
+  it.each([
+    ['a unique violation', '23505'],
+    ['a not-null violation', '23502'],
+    ['a connection failure', 'ECONNREFUSED'],
+  ])('does not confuse %s with a foreign key violation', (_label, code) => {
+    expect(isForeignKeyConstraint(withCode(code))).toBe(false);
+    expect(isForeignKeyConstraint(wrappedByDrizzle(withCode(code)))).toBe(false);
+  });
+
+  it('is false for an ordinary application error', () => {
+    expect(isForeignKeyConstraint(new Error('boom'))).toBe(false);
   });
 });

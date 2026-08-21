@@ -140,6 +140,39 @@ describe('getEntityName', () => {
     expect(name).toBe('character');
   });
 
+  it('names a suggestion by its value and a named list by catalog name only', async () => {
+    await seedStory();
+    await database.db.insert(schema.suggestions).values([
+      { id: 'sug-plain', storyId: STORY_ID, type: 'character_race', value: 'Elfo', ...base },
+      {
+        id: 'sug-list',
+        storyId: STORY_ID,
+        type: 'list_catalog',
+        value: '{"type":"list_01ARZ3NDEKTSV4RRFFQ69G5FAV_cores","name":"Cores"}',
+        ...base,
+      },
+    ]);
+
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Suggestion,
+        'sug-plain',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('suggestion - Elfo');
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Suggestion,
+        'sug-list',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('suggestion - Cores');
+  });
+
   it('does not confuse two entities that share an id across tables', async () => {
     await seedStory();
     await database.db

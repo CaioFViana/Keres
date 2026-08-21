@@ -28,4 +28,13 @@ describe('getSimpleDisplayName', () => {
     expect(getSimpleDisplayName('CharacterRelation', { character1Id: 'x' })).toBeNull();
     expect(getSimpleDisplayName('Character', { name: '  ' })).toBeNull();
   });
+
+  it('shows a named list catalog row by name, not the stored JSON', () => {
+    expect(
+      getSimpleDisplayName('Suggestion', {
+        value: '{"type":"list_01ARZ3NDEKTSV4RRFFQ69G5FAV_cores","name":"Cores"}',
+      }),
+    ).toBe('Cores');
+    expect(getSimpleDisplayName('Suggestion', { value: 'Vermelho' })).toBe('Vermelho');
+  });
 });

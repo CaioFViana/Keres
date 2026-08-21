@@ -36,6 +36,32 @@ function truncate(value: string, max: number): string {
 }
 
 /**
+ * Named-list catalog rows store `{ type, name }` as Suggestion.value.
+ * Show only the human name; leave ordinary suggestion values untouched.
+ */
+export function suggestionDisplayValue(value: unknown): string | null {
+  const raw = asNonEmptyString(value);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { type?: unknown; name?: unknown };
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof parsed.name === 'string' &&
+      parsed.name.trim() &&
+      typeof parsed.type === 'string' &&
+      parsed.type.startsWith('list_') &&
+      parsed.type !== 'list_catalog'
+    ) {
+      return parsed.name.trim();
+    }
+  } catch {
+    // Plain suggestion text, not catalog JSON.
+  }
+  return raw;
+}
+
+/**
  * Best-effort display name from the entity's own row (no joins).
  * Does **not** prefer Character.title over Character.name — that mismatch with the client
  * was the old recovery bug.
@@ -55,6 +81,10 @@ export function getSimpleDisplayName(
 
   if (entityType === 'Effect') {
     return asNonEmptyString(row.triggerName) ?? asNonEmptyString(row.effectType);
+  }
+
+  if (entityType === 'Suggestion') {
+    return suggestionDisplayValue(row.value);
   }
 
   const field = ENTITY_SIMPLE_DISPLAY_NAME_FIELD[entityType];

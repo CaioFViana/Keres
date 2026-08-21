@@ -20,6 +20,8 @@ import { createStorySchemaFieldService } from '../../services/storymanagement/St
 import {
   createSuggestionService,
   customAttributeSuggestionType,
+  isNamedListType,
+  namedListDisplayKey,
 } from '../../services/storymanagement/SuggestionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -28,7 +30,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useDocumentTitle } from '../../utils/documentTitle';
 
-type SuggestionGroup = { type: string; label: string; key: string };
+type SuggestionGroup = { type: string; label: string; key: string; name?: string };
 
 const ENTITY_LABELS: Record<string, string> = {
   Character: 'characters_title',
@@ -65,6 +67,12 @@ const SuggestionsScreen = () => {
   const [newValue, setNewValue] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
+  const [newListName, setNewListName] = useState('');
+  const [creatingList, setCreatingList] = useState(false);
+  const [renamingList, setRenamingList] = useState(false);
+  const [renameListName, setRenameListName] = useState('');
+  const [copying, setCopying] = useState(false);
+  const [copyTargets, setCopyTargets] = useState<string[]>([]);
 
   const loadGroups = useCallback(async () => {
     if (!storyId) return setGroups([]);
@@ -92,12 +100,18 @@ const SuggestionsScreen = () => {
           label: `${t(SCHEMA_ENTITY_LABELS[STORY_SCHEMA_ENTITY_TYPES[index]])} · ${field.name}`,
         })),
     );
-    const next = [...native, ...custom].sort((a, b) => a.label.localeCompare(b.label));
+    const named = (await suggestionService.listNamedLists(storyId)).map((list) => ({
+      type: list.type,
+      key: namedListDisplayKey(list.type),
+      name: list.name,
+      label: `${t('suggestion_named_list')} · ${list.name}`,
+    }));
+    const next = [...native, ...custom, ...named].sort((a, b) => a.label.localeCompare(b.label));
     setGroups(next);
     setSelectedType((current) =>
       current && next.some((group) => group.type === current) ? current : (next[0]?.type ?? null),
     );
-  }, [db, storyId, t]);
+  }, [db, storyId, suggestionService, t]);
 
   const loadStored = useCallback(async () => {
     if (!storyId || !selectedType) return setStored([]);
@@ -113,6 +127,10 @@ const SuggestionsScreen = () => {
   useEffect(() => {
     loadStored();
   }, [loadStored]);
+  useEffect(() => {
+    setRenamingList(false);
+    setRenameListName('');
+  }, [selectedType]);
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
       if (changedStoryId === storyId) loadStored();
@@ -151,7 +169,74 @@ const SuggestionsScreen = () => {
       },
     ]);
 
+  const createList = async () => {
+    if (!userId || !storyId || !newListName.trim()) return;
+    try {
+      const created = await suggestionService.createNamedList(userId, storyId, newListName);
+      setNewListName('');
+      setCreatingList(false);
+      await loadGroups();
+      setSelectedType(created.type);
+    } catch (error) {
+      AppAlert.alert(t('error'), (error as Error).message);
+    }
+  };
+
+  const renameList = async () => {
+    if (!userId || !storyId || !selectedType || !renameListName.trim()) return;
+    try {
+      await suggestionService.renameNamedList(userId, storyId, selectedType, renameListName);
+      setRenamingList(false);
+      await loadGroups();
+    } catch (error) {
+      AppAlert.alert(t('error'), (error as Error).message);
+    }
+  };
+
+  const copyToSelected = async () => {
+    if (!userId || !storyId || !selectedType || copyTargets.length === 0) return;
+    try {
+      const result = await suggestionService.copyStoredValues(
+        userId,
+        storyId,
+        selectedType,
+        copyTargets,
+      );
+      setCopying(false);
+      setCopyTargets([]);
+      AppAlert.alert(
+        t('success'),
+        t('suggestion_copy_result', { copied: result.copied, skipped: result.skipped }),
+      );
+    } catch (error) {
+      AppAlert.alert(t('error'), (error as Error).message);
+    }
+  };
+
+  const removeNamedList = () => {
+    if (!selectedType || !isNamedListType(selectedType)) return;
+    AppAlert.alert(t('delete'), t('delete_named_suggestion_list_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('delete'),
+        style: 'destructive',
+        onPress: async () => {
+          if (!userId || !storyId) return;
+          await suggestionService.deleteNamedList(userId, storyId, selectedType);
+          await loadGroups();
+        },
+      },
+    ]);
+  };
+
+  const toggleCopyTarget = (type: string) => {
+    setCopyTargets((current) =>
+      current.includes(type) ? current.filter((item) => item !== type) : [...current, type],
+    );
+  };
+
   const selectedGroup = groups.find((group) => group.type === selectedType);
+  const copyDestinations = groups.filter((group) => group.type !== selectedType);
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background, padding: 16 },
     title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
@@ -202,6 +287,10 @@ const SuggestionsScreen = () => {
     value: { flex: 1, color: colors.text, fontSize: 16 },
     icon: { padding: 7 },
     empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
+    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+    copyList: { marginBottom: 12 },
+    copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
+    copyLabel: { flex: 1, color: colors.text },
   });
 
   const groupsList = isCompact ? (
@@ -250,6 +339,113 @@ const SuggestionsScreen = () => {
         <Text style={styles.key}>
           {t('suggestion_key')}: {selectedGroup.key}
         </Text>
+      )}
+      {canEdit && (
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.icon}
+            onPress={() => {
+              setCreatingList((open) => !open);
+              setRenamingList(false);
+            }}
+            accessibilityLabel={t('suggestion_new_list')}
+          >
+            <Ionicons
+              name="add-circle-outline"
+              size={26}
+              color={creatingList ? colors.primary : colors.text}
+            />
+          </TouchableOpacity>
+          {selectedType && stored.length > 0 && (
+            <TouchableOpacity
+              style={styles.icon}
+              onPress={() => {
+                setCopying((open) => !open);
+                setCopyTargets([]);
+              }}
+              accessibilityLabel={t('suggestion_copy_to')}
+            >
+              <Ionicons
+                name="copy-outline"
+                size={24}
+                color={copying ? colors.primary : colors.text}
+              />
+            </TouchableOpacity>
+          )}
+          {selectedType && isNamedListType(selectedType) && (
+            <>
+              <TouchableOpacity
+                style={styles.icon}
+                onPress={() => {
+                  setRenamingList((open) => !open);
+                  setCreatingList(false);
+                  setRenameListName(selectedGroup?.name ?? '');
+                }}
+                accessibilityLabel={t('suggestion_rename_list')}
+              >
+                <Ionicons
+                  name="pencil-outline"
+                  size={24}
+                  color={renamingList ? colors.primary : colors.text}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.icon}
+                onPress={removeNamedList}
+                accessibilityLabel={t('suggestion_delete_list')}
+              >
+                <Ionicons name="trash-outline" size={24} color={colors.error} />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      )}
+      {canEdit && creatingList && (
+        <View style={styles.inputRow}>
+          <TextInput
+            value={newListName}
+            onChangeText={setNewListName}
+            placeholder={t('suggestion_list_name_placeholder')}
+            style={styles.input}
+          />
+          <Button onPress={createList}>{t('add')}</Button>
+        </View>
+      )}
+      {canEdit && renamingList && (
+        <View style={styles.inputRow}>
+          <TextInput
+            value={renameListName}
+            onChangeText={setRenameListName}
+            placeholder={t('suggestion_list_name_placeholder')}
+            style={styles.input}
+          />
+          <Button onPress={renameList}>{t('save')}</Button>
+        </View>
+      )}
+      {canEdit && copying && (
+        <View style={styles.copyList}>
+          {copyDestinations.map((group) => (
+            <TouchableOpacity
+              key={group.type}
+              style={styles.copyRow}
+              onPress={() => toggleCopyTarget(group.type)}
+            >
+              <Ionicons
+                name={copyTargets.includes(group.type) ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={colors.primary}
+              />
+              <Text style={styles.copyLabel}>{group.label}</Text>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity
+            style={styles.icon}
+            onPress={copyToSelected}
+            accessibilityLabel={t('suggestion_copy_confirm')}
+          >
+            <Ionicons name="checkmark-circle-outline" size={26} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
       )}
       {canEdit && selectedType && (
         <View style={styles.inputRow}>

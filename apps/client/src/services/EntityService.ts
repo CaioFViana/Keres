@@ -3,6 +3,7 @@ import {
   decodeAttributeValue,
   OperationLogEntityType,
   StorySchemaEntityType,
+  suggestionDisplayValue,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { TFunction } from 'i18next';
@@ -210,7 +211,7 @@ export class EntityService {
           where: and(eq(suggestions.id, entityId), eq(suggestions.storyId, storyId)),
           columns: { value: true },
         });
-        entitySpecificName = suggestion?.value;
+        entitySpecificName = suggestionDisplayValue(suggestion?.value) ?? undefined;
         translatedEntityType = t('suggestion');
         break;
       case OperationLogEntityType.Favorite:

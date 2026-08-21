@@ -1,6 +1,6 @@
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
-import { OperationLogEntityType } from '@keres/shared';
+import { OperationLogEntityType, suggestionDisplayValue } from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -413,7 +413,12 @@ const OperationLogDetailScreen: React.FC = () => {
                       ) : typeof value === 'object' ? (
                         <Text style={styles.jsonValue}>{JSON.stringify(value, null, 2)}</Text>
                       ) : (
-                        <Text style={styles.changeValue}>{String(value)}</Text>
+                        <Text style={styles.changeValue}>
+                          {operationLog.entityType === OperationLogEntityType.Suggestion &&
+                          key === 'value'
+                            ? (suggestionDisplayValue(String(value)) ?? String(value))
+                            : String(value)}
+                        </Text>
                       )}
                     </View>
                   </View>

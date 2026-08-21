@@ -1,5 +1,6 @@
 import {
   formatStatValue,
+  formatTierLabel,
   generateNumericLadder,
   normalizeValue,
   OVERSHOOT_RATIO,
@@ -152,6 +153,28 @@ describe('formatStatValue', () => {
 
   it('shows a dash when there is no value', () => {
     expect(formatStatValue(null, LETTER_LADDER, 'letter')).toBe('—');
+  });
+});
+
+describe('formatTierLabel', () => {
+  it('names the tier a value fell into', () => {
+    expect(formatTierLabel(100, LETTER_LADDER)).toBe('C');
+  });
+
+  it('names the tier at its own floor', () => {
+    expect(formatTierLabel(400, LETTER_LADDER)).toBe('A');
+  });
+
+  it('marks a value past the top tier', () => {
+    expect(formatTierLabel(900, LETTER_LADDER)).toBe('A+');
+  });
+
+  it('shows a dash when there is no value', () => {
+    expect(formatTierLabel(null, LETTER_LADDER)).toBe('—');
+  });
+
+  it('shows a dash when the stat has no ladder at all', () => {
+    expect(formatTierLabel(100, [])).toBe('—');
   });
 });
 

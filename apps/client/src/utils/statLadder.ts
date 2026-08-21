@@ -148,6 +148,20 @@ export function formatStatValueDetailed(
   return tier ? `${tier.label} (${formatNumber(value)})` : formatNumber(value);
 }
 
+/**
+ * Só o rótulo do degrau, para dizer ao lado do campo em que rank o número digitado caiu - a
+ * pergunta que uma escada de pisos arbitrários (F em 0, C em 50, A em 400) não responde sozinha.
+ * Vale nas duas notações: na numérica o rótulo é o piso do degrau, que ainda diz algo que o
+ * número digitado não diz. Passar do último degrau vira `S+`, o mesmo que a faixa tracejada da
+ * régua mostra em desenho.
+ */
+export function formatTierLabel(value: number | null, ladder: readonly StatTier[]): string {
+  if (value === null) return EMPTY_VALUE;
+  const tier = tierOf(value, ladder);
+  if (!tier) return EMPTY_VALUE;
+  return tier.isOverflow ? `${tier.label}+` : tier.label;
+}
+
 /** Só o número, para quando o tier já está dito em outro lugar (o cabeçalho do ranking). */
 export function formatStatNumber(value: number | null): string {
   return value === null ? EMPTY_VALUE : formatNumber(value);

@@ -29,6 +29,7 @@ const page: HelpPage = {
         'Abra Status no menu da história e crie os eixos. Marque como primários os que devem entrar no gráfico.',
         'Edite a escada padrão da história e dê escada própria a um status só quando ele precisar de outra faixa.',
         'Abra um personagem, escolha Editar e preencha os valores. Um modo sem valor próprio herda o do modo normal.',
+        'Ao digitar, a régua abaixo do campo mostra onde cada tier começa e onde o valor cai.',
         'Use Comparar para sobrepor até quatro personagens ou modos, e Ranking para listar todo mundo por um status.',
       ],
     },

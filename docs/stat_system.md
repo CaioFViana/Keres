@@ -63,6 +63,36 @@ intervalo fechado - preenche a faixa toda, e daí para cima trava na borda. O an
 faixa é tracejado, que é o que deixa "acima da escala" visível sem reescalar o gráfico inteiro por
 causa de um personagem.
 
+### A régua de tiers
+
+O campo de valor é um número solto: sozinho, ele não diz que 100 é "C" nesta escada nem quanto
+falta para o próximo degrau. Por isso o formulário do personagem desenha, sob cada campo, uma
+régua com uma faixa por degrau, uma marca em cada piso e o ponto do valor - que acompanha o que
+está sendo digitado, antes mesmo de salvar. O mesmo componente aparece na tela da escada, como
+prévia do que está sendo montado.
+
+Ao lado do campo há um **selo com o rótulo do degrau** em que o número caiu, atualizado enquanto
+se digita. A régua diz *onde* o valor está; o selo diz *como ele se chama* - que é justamente o
+que uma escada de pisos arbitrários (F em 0, C em 50, A em 400) esconde. Vale nas duas notações,
+já que na numérica o rótulo é o piso do degrau. Acima do último degrau o selo mostra `A+`, o mesmo
+transbordo que a faixa tracejada desenha (`formatTierLabel` em `statLadder.ts`).
+
+**Um cartão por status a partir de médio.** Em tela estreita nome, campo e régua empilhados
+bastam. Numa tela larga a mesma disposição deixa o campo numérico com metade da largura e a
+barra esticada sem necessidade, então de `medium` para cima cada status vira um cartão num
+`ResponsiveGrid` (duas colunas em médio, três em largo) com o campo em largura fixa. O
+agrupamento também deixa claro a que status cada régua pertence.
+
+O eixo da régua é **numérico**, e não um degrau por fatia igual como no radar. São perguntas
+diferentes: o radar compara personagens entre eixos, então cada anel é um degrau; a régua mostra
+o formato da escada, então F em 0, C em 50 e A em 400 aparece como uma faixa estreita seguida de
+uma enorme, que é a verdade sobre aqueles números. A faixa tracejada no fim é o mesmo transbordo
+de 20% do radar.
+
+Rótulos que não cabem são omitidos, sempre preservando os das duas pontas. O cálculo respeita o
+alinhamento com que cada um é desenhado (o primeiro sai da marca para a direita, o último para a
+esquerda) - supor todos centrados fazia "90" e "100" saírem colados numa escada numérica.
+
 ## 4. Herança de modo
 
 Um modo que **não** tem linha própria para um status lê o valor do modo normal, marcado como
@@ -95,8 +125,9 @@ imediato em vez de conflito de sync opaco horas depois.
 
 - **Matemática pura** (sem React, sem banco): `apps/client/src/utils/statLadder.ts` (escada),
   `statValues.ts` (herança), `statRadarLayout.ts` (geometria), `statRanking.ts` (tier list),
-  `statRadarSvg.ts` (arquivo exportado). Mesma disciplina dos layouts de grafo do app: a tela
-  interativa e o SVG exportado consomem a mesma geometria e nunca discordam.
+  `statRadarSvg.ts` (arquivo exportado), `statLadderBarLayout.ts` (a régua de tiers). Mesma
+  disciplina dos layouts de grafo do app: a tela interativa e o SVG exportado consomem a mesma
+  geometria e nunca discordam.
 - **Telas**: `apps/client/src/screens/stats/` - lista, formulário, escada, comparação e ranking,
   todas sob a entrada "Status" do menu da história (`navigation/StatsStack.tsx`).
 - **No personagem**: painel no detalhe (`components/features/stats/CharacterStatPanel`), e no

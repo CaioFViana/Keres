@@ -226,7 +226,13 @@ function scanFile(filePath: string): ScanResult {
     // somewhere else entirely, so it never appears as a `t(...)` call site itself.
     if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === 'label') {
       const init = node.initializer;
-      if (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) {
+      // Um literal vazio é a ausência de rótulo (o grupo único de um MultiSelectPill não tem
+      // cabeçalho), nunca uma chave: `t('')` não existe, e tratá-lo como chave só produz um
+      // "Missing key ''" que não dá para corrigir no locale.
+      if (
+        (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) &&
+        init.text.trim() !== ''
+      ) {
         exactUsages.push({
           key: init.text,
           file: filePath,

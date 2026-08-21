@@ -20,7 +20,8 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
-import { generateNumericLadder } from '../../utils/statLadder';
+import { generateNumericLadder, sortLadder, type StatTier } from '../../utils/statLadder';
+import { StatLadderBar } from '../../components/features/stats/StatLadderBar/StatLadderBar';
 
 type StatLadderNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatLadder'>;
 
@@ -131,10 +132,20 @@ const StatLadderScreen = () => {
           marginBottom: 16,
         },
         generatorRow: { flexDirection: 'row', gap: 8, marginTop: 8, marginBottom: 12 },
+        preview: { marginBottom: 16 },
         empty: { color: colors.textSecondary, marginBottom: 12 },
       }),
     [colors],
   );
+
+  // Só os degraus já preenchidos entram na prévia: uma linha em branco recém-adicionada não
+  // pode fazer a barra sumir enquanto o autor digita o valor dela.
+  const previewLadder: StatTier[] = useMemo(() => {
+    const parsed = tiers
+      .map((tier) => ({ label: tier.label.trim(), minValue: Number(tier.minValue) }))
+      .filter((tier) => tier.label !== '' && Number.isFinite(tier.minValue) && tier.minValue >= 0);
+    return sortLadder(parsed);
+  }, [tiers]);
 
   const addTier = () =>
     setTiers((current) => [...current, { key: newDraftKey(), label: '', minValue: '' }]);
@@ -225,6 +236,10 @@ const StatLadderScreen = () => {
       {editingOwnLadder ? (
         <>
           <Text style={styles.label}>{t('stat_ladder_title')}</Text>
+          {/* A régua do rascunho: mostra o formato da escada sendo montada antes de salvar. */}
+          <View style={styles.preview}>
+            <StatLadderBar ladder={previewLadder} value={null} />
+          </View>
           {tiers.length === 0 ? <Text style={styles.empty}>{t('stats_empty')}</Text> : null}
           {tiers.map((tier) => (
             <View key={tier.key} style={styles.tierRow}>

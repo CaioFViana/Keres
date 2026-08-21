@@ -29,6 +29,7 @@ const page: HelpPage = {
         'Open Stats in the story menu and create the axes. Mark as primary the ones you want on the chart.',
         'Edit the story default ladder, and give a stat its own ladder only when it needs a different scale.',
         'Open a character, choose Edit, and fill in the values. A mode without its own value inherits the normal mode.',
+        'While typing, the ruler under the field shows where each tier starts and where the value falls.',
         'Use Compare to overlay up to four characters or modes, and Ranking to list everyone by one stat.',
       ],
     },

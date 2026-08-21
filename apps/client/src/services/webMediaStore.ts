@@ -62,10 +62,7 @@ async function opfsDirectory(
   return directory;
 }
 
-async function opfsList(
-  directory: FileSystemDirectoryHandle,
-  prefix: string,
-): Promise<string[]> {
+async function opfsList(directory: FileSystemDirectoryHandle, prefix: string): Promise<string[]> {
   const paths: string[] = [];
   const entries = (
     directory as FileSystemDirectoryHandle & {
@@ -113,9 +110,7 @@ const opfsBackend: KeresMediaBridge = {
       return;
     }
     const parent =
-      parts.length === 0
-        ? await opfsRoot()
-        : await opfsDirectory(await opfsRoot(), parts, false);
+      parts.length === 0 ? await opfsRoot() : await opfsDirectory(await opfsRoot(), parts, false);
     await parent.removeEntry(name, { recursive: true });
   },
   async listAllFiles() {

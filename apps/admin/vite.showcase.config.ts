@@ -55,10 +55,9 @@ function serveShowcaseHtmlInDev(): Plugin {
 /**
  * A segunda saída de build deste mesmo projeto: o site público (Showcase).
  *
- * `base: '/_showcase/'` com as *páginas* na raiz é deliberado. Montar os arquivos estáticos
- * direto em `/` faria o plugin de estáticos do Elysia sombrear as rotas da API; com o prefixo
- * próprio, o servidor entrega os assets ali e devolve o index.html para qualquer outro caminho
- * que não seja da API (ver o catch-all em apps/api/src/index.ts).
+ * `base: '/_showcase/'` com as *páginas* em `/showcase` é deliberado. Montar os arquivos
+ * estáticos direto em `/` sombrearia o cliente web (e as rotas da API); o prefixo próprio
+ * entrega os assets em `/_showcase/` e o HTML em `/showcase` (ver apps/api/src/index.ts).
  *
  * O painel admin continua saindo em `dist/` com `base: '/admin/'`, intocado.
  *

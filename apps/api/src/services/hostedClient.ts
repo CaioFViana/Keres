@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import * as path from 'node:path';
 
-/** Prefixo público do cliente web co-hospedado. O export do Expo continua com paths em `/`. */
-export const CLIENT_APP_PREFIX = '/app';
+/** Prefixo público da vitrine, depois de a raiz passar a ser o cliente web. */
+export const SHOWCASE_PATH_PREFIX = '/showcase';
 
 /**
  * Isolamento entre origens: o `expo-sqlite` web precisa de `SharedArrayBuffer`, e o Chromium
@@ -36,13 +36,32 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 };
 
 /**
- * O export do Expo (`output: "single"`) aponta `src`/`href` para a raiz do origin
- * (`/_expo/...`). Em `/app` esses caminhos 404. Reescrever só o HTML — o bundle é único
- * e os WASM saem relativos ao JS. O Electron continua a servir o mesmo `dist` na raiz
- * do `app://`, sem esta reescrita.
+ * Marca o HTML servido pela API para o cliente saber que está co-hospedado (sessão cookie,
+ * same-origin). O Electron e o `expo start --web` não passam por esta reescrita.
  */
+export const HOSTED_CLIENT_META = '<meta name="keres-hosted" content="1" />';
+
+/**
+ * Expo Router só tem a rota de ficheiro `/`. O React Navigation escreve o nome da tela
+ * na barra (`/StorySelection`, …); o Router trata isso como unmatched (404). A solução
+ * mais simples: o URL hospedado fica sempre em `/`. F5 recarrega o cliente; o estado
+ * das telas é o do React Navigation, não o path. O Electron não vê este script.
+ */
+export const HOSTED_CLIENT_HISTORY_GUARD = `<script>(function(){function here(){return "/"+location.search+location.hash}var push=history.pushState.bind(history),rep=history.replaceState.bind(history);history.pushState=function(){return push(null,"",here())};history.replaceState=function(){return rep(null,"",here())};try{rep(null,"",here())}catch(e){}})();</script>`;
+
 export function rewriteHostedClientHtml(html: string): string {
-  return html.replace(/(href|src)="\/(?!app\/)/g, '$1="/app/');
+  let next = html;
+  if (!/<meta\s+name="keres-hosted"/i.test(next)) {
+    next = /<head>/i.test(next)
+      ? next.replace(/<head>/i, `<head>${HOSTED_CLIENT_META}`)
+      : `${HOSTED_CLIENT_META}${next}`;
+  }
+  if (!next.includes('HOSTED_CLIENT_HISTORY_GUARD') && !next.includes('history.pushState=function()')) {
+    next = /<head>/i.test(next)
+      ? next.replace(/<head>/i, `<head>${HOSTED_CLIENT_HISTORY_GUARD}`)
+      : `${HOSTED_CLIENT_HISTORY_GUARD}${next}`;
+  }
+  return next;
 }
 
 export function hostedClientMimeType(filePath: string): string {
@@ -50,17 +69,17 @@ export function hostedClientMimeType(filePath: string): string {
 }
 
 /**
- * Resolve um pedido `/app/...` para um ficheiro dentro do export, sem sair da raiz.
- * Sem extensão (rota de SPA) cai no `index.html`.
+ * Resolve um pedido na raiz do origin para um ficheiro do export Expo. Sem extensão
+ * (rota de SPA / React Navigation) cai no `index.html`.
  */
 export function resolveHostedClientFile(
   clientDist: string,
   requestPath: string,
 ): { filePath: string; html: boolean } | null {
   const relative =
-    requestPath === CLIENT_APP_PREFIX || requestPath === `${CLIENT_APP_PREFIX}/`
+    requestPath === '/' || requestPath === ''
       ? 'index.html'
-      : requestPath.slice(CLIENT_APP_PREFIX.length).replace(/^\/+/, '') || 'index.html';
+      : requestPath.replace(/^\/+/, '') || 'index.html';
   const decoded = decodeURIComponent(relative);
   const hasExtension = path.extname(decoded).length > 0;
   const candidate = hasExtension ? decoded : path.join(decoded, 'index.html');
@@ -101,13 +120,12 @@ export function readHostedClientFile(
   };
 }
 
-/**
- * O bundle do Expo pede o worker WASM e as fontes em caminhos da raiz (`/_expo/...`,
- * `/assets/...`), não sob `/app`. Sem estes ficheiros no origin, o SQLite web e os
- * ícones 404 — e o router mostra o ecrã unmatched.
- */
 export function isClientDistRootAssetPath(pathname: string): boolean {
   return pathname.startsWith('/_expo/') || pathname.startsWith('/assets/');
+}
+
+export function isShowcasePath(pathname: string): boolean {
+  return pathname === SHOWCASE_PATH_PREFIX || pathname.startsWith(`${SHOWCASE_PATH_PREFIX}/`);
 }
 
 export function readClientDistRootAsset(

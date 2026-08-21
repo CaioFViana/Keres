@@ -10,7 +10,9 @@ import {
   writeBytes,
 } from '../../src/services/webMediaStore';
 
-type Entry = { kind: 'file'; data: Uint8Array } | { kind: 'directory'; children: Map<string, Entry> };
+type Entry =
+  | { kind: 'file'; data: Uint8Array }
+  | { kind: 'directory'; children: Map<string, Entry> };
 
 function directoryEntry(): Entry {
   return { kind: 'directory', children: new Map() };
@@ -49,13 +51,18 @@ function installMemoryOpfs(root: Map<string, Entry>) {
           kind: 'file',
           async getFile() {
             return {
-              arrayBuffer: async () => file.data.buffer.slice(file.data.byteOffset, file.data.byteOffset + file.data.byteLength),
+              arrayBuffer: async () =>
+                file.data.buffer.slice(
+                  file.data.byteOffset,
+                  file.data.byteOffset + file.data.byteLength,
+                ),
             };
           },
           async createWritable() {
             return {
               async write(bytes: BufferSource) {
-                const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes as ArrayBuffer);
+                const view =
+                  bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes as ArrayBuffer);
                 file.data = view;
               },
               async close() {},

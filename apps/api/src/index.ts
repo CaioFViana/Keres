@@ -14,10 +14,11 @@ import {
 } from './config/resourceRoot';
 import {
   CLIENT_APP_ISOLATION_HEADERS,
-  CLIENT_APP_PREFIX,
   isClientDistRootAssetPath,
+  isShowcasePath,
   readClientDistRootAsset,
   readHostedClientFile,
+  SHOWCASE_PATH_PREFIX,
 } from './services/hostedClient';
 import { env } from './config/env';
 import { adminRoutes } from './modules/admin/admin.route';
@@ -94,11 +95,7 @@ function applyClientAppIsolationHeaders(set: { headers: Record<string, string | 
 }
 
 function isClientAppPath(pathname: string): boolean {
-  return (
-    pathname === CLIENT_APP_PREFIX ||
-    pathname.startsWith(`${CLIENT_APP_PREFIX}/`) ||
-    isClientDistRootAssetPath(pathname)
-  );
+  return pathname === '/' || isClientDistRootAssetPath(pathname);
 }
 
 function serveClientRootAsset(
@@ -139,7 +136,7 @@ const API_PATH_PREFIXES = [
   '/kerescheck',
   '/favicon.ico',
   '/_showcase',
-  CLIENT_APP_PREFIX,
+  SHOWCASE_PATH_PREFIX,
   '/_expo',
   '/assets',
 ];
@@ -164,7 +161,7 @@ if (!adminUiAvailable) {
 
 if (!clientUiAvailable) {
   logger.warn(
-    `Hosted client not built - ${CLIENT_APP_PREFIX} will 404. Run 'bun run export:web' in apps/client to enable it.`,
+    `Hosted client not built - / will not serve the web app. Run 'bun run export:web' in apps/client to enable it.`,
   );
 }
 
@@ -376,22 +373,32 @@ export async function createApp() {
       })
       .get(
         '/',
-        async ({ redirect, set }) => {
-          // Com o Showcase ligado e buildado, a raiz é o site público. Sem uma das duas coisas,
-          // a raiz continua sendo o que sempre foi - o atalho para a documentação.
-          if (showcaseUiAvailable && (await showcaseSettingsService.isEnabled())) {
-            applyAdminUiSecurityHeaders(set);
-            set.headers['content-type'] = 'text/html; charset=utf-8';
-            return readFileSync(showcaseDistIndexPath, 'utf8');
+        async ({ set }) => {
+          // A raiz é o cliente web (mesmo export que o Electron), para o Expo Router viver
+          // em `/` como no desktop. Sem o export, a vitrine (se ligada) ou o Swagger.
+          if (clientUiAvailable) {
+            const file = readHostedClientFile(clientDistPath, '/');
+            if (file) {
+              applyClientAppIsolationHeaders(set);
+              set.headers['content-type'] = file.contentType;
+              return file.body;
+            }
           }
-          return redirect('/swagger');
+          if (showcaseUiAvailable && (await showcaseSettingsService.isEnabled())) {
+            set.status = 302;
+            set.headers.location = SHOWCASE_PATH_PREFIX;
+            return;
+          }
+          set.status = 302;
+          set.headers.location = '/swagger';
+          return;
         },
         {
           detail: {
-            summary: 'Public showcase (or Swagger redirect)',
+            summary: 'Hosted Keres client (or showcase / Swagger)',
             description:
-              'Serves the public showcase site when it is enabled and built; otherwise redirects to the API documentation.',
-            tags: ['Showcase'],
+              'Serves the web export of apps/client at the origin root, with COOP/COEP so expo-sqlite can use SharedArrayBuffer. Same origin as the API. Falls back to /showcase or /swagger when the export is missing.',
+            tags: ['Client'],
           },
         },
       )
@@ -450,10 +457,7 @@ export async function createApp() {
         if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/api')) {
           applyAdminUiSecurityHeaders(set);
         }
-        // O site público roda com o mesmo conjunto de headers do painel: mesmo tipo de conteúdo
-        // (SPA estática servida por este processo), e sem isto as páginas novas iriam ao ar sem
-        // CSP nenhuma.
-        if (pathname === '/' || pathname.startsWith('/_showcase') || !isApiPath(pathname)) {
+        if (isShowcasePath(pathname) || pathname.startsWith('/_showcase')) {
           applyAdminUiSecurityHeaders(set);
         }
       })
@@ -497,90 +501,33 @@ export async function createApp() {
       .get(
         '/app',
         ({ set }) => {
-          if (!clientUiAvailable) {
-            set.status = 404;
-            return { message: "Hosted client not built. Run 'bun run export:web' in apps/client." };
-          }
-          const file = readHostedClientFile(clientDistPath, '/app');
-          if (!file) {
-            set.status = 404;
-            return { message: 'Not found' };
-          }
-          applyClientAppIsolationHeaders(set);
-          set.headers['content-type'] = file.contentType;
-          return file.body;
+          set.status = 302;
+          set.headers.location = '/';
         },
         {
           detail: {
-            summary: 'Hosted Keres client',
-            description:
-              'Serves the web export of apps/client under /app, with COOP/COEP so expo-sqlite can use SharedArrayBuffer. Same origin as the API, so the HttpOnly session cookie is sent.',
+            summary: 'Legacy hosted-client path',
+            description: 'The web client used to live at /app; it now occupies the origin root.',
             tags: ['Client'],
           },
         },
       )
       .get(
         '/app/*',
-        ({ set, request }) => {
-          if (!clientUiAvailable) {
-            set.status = 404;
-            return { message: "Hosted client not built. Run 'bun run export:web' in apps/client." };
-          }
-          const file = readHostedClientFile(clientDistPath, new URL(request.url).pathname);
-          if (!file) {
-            set.status = 404;
-            return { message: 'Not found' };
-          }
-          applyClientAppIsolationHeaders(set);
-          set.headers['content-type'] = file.contentType;
-          return file.body;
+        ({ set }) => {
+          set.status = 302;
+          set.headers.location = '/';
         },
         {
           detail: {
-            summary: 'Hosted Keres client (assets and SPA fallback)',
+            summary: 'Legacy hosted-client path',
             tags: ['Client'],
           },
         },
       )
       .get(
-        '/_expo/*',
-        ({ set, request }) => serveClientRootAsset(set, request),
-        {
-          detail: {
-            summary: 'Expo web runtime (worker and bundles requested from origin root)',
-            tags: ['Client'],
-          },
-        },
-      )
-      .get(
-        '/assets/*',
-        ({ set, request }) => serveClientRootAsset(set, request),
-        {
-          detail: {
-            summary: 'Expo web static assets requested from origin root',
-            tags: ['Client'],
-          },
-        },
-      )
-      .use(
-        showcaseUiAvailable
-          ? await staticPlugin({
-              assets: showcaseDistPath,
-              prefix: '/_showcase',
-              alwaysStatic: true,
-            })
-          : new Elysia(),
-      )
-      // Registrado por último de propósito: é o fallback de SPA do site público, e qualquer coisa
-      // que pertença à API precisa ter sido resolvida antes de chegar aqui. `isApiPath` é a rede
-      // de segurança para o que ainda assim escapar - um 404 de API tem que continuar sendo JSON.
-      .get(
-        '/*',
-        async ({ set, path }) => {
-          if (isApiPath(path)) {
-            set.status = 404;
-            return { message: 'Not found' };
-          }
+        '/showcase',
+        async ({ set }) => {
           if (!showcaseUiAvailable || !(await showcaseSettingsService.isEnabled())) {
             set.status = 404;
             return { message: 'Not found' };
@@ -591,9 +538,75 @@ export async function createApp() {
         },
         {
           detail: {
-            summary: 'Public showcase (single-page app)',
-            description: 'Serves the built showcase SPA and its client-side routes.',
+            summary: 'Public showcase',
+            description: 'Lists stories published on this server.',
             tags: ['Showcase'],
+          },
+        },
+      )
+      .get(
+        '/showcase/*',
+        async ({ set }) => {
+          if (!showcaseUiAvailable || !(await showcaseSettingsService.isEnabled())) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
+          applyAdminUiSecurityHeaders(set);
+          set.headers['content-type'] = 'text/html; charset=utf-8';
+          return readFileSync(showcaseDistIndexPath, 'utf8');
+        },
+        {
+          detail: {
+            summary: 'Public showcase (SPA fallback)',
+            tags: ['Showcase'],
+          },
+        },
+      )
+      .get('/_expo/*', ({ set, request }) => serveClientRootAsset(set, request), {
+        detail: {
+          summary: 'Expo web runtime (worker and bundles requested from origin root)',
+          tags: ['Client'],
+        },
+      })
+      .get('/assets/*', ({ set, request }) => serveClientRootAsset(set, request), {
+        detail: {
+          summary: 'Expo web static assets requested from origin root',
+          tags: ['Client'],
+        },
+      })
+      .use(
+        showcaseUiAvailable
+          ? await staticPlugin({
+              assets: showcaseDistPath,
+              prefix: '/_showcase',
+              alwaysStatic: true,
+            })
+          : new Elysia(),
+      )
+      // Expo Router só reconhece `/`. Um F5 em `/StorySelection` (ou o que o React Navigation
+      // tiver escrito na barra) tem de voltar à raiz, não servir o index nesse path — senão o
+      // Router mostra unmatched. API e /showcase já foram registados acima.
+      .get(
+        '/*',
+        ({ set, path: requestPath }) => {
+          if (isApiPath(requestPath)) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
+          if (clientUiAvailable) {
+            set.status = 302;
+            set.headers.location = '/';
+            return;
+          }
+          set.status = 404;
+          return { message: 'Not found' };
+        },
+        {
+          detail: {
+            summary: 'Refresh fallback to the hosted client',
+            description:
+              'Unknown non-API paths redirect to / so a refresh never lands on an Expo Router unmatched screen.',
+            tags: ['Client'],
           },
         },
       )

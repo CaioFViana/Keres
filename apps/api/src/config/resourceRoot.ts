@@ -92,7 +92,7 @@ export function showcaseDistPath(): string {
 
 /**
  * Export web do cliente (`expo export -p web`). O Electron consome o mesmo `dist`
- * pelo protocolo `app://`; a API serve-o em `/app` com reescrita do HTML.
+ * pelo protocolo `app://`; a API serve-o na raiz do origin.
  */
 export function clientDistPath(): string {
   const override = resourceOverride();

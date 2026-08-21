@@ -38,7 +38,7 @@
     },
     "anywhere": {
       "title": "Celular, desktop e navegador",
-      "body": "O mesmo cliente em Android, iOS e no aplicativo de desktop para Windows, macOS e Linux. No navegador, a API serve o cliente em /app — só na origem daquele servidor."
+      "body": "O mesmo cliente em Android, iOS e no aplicativo de desktop para Windows, macOS e Linux. No navegador, a API serve o cliente na raiz do servidor — só na origem daquele servidor."
     }
   },
   "product": {
@@ -245,7 +245,7 @@
       },
       "web": {
         "title": "Navegador",
-        "body": "A API serve o cliente em /app, no mesmo origin. Essa página só fala com o servidor de onde veio: apontar para outra API seria cross-origin e o SQLite no browser deixa de funcionar."
+        "body": "A API serve o cliente na raiz do servidor, no mesmo origin. Essa página só fala com o servidor de onde veio: apontar para outra API seria cross-origin e o SQLite no browser deixa de funcionar."
       },
       "windows": {
         "title": "Windows",
@@ -261,11 +261,11 @@
       },
       "keresServer": {
         "title": "Keres Server",
-        "body": "A API em SQLite, com assistente em português e inglês. Sem Docker, sem Postgres: descompacte e corra. O cliente web fica em /app neste mesmo processo."
+        "body": "A API em SQLite, com assistente em português e inglês. Sem Docker, sem Postgres: descompacte e corra. O cliente web fica na raiz deste mesmo processo; a vitrine de histórias, em /showcase."
       },
       "docker": {
         "title": "Docker",
-        "body": "Imagem no GHCR com PostgreSQL, painel /admin, cliente web em /app e armazenamento de mídia. Para quem opera um servidor de verdade."
+        "body": "Imagem no GHCR com PostgreSQL, painel /admin, cliente web na raiz, vitrine em /showcase e armazenamento de mídia. Para quem opera um servidor de verdade."
       }
     }
   },
@@ -299,8 +299,8 @@
     "title": "Como é feito",
     "lead": "As mesmas peças descritas na documentação do repositório.",
     "client": "React Native + Expo, SQLite local, store Zustand e um motor de sincronização próprio.",
-    "desktop": "Electron empacota a build web do cliente para o aplicativo de desktop. A mesma build, na API, é o cliente em /app.",
-    "api": "Bun, Elysia, Drizzle. PostgreSQL no Docker; SQLite no Keres Server de casa. Serve o cliente web em /app no mesmo origin.",
+    "desktop": "Electron empacota a build web do cliente para o aplicativo de desktop. A mesma build, na API, é o cliente na raiz do servidor.",
+    "api": "Bun, Elysia, Drizzle. PostgreSQL no Docker; SQLite no Keres Server de casa. Serve o cliente web na raiz, no mesmo origin.",
     "admin": "Painel React servido pela API em /admin, para contas, planos e cadastro.",
     "shared": "Entidades, contratos Zod e paletas compartilhados entre os apps."
   },
@@ -313,7 +313,7 @@
       },
       "browser": {
         "q": "Roda no navegador?",
-        "a": "Sim, no endereço /app do próprio servidor Keres (Docker ou Keres Server). Esse cliente só conecta à API de onde a página foi carregada. Cadastrar outro servidor no browser voltaria a ser cross-origin: o SQLite web precisa de isolamento na mesma origem. No telemóvel e no desktop você registra qualquer URL."
+        "a": "Sim, no endereço do próprio servidor Keres (Docker ou Keres Server), na raiz. Esse cliente só conecta à API de onde a página foi carregada. Cadastrar outro servidor no browser voltaria a ser cross-origin: o SQLite web precisa de isolamento na mesma origem. No telemóvel e no desktop você registra qualquer URL. Histórias publicadas ficam em /showcase."
       },
       "offline": {
         "q": "Preciso de internet?",

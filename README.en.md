@@ -111,7 +111,8 @@ Available services:
 - API and Swagger: `http://localhost:3000/swagger`
 - Health check: `http://localhost:3000/kerescheck`
 - Built administration panel: `http://localhost:3000/admin`
-- Hosted web client (same origin, COOP/COEP): `http://localhost:3000/app` — requires `bun run --cwd apps/client export:web`
+- Hosted web client (same origin, COOP/COEP): `http://localhost:3000/` — requires `bun run --cwd apps/client export:web`
+- Published-story showcase: `http://localhost:3000/showcase`
 - Administration panel with hot reload: run `bun run dev` in `apps/admin` and open `http://localhost:5173/admin/`
 
 ### Local Docker stack

@@ -1,11 +1,9 @@
 import { Platform } from 'react-native';
 
 /**
- * Sessão por cookie HttpOnly, só no cliente web hospedado pela própria API (`/app`).
- *
- * Mobile e o Electron não entram aqui: o nativo usa SecureStore; o desktop, `window.keresAuth`.
- * O `expo start --web` também não — o Metro não vive em `/app`, então o cookie same-origin
- * da API nem seria enviado.
+ * Sessão por cookie HttpOnly, só no cliente web co-hospedado pela API (HTML marcado com
+ * `meta[name=keres-hosted]`). Mobile usa SecureStore; o Electron, `window.keresAuth`.
+ * O `expo start --web` não tem essa meta, então não tenta cookie same-origin.
  */
 
 export function usesHttpOnlyCookieSession(): boolean {
@@ -15,7 +13,7 @@ export function usesHttpOnlyCookieSession(): boolean {
   if (window.keresAuth) {
     return false;
   }
-  return window.location.pathname.startsWith('/app');
+  return document.querySelector('meta[name="keres-hosted"]') !== null;
 }
 
 export function hostedApiOrigin(): string {

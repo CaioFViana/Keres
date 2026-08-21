@@ -66,7 +66,9 @@ it('creates a local server record from GET /auth/me', async () => {
 
 it('ignores a missing session', async () => {
   const db = { query: { servers: { findFirst: jest.fn() } } } as never;
-  jest.spyOn(axios, 'get').mockResolvedValueOnce({ status: 401, data: { message: 'Unauthorized' } });
+  jest
+    .spyOn(axios, 'get')
+    .mockResolvedValueOnce({ status: 401, data: { message: 'Unauthorized' } });
   await expect(restoreHostedCookieSession(db)).resolves.toBeNull();
   expect(mockCreateServer).not.toHaveBeenCalled();
 });

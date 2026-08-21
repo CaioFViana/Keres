@@ -3,6 +3,15 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
+// Metro default is (cpus − 1) transformer workers, each its own Node heap. Docker
+// Desktop / WSL2 reports the host CPU count against a much smaller memory budget, so
+// `expo export` would spawn a dozen workers and freeze the machine. CI (GitHub and
+// the API image build) keeps a single worker; a local export on a large machine stays
+// parallel.
+if (process.env.CI) {
+  config.maxWorkers = 1;
+}
+
 // expo-sqlite's web implementation (wa-sqlite, used by the "web" export - see
 // apps/desktop) imports a .wasm file as an asset. Metro's default config doesn't treat
 // .wasm as an asset extension, so without this the web bundler can't resolve it.

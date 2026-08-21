@@ -55,6 +55,7 @@ Pushing the tag runs `.github/workflows/release.yml`, which:
 5. Packages **Keres Server** zips for Windows x64, Linux x64, and
    macOS arm64 (`Keres-Server-<os>-<arch>-<version>.zip`) — the home API
    without Docker. Docker/GHCR remains the production PostgreSQL channel.
+   DO. NOT. FORGET. To check if Docker builds. (1.4 failed release first time)
 6. Collects every artifact into a single GitHub Release on the tag, with
    auto-generated release notes.
 

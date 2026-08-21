@@ -26,4 +26,4 @@ Will say, favorite feature was the help pages.
 
 _"No matter how many cycles the serpent passes. No one should lose themselves to it. To heal is to care, and to care is to live."_
 
-The goddess of cleaningless, of preventing diseases, and much more. Who else to make sure Ouroboros is fixed with the ton it was missed? This release fixed so many issues that isnt worth listing them here. Theme of release was to fix them and to prevent new issues from happening. 0 features.
+The goddess of cleaningless, of preventing diseases, and much more. Who else to make sure Ouroboros is fixed with the ton it was missed? This release fixed so many issues that isnt worth listing them here. Theme of release was to fix them and to prevent new issues from happening... Even if we got way too many features in the end.

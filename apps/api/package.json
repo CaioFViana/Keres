@@ -13,7 +13,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:sqlite": "vitest run --config vitest.integration.sqlite.config.ts",
     "test:integration:coverage": "vitest run --config vitest.integration.config.ts --coverage",
-    "build": "cd ../admin && bun run build",
+    "build": "cd ../admin && bun run build:all",
     "db:generate": "bun drizzle-kit generate --dialect postgresql --schema=./src/db/schema.ts",
     "db:generate:sqlite": "bun drizzle-kit generate --config drizzle.sqlite.config.ts",
     "db:migrate": "bun drizzle-kit migrate",

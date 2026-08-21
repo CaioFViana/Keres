@@ -19,27 +19,50 @@ COPY patches patches
 # toolchain), so a strict frozen check on this partial workspace always fails.
 RUN bun install
 
-# ---- admin-build: build the static admin panel (apps/admin) with Vite ----
+# ---- admin-build: painel (`dist/`) e vitrine pública (`dist-showcase/`) ----
+# `build:all` = `build` (Vite do /admin) + `build:showcase` (Vite do site público). Sem o
+# segundo, a API sobe com o warn "Showcase UI not built" e `/showcase` fica fora do ar.
+# Os dois usam o mesmo ícone do desktop (vite.keresIcon.ts); sem o PNG no contexto,
+# png-to-ico relata "not a valid PNG" no lugar de ENOENT.
 FROM deps AS admin-build
 COPY packages/shared packages/shared
 COPY apps/admin apps/admin
-RUN cd apps/admin && bun run build
+COPY apps/client/assets/images/desktop_icon.png apps/client/assets/images/desktop_icon.png
+RUN cd apps/admin && bun run build:all
 
-# ---- client-web-build: Expo web export served by the API at /app ----
+# ---- client-web-build: Expo web export served by the API at / ----
+# Só client + shared. Copiar o workspace inteiro (desktop/site/api/admin) faz o `bun install`
+# puxar Electron e, pior, `better-sqlite3` — devDependency só dos testes do client, módulo
+# nativo cujo `install` dispara node-gyp e exige Python/g++ que esta imagem não tem (e que
+# não vamos instalar só para um pacote que `expo export` nunca carrega). `--production`
+# omite esse grafo de teste; o runtime da API só recebe o `dist/` estático daqui.
 FROM oven/bun:latest AS client-web-build
 WORKDIR /app
+# BuildKit paraleliza estágios independentes. Sem esta barreira, `deps` (bun install da
+# API) e este estágio (bun install do grafo Expo) correm juntos e o WSL2 esgota a RAM
+# do host. Copiar um artefato do admin-build serializa: deps → admin → client.
+COPY --from=admin-build /app/apps/admin/dist/index.html /tmp/.admin-built
 COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/package.json
-COPY apps/api/package.json apps/api/package.json
-COPY apps/admin/package.json apps/admin/package.json
 COPY apps/client/package.json apps/client/package.json
-COPY apps/desktop/package.json apps/desktop/package.json
-COPY apps/site/package.json apps/site/package.json
 COPY patches patches
-RUN bun install
+# --linker=hoisted: o Metro resolve `zod` (e o resto) subindo de
+# packages/shared até /app/node_modules. Sem hoist, bun deixa os pacotes
+# só em node_modules/.bun e o export falha com "Unable to resolve module zod".
+RUN bun install --production --linker=hoisted
 COPY packages/shared packages/shared
 COPY apps/client apps/client
-RUN bun run --cwd apps/client export:web
+# Metro no Bun infla demais; o CLI do Expo é `#!/usr/bin/env node`. Um worker
+# (CI=1 → metro.config.js) e heap limitado cabem no Docker Desktop sem congelar o host.
+ENV CI=1
+ENV EXPO_NO_TELEMETRY=1
+ENV NODE_OPTIONS=--max-old-space-size=3072
+WORKDIR /app/apps/client
+RUN node scripts/generate-migrations-index.js \
+ && node scripts/generate-example-stories-index.js \
+ && node scripts/generate-help-index.js \
+ && node scripts/generate-story-devices-index.js \
+ && node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web
 
 # ---- prod-deps: production-only install, scoped to just what the API needs at runtime ----
 # Deliberately does NOT copy apps/admin/package.json: admin is already built to static files by
@@ -84,9 +107,10 @@ COPY apps/api/src ./apps/api/src
 COPY apps/api/drizzle ./apps/api/drizzle
 COPY apps/api/drizzle-sqlite ./apps/api/drizzle-sqlite
 
-# apps/api/src/index.ts looks for this at apps/admin/dist relative to its own
-# location (import.meta.dir), regardless of process.cwd() - see the comment there.
+# `resourceRoot` resolve estes dois a partir de import.meta.dir (apps/admin/dist e
+# apps/admin/dist-showcase), independente de process.cwd().
 COPY --from=admin-build /app/apps/admin/dist ./apps/admin/dist
+COPY --from=admin-build /app/apps/admin/dist-showcase ./apps/admin/dist-showcase
 # Cliente web co-hospedado em /app (o mesmo export que o Electron empacota). Sem
 # este estágio a API sobe, só o /app 404. Expo fica isolado deste stage para o
 # runtime continuar só com Bun.

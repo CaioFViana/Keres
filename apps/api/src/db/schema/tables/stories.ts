@@ -44,6 +44,10 @@ export const stories = table('stories', {
   theme: text('theme'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
+  /** Liga o sistema de status desta história (stats, escadas, radar). */
+  statSystem: boolean('stat_system').notNull().default(false),
+  /** 'letter' | 'number' - como os valores de status são exibidos. */
+  statNotation: text('stat_notation').notNull().default('letter'),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),

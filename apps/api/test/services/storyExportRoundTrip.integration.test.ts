@@ -19,10 +19,14 @@ import {
   items,
   locationRelations,
   locations,
+  modes,
   noteRelations,
   notes,
   scenes,
   seeAlsoRelations,
+  statRelations,
+  statStrengths,
+  stats,
   stories,
   storySchemaFields,
   suggestions,
@@ -77,6 +81,13 @@ const id = {
   attributeValue: '',
   favorite: '',
   comment: '',
+  stat: '',
+  secondaryStat: '',
+  defaultTier: '',
+  statTier: '',
+  mode: '',
+  baseValue: '',
+  modeValue: '',
 };
 
 beforeEach(async () => {
@@ -94,6 +105,8 @@ beforeEach(async () => {
     title: 'O farol',
     type: 'branching',
     favoriteBehavior: 'individual_public',
+    statSystem: true,
+    statNotation: 'letter',
   } as never);
 
   await db
@@ -259,6 +272,41 @@ beforeEach(async () => {
     commentText: 'rever o nome',
     criticality: 2,
   } as never);
+  await db.insert(stats).values([
+    { id: id.stat, storyId, name: 'Coragem', isPrimary: true, order: 0 },
+    { id: id.secondaryStat, storyId, name: 'Reputação', isPrimary: false, order: 1 },
+  ] as never);
+  await db.insert(statStrengths).values([
+    // statId nulo é a escada padrão da história; a outra linha é o override do stat.
+    { id: id.defaultTier, storyId, statId: null, label: 'F', minValue: 0 },
+    { id: id.statTier, storyId, statId: id.stat, label: 'A', minValue: 400 },
+  ] as never);
+  await db.insert(modes).values({
+    id: id.mode,
+    storyId,
+    characterId: id.characterA,
+    name: 'Na tempestade',
+    modeChanges: 'Perde o medo do mar.',
+    order: 0,
+  } as never);
+  await db.insert(statRelations).values([
+    {
+      id: id.baseValue,
+      storyId,
+      characterId: id.characterA,
+      modeId: null,
+      statId: id.stat,
+      value: 120,
+    },
+    {
+      id: id.modeValue,
+      storyId,
+      characterId: id.characterA,
+      modeId: id.mode,
+      statId: id.stat,
+      value: 480,
+    },
+  ] as never);
 });
 
 async function childrenOf(storyId: string) {
@@ -291,6 +339,10 @@ async function childrenOf(storyId: string) {
     seeAlsoRelations: await rows(seeAlsoRelations),
     comments: await rows(comments),
     favorites: await rows(favorites),
+    stats: await rows(stats),
+    statStrengths: await rows(statStrengths),
+    statRelations: await rows(statRelations),
+    modes: await rows(modes),
   };
 }
 
@@ -362,7 +414,28 @@ describe('import of a package with one row of every kind', () => {
     expect(after.effects[0].itemId).toBe(after.items[0].id);
     expect(after.choiceChecks[0].itemId).toBe(after.items[0].id);
     expect(after.itemJourneys[0].newCharacterOwnerId).toBe(byName(after.characters, 'Bento').id);
+    expect(after.statRelations.every((row: any) => row.storyId === importedId)).toBe(true);
     expect(after.locationRelations[0].locationAId).toBe(location.id);
+
+    const stat = byName(after.stats, 'Coragem');
+    const mode = byName(after.modes, 'Na tempestade');
+    expect(mode.characterId).toBe(character.id);
+    // A escada padrão da história continua sem stat; o override continua apontando para o dele.
+    const tierNamed = (label: string) => {
+      const found = after.statStrengths.find((row: any) => row.label === label);
+      expect(found, `esperava o degrau ${label}`).toBeDefined();
+      return found;
+    };
+    expect(tierNamed('F')?.statId).toBeNull();
+    expect(tierNamed('A')?.statId).toBe(stat.id);
+    const base = after.statRelations.find((row: any) => row.modeId === null);
+    const overridden = after.statRelations.find((row: any) => row.modeId !== null);
+    expect(base).toBeDefined();
+    expect(overridden).toBeDefined();
+    expect(base?.statId).toBe(stat.id);
+    expect(base?.characterId).toBe(character.id);
+    expect(overridden?.modeId).toBe(mode.id);
+    expect(overridden?.value).toBe(480);
     expect(after.characterRelations[0].character1Id).toBe(character.id);
     expect(after.characterScenes[0].characterId).toBe(character.id);
   });

@@ -37,7 +37,7 @@ const conflict = (overrides: Partial<PendingConflict> = {}): PendingConflict => 
 });
 
 describe('RELATION_ENTITY_TYPES', () => {
-  it('lists exactly the 8 relation/junction entity types', () => {
+  it('lists exactly the 9 relation/junction entity types', () => {
     expect([...RELATION_ENTITY_TYPES].sort()).toEqual(
       [
         'CharacterRelation',
@@ -47,6 +47,7 @@ describe('RELATION_ENTITY_TYPES', () => {
         'LocationRelation',
         'NoteRelation',
         'SeeAlsoRelation',
+        'StatRelation',
         'TagRelation',
       ].sort(),
     );

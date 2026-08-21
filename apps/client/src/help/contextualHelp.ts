@@ -83,4 +83,9 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   OperationLogDetail: 'activity-log',
   StoryAnalysis: 'story-analysis',
   StorySettings: 'story-settings',
+  StatList: 'stats',
+  StatForm: 'stats',
+  StatLadder: 'stats',
+  StatComparison: 'stats',
+  StatRanking: 'stats',
 };

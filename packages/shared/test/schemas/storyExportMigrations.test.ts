@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { CURRENT_STORY_FORMAT_VERSION } from '../../schemas/StoryExportVersion';
 import { migrateStoryExport, StoryExportVersionError } from '../../schemas/storyExportMigrations';
 
+/** As coleções que a migração V4 -> V5 materializa vazias. */
+const EMPTY_V5_COLLECTIONS = { stats: [], statStrengths: [], statRelations: [], modes: [] };
+
 describe('migrateStoryExport', () => {
   it('migrates a V1 export to the current format without changing the source object', () => {
     const v1Export = {
@@ -52,11 +55,13 @@ describe('migrateStoryExport', () => {
 
     expect(migrateStoryExport(v2Export)).toEqual({
       ...v2Export,
+      story: { ...v2Export.story, statSystem: false, statNotation: 'letter' },
       comments: [],
       seeAlsoRelations: [],
       choiceCheckGroups: [],
       choiceChecks: [],
       effects: [],
+      ...EMPTY_V5_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -76,27 +81,57 @@ describe('migrateStoryExport', () => {
 
     expect(migrateStoryExport(v3Export)).toEqual({
       ...v3Export,
+      story: { ...v3Export.story, statSystem: false, statNotation: 'letter' },
       choiceCheckGroups: [],
       choiceChecks: [],
       effects: [],
+      ...EMPTY_V5_COLLECTIONS,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
 
-  it('preserves comments and see-also relations already present in V3', () => {
-    const v3Export = {
+  it('leaves a package already in the current format untouched', () => {
+    const currentExport = {
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
       story: {
         id: 'story-3',
         title: 'Current story',
         favoriteBehavior: 'individual',
         normalizeSceneTiming: false,
+        statSystem: true,
+        statNotation: 'number',
       },
       comments: [{ id: 'comment-1' }],
       seeAlsoRelations: [{ id: 'relation-1' }],
+      stats: [{ id: 'stat-1' }],
+      statStrengths: [{ id: 'strength-1' }],
+      statRelations: [{ id: 'value-1' }],
+      modes: [{ id: 'mode-1' }],
     };
 
-    expect(migrateStoryExport(v3Export)).toEqual(v3Export);
+    expect(migrateStoryExport(currentExport)).toEqual(currentExport);
+  });
+
+  it('migrates a V4 export with the stat system off and empty stat collections', () => {
+    const v4Export = {
+      formatVersion: 4,
+      story: {
+        id: 'story-4',
+        title: 'Current story',
+        favoriteBehavior: 'individual',
+        normalizeSceneTiming: false,
+      },
+      choiceCheckGroups: [{ id: 'group-1' }],
+      choiceChecks: [],
+      effects: [],
+    };
+
+    expect(migrateStoryExport(v4Export)).toEqual({
+      ...v4Export,
+      story: { ...v4Export.story, statSystem: false, statNotation: 'letter' },
+      ...EMPTY_V5_COLLECTIONS,
+      formatVersion: CURRENT_STORY_FORMAT_VERSION,
+    });
   });
 
   it('rejects an export produced by a newer format', () => {

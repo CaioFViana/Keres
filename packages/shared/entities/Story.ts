@@ -1,4 +1,6 @@
 export type FavoriteBehavior = 'global' | 'individual' | 'individual_public';
+/** Notação dos valores do sistema de status: letras (F, D, C…) ou o número puro. */
+export type StatNotation = 'letter' | 'number';
 
 export interface Story {
   id: string;
@@ -19,6 +21,10 @@ export interface Story {
   // Só é relevante (e só exibido na UI) para histórias vinculadas a um servidor - histórias
   // locais só têm o papel 'owner', então a distinção reader/writer não existe para elas.
   allowReaderComments: boolean;
+  /** Liga o sistema de status desta história (stats, escadas, radar). */
+  statSystem: boolean;
+  /** Como os valores de status são exibidos. Só importa com `statSystem` ligado. */
+  statNotation: StatNotation;
   // Optional: ID of the server this story is synchronized with.
   // This ID references an entry in the local 'Server' entity.
   // If null or undefined, the story is considered offline-only.

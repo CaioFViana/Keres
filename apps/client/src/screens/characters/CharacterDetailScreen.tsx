@@ -61,6 +61,10 @@ import { AppAlert } from '../../utils/AppAlert';
 import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharacterListScreen';
+import { CharacterStatPanel } from '../../components/features/stats/CharacterStatPanel/CharacterStatPanel';
+import { useStoryStats } from '../../hooks/useStoryStats';
+import { useStoryStore } from '../../state/storyStore';
+import type { StatNotation } from '../../utils/statLadder';
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
@@ -114,6 +118,9 @@ const CharacterDetailScreen = () => {
 
   const [character, setCharacter] = useState<CharacterSelect | null>(null);
   const { canEdit } = useStoryRole(character?.storyId);
+  const { selectedStory } = useStoryStore();
+  const statSystemEnabled = !!selectedStory?.statSystem;
+  const statData = useStoryStats(statSystemEnabled ? character?.storyId : null);
   const {
     commentsByField,
     canComment,
@@ -734,6 +741,24 @@ const CharacterDetailScreen = () => {
           </>
         );
       })()}
+
+      {statSystemEnabled ? (
+        <>
+          <Text style={styles.sectionTitle}>{t('stats_title')}</Text>
+          <CharacterStatPanel
+            characterId={characterId}
+            characterName={character.name}
+            data={statData}
+            notation={(selectedStory?.statNotation ?? 'letter') as StatNotation}
+            onCompare={(modeId) =>
+              navigation.navigate('StatsDrawer', {
+                screen: 'StatComparison',
+                params: { characterId, modeId: modeId ?? undefined },
+              })
+            }
+          />
+        </>
+      ) : null}
 
       <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
       <EntityGalleryManager

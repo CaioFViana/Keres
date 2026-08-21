@@ -20,7 +20,12 @@ it('covers every application screen with a reader-facing header', () => {
   );
   // As duas bibliotecas de documentação não têm atalho contextual: a página de destino seria
   // ela mesma.
-  const intentionallyUnmapped = new Set(['HelpDrawer', 'StoryDevicesDrawer', 'StorySelection']);
+  const intentionallyUnmapped = new Set([
+    'HelpDrawer',
+    'StatsDrawer',
+    'StoryDevicesDrawer',
+    'StorySelection',
+  ]);
 
   for (const routeName of new Set(routeNames)) {
     if (!intentionallyUnmapped.has(routeName)) expect(screenHelpPage[routeName]).toBeDefined();

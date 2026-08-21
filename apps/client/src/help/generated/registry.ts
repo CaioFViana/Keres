@@ -15,6 +15,8 @@ import changePassword_en from '../content/change-password/en';
 import changePassword_pt from '../content/change-password/pt';
 import chapters_en from '../content/chapters/en';
 import chapters_pt from '../content/chapters/pt';
+import characterModes_en from '../content/character-modes/en';
+import characterModes_pt from '../content/character-modes/pt';
 import characterRelationships_en from '../content/character-relationships/en';
 import characterRelationships_pt from '../content/character-relationships/pt';
 import characters_en from '../content/characters/en';
@@ -75,6 +77,8 @@ import scenes_en from '../content/scenes/en';
 import scenes_pt from '../content/scenes/pt';
 import seeAlso_en from '../content/see-also/en';
 import seeAlso_pt from '../content/see-also/pt';
+import stats_en from '../content/stats/en';
+import stats_pt from '../content/stats/pt';
 import storyAnalysis_en from '../content/story-analysis/en';
 import storyAnalysis_pt from '../content/story-analysis/pt';
 import storyDashboard_en from '../content/story-dashboard/en';
@@ -120,6 +124,7 @@ export type GeneratedHelpPageId =
   | 'branching-basics'
   | 'change-password'
   | 'chapters'
+  | 'character-modes'
   | 'character-relationships'
   | 'characters'
   | 'choice-conditions'
@@ -150,6 +155,7 @@ export type GeneratedHelpPageId =
   | 'scene-timing'
   | 'scenes'
   | 'see-also'
+  | 'stats'
   | 'story-analysis'
   | 'story-dashboard'
   | 'story-devices'
@@ -197,6 +203,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   chapters: {
     en: chapters_en,
     pt: chapters_pt,
+  },
+  'character-modes': {
+    en: characterModes_en,
+    pt: characterModes_pt,
   },
   'character-relationships': {
     en: characterRelationships_en,
@@ -317,6 +327,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'see-also': {
     en: seeAlso_en,
     pt: seeAlso_pt,
+  },
+  stats: {
+    en: stats_en,
+    pt: stats_pt,
   },
   'story-analysis': {
     en: storyAnalysis_en,

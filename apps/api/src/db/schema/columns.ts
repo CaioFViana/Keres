@@ -33,6 +33,12 @@ export const text = (usingSqlite ? sqlite.text : pg.text) as typeof pg.text;
 
 export const integer = (usingSqlite ? sqlite.integer : pg.integer) as typeof pg.integer;
 
+/**
+ * Número com casas decimais. `real` existe nos dois dialetos e o tipo inferido é `number` dos
+ * dois lados, então serviços não notam a diferença - mesmo critério das colunas acima.
+ */
+export const real = (usingSqlite ? sqlite.real : pg.real) as typeof pg.real;
+
 /** Inteiro de 64 bits. `INTEGER` do SQLite já é 64 bits; no Postgres é `bigint`. */
 export const bigintNumber = (
   usingSqlite

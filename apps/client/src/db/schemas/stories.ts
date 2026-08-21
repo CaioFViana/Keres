@@ -26,6 +26,10 @@ export const stories = sqliteTable('stories', {
   allowReaderComments: integer('allow_reader_comments', { mode: 'boolean' })
     .notNull()
     .default(false),
+  /** Liga o sistema de status desta história (stats, escadas, radar). */
+  statSystem: integer('stat_system', { mode: 'boolean' }).notNull().default(false),
+  /** 'letter' | 'number' - como os valores de status são exibidos. */
+  statNotation: text('stat_notation').notNull().default('letter'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

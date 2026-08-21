@@ -11,6 +11,8 @@ export const fieldSources: Record<string, string[]> = {
     'extraNotes',
     'theme',
   ],
+  'character-modes': ['name', 'modeChanges'],
+  stats: ['name', 'isPrimary', 'label', 'minValue', 'value'],
   characters: [
     'name',
     'title',
@@ -82,6 +84,7 @@ export const entityMetadataHelpPages = {
   Chapter: 'chapters',
   Scene: 'scenes',
   Choice: 'choices',
+  Mode: 'character-modes',
 } as const;
 
 export const visibleEntityProperties = fieldSources;
@@ -193,6 +196,31 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'updatedAt',
     ],
     invisible: ['id', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Mode: {
+    documented: ['name', 'modeChanges', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'characterId', 'order', 'version', 'isDeleted', 'deletedAt'],
+  },
+  Stat: {
+    documented: ['name', 'isPrimary', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'order', 'version', 'isDeleted', 'deletedAt'],
+  },
+  StatStrength: {
+    documented: ['label', 'minValue', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'statId', 'version', 'isDeleted', 'deletedAt'],
+  },
+  StatRelation: {
+    documented: ['value', 'createdAt', 'updatedAt'],
+    invisible: [
+      'id',
+      'storyId',
+      'characterId',
+      'modeId',
+      'statId',
+      'version',
+      'isDeleted',
+      'deletedAt',
+    ],
   },
   Comment: {
     documented: [
@@ -396,6 +424,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'theme',
       'normalizeSceneTiming',
       'allowReaderComments',
+      'statSystem',
+      'statNotation',
       'createdAt',
       'updatedAt',
     ],

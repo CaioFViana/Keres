@@ -10,6 +10,8 @@ import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextIn
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager'; // Import CharacterRelationManager
+import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
+import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
 import SeeAlsoManager, {
   SeeAlsoManagerHandle,
 } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
@@ -24,7 +26,7 @@ import {
   useRoute,
 } from '@react-navigation/native'; // Import StackActions
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -41,6 +43,10 @@ import {
   createCharacterRelationService,
 } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
+import { useStoryStats } from '../../hooks/useStoryStats';
+import { createModeService } from '../../services/storymanagement/ModeService';
+import { createStatRelationService } from '../../services/storymanagement/StatRelationService';
+import type { StatNotation } from '../../utils/statLadder';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -106,6 +112,16 @@ const CharacterFormScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
 
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // To pass to CharacterRelationManager
+  // Modos e valores de status só existem depois que o personagem tem id, então os dois blocos
+  // abaixo aparecem apenas em edição - criar já com modos exigiria uma fila de pendentes como a
+  // de relações, sem ganho: o autor acabou de nomear o personagem.
+  const statData = useStoryStats(selectedStory?.id);
+  const characterModes = useMemo(
+    () => statData.modes.filter((mode) => mode.characterId === currentCharacterId),
+    [statData.modes, currentCharacterId],
+  );
+  const modeService = useCallback(() => createModeService(drizzleDb), [drizzleDb]);
+  const statRelationService = useCallback(() => createStatRelationService(drizzleDb), [drizzleDb]);
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
   // Enquanto `currentCharacterId` é undefined (criando), guarda aqui - sem id real ainda pra
   // gravar a relação. Replay em `persistPendingCharacterRelations` depois do save principal.
@@ -664,6 +680,52 @@ const CharacterFormScreen = () => {
           label={t('character_tags')}
         />
       </View>
+
+      {selectedStory?.id && currentCharacterId && (
+        <View style={styles.noteSection}>
+          <ModeManager
+            modes={characterModes}
+            editable
+            onCreate={async (mode) => {
+              await modeService().createMode(userId!, {
+                storyId: selectedStory.id,
+                characterId: currentCharacterId,
+                ...mode,
+                order: characterModes.length,
+              });
+            }}
+            onUpdate={(modeId, mode) => modeService().updateMode(userId!, modeId, mode)}
+            onDelete={(modeId) => modeService().deleteMode(userId!, modeId)}
+          />
+        </View>
+      )}
+
+      {selectedStory?.id && currentCharacterId && selectedStory.statSystem && (
+        <View style={styles.noteSection}>
+          <CharacterStatValuesEditor
+            characterId={currentCharacterId}
+            data={statData}
+            notation={(selectedStory.statNotation ?? 'letter') as StatNotation}
+            editable
+            onSetValue={({ modeId, statId, value }) =>
+              statRelationService().setValue(userId!, {
+                storyId: selectedStory.id,
+                characterId: currentCharacterId,
+                modeId,
+                statId,
+                value,
+              })
+            }
+            onClearValue={({ modeId, statId }) =>
+              statRelationService().clearValue(userId!, {
+                characterId: currentCharacterId,
+                modeId,
+                statId,
+              })
+            }
+          />
+        </View>
+      )}
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>

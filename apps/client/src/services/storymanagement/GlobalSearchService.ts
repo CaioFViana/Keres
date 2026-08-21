@@ -118,10 +118,13 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
 
         for (const row of rows as Record<string, any>[]) {
           const match = findMatchingField(row, searchFields, trimmedTerm);
+          // Modo não tem tela própria: o resultado carrega o id do personagem dono, que é para
+          // onde `navigateToEntityDetail` leva (ver ENTITY_ROUTES.Mode em entityNavigation).
+          const resultId = entityType === 'Mode' ? row.characterId : row.id;
           const key = `${entityType}:${row.id}`;
           results.set(key, {
             entityType,
-            id: row.id,
+            id: resultId,
             title: String(row[titleField] ?? ''),
             snippet: match ? buildSnippet(match.field, match.value) : '',
             isFavorite: null,

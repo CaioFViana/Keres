@@ -93,6 +93,7 @@ jest.mock(
   () => () => null,
 );
 jest.mock('../../src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../src/navigation/StatsStack', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../src/help/contextualHelp', () => ({
   __esModule: true,
   screenHelpPage: { ScenesStack: 'scenes' },
@@ -301,7 +302,7 @@ afterEach(() => jest.restoreAllMocks());
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  expect(mockDrawerScreens).toHaveLength(23);
+  expect(mockDrawerScreens).toHaveLength(24);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -332,6 +333,7 @@ it.each([
   ['StorySchemaStack', 'StorySchemaList'],
   ['CommentsStack', 'CommentsList'],
   ['OperationLogStack', 'OperationLog'],
+  ['StatsDrawer', 'StatList'],
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its list screen when its drawer item is pressed', async (drawerName, screen) => {

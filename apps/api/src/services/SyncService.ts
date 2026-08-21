@@ -53,6 +53,10 @@ import { WorldRuleSyncHandler } from './entity-sync-handlers/WorldRuleSyncHandle
 import { FavoriteSyncHandler } from './entity-sync-handlers/FavoriteSyncHandler';
 import { SeeAlsoRelationSyncHandler } from './entity-sync-handlers/SeeAlsoRelationSyncHandler';
 import { CommentSyncHandler } from './entity-sync-handlers/CommentSyncHandler';
+import { ModeSyncHandler } from './entity-sync-handlers/ModeSyncHandler';
+import { StatRelationSyncHandler } from './entity-sync-handlers/StatRelationSyncHandler';
+import { StatStrengthSyncHandler } from './entity-sync-handlers/StatStrengthSyncHandler';
+import { StatSyncHandler } from './entity-sync-handlers/StatSyncHandler';
 import { storyPermissionService } from './StoryPermissionService';
 
 /** Campos de bookkeeping que nunca contam como "mudança de conteúdo" em `getChangedFieldsSinceVersion`. */
@@ -97,6 +101,10 @@ export class SyncService {
     this.registerEntityHandler(new FavoriteSyncHandler());
     this.registerEntityHandler(new SeeAlsoRelationSyncHandler());
     this.registerEntityHandler(new CommentSyncHandler());
+    this.registerEntityHandler(new ModeSyncHandler());
+    this.registerEntityHandler(new StatSyncHandler());
+    this.registerEntityHandler(new StatStrengthSyncHandler());
+    this.registerEntityHandler(new StatRelationSyncHandler());
   }
 
   private registerEntityHandler(handler: SyncEntityHandler) {

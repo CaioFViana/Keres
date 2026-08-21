@@ -61,6 +61,14 @@ import {
   StorySelect,
   storyPermissions,
   StorySchemaFieldInsert,
+  ModeInsert,
+  modes,
+  StatInsert,
+  StatRelationInsert,
+  statRelations,
+  stats,
+  StatStrengthInsert,
+  statStrengths,
   storySchemaFields,
   SuggestionInsert,
   suggestions,
@@ -140,6 +148,10 @@ async function deleteStoryChildRows(tx: AppDrizzleTransaction, storyId: string):
   await tx.delete(scenes).where(eq(scenes.storyId, storyId)).run();
   await tx.delete(seeAlsoRelations).where(eq(seeAlsoRelations.storyId, storyId)).run();
   await tx.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
+  await tx.delete(statRelations).where(eq(statRelations.storyId, storyId)).run();
+  await tx.delete(statStrengths).where(eq(statStrengths.storyId, storyId)).run();
+  await tx.delete(stats).where(eq(stats.storyId, storyId)).run();
+  await tx.delete(modes).where(eq(modes.storyId, storyId)).run();
   await tx.delete(storySchemaFields).where(eq(storySchemaFields.storyId, storyId)).run();
   await tx.delete(suggestions).where(eq(suggestions.storyId, storyId)).run();
   await tx.delete(syncConflicts).where(eq(syncConflicts.storyId, storyId)).run();
@@ -1119,6 +1131,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         storyFavorites,
         storyComments,
         storySeeAlsoRelations,
+        storyStats,
+        storyStatStrengths,
+        storyStatRelations,
+        storyModes,
       ] = await Promise.all([
         db.query.chapters.findMany({ where: belongsToStory(chapters) }),
         db.query.scenes.findMany({ where: belongsToStory(scenes) }),
@@ -1143,6 +1159,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         db.query.favorites.findMany({ where: belongsToStory(favorites) }),
         db.query.comments.findMany({ where: belongsToStory(comments) }),
         db.query.seeAlsoRelations.findMany({ where: belongsToStory(seeAlsoRelations) }),
+        db.query.stats.findMany({ where: belongsToStory(stats) }),
+        db.query.statStrengths.findMany({ where: belongsToStory(statStrengths) }),
+        db.query.statRelations.findMany({ where: belongsToStory(statRelations) }),
+        db.query.modes.findMany({ where: belongsToStory(modes) }),
       ]);
 
       return FullStoryExportSchema.parse({
@@ -1170,6 +1190,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         favorites: storyFavorites,
         comments: storyComments,
         seeAlsoRelations: storySeeAlsoRelations,
+        stats: storyStats,
+        statStrengths: storyStatStrengths,
+        statRelations: storyStatRelations,
+        modes: storyModes,
         // O importador usa este número como ponto de partida da sincronização. Preservar o
         // marcador local mantém o pacote útil para uma história já ligada a um servidor.
         serverLastOperationVersion: story.lastServerSyncedLog || 0,
@@ -1667,6 +1691,63 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
               deletedAt: null,
             };
             await tx.insert(comments).values(commentToInsert).run();
+          }
+        }
+
+        // Sistema de status: Stat e Mode antes de StatStrength/StatRelation, que os referenciam.
+        if (fullStoryData.stats) {
+          for (const stat of fullStoryData.stats) {
+            const statToInsert: StatInsert = {
+              ...stat,
+              storyId: originalStory.id,
+              createdAt: new Date(stat.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(stats).values(statToInsert).run();
+          }
+        }
+
+        if (fullStoryData.modes) {
+          for (const mode of fullStoryData.modes) {
+            const modeToInsert: ModeInsert = {
+              ...mode,
+              storyId: originalStory.id,
+              createdAt: new Date(mode.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(modes).values(modeToInsert).run();
+          }
+        }
+
+        if (fullStoryData.statStrengths) {
+          for (const strength of fullStoryData.statStrengths) {
+            const strengthToInsert: StatStrengthInsert = {
+              ...strength,
+              storyId: originalStory.id,
+              createdAt: new Date(strength.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(statStrengths).values(strengthToInsert).run();
+          }
+        }
+
+        if (fullStoryData.statRelations) {
+          for (const value of fullStoryData.statRelations) {
+            const valueToInsert: StatRelationInsert = {
+              ...value,
+              storyId: originalStory.id,
+              createdAt: new Date(value.createdAt),
+              updatedAt: new Date(),
+              isDeleted: false,
+              deletedAt: null,
+            };
+            await tx.insert(statRelations).values(valueToInsert).run();
           }
         }
 

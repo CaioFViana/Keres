@@ -12,7 +12,16 @@ const ENTITY_TYPES: NavigableEntityType[] = [
   'Chapter',
   'Note',
   'WorldRule',
+  // Modo abre o detalhe do personagem dono - ver ENTITY_ROUTES.Mode.
+  'Mode',
 ];
+
+/**
+ * Modo é o único tipo navegável sem stack e sem tela própria: o resultado da busca carrega o id
+ * do personagem dono, e abrir leva ao detalhe dele. Por isso ele fica fora da checagem de
+ * convenção de nomes abaixo, mas continua dentro da checagem de paridade com a busca global.
+ */
+const OWN_SCREEN_ENTITY_TYPES = ENTITY_TYPES.filter((entityType) => entityType !== 'Mode');
 
 function fakeDrawer() {
   const navigate = jest.fn();
@@ -31,7 +40,7 @@ describe('navigateToEntityDetail', () => {
     });
   });
 
-  it.each(ENTITY_TYPES)('has a route for %s', (entityType) => {
+  it.each(OWN_SCREEN_ENTITY_TYPES)('has a route for %s', (entityType) => {
     const { navigate, drawer } = fakeDrawer();
 
     navigateToEntityDetail(drawer, entityType, 'id-1');
@@ -49,6 +58,17 @@ describe('navigateToEntityDetail', () => {
     navigateToEntityDetail(drawer, 'ItemJourney', 'journey-1');
 
     expect(navigate.mock.calls[0][1].params).toEqual({ itemJourneyId: 'journey-1' });
+  });
+
+  it('sends a mode to the detail screen of the character that owns it', () => {
+    const { navigate, drawer } = fakeDrawer();
+
+    navigateToEntityDetail(drawer, 'Mode', 'character-1');
+
+    expect(navigate).toHaveBeenCalledWith('CharactersStack', {
+      screen: 'CharacterDetail',
+      params: { characterId: 'character-1' },
+    });
   });
 
   it('passes the id through untouched', () => {

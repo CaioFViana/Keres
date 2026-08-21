@@ -20,6 +20,8 @@ import { TagRelationSchema } from './TagRelationSchemas'; // Adjusted path
 import { TagSchema } from './TagSchemas'; // Adjusted path
 import { WorldRuleSchema } from './WorldRuleSchemas'; // Adjusted path
 import { NoteRelationSchema } from './NoteRelationSchemas';
+import { ModeSchema } from './ModeSchemas';
+import { StatRelationSchema, StatSchema, StatStrengthSchema } from './StatSchemas';
 import { CURRENT_STORY_FORMAT_VERSION } from './StoryExportVersion';
 import { StorySchemaFieldSchema } from './StorySchemaFieldSchemas';
 import { AttributeValueSchema } from './AttributeValueSchemas';
@@ -63,6 +65,12 @@ export const FullStoryExportSchema = z.object({
   choiceCheckGroups: z.array(ChoiceCheckGroupSchema).optional(),
   choiceChecks: z.array(ChoiceCheckSchema).optional(),
   effects: z.array(EffectSchema).optional(),
+  // Introduzidos no formato V5 (sistema de status e modos); migrações anteriores fornecem
+  // listas vazias.
+  stats: z.array(StatSchema).optional(),
+  statStrengths: z.array(StatStrengthSchema).optional(),
+  statRelations: z.array(StatRelationSchema).optional(),
+  modes: z.array(ModeSchema).optional(),
   serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
   // Ausente em exports de antes deste campo existir - `migrateStoryExport` normaliza para
   // `CURRENT_STORY_FORMAT_VERSION` antes desta validação rodar, então o default aqui é só

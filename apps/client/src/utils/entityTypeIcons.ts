@@ -20,4 +20,5 @@ export const ENTITY_TYPE_ICONS: Record<GlobalSearchEntityType, keyof typeof Ioni
   Chapter: 'book-outline',
   Note: 'document-text-outline',
   WorldRule: 'shield-checkmark-outline',
+  Mode: 'sparkles-outline',
 };

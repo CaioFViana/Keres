@@ -49,6 +49,12 @@ import { WorldRuleClientSyncHandler } from './entity-sync-handlers/WorldRuleClie
 import { FavoriteClientSyncHandler } from './entity-sync-handlers/FavoriteClientSyncHandler';
 import { SeeAlsoRelationClientSyncHandler } from './entity-sync-handlers/SeeAlsoRelationClientSyncHandler';
 import { CommentClientSyncHandler } from './entity-sync-handlers/CommentClientSyncHandler';
+import {
+  ModeClientSyncHandler,
+  StatClientSyncHandler,
+  StatRelationClientSyncHandler,
+  StatStrengthClientSyncHandler,
+} from './entity-sync-handlers/StatClientSyncHandler';
 import { SuggestionClientSyncHandler } from './entity-sync-handlers/SuggestionClientSyncHandler';
 import { createMediaSyncService, MediaSyncService } from './MediaSyncService';
 import { createServerService } from './ServerService';
@@ -103,6 +109,10 @@ const SYNC_ENTITY_EVENTS: Record<string, string> = {
   SeeAlsoRelation: 'see_also_relation_changed',
   Comment: 'comment_changed',
   Suggestion: 'suggestion_changed',
+  Stat: 'stat_changed',
+  StatStrength: 'stat_strength_changed',
+  StatRelation: 'stat_relation_changed',
+  Mode: 'mode_changed',
 };
 
 const FAVORITE_TARGET_EVENTS: Record<string, string> = {
@@ -184,6 +194,10 @@ export class SyncEngineService {
     this.registerEntityHandler(new SeeAlsoRelationClientSyncHandler());
     this.registerEntityHandler(new CommentClientSyncHandler());
     this.registerEntityHandler(new SuggestionClientSyncHandler());
+    this.registerEntityHandler(new StatClientSyncHandler());
+    this.registerEntityHandler(new StatStrengthClientSyncHandler());
+    this.registerEntityHandler(new StatRelationClientSyncHandler());
+    this.registerEntityHandler(new ModeClientSyncHandler());
   }
 
   public static getInstance(): SyncEngineService {

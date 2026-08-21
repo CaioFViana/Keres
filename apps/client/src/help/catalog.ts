@@ -38,6 +38,8 @@ export const helpSections: HelpSection[] = [
     pageIds: [
       'characters',
       'character-relationships',
+      'character-modes',
+      'stats',
       'chapters',
       'scenes',
       'scene-timing',

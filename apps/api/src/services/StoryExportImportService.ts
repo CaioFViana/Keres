@@ -118,6 +118,20 @@ export class StoryExportImportService {
       where: (comments, { eq, and }) =>
         and(eq(comments.storyId, storyId), eq(comments.isDeleted, false)),
     });
+    const stats = await db.query.stats.findMany({
+      where: (stats, { eq, and }) => and(eq(stats.storyId, storyId), eq(stats.isDeleted, false)),
+    });
+    const statStrengths = await db.query.statStrengths.findMany({
+      where: (statStrengths, { eq, and }) =>
+        and(eq(statStrengths.storyId, storyId), eq(statStrengths.isDeleted, false)),
+    });
+    const statRelations = await db.query.statRelations.findMany({
+      where: (statRelations, { eq, and }) =>
+        and(eq(statRelations.storyId, storyId), eq(statRelations.isDeleted, false)),
+    });
+    const modes = await db.query.modes.findMany({
+      where: (modes, { eq, and }) => and(eq(modes.storyId, storyId), eq(modes.isDeleted, false)),
+    });
     const seeAlsoRelations = await db.query.seeAlsoRelations.findMany({
       where: (relations, { eq, and }) =>
         and(eq(relations.storyId, storyId), eq(relations.isDeleted, false)),
@@ -175,6 +189,10 @@ export class StoryExportImportService {
       favorites,
       comments,
       seeAlsoRelations,
+      stats,
+      statStrengths,
+      statRelations,
+      modes,
       serverLastOperationVersion: serverLastOperationVersion,
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
@@ -1023,6 +1041,104 @@ export class StoryExportImportService {
           };
         });
         await tx.insert(dbSchema.comments).values(newCommentsData);
+      }
+
+      // --- Sistema de status ---
+      // Ordem obrigatória: Stat e Mode antes de StatStrength/StatRelation, que os referenciam.
+      if (validatedFullStory.stats && validatedFullStory.stats.length > 0) {
+        const newStatsData = validatedFullStory.stats.map((original) => {
+          const newId = nextId(original.id);
+          idMap.set(original.id, newId);
+          return {
+            ...original,
+            id: newId,
+            storyId: targetStoryId,
+            version: 1,
+            createdAt: now,
+            updatedAt: now,
+            isDeleted: false,
+            deletedAt: null,
+          };
+        });
+        await tx.insert(dbSchema.stats).values(newStatsData);
+      }
+
+      if (validatedFullStory.modes && validatedFullStory.modes.length > 0) {
+        const newModesData = validatedFullStory.modes.map((original) => {
+          const newId = nextId(original.id);
+          idMap.set(original.id, newId);
+          const characterId = idMap.get(original.characterId);
+          if (!characterId) {
+            throw new Error(
+              `Import Error: Mode ${original.id} references a character absent from the export.`,
+            );
+          }
+          return {
+            ...original,
+            id: newId,
+            storyId: targetStoryId,
+            characterId,
+            version: 1,
+            createdAt: now,
+            updatedAt: now,
+            isDeleted: false,
+            deletedAt: null,
+          };
+        });
+        await tx.insert(dbSchema.modes).values(newModesData);
+      }
+
+      if (validatedFullStory.statStrengths && validatedFullStory.statStrengths.length > 0) {
+        const newStatStrengthsData = validatedFullStory.statStrengths.map((original) => {
+          const newId = nextId(original.id);
+          idMap.set(original.id, newId);
+          // statId nulo é a escada padrão da história, que não referencia stat nenhum.
+          const statId = original.statId ? idMap.get(original.statId) : null;
+          if (original.statId && !statId) {
+            throw new Error(
+              `Import Error: Stat tier ${original.id} references a stat absent from the export.`,
+            );
+          }
+          return {
+            ...original,
+            id: newId,
+            storyId: targetStoryId,
+            statId: statId ?? null,
+            version: 1,
+            createdAt: now,
+            updatedAt: now,
+            isDeleted: false,
+            deletedAt: null,
+          };
+        });
+        await tx.insert(dbSchema.statStrengths).values(newStatStrengthsData);
+      }
+
+      if (validatedFullStory.statRelations && validatedFullStory.statRelations.length > 0) {
+        const newStatRelationsData = validatedFullStory.statRelations.map((original) => {
+          const characterId = idMap.get(original.characterId);
+          const statId = idMap.get(original.statId);
+          const modeId = original.modeId ? idMap.get(original.modeId) : null;
+          if (!characterId || !statId || (original.modeId && !modeId)) {
+            throw new Error(
+              `Import Error: Stat value ${original.id} references an entity absent from the export.`,
+            );
+          }
+          return {
+            ...original,
+            id: nextId(original.id),
+            storyId: targetStoryId,
+            characterId,
+            statId,
+            modeId: modeId ?? null,
+            version: 1,
+            createdAt: now,
+            updatedAt: now,
+            isDeleted: false,
+            deletedAt: null,
+          };
+        });
+        await tx.insert(dbSchema.statRelations).values(newStatRelationsData);
       }
 
       if (validatedFullStory.favorites && validatedFullStory.favorites.length > 0) {

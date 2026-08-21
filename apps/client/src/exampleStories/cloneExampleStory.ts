@@ -48,6 +48,10 @@ export function cloneExampleStoryForInstall(
   registerAll(example.seeAlsoRelations);
   registerAll(example.favorites);
   registerAll(example.locationRelations);
+  registerAll(example.stats);
+  registerAll(example.statStrengths);
+  registerAll(example.statRelations);
+  registerAll(example.modes);
 
   const remapId = (id: string) => idMap.get(id) ?? id;
   const remapNullableId = (id: string | null) => (id === null ? null : remapId(id));
@@ -191,6 +195,25 @@ export function cloneExampleStoryForInstall(
       storyId,
       locationAId: remapId(relation.locationAId),
       locationBId: remapId(relation.locationBId),
+    })),
+    stats: example.stats?.map((stat) => ({ ...cloneEntity(stat), storyId })),
+    statStrengths: example.statStrengths?.map((strength) => ({
+      ...cloneEntity(strength),
+      storyId,
+      // Nulo é a escada padrão da história e continua nulo na cópia.
+      statId: remapNullableId(strength.statId),
+    })),
+    statRelations: example.statRelations?.map((value) => ({
+      ...cloneEntity(value),
+      storyId,
+      characterId: remapId(value.characterId),
+      statId: remapId(value.statId),
+      modeId: remapNullableId(value.modeId),
+    })),
+    modes: example.modes?.map((mode) => ({
+      ...cloneEntity(mode),
+      storyId,
+      characterId: remapId(mode.characterId),
     })),
     // O cursor pertence ao servidor de origem, não à cópia recém-instalada.
     serverLastOperationVersion: 0,

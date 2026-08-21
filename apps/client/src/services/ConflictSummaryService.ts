@@ -66,6 +66,10 @@ export const ENTITY_LABEL_KEYS: Record<string, string> = {
   Tag: 'tag',
   TagRelation: 'tag_relation',
   WorldRule: 'world_rule',
+  Stat: 'stat',
+  StatStrength: 'stat_strength',
+  StatRelation: 'stat_relation',
+  Mode: 'mode',
 };
 
 type RelationFieldTarget =
@@ -115,6 +119,11 @@ const RELATION_FIELD_TARGETS: Record<string, RelationFieldTarget[]> = {
   SeeAlsoRelation: [
     { kind: 'dynamic', idField: 'entityAId', typeField: 'entityAType' },
     { kind: 'dynamic', idField: 'entityBId', typeField: 'entityBType' },
+  ],
+  StatRelation: [
+    { kind: 'fixed', field: 'characterId', entityType: 'Character' },
+    { kind: 'fixed', field: 'statId', entityType: 'Stat' },
+    { kind: 'fixed', field: 'modeId', entityType: 'Mode' },
   ],
 };
 

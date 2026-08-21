@@ -149,6 +149,10 @@ const StoryFormScreen = () => {
           theme,
           normalizeSceneTiming: false,
           allowReaderComments: false,
+          // O sistema de status é ligado depois, em Configurações da História: uma história
+          // nova nunca nasce com ele.
+          statSystem: false,
+          statNotation: 'letter',
           lastOperationLog: 0,
           lastServerSyncedLog: 0,
         };

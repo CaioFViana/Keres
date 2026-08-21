@@ -19,11 +19,15 @@ import {
   items,
   locationRelations,
   locations,
+  modes,
   noteRelations,
   notes,
   scenes,
   seeAlsoRelations,
   stories,
+  statRelations,
+  statStrengths,
+  stats,
   storySchemaFields,
   suggestions,
   tagRelations,
@@ -64,6 +68,8 @@ const SIMPLE_TABLES: Partial<Record<string, { table: any; column: string }>> = {
   Story: { table: stories, column: 'title' },
   Choice: { table: choices, column: 'text' },
   StorySchemaField: { table: storySchemaFields, column: 'name' },
+  Stat: { table: stats, column: 'name' },
+  Mode: { table: modes, column: 'name' },
 };
 
 async function resolveSimpleNames(
@@ -199,6 +205,19 @@ export async function enrichDeletedDisplayNames(
         if (asId(r.groupId)) groupIdsForChecks.add(r.groupId as string);
         if (asId(r.itemId)) refs.push({ entityType: 'Item', id: r.itemId as string });
         if (asId(r.sceneId)) refs.push({ entityType: 'Scene', id: r.sceneId as string });
+        break;
+      case 'Mode':
+        if (asId(r.characterId))
+          refs.push({ entityType: 'Character', id: r.characterId as string });
+        break;
+      case 'StatStrength':
+        if (asId(r.statId)) refs.push({ entityType: 'Stat', id: r.statId as string });
+        break;
+      case 'StatRelation':
+        if (asId(r.characterId))
+          refs.push({ entityType: 'Character', id: r.characterId as string });
+        if (asId(r.statId)) refs.push({ entityType: 'Stat', id: r.statId as string });
+        if (asId(r.modeId)) refs.push({ entityType: 'Mode', id: r.modeId as string });
         break;
       case 'AttributeValue':
         if (asId(r.fieldId)) fieldIds.add(r.fieldId as string);
@@ -338,6 +357,26 @@ export async function enrichDeletedDisplayNames(
         composed = [choiceLabel, mode, type].filter(Boolean).join(' · ') || item.name;
         break;
       }
+      case 'Mode': {
+        const character = labelOrId(nameMap, 'Character', asId(r.characterId));
+        composed = item.name ? `${character} · ${item.name}` : character;
+        break;
+      }
+      case 'StatStrength': {
+        const statId = asId(r.statId);
+        const ladder = statId ? labelOrId(nameMap, 'Stat', statId) : '*';
+        const label = asText(r.label) ?? '?';
+        composed = `${ladder} · ${label} ≥ ${r.minValue ?? '?'}`;
+        break;
+      }
+      case 'StatRelation': {
+        const character = labelOrId(nameMap, 'Character', asId(r.characterId));
+        const stat = labelOrId(nameMap, 'Stat', asId(r.statId));
+        const modeId = asId(r.modeId);
+        const owner = modeId ? `${character} · ${labelOrId(nameMap, 'Mode', modeId)}` : character;
+        composed = `${owner} · ${stat} = ${r.value ?? '?'}`;
+        break;
+      }
       case 'AttributeValue': {
         const fieldId = asId(r.fieldId);
         const fieldName = fieldId ? fieldNames.get(fieldId) : null;
@@ -367,6 +406,10 @@ const ENTITY_TABLES: Partial<Record<string, any>> = {
   Story: stories,
   Choice: choices,
   StorySchemaField: storySchemaFields,
+  Stat: stats,
+  StatStrength: statStrengths,
+  StatRelation: statRelations,
+  Mode: modes,
   Suggestion: suggestions,
   Gallery: galleries,
   Comment: comments,

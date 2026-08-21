@@ -2,7 +2,7 @@ import { Button, Select } from '@/src/components/common';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
+import { FavoriteBehavior, StatNotation, Story } from '@keres/shared/entities/Story';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -69,6 +69,8 @@ const StorySettingsScreen = () => {
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
   const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
+  const [statSystem, setStatSystem] = useState(false);
+  const [statNotation, setStatNotation] = useState<StatNotation>('letter');
   const [allowReaderComments, setAllowReaderComments] = useState(false);
   const [serverId, setServerId] = useState<string | null>(null); // Servidor vinculado (read-only aqui - ver handleSendToServer/handleUnlinkFromServer)
   const [availableServers, setAvailableServers] = useState<ServerSelect[]>([]); // New state for available servers
@@ -113,6 +115,8 @@ const StorySettingsScreen = () => {
         setExtraNotes(fetchedStory.extraNotes);
         setTheme(fetchedStory.theme);
         setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
+        setStatSystem(fetchedStory.statSystem);
+        setStatNotation(fetchedStory.statNotation as StatNotation);
         setAllowReaderComments(fetchedStory.allowReaderComments);
         applyTheme(fetchedStory.theme || 'default');
 
@@ -247,6 +251,8 @@ const StorySettingsScreen = () => {
         extraNotes,
         theme,
         normalizeSceneTiming,
+        statSystem,
+        statNotation,
         // `type` / `favoriteBehavior` / `allowReaderComments` são política de dono - um
         // writer que os mandasse gravaria localmente e levaria `unauthorized` em todo push.
         ...(canManageStoryPolicy ? { favoriteBehavior, allowReaderComments } : {}),
@@ -679,6 +685,32 @@ const StorySettingsScreen = () => {
           disabled={!canEdit}
         />
       </View>
+
+      <View style={styles.switchContainer}>
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={[styles.label, { color: colors.text }]}>{t('stat_system')}</Text>
+          <Text style={{ color: colors.textSecondary }}>{t('stat_system_description')}</Text>
+        </View>
+        <ThemedSwitch value={statSystem} onValueChange={setStatSystem} disabled={!canEdit} />
+      </View>
+
+      {/* A notação só muda como os valores aparecem, então só faz sentido com o sistema ligado. */}
+      {statSystem && (
+        <View style={{ marginBottom: 20 }}>
+          <Text style={[styles.label, { color: colors.text }]}>{t('stat_notation')}</Text>
+          <Select
+            options={[
+              { label: t('stat_notation_letter'), value: 'letter' },
+              { label: t('stat_notation_number'), value: 'number' },
+            ]}
+            value={statNotation}
+            onValueChange={(value) => setStatNotation((value as StatNotation) || 'letter')}
+            placeholder={t('stat_notation')}
+            disabled={!canEdit}
+          />
+          <Text style={{ color: colors.textSecondary }}>{t('stat_notation_description')}</Text>
+        </View>
+      )}
 
       {/* Só existe distinção reader/writer para histórias vinculadas a um servidor - uma
               história local não tem colaboradores, então este ajuste não faria sentido. */}

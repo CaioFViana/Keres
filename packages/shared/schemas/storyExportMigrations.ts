@@ -71,7 +71,32 @@ const migrateV3ToV4: StoryExportMigration = {
   }),
 };
 
-const migrations: StoryExportMigration[] = [migrateV1ToV2, migrateV2ToV3, migrateV3ToV4];
+/** V4 -> V5: sistema de status (stats, escadas, valores) e modos de personagem. */
+const migrateV4ToV5: StoryExportMigration = {
+  fromVersion: 4,
+  migrate: (data) => ({
+    ...data,
+    story: data?.story
+      ? {
+          ...data.story,
+          // Pacotes anteriores não tinham o sistema; importá-los não pode ligar a feature.
+          statSystem: data.story.statSystem ?? false,
+          statNotation: data.story.statNotation ?? 'letter',
+        }
+      : data?.story,
+    stats: Array.isArray(data?.stats) ? data.stats : [],
+    statStrengths: Array.isArray(data?.statStrengths) ? data.statStrengths : [],
+    statRelations: Array.isArray(data?.statRelations) ? data.statRelations : [],
+    modes: Array.isArray(data?.modes) ? data.modes : [],
+  }),
+};
+
+const migrations: StoryExportMigration[] = [
+  migrateV1ToV2,
+  migrateV2ToV3,
+  migrateV3ToV4,
+  migrateV4ToV5,
+];
 
 /**
  * Normaliza um export bruto (JSON já parseado, ainda não validado pelo `FullStoryExportSchema`)

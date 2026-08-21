@@ -35,6 +35,9 @@ const NAME_COLUMN_BY_ENTITY: Partial<Record<SyncableEntityName, string>> = {
   WorldRule: 'title',
   Story: 'title',
   Choice: 'text',
+  Stat: 'name',
+  Mode: 'name',
+  StatStrength: 'label',
 };
 
 export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameBatchResolver {

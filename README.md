@@ -111,6 +111,7 @@ Serviços disponíveis:
 - API e Swagger: `http://localhost:3000/swagger`
 - Health check: `http://localhost:3000/kerescheck`
 - Painel administrativo compilado: `http://localhost:3000/admin`
+- Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/app` — precisa de `bun run --cwd apps/client export:web`
 - Painel administrativo com hot reload: execute `bun run dev` em `apps/admin` e abra `http://localhost:5173/admin/`
 
 ### Stack Docker local

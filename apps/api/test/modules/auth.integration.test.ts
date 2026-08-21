@@ -335,6 +335,34 @@ describe('authentication guard', () => {
   });
 });
 
+describe('GET /auth/me', () => {
+  it('returns the account from a Bearer token', async () => {
+    const user = await registerUser('ana');
+
+    const { status, data } = await request('GET', '/auth/me', { token: user.token });
+
+    expect(status).toBe(200);
+    expect(data).toEqual({ userId: user.userId, username: 'ana', tag: 'ana' });
+  });
+
+  it('returns the account from the session cookie alone', async () => {
+    const user = await registerUser('ana');
+
+    const { status, data } = await request('GET', '/auth/me', {
+      headers: { cookie: `access_token=${user.token}` },
+    });
+
+    expect(status).toBe(200);
+    expect(data).toEqual({ userId: user.userId, username: 'ana', tag: 'ana' });
+  });
+
+  it('rejects a missing session', async () => {
+    const { status } = await request('GET', '/auth/me');
+
+    expect(status).toBe(401);
+  });
+});
+
 describe('POST /auth/ws-ticket', () => {
   it('issues a short-lived ticket to an authenticated user', async () => {
     const user = await registerUser('ana');

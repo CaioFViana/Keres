@@ -1,5 +1,6 @@
+import { eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { ServerSelect } from '../db/schema';
+import { ServerSelect, servers } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import apiClient, {
   clearAllServerAuthState,
@@ -9,6 +10,7 @@ import apiClient, {
   TokenProvider,
   updateServerTokenCache,
 } from './apiClient';
+import { canRefreshSessionWithCookie, usesHttpOnlyCookieSession } from './browserCookieSession';
 import { AuthTokens, tokenVault } from './TokenVault';
 
 let drizzleDb: AppDrizzleClient | null = null;
@@ -105,7 +107,7 @@ class AuthTokenManager implements TokenProvider {
     // The Vault is authoritative; the parameter is retained as an interceptor fallback.
     const refreshTokenToUse = (await tokenVault.get(serverId))?.refreshToken || currentRefreshToken;
 
-    if (!refreshTokenToUse) {
+    if (!refreshTokenToUse && !canRefreshSessionWithCookie(server.url)) {
       console.log(
         'AuthTokenManager: No refresh token available for server. Clearing authentication.',
       );
@@ -125,7 +127,7 @@ class AuthTokenManager implements TokenProvider {
 
       const response = await refreshInstance.post<{ accessToken: string; refreshToken: string }>(
         refreshEndpoint,
-        { refreshToken: refreshTokenToUse },
+        refreshTokenToUse ? { refreshToken: refreshTokenToUse } : {},
       );
 
       const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
@@ -163,6 +165,22 @@ class AuthTokenManager implements TokenProvider {
 
   /** Awaitable variant used when removing a locally registered server. */
   public async clearAuthForServer(serverId: string): Promise<void> {
+    if (usesHttpOnlyCookieSession()) {
+      try {
+        const server = this._getServerById
+          ? await this._getServerById(serverId)
+          : drizzleDb
+            ? await drizzleDb.query.servers.findFirst({ where: eq(servers.id, serverId) })
+            : undefined;
+        if (server?.url && canRefreshSessionWithCookie(server.url)) {
+          const logoutClient = createKeresAxiosInstance({ baseURL: server.url });
+          await logoutClient.post('/auth/logout');
+        }
+      } catch (error) {
+        console.log('Failed to clear session cookie:', error);
+      }
+    }
+
     clearServerTokenCache(serverId);
     try {
       await tokenVault.remove(serverId);

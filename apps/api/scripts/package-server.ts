@@ -141,6 +141,10 @@ cpSync(
   path.join(repoRoot, 'apps', 'client', 'assets', 'images', 'desktop_icon.png'),
   path.join(bundleDir, 'desktop_icon.png'),
 );
+const clientDist = path.join(repoRoot, 'apps', 'client', 'dist');
+if (existsSync(path.join(clientDist, 'index.html'))) {
+  cpSync(clientDist, path.join(bundleDir, 'client-dist'), { recursive: true });
+}
 cpSync(path.join(apiRoot, 'packaging', 'README.md'), path.join(bundleDir, 'README.md'));
 
 const nativeName = libsqlNativePackage();

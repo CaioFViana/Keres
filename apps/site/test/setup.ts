@@ -1,5 +1,10 @@
 import { initI18n } from '../src/i18n';
 
+declare global {
+  // React 19 lê isto no `act()`. Sem a declaração, `tsc` recusa o índice em `globalThis`.
+  var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
+}
+
 // React 19 recusa `act()` se o ambiente de teste não se declara. Sem isto, cada
 // render/click do helper imprime "The current testing environment is not configured
 // to support act(...)" e os testes ainda passam — o ruído é que some.

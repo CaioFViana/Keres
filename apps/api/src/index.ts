@@ -8,9 +8,17 @@ import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
 import {
   adminDistPath as resolveAdminDistPath,
+  clientDistPath as resolveClientDistPath,
   desktopIconPath,
   showcaseDistPath as resolveShowcaseDistPath,
 } from './config/resourceRoot';
+import {
+  CLIENT_APP_ISOLATION_HEADERS,
+  CLIENT_APP_PREFIX,
+  isClientDistRootAssetPath,
+  readClientDistRootAsset,
+  readHostedClientFile,
+} from './services/hostedClient';
 import { env } from './config/env';
 import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
@@ -57,6 +65,9 @@ const showcaseDistIndexPath = path.join(showcaseDistPath, 'index.html');
 const showcaseUiAvailable = existsSync(showcaseDistIndexPath);
 /** O mesmo .ico, gerado do mesmo PNG, pelo build do site público. */
 const showcaseFaviconPath = path.join(showcaseDistPath, 'favicon.ico');
+const clientDistPath = resolveClientDistPath();
+const clientDistIndexPath = path.join(clientDistPath, 'index.html');
+const clientUiAvailable = existsSync(clientDistIndexPath);
 
 /** Fallback before an admin build exists — same PNG desktop uses, not copied into admin. */
 const desktopIconFilePath = desktopIconPath();
@@ -74,6 +85,38 @@ function applyAdminUiSecurityHeaders(set: { headers: Record<string, string | num
   for (const [name, value] of Object.entries(ADMIN_UI_SECURITY_HEADERS)) {
     set.headers[name] = value;
   }
+}
+
+function applyClientAppIsolationHeaders(set: { headers: Record<string, string | number> }): void {
+  for (const [name, value] of Object.entries(CLIENT_APP_ISOLATION_HEADERS)) {
+    set.headers[name] = value;
+  }
+}
+
+function isClientAppPath(pathname: string): boolean {
+  return (
+    pathname === CLIENT_APP_PREFIX ||
+    pathname.startsWith(`${CLIENT_APP_PREFIX}/`) ||
+    isClientDistRootAssetPath(pathname)
+  );
+}
+
+function serveClientRootAsset(
+  set: { status?: number | string; headers: Record<string, string | number> },
+  request: Request,
+): Uint8Array | { message: string } {
+  if (!clientUiAvailable) {
+    set.status = 404;
+    return { message: 'Not found' };
+  }
+  const file = readClientDistRootAsset(clientDistPath, new URL(request.url).pathname);
+  if (!file) {
+    set.status = 404;
+    return { message: 'Not found' };
+  }
+  applyClientAppIsolationHeaders(set);
+  set.headers['content-type'] = file.contentType;
+  return file.body;
 }
 
 /**
@@ -96,6 +139,9 @@ const API_PATH_PREFIXES = [
   '/kerescheck',
   '/favicon.ico',
   '/_showcase',
+  CLIENT_APP_PREFIX,
+  '/_expo',
+  '/assets',
 ];
 
 function isApiPath(pathname: string): boolean {
@@ -113,6 +159,12 @@ if (!showcaseUiAvailable) {
 if (!adminUiAvailable) {
   logger.warn(
     `Admin UI not built - /admin will 404. Run 'bun run build' in apps/api (or apps/admin) to enable it.`,
+  );
+}
+
+if (!clientUiAvailable) {
+  logger.warn(
+    `Hosted client not built - ${CLIENT_APP_PREFIX} will 404. Run 'bun run export:web' in apps/client to enable it.`,
   );
 }
 
@@ -391,6 +443,10 @@ export async function createApp() {
       .group('/admin/api', (app) => app.use(adminRoutes))
       .onAfterHandle(({ request, set }) => {
         const pathname = new URL(request.url).pathname;
+        if (isClientAppPath(pathname)) {
+          applyClientAppIsolationHeaders(set);
+          return;
+        }
         if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/api')) {
           applyAdminUiSecurityHeaders(set);
         }
@@ -438,6 +494,74 @@ export async function createApp() {
       .group('/user', (app) => app.use(userRoutes)) // Add userRoutes
       .group('/ws', (app) => app.use(wsRoutes))
       .group('/public', (app) => app.use(publicRoutes))
+      .get(
+        '/app',
+        ({ set }) => {
+          if (!clientUiAvailable) {
+            set.status = 404;
+            return { message: "Hosted client not built. Run 'bun run export:web' in apps/client." };
+          }
+          const file = readHostedClientFile(clientDistPath, '/app');
+          if (!file) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
+          applyClientAppIsolationHeaders(set);
+          set.headers['content-type'] = file.contentType;
+          return file.body;
+        },
+        {
+          detail: {
+            summary: 'Hosted Keres client',
+            description:
+              'Serves the web export of apps/client under /app, with COOP/COEP so expo-sqlite can use SharedArrayBuffer. Same origin as the API, so the HttpOnly session cookie is sent.',
+            tags: ['Client'],
+          },
+        },
+      )
+      .get(
+        '/app/*',
+        ({ set, request }) => {
+          if (!clientUiAvailable) {
+            set.status = 404;
+            return { message: "Hosted client not built. Run 'bun run export:web' in apps/client." };
+          }
+          const file = readHostedClientFile(clientDistPath, new URL(request.url).pathname);
+          if (!file) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
+          applyClientAppIsolationHeaders(set);
+          set.headers['content-type'] = file.contentType;
+          return file.body;
+        },
+        {
+          detail: {
+            summary: 'Hosted Keres client (assets and SPA fallback)',
+            tags: ['Client'],
+          },
+        },
+      )
+      .get(
+        '/_expo/*',
+        ({ set, request }) => serveClientRootAsset(set, request),
+        {
+          detail: {
+            summary: 'Expo web runtime (worker and bundles requested from origin root)',
+            tags: ['Client'],
+          },
+        },
+      )
+      .get(
+        '/assets/*',
+        ({ set, request }) => serveClientRootAsset(set, request),
+        {
+          detail: {
+            summary: 'Expo web static assets requested from origin root',
+            tags: ['Client'],
+          },
+        },
+      )
       .use(
         showcaseUiAvailable
           ? await staticPlugin({

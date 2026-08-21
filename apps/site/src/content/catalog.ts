@@ -66,6 +66,7 @@ export const FEATURE_GROUPS = [
 export const PLATFORMS = [
   'android',
   'ios',
+  'web',
   'windows',
   'macos',
   'linux',

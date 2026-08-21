@@ -9,7 +9,7 @@
   },
   "meta": {
     "title": "Keres — Organize universos, conecte narrativas",
-    "description": "Plataforma offline-first para planejar histórias no celular e no desktop, com sincronização opcional entre dispositivos."
+    "description": "Plataforma offline-first para planejar histórias no celular, no desktop e no navegador, servida pelo próprio servidor Keres."
   },
   "nav": {
     "product": "Produto",
@@ -37,8 +37,8 @@
       "body": "O Keres não é um editor de texto. Você escreve o capítulo onde preferir e registra aqui quem estava na cena, o que mudou de dono e qual regra do mundo isso respeita."
     },
     "anywhere": {
-      "title": "Celular e desktop",
-      "body": "O mesmo cliente em Android, iOS e no aplicativo de desktop para Windows, macOS e Linux. Em casa, um Keres Server no PC sincroniza o telemóvel sem Docker nem PostgreSQL."
+      "title": "Celular, desktop e navegador",
+      "body": "O mesmo cliente em Android, iOS e no aplicativo de desktop para Windows, macOS e Linux. No navegador, a API serve o cliente em /app — só na origem daquele servidor."
     }
   },
   "product": {
@@ -243,6 +243,10 @@
         "title": "iOS",
         "body": "Cliente Expo nativo. Planeje no telemóvel e sincronize com o PC de casa."
       },
+      "web": {
+        "title": "Navegador",
+        "body": "A API serve o cliente em /app, no mesmo origin. Essa página só fala com o servidor de onde veio: apontar para outra API seria cross-origin e o SQLite no browser deixa de funcionar."
+      },
       "windows": {
         "title": "Windows",
         "body": "Instalador e executável portátil, gerados a cada versão."
@@ -257,11 +261,11 @@
       },
       "keresServer": {
         "title": "Keres Server",
-        "body": "A API em SQLite, com assistente em português e inglês. Sem Docker, sem Postgres: descompacte e corra."
+        "body": "A API em SQLite, com assistente em português e inglês. Sem Docker, sem Postgres: descompacte e corra. O cliente web fica em /app neste mesmo processo."
       },
       "docker": {
         "title": "Docker",
-        "body": "Imagem no GHCR com PostgreSQL, painel /admin e armazenamento de mídia. Para quem opera um servidor de verdade."
+        "body": "Imagem no GHCR com PostgreSQL, painel /admin, cliente web em /app e armazenamento de mídia. Para quem opera um servidor de verdade."
       }
     }
   },
@@ -295,8 +299,8 @@
     "title": "Como é feito",
     "lead": "As mesmas peças descritas na documentação do repositório.",
     "client": "React Native + Expo, SQLite local, store Zustand e um motor de sincronização próprio.",
-    "desktop": "Electron empacota a build web do cliente. Essa build não corre sozinha no navegador: o aplicativo de desktop é o caminho.",
-    "api": "Bun, Elysia, Drizzle. PostgreSQL no Docker; SQLite no Keres Server de casa.",
+    "desktop": "Electron empacota a build web do cliente para o aplicativo de desktop. A mesma build, na API, é o cliente em /app.",
+    "api": "Bun, Elysia, Drizzle. PostgreSQL no Docker; SQLite no Keres Server de casa. Serve o cliente web em /app no mesmo origin.",
     "admin": "Painel React servido pela API em /admin, para contas, planos e cadastro.",
     "shared": "Entidades, contratos Zod e paletas compartilhados entre os apps."
   },
@@ -309,7 +313,7 @@
       },
       "browser": {
         "q": "Roda no navegador?",
-        "a": "Não. O cliente é aplicativo: Android, iOS e desktop. O Electron usa uma build web por baixo, mas essa build não se abre isolada no Chrome ou no Firefox. Docker e o Keres Server são o lado servidor, não um substituto do app."
+        "a": "Sim, no endereço /app do próprio servidor Keres (Docker ou Keres Server). Esse cliente só conecta à API de onde a página foi carregada. Cadastrar outro servidor no browser voltaria a ser cross-origin: o SQLite web precisa de isolamento na mesma origem. No telemóvel e no desktop você registra qualquer URL."
       },
       "offline": {
         "q": "Preciso de internet?",

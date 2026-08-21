@@ -25,6 +25,22 @@ COPY packages/shared packages/shared
 COPY apps/admin apps/admin
 RUN cd apps/admin && bun run build
 
+# ---- client-web-build: Expo web export served by the API at /app ----
+FROM oven/bun:latest AS client-web-build
+WORKDIR /app
+COPY package.json bun.lock ./
+COPY packages/shared/package.json packages/shared/package.json
+COPY apps/api/package.json apps/api/package.json
+COPY apps/admin/package.json apps/admin/package.json
+COPY apps/client/package.json apps/client/package.json
+COPY apps/desktop/package.json apps/desktop/package.json
+COPY apps/site/package.json apps/site/package.json
+COPY patches patches
+RUN bun install
+COPY packages/shared packages/shared
+COPY apps/client apps/client
+RUN bun run --cwd apps/client export:web
+
 # ---- prod-deps: production-only install, scoped to just what the API needs at runtime ----
 # Deliberately does NOT copy apps/admin/package.json: admin is already built to static files by
 # this point, so its React/Vite toolchain (and every dependency it pulls in) has no reason to
@@ -71,6 +87,10 @@ COPY apps/api/drizzle-sqlite ./apps/api/drizzle-sqlite
 # apps/api/src/index.ts looks for this at apps/admin/dist relative to its own
 # location (import.meta.dir), regardless of process.cwd() - see the comment there.
 COPY --from=admin-build /app/apps/admin/dist ./apps/admin/dist
+# Cliente web co-hospedado em /app (o mesmo export que o Electron empacota). Sem
+# este estágio a API sobe, só o /app 404. Expo fica isolado deste stage para o
+# runtime continuar só com Bun.
+COPY --from=client-web-build /app/apps/client/dist ./apps/client/dist
 
 WORKDIR /app/apps/api
 

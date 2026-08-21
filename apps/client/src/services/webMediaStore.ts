@@ -1,19 +1,15 @@
 import SparkMD5 from 'spark-md5';
 
 /**
- * Armazenamento de mídia para a plataforma web (Electron): arquivos reais em disco, através
- * da ponte IPC exposta por `apps/desktop/src/preload.ts` (a renderer não tem acesso a
- * sistema de arquivos por conta própria - `contextIsolation: true`). SQLite continua no OPFS
- * via `expo-sqlite`, cuja implementação web já funciona; mídia (fotos/vídeos) não tem motivo
- * para morar dentro do sistema de arquivos sandboxed do Chromium quando o processo principal
- * do Electron pode gravar arquivos de verdade - visíveis no Explorer/Finder, fáceis de fazer
- * backup, exatamente o tipo de capacidade nativa que só um app desktop de verdade oferece.
+ * Armazenamento de mídia na plataforma web.
  *
- * Convenção de path: sempre relativo à raiz do armazenamento (ex: `media/<storyId>/<hash>.<ext>`),
- * espelhando a mesma estrutura usada nativamente sob `Paths.document`. `mediaFileService`
- * prefixa isso com `desktop-media:` ao devolver como `localPath`/`thumbnailPath` (ver
- * MediaFileService.ts), para as duas plataformas serem distinguíveis por quem consome o
- * valor guardado no banco (`useResolvedMediaUri`).
+ * Duas costas, mesma interface:
+ *   - Electron (`window.keresMedia`): ficheiros reais via IPC, visíveis no Explorer.
+ *   - Browser hospedado: Origin Private File System, o mesmo sandbox em que o SQLite web
+ *     já vive. Sem ponte IPC. Não precisa de SharedArrayBuffer (a API do OPFS é async).
+ *
+ * Convenção de path: sempre relativo à raiz (ex: `media/<storyId>/<hash>.<ext>`).
+ * `mediaFileService` prefixa com `desktop-media:` no valor guardado no banco.
  */
 
 export const DESKTOP_MEDIA_URI_PREFIX = 'desktop-media:';
@@ -33,33 +29,132 @@ declare global {
   }
 }
 
-function bridge(): KeresMediaBridge {
-  if (!window.keresMedia) {
-    throw new Error(
-      'window.keresMedia is not available - media storage on web requires running inside the Electron shell (apps/desktop), not a plain browser tab.',
-    );
+function electronBridge(): KeresMediaBridge | undefined {
+  return typeof window === 'undefined' ? undefined : window.keresMedia;
+}
+
+function splitRelativePath(relativePath: string): { dirParts: string[]; fileName: string } {
+  const parts = relativePath.split('/').filter(Boolean);
+  const fileName = parts.pop();
+  if (!fileName) {
+    throw new Error(`Invalid media path: "${relativePath}"`);
   }
-  return window.keresMedia;
+  return { dirParts: parts, fileName };
+}
+
+async function opfsRoot(): Promise<FileSystemDirectoryHandle> {
+  if (typeof navigator === 'undefined' || !navigator.storage?.getDirectory) {
+    throw new Error('Origin Private File System is not available in this browser.');
+  }
+  const root = await navigator.storage.getDirectory();
+  return root.getDirectoryHandle('keres-media', { create: true });
+}
+
+async function opfsDirectory(
+  root: FileSystemDirectoryHandle,
+  dirParts: string[],
+  create: boolean,
+): Promise<FileSystemDirectoryHandle> {
+  let directory = root;
+  for (const part of dirParts) {
+    directory = await directory.getDirectoryHandle(part, { create });
+  }
+  return directory;
+}
+
+async function opfsList(
+  directory: FileSystemDirectoryHandle,
+  prefix: string,
+): Promise<string[]> {
+  const paths: string[] = [];
+  const entries = (
+    directory as FileSystemDirectoryHandle & {
+      entries: () => AsyncIterableIterator<[string, FileSystemHandle]>;
+    }
+  ).entries();
+  for await (const [name, handle] of entries) {
+    const next = prefix ? `${prefix}/${name}` : name;
+    if (handle.kind === 'file') {
+      paths.push(next);
+    } else if (handle.kind === 'directory') {
+      paths.push(...(await opfsList(handle as FileSystemDirectoryHandle, next)));
+    }
+  }
+  return paths;
+}
+
+const opfsBackend: KeresMediaBridge = {
+  async writeBytes(relativePath, bytes) {
+    const { dirParts, fileName } = splitRelativePath(relativePath);
+    const directory = await opfsDirectory(await opfsRoot(), dirParts, true);
+    const file = await directory.getFileHandle(fileName, { create: true });
+    const writable = await file.createWritable();
+    await writable.write(bytes as BufferSource);
+    await writable.close();
+  },
+  async readBytes(relativePath) {
+    const { dirParts, fileName } = splitRelativePath(relativePath);
+    const directory = await opfsDirectory(await opfsRoot(), dirParts, false);
+    const file = await directory.getFileHandle(fileName);
+    const blob = await file.getFile();
+    return new Uint8Array(await blob.arrayBuffer());
+  },
+  async deleteFile(relativePath) {
+    const { dirParts, fileName } = splitRelativePath(relativePath);
+    const directory = await opfsDirectory(await opfsRoot(), dirParts, false);
+    await directory.removeEntry(fileName);
+  },
+  async deleteDirectory(relativeDirPath) {
+    const parts = relativeDirPath.split('/').filter(Boolean);
+    const name = parts.pop();
+    if (!name) {
+      const storageRoot = await navigator.storage.getDirectory();
+      await storageRoot.removeEntry('keres-media', { recursive: true });
+      return;
+    }
+    const parent =
+      parts.length === 0
+        ? await opfsRoot()
+        : await opfsDirectory(await opfsRoot(), parts, false);
+    await parent.removeEntry(name, { recursive: true });
+  },
+  async listAllFiles() {
+    try {
+      return await opfsList(await opfsRoot(), '');
+    } catch {
+      return [];
+    }
+  },
+};
+
+function backend(): KeresMediaBridge {
+  return electronBridge() ?? opfsBackend;
+}
+
+function backendKind(): 'electron' | 'opfs' {
+  return electronBridge() ? 'electron' : 'opfs';
 }
 
 /**
  * Todos os paths conhecidos como existentes, mantido em memória porque `mediaFileService`
  * expõe `exists()` de forma síncrona (contrato compartilhado com a checagem nativa,
- * `File.exists`, que também é síncrona) - a ponte IPC em si só responde de forma assíncrona.
- * Somos o único escritor deste armazenamento, então o cache não corre o risco de divergir
- * por causa de mudança externa; só precisa ser semeado uma vez no boot (`hydrate`).
+ * `File.exists`, que também é síncrona).
  */
 const knownPaths = new Set<string>();
 let hydrated = false;
+let hydratedBackend: 'electron' | 'opfs' | null = null;
 
-/** Popula `knownPaths` listando o que já está em disco de sessões anteriores. Chamar uma vez no boot. */
+/** Popula `knownPaths` listando o que já está gravado. Chamar uma vez no boot. */
 export async function hydrate(): Promise<void> {
-  if (hydrated) {
+  const kind = backendKind();
+  if (hydrated && hydratedBackend === kind) {
     return;
   }
+  knownPaths.clear();
   hydrated = true;
+  hydratedBackend = kind;
   try {
-    const paths = await bridge().listAllFiles();
+    const paths = await backend().listAllFiles();
     for (const path of paths) {
       knownPaths.add(path);
     }
@@ -73,22 +168,27 @@ export function existsSync(relativePath: string): boolean {
 }
 
 export async function writeBytes(relativePath: string, bytes: Uint8Array): Promise<void> {
-  await bridge().writeBytes(relativePath, bytes);
+  await backend().writeBytes(relativePath, bytes);
   knownPaths.add(relativePath);
 }
 
 export async function readBytes(relativePath: string): Promise<Uint8Array> {
-  return bridge().readBytes(relativePath);
+  return backend().readBytes(relativePath);
 }
 
 export async function deleteFile(relativePath: string): Promise<void> {
   knownPaths.delete(relativePath);
-  await bridge().deleteFile(relativePath);
+  const blobUrl = blobUrlCache.get(relativePath);
+  if (blobUrl) {
+    URL.revokeObjectURL(blobUrl);
+    blobUrlCache.delete(relativePath);
+  }
+  await backend().deleteFile(relativePath);
 }
 
 export async function deleteDirectory(relativeDirPath: string): Promise<void> {
   const prefix = `${relativeDirPath}/`;
-  for (const path of knownPaths) {
+  for (const path of [...knownPaths]) {
     if (path.startsWith(prefix)) {
       knownPaths.delete(path);
       const blobUrl = blobUrlCache.get(path);
@@ -98,7 +198,7 @@ export async function deleteDirectory(relativeDirPath: string): Promise<void> {
       }
     }
   }
-  await bridge().deleteDirectory(relativeDirPath);
+  await backend().deleteDirectory(relativeDirPath);
 }
 
 /** MD5 hex - precisa ser exatamente o mesmo algoritmo do servidor (ver MediaStorageService.ts). */
@@ -113,9 +213,7 @@ const blobUrlCache = new Map<string, string>();
  *
  * Nunca persistido (um `blob:` URL só vale para a sessão que o criou) - por isso o banco
  * guarda o path estável (`desktop-media:media/...`), e cada tela resolve o blob URL na hora
- * de exibir (ver `useResolvedMediaUri`). Cacheado pelo resto da sessão em vez de revogado a
- * cada unmount: mais simples, e a galeria de uma história não é grande o bastante para isso
- * acumular memória de forma relevante.
+ * de exibir (ver `useResolvedMediaUri`).
  */
 export async function resolveBlobUri(mediaUri: string): Promise<string> {
   const relativePath = mediaUri.slice(DESKTOP_MEDIA_URI_PREFIX.length);

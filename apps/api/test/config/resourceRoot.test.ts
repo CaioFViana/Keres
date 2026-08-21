@@ -2,7 +2,12 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { adminDistPath, firstExistingPath, migrationsFolder } from '../../src/config/resourceRoot';
+import {
+  adminDistPath,
+  clientDistPath,
+  firstExistingPath,
+  migrationsFolder,
+} from '../../src/config/resourceRoot';
 
 describe('resourceRoot', () => {
   afterEach(() => {
@@ -39,5 +44,14 @@ describe('resourceRoot', () => {
     writeFileSync(path.join(dist, 'index.html'), '<html></html>');
     vi.stubEnv('KERES_RESOURCE_ROOT', root);
     expect(adminDistPath()).toBe(dist);
+  });
+
+  it('finds client-dist under the resource override', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'keres-client-'));
+    const dist = path.join(root, 'client-dist');
+    mkdirSync(dist);
+    writeFileSync(path.join(dist, 'index.html'), '<html></html>');
+    vi.stubEnv('KERES_RESOURCE_ROOT', root);
+    expect(clientDistPath()).toBe(dist);
   });
 });

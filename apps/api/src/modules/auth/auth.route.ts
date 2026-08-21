@@ -11,6 +11,7 @@ import { db } from '../../db';
 import { users } from '../../db/schema';
 import { InvalidRecoveryCodeError, recoveryCodeService } from '../../services/RecoveryCodeService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
+import { userService } from '../../services/UserService';
 import { isUniqueViolation, postgresErrorConstraint } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
 import type { JWTPayload } from '../../index';
@@ -466,6 +467,38 @@ export const authRoutes = new Elysia()
         description:
           'Clears httpOnly access_token and refresh_token cookies. Idempotent. The admin SPA also drops its Bearer token from localStorage on its side.',
         tags: ['Auth'],
+      },
+    },
+  )
+  .get(
+    '/me',
+    async ({ user, set }) => {
+      if (!user) {
+        set.status = 401;
+        return { message: 'Unauthorized' };
+      }
+      const found = await userService.getUserById(user.userId);
+      if (!found || found.id !== user.userId) {
+        set.status = 401;
+        return { message: 'Unauthorized' };
+      }
+      return { userId: found.id, username: found.username, tag: found.tag };
+    },
+    {
+      response: {
+        200: t.Object({
+          userId: t.String(),
+          username: t.String(),
+          tag: t.String(),
+        }),
+        401: MessageResponseSchema,
+      },
+      detail: {
+        summary: 'Current session',
+        description:
+          'Returns the signed-in account from the Bearer token or the HttpOnly session cookie. Used by the co-hosted web client after a reload, when JavaScript no longer holds the JWT.',
+        tags: ['Auth'],
+        security: [{ bearerAuth: [] }],
       },
     },
   );

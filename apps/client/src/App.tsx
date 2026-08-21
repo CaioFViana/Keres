@@ -13,6 +13,7 @@ import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
 import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
+import { restoreHostedCookieSession } from './services/HostedCookieSession';
 import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
 import { useUserSettingsStore } from './state/userSettingsStore';
 import {
@@ -99,6 +100,7 @@ const DatabaseInitializer = () => {
         await authTokenManager.hydrateTokens();
         // Set the authTokenManager as the token provider for the API client
         apiClient.setTokenProvider(authTokenManager);
+        await restoreHostedCookieSession(initializedDrizzle);
 
         const settings = await initializeUserSettings(initializedDrizzle);
         if (settings?.language) {

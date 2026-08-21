@@ -3,8 +3,8 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /**
- * Onde a API acha migrações, painel admin e ícone — em dev, no zip portátil e num
- * `bun build --compile`.
+ * Onde a API acha migrações, painel admin, export do cliente e ícone — em dev, no zip
+ * portátil e num `bun build --compile`.
  *
  * Não usa `process.cwd()`: Docker, atalhos e o binário compilado arrancam de pastas
  * que não são `apps/api`. Candidatos, por ordem:
@@ -87,6 +87,25 @@ export function showcaseDistPath(): string {
         path.join(thisDirectory, '..', '..', '..', 'admin', 'dist-showcase'),
       ].filter((value): value is string => Boolean(value)),
     ) ?? path.join(thisDirectory, '..', '..', '..', 'admin', 'dist-showcase')
+  );
+}
+
+/**
+ * Export web do cliente (`expo export -p web`). O Electron consome o mesmo `dist`
+ * pelo protocolo `app://`; a API serve-o em `/app` com reescrita do HTML.
+ */
+export function clientDistPath(): string {
+  const override = resourceOverride();
+  return (
+    firstExistingPath(
+      [
+        override ? path.join(override, 'client-dist') : undefined,
+        override ? path.join(override, 'client', 'dist') : undefined,
+        path.join(executableDirectory(), 'client-dist'),
+        path.join(executableDirectory(), 'client', 'dist'),
+        path.join(thisDirectory, '..', '..', '..', 'client', 'dist'),
+      ].filter((value): value is string => Boolean(value)),
+    ) ?? path.join(thisDirectory, '..', '..', '..', 'client', 'dist')
   );
 }
 

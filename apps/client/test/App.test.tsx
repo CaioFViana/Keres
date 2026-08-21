@@ -35,6 +35,10 @@ jest.mock('../src/services/apiClient', () => ({
   default: { setTokenProvider: jest.fn() },
 }));
 jest.mock('../src/services/webMediaStore', () => ({ __esModule: true, hydrate: jest.fn() }));
+jest.mock('../src/services/HostedCookieSession', () => ({
+  __esModule: true,
+  restoreHostedCookieSession: jest.fn(),
+}));
 jest.mock('../src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
@@ -82,6 +86,7 @@ import { initializeDrizzle, useDrizzle } from '../src/db';
 import { migrate } from '../src/db/migrate';
 import apiClient from '../src/services/apiClient';
 import { authTokenManager, setAuthDb } from '../src/services/AuthTokenManager';
+import { restoreHostedCookieSession } from '../src/services/HostedCookieSession';
 import { hydrate as hydrateWebMediaStore } from '../src/services/webMediaStore';
 import { useUserSettingsStore } from '../src/state/userSettingsStore';
 import { runSqliteWebSmokeProbe } from '../src/testing/sqliteWebSmokeProbe';
@@ -102,6 +107,7 @@ beforeEach(() => {
   (initializeDrizzle as jest.Mock).mockReturnValue(drizzle);
   (migrate as jest.Mock).mockResolvedValue(undefined);
   (authTokenManager.hydrateTokens as jest.Mock).mockResolvedValue(undefined);
+  (restoreHostedCookieSession as jest.Mock).mockResolvedValue(null);
   initializeSettings.mockResolvedValue({ language: 'pt-BR' });
   (useUserSettingsStore as unknown as jest.Mock).mockImplementation((selector) =>
     selector({ initializeSettings }),
@@ -137,6 +143,7 @@ it('initializes SQLite, authentication, settings and navigation in order', async
   expect(setAuthDb).toHaveBeenCalledWith(drizzle);
   expect(authTokenManager.hydrateTokens).toHaveBeenCalledTimes(1);
   expect(apiClient.setTokenProvider).toHaveBeenCalledWith(authTokenManager);
+  expect(restoreHostedCookieSession).toHaveBeenCalledWith(drizzle);
   expect(initializeSettings).toHaveBeenCalledWith(drizzle);
   expect(i18n.changeLanguage).toHaveBeenCalledWith('pt-BR');
   expect(screen.getByTestId('app-navigator').props.accessibilityLabel).toBe('true');

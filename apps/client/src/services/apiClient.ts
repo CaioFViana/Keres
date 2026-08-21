@@ -9,6 +9,7 @@ import {
 import { Platform } from 'react-native';
 import { ServerSelect } from '../db/schema'; // Import ServerSelect
 import { useConnectivityStore } from '../state/connectivityStore';
+import { canRefreshSessionWithCookie } from './browserCookieSession';
 
 export const NO_RESPONSE_ERROR = 'NO_RESPONSE';
 export const TIMEOUT_ERROR = 'TIMEOUT';
@@ -242,7 +243,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
 
           const refreshToken = serverTokenCache.get(serverId)?.refreshToken || null;
 
-          if (!refreshToken) {
+          if (!refreshToken && !canRefreshSessionWithCookie(currentServer.url)) {
             console.log('No refresh token available for token refresh. Clearing auth.');
             refreshState.isRefreshing = false;
             tokenProvider.clearAuth(serverId);
@@ -260,7 +261,10 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
           }
 
           try {
-            const refreshResult = await tokenProvider.refreshAccessToken(serverId, refreshToken);
+            const refreshResult = await tokenProvider.refreshAccessToken(
+              serverId,
+              refreshToken ?? '',
+            );
 
             if (refreshResult) {
               const newAccessToken = refreshResult.accessToken;

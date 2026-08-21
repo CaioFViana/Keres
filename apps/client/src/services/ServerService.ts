@@ -6,6 +6,7 @@ import { useNotificationStore } from '../state/notificationStore';
 import { Create, prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added
+import { normalizeServerUrl } from '../utils/serverUrl';
 import { isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 
@@ -21,9 +22,17 @@ export class ServerHasOwnedStoriesError extends Error {
   }
 }
 
+export class ServerUrlAlreadyRegisteredError extends Error {
+  constructor(public readonly existingServer: ServerSelect) {
+    super('A server with this URL is already registered.');
+    this.name = 'ServerUrlAlreadyRegisteredError';
+  }
+}
+
 export interface ServerService {
   getAllServers(): Promise<ServerSelect[]>;
   getServerById(serverId: string): Promise<ServerSelect | undefined>;
+  getServerByUrl(url: string): Promise<ServerSelect | undefined>;
   createServer(serverData: Create<ServerInsert>): Promise<ServerSelect>;
   updateServer(
     serverId: string,
@@ -54,16 +63,41 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
       });
     },
 
+    async getServerByUrl(url: string): Promise<ServerSelect | undefined> {
+      const canonical = normalizeServerUrl(url);
+      const live = await this.getAllServers();
+      return live.find((server) => normalizeServerUrl(server.url) === canonical);
+    },
+
     async createServer(serverData): Promise<ServerSelect> {
-      const newServer = prepareNewEntityData<ServerInsert>(serverData);
+      const url = normalizeServerUrl(serverData.url);
+      const existing = await this.getServerByUrl(url);
+      if (existing) {
+        throw new ServerUrlAlreadyRegisteredError(existing);
+      }
+      const newServer = prepareNewEntityData<ServerInsert>({ ...serverData, url });
       const result = await db.insert(servers).values(newServer).returning().get();
       return result;
     },
 
     async updateServer(serverId: string, serverData): Promise<void> {
+      const nextData =
+        serverData.url === undefined
+          ? serverData
+          : { ...serverData, url: normalizeServerUrl(serverData.url) };
+      if (nextData.url !== undefined) {
+        const current = await this.getServerById(serverId);
+        const urlChanged = !current || normalizeServerUrl(current.url) !== nextData.url;
+        if (urlChanged) {
+          const existing = await this.getServerByUrl(nextData.url);
+          if (existing && existing.id !== serverId) {
+            throw new ServerUrlAlreadyRegisteredError(existing);
+          }
+        }
+      }
       await db
         .update(servers)
-        .set({ ...serverData, updatedAt: new Date() })
+        .set({ ...nextData, updatedAt: new Date() })
         .where(eq(servers.id, serverId))
         .run();
     },

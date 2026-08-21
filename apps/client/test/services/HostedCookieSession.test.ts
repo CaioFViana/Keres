@@ -13,7 +13,11 @@ jest.mock('../../src/services/apiClient', () => ({
   default: { setBaseUrl: jest.fn(), setActiveServer: jest.fn() },
 }));
 jest.mock('../../src/services/ServerService', () => ({
-  createServerService: jest.fn(() => ({ createServer: mockCreateServer })),
+  createServerService: jest.fn(() => ({
+    createServer: mockCreateServer,
+    getServerByUrl: mockGetServerByUrl,
+    updateServer: mockUpdateServer,
+  })),
 }));
 
 import axios from 'axios';
@@ -23,6 +27,8 @@ import apiClient from '../../src/services/apiClient';
 
 const mockSettings = { setActiveServer: jest.fn() };
 const mockCreateServer = jest.fn();
+const mockGetServerByUrl = jest.fn();
+const mockUpdateServer = jest.fn();
 const usesCookie = usesHttpOnlyCookieSession as jest.Mock;
 
 beforeEach(() => {
@@ -32,7 +38,7 @@ beforeEach(() => {
 
 it('does nothing outside the hosted cookie session', async () => {
   usesCookie.mockReturnValue(false);
-  const db = { query: { servers: { findFirst: jest.fn() } } } as never;
+  const db = {} as never;
   await expect(restoreHostedCookieSession(db)).resolves.toBeNull();
   expect(mockCreateServer).not.toHaveBeenCalled();
 });
@@ -46,8 +52,9 @@ it('creates a local server record from GET /auth/me', async () => {
     tag: 'ana',
     name: 'localhost:3000',
   };
+  mockGetServerByUrl.mockResolvedValueOnce(undefined);
   mockCreateServer.mockResolvedValueOnce(created);
-  const db = { query: { servers: { findFirst: jest.fn(async () => undefined) } } } as never;
+  const db = {} as never;
   jest.spyOn(axios, 'get').mockResolvedValueOnce({
     status: 200,
     data: { userId: 'user-1', username: 'ana', tag: 'ana' },
@@ -64,8 +71,38 @@ it('creates a local server record from GET /auth/me', async () => {
   expect(mockSettings.setActiveServer).toHaveBeenCalledWith(created);
 });
 
+it('updates the existing local server when the origin is already registered', async () => {
+  const existing = {
+    id: 'server-1',
+    url: 'http://localhost:3000/',
+    idUser: 'old',
+    userName: 'old',
+    tag: 'old',
+    name: 'localhost:3000',
+  };
+  mockGetServerByUrl.mockResolvedValueOnce(existing);
+  mockUpdateServer.mockResolvedValueOnce(undefined);
+  const db = {} as never;
+  jest.spyOn(axios, 'get').mockResolvedValueOnce({
+    status: 200,
+    data: { userId: 'user-1', username: 'ana', tag: 'ana' },
+  });
+
+  await expect(restoreHostedCookieSession(db)).resolves.toMatchObject({
+    id: 'server-1',
+    idUser: 'user-1',
+    userName: 'ana',
+    tag: 'ana',
+  });
+  expect(mockCreateServer).not.toHaveBeenCalled();
+  expect(mockUpdateServer).toHaveBeenCalledWith(
+    'server-1',
+    expect.objectContaining({ idUser: 'user-1', userName: 'ana', tag: 'ana' }),
+  );
+});
+
 it('ignores a missing session', async () => {
-  const db = { query: { servers: { findFirst: jest.fn() } } } as never;
+  const db = {} as never;
   jest
     .spyOn(axios, 'get')
     .mockResolvedValueOnce({ status: 401, data: { message: 'Unauthorized' } });

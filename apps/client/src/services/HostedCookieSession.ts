@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { and, eq } from 'drizzle-orm';
 import { AppDrizzleClient } from '../db';
-import { ServerSelect, servers } from '../db/schema';
+import { ServerSelect } from '../db/schema';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import apiClient from './apiClient';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from './browserCookieSession';
@@ -40,22 +39,16 @@ export async function restoreHostedCookieSession(
     return null;
   }
 
-  const existing = await db.query.servers.findFirst({
-    where: and(eq(servers.url, origin), eq(servers.isDeleted, false)),
-  });
+  const serverService = createServerService(db);
+  const existing = await serverService.getServerByUrl(origin);
 
   let server: ServerSelect;
   if (existing) {
-    await db
-      .update(servers)
-      .set({
-        idUser: me.userId,
-        userName: me.username,
-        tag: me.tag,
-        updatedAt: new Date(),
-      })
-      .where(eq(servers.id, existing.id))
-      .run();
+    await serverService.updateServer(existing.id, {
+      idUser: me.userId,
+      userName: me.username,
+      tag: me.tag,
+    });
     server = {
       ...existing,
       idUser: me.userId,
@@ -63,7 +56,7 @@ export async function restoreHostedCookieSession(
       tag: me.tag,
     };
   } else {
-    server = await createServerService(db).createServer({
+    server = await serverService.createServer({
       idUser: me.userId,
       userName: me.username,
       tag: me.tag ?? me.username,

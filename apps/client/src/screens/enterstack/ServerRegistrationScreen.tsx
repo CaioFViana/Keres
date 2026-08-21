@@ -20,13 +20,18 @@ import apiClient from '../../services/apiClient';
 import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from '../../services/browserCookieSession';
-import { createServerService, ServerHasOwnedStoriesError } from '../../services/ServerService';
+import {
+  createServerService,
+  ServerHasOwnedStoriesError,
+  ServerUrlAlreadyRegisteredError,
+} from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { normalizeServerUrl } from '../../utils/serverUrl';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };
@@ -119,6 +124,16 @@ const ServerRegistrationScreen = () => {
       return;
     }
 
+    // Sync, auth and the hosted session all assume one live row per URL. Check before
+    // /auth/register so a duplicate address cannot create an account and then fail locally.
+    if (!serverId) {
+      const duplicateServer = await serverService.getServerByUrl(addressToSave);
+      if (duplicateServer) {
+        AppAlert.alert(t('error'), t('server_url_already_registered'));
+        return;
+      }
+    }
+
     // Creating a brand-new account (as opposed to logging into an existing one) needs its
     // own, stricter checks - a typo'd password here would lock the user out of an account
     // they just made, with nothing yet synced anywhere to recover from.
@@ -146,6 +161,14 @@ const ServerRegistrationScreen = () => {
         setError(t('server_not_found'));
         setLoading(false); // Ensure loading is reset if server not found
         return;
+      }
+      if (normalizeServerUrl(existingServer.url) !== normalizeServerUrl(addressToSave)) {
+        const duplicateServer = await serverService.getServerByUrl(addressToSave);
+        if (duplicateServer && duplicateServer.id !== serverId) {
+          AppAlert.alert(t('error'), t('server_url_already_registered'));
+          setLoading(false);
+          return;
+        }
       }
     }
 
@@ -284,7 +307,9 @@ const ServerRegistrationScreen = () => {
     } catch (err) {
       let errorMessage = t('failed_to_save_server'); // New translation key
 
-      if (err instanceof Error) {
+      if (err instanceof ServerUrlAlreadyRegisteredError) {
+        errorMessage = t('server_url_already_registered');
+      } else if (err instanceof Error) {
         errorMessage = err.message;
       }
 
@@ -326,6 +351,12 @@ const ServerRegistrationScreen = () => {
       return;
     }
 
+    const duplicateServer = await serverService.getServerByUrl(addressToSave);
+    if (duplicateServer) {
+      AppAlert.alert(t('error'), t('server_url_already_registered'));
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -359,7 +390,12 @@ const ServerRegistrationScreen = () => {
       AppAlert.alert(t('success'), t('password_reset_successfully'));
       navigation.goBack();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('failed_to_save_server');
+      const errorMessage =
+        err instanceof ServerUrlAlreadyRegisteredError
+          ? t('server_url_already_registered')
+          : err instanceof Error
+            ? err.message
+            : t('failed_to_save_server');
       setError(errorMessage);
       AppAlert.alert(t('error'), errorMessage);
     } finally {

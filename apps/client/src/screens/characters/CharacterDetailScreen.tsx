@@ -62,6 +62,7 @@ import { setDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { type CharactersScreenNavigationProp } from './CharacterListScreen';
 import { CharacterStatPanel } from '../../components/features/stats/CharacterStatPanel/CharacterStatPanel';
+import { ModeManager } from '../../components/features/stats/ModeManager/ModeManager';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import { useStoryStore } from '../../state/storyStore';
 import type { StatNotation } from '../../utils/statLadder';
@@ -72,6 +73,9 @@ export type CharacterDetailScreenParamList = {
 };
 
 type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 'CharacterDetail'>;
+
+/** A tela de detalhe nunca escreve; o manager exige os callbacks, então recebem uma no-op. */
+const noopModeWrite = async () => {};
 
 const CharacterDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -120,7 +124,13 @@ const CharacterDetailScreen = () => {
   const { canEdit } = useStoryRole(character?.storyId);
   const { selectedStory } = useStoryStore();
   const statSystemEnabled = !!selectedStory?.statSystem;
-  const statData = useStoryStats(statSystemEnabled ? character?.storyId : null);
+  // Sempre carregado: modos existem mesmo com o sistema de status desligado, e é aqui que o
+  // leitor os consulta (criar e editar é no formulário).
+  const statData = useStoryStats(character?.storyId);
+  const characterModes = useMemo(
+    () => statData.modes.filter((mode) => mode.characterId === characterId),
+    [statData.modes, characterId],
+  );
   const {
     commentsByField,
     canComment,
@@ -742,6 +752,14 @@ const CharacterDetailScreen = () => {
         );
       })()}
 
+      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
+      <EntityGalleryManager
+        ownerId={characterId}
+        ownerType="Character"
+        onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
+      />
+
       {statSystemEnabled ? (
         <>
           <Text style={styles.sectionTitle}>{t('stats_title')}</Text>
@@ -760,12 +778,12 @@ const CharacterDetailScreen = () => {
         </>
       ) : null}
 
-      <Text style={styles.sectionTitle}>{t('media_section_title')}</Text>
-      <EntityGalleryManager
-        ownerId={characterId}
-        ownerType="Character"
-        onPressMedia={openGalleryMediaViewer}
-        editable={canEdit}
+      <ModeManager
+        modes={characterModes}
+        editable={false}
+        onCreate={noopModeWrite}
+        onUpdate={noopModeWrite}
+        onDelete={noopModeWrite}
       />
 
       <CharacterRelationManager

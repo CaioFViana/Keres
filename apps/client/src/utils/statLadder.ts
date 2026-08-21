@@ -25,6 +25,9 @@ export const OVERSHOOT_RATIO = 0.2;
  */
 const IMPLICIT_TIER_LABEL = '—';
 
+/** O que aparece no lugar de um valor que não existe. */
+const EMPTY_VALUE = '—';
+
 export type StatNotation = 'letter' | 'number';
 
 /**
@@ -124,9 +127,30 @@ export function formatStatValue(
   ladder: readonly StatTier[],
   notation: StatNotation,
 ): string {
-  if (value === null) return '—';
+  if (value === null) return EMPTY_VALUE;
   if (notation === 'number') return formatNumber(value);
   return tierOf(value, ladder)?.label ?? formatNumber(value);
+}
+
+/**
+ * O rótulo do degrau seguido do número, que é o que a leitura de um personagem precisa: o tier
+ * diz a faixa, o número diz onde dentro dela. Na notação numérica não há tier a mostrar, então
+ * sobra o próprio número.
+ */
+export function formatStatValueDetailed(
+  value: number | null,
+  ladder: readonly StatTier[],
+  notation: StatNotation,
+): string {
+  if (value === null) return EMPTY_VALUE;
+  if (notation === 'number') return formatNumber(value);
+  const tier = tierOf(value, ladder);
+  return tier ? `${tier.label} (${formatNumber(value)})` : formatNumber(value);
+}
+
+/** Só o número, para quando o tier já está dito em outro lugar (o cabeçalho do ranking). */
+export function formatStatNumber(value: number | null): string {
+  return value === null ? EMPTY_VALUE : formatNumber(value);
 }
 
 function formatNumber(value: number): string {

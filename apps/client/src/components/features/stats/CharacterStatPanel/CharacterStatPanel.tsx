@@ -6,7 +6,7 @@ import Select from '../../../common/inputs/Select/Select';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import type { StoryStatsData } from '../../../../hooks/useStoryStats';
 import { useTheme } from '../../../../theme';
-import { formatStatValue, type StatNotation } from '../../../../utils/statLadder';
+import { formatStatValueDetailed, type StatNotation } from '../../../../utils/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
@@ -78,7 +78,7 @@ export function CharacterStatPanel({
           name: stat.name,
           isPrimary: stat.isPrimary,
           inherited: resolved.inherited,
-          display: formatStatValue(resolved.value, data.ladderOf(stat.id), notation),
+          display: formatStatValueDetailed(resolved.value, data.ladderOf(stat.id), notation),
         };
       }),
     [characterId, data, modeId, notation],
@@ -87,11 +87,11 @@ export function CharacterStatPanel({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        layout: { gap: 12 },
+        layout: { gap: 16, marginTop: 4 },
         wideLayout: { flexDirection: 'row', alignItems: 'flex-start', gap: 20 },
         chartColumn: { flexGrow: 0 },
         detailsColumn: { flex: 1 },
-        header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+        header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
         modeSelect: { flex: 1, maxWidth: 260 },
         actionButton: { padding: 6 },
         sectionLabel: {

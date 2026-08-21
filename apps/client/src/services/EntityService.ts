@@ -25,11 +25,15 @@ import {
   items,
   locations,
   locationRelations,
+  modes,
   noteRelations,
   notes,
   operationLogs,
   scenes,
   seeAlsoRelations,
+  statRelations,
+  stats,
+  statStrengths,
   suggestions,
   stories,
   storySchemaFields,
@@ -78,6 +82,10 @@ const ENTITY_LOOKUP_MAP: Record<string, OperationLogEntityType> = {
   choicecheckgroup: OperationLogEntityType.ChoiceCheckGroup,
   choicecheck: OperationLogEntityType.ChoiceCheck,
   effect: OperationLogEntityType.Effect,
+  stat: OperationLogEntityType.Stat,
+  statstrength: OperationLogEntityType.StatStrength,
+  statrelation: OperationLogEntityType.StatRelation,
+  mode: OperationLogEntityType.Mode,
 };
 
 /** Chaves de tradução do rótulo de cada tipo de Effect - usadas para montar o nome legível
@@ -622,6 +630,84 @@ export class EntityService {
         }
         translatedEntityType = t('effect');
         break;
+      case OperationLogEntityType.Stat:
+        const stat = await db.query.stats.findFirst({
+          where: and(eq(stats.id, entityId), eq(stats.isDeleted, false)),
+          columns: { name: true },
+        });
+        entitySpecificName = stat?.name;
+        translatedEntityType = t('stat');
+        break;
+      case OperationLogEntityType.Mode:
+        const mode = await db.query.modes.findFirst({
+          where: and(eq(modes.id, entityId), eq(modes.isDeleted, false)),
+          columns: { name: true, characterId: true },
+        });
+        if (mode) {
+          const modeOwner = await db.query.characters.findFirst({
+            where: and(eq(characters.id, mode.characterId), eq(characters.isDeleted, false)),
+            columns: { name: true },
+          });
+          entitySpecificName = t('mode_of_character', {
+            modename: mode.name,
+            charactername: modeOwner?.name || t('unknown_character'),
+          });
+        }
+        translatedEntityType = t('mode');
+        break;
+      case OperationLogEntityType.StatStrength:
+        const statStrength = await db.query.statStrengths.findFirst({
+          where: and(eq(statStrengths.id, entityId), eq(statStrengths.isDeleted, false)),
+          columns: { statId: true, label: true, minValue: true },
+        });
+        if (statStrength) {
+          // `statId` nulo é a escada padrão da história, que não pertence a status nenhum.
+          const ladderStat = statStrength.statId
+            ? await db.query.stats.findFirst({
+                where: and(eq(stats.id, statStrength.statId), eq(stats.isDeleted, false)),
+                columns: { name: true },
+              })
+            : undefined;
+          const ladderName = statStrength.statId
+            ? t('stat_ladder_of_stat', { statname: ladderStat?.name || t('unknown_stat') })
+            : t('stat_ladder_story_default');
+          entitySpecificName = `${ladderName} - ${statStrength.label} (${statStrength.minValue})`;
+        }
+        translatedEntityType = t('stat_strength');
+        break;
+      case OperationLogEntityType.StatRelation:
+        const statRelation = await db.query.statRelations.findFirst({
+          where: and(eq(statRelations.id, entityId), eq(statRelations.isDeleted, false)),
+          columns: { characterId: true, modeId: true, statId: true, value: true },
+        });
+        if (statRelation) {
+          const valueStat = await db.query.stats.findFirst({
+            where: and(eq(stats.id, statRelation.statId), eq(stats.isDeleted, false)),
+            columns: { name: true },
+          });
+          const valueOwner = await db.query.characters.findFirst({
+            where: and(
+              eq(characters.id, statRelation.characterId),
+              eq(characters.isDeleted, false),
+            ),
+            columns: { name: true },
+          });
+          const valueMode = statRelation.modeId
+            ? await db.query.modes.findFirst({
+                where: and(eq(modes.id, statRelation.modeId), eq(modes.isDeleted, false)),
+                columns: { name: true },
+              })
+            : undefined;
+          const ownerName = valueMode
+            ? `${valueOwner?.name || t('unknown_character')} · ${valueMode.name}`
+            : valueOwner?.name || t('unknown_character');
+          entitySpecificName = `${t('stat_value_of_entity', {
+            statname: valueStat?.name || t('unknown_stat'),
+            entityname: ownerName,
+          })}: ${statRelation.value}`;
+        }
+        translatedEntityType = t('stat_relation');
+        break;
     }
     if (entitySpecificName) {
       return `${translatedEntityType} - ${entitySpecificName}`;
@@ -1002,6 +1088,39 @@ export class EntityService {
           name = `${sideA.name || t('unknown_entity')} (${sideA.type || t('unknown_entity_type')}) - ${sideB.name || t('unknown_entity')} (${sideB.type || t('unknown_entity_type')})`;
         }
         type = t('see_also_relation');
+        break;
+      case OperationLogEntityType.Stat:
+        const relatedStat = await db.query.stats.findFirst({
+          where: and(
+            eq(stats.id, relationId),
+            eq(stats.storyId, storyId),
+            eq(stats.isDeleted, false),
+          ),
+          columns: { name: true },
+        });
+        name = relatedStat?.name;
+        type = t('stat');
+        break;
+      case OperationLogEntityType.Mode:
+        const relatedMode = await db.query.modes.findFirst({
+          where: and(
+            eq(modes.id, relationId),
+            eq(modes.storyId, storyId),
+            eq(modes.isDeleted, false),
+          ),
+          columns: { name: true, characterId: true },
+        });
+        if (relatedMode) {
+          const relatedModeOwner = await db.query.characters.findFirst({
+            where: and(eq(characters.id, relatedMode.characterId), eq(characters.isDeleted, false)),
+            columns: { name: true },
+          });
+          name = t('mode_of_character', {
+            modename: relatedMode.name,
+            charactername: relatedModeOwner?.name || t('unknown_character'),
+          });
+        }
+        type = t('mode');
         break;
       default:
         name = undefined;

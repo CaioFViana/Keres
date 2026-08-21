@@ -46,7 +46,6 @@ import { createCharacterService } from '../../services/storymanagement/Character
 import { useStoryStats } from '../../hooks/useStoryStats';
 import { createModeService } from '../../services/storymanagement/ModeService';
 import { createStatRelationService } from '../../services/storymanagement/StatRelationService';
-import type { StatNotation } from '../../utils/statLadder';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -705,7 +704,6 @@ const CharacterFormScreen = () => {
           <CharacterStatValuesEditor
             characterId={currentCharacterId}
             data={statData}
-            notation={(selectedStory.statNotation ?? 'letter') as StatNotation}
             editable
             onSetValue={({ modeId, statId, value }) =>
               statRelationService().setValue(userId!, {

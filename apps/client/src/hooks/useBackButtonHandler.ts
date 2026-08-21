@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BackHandler } from 'react-native';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
@@ -9,6 +9,15 @@ interface BackButtonHandlerOptions {
    * option no longer changes the header from a nested screen.
    */
   showWebBackButton?: boolean;
+  /**
+   * Para onde voltar quando o padrão está errado.
+   *
+   * `goBack` volta dentro do stack em foco, o que é certo quase sempre. Não é quando a tela foi
+   * aberta a partir de *outro* stack do drawer: a comparação de status aberta do detalhe de um
+   * personagem cairia na lista de status, e não de volta no personagem, porque a pilha de
+   * status começa na lista dela. Quem sabe de onde veio passa a volta correta aqui.
+   */
+  onBack?: () => void;
 }
 
 /**
@@ -19,10 +28,16 @@ interface BackButtonHandlerOptions {
  */
 export const useBackButtonHandler = ({
   showWebBackButton = false,
+  onBack,
 }: BackButtonHandlerOptions = {}) => {
   const navigation = useNavigation();
   const setBackAction = useHeaderBackActionStore((state) => state.setBackAction);
   const clearBackAction = useHeaderBackActionStore((state) => state.clearBackAction);
+  // Um ref mantém a volta customizada fora das dependências dos efeitos: o chamador quase
+  // sempre passa uma função nova a cada render, e sem isto o handler se registraria de novo
+  // a cada tecla digitada na tela.
+  const onBackRef = useRef(onBack);
+  onBackRef.current = onBack;
 
   useFocusEffect(
     useCallback(() => {
@@ -30,7 +45,10 @@ export const useBackButtonHandler = ({
         return undefined;
       }
 
-      const backAction = () => navigation.goBack();
+      const backAction = () => {
+        if (onBackRef.current) onBackRef.current();
+        else navigation.goBack();
+      };
       setBackAction(backAction);
 
       return () => clearBackAction(backAction);
@@ -39,6 +57,11 @@ export const useBackButtonHandler = ({
 
   useEffect(() => {
     const backAction = () => {
+      // 0. Volta customizada: quem abriu a tela sabe para onde ela deve voltar.
+      if (onBackRef.current) {
+        onBackRef.current();
+        return true;
+      }
       // 1. Try to go back within the current navigator (nested stack)
       if (navigation.canGoBack()) {
         navigation.goBack();

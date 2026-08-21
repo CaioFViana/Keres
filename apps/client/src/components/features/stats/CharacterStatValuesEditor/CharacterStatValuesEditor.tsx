@@ -7,7 +7,7 @@ import type { StoryStatsData } from '../../../../hooks/useStoryStats';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import { AppAlert } from '../../../../utils/AppAlert';
-import { formatStatValue, type StatNotation } from '../../../../utils/statLadder';
+import { formatStatNumber } from '../../../../utils/statLadder';
 import { resolveStatValue } from '../../../../utils/statValues';
 
 /**
@@ -20,7 +20,6 @@ import { resolveStatValue } from '../../../../utils/statValues';
 interface CharacterStatValuesEditorProps {
   characterId: string;
   data: StoryStatsData;
-  notation: StatNotation;
   editable: boolean;
   onSetValue: (params: { modeId: string | null; statId: string; value: number }) => Promise<void>;
   onClearValue: (params: { modeId: string | null; statId: string }) => Promise<void>;
@@ -29,7 +28,6 @@ interface CharacterStatValuesEditorProps {
 export function CharacterStatValuesEditor({
   characterId,
   data,
-  notation,
   editable,
   onSetValue,
   onClearValue,
@@ -48,7 +46,7 @@ export function CharacterStatValuesEditor({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        tabs: { flexGrow: 0, marginBottom: 10 },
+        tabs: { flexGrow: 0, marginBottom: 14 },
         tab: {
           paddingHorizontal: 14,
           paddingVertical: 8,
@@ -61,11 +59,11 @@ export function CharacterStatValuesEditor({
         tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
         tabText: { color: colors.text, fontSize: 14 },
         tabTextActive: { color: colors.onPrimary, fontWeight: 'bold' },
-        row: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+        row: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
         name: { color: colors.text, flex: 1, fontSize: 15 },
         input: { flex: 1 },
-        hint: { color: colors.textSecondary, fontSize: 12, marginBottom: 8 },
-        empty: { color: colors.textSecondary, paddingVertical: 8 },
+        hint: { color: colors.textSecondary, fontSize: 12, marginBottom: 12 },
+        empty: { color: colors.textSecondary, paddingVertical: 12 },
       }),
     [colors],
   );
@@ -112,7 +110,7 @@ export function CharacterStatValuesEditor({
         </ScrollView>
       ) : null}
 
-      {modeId ? <Text style={styles.hint}>{t('stat_inherited')}</Text> : null}
+      {modeId ? <Text style={styles.hint}>{t('stat_mode_inherit_hint')}</Text> : null}
 
       {data.stats.length === 0 ? <Text style={styles.empty}>{t('stats_empty')}</Text> : null}
       {data.stats.map((stat) => {
@@ -120,8 +118,10 @@ export function CharacterStatValuesEditor({
         const resolved = resolveStatValue(data.valueIndex, characterId, modeId, stat.id);
         const draft = drafts[key];
         const shown = draft ?? (resolved.inherited ? '' : (resolved.value?.toString() ?? ''));
+        // Herdado: o campo mostra vazio e o placeholder traz o número que está sendo herdado,
+        // que é exatamente o que digitar por cima substitui.
         const placeholder = resolved.inherited
-          ? formatStatValue(resolved.value, data.ladderOf(stat.id), notation)
+          ? formatStatNumber(resolved.value)
           : t('stat_value_placeholder');
         return (
           <View key={stat.id} style={styles.row}>

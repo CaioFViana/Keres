@@ -1,4 +1,10 @@
-import { formatStatValue, tierOf, type StatNotation, type StatTier } from './statLadder';
+import {
+  formatStatNumber,
+  formatStatValueDetailed,
+  tierOf,
+  type StatNotation,
+  type StatTier,
+} from './statLadder';
 import { resolveStatValue, type StatValueIndex } from './statValues';
 
 /**
@@ -30,7 +36,10 @@ export interface RankingEntry {
   value: number | null;
   /** O valor veio do modo normal porque este modo não tem um próprio. */
   inherited: boolean;
+  /** Tier e número juntos, para quando a linha aparece fora de um grupo de tier. */
   display: string;
+  /** Só o número, para quando o cabeçalho do grupo já diz o tier. */
+  valueDisplay: string;
 }
 
 export interface RankingGroup {
@@ -70,7 +79,8 @@ export function buildStatRanking(input: StatRankingInput): RankingGroup[] {
       label: character.name,
       value: base.value,
       inherited: false,
-      display: formatStatValue(base.value, ladder, notation),
+      display: formatStatValueDetailed(base.value, ladder, notation),
+      valueDisplay: formatStatNumber(base.value),
     });
   }
   for (const mode of modes) {
@@ -85,7 +95,8 @@ export function buildStatRanking(input: StatRankingInput): RankingGroup[] {
       label: `${owner.name} · ${mode.name}`,
       value: resolved.value,
       inherited: resolved.inherited,
-      display: formatStatValue(resolved.value, ladder, notation),
+      display: formatStatValueDetailed(resolved.value, ladder, notation),
+      valueDisplay: formatStatNumber(resolved.value),
     });
   }
 

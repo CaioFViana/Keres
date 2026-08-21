@@ -83,6 +83,15 @@ describe('buildStatRanking', () => {
     expect(rank({ direction: 'asc' }).map((group) => group.label)).toEqual(['F', 'C', 'A']);
   });
 
+  it('carries the tier and the number together, and the number alone', () => {
+    const top = rank()[0]!.entries[0]!;
+
+    // O cabeçalho do grupo já diz o tier, então a linha pode mostrar só o número; fora de um
+    // grupo (notação numérica, ou o painel do personagem) o tier precisa vir junto.
+    expect(top.display).toBe('A (480)');
+    expect(top.valueDisplay).toBe('480');
+  });
+
   it('does not group in number notation', () => {
     const groups = rank({ notation: 'number' });
 
@@ -114,6 +123,7 @@ describe('buildStatRanking', () => {
     expect(last.key).toBe('none');
     expect(last.entries.map((entry) => entry.label)).toEqual(['Bento', 'Bento · Ferido']);
     expect(last.entries[0]!.display).toBe('—');
+    expect(last.entries[0]!.valueDisplay).toBe('—');
   });
 
   it('ignores a mode whose character is not in the list', () => {

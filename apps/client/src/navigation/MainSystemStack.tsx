@@ -135,6 +135,11 @@ const mainSystemStackRootScreens = new Set([
   'OperationLog',
   'CommentsList',
   'StorySchemaList',
+  // As raízes dos stacks que o drawer abre direto: sem elas o header desenha uma seta de
+  // voltar em cima da própria lista, que é justamente o lugar de onde não se volta.
+  'StatList',
+  'HelpIndex',
+  'DeviceIndex',
 ]);
 
 //#region Character

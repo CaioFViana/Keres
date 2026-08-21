@@ -76,18 +76,19 @@ const StatRankingScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        controls: { gap: 10, paddingBottom: 12 },
+        controls: { gap: 12, paddingTop: 12, paddingBottom: 16 },
         controlRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-        statSelect: { flex: 1 },
         directionButton: {
           borderColor: colors.border,
           borderWidth: 1,
           borderRadius: 8,
+          height: 44,
           paddingHorizontal: 12,
-          paddingVertical: 10,
           flexDirection: 'row',
           alignItems: 'center',
+          justifyContent: 'center',
           gap: 6,
+          flex: 1,
         },
         directionLabel: { color: colors.text },
         switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -133,15 +134,13 @@ const StatRankingScreen = () => {
   return (
     <View style={getCommonContainerStyles(colors).container}>
       <View style={styles.controls}>
+        <Select
+          options={data.stats.map((stat) => ({ label: stat.name, value: stat.id }))}
+          value={statId}
+          onValueChange={setStatId}
+          placeholder={t('stats_title')}
+        />
         <View style={styles.controlRow}>
-          <View style={styles.statSelect}>
-            <Select
-              options={data.stats.map((stat) => ({ label: stat.name, value: stat.id }))}
-              value={statId}
-              onValueChange={setStatId}
-              placeholder={t('stats_title')}
-            />
-          </View>
           <TouchableOpacity
             style={styles.directionButton}
             onPress={() => setDirection((current) => (current === 'desc' ? 'asc' : 'desc'))}
@@ -151,7 +150,7 @@ const StatRankingScreen = () => {
               size={18}
               color={colors.text}
             />
-            <Text style={styles.directionLabel}>
+            <Text style={styles.directionLabel} numberOfLines={1}>
               {direction === 'desc'
                 ? t('stat_ranking_direction_desc')
                 : t('stat_ranking_direction_asc')}
@@ -172,13 +171,15 @@ const StatRankingScreen = () => {
         renderSectionHeader={({ section }) =>
           section.title ? <Text style={styles.sectionHeader}>{section.title}</Text> : null
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, section }) => (
           <TouchableOpacity style={styles.row} onPress={() => openCharacter(item.characterId)}>
             <Text style={styles.rowLabel} numberOfLines={2}>
               {item.label}
             </Text>
             <Text style={[styles.rowValue, item.inherited && styles.inherited]}>
-              {item.display}
+              {/* Dentro de um grupo de tier o cabeçalho já diz a letra; repeti-la em cada
+                  linha só rouba espaço do número, que é o que diferencia as linhas ali. */}
+              {section.title && section.key !== 'none' ? item.valueDisplay : item.display}
               {item.inherited ? ` · ${t('stat_inherited')}` : ''}
             </Text>
           </TouchableOpacity>

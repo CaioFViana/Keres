@@ -208,3 +208,152 @@ describe('getEntityIdentifier', () => {
     ).rejects.toThrow(/Invalid entityTypeString/);
   });
 });
+
+/**
+ * As entidades do sistema de status entraram depois do resto, e o sintoma de esquecer um `case`
+ * aqui é o log de operações mostrar "entidade desconhecida" - foi exatamente o que aconteceu.
+ */
+describe('stat system entities', () => {
+  async function seedStatWorld() {
+    await seedStory({ statSystem: true });
+    await database.db
+      .insert(schema.characters)
+      .values({ id: 'char-1', storyId: STORY_ID, name: 'Ilda', ...base });
+    await database.db.insert(schema.stats).values({
+      id: 'stat-1',
+      storyId: STORY_ID,
+      name: 'Coragem',
+      isPrimary: true,
+      order: 0,
+      ...base,
+    });
+    await database.db.insert(schema.modes).values({
+      id: 'mode-1',
+      storyId: STORY_ID,
+      characterId: 'char-1',
+      name: 'Na tempestade',
+      order: 0,
+      ...base,
+    });
+  }
+
+  it('names a stat by its name', async () => {
+    await seedStatWorld();
+
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Stat,
+        'stat-1',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('stat - Coragem');
+  });
+
+  it('names a mode together with the character that owns it', async () => {
+    await seedStatWorld();
+
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Mode,
+        'mode-1',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('mode - mode_of_character');
+  });
+
+  it('names a tier of the story default ladder', async () => {
+    await seedStatWorld();
+    await database.db.insert(schema.statStrengths).values({
+      id: 'tier-1',
+      storyId: STORY_ID,
+      statId: null,
+      label: 'C',
+      minValue: 50,
+      ...base,
+    });
+
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.StatStrength,
+        'tier-1',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('stat_strength - stat_ladder_story_default - C (50)');
+  });
+
+  it('names a tier that belongs to one stat', async () => {
+    await seedStatWorld();
+    await database.db.insert(schema.statStrengths).values({
+      id: 'tier-2',
+      storyId: STORY_ID,
+      statId: 'stat-1',
+      label: 'A',
+      minValue: 400,
+      ...base,
+    });
+
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.StatStrength,
+        'tier-2',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('stat_strength - stat_ladder_of_stat - A (400)');
+  });
+
+  it('names a value with its stat, its character and the number', async () => {
+    await seedStatWorld();
+    await database.db.insert(schema.statRelations).values({
+      id: 'value-1',
+      storyId: STORY_ID,
+      characterId: 'char-1',
+      modeId: null,
+      statId: 'stat-1',
+      value: 120,
+      ...base,
+    });
+
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.StatRelation,
+        'value-1',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('stat_relation - stat_value_of_entity: 120');
+  });
+
+  it('degrades to the translated type when the row is gone', async () => {
+    await seedStatWorld();
+
+    expect(
+      await EntityService.getEntityName(
+        database.db,
+        OperationLogEntityType.Stat,
+        'sumiu',
+        STORY_ID,
+        t,
+      ),
+    ).toBe('stat');
+  });
+
+  it('resolves a stat and a mode as a relation target too', async () => {
+    await seedStatWorld();
+
+    expect(
+      await EntityService.getEntityIdentifier(database.db, 'Stat', 'stat-1', STORY_ID, t),
+    ).toBe('Coragem');
+    expect(
+      await EntityService.getEntityIdentifier(database.db, 'Mode', 'mode-1', STORY_ID, t),
+    ).toBe('mode_of_character');
+  });
+});

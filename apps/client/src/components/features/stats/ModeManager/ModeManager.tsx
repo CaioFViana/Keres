@@ -37,16 +37,20 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
         row: {
           flexDirection: 'row',
           alignItems: 'center',
-          paddingVertical: 10,
+          paddingVertical: 12,
           borderBottomColor: colors.border,
           borderBottomWidth: StyleSheet.hairlineWidth,
         },
         name: { color: colors.text, fontSize: 15, fontWeight: '600' },
-        changes: { color: colors.textSecondary, marginTop: 2 },
+        changes: { color: colors.textSecondary, marginTop: 4 },
         iconButton: { padding: 8 },
-        form: { marginTop: 12 },
-        label: { color: colors.text, fontWeight: 'bold', marginBottom: 6 },
-        empty: { color: colors.textSecondary, paddingVertical: 8 },
+        // Os inputs do app têm `marginBottom: 0` (ver commonStyles), então o espaçamento
+        // vertical precisa vir daqui - sem isto rótulo, campo e botão ficam colados.
+        form: { marginTop: 20, gap: 8 },
+        label: { color: colors.text, fontWeight: 'bold', marginTop: 8, marginBottom: 6 },
+        firstLabel: { marginTop: 0 },
+        saveButton: { marginTop: 12 },
+        empty: { color: colors.textSecondary, paddingVertical: 12 },
       }),
     [colors],
   );
@@ -140,7 +144,7 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
 
       {editable ? (
         <View style={styles.form}>
-          <Text style={styles.label}>{t('mode_name')}</Text>
+          <Text style={[styles.label, styles.firstLabel]}>{t('mode_name')}</Text>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -155,7 +159,7 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
             multiline
             style={commonInputStyles.input}
           />
-          <Button onPress={handleSubmit} disabled={saving}>
+          <Button onPress={handleSubmit} disabled={saving} style={styles.saveButton}>
             {editingId ? t('save') : t('modes_add')}
           </Button>
           {editingId ? <Button onPress={reset}>{t('cancel')}</Button> : null}

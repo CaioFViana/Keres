@@ -77,6 +77,9 @@ const storySelectionStackRootScreens = new Set([
   'StorySelectionScreen',
   'ServerManagement',
   'FriendshipList',
+  // Mesma razão do drawer da história: a raiz de um stack aberto pelo menu não mostra seta.
+  'HelpIndex',
+  'DeviceIndex',
 ]);
 
 type StorySelectionMainDrawerNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList>;

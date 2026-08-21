@@ -65,7 +65,7 @@ const StatFormScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        label: { color: colors.text, fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
+        label: { color: colors.text, fontSize: 16, fontWeight: 'bold', marginBottom: 8 },
         hint: { color: colors.textSecondary, marginBottom: 12 },
         switchRow: {
           flexDirection: 'row',
@@ -148,7 +148,7 @@ const StatFormScreen = () => {
         style={commonInputStyles.input}
       />
 
-      <View style={styles.switchRow}>
+      <View style={[styles.switchRow, { marginTop: 20 }]}>
         <View style={{ flex: 1, marginRight: 12 }}>
           <Text style={styles.label}>{t('stat_is_primary')}</Text>
           <Text style={styles.hint}>{t('stat_is_primary_hint')}</Text>

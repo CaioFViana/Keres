@@ -104,7 +104,13 @@ const StatLadderScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        label: { color: colors.text, fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
+        label: {
+          color: colors.text,
+          fontSize: 16,
+          fontWeight: 'bold',
+          marginTop: 8,
+          marginBottom: 8,
+        },
         hint: { color: colors.textSecondary, marginBottom: 12 },
         switchRow: {
           flexDirection: 'row',
@@ -112,7 +118,7 @@ const StatLadderScreen = () => {
           justifyContent: 'space-between',
           marginBottom: 16,
         },
-        tierRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+        tierRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
         tierLabel: { flex: 2 },
         tierValue: { flex: 1 },
         iconButton: { padding: 8 },
@@ -124,7 +130,7 @@ const StatLadderScreen = () => {
           marginTop: 8,
           marginBottom: 16,
         },
-        generatorRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+        generatorRow: { flexDirection: 'row', gap: 8, marginTop: 8, marginBottom: 12 },
         empty: { color: colors.textSecondary, marginBottom: 12 },
       }),
     [colors],

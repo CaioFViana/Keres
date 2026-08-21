@@ -9,7 +9,7 @@
   },
   "meta": {
     "title": "Keres — Organize universes, connect narratives",
-    "description": "An offline-first story planning platform for mobile, web, and desktop, with optional sync across devices."
+    "description": "An offline-first story planning platform for phone and desktop, with optional sync across devices."
   },
   "nav": {
     "product": "Product",
@@ -37,8 +37,8 @@
       "body": "Keres is not a text editor. You write the chapter wherever you prefer, and record here who was in the scene, what changed hands, and which world rule that respects."
     },
     "anywhere": {
-      "title": "Phone, web, and desktop",
-      "body": "The same client on Android, iOS, the browser, and Windows, macOS, and Linux. At home, Keres Server on a PC syncs the phone without Docker or PostgreSQL."
+      "title": "Phone and desktop",
+      "body": "The same client on Android, iOS, and the desktop app for Windows, macOS, and Linux. At home, Keres Server on a PC syncs the phone without Docker or PostgreSQL."
     }
   },
   "product": {
@@ -243,10 +243,6 @@
         "title": "iOS",
         "body": "Native Expo client. Plan on the phone and sync with the PC at home."
       },
-      "web": {
-        "title": "Web",
-        "body": "The client also runs in the browser. That is the build the desktop app wraps."
-      },
       "windows": {
         "title": "Windows",
         "body": "Installer and portable executable, produced with every version."
@@ -299,7 +295,7 @@
     "title": "How it is built",
     "lead": "The same pieces described in the repository documentation.",
     "client": "React Native + Expo, local SQLite, Zustand stores, and a custom sync engine.",
-    "desktop": "Electron around the client's web build, with SQLite in OPFS.",
+    "desktop": "Electron wraps the client's web build. That build does not run on its own in a browser: the desktop app is the way in.",
     "api": "Bun, Elysia, Drizzle. PostgreSQL in Docker; SQLite in the home Keres Server.",
     "admin": "A React panel served by the API at /admin, for accounts, plans, and registration.",
     "shared": "Entities, Zod contracts, and palettes shared across the apps."
@@ -310,6 +306,10 @@
       "editor": {
         "q": "Does Keres replace my text editor?",
         "a": "No. It organizes the narrative universe. The manuscript, script, or campaign stays where you already write."
+      },
+      "browser": {
+        "q": "Does it run in the browser?",
+        "a": "No. The client is an app: Android, iOS, and desktop. Electron uses a web build under the hood, but that build is not opened on its own in Chrome or Firefox. Docker and Keres Server are the server side, not a stand-in for the app."
       },
       "offline": {
         "q": "Do I need the internet?",

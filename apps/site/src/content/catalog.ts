@@ -66,7 +66,6 @@ export const FEATURE_GROUPS = [
 export const PLATFORMS = [
   'android',
   'ios',
-  'web',
   'windows',
   'macos',
   'linux',
@@ -78,6 +77,7 @@ export const DOWNLOADS = ['releases', 'server', 'docker', 'source'] as const;
 
 export const FAQ_ITEMS = [
   'editor',
+  'browser',
   'offline',
   'server',
   'languages',

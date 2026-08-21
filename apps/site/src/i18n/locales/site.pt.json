@@ -9,7 +9,7 @@
   },
   "meta": {
     "title": "Keres — Organize universos, conecte narrativas",
-    "description": "Plataforma offline-first para planejar histórias em celular, web e desktop, com sincronização opcional entre dispositivos."
+    "description": "Plataforma offline-first para planejar histórias no celular e no desktop, com sincronização opcional entre dispositivos."
   },
   "nav": {
     "product": "Produto",
@@ -37,8 +37,8 @@
       "body": "O Keres não é um editor de texto. Você escreve o capítulo onde preferir e registra aqui quem estava na cena, o que mudou de dono e qual regra do mundo isso respeita."
     },
     "anywhere": {
-      "title": "Celular, web e desktop",
-      "body": "O mesmo cliente em Android, iOS, navegador e Windows, macOS e Linux. Em casa, um Keres Server no PC sincroniza o telemóvel sem Docker nem PostgreSQL."
+      "title": "Celular e desktop",
+      "body": "O mesmo cliente em Android, iOS e no aplicativo de desktop para Windows, macOS e Linux. Em casa, um Keres Server no PC sincroniza o telemóvel sem Docker nem PostgreSQL."
     }
   },
   "product": {
@@ -243,10 +243,6 @@
         "title": "iOS",
         "body": "Cliente Expo nativo. Planeje no telemóvel e sincronize com o PC de casa."
       },
-      "web": {
-        "title": "Web",
-        "body": "O cliente também corre no navegador. É essa build que o desktop empacota."
-      },
       "windows": {
         "title": "Windows",
         "body": "Instalador e executável portátil, gerados a cada versão."
@@ -299,7 +295,7 @@
     "title": "Como é feito",
     "lead": "As mesmas peças descritas na documentação do repositório.",
     "client": "React Native + Expo, SQLite local, store Zustand e um motor de sincronização próprio.",
-    "desktop": "Electron em volta da build web do cliente, com SQLite em OPFS.",
+    "desktop": "Electron empacota a build web do cliente. Essa build não corre sozinha no navegador: o aplicativo de desktop é o caminho.",
     "api": "Bun, Elysia, Drizzle. PostgreSQL no Docker; SQLite no Keres Server de casa.",
     "admin": "Painel React servido pela API em /admin, para contas, planos e cadastro.",
     "shared": "Entidades, contratos Zod e paletas compartilhados entre os apps."
@@ -310,6 +306,10 @@
       "editor": {
         "q": "O Keres substitui o meu editor de texto?",
         "a": "Não. Ele organiza o universo da narrativa. O manuscrito, o roteiro ou a campanha continuam onde você já escreve."
+      },
+      "browser": {
+        "q": "Roda no navegador?",
+        "a": "Não. O cliente é aplicativo: Android, iOS e desktop. O Electron usa uma build web por baixo, mas essa build não se abre isolada no Chrome ou no Firefox. Docker e o Keres Server são o lado servidor, não um substituto do app."
       },
       "offline": {
         "q": "Preciso de internet?",

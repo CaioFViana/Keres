@@ -486,3 +486,90 @@ describe('buildConflictSummaries - content conflicts', () => {
     expect(summary.canQuickResolve).toBe(true);
   });
 });
+
+/**
+ * O conflito que o usuário viu na prática: um valor de status recusado pelo servidor, exibido
+ * como "relations - Stat value" seguido de um ULID cru e de um motivo que não explicava nada.
+ */
+describe('stat value conflicts', () => {
+  const names = new Map<string, string>([
+    ['Character:char-1', 'Ilda'],
+    ['Stat:stat-1', 'Dexterity'],
+    ['Mode:mode-1', 'Na tempestade'],
+  ]);
+
+  const statValueConflict = (overrides: Partial<PendingConflict> = {}) =>
+    conflict({
+      entityType: 'StatRelation',
+      entityId: 'value-1',
+      reason: 'validation',
+      localOperationType: 'create',
+      localValues: { characterId: 'char-1', modeId: null, statId: 'stat-1', value: 5 },
+      serverValues: null,
+      ...overrides,
+    });
+
+  it('names the character and the stat instead of showing a raw id', () => {
+    const [summary] = buildConflictSummaries([statValueConflict()], noSnapshots, names, t);
+
+    expect(summary!.title).toBe('stat_relation');
+    expect(summary!.detail).toContain('Ilda - Dexterity: 5');
+    expect(summary!.detail).not.toContain('value-1');
+  });
+
+  it('says which mode the value belongs to', () => {
+    const [summary] = buildConflictSummaries(
+      [
+        statValueConflict({
+          localValues: { characterId: 'char-1', modeId: 'mode-1', statId: 'stat-1', value: 9 },
+        }),
+      ],
+      noSnapshots,
+      names,
+      t,
+    );
+
+    expect(summary!.detail).toContain('Ilda · Na tempestade - Dexterity: 9');
+  });
+
+  it('adds the reason the server gave, which is the only thing that explains a validation refusal', () => {
+    const [summary] = buildConflictSummaries(
+      [statValueConflict({ message: 'Validation Error: character already has a value.' })],
+      noSnapshots,
+      names,
+      t,
+    );
+
+    expect(summary!.detail).toContain('character already has a value');
+  });
+
+  it('stays quiet about the server message when the reason already explains itself', () => {
+    const [summary] = buildConflictSummaries(
+      [statValueConflict({ reason: 'version_conflict', message: 'ruído interno' })],
+      noSnapshots,
+      names,
+      t,
+    );
+
+    expect(summary!.detail).not.toContain('ruído interno');
+  });
+
+  it('collects the character, the stat and the mode as names to resolve', () => {
+    const refs = collectEntityRefs(
+      [
+        statValueConflict({
+          localValues: { characterId: 'char-1', modeId: 'mode-1', statId: 'stat-1', value: 9 },
+        }),
+      ],
+      noSnapshots,
+    );
+
+    expect(refs).toEqual(
+      expect.arrayContaining([
+        { entityType: 'Character', entityId: 'char-1' },
+        { entityType: 'Stat', entityId: 'stat-1' },
+        { entityType: 'Mode', entityId: 'mode-1' },
+      ]),
+    );
+  });
+});

@@ -168,9 +168,9 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
     'ImportExport',
     'PublishStory',
     'ExampleStories',
-    'Settings',
     'StoryDevicesDrawer',
     'HelpDrawer',
+    'Settings',
   ]);
 });
 

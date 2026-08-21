@@ -172,6 +172,24 @@ function formatValue(value: unknown, emptyLabel: string): string {
 }
 
 /** Chave de um snapshot no mapa devolvido por `EntitySnapshotResolver.resolveMany`. */
+/**
+ * Motivos cujo texto pronto não explica nada: `validation` e `unknown` só dizem que o servidor
+ * recusou, e a razão de verdade ("já existe um valor para este stat neste modo") vem na
+ * mensagem que ele mandou junto. Sem ela a tela de conflito é um beco sem saída.
+ */
+const REASONS_NEEDING_THE_SERVER_MESSAGE = new Set(['validation', 'unknown']);
+const SERVER_MESSAGE_MAX_LENGTH = 200;
+
+function withServerMessage(text: string, conflict: PendingConflict): string {
+  const message = conflict.message?.trim();
+  if (!message || !REASONS_NEEDING_THE_SERVER_MESSAGE.has(conflict.reason)) return text;
+  const shortened =
+    message.length > SERVER_MESSAGE_MAX_LENGTH
+      ? `${message.slice(0, SERVER_MESSAGE_MAX_LENGTH - 1)}…`
+      : message;
+  return `${text} ${shortened}`;
+}
+
 const snapshotKey = (entityType: string, entityId: string) => `${entityType}:${entityId}`;
 
 /**
@@ -320,6 +338,15 @@ function buildRelationSummary(
       const b = nameOf(names, merged.entityBType, merged.entityBId, unknown);
       return { title: t('see_also_relation'), detail: `${a} - ${b}` };
     }
+    case 'StatRelation': {
+      const character = nameOf(names, 'Character', merged.characterId, unknown);
+      const stat = nameOf(names, 'Stat', merged.statId, unknown);
+      const owner = merged.modeId
+        ? `${character} · ${nameOf(names, 'Mode', merged.modeId, unknown)}`
+        : character;
+      const value = merged.value ?? unknown;
+      return { title: t('stat_relation'), detail: `${owner} - ${stat}: ${value}` };
+    }
     default:
       return {
         title: t(ENTITY_LABEL_KEYS[conflict.entityType] || conflict.entityType),
@@ -360,7 +387,7 @@ export function buildConflictSummaries(
         kind: 'relation',
         entityLabel,
         title,
-        detail,
+        detail: withServerMessage(detail, conflict),
         reason: conflict.reason,
         canQuickResolve: true,
         diffFields: [],
@@ -401,10 +428,13 @@ export function buildConflictSummaries(
     // No caso binário (nada a comparar campo a campo) o motivo explica melhor a decisão do
     // que só o nome da entidade - mesma frase que `SyncConflictModal.tsx` já montava.
     const detail = canQuickResolve
-      ? t(`conflict_reason_${conflict.reason}`, {
-          defaultValue: t('conflict_reason_unknown'),
-          entity: entityLabel,
-        })
+      ? withServerMessage(
+          t(`conflict_reason_${conflict.reason}`, {
+            defaultValue: t('conflict_reason_unknown'),
+            entity: entityLabel,
+          }),
+          conflict,
+        )
       : entityName;
 
     return {

@@ -305,7 +305,7 @@ bun run dev:site      # http://localhost:5175
 bun run build:site
 ```
 
-The `.github/workflows/pages.yml` workflow builds and publishes on every push to `master` or `ouroboros`. The first time, under Settings → Pages, set the source to **GitHub Actions**.
+The `.github/workflows/pages.yml` workflow builds and publishes on every push to `master` (the default branch). The `github-pages` environment rejects other branches. The first time, under Settings → Pages, set the source to **GitHub Actions**.
 
 ## Technical documentation
 

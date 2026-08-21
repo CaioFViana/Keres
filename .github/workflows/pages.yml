@@ -1,10 +1,11 @@
 name: GitHub Pages
 
-# A landing em apps/site. Corre no master (branch padrão) e no ouroboros (linha
-# ativa), e também à mão, para poder publicar uma revisão sem esperar o merge.
+# A landing em apps/site. Só publica a partir de `master` (branch padrão do
+# repositório). O environment `github-pages` recusa qualquer outra branch —
+# um push na ouroboros com este workflow disparando só gerava um X vermelho.
 on:
   push:
-    branches: [master, ouroboros]
+    branches: [master]
   workflow_dispatch:
 
 permissions:

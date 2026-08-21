@@ -305,7 +305,7 @@ bun run dev:site      # http://localhost:5175
 bun run build:site
 ```
 
-O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `master` ou `ouroboros`. Na primeira vez, em Settings → Pages, escolha **GitHub Actions** como origem.
+O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `master` (a branch padrão). O environment `github-pages` recusa outras branches. Na primeira vez, em Settings → Pages, escolha **GitHub Actions** como origem.
 
 ## Documentação técnica
 
